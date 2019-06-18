@@ -1,0 +1,33 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+*******************************************************************************/
+
+.LocaleSwitcher .bx--list-box.bx--list-box--inline.bx--list-box--disabled:hover, 
+.LocaleSwitcher .bx--list-box.bx--list-box--inline.bx--list-box--expanded:hover,
+.LocaleSwitcher .bx--list-box.bx--list-box--inline {
+    background-color: black;
+}
+
+.LocaleSwitcher .bx--list-box--inline .bx--list-box__label {
+    color:white;
+}
+
+.LocaleSwitcher .bx--list-box__menu-icon > svg {
+    fill: white;
+}
+
+
+.LocaleSwitcher .bx--list-box--inline > .bx--list-box__menu {
+    width: 7.75rem;
+}
+
+.LocaleSwitcher {
+    margin-right: 30px;
+}

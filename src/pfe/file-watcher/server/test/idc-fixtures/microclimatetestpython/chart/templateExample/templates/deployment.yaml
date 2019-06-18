@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: "{{  .Chart.Name }}-deployment"
+  labels:
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
+spec:
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: "{{ .Chart.Name }}-selector"
+        version: "current"
+    spec:
+      containers:
+      - name: "{{ .Chart.Name }}"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.servicePort }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.service.servicePort }}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.service.servicePort }}
+        resources:
+        env:
+        - name: PORT
+          value: "{{ .Values.service.servicePort }}"
+

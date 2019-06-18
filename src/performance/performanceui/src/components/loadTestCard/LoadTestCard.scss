@@ -1,0 +1,118 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+* 
+* Contributors:
+*     IBM Corporation - initial API and implementation
+*******************************************************************************/
+
+@import '../../theme/default.scss';
+
+.LoadTestCard {
+    width: 100%;
+    border-bottom:1px solid $default-border;
+    border-left:4px solid $default-border;
+    border-right:1px solid $default-border;
+    background-color: #f4f7fb;
+    min-height:40px;
+}
+
+.LoadTestCard.expanded {
+    border-left:4px solid #49E4C7;
+}
+
+.LoadTestCard .toolbar {
+    float:right;
+    margin-top:5px;
+    margin-right:10px;
+}
+
+.loadTestCard .icon {
+    margin-left: '10px';
+    height: 20px;
+    width: 20px;
+}
+
+.LoadTestCard .toolbar {
+    float:right;
+    margin-top:5px;
+    margin-right:10px;
+}
+
+.LoadTestCard .toolbar .icon:hover{
+    cursor: pointer;
+}
+
+.LoadTestCard .basics {
+    line-height:45px;
+    color:  #5A6872;
+}
+
+.LoadTestCard .details {
+    margin-left:10px;
+    margin-right:10px;
+      -webkit-animation: fadein 0.4s; 
+  -moz-animation: fadein 0.4s; 
+   -ms-animation: fadein 0.4s; 
+    -o-animation: fadein 0.4s; 
+       animation: fadein 0.4s;
+}
+
+
+
+.LoadTestCard .title {
+    display:inline-block;
+    font-size: 18px;
+    margin-left: 20px;
+}
+
+.LoadTestCard .time {
+    display:inline-block;
+    font-size: 14px;
+    margin-left: 10px;
+}
+
+.LoadTestCard .detailsTable {
+    width:100%;
+    margin-top:20px;
+}
+
+.LoadTestCard .detailsTable td,
+.LoadTestCard .detailsTable th {
+    width:auto;
+    text-align: center;
+}
+
+.LoadTestCard .detailsTable td:first-of-type,
+.LoadTestCard .detailsTable th:first-of-type {
+    text-align: left;
+}
+
+.LoadTestCard .detailsTable td:last-of-type,
+.LoadTestCard .detailsTable th:last-of-type {
+    text-align: right;
+}
+
+.LoadTestCard .detailsTable th {
+    font-weight: bold;
+}
+
+.LoadTestCard .detailsTable td {
+    font-size: 30px;
+    line-height: 50px;
+    font-weight:bold;
+    color: #5A6872;
+}
+
+
+.LoadTestCard .detailsTable .bx--tooltip__label {
+    font-weight:bold;
+    font-size: 12px;
+}
+
+.bx--tooltip.largeTooltip {
+    max-width: 80%;
+}

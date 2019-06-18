@@ -1,0 +1,45 @@
+RUN apt-get update && apt-get install -y vim maven 
+
+ENV JAVA_VERSION 1.8.0_sr5
+
+RUN set -eux; \
+    ARCH="$(dpkg --print-architecture)"; \
+    case "${ARCH}" in \
+       amd64|x86_64) \
+         YML_FILE='sdk/linux/x86_64/index.yml'; \
+         ;; \
+       i386) \
+         YML_FILE='sdk/linux/i386/index.yml'; \
+         ;; \
+       ppc64el|ppc64le) \
+         YML_FILE='sdk/linux/ppc64le/index.yml'; \
+         ;; \
+       s390) \
+         YML_FILE='sdk/linux/s390/index.yml'; \
+         ;; \
+       s390x) \
+         YML_FILE='sdk/linux/s390x/index.yml'; \
+         ;; \
+       *) \
+         echo "Unsupported arch: ${ARCH}"; \
+         exit 1; \
+         ;; \
+    esac; \
+    BASE_URL="https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta/"; \
+    wget -q -U UA_IBM_JAVA_Docker -O /tmp/index.yml ${BASE_URL}/${YML_FILE}; \
+    JAVA_URL=$(cat /tmp/index.yml | sed -n '/'${JAVA_VERSION}'/{n;p}' | sed -n 's/\s*uri:\s//p' | tr -d '\r'); \
+    wget -q -U UA_IBM_JAVA_Docker -O /tmp/ibm-java.bin https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/8.0.5.5/linux/x86_64/ibm-java-sdk-8.0-5.5-x86_64-archive.bin; \
+    echo "INSTALLER_UI=silent" > /tmp/response.properties; \
+    echo "USER_INSTALL_DIR=/root/java" >> /tmp/response.properties; \
+    echo "LICENSE_ACCEPTED=TRUE" >> /tmp/response.properties; \
+    mkdir -p /root/java; \
+    chmod +x /tmp/ibm-java.bin; \
+    /tmp/ibm-java.bin -i silent -f /tmp/response.properties; \
+    rm -f /tmp/response.properties; \
+    rm -f /tmp/index.yml; \
+    rm -f /tmp/ibm-java.bin;
+
+RUN mkdir -m 777 -p /config/resources
+
+ENV JAVA_HOME=/opt/ibm/java/jre \
+    PATH=/opt/ibm/java/bin:$PATH

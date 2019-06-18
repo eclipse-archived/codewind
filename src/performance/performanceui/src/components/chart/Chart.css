@@ -1,0 +1,69 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+*******************************************************************************/
+
+
+.Chart {
+    padding: 20px;
+}
+
+.Chart .chartCanvas {
+    padding: 20px;
+}
+
+.Chart .chartTitle {
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.Chart .c3 svg {
+    width: 100%;  /* Constrain horizontal size to 100% of container*/
+}
+
+.Chart .chartFull {
+    text-align: center;
+    border: 1px solid #30588c;
+    padding: 20px;
+}
+
+.Chart .chartFull p {
+    font-weight: lighter;
+}
+
+.c3-brush .extent {
+    fill-opacity: 0.3;
+    fill: #3D70B2; 
+}
+
+/* Top bar of the chart hover tooltip */
+.c3-tooltip th {
+    opacity:1;
+    background-color: #30588c;
+    color:white;
+}
+
+/* Prefix title with a # */
+.c3-tooltip th:first-child:before {
+    content:'#';
+}
+
+.c3-grid text {
+ fill: black;
+}
+
+.ChartList .chartToolbarLink {
+    float:right;
+    margin-right:50px;
+}
+
+.ChartList .chartToolbarLink:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}

@@ -1,0 +1,6 @@
+docker build -t codewind-performance-$(../../script/platform.sh) \
+--file $1 \
+--label "org.label-schema.build-date=$(date '+%Y-%m-%dT%k:%M:%S%z')" \
+--label "org.label-schema.vcs-ref=$(git rev-parse HEAD)" \
+--label "org.label-schema.version=" \
+.

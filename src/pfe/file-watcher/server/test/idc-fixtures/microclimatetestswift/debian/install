@@ -1,0 +1,3 @@
+.build/ usr/src/microclimatetestswift
+terraform/scripts/install.sh usr/src/microclimatetestswift
+terraform/scripts/start.sh usr/src/microclimatetestswift

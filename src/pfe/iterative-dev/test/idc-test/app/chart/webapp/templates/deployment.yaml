@@ -1,0 +1,66 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: "{{  .Chart.Name }}-deployment"
+  labels:
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  template:
+    metadata:
+      labels:
+        app: "{{  .Chart.Name }}-selector"
+        version: "current"
+    spec:
+      containers:
+      - name: "{{  .Chart.Name  }}"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+{{ if .Values.istio.enabled }}
+{{ else }}
+        readinessProbe:
+          httpGet:
+            path: /webapp/health
+            port: 9080
+          initialDelaySeconds: 20
+{{ end }}
+        resources:
+          requests:
+            cpu: "{{ .Values.image.resources.requests.cpu }}"
+            memory: "{{ .Values.image.resources.requests.memory }}"
+        env:
+          - name: PORT
+            value: "{{ .Values.service.servicePort }}"
+          - name: APPLICATION_NAME
+            value: "{{ .Release.Name }}"
+          - name: IBM_APM_SERVER_URL
+            valueFrom:
+              secretKeyRef:
+                name: apm-server-config
+                key: ibm_apm_server_url
+                optional: true
+          - name: IBM_APM_KEYFILE
+            valueFrom:
+              secretKeyRef:
+                name: apm-server-config
+                key: ibm_apm_keyfile
+                optional: true
+          - name: IBM_APM_KEYFILE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: apm-server-config
+                key: ibm_apm_keyfile_password
+                optional: true
+          - name: IBM_APM_INGRESS_URL
+            valueFrom:
+              secretKeyRef:
+                name: apm-server-config
+                key: ibm_apm_ingress_url
+                optional: true
+          - name: IBM_APM_ACCESS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: apm-server-config
+                key: ibm_apm_access_token
+                optional: true

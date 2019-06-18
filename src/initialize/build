@@ -1,0 +1,5 @@
+docker build -t codewind-initialize-$(../../script/platform.sh) \
+--label "org.label-schema.build-date=$(date '+%Y-%m-%dT%k:%M:%S%z')" \
+--label "org.label-schema.vcs-ref=$(git rev-parse HEAD)" \
+--label "org.label-schema.version=" \
+.

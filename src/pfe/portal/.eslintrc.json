@@ -1,0 +1,61 @@
+{
+    "env": {
+        "es6": true,
+        "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 2018,
+        "sourceType": "module"
+    },
+    "plugins": [
+        "microclimate-portal-eslint"
+    ],
+    "rules": {
+        "indent": [
+            "warn", 2
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "quotes": "off",
+        "semi": "off",
+        "no-console": "off",
+        "no-inner-declarations": "off",
+        "no-const-assign":"error",
+        "no-var":"error",
+        "no-undef":"error",
+        "no-undef-init":"error",
+        "require-await": "warn",
+        "no-return-await": "error",
+        "no-async-promise-executor": "warn",
+        "no-await-in-loop": "warn",
+        "require-atomic-updates": "warn",
+        "array-callback-return": "warn",
+        "block-scoped-var": "warn",
+        "class-methods-use-this": "warn",
+        "consistent-return": "warn",
+        "default-case": "warn",
+        "no-else-return": "warn",
+        "no-fallthrough": "warn",
+        "no-implicit-globals": "warn",
+        "no-lone-blocks": "warn",
+        "no-loop-func": "warn",
+        "no-param-reassign": "error",
+        "no-return-assign": "warn",
+        "no-self-compare": "warn",
+        "no-unmodified-loop-condition": "warn",
+        "no-unused-expressions": "warn",
+        "no-useless-return": "warn",
+        "no-unused-vars": [
+            "error",
+            {
+              "ignoreRestSiblings": true,
+              "argsIgnorePattern": "^_"
+            }
+        ],
+        "no-sync": "warn",
+        "microclimate-portal-eslint/sanitise-body-parameters": "error"
+    }
+}

@@ -1,0 +1,9 @@
+---
+applications:
+- instances: 1
+  timeout: 180
+  name: LibertyProject
+  buildpack: liberty-for-java
+  path: ./target/MyProject-1.0-SNAPSHOT.zip
+  memory: 512M
+  random-route: true

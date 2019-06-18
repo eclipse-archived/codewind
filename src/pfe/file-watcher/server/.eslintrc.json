@@ -1,0 +1,26 @@
+{
+    "env": {
+        "es6": true,
+        "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 2017,
+        "sourceType": "module"
+    },
+    "rules": {
+        "indent": [
+            "off"
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "quotes": "off",
+        "semi": "off",
+        "no-console": "off",
+        "no-inner-declarations": "off",
+        "no-sync": "error",
+        "no-unused-vars": "off"
+    }
+}

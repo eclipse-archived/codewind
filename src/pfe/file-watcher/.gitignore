@@ -1,0 +1,4 @@
+scripts/.env
+/LICENSE/
+server/.env
+.vscode/settings.json

@@ -1,0 +1,55 @@
+
+ENV JAVA_VERSION_PREFIX 1.8.0
+
+RUN set -eux; \
+    ARCH="$(dpkg --print-architecture)"; \
+    case "${ARCH}" in \
+       amd64|x86_64) \
+         YML_FILE='sdk/linux/x86_64/index.yml'; \
+         ;; \
+       i386) \
+         YML_FILE='sdk/linux/i386/index.yml'; \
+         ;; \
+       ppc64el|ppc64le) \
+         YML_FILE='sdk/linux/ppc64le/index.yml'; \
+         ;; \
+       s390) \
+         YML_FILE='sdk/linux/s390/index.yml'; \
+         ;; \
+       s390x) \
+         YML_FILE='sdk/linux/s390x/index.yml'; \
+         ;; \
+       *) \
+         echo "Unsupported arch: ${ARCH}"; \
+         exit 1; \
+         ;; \
+    esac; \
+    BASE_URL="https://public.dhe.ibm.com/ibmdl/export/pub/systems/cloud/runtimes/java/meta/"; \
+    wget -q -U UA_IBM_JAVA_Docker -O /tmp/index.yml ${BASE_URL}/${YML_FILE}; \
+    ESUM=$(cat /tmp/index.yml | sed -n '/'${JAVA_VERSION_PREFIX}'/{n;n;p}' | sed -n 's/\s*sha256sum:\s//p' | tr -d '\r' | tail -1); \
+    JAVA_URL=$(cat /tmp/index.yml | sed -n '/'${JAVA_VERSION_PREFIX}'/{n;p}' | sed -n 's/\s*uri:\s//p' | tr -d '\r' | tail -1); \
+    wget -q -U UA_IBM_JAVA_Docker -O /tmp/ibm-java.bin ${JAVA_URL}; \
+    echo "${ESUM}  /tmp/ibm-java.bin" | sha256sum -c -; \
+    echo "INSTALLER_UI=silent" > /tmp/response.properties; \
+    echo "USER_INSTALL_DIR=/root/java" >> /tmp/response.properties; \
+    echo "LICENSE_ACCEPTED=TRUE" >> /tmp/response.properties; \
+    mkdir -p /root/java; \
+    chmod +x /tmp/ibm-java.bin; \
+    /tmp/ibm-java.bin -i silent -f /tmp/response.properties; \
+    rm -f /tmp/response.properties; \
+    rm -f /tmp/index.yml; \
+    rm -f /tmp/ibm-java.bin; \
+    cd /root/java/jre/lib; \
+    rm -rf icc;
+
+RUN mkdir -p /opt/mvn &&\
+    MAVEN_VERSION=$(wget -qO- https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/maven-metadata.xml | sed -n 's/\s*<release>\(.*\)<.*>/\1/p') &&\
+    wget -q -U UA_IBM_JAVA_Docker -O /opt/mvn/apache-maven-${MAVEN_VERSION}-bin.tar.gz https://search.maven.org/remotecontent?filepath=org/apache/maven/apache-maven/${MAVEN_VERSION}/apache-maven-${MAVEN_VERSION}-bin.tar.gz &&\
+    tar xf /opt/mvn/apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt/mvn &&\
+    mv /opt/mvn/apache-maven-${MAVEN_VERSION} /opt/mvn/apache-maven &&\
+    rm -f /opt/mvn/apache-maven-${MAVEN_VERSION}-bin.tar.gz;
+
+RUN mkdir -m 777 -p /config/resources
+
+ENV JAVA_HOME=/root/java \
+    PATH=/root/java/jre/bin:/opt/mvn/apache-maven/bin:$PATH

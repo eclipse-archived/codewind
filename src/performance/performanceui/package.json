@@ -1,0 +1,47 @@
+{
+  "name": "performance",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@carbon/colors": "^10.2.0",
+    "@carbon/icons-react": "^10.2.0",
+    "@carbon/layout": "^10.2.0",
+    "carbon-components": "^10.2.0",
+    "carbon-components-react": "^7.2.0",
+    "carbon-icons": "^7.0.7",
+    "query-string": "^6.5.0",
+    "react": "^16.8.4",
+    "react-c3js": "^0.1.20",
+    "react-dom": "^16.8.4",
+    "react-redux": "^6.0.1",
+    "react-router-dom": "^4.3.1",
+    "react-scripts": "3.0.0",
+    "react-transition-group": "^2.9.0",
+    "redux": "^4.0.1",
+    "redux-logger": "^3.0.6",
+    "redux-thunk": "^2.3.0",
+    "socket.io": "^2.2.0"
+  },
+  "scripts": {
+    "start": "PORT=3001 react-scripts start",
+    "build": "PUBLIC_ROUTE=/performance react-scripts build",
+    "test": "react-scripts test --silent",
+    "test-verbose": "react-scripts test  --silent --verbose"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "devDependencies": {
+    "enzyme": "^3.9.0",
+    "enzyme-adapter-react-16": "^1.12.1",
+    "react-testing-library": "^7.0.0",
+    "node-sass": "^4.11.0"
+  },
+  "homepage": "/performance"
+}

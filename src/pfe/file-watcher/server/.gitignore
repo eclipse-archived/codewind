@@ -1,0 +1,5 @@
+/dist/
+coverage
+.nyc_output
+test/functional-test/idc-fixtures
+!package-lock.json

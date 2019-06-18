@@ -1,0 +1,76 @@
+################################################################################
+# Copyright (c) 2019 IBM Corporation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v2.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v20.html
+#
+# Contributors:
+#     IBM Corporation - initial API and implementation
+################################################################################
+
+################################################################################
+# Multi stage DockerFile to build the performance UI and a Docker runtime image
+################################################################################
+
+FROM node:10-alpine AS build-performance-ui
+
+# Create UI app directory and install source code
+WORKDIR /usr/src/app
+
+COPY . .
+
+WORKDIR /usr/src/app/performanceui
+
+# Install nodeJS dependancies
+RUN npm ci
+
+# Build React webapp 
+RUN npm run build
+
+############################################################
+# We now have a built ui, begin setup of a new runtime image 
+############################################################
+
+FROM node:10-alpine
+
+# Copy our license files into the new image
+COPY LICENSE.md NOTICE.md /
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Install performance server
+COPY package*.json server.js ./
+
+RUN npm ci --only=production
+
+# Install performance UI by copying over the built application
+
+COPY --from=build-performance-ui /usr/src/app/performanceui/build /usr/src/app/performanceui/build
+
+
+#loadrunner setup
+
+#COPY . .
+
+
+
+# Change working directory
+#WORKDIR /usr/src/app/loadrunner
+
+# Install npm production packages
+COPY loadrunner/package.json /usr/src/app/
+COPY loadrunner/runload.js /usr/src/app/
+RUN npm ci --production
+
+ENV NODE_ENV production
+ENV PORT 9095
+
+EXPOSE 9095
+# Run as the default node user from the image rather than root.
+USER 1000
+
+WORKDIR /usr/src/app
+
+CMD [ "npm", "start" ]

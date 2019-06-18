@@ -1,0 +1,128 @@
+{
+  "filewatcherUtil": {
+    "fwNLSInitSuccess": "File-watcher NLS has been initialized successfully"
+  },
+  "action": {
+    "calculateDifference": "Calculating difference"
+  },
+  "buildscripts": {
+      "buildImage": "Creating image",
+      "buildApplicationImage": "Creating image for application",
+      "buildBuildImage": "Creating image for build",
+      "compileApplication": "Compiling application",
+      "compileFail": "Application failed to compile",
+      "buildFail": "Creating image for build failed",
+      "containerBuildSuccess": "Container image has been built successfully",
+      "buildcontainerCreateSuccess": "Build container image has been created successfully",
+      "buildMaven": "Running maven build",
+      "buildMavenPass": "Maven build succeeded",
+      "buildMavenFail": "Maven build failed",
+      "noHelmChart": "A Helm chart cannot be found for the project. Place a Helm chart within the chart subfolder of the project.",
+      "buildFailMissingFile": "The build failed because required files are missing. See validation results for details.",
+      "noDeployment": "A deployment file in the Helm chart could not be found.",
+      "noService": "A service file in the Helm chart could not be found.",
+      "podFailedToStart": "Pod for Helm release {{- projectName}} failed to start.",
+      "invalidMavenSettings": "Build aborted. Failed to get the user Maven settings",
+      "missingDeploymentRegistry": "The project will not build due to missing Deployment Registry. Please enter a deployment registry to build projects.",
+      "invalidDeploymentRegistry": "Codewind was unable to push an image to the Deployment Registry. Please make sure it is a valid Deployment Registry with the appropriate permissions.",
+      "wrongDeploymentRegistry": "The project will not build with the new deployment registry. Please unbind and bind the project to build with the new deployment registry."
+  },
+  "buildApplicationTask": {
+    "pomChangeDetected": "pom.xml change detected, running clean build",
+    "runCleanBuild": "Running clean build",
+    "containerNotRunning": "The container is not running",
+    "cleanBuildFailed": "Clean build failed",
+    "configChangeDetected": "Server config file change detected, running application build",
+    "configBuildFail": "Application build for server config change failed. Please check the build log view for more details.",
+    "compileApplication": "Compiling application",
+    "buildFail": "Application build failed. Please check the log in the build log view for more details.",
+    "missingServerXml": "The Liberty server configuration file was not found at {{- path}}.\n\tPlease move the server.xml to this location, or copy one in from another Microprofile project."
+  },
+  "containerBuildTask": {
+    "containerBuild": "Building container image",
+    "containerBuildFailDockerfileGenerate": "Container image failed to build: failed on generating Dockerfile",
+    "containerBuildFailDockerfileSetup": "Container image failed to build: failed on Dockerfile setup",
+    "containerBuildFailImageExist": "Container image failed to build: container image already exists",
+    "containerBuildFailArtifactsMissing": "Container image failed to build: the image could not be built because the artifacts directory was not found",
+    "containerBuildFail": "Container image failed to build: failed on running build command",
+    "containerBuildSuccess": "Container image has been built successfully"
+  },
+  "projectStatusController": {
+    "projectInfoError": "No current build information available",
+    "serverNotStarted": "Liberty server did not start due to internal error.",
+    "appStatusContainerStopped": "Application stopped unexpectedly. Check the application logs for details.",
+    "buildStateMap": "No current build information available for the project",
+    "buildRank": "Rank {{- rank}}",
+    "buildStarted": "Build started",
+    "appErrorWhenStopping": "An error occurred while the application was stopping. Check the application logs for details."
+  },
+  "quickfix": {
+    "generateMissingFilesName": "Generate missing files",
+    "generateMissingFilesDescription": "Generate missing required files."
+  },
+  "projectUtil": {
+    "projectInfoError": "could not retrieve project info"
+  },
+  "validator": {
+    "requiredFiles": {
+      "label": "Missing required file",
+      "details": "{{- filename}} is required but was not found.",
+      "orDetails": "At least one of {{missingFileList}} is required but was not found."
+    }
+  },
+  "libertyProject": {
+    "pomParsingError": "POM parsing error",
+    "DockerfileBuildParsingError": "Dockerfile-Build parsing error",
+    "validator": {
+      "parentGroupId": {
+        "label": "Missing Liberty parent POM groupId",
+        "details": "A Liberty parent POM declaration is required. The parent groupId should be <groupId>net.wasdev.wlp.maven.parent</groupId>"
+      },
+      "parentArtifactId": {
+        "label": "Missing Liberty parent POM artifactId",
+        "details": "A Liberty parent POM declaration is required. The parent artifactId should be <artifactId>liberty-maven-app-parent</artifactId>"
+      },
+      "parentPOM": {
+        "label": "Missing Liberty parent POM",
+        "details": "A Liberty parent POM declaration is required. See the project import documentation for details."
+      },
+      "activationNotFound": {
+        "label": "Missing profile activation",
+        "details": "Missing a profile activation property libertyEnv=microclimate. See the project import documentation for more details."
+      },
+      "pluginExtensions": {
+        "label": "liberty-maven-plugin extensions not enabled",
+        "details": "The liberty-maven-plugin is configured but does not include <extensions>true</extensions>"
+      },
+      "looseAppConfig": {
+        "label": "liberty-maven-plugin looseApplication is not enabled",
+        "details": "It is recommended for the liberty-maven-plugin configuration to include <looseApplication>true</looseApplication>. This configuration speeds up application updates."
+      },
+      "libertyPluginNotFound": {
+        "label": "Missing liberty-maven-plugin configuration",
+        "details": "A microclimate profile is configured but the liberty-maven-plugin was not found. It should be added to the build plugins section of the microclimate profile. See the project import documentation for a configuration example."
+      },
+      "microclimateProfileNotFound": {
+        "label": "A maven profile named 'microclimate' was not found.",
+        "details": "A microclimate build profile is recommended for Microprofile projects. See the project import documentation for details."
+      },
+      "migrateNonRootUser": {
+        "label": "Migration may required to run project container as a non-root user",
+        "details": "Please see our documentation here on how to migrate your application to run as a non-root user:\n\thttps://microclimate-dev2ops.github.io/troubleshooting#microclimate-liberty-projects-are-broken"
+      }
+    }
+  },
+  "springProject": {
+    "pomParsingError": "Non-parseable POM",
+    "validator": {
+      "foundSpringGroupId": {
+        "label": "Spring Boot dependency not found",
+        "details": "This project is identified as a Spring project but the pom.xml does not have the required configuration for Spring projects. See the Importing Projects documentation for more information."
+      },
+      "foundInvalidPackaging": {
+        "label": "Invalid packaging for Spring project",
+        "details": "This project's pom.xml specifies an invalid packaging for its output. Only Spring projects with jar packaging are supported for this project type."
+      }
+    }
+  }
+}

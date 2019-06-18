@@ -1,0 +1,4 @@
+node_modules
+node_modules_linux
+coverage
+server/localdev-config.json

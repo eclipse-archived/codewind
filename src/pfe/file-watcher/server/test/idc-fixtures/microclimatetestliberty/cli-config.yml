@@ -1,0 +1,47 @@
+# The IBM version of this configuration
+version : 0.0.3
+
+# The container name used for the run container
+container-name-run : "microclimatetestliberty"
+
+# The container name used for the tools container
+container-name-tools : "bx-dev-microclimatetestliberty-tools"
+
+# The project root in the run container to mount to host-path-run
+container-path-run : "/project"
+# The project root in the tools container that will be mounted to host-path-tools
+container-path-tools : "/project"
+
+# The name of the Dockerfile used to create the run container
+dockerfile-run : "Dockerfile"
+# The name of the Dockerfile used to create the tools container
+dockerfile-tools : "Dockerfile-tools"
+
+# The name of image to create from dockerfile-run
+image-name-run : "microclimatetestliberty"
+# The name of image to create from dockerfile-tools
+image-name-tools : "bx-dev-java-maven-tools"
+
+# The project root on the host for the run container to mount to container-path-run
+host-path-run : "target"
+
+# The command to build the code and docker image for RUN
+build-cmd-run : "mvn install -Dmaven.repo.local=/project/.m2/repository -Pbx-dev-build"
+
+# The command to execute tests for the code in the tools container
+test-cmd : "mvn install -Dmaven.repo.local=/project/.m2/repository -Pbx-dev-build"
+
+# The command to build the code and docker image for DEBUG
+build-cmd-debug : "mvn install -Dmaven.repo.local=/project/.m2/repository -Pbx-dev-build"
+
+# The command to execute debug of the code in the tools container
+debug-cmd : "server debug"
+
+# The port mappings between the host and the container in the form [host:container]
+container-port-map : "9080:9080,9443:9443"
+
+# The port mappings between the host and the container for the debug port in the form [host:container]
+container-port-map-debug : "7777:7777"
+
+# The relative path to the helm chart used for Kubernetes deployment
+chart-path : "chart/microclimatetestliberty"

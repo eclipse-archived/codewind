@@ -1,0 +1,75 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+*******************************************************************************/
+
+@import '../../theme/default.scss';
+
+  .TestCardTooltip .tooltipTable {
+    display: table;
+	width: 100%;
+  }
+  
+  .TestCardTooltip .tooltipRow {
+    display: table-row;
+    line-height: 20px;
+  }
+
+  .TestCardTooltip .tooltipRow.header {
+    display: table-row;
+    line-height: 20px;
+    border:0;
+    background-color: $table-header-bg;
+  }
+  
+  .TestCardTooltip .tooltipRow.header:hover {
+    background-color: $table-header-bg;
+}
+
+
+.TestCardTooltip .tooltipTitle {
+    margin-bottom:15px;
+    font-weight:bold;
+  }
+
+  .TestCardTooltip .tooltipRow:hover {
+    background-color:$table-header-bg;
+  }
+
+  .TestCardTooltip .tooltipRow.tooltipRow.header .columnL, 
+  .TestCardTooltip .tooltipRow.tooltipRow.header .columnC, 
+  .TestCardTooltip .tooltipRow.tooltipRow.header .columnR {
+    border-bottom: 1px solid black;
+  }
+
+  .TestCardTooltip .tooltipRow .columnL {
+    padding: 3px;
+    width: 160px;
+    font-size: 0.9rem;
+    display: table-cell;
+
+    font-weight:lighter;
+  }
+
+  .TestCardTooltip .tooltipRow .columnC   {
+    padding: 3px 10px 3px 3px;
+    width: 160px;
+    font-size: 0.9rem;
+    display: table-cell;
+    text-align: right;
+    font-weight:lighter;
+  }
+
+  .TestCardTooltip .tooltipRow .columnR {
+   padding: 2px;
+   font-size: 0.9rem;
+   display: table-cell;
+   text-align:right;
+   font-weight:lighter;
+}

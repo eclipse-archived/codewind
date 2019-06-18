@@ -1,0 +1,13 @@
+/target
+/.m2
+
+
+/.classpath
+/.project
+/.settings
+
+/caches
+/local.properties
+.*.swp
+.DS_Store
+/src/main/resources/application-local.properties

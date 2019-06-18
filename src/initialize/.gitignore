@@ -1,0 +1,5 @@
+out/
+.nyc_output/
+coverage/
+reports/
+!package-lock.json

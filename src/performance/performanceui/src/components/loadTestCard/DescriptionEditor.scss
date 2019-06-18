@@ -1,0 +1,82 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+*******************************************************************************/
+
+@import '../../theme/default.scss';
+
+.DescriptionEditor .bx--text-area {
+    resize: none;
+    background-color:white;
+    height:60px;
+    font-size: 0.9rem;
+    margin-bottom:10px;
+    padding:5px;
+}
+
+.DescriptionEditor .bx--form-item {
+    margin-right: 0;
+    margin-bottom: 0;
+}
+
+.DescriptionEditor .charCounter {
+    float:right;
+}
+
+.DescriptionEditor .actions {
+    float:left;
+}
+
+.DescriptionEditor .actions .link {
+    display:inline-block;
+    margin-right:10px;
+    font-size:15px;
+}
+
+.DescriptionEditor .actions .link:hover{
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.DescriptionEditor .footer {
+    margin-bottom:30px;
+}
+
+.DescriptionEditor  .warning {
+    font-weight: bold; 
+  }
+  
+.DescriptionEditor .danger {
+    font-weight: bold; 
+    color: $danger-color;
+}
+
+.DescriptionEditor .iconEdit {
+    fill:#5A6872;
+    margin-left:10px;
+    height:14px;
+}
+
+.DescriptionEditor .testDescription {
+    font-size:14px;
+    color:#5A6872;
+}
+
+
+.DescriptionEditor .actions .link {
+    color:$link-color;
+    margin-right:10px;
+    float:right;
+    font-weight: bold;
+}
+
+
+
+.DescriptionEditor .inline {display: inline-block; vertical-align: middle} 
+

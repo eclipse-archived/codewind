@@ -1,0 +1,4 @@
+**/node_modules
+file-watcher/server/test
+file-watcher/server/coverage
+file-watcher/server/.nyc_output

@@ -1,0 +1,40 @@
+{
+  "name": "nodefolder",
+  "version": "1.0.0",
+  "description": "A generated Bluemix application",
+  "private": true,
+  "engines": {
+    "node": "^6.9.0"
+  },
+  "scripts": {
+    "start": "node server/server.js",
+    "start:cluster": "sl-run server/server.js",
+    "debug": "node --debug server/server.js",
+    "test": "nyc mocha",
+    "build": "npm run build:idt",
+    "idt:build": "node idt.js build",
+    "idt:test": "node idt.js test",
+    "idt:debug": "node idt.js debug",
+    "idt:run": "node idt.js run",
+    "idt:deploy": "node idt.js deploy",
+    "idt:install": "node idt.js install"
+  },
+  "dependencies": {
+    "appmetrics-dash": "^3.3.2",
+    "appmetrics-prometheus": "^0.0.2",
+    "body-parser": "^1.17.2",
+    "express": "^4.15.3",
+    "strong-supervisor": "^6.2.0",
+    "log4js": "^1.1.1",
+    "ibm-cloud-env": "^0"
+  },
+  "devDependencies": {
+    "chai": "^4.0.0",
+    "chalk": "^1.1.3",
+    "mocha": "^3.4.2",
+    "nyc": "^10.3.2",
+    "prompt-confirm": "^1.2.0",
+    "proxyquire": "^1.8.0",
+    "request": "^2.82.0"
+  }
+}

@@ -1,0 +1,38 @@
+dist: xenial
+
+sudo: required
+
+language: node_js
+
+node_js:
+  - "10"
+
+services:
+  - docker
+addons:
+  apt:
+    sources:
+      - sourceline: 'deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable'
+        key_url: 'https://download.docker.com/linux/ubuntu/gpg'
+    packages:
+      - docker-ce maven
+
+
+matrix:
+  include:
+    - os: linux
+      env: TEST_SCOPE=codewind-pfe UPLOAD_IMAGES=true
+    - os: linux
+      env: TEST_SCOPE=file-watcher-pfe-all
+    # - os: linux
+    #   env: TEST_SCOPE=codewind-pfe-smoke-tests
+    # - os: linux
+    #   env: TEST_SCOPE=filewatcher2
+
+script:
+  # Run tests only if build script passes.
+  - sudo env "TRAVIS_BRANCH=$TRAVIS_BRANCH" "TRAVIS_COMMIT=$TRAVIS_COMMIT" "TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST" ./script/build.sh $USERNAME $PASSWORD &&
+    sudo env "TRAVIS_EVENT_TYPE=$TRAVIS_EVENT_TYPE" "TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER" "PATH=$PATH" "NOBUILD=true" "TEST_SCOPE=$TEST_SCOPE" ./test.sh $GIT_AUTH $GIT_EXPORT_AUTH
+
+notifications:
+  slack: ibm-cloud:uBUFI8EQJBMIskWTJg6Q6fcQ

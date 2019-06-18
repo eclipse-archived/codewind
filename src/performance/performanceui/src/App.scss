@@ -1,0 +1,50 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+*******************************************************************************/
+
+$font-path: '/performance/fonts';
+
+@import '~carbon-components/scss/globals/scss/styles';
+@import './theme/default.scss';
+
+.App {
+    min-width:800px;
+}
+
+.hidden { display:none;}
+
+
+.link {
+  color:$link-color;
+}
+
+.link:hover {
+    cursor: pointer;
+}
+
+.iconDisabled {
+    fill:rgb(190, 188, 185);
+}
+
+
+.noselect {
+    -webkit-touch-callout: none; 
+      -webkit-user-select: none; 
+       -khtml-user-select: none; 
+         -moz-user-select: none; 
+          -ms-user-select: none; 
+              user-select: none;
+  }
+
+/** Animation fade for different browsers */
+@keyframes fadein { from { opacity: 0; }  to   { opacity: 1; } }
+@-moz-keyframes fadein { from { opacity: 0; }  to   { opacity: 1; } }
+@-webkit-keyframes fadein {  from { opacity: 0; }  to   { opacity: 1; } }
+@-ms-keyframes fadein {  from { opacity: 0; }  to   { opacity: 1; } }

@@ -1,0 +1,13 @@
+hello-impl/.classpath
+hello-impl/.settings
+hello-impl/.project
+hello-impl/target
+hello-api/.classpath
+hello-api/.settings
+hello-api/.project
+hello-api/target
+.DS_Store
+chart/.DS_Store
+chart/lagomjavatemplate/.DS_Store
+target
+.project
