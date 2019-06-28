@@ -27,14 +27,14 @@ const { validateReq } = require('../../middleware/reqValidator');
  * @param language the project language (e.g. java|nodejs|swift)
  * @param projectType the project type for the project, required
  * @param autoBuild whether the project should be built automatically (optional, default true)
- * @return 202 if project directory was successfully bound as a microclimate project
+ * @return 202 if project directory was successfully bound as a codewind project
  * @return 400 if there was an error in the parameters
  * @return 409 if the project path or name are already in use
  * @return 500 if there was an error
  */
 router.post('/api/v1/projects/bind', validateReq, async function (req, res) {
   let newProject;
-  const user = req.mc_user;
+  const user = req.cw_user;
   try {
     // Null checks on required parameters are done by validateReq.
     const projectPath = req.sanitizeBody('path');
@@ -101,6 +101,11 @@ router.post('/api/v1/projects/bind', validateReq, async function (req, res) {
 
     if (projectType) {
       projectDetails.projectType = projectType
+      // If the project type is an extension, add the extension
+      let extension = user.extensionList.getExtensionForProjectType(projectType);
+      if (extension) {
+        projectDetails.extension = extension;
+      }
     }
 
     newProject = await user.createProject(projectDetails);
@@ -146,7 +151,7 @@ router.post('/api/v1/projects/bind', validateReq, async function (req, res) {
  * @return 409 if unbind was already in progress
  */
 router.post('/api/v1/projects/:id/unbind', validateReq, async function (req, res) {
-  const user = req.mc_user;
+  const user = req.cw_user;
   // Null checks on projectID done by validateReq.
   const projectID = req.sanitizeParams('id');
   try {

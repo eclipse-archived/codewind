@@ -54,8 +54,8 @@ module.exports.initialiseGitRepository = async function initialiseGitRepository(
   if (!isGitRepo) {
     await git.init();
   }
-  let userName = await git.raw(['config', '-f', configDirectory, '--get', 'user.name']) || 'Microclimate User';
-  let userEmail = await git.raw(['config', '-f', configDirectory, '--get', 'user.email']) || 'microclimate.user@localhost';
+  let userName = await git.raw(['config', '-f', configDirectory, '--get', 'user.name']) || 'Codewind User';
+  let userEmail = await git.raw(['config', '-f', configDirectory, '--get', 'user.email']) || 'codewind.user@localhost';
   await git.addConfig('user.name', userName);
   await git.addConfig('user.email', userEmail);
   if (process.env.EXTRA_GIT_OPTION) {

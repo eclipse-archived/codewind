@@ -1,0 +1,108 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+*******************************************************************************/
+
+@import "../../themes/dark-theme.scss";
+@import "~@carbon/layout/scss/spacing";
+@import "~@carbon/type/scss/type";
+
+.DescriptionEditor .description-text {
+  margin-bottom: 0;
+  margin-left: 5px;
+}
+
+.DescriptionEditor .description-text {
+  cursor: pointer;
+} 
+
+
+.DescriptionEditor .description-text .notext {
+  color: $ui-04;
+  font-style: italic;
+}
+
+.DescriptionEditor .bx--text-area {
+  resize: none;
+  height: 55px;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  padding: 5px;
+  margin-top: 6px;
+}
+
+.DescriptionEditor .bx--form-item {
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+.DescriptionEditor .charCounter {
+  float: right;
+}
+
+.DescriptionEditor .actions {
+  float: left;
+}
+
+.DescriptionEditor .actions .link {
+  display: inline-block;
+  margin-right: 10px;
+  font-size: 15px;
+}
+
+.DescriptionEditor .actions .link:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.DescriptionEditor .footer {
+  margin-bottom: 30px;
+}
+
+.DescriptionEditor .warning {
+  color: $support-03;
+}
+
+.DescriptionEditor .danger {
+  font-weight: bold;
+  color: $support-01;
+}
+
+.DescriptionEditor .iconEdit {
+  fill: $interactive-04;
+  margin-left: 10px;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.DescriptionEditor .iconEdit:hover {
+  cursor: pointer;
+  fill: $interactive-01;
+}
+
+.DescriptionEditor .testDescription {
+  font-size: 14px;
+  color: $ui-04;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.DescriptionEditor .actions .link {
+  color: $color-link;
+  margin-right: 10px;
+  float: right;
+}
+
+.DescriptionEditor .inline {
+  display: inline-block;
+}
+
+.DescriptionEditor .bx--btn--ghost.bx--btn-sm {
+  padding: 0;
+}

@@ -74,10 +74,10 @@ set -o pipefail
 
 function cleanContainer() {
 	if [ "$IN_K8" != "true" ]; then
-		if [ "$(docker ps -aq -f name=$project)" ]; then
+		if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-			docker rm -f $project
-			docker rmi -f $project
+			$IMAGE_COMMAND rm -f $project
+			$IMAGE_COMMAND rmi -f $project
 		fi
 	fi
 }
@@ -145,12 +145,13 @@ function deployK8s() {
 
 		# If the image already exists, remove it as well.
 		# Fix for no nodemon in ICP.
-		if [ "$( docker images -q $project )" ]; then
-			docker rmi -f $project
+		if [ "$( $IMAGE_COMMAND images -q $project )" ]; then
+			$IMAGE_COMMAND rmi -f $project
 		fi
-		if [ "$( docker images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
-			docker rmi -f $DEPLOYMENT_REGISTRY/$project
+		if [ "$( $IMAGE_COMMAND images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
+			$IMAGE_COMMAND rmi -f $DEPLOYMENT_REGISTRY/$project
 		fi
+		
 		# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
 		if [ "$( helm list $project --failed )" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
@@ -166,7 +167,7 @@ function deployK8s() {
  		$util newLogFileAvailable $PROJECT_ID "build"
 
 		echo -e "Docker build log file "$LOG_FOLDER/$DOCKER_BUILD.log""
-		docker build -t $project . |& tee "$LOG_FOLDER/$DOCKER_BUILD.log"
+		$IMAGE_COMMAND $BUILD_COMMAND -t $project . |& tee "$LOG_FOLDER/$DOCKER_BUILD.log"
 		exitCode=$?
 		imageLastBuild=$(($(date +%s)*1000))
 		if [ $exitCode -eq 0 ]; then
@@ -179,15 +180,14 @@ function deployK8s() {
 		fi
 
 		# Tag and push the image to the registry
-		docker tag $project $DEPLOYMENT_REGISTRY/$project
-		docker push $DEPLOYMENT_REGISTRY/$project
+		$IMAGE_COMMAND push --tls-verify=false $project $DEPLOYMENT_REGISTRY/$project
 
 		if [ $? -eq 0 ]; then
 			echo "Successfully tagged and pushed the application image $DEPLOYMENT_REGISTRY/$project"
 		else
 			echo "Error: $?, could not push application image $DEPLOYMENT_REGISTRY/$project" >&2
 			$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
-			exit 1;
+			exit 7;
 		fi
 
 		# Install the application using helm.
@@ -205,7 +205,7 @@ function deployK8s() {
  		$util newLogFileAvailable $PROJECT_ID "build"
 
 		echo -e "Docker build log file "$LOG_FOLDER/$DOCKER_BUILD.log""
-		docker build -t $project . |& tee "$LOG_FOLDER/$DOCKER_BUILD.log"
+		$IMAGE_COMMAND $BUILD_COMMAND -t $project . |& tee "$LOG_FOLDER/$DOCKER_BUILD.log"
 		exitCode=$?
 		imageLastBuild=$(($(date +%s)*1000))
 		if [ $exitCode -eq 0 ]; then
@@ -274,16 +274,19 @@ function dockerRun() {
 	heapdump="NODE_HEAPDUMP_OPTIONS=nosignal"
 
 	# Remove container if it already exists (could be from a failed attempt)
-	if [ "$(docker ps -aq -f name=$project)" ]; then
-		docker rm -f $project
+	if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then
+		$IMAGE_COMMAND rm -f $project
 	fi
 
 	# If the node module volume for the project doesn't already exist, create it.
-	if [ ! "$(docker volume ls -q -f name=$project-nodemodules)" ]; then
-		docker volume create $project-nodemodules
+	if [ ! "$($IMAGE_COMMAND volume ls -q -f name=$project-nodemodules)" ]; then
+		$IMAGE_COMMAND volume create $project-nodemodules
 	fi
 
-	docker run --network=codewind_network -e $heapdump --name $project -p 127.0.0.1::$DEBUG_PORT -P -dt -v "$LOCAL_WORKSPACE/$projectName":/app -v $project-nodemodules:/app/node_modules $project /bin/bash -c "$dockerCmd";
+	workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
+	echo "Workspace path used for volume mounting is: "$workspace""
+
+	$IMAGE_COMMAND run --network=codewind_network -e $heapdump --name $project -p 127.0.0.1::$DEBUG_PORT -P -dt -v "$workspace/$projectName":/app -v $project-nodemodules:/app/node_modules $project /bin/bash -c "$dockerCmd";
 }
 
 function deployLocal() {
@@ -296,7 +299,7 @@ function deployLocal() {
  	$util newLogFileAvailable $PROJECT_ID "build"
 
 	echo -e "Docker build log file "$LOG_FOLDER/$DOCKER_BUILD.log""
-	docker build -t $project . |& tee "$LOG_FOLDER/$DOCKER_BUILD.log"
+	$IMAGE_COMMAND $BUILD_COMMAND -t $project . |& tee "$LOG_FOLDER/$DOCKER_BUILD.log"
 
 	exitCode=$?
 	imageLastBuild=$(($(date +%s)*1000))
@@ -328,8 +331,9 @@ function deployLocal() {
 			exit 1
 		fi
 	fi
-	docker cp /file-watcher/scripts/nodejsScripts $project:/scripts
-	docker exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
+
+	$IMAGE_COMMAND cp /file-watcher/scripts/nodejsScripts $project:/scripts
+	$IMAGE_COMMAND exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
 	if [ $? -eq 0 ]; then
 		# The build is now complete so send a success event
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_SUCCESS " " "$imageLastBuild"
@@ -346,7 +350,7 @@ function deployLocal() {
 
 	# add the app logs
 	echo -e "App log file "$LOG_FOLDER/$APP_LOG.log""
-	docker logs -f $CONTAINER_NAME >> "$LOG_FOLDER/$APP_LOG.log" &
+	$IMAGE_COMMAND logs -f $CONTAINER_NAME >> "$LOG_FOLDER/$APP_LOG.log" &
 }
 
 # Initialize the cache with the hash for select files.  Called from project-watcher.
@@ -422,9 +426,10 @@ elif [ "$COMMAND" == "update" ]; then
 			create
 		else
 			echo "Restarting node/nodemon for changed config file"
-			docker exec $project /scripts/noderun.sh stop
+			$IMAGE_COMMAND exec $project /scripts/noderun.sh stop
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-			docker exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
+
+			$IMAGE_COMMAND exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
 			$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 		fi
 	else
@@ -435,9 +440,9 @@ elif [ "$COMMAND" == "update" ]; then
 		elif [ "$AUTO_BUILD_ENABLED" != "true" ]; then
 			# If auto build disabled then not using nodemon and need to restart
 			echo "Restarting node for changed file"
-			docker exec $project /scripts/noderun.sh stop
+			$IMAGE_COMMAND exec $project /scripts/noderun.sh stop
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-			docker exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
+			$IMAGE_COMMAND exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
 			$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 		fi
 	fi
@@ -445,31 +450,31 @@ elif [ "$COMMAND" == "update" ]; then
 # Stop the application (not supported for ICP)
 elif [ "$COMMAND" == "stop" ]; then
 	echo "Stopping node.js project $projectName"
-	docker exec $project /scripts/noderun.sh stop
+	$IMAGE_COMMAND exec $project /scripts/noderun.sh stop
 	$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
 # Start the application (not supported for ICP)
 elif [ "$COMMAND" == "start" ]; then
 	echo "Starting node.js project $projectName"
 	# Clear the cache since restarting node will pick up any changes to package.json or nodemon.json
 	clearNodeCache
-	docker exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
+	$IMAGE_COMMAND exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
 	$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 # Enable auto build
 elif [ "$COMMAND" == "enableautobuild" ]; then
 	echo "Enabling auto build for node.js project $projectName"
 	# Wipe out any changes to package.json or nodemon.json since restarting node will take care of them
 	clearNodeCache
-	docker exec $project /scripts/noderun.sh stop
+	$IMAGE_COMMAND exec $project /scripts/noderun.sh stop
 	$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-	docker exec $project /scripts/noderun.sh start true $START_MODE $HOST_OS
+	$IMAGE_COMMAND exec $project /scripts/noderun.sh start true $START_MODE $HOST_OS
 	$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 	echo "Auto build for node.js project $projectName enabled"
 # Disable auto build
 elif [ "$COMMAND" == "disableautobuild" ]; then
 	echo "Disabling auto build for node.js project $projectName"
-	docker exec $project /scripts/noderun.sh stop
+	$IMAGE_COMMAND exec $project /scripts/noderun.sh stop
 	$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-	docker exec $project /scripts/noderun.sh start false $START_MODE $HOST_OS
+	$IMAGE_COMMAND exec $project /scripts/noderun.sh start false $START_MODE $HOST_OS
 	$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 	echo "Auto build for node.js project $projectName disabled"
 # Remove the application
@@ -483,27 +488,27 @@ elif [ "$COMMAND" == "remove" ]; then
 		fi
 	else
 		# Remove container
-		if [ "$(docker ps -aq -f name=$project)" ]; then
-			docker rm -f $project
+		if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then
+			$IMAGE_COMMAND rm -f $project
 		fi
 
 		# Remove the node modules volume, as it needs to be deleted separately.
-		if [ "$(docker volume ls -q -f name=$project-nodemodules)" ]; then
-			docker volume rm $project-nodemodules
+		if [ "$($IMAGE_COMMAND volume ls -q -f name=$project-nodemodules)" ]; then
+			$IMAGE_COMMAND volume rm $project-nodemodules
 		fi
 	fi
 
 	# Remove image
-	if [ "$(docker images -qa -f reference=$project)" ]; then
-		docker rmi -f $project
+	if [ "$($IMAGE_COMMAND images -qa -f reference=$project)" ]; then
+		$IMAGE_COMMAND rmi -f $project
 	else
 		echo The application image $project has already been removed.
 	fi
 
 	# Remove registry image and Kubernetes image
 	if [ "$IN_K8" == "true" ]; then
-		if [ "$( docker images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
-			docker rmi -f $DEPLOYMENT_REGISTRY/$project
+		if [ "$( $IMAGE_COMMAND images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
+			$IMAGE_COMMAND rmi -f $DEPLOYMENT_REGISTRY/$project
 		fi
 	fi
 # Rebuild the application

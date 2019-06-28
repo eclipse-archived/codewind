@@ -1,0 +1,112 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+******************************************************************************/
+
+@import '~@carbon/colors/scss/colors';
+@import '~@carbon/layout/scss/spacing';
+@import '~@carbon/type/scss/type';
+
+.ChartCounterSelector .reset {
+   text-align: right;
+}
+
+.ChartCounterSelector .innerContainer {
+    padding:10px 0 0 10px; 
+    background-color: $carbon--gray-80;
+    height: 380px;
+    display: flex;
+    flex-direction: column;
+}
+
+.ChartCounterSelector .chartCategory{
+    padding-right:10px
+}
+
+.ChartCounterSelector .options {
+    margin: 0;
+    padding-left:20px;
+    max-height: 0;
+    transform: scaleY(0);
+    opacity:0;
+    transition: transform 1ms ease-in-out;
+    -webkit-transition: opacity 250ms ease-in-out;
+
+}
+
+.ChartCounterSelector .options.expanded {
+    transform: scaleY(1);
+    max-height:100px;
+    opacity:1;
+}
+
+
+.ChartCounterSelector .option {
+    margin: 0;
+    padding-right:10px;
+    display: flex;
+    align-items:center;  
+}
+
+.ChartCounterSelector .checkbox-container {
+    margin: 0;
+}
+
+
+.categoryLabels .bx--form-item {
+    flex: initial;
+}
+
+.categoryLabels .bx--tooltip__label {
+    margin-top:-4px;
+}
+
+.categoryLabels {
+    display: flex;
+    flex: initial;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-content: stretch;
+}
+
+.categoryLabels  .bx--checkbox:disabled + .bx--checkbox-label {
+    color: $carbon--gray-40;
+}
+
+.nodata-container {
+    text-align: center;
+    background-color: $carbon--gray-80;
+    margin-top:35px;  
+}
+
+@keyframes fadeInWithDelay {
+    0% { opacity: 0; }
+    50% { opacity: 0; }
+    100%   { opacity: 1; }
+}
+
+@-webkit-keyframes fadeInWithDelay {
+    0% { opacity: 0; }
+    50% { opacity: 0; }
+    100%   { opacity: 1; }
+}
+
+.nodata-container .innerContainer {
+    -webkit-animation: fadeInWithDelay 3s ease-in; 
+    animation: fadeInWithDelay 3s;
+}
+
+.nodata-container .message {
+    @include properties($body-long-02);
+    padding:20px;
+}
+
+.nodata-container img {
+   margin-top:20px;
+}

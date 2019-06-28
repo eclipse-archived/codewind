@@ -13,7 +13,7 @@ const chai = require('chai');
 const projectService = require('../../modules/project.service');
 const SocketService = require('../../modules/socket.service');
 const reqService = require('../../modules/request.service');
-const {promisify} = require('util');
+const { promisify } = require('util');
 const execAsync = promisify(require('child_process').exec);
 const { ADMIN_COOKIE, testTimeout } = require('../../config');
 const zlib = require('zlib');
@@ -33,7 +33,7 @@ describe('watchList and file-changes route tests', function() {
         workspace_location = await projectService.findWorkspaceLocation();
         const createOption = {
             projectName,
-            url : 'https://github.com/microclimate-dev2ops/SVTPythonTemplate',
+            url: 'https://github.com/microclimate-dev2ops/SVTPythonTemplate',
             parentPath: workspace_location,
         };
         const res = await projectService.createProjectFromTemplate(createOption);
@@ -92,7 +92,7 @@ describe('watchList and file-changes route tests', function() {
             const req = () => reqService.chai
                 .put(`/api/v1/projects/12345acde/file-changes/${projectWatchStateId}/status`)
                 .set('Cookie', ADMIN_COOKIE)
-                .send({success: true });
+                .send({ success: true });
 
             await reqService.makeReq(req, 404);
         });
@@ -131,7 +131,7 @@ describe('watchList and file-changes route tests', function() {
             const req = () => reqService.chai
                 .post(`/api/v1/projects/${projectID}/file-changes`)
                 .set('Cookie', ADMIN_COOKIE)
-                .send({msg: 'hi'});
+                .send({ msg: 'hi' });
 
             await reqService.makeReq(req, 400);
         });
@@ -163,7 +163,7 @@ describe('watchList and file-changes route tests', function() {
             const req = () => reqService.chai
                 .post(`/api/v1/projects/${projectID}/file-changes?timestamp=${Date.now()}&chunk=1&chunk_total=1`)
                 .set('Cookie', ADMIN_COOKIE)
-                .send({msg: 'hi'});
+                .send({ msg: 'hi' });
 
             await reqService.makeReq(req, 500);
         });

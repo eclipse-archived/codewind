@@ -25,6 +25,10 @@ export function pingPFE(callback: request.RequestCallback): request.Request {
     return request.get(pfeURL, callback);
 }
 
+export function cloneProject(projectName: string, parentPath: string, url: string, callback: request.RequestCallback): request.Request {
+    return request.post({"url": pfeURL, "form": {"projectName": projectName, "parentPath": parentPath, "url": url}}, callback);
+}
+
 export function deleteFixtures(callback: any): any {
     fs.remove(fixtures, callback);
 }

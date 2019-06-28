@@ -13,15 +13,15 @@ const chaiHttp = require('chai-http');
 const util = require('util');
 
 const SocketService = require('./socket.service');
-const { MICROCLIMATE_URL } = require('../config');
+const { CODEWIND_URL } = require('../config');
 
 chai.use(chaiHttp);
 
 
 /**
- * 
+ *
  * @param {function} request a function that makes an http request. e.g. () => reqService.chai.get('/api/v1/projects')
- * @param {number} expectedResStatus e.g. 200 
+ * @param {number} expectedResStatus e.g. 200
  * @returns {Promise} res
  */
 async function makeReq(request, expectedResStatus) {
@@ -31,7 +31,7 @@ async function makeReq(request, expectedResStatus) {
 }
 
 /**
- * 
+ *
  * @param {function} request a function that makes an http request. e.g. () => reqService.chai.get('/api/v1/projects')
  * @param {number} expectedResStatus e.g. 200
  * @param {JSON} expectedSocketMsg e.g. { projectID: 'p1', msgType: 'projectDeletion' }. (See {@link SocketService} for expected msgTypes.)
@@ -71,5 +71,5 @@ function isEmpty(obj) {
 module.exports = {
   makeReq,
   makeReqAndAwaitSocketMsg,
-  chai: chai.request(MICROCLIMATE_URL),
+  chai: chai.request(CODEWIND_URL),
 }

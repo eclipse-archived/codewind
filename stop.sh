@@ -76,8 +76,8 @@ else
   DOCKER_IMAGES="docker images -q --filter reference=codewind*";
 fi
 
-DOCKER_PS_APPS="docker ps -a -q  --filter name=mc";
-DOCKER_IMAGES_APPS="docker images -q --filter reference=mc*";
+DOCKER_PS_APPS="docker ps -a -q  --filter name=cw";
+DOCKER_IMAGES_APPS="docker images -q --filter reference=cw*";
 
 # Check to make sure that there are actually proceses to remove
 NUMBER_OF_PROCESSES=$($DOCKER_PS | wc -l)

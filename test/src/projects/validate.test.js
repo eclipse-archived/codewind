@@ -11,9 +11,8 @@
 const chai = require('chai');
 const fs = require('fs-extra');
 
-const projService = require('../../modules/project.service');
-const reqService = require('../../modules/request.service');
-const { ADMIN_COOKIE, testTimeout, templateOptions } = require('../../config');
+const projectService = require('../../modules/project.service');
+const { testTimeout, templateOptions } = require('../../config');
 
 chai.should();
 
@@ -32,7 +31,7 @@ describe('Validate API', function() {
 
     before(async function() {
         this.timeout(testTimeout.med);
-        workspaceLocation = await projService.findWorkspaceLocation();
+        workspaceLocation = await projectService.findWorkspaceLocation();
     });
 
     describe('when passed Java project', function() {
@@ -52,7 +51,7 @@ describe('Validate API', function() {
                 projectPath,
             };
 
-            await projService.cloneProject(templateOptions['liberty'].url, projectPath);
+            await projectService.cloneProject(templateOptions['liberty'].url, projectPath);
         });
 
         after(async function() {
@@ -62,13 +61,13 @@ describe('Validate API', function() {
 
         it('should return the correct project details', async function() {
             this.timeout(testTimeout.med);
-            const res = await validate(projectPath);
+            const res = await projectService.validate(projectPath);
             res.should.have.status(200);
             res.body.should.deep.equal(expectedValidationResult);
         });
 
         it('writes the .cw-settings file and adds the correct data', function() {
-            const cwSettingsData = projService.readCwSettings(projectPath);
+            const cwSettingsData = projectService.readCwSettings(projectPath);
             cwSettingsData.should.deep.equal(expectedCwSettingsData);
         });
     });
@@ -92,20 +91,20 @@ describe('Validate API', function() {
 
         it('returns the validation was a success but unknown type', async function() {
             this.timeout(testTimeout.med);
-            const res = await validate(projectPath);
+            const res = await projectService.validate(projectPath);
             res.should.have.status(200);
             res.body.should.deep.equal(expectedValidationResult);
         });
 
         it('writes the .cw-settings file and adds the correct data', function() {
-            const cwSettingsData = projService.readCwSettings(projectPath);
+            const cwSettingsData = projectService.readCwSettings(projectPath);
             cwSettingsData.should.deep.equal(expectedCwSettingsData);
         });
     });
 
     // can't find a non-bindable path!
     describe.skip('when passed non-bindable path', function() {
-        const projectPath = '/test/example'; // invalid path
+        const projectPath = '/invalid/path';
 
         const expectedValidationResult = {
             success: false,
@@ -116,7 +115,7 @@ describe('Validate API', function() {
 
         it('returns an error', async function() {
             this.timeout(testTimeout.med);
-            const res = await validate(projectPath);
+            const res = await projectService.validate(projectPath);
             res.should.have.status(200);
             res.body.should.deep.equal(expectedValidationResult);
         });
@@ -126,7 +125,7 @@ describe('Validate API', function() {
         const projectPath = ['arrays are not allowed'];
 
         it('returns a 400 code', async() => {
-            const validationResult = await validate(projectPath);
+            const validationResult = await projectService.validate(projectPath);
             validationResult.should.have.status(400);
         });
 
@@ -136,11 +135,3 @@ describe('Validate API', function() {
         });
     });
 });
-
-async function validate(projectPath) {
-    const res = await reqService.chai
-        .post('/api/v1/validate')
-        .set('cookie', ADMIN_COOKIE)
-        .send({ projectPath });
-    return res;
-}

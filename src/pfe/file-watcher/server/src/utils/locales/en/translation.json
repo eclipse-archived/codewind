@@ -23,9 +23,9 @@
       "noService": "A service file in the Helm chart could not be found.",
       "podFailedToStart": "Pod for Helm release {{- projectName}} failed to start.",
       "invalidMavenSettings": "Build aborted. Failed to get the user Maven settings",
-      "missingDeploymentRegistry": "The project will not build due to missing Deployment Registry. Please enter a deployment registry to build projects.",
+      "missingDeploymentRegistry": "The project will not build due to missing Deployment Registry. Run the Set Deployment Registry command to set a new Deployment Registry to build projects.",
       "invalidDeploymentRegistry": "Codewind was unable to push an image to the Deployment Registry. Please make sure it is a valid Deployment Registry with the appropriate permissions.",
-      "wrongDeploymentRegistry": "The project will not build with the new deployment registry. Please unbind and bind the project to build with the new deployment registry."
+      "wrongDeploymentRegistry": "The project will not build with the new Deployment Registry. Please remove and re-add the project to deploy to the new Deployment Registry."
   },
   "buildApplicationTask": {
     "pomChangeDetected": "pom.xml change detected, running clean build",

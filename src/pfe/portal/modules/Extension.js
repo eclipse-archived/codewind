@@ -14,7 +14,7 @@ const path = require('path');
 const yaml = require('js-yaml');
 
 const Logger = require('./utils/Logger');
-const log = new Logger('Extension.js');
+const log = new Logger(__filename);
 
 /**
  * The Extension class. Holds the metadata for a Codewind extension. Extensions are
@@ -39,34 +39,28 @@ module.exports = class Extension {
    * Constructor
    * @param path, codewind extension directory full path
    */
-  constructor(extensionPath) {
-    this.path = extensionPath || null;
+  constructor(args) {
+    this.name = args.name;
+    this.path = args.path;
 
-    this.name = null;
     this.description = null;
     this.projectType = null;
     this.commands = [];
     this.detection = null;
     this.templates = null;
 
-    this.initialise(extensionPath);
+    this.initialise();
   }
 
   /**
    * Function to initialise an extension
    */
-  async initialise(extensionPath) {
+  async initialise() {
     try {
       // Load the extension definition file
-      let definitionFile = await fs.readFile(path.join(extensionPath, 'codewind.yaml'));
+      let definitionFile = await fs.readFile(path.join(this.path, 'codewind.yaml'));
       let definition = yaml.safeLoad(definitionFile);
-      if (definition.hasOwnProperty('name')) {
-        // TODO: validate extension name
-        this.name = definition.name;
-      } else {
-        // Name is mandatory
-        throw(`Error initialising extension, path: ${extensionPath}. Missing name property in codewind.yaml`);
-      }
+
       if (definition.hasOwnProperty('description')) {
         // TODO: validate extension description
         this.description = definition.description;

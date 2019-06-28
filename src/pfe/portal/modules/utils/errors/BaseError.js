@@ -10,14 +10,14 @@
  *******************************************************************************/
 
 /**
-*   Base class for Microclimate errors which all errors should extend. See below for examples of extending
+*   Base class for Codewind errors which all errors should extend. See below for examples of extending
 *   This class shouldn't be instantiated.
 */
 
 module.exports = class BaseError extends Error {
   constructor(code, message){
     super(message);
-    
+
     // Assign fields so information is accessible through the error object
     this.name = this.constructor.name;
     this.code = code;
@@ -28,26 +28,26 @@ module.exports = class BaseError extends Error {
       code,
       message: message.replace('\n', ' ')
     }
-    
+
     //Removes the error class line from the stack trace
     Error.captureStackTrace(this, this.constructor);
   }
-} 
+}
 
 
 /*
 *   Any class extending this base class will need to contain the following:
 *   - Error class extending the BaseError class
-*   - A set of exported error codes   
+*   - A set of exported error codes
 *   - An implementation of the constructMessage function
 */
 
 
 /* --- ERROR CLASS ---
-*   The class sample below can be copied and should only require the name to be replaced. 
+*   The class sample below can be copied and should only require the name to be replaced.
 *   - The 'code' param expects the user to pass in an error code (e.g. MyError.NOT_FOUND)
 *   - The 'message' param is an optional message the user can add to be appended to the end of the predefined error message
-*   - Additional data can be passed in to be included in error messages if necessary 
+*   - Additional data can be passed in to be included in error messages if necessary
 *   (e.g. ProjectListError takes in an 'identifier' to be used in error messages)
 */
 
@@ -57,7 +57,7 @@ module.exports = class BaseError extends Error {
 //     if (!code){
 //       code = `[Unknown error code]`
 //     }
-// 
+//
 //     super(code, constructMessage(code, message));
 //   }
 // }
@@ -75,7 +75,7 @@ module.exports = class BaseError extends Error {
 
 
 /* --- CONSTRUCT MESSAGE ---
-*   The constructMessage function should implement predefined messages for all error codes defined  
+*   The constructMessage function should implement predefined messages for all error codes defined
 */
 
 // function constructMessage(code, message) {
@@ -96,7 +96,7 @@ module.exports = class BaseError extends Error {
 //     default:
 //       output = `${code}: <message content>`;
 //   }
-// 
+//
 //   // Append message to output if provided
 //   return message ? `${output}\n${message}` : output;
 // }

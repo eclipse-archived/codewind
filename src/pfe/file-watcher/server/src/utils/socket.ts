@@ -31,7 +31,7 @@ const registeredListeners: Array<FWEventHandler> = [];
  */
 export function emitOnListener (event: string, data: any): void {
     const projectID = data.projectID;
-    logger.logFileWatcherInfo("Emitting event over listener \n message: " + event + "\n data: " + JSON.stringify(data, undefined, 2), projectID);
+    logger.logProjectInfo("Emitting event over listener \n message: " + event + "\n data: " + JSON.stringify(data, undefined, 2), projectID);
     registeredListeners.map( x => x.handleEvent(event, data));
 }
 

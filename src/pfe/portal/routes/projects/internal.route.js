@@ -24,7 +24,7 @@ router.post('/internal/api/v1/projects/:id/settingsFileChanged', async function 
     return;
   }
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const projectID = req.sanitizeParams('id');
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
@@ -49,7 +49,7 @@ router.post('/internal/api/v1/projects/:id/updateProject', async function (req, 
     return;
   }
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const projectID = req.sanitizeParams('id');
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
@@ -73,7 +73,7 @@ router.post('/internal/api/v1/projects/:id/inotifyStatus', function (req, res) {
     return;
   }
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const projectID = req.sanitizeParams('id');
     const operationId = req.sanitizeBody('operationId');
     const status = req.sanitizeBody('status');
@@ -114,7 +114,7 @@ router.post('/internal/api/v1/projects/updateStatus', async function (req, res) 
     return;
   }
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const projectID = req.sanitizeBody('projectID');
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
@@ -138,7 +138,7 @@ router.post('/internal/api/v1/projects/deploymentRegistryStatus', async function
     return;
   }
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const projectID = req.sanitizeBody('projectID');
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
@@ -163,7 +163,7 @@ router.get('/internal/api/v1/projects/:id/logs/:type', async function (req, res)
     return;
   }
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const projectID = req.sanitizeParams('id');
     const type = req.sanitizeParams('type');
     if (!projectID || !type ) {

@@ -26,7 +26,7 @@ const log = new Logger(__filename);
 router.get('/api/v1/projects/:id', (req, res) => {
   try {
     let projectID = req.sanitizeParams('id');
-    let user = req.mc_user;
+    let user = req.cw_user;
     let project = user.projectList.retrieveProject(projectID);
     if (project) {
       res.status(200).send(project);
@@ -45,7 +45,7 @@ router.get('/api/v1/projects/:id', (req, res) => {
  */
 router.get('/api/v1/projects', (req, res) => {
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const list = user.projectList.getAsArray();
     res.status(200).send(list);
   } catch (err) {
@@ -66,6 +66,7 @@ router.get('/api/v1/projects', (req, res) => {
 router.post('/api/v1/projects', validateReq, async function (req, res) {
 
   try {
+    const user = req.cw_user;
     const parentPath = req.sanitizeBody('parentPath');
     const projectName = req.sanitizeBody('projectName');
     const url = req.sanitizeBody('url');
@@ -80,7 +81,7 @@ router.post('/api/v1/projects', validateReq, async function (req, res) {
       branch: "master"
     }
     log.info(`Trying to clone ${gitInfo.repo} into ${projectPath}`);
-    const projectInfo = await projectInitializer.initializeProjectFromTemplate(projectPath, projectName, gitInfo);
+    const projectInfo = await projectInitializer.initializeProjectFromTemplate(user, projectPath, projectName, gitInfo);
     res.status(200).send(projectInfo);
   } catch (err) {
     log.error(err);

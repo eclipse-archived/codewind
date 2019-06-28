@@ -75,6 +75,11 @@ public class ContainerRunTask {
         // Container ID is the last line of the output
         String[] lines = pr.getReceived().split("\\r?\\n");
         if (context.isK8s()) {
+            if (exitCode == 7) {
+                Logger.info("ContainerRunTask: run_kubernetes.sh has failed with exit code " + exitCode);
+                return "registryError";
+            }
+
         		// Get the release name, deployment, and pod IDs (last three lines of output)
             if (lines.length < 3) {
                 Logger.error("Start container stage failed: failed to get deploymentID/podID/releaseID");

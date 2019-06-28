@@ -16,10 +16,11 @@ const { testTimeout } = require('../../config');
 
 chai.should();
 
-describe.skip('Project-list tests', function() {
+describe('Project-list tests', function() {
     describe('GET /projects', function() {
         let originalProjectIDs;
         let projectID;
+        const projectName = `projectlist${Date.now()}`;
 
         it('should return a list of projectIDs', async function() {
             originalProjectIDs = await projectService.getProjectIDs();
@@ -28,7 +29,7 @@ describe.skip('Project-list tests', function() {
 
         it('should create a project', async function() {
             this.timeout(testTimeout.med);
-            projectID = await projectService.createProjectAndAwaitID({ name: `projectlist${Date.now()}` });
+            projectID = await projectService.cloneAndBindProject(projectName, 'nodejs');
         });
 
         it('should return the same list but now including the extra projectID', async function() {
@@ -38,7 +39,8 @@ describe.skip('Project-list tests', function() {
 
         it('should delete the extra project', async function() {
             this.timeout(testTimeout.med);
-            await projectService.deleteProject(projectID);
+            await projectService.unbindProject(projectID);
+            await projectService.deleteProjectDir(projectName);
         });
 
         it('should return the original list of projectIDs', async function() {

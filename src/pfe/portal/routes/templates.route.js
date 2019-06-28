@@ -17,11 +17,11 @@ const log = new Logger(__filename);
 const { validateReq } = require('../middleware/reqValidator');
 
 /**
- * API Function to return a list of available templates 
+ * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
  */
 router.get('/api/v1/templates', async (req, res, _next) => {
-  const user = req.mc_user;
+  const user = req.cw_user;
   log.trace(`requesting list of templates`);
   let projectTemplates = await user.templates.getTemplateList();
 
@@ -34,13 +34,13 @@ router.get('/api/v1/templates', async (req, res, _next) => {
 });
 
 /**
- * API Function to return a list of available templates 
+ * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
  */
 router.get('/api/v1/templates/repositories', sendRepositories);
 
 router.post('/api/v1/templates/repositories', validateReq, (req, res, _next) => {
-  const user = req.mc_user;
+  const user = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
   const repositoryDescription = req.sanitizeBody('description');
 
@@ -59,14 +59,14 @@ router.post('/api/v1/templates/repositories', validateReq, (req, res, _next) => 
 });
 
 router.delete('/api/v1/templates/repositories', validateReq, (req, res, _next) => {
-  const user = req.mc_user;
+  const user = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
   user.templates.deleteRepository(repositoryUrl);
   sendRepositories(req, res, _next);
 });
 
 function sendRepositories(req, res, _next) {
-  const user = req.mc_user;
+  const user = req.cw_user;
   const repositoryList = user.templates.getRepositories();
   res.status(200).json(repositoryList);
 }

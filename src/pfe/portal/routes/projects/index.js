@@ -13,7 +13,6 @@ const router = express.Router();
 
 [
   require('./build.route'),
-  require('./cancelLoad.route'),
   require('./capabilities.route'),
   require('./close.route'),
   require('./compare.route'),

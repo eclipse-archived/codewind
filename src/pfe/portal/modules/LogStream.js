@@ -10,7 +10,7 @@
  *******************************************************************************/
 
 const { spawn } = require('child_process');
-const mcUtils = require('./utils/sharedFunctions');
+const cwUtils = require('./utils/sharedFunctions');
 const Logger = require('./utils/Logger');
 const logger = new Logger('LogStream.js');
 const path = require('path');
@@ -88,7 +88,7 @@ class ApplicationContainerLogStream {
     // Make 'this' accessible in the callback.
     const logStream = this;
     logStream.stopped = false;
-    mcUtils.getContainerLogStream(this.project, function (project, stream) {
+    cwUtils.getContainerLogStream(this.project, function (project, stream) {
       logStream.firstChunk = true;
       logStream.stream = stream;
       stream.on('data', (chunk) => {
@@ -96,7 +96,7 @@ class ApplicationContainerLogStream {
         // these are issued when the project changes as the pods change
         const errorString = 'rpc error: code = Unknown desc = Error: No such container:'
         const chunkString = chunk.toString('utf8')
-        if (!global.microclimate.RUNNING_IN_K8S || chunkString.indexOf(errorString) == -1) {
+        if (!global.codewind.RUNNING_IN_K8S || chunkString.indexOf(errorString) == -1) {
           logStream.sendQueue.push(chunkString);
           logger.debug(`Emit done for ${project.projectID} (${project.name}) container log`);
         }

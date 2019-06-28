@@ -10,20 +10,20 @@
  *******************************************************************************/
 const path = require('path');
 
-const MICROCLIMATE_URL = process.env.MICROCLIMATE_URL || 'http://localhost:9090';
-const MICROCLIMATE_HOST = process.env.INGRESS_DOMAIN || 'localhost';
+const CODEWIND_URL = process.env.CODEWIND_URL || 'http://localhost:9090';
+const CODEWIND_HOST = process.env.INGRESS_DOMAIN || 'localhost';
 const DEFAULT_USER_NAME = 'default';
 const ADMIN_COOKIE = process.env.ADMIN_COOKIE || 'connect.sid=dummy';
 const USING_K8S = !!process.env.ADMIN_COOKIE;
 const USER_PATH = USING_K8S ? 'admin' : DEFAULT_USER_NAME;
 const WORKSPACE_DIR = USING_K8S ? `/codewind-workspace/${USER_PATH}` : '/codewind-workspace';
-const MICROCLIMATE_SOCKET_URL = `${MICROCLIMATE_URL}/${USER_PATH}`;
+const CODEWIND_SOCKET_URL = `${CODEWIND_URL}/${USER_PATH}`;
 const IBM_GITHUB_AUTH = process.env.GIT_EXPORT_AUTH || '';
 
 const K8S_NAME_SPACE = process.env.KUBE_NAMESPACE || 'default';
 
-const containerDir = '/home/mcuser/microclimate-test-projects/';
-const dir = '/tmp/microclimate-test-projects/';
+const containerDir = '/home/cwuser/codewind-test-projects/';
+const dir = '/tmp/codewind-test-projects/';
 
 const METRIC_TYPES = ['cpu', 'memory', 'gc', 'http']; // Data types are hardcoded in the Project.js
 const MOCK_LOADTEST_DIR = path.resolve(__dirname, '../resources/load-test-data');
@@ -71,8 +71,8 @@ const templateOptions = {
 
 
 module.exports = {
-    MICROCLIMATE_URL,
-    MICROCLIMATE_HOST,
+    CODEWIND_URL,
+    CODEWIND_HOST,
     DEFAULT_USER_NAME,
     ADMIN_COOKIE,
     USER_PATH,
@@ -80,7 +80,7 @@ module.exports = {
     USING_K8S,
     K8S_NAME_SPACE,
     WORKSPACE_DIR,
-    MICROCLIMATE_SOCKET_URL,
+    CODEWIND_SOCKET_URL,
     containerDir,
     dir,
     testTimeout,

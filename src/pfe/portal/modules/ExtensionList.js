@@ -12,7 +12,10 @@
 const fs = require('fs-extra');
 const path = require('path');
 const Extension = require('./Extension.js');
+const Logger = require('./utils/Logger');
 const ExtensionListError = require('./utils/errors/ExtensionListError');
+
+const log = new Logger(__filename);
 
 /**
  * The ExtensionList class
@@ -34,10 +37,12 @@ module.exports = class ExtensionList {
         let fstats = await fs.lstat(path.join(extensionsPath, entries[i]));
         // Extensions are in sub-directories of the top-level extensions directory
         if (fstats.isDirectory()) {
-          this.add(new Extension(path.join(extensionsPath, entries[i])));
+          this.add(new Extension({path: path.join(extensionsPath, entries[i]), name: entries[i]}));
         }
       }
-    } catch(error) {
+    } catch(err) {
+      log.error('Error loading codewind extension:');
+      log.error(err);
       throw new ExtensionListError('FAILED_TO_LOAD');
     }
   }
@@ -82,26 +87,6 @@ module.exports = class ExtensionList {
   }
 
   /**
-   * Function to update an extension. If existing fields are supplied these
-   * overwrite current ones. If new fields are supplied they are added to the extension
-   * Throws an error if the extension was not found in the list
-   * @param {Object} extension
-   * @return the updated extension object
-   */
-  update(extension) {
-    if (!this._list.hasOwnProperty(extension.name)) {
-      throw new ExtensionListError('NOT_FOUND', extension.name);
-    } else {
-      let currentExtension = this._list[extension.name];
-      for (let key in extension) {
-        currentExtension[key] = extension[key];
-      }
-      this._list[extension.name] = currentExtension;
-      return this._list[extension.name];
-    }
-  }
-
-  /**
    * Function to get all the extension names as an array
    * @return array of extension names
    */
@@ -109,6 +94,47 @@ module.exports = class ExtensionList {
     let array = [];
     for (let key in this._list) {
       array.push(key);
+    }
+    return array;
+  }
+
+  /**
+   * Function to get all extension project types as an array
+   * @return array of project types
+   */
+  getProjectTypes() {
+    let array = [];
+    for (let key in this._list) {
+      if (this._list[key].projectType != null) {
+        array.push(this._list[key].projectType);
+      }
+    }
+    return array;
+  }
+
+  /**
+   * Function to get an extension given a project type
+   * @return extension
+   */
+  getExtensionForProjectType(type) {
+    for (let key in this._list) {
+      if (this._list[key].projectType == type) {
+        return this._list[key];
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Function to get an array that maps extension types to detection filenames
+   * @return array
+   */
+  getDetectionList() {
+    let array = [];
+    for (let key in this._list) {
+      if (this._list[key].projectType && this._list[key].detection) {
+        array.push({type: this._list[key].projectType, file: this._list[key].detection});
+      }
     }
     return array;
   }

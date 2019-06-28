@@ -136,8 +136,8 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     if (settings) {
         logger.logProjectInfo("Project Settings: " + JSON.stringify(settings), projectID);
 
-        if (settings.internalAppPort) {
-            settings.internalAppPort = settings.internalAppPort.toString();
+        if (settings.internalPort) {
+            settings.internalPort = settings.internalPort.toString();
         }
 
         if (settings.internalDebugPort) {
@@ -185,7 +185,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         } as ProjectInfo;
 
         if (req.extension)
-            projInfo.extensionID = req.extension.extensionID;
+            projInfo.extensionID = req.extension.name;
     }
 
     if (! await utils.asyncFileExists(projectLocation)) {
@@ -212,7 +212,8 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         location: projectLocation,
         autoBuildEnabled: true,
         startMode: "run",
-        appPorts: []
+        appPorts: [],
+        extensionID: projInfo.extensionID
     };
     const startMode = req.startMode;
     if (startMode) {
@@ -230,8 +231,8 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     }
 
         // check if application port has been provided by Portal, if not, use the default app port of the project handler
-        if (settings && settings.internalAppPort) {
-            projectInfo.appPorts.push(settings.internalAppPort);
+        if (settings && settings.internalPort) {
+            projectInfo.appPorts.push(settings.internalPort);
         } else if (selectedProjectHandler.getDefaultAppPort) {
             const port = selectedProjectHandler.getDefaultAppPort();
             if (Array.isArray(port))
@@ -511,13 +512,13 @@ async function triggerBuild(project: BuildQueueType): Promise<void> {
             killProcesses(data, projectID, projectLocation);
             processManager.spawnDetached(projectID, "/file-watcher/scripts/project-watcher.sh", [projectLocation, workspaceOrigin, projectID, "localhost", (watchedFiles) ? watchedFiles.toString() : undefined, (ignoredFiles) ? ignoredFiles.toString() : undefined, undefined, (process.env.PORTAL_HTTPS == "true") ? "9191" : "9090", "&"], { cwd: projectLocation }, (result) => { });
         });
-        // To notify filewatcher daemon that the project has been added
-        const eventData: NewProjectAddedEvent = {
-            projectID: projectID,
-            ignoredPaths: projectInfo.ignoredPaths
-        };
-        io.emitOnListener("newProjectAdded", eventData);
     }
+    // To notify filewatcher daemon that the project has been added
+    const eventData: NewProjectAddedEvent = {
+        projectID: projectID,
+        ignoredPaths: projectInfo.ignoredPaths
+    };
+    io.emitOnListener("newProjectAdded", eventData);
 }
 
 /**
@@ -1279,12 +1280,12 @@ export interface ICreateProjectParams {
 }
 
 export interface IProjectExtension {
-    extensionID: string;
+    name: string;
     [key: string]: any;
 }
 
 export interface IProjectSettings {
-    internalAppPort?: string;
+    internalPort?: string;
     internalDebugPort?: string;
     contextRoot?: string;
     healthCheck?: string;

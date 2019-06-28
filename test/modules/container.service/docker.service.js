@@ -37,10 +37,10 @@ function getContainerName(projectName) {
  */
 async function getAppContainers() {
   const containers = await getAllContainers();
-  const mcContainers = containers.filter(container => (
+  const cwContainers = containers.filter(container => (
     container.NetworkSettings.Networks.codewind_network
   ));
-  return summariseContainerInfo(mcContainers);
+  return summariseContainerInfo(cwContainers);
 }
 
 async function getAllContainers() {
@@ -51,8 +51,8 @@ async function getAllContainers() {
   return containers;
 }
 
-function summariseContainerInfo(mcContainers) {
-  return mcContainers.map(container => {
+function summariseContainerInfo(cwContainers) {
+  return cwContainers.map(container => {
     const containerInfo = { id: container.Id };
     containerInfo.name = getAppName(container.Name);
     const { Networks, Ports } = container.NetworkSettings;

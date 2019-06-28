@@ -26,7 +26,7 @@ let projectURL;
 
 
 app.use(bodyParser.json());
-app.get('/', (req, res) => res.send('Hello World!'));
+app.get('/', (req, res) => res.send('Performance Container is running...'));
 
 app.get('/health', (req, res) => res.json({ status: 'UP' }));
 
@@ -127,16 +127,23 @@ function runLoad(options) {
     console.log('loadProcess = ' + loadProcess)
 }
 
+/** React Performance Dashboard static files */
+app.use('/performance/static', express.static(path.join(__dirname, 'dashboard', 'build', 'static')));
 
-/** React PerformanceUI application static files */
-app.use('/performance/static', express.static(path.join(__dirname, 'performanceui', 'build', 'static')));
+/** React Performance Dashboard styles files */
+app.use('/performance/styles', express.static(path.join(__dirname, 'dashboard', 'build', 'styles')));
 
 /** Carbon Plex Fonts */
-app.use('/performance/fonts', express.static(path.join(__dirname, 'performanceui', 'build', 'fonts')));
+app.use('/performance/fonts', express.static(path.join(__dirname, 'dashboard', 'build', 'fonts')));
 
-/** Map everything else in the /performance/ directory to the 
+/** React Performance main.js */
+app.use('/performance/main.js', express.static(path.join(__dirname, 'dashboard', 'build', 'main.js')));
+
+/** 
+* Map everything else in the /dashboard/ directory to the 
 * React Single-Page-Application root index.html
 */
 app.get('/performance/*', function (req, res) {
-    res.sendFile(path.join(__dirname, 'performanceui', 'build', 'index.html'));
+    res.sendFile(path.join(__dirname, 'dashboard', 'build', 'index.html'));
 });
+

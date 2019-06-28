@@ -16,16 +16,16 @@ const router = express.Router();
 const log = new Logger(__filename);
 
 /**
- * API Function to provide microclimate runtime information to the UI
+ * API Function to provide codewind runtime information to the UI
  */
 router.get('/api/v1/environment', (req, res) => {
   try {
     let body = {};
     body = {
-      running_on_icp: global.microclimate.RUNNING_IN_K8S,
-      user_string: req.mc_user.userString,
-      socket_namespace: req.mc_user.uiSocketNamespace,
-      microclimate_version: process.env.MICROCLIMATE_VERSION,
+      running_on_icp: global.codewind.RUNNING_IN_K8S,
+      user_string: req.cw_user.userString,
+      socket_namespace: req.cw_user.uiSocketNamespace,
+      codewind_version: process.env.CODEWIND_VERSION,
       workspace_location: process.env.HOST_WORKSPACE_DIRECTORY,
       os_platform: process.env.HOST_OS || 'Linux',
     }

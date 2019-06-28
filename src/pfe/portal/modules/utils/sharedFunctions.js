@@ -16,7 +16,7 @@ const request = require('request');
 
 // This if statement allows us to only include one utils function, exporting either
 //      the Docker of K8s one depending on which environment we're in
-module.exports = require((global.microclimate.RUNNING_IN_K8S ? './kubernetesFunctions' : './dockerFunctions'));
+module.exports = require((global.codewind.RUNNING_IN_K8S ? './kubernetesFunctions' : './dockerFunctions'));
 
 // variable to do a async timeout
 module.exports.timeout = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -100,4 +100,45 @@ module.exports.updateObject = function updateObject(objectToUpdate, fieldsToAddT
     objectToUpdate[key] = fieldsToAddToObject[key];
   }
   return objectToUpdate;
+}
+
+
+/** C:\helloThere -> /c/helloThere */
+module.exports.convertFromWindowsDriveLetter = function convertFromWindowsDriveLetter(absolutePath) {
+
+    if (!isWindowsAbsolutePath(absolutePath)) {
+      return absolutePath;
+    }
+    let temp;
+    // Replace \ with /
+    temp = convertBackSlashesToForwardSlashes(absolutePath);
+    const char0 = temp.charAt(0);
+    // Strip first two characters
+    temp = temp.substring(2);
+    temp = "/" + char0.toLowerCase() + temp;
+    return temp;
+
+}
+
+function convertBackSlashesToForwardSlashes(str) {
+  return str.split("\\").join("/");
+}
+
+function isWindowsAbsolutePath(absolutePath) {
+  if (absolutePath.length < 2) {
+    return false;
+  }
+  const char0 = absolutePath.charAt(0);
+  if (!isLetter(char0)) {
+    return false;
+  }
+  if (absolutePath.charAt(1) !== ":") {
+    return false;
+  }
+  return true;
+}
+
+function isLetter(currentChar) {
+  return ("a" <= currentChar && currentChar <= "z")
+      || ("A" <= currentChar && currentChar <= "Z");
 }

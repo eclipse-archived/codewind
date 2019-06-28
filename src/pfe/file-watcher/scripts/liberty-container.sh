@@ -112,16 +112,17 @@ function create() {
 	# group which other workspace containers' users belong to as well
 	echo "chmod g=rwx the project root dir for user 1001"
 	chmod -R g=rwx "/codewind-workspace/$projectName"
+	chmod -R g=rwx /codewind-workspace/.logs
 
 	echo "First time setup of app $ROOT"
 
 	# Check if the Liberty app / JDK image has finished downloading and is cached
-	if [ -f $LOCAL_WORKSPACE/.logs/jdk_cache.log ] && [ ! "$(docker images -q mc-liberty-jdk-cache)" ]; then
+	if [ -f $LOCAL_WORKSPACE/.logs/jdk_cache.log ] && [ ! "$($IMAGE_COMMAND images -q mc-liberty-jdk-cache)" ]; then
 		DOCKER_PS="ps | grep -v 'grep' | grep '$LIBERTY_BUILD_TEMPLATE'"
 		if [ "$( eval $DOCKER_PS )" ]; then
 			echo "Waiting for the Liberty app image to be downloaded $(date)"
 			COUNTER=0
-			while [ ! "$(docker images -q mc-liberty-jdk-cache)" ] && [ $COUNTER -le 300 ] && [ eval $DOCKER_PS ]; do
+			while [ ! "$($IMAGE_COMMAND images -q mc-liberty-jdk-cache)" ] && [ $COUNTER -le 300 ] && [ eval $DOCKER_PS ]; do
 				sleep 1;
 				COUNTER=$((COUNTER+1))
 			done
@@ -133,7 +134,8 @@ function create() {
 	/file-watcher/idc/idc dev
 
 	# Setup IDC Options
-	/file-watcher/idc/idc set --localWorkspaceOrigin=$LOCAL_WORKSPACE
+	workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
+	/file-watcher/idc/idc set --localWorkspaceOrigin=$workspace
 
 	if [ $CONTAINER_NAME ]; then
 		/file-watcher/idc/idc set --containerName=$CONTAINER_NAME
@@ -170,11 +172,16 @@ function create() {
 	# Build the application for the first time
 	echo "idc build started for $ROOT $(date)"
 	/file-watcher/idc/idc build --mavenSettings="$MAVEN_SETTINGS"
-
+	exitCode=$?
 	# get the status code of the build, if the build failed, update the status
-	if [[ $? -ne 0 ]]; then
-		echo "idc build failed for $ROOT $(date)"
-    	$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "containerBuildTask.containerBuildFailDockerfileGenerate"
+	if [[ $exitCode -ne 0 ]]; then
+		echo "idc build failed for $ROOT with exit code $exitCode $(date)"
+		if [[ $exitCode -eq 7 ]]; then
+        	$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
+			exit 7;
+    	else
+        	$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "containerBuildTask.containerBuildFailDockerfileGenerate"
+    	fi	
 	else
 		echo "idc build finished for $ROOT $(date)"
 		# Start the status tracker
@@ -215,7 +222,17 @@ elif [ "$COMMAND" == "update" ]; then
 
 	echo "idc build started for $ROOT $(date)"
 	/file-watcher/idc/idc build --mavenSettings="$MAVEN_SETTINGS"
+	exitCode=$?
 	echo "idc build finished for $ROOT $(date)"
+	
+	# get the status code of the build, if the build failed, update the status
+	if [[ $exitCode -ne 0 ]]; then
+		echo "idc build failed for $ROOT with exit code $exitCode $(date)"
+		if [[ $exitCode -eq 7 ]]; then
+        	$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
+			exit 7;
+    	fi
+	fi
 
 # Stop the server
 elif [ "$COMMAND" == "stop" ]; then

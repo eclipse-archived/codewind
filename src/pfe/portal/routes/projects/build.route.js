@@ -25,7 +25,7 @@ const log = new Logger(__filename);
 router.post('/api/v1/projects/:id/build', async function (req, res) {
   try {
     const id = req.sanitizeParams('id');
-    const user = req.mc_user;
+    const user = req.cw_user;
     const project = user.projectList.retrieveProject(id);
     const action = req.sanitizeBody('action');
     if (!project) {

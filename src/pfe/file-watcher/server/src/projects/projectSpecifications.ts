@@ -41,6 +41,24 @@ const changeInternalDebugPort = async function (debugPort: string, operation: Op
     const settingName = "internalDebugPort";
 
     debugPort = debugPort.toString();
+    if (process.env.IN_K8 === "true") {
+        if (debugPort.trim().length != 0) {
+            const errorMsg = "BAD_REQUEST: debug mode is not supported on ICP. ";
+            logger.logProjectError("changeDebugPort API: Failed with message: " + errorMsg, projectID);
+            const data: ProjectSettingsEvent = {
+                operationId: operation.operationId,
+                projectID: projectID,
+                name: settingName,
+                ports: {
+                    internalDebugPort: debugPort
+                },
+                status: "failed",
+                error: errorMsg
+            };
+            io.emitOnListener("projectSettingsChanged", data);
+        }
+        return;
+    }
 
     if ( !capabilities || ( !capabilities.hasStartMode("debug") && !capabilities.hasStartMode("debugNoInit") )) {
             const errorMsg = "BAD_REQUEST: The project does not support debug mode.";
@@ -108,12 +126,12 @@ const changeInternalDebugPort = async function (debugPort: string, operation: Op
  *
  * @returns Promise<any>
  */
-const changeInternalAppPort = async function (applicationPort: string, operation: Operation): Promise<any> {
+const changeInternalPort = async function (applicationPort: string, operation: Operation): Promise<any> {
 
     let projectInfo: ProjectInfo = operation.projectInfo;
     const projectID = projectInfo.projectID;
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
-    const settingName = "internalAppPort";
+    const settingName = "internalPort";
 
     applicationPort = applicationPort.toString();
 
@@ -871,7 +889,7 @@ export async function projectSpecificationHandler(projectID: string, settings: a
 
 
 specificationSettingMap.set("internalDebugPort", changeInternalDebugPort);
-specificationSettingMap.set("internalAppPort", changeInternalAppPort);
+specificationSettingMap.set("internalPort", changeInternalPort);
 specificationSettingMap.set("contextRoot", changeContextRoot);
 specificationSettingMap.set("watchedFiles", reconfigWatchedFiles);
 specificationSettingMap.set("healthCheck", changeHealthCheck);

@@ -14,7 +14,7 @@ const Logger = require('./utils/Logger');
 const log = new Logger('ProjectList.js');
 
 // list of properties that must never be changed once created
-const keysOfConstantProperties = ['microclimateVersion', 'projectID'];
+const keysOfConstantProperties = ['codewindVersion', 'projectID'];
 
 /**
  * The ProjectList class

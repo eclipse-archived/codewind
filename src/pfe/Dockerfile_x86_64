@@ -15,11 +15,16 @@ LABEL org.label-schema.name="Microclimate Portal" org.label-schema.description="
       org.label-schema.url="https://microclimate-dev2ops.github.io/" \
       org.label-schema.vcs-url="https://github.ibm.com/dev-ex/microclimate-devops" org.label-schema.vendor="IBM"
 
+ARG BUILDAH_RPM=http://download-ib01.fedoraproject.org/pub/fedora/linux/updates/30/Everything/x86_64/Packages/b/buildah-1.9.0-1.git00eb895.fc30.x86_64.rpm
+
+# Download the buildah RPM
+RUN curl -o buildah.rpm $BUILDAH_RPM
+
 # Download and set up Node 10.x RPM
 RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 
 RUN yum install -y epel-release \
-    && yum -y --enablerepo=epel install inotify-tools zip git sudo wget ca-certificates openssl nodejs buildah \
+    && yum -y --enablerepo=epel install inotify-tools zip unzip git sudo wget ca-certificates openssl nodejs buildah.rpm \
     && yum clean all \
     && rm -rf /var/cache/yum
 
@@ -69,8 +74,11 @@ RUN cd /tmp \
     && rm -rf /tmp/linux-amd64 /tmp/helm-v2.9.1-linux-amd64.tar.gz
 
 WORKDIR /
+# Softlink to /codewind-workspace to /projects so paths
+# match in che.
 RUN chmod 644 /etc/sudoers \
     && mkdir -m 777 -p /codewind-workspace \
+    && ln -s /codewind-workspace /projects \
     && adduser mcuser
 
 ######### File watcher setup.
@@ -99,6 +107,15 @@ RUN cp -r src/utils/locales dist/utils/locales
 # Changes outside /portal will be lost.
 FROM codewind-pfe-base as codewind-pfe-portal
 
+# Install and build the initialization module.
+RUN mkdir /initialize
+COPY /initialize /initialize
+WORKDIR /initialize
+RUN npm ci \
+    && npm run build \
+    && rm -rf node_modules \
+    && npm ci --production \
+
 RUN mkdir /portal
 
 WORKDIR /portal
@@ -115,12 +132,12 @@ COPY /portal/routes /portal/routes
 COPY /portal/config /portal/config
 COPY /portal/middleware /portal/middleware
 COPY /portal/docs /portal/docs
-COPY /portal/che /portal/che
 
 FROM codewind-pfe-base
 
 # Don't force a file-watcher rebuild on a portal change.
 # (Improves development builds significantly.)
+COPY --from=codewind-pfe-portal /initialize /initialize
 COPY --from=codewind-pfe-portal /portal /portal
 
 # Copy the license files to the root directory
@@ -144,4 +161,4 @@ ENV FORCE_COLOR=1
 # USER mcuser
 # TODO, work out how to start everything.
 WORKDIR /
-CMD [ "sh", "-c", " /file-watcher/scripts/root-watcher.sh ${HOST_WORKSPACE_DIRECTORY} ; cd /portal ; node che/PFELifecycleHandler.js > /PFELifecycleHandler.log & npm start ;" ]
+CMD [ "sh", "-c", " /file-watcher/scripts/root-watcher.sh ${HOST_WORKSPACE_DIRECTORY} ${CONTAINER_WORKSPACE_DIRECTORY} ; cd /portal ; npm start ;" ]

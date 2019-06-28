@@ -23,13 +23,13 @@ describe('Environment API tests', function() {
         const res = await reqService.chai
             .get('/api/v1/environment')
             .set('Cookie', ADMIN_COOKIE);
-            
+
         res.should.have.status(200);
         res.should.have.ownProperty('body');
         res.body.should.have.ownProperty('running_on_icp', USING_K8S);
         res.body.should.have.ownProperty('user_string');
         res.body.should.have.ownProperty('socket_namespace', SOCKET_NAMESPACE);
-        res.body.should.have.ownProperty('microclimate_version');
+        res.body.should.have.ownProperty('codewind_version');
         res.body.should.have.ownProperty('os_platform');
         if (!USING_K8S) res.body.should.have.ownProperty('workspace_location');
     });

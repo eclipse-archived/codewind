@@ -14,11 +14,11 @@ const path = require('path');
 
 const Logger = require('./utils/Logger');
 const log = new Logger('Templates.js');
-const mcUtils = require('../modules/utils/sharedFunctions.js');
+const cwUtils = require('../modules/utils/sharedFunctions.js');
 
 const DEFAULT_REPOSITORY_LIST = [
   {
-    url: 'https://raw.githubusercontent.com/microclimate-dev2ops/codewind-templates/master/devfiles/index.json',
+    url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
     description: 'Standard Codewind templates.'
   }
 ];
@@ -34,10 +34,13 @@ module.exports = class Templates {
 
   async initializeRepositoryList() {
     try {
-      if (await mcUtils.fileExists(this.repositoryFile)) {
+      if (await cwUtils.fileExists(this.repositoryFile)) {
         let list = await fs.readJson(this.repositoryFile);
         this.repositoryList = list;
         this.needsRefresh = true;
+      } else {
+        // Save the default list to disk so the user can potentially edit it.
+        this.writeRepositoryList();
       }
     } catch (err) {
       log.error(`Error reading repository list from ${this.repositoryFile}: ${err}`)
@@ -61,7 +64,7 @@ module.exports = class Templates {
       }
 
       try {
-        let response = await mcUtils.asyncHttpRequest(options, undefined, repositoryUrl.protocol == 'https:');
+        let response = await cwUtils.asyncHttpRequest(options, undefined, repositoryUrl.protocol == 'https:');
         if (response.statusCode == 200) {
 
           const newTypes = JSON.parse(response.body);
@@ -110,7 +113,7 @@ module.exports = class Templates {
 
   /**
    * Add a repository to the list of template repositories.
-   * 
+   *
    * @param {*} url - url of the template repository
    * @param {*} description - description of the template repository
    */

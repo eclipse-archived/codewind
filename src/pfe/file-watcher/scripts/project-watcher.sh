@@ -26,9 +26,9 @@ SPRING_WATCHED_FILES=("$ROOT/src" "$ROOT/pom.xml" "$ROOT/Dockerfile" "$ROOT/Dock
 PORTAL_PROTOCOL="http";
 
 ## set file-watching by default to true, developers can change it to false to disable inotify based file watching
-FILE_WATCHING="true"
+FILE_WATCHING="false"
 if [ "$FILE_WATCHING" == "false" ]; then
-	echo -e "File watching set to false. Will not watch any files."
+	echo -e "File watching set to false. By default inotify is disabled. Will not watch any files."
 	exit 0;
 fi
 

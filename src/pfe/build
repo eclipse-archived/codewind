@@ -3,6 +3,12 @@ if [ $? -ne 0 ]; then
     echo "iterative-dev build failed"
     exit 1;
 fi
+
+# We need to copy the initialize npm in to use locally in che.
+rm -rf initialize
+mkdir -p initialize
+cp -r ../initialize/*.json ../initialize/src ./initialize
+
 docker build -t codewind-pfe-$(../../script/platform.sh) \
 --file $1 \
 --label "org.label-schema.build-date=$(date '+%Y-%m-%dT%k:%M:%S%z')" \

@@ -61,6 +61,20 @@ function deploymentRegistryStatus() {
 	curl -sS -k -X POST -H "Content-Type: application/json" -d '{"projectID": "'$projectID'", "detailedDeploymentRegistryStatus": "'"$message"'"}' $PORTAL_PROTOCOL://localhost:$PORTAL_PORT/internal/api/v1/projects/deploymentRegistryStatus
 }
 
+function getWorkspacePathForVolumeMounting() {
+	workspace=$LOCAL_WORKSPACE
+	# Convert C:\Users... to /C/Users..
+	if [ "$HOST_OS" == "windows" ]; then
+		if [[ $LOCAL_WORKSPACE == *":"* ]]; then
+			# replace first colon
+			temp=/${LOCAL_WORKSPACE/:/}
+			# replace backward slash to forward slash
+			workspace=${temp//\\/\/}
+		fi
+	fi
+	echo "$workspace"
+}
+
 if [ "$COMMAND" == "updateAppState" ]; then
 	projectID=$1
 	state=$2
@@ -82,4 +96,8 @@ elif [ "$COMMAND" == "deploymentRegistryStatus" ]; then
  	projectID=$1
 	message="$2"
  	deploymentRegistryStatus "$projectID" "$status" "$message" &
+elif [ "$COMMAND" == "getWorkspacePathForVolumeMounting" ]; then
+ 	LOCAL_WORKSPACE=$1
+ 	retval=$( getWorkspacePathForVolumeMounting "$LOCAL_WORKSPACE" )
+	echo "$retval"
 fi

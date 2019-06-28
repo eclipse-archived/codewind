@@ -122,7 +122,7 @@ describe('Metrics Status Tests', function() {
             });
 
             it('should return { metricsAvailable: false } when "appmetrics-dash" has been removed from the package.json', async function() {
-                this.timeout(testTimeout.med);;
+                this.timeout(testTimeout.med);
                 const res = await getMetricsAvailability(projectID);
                 res.body.metricsAvailable.should.equal(false);
                 res.should.have.status(200);
@@ -154,7 +154,7 @@ describe('Metrics Status Tests', function() {
             });
 
             it('should return { metricsAvailable: false } when dependencies block has been removed from the package.json', async function() {
-                this.timeout(testTimeout.med);;
+                this.timeout(testTimeout.med);
                 const res = await getMetricsAvailability(projectID);
                 res.body.metricsAvailable.should.equal(false);
                 res.should.have.status(200);
@@ -186,7 +186,7 @@ describe('Metrics Status Tests', function() {
             });
 
             it('should return { metricsAvailable: false } when dependencies block has been removed from the package.json', async function() {
-                this.timeout(testTimeout.med);;
+                this.timeout(testTimeout.med);
                 const res = await getMetricsAvailability(projectID);
                 res.body.metricsAvailable.should.equal(false);
                 res.should.have.status(200);

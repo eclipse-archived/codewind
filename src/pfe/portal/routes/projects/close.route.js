@@ -23,7 +23,7 @@ const log = new Logger(__filename);
  * @return 404 if project is not found
  */
 router.put('/api/v1/projects/:id/close', async function (req, res) {
-  const user = req.mc_user;
+  const user = req.cw_user;
   const id = req.sanitizeParams('id');
   try {
     const project = user.projectList.retrieveProject(id);

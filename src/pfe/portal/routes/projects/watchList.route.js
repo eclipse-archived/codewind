@@ -21,16 +21,15 @@ const log = new Logger(__filename);
  * @return 500 if there was an error
  */
 router.get('/api/v1/projects/watchlist', async function (req, res) {
-    try {
-        const user = req.mc_user;
-        const watchList = await user.getWatchList();
-        res.status(200).send(watchList);
-   } catch (err) {
-      log.error(err);
-      res.status(500).send(err);
-   }
-  });
-  
-  
+  try {
+    const user = req.cw_user;
+    const watchList = await user.getWatchList();
+    res.status(200).send(watchList);
+  } catch (err) {
+    log.error(err);
+    res.status(500).send(err);
+  }
+});
+
+
 module.exports = router;
-  

@@ -13,21 +13,12 @@
 # yq command format:
 # `yq <operation> <flags> <file> -- <yaml path> <value>`
 
+source /file-watcher/scripts/kubeScripts/kube-utils.sh
+
 deploymentFile=$1
 projectName=$2
 entrypoint=$3
 logFolder=$4
-
-# getIndex returns the number of entries at a given yaml path in the deployment yaml file.
-function getIndex() {
-    local yamlPath="$1"
-    local values=$( yq r $deploymentFile -- "$yamlPath" )
-    local index=0
-    if [[ "$values" != "null" ]]; then
-        index=$( echo "$values" | wc -l)
-    fi
-    echo -e $index
-}
 
 # Adds the entrypoint command and arg override to the deployment file
 function addEntrypoint() {
@@ -49,14 +40,14 @@ function addEntrypoint() {
 function addVolumeMount() {
     # Add in the volume mount to the container (note the first '+' is not a typo, it's required to append to the array)
     local volumeMountPath="spec.template.spec.containers[0].volumeMounts"
-    local index=$(getIndex $volumeMountPath[*].name)
+    local index=$(getIndex $deploymentFile $volumeMountPath[*].name)
     yq w -i $deploymentFile -- $volumeMountPath[+].name shared-workspace
     yq w -i $deploymentFile -- $volumeMountPath[$index].mountPath /codewind-workspace/
-    yq w -i $deploymentFile -- $volumeMountPath[$index].subPath "$KUBE_NAMESPACE/projects"
+    yq w -i $deploymentFile -- $volumeMountPath[$index].subPath "$CHE_WORKSPACE_ID/projects"
 
     # Add the persistent volume to the deployment
     local volumesPath="spec.template.spec.volumes"
-    local index=$(getIndex $volumesPath[*].name)
+    local index=$(getIndex $deploymentFile $volumesPath[*].name)
     yq w -i $deploymentFile -- $volumesPath[+].name shared-workspace
     yq w -i $deploymentFile -- $volumesPath[$index].persistentVolumeClaim.claimName $PVC_NAME
 }
@@ -64,15 +55,15 @@ function addVolumeMount() {
 function addEnvVars() {
     # Append the project name environment variable
     local envPath="spec.template.spec.containers[0].env"
-    index=$(getIndex "$envPath[*].name")
+    index=$(getIndex $deploymentFile "$envPath[*].name")
     yq w -i $deploymentFile -- $envPath[+].name PROJECT_NAME
     yq w -i $deploymentFile -- $envPath[$index].value $projectName
 
-    index1=$(getIndex "$envPath[*].name")
+    index1=$(getIndex $deploymentFile "$envPath[*].name")
     yq w -i $deploymentFile -- $envPath[+].name LOG_FOLDER
     yq w -i $deploymentFile -- $envPath[$index1].value $logFolder
 
-    index2=$(getIndex "$envPath[*].name")
+    index2=$(getIndex $deploymentFile "$envPath[*].name")
     yq w -i $deploymentFile -- $envPath[+].name IN_K8
     yq w -i $deploymentFile -- $envPath[$index2].value "\"true\""
 }

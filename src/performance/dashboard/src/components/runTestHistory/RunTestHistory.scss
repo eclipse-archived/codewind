@@ -1,0 +1,50 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+******************************************************************************/
+
+@import "../../themes/dark-theme.scss";
+@import "~@carbon/layout/scss/spacing";
+
+.actionItem {
+  margin-left: $carbon--spacing-05;
+  fill: $carbon__gray-30;
+}
+
+.RunTestHistory {
+  margin-top: 20px;
+}
+
+.RunTestHistory .bx--data-table th,
+.bx--data-table td {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.RunTestHistory .bx--data-table th.bx--table-column-checkbox {
+  padding: 0.75rem 0.5rem 0 1rem;
+}
+
+/* Carbon colour corrections */
+.RunTestHistory .bx--action-list .bx--btn,
+.RunTestHistory .bx--batch-summary {
+  color: $color-datagrid-foreground;
+}
+
+.RunTestHistory .bx--action-list .bx--btn .bx--btn__icon {
+  fill: $color-datagrid-foreground;
+}
+
+.RunTestHistory .bx--btn--primary.bx--batch-summary__cancel::before {
+  background-color: $color-datagrid-foreground;
+}
+
+.RunTestHistory .bx--data-table-container {
+  overflow-y: hidden;
+}

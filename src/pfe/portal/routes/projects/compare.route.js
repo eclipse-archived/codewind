@@ -24,7 +24,7 @@ const log = new Logger(__filename);
 router.get('/api/v1/projects/:id/compare', async function (req, res) {
   let projectID = req.sanitizeParams('id');
   try {
-    let user = req.mc_user;
+    let user = req.cw_user;
     let project = user.projectList.retrieveProject(projectID);
     if (project) {
       let comparison = await project.getComparison();

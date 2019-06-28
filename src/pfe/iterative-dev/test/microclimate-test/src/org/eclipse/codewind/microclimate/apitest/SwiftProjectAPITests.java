@@ -750,7 +750,7 @@ public class SwiftProjectAPITests extends AbstractMicroclimateTest {
 			String[] eventsOfInterest = { projectSettingsChangedEvent };
 			String projectID = MicroclimateTestUtils.getProjectID(projectName, testType);
 			String SettingsAPI = MicroclimateTestUtils.getSettingsAPI(projectID);
-			String urlParameters = "{\"settings\": {\"internalAppPort\" : \"4321\"}}";
+			String urlParameters = "{\"settings\": {\"internalPort\" : \"4321\"}}";
 
 			MicroclimateTestUtils.PairedResponse pairedResponse = MicroclimateTestUtils
 					.callAPIBodyParametersWSocketResponse(SettingsAPI, urlParameters, PROTOCOL, PORT, "POST", testType,
@@ -797,7 +797,7 @@ public class SwiftProjectAPITests extends AbstractMicroclimateTest {
 			String[] eventsOfInterest = { projectSettingsChangedEvent };
 			String projectID = MicroclimateTestUtils.getProjectID(projectName, testType);
 			String SettingsAPI = MicroclimateTestUtils.getSettingsAPI(projectID);
-			String urlParameters = "{\"settings\": {\"internalAppPort\" : \"4321\"}}";
+			String urlParameters = "{\"settings\": {\"internalPort\" : \"4321\"}}";
 
 			// Expose the port and confirm the exposed port
 			MicroclimateTestUtils.updateDockerFile(testType, projectName, Dockerfile, content);

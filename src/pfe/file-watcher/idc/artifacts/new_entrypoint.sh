@@ -67,6 +67,11 @@ fi
 # Verify liberty feature cache
 if [ -d $HOME/artifacts/$LIBERTY_REPO_CACHE ]; then
 	echo "Liberty feature cache is set up"
+
+    # Remove liberty feature cache archive file if it still exists
+    if [ -f $APP_DIR/libertyrepocache.zip ]; then
+        rm -rf $APP_DIR/libertyrepocache.zip
+    fi
 else
 	echo "Liberty feature cache is not set up"
 fi

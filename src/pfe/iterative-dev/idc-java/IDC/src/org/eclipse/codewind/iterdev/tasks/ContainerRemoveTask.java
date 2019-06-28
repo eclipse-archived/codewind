@@ -24,6 +24,7 @@ import org.eclipse.codewind.iterdev.ProcessRunner;
 public class ContainerRemoveTask {
 
 	public static boolean execute(IDCContext context) throws Exception {
+		String imageCommand = context.getImageCommand();
 		File idcBase = context.getIDCBase();
 		if (!idcBase.exists()) {
 			/* If the .idc directory doesn't exist then we cannot validate the container that needs to be removed.
@@ -84,7 +85,7 @@ public class ContainerRemoveTask {
 				
 				String imageName = appDB.get(Constants.DB_CONTAINER_NAME);
 				if (imageName != null) {
-					ProcessRunner pr = TaskUtils.runCmd("docker rmi " + imageName + " -f", context,
+					ProcessRunner pr = TaskUtils.runCmd(imageCommand + " rmi " + imageName + " -f", context,
 							false);
 					if(pr.getErrorCode().orElse(0) != 0) {
 						Logger.error("Error code: " + pr.getErrorCode() + ", Failed to remove the image " + imageName);
@@ -95,7 +96,7 @@ public class ContainerRemoveTask {
 
 					String deploymentRegistry = appDB.get(Constants.DB_DEPLOYMENT_REGISTRY);
 					if (deploymentRegistry != null) {
-						pr = TaskUtils.runCmd("docker rmi -f " + deploymentRegistry + "/" + imageName, context,
+						pr = TaskUtils.runCmd("imageCommand rmi -f " + deploymentRegistry + "/" + imageName, context,
 								false);
 						if(pr.getErrorCode().orElse(0) != 0) {
 							Logger.error("Error code: " + pr.getErrorCode() + ", Failed to remove the image " + imageName +
@@ -124,7 +125,7 @@ public class ContainerRemoveTask {
 				Logger.info("* Stopping and removing application: " + containerName);
 				
 				// Get the container id using the container name
-				ProcessRunner pr = TaskUtils.runCmd("docker ps -aq -f name=" + containerName, context, false);
+				ProcessRunner pr = TaskUtils.runCmd(imageCommand + " ps -aq -f name=" + containerName, context, false);
 				if(pr.getErrorCode().orElse(0) != 0) {
 					Logger.error("Error code: " + pr.getErrorCode() + ", No container with the name " + containerName + " was found.");
 				}
@@ -132,7 +133,7 @@ public class ContainerRemoveTask {
 				String containerID = lines[lines.length - 1].trim();
 			
 				if(containerID != null && !containerID.isEmpty()) {
-					pr = TaskUtils.runCmd("docker rm -f " + containerID, context, false);
+					pr = TaskUtils.runCmd(imageCommand + " rm -f " + containerID, context, false);
 					if(pr.getErrorCode().orElse(0) != 0) {
 						Logger.error("Error code: " + pr.getErrorCode() + ", Failed to remove the container " + containerID);
 						return false;
@@ -143,7 +144,7 @@ public class ContainerRemoveTask {
 				
 				String imageName = appDB.get(Constants.DB_CONTAINER_NAME);
 				if(imageName != null){
-					pr = TaskUtils.runCmd("docker image rm " + imageName, context,
+					pr = TaskUtils.runCmd(imageCommand + " image rm " + imageName, context,
 							false);
 					if(pr.getErrorCode().orElse(0) != 0) {
 						Logger.error("Error Code: " + pr.getErrorCode() + ", Failed to remove the image " + imageName);

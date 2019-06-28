@@ -17,6 +17,16 @@ const Logger = require('../modules/utils/Logger');
 const docker = new dockerode();
 const log = new Logger(__filename);
 const dockerImage = 'codewind-initialize-amd64'
+const dockerTag = process.env.CODEWIND_VERSION || 'latest';
+const fs = require('fs-extra');
+
+console.log('dockerTag');
+console.log(dockerTag);
+
+let initialize;
+if (global.codewind.RUNNING_IN_K8S) {
+  initialize = require('initialize');
+}
 
 const validatePathForInitialize = (projectPath) => {
   if (typeof projectPath !== 'string') {
@@ -30,15 +40,27 @@ const validatePathForInitialize = (projectPath) => {
   }
 }
 
-const initializeProjectFromTemplate = async (projectPath, projectName, gitInfo) => {
+const initializeProjectFromTemplate = async (user, projectPath, projectName, gitInfo) => {
   validatePathForInitialize(projectPath);
-  const containerName = `initialize-${Date.now()}`;
-  const projectInfo = await createContainerWithBoundProject(containerName, projectPath, projectName, gitInfo);
-  projectInfo.projectPath = projectPath;
-  try {
-    await removeRunningContainer(containerName);
-  } catch(err) {
-    log.error(err)
+  let projectInfo;
+  if (!global.codewind.RUNNING_IN_K8S) {
+    const containerName = `initialize-${Date.now()}`;
+    projectInfo = await createContainerWithBoundProject(user, containerName, projectPath, projectName, gitInfo);
+    projectInfo.projectPath = projectPath;
+    try {
+      await removeRunningContainer(containerName);
+    } catch (err) {
+      log.error(err)
+    }
+  } else {
+    try {
+      // The bind mount for docker creates the path in the docker case.
+      await fs.ensureDir(projectPath);
+      projectInfo = await initialize.initialiseProject(projectName, projectPath, gitInfo.repo, gitInfo.branch);
+      projectInfo.projectPath = projectPath;
+    } catch (err) {
+      log.error(err)
+    }
   }
   log.trace(`Initialized project created from a template - Checked project info: ${ JSON.stringify(projectInfo) }`);
   if (projectInfo.status === 'failed' && projectInfo.result.includes('Git clone failed - directory to clone into is not empty')) {
@@ -47,31 +69,43 @@ const initializeProjectFromTemplate = async (projectPath, projectName, gitInfo) 
   return projectInfo;
 };
 
-const initializeProjectFromLocalDir = async (projectPath) => {
+const initializeProjectFromLocalDir = async (user, projectPath) => {
   validatePathForInitialize(projectPath);
-  const containerName = `initialize-${Date.now()}`;
-  const projectInfo = await createContainerWithBoundProject(containerName, projectPath);
-  projectInfo.projectPath = projectPath;
-  try {
-    await removeRunningContainer(containerName);
-  } catch(err) {
-    log.error(err)
+  let projectInfo;
+  if (!global.codewind.RUNNING_IN_K8S) {
+    const containerName = `initialize-${Date.now()}`;
+    projectInfo = await createContainerWithBoundProject(user, containerName, projectPath);
+    projectInfo.projectPath = projectPath;
+    try {
+      await removeRunningContainer(containerName);
+    } catch (err) {
+      log.error(err)
+    }
+  } else {
+    try {
+      // The bind mount for docker creates the path in the docker case.
+      await fs.ensureDir(projectPath);
+      projectInfo = await initialize.initialiseProject(undefined, projectPath);
+      projectInfo.projectPath = projectPath;
+    } catch (err) {
+      log.error(err)
+    }
   }
   log.trace(`Initialized local project - Checked project info: ${ JSON.stringify(projectInfo) }`);
   return projectInfo;
 }
 
-const createContainerWithBoundProject = async (containerName, projectPath, projectName, gitInfo) => {
+const createContainerWithBoundProject = async (user, containerName, projectPath, projectName, gitInfo) => {
   let container;
   const dockerBinds = [`${projectPath}:/initialize/`];
-  const env = createEnvForContainerCreation(projectName, gitInfo);
+  const env = createEnvForContainerCreation(user, projectName, gitInfo);
   await checkForExistingContainer();
   await ensureImageExists();
   try {
-    log.debug("Starting initializer container")
+    log.debug(`Starting initializer container using image ${dockerImage}:${dockerTag}`)
     container = await docker.createContainer({
       name: containerName,
-      Image: dockerImage,
+      Image: `${dockerImage}:${dockerTag}`,
       Env: env,
       Tty: true,
       HostConfig: {
@@ -84,7 +118,7 @@ const createContainerWithBoundProject = async (containerName, projectPath, proje
     return new Promise((resolve, reject) => {
       const timeoutID = setTimeout(function() {
         reject('Initialization timeout');
-      }, 20000);
+      }, 60000);
       stream.on('data', data => {
         const result = data.toString();
         log.debug(`Response from initializer container: "${result}"`);
@@ -95,6 +129,7 @@ const createContainerWithBoundProject = async (containerName, projectPath, proje
         catch (err) {
           clearTimeout(timeoutID);
           log.error("Error parsing JSON from initializer container: " + err.message)
+          log.error(result);
           return reject(err);
         }
         if (jsonData.status) {
@@ -143,13 +178,17 @@ const removeRunningContainer = async (containerName) => {
   await container.remove();
 }
 
-const createEnvForContainerCreation = (projectName, gitInfo) => {
+const createEnvForContainerCreation = (user, projectName, gitInfo) => {
 
-  // TODO: EXTENSIONS
-  const cwExtensions = [
-  ];
+  const env = [];
+  let cwExtensions = [];
 
-  const env = ['MC_SETTINGS=true', `CW_EXTENSIONS=${JSON.stringify(cwExtensions)}`];
+  if (user) {
+    // Get the file detection list for extension project types
+    cwExtensions = user.extensionList.getDetectionList();
+  }
+  env.push(`CW_EXTENSIONS=${JSON.stringify(cwExtensions)}`);
+
   if (projectName && gitInfo.repo) {
     env.push(
       `PROJ_NAME=${projectName}`,

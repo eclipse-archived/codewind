@@ -20,13 +20,19 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-WORKDIR /usr/src/app/performanceui
+
+##############################################
+# Build the performance dashboard (Codewind) 
+##############################################
+
+WORKDIR /usr/src/app/dashboard
 
 # Install nodeJS dependancies
-RUN npm ci
+RUN npm install
 
 # Build React webapp 
 RUN npm run build
+
 
 ############################################################
 # We now have a built ui, begin setup of a new runtime image 
@@ -45,19 +51,12 @@ COPY package*.json server.js ./
 
 RUN npm ci --only=production
 
-# Install performance UI by copying over the built application
+# Install performance UIs by copying over the built applications
 
-COPY --from=build-performance-ui /usr/src/app/performanceui/build /usr/src/app/performanceui/build
-
-
-#loadrunner setup
-
-#COPY . .
+COPY --from=build-performance-ui /usr/src/app/dashboard/build /usr/src/app/dashboard/build
 
 
 
-# Change working directory
-#WORKDIR /usr/src/app/loadrunner
 
 # Install npm production packages
 COPY loadrunner/package.json /usr/src/app/

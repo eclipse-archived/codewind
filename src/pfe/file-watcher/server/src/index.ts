@@ -183,7 +183,7 @@ export default class Filewatcher {
      *   name : (project settings name)
      *   status :  success/failed,
      *   error :  (only include error if this setting failed)
-     *   ports : (Optional - only included if the setting is internalAppPort/internalDebugPort)
+     *   ports : (Optional - only included if the setting is internalPort/internalDebugPort)
      *      {
      *          exposedPort: <new Exposed Port if the project application port has changed>,
      *          internalPort: <new Internal Port if the project application port has changed>,
@@ -273,7 +273,7 @@ export default class Filewatcher {
      *  @property 400: Error when attempting to test the registry
      *
      */
-    testDeploymentRegistry: (deploymentRegistry: string) => Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>;
+    testDeploymentRegistry: (deploymentRegistry: string) => Promise<workspaceSettings.IDeploymentRegistryTestSuccess | workspaceSettings.IDeploymentRegistryTestFailure>;
 
     /**
      * @function
@@ -466,7 +466,7 @@ export default class Filewatcher {
      *  req: {
      *    projectID: microprofileproject
      *    settings: {
-     *          "debugPort": "7878",
+     *          "internalDebugPort": "7878",
      *          "contextRoot": "myproject"
      *      }
      *  }

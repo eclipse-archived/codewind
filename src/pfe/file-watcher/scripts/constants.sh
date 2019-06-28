@@ -31,3 +31,11 @@ export BUILD_IMAGE_FAILED_MSG="Build image stage failed for" # :NLS
 export MAVEN_BUILD_INPROGRESS_MSG="Running maven build for" # :NLS
 export MAVEN_BUILD_SUCCESS_MSG="Maven build state succeeded for" # :NLS
 export MAVEN_BUILD_FAILED_MSG="Maven build stage failed for" # :NLS
+
+if [ "$IN_K8" == "true" ]; then
+	export IMAGE_COMMAND="buildah"
+	export BUILD_COMMAND="bud"
+else
+	export IMAGE_COMMAND="docker"
+	export BUILD_COMMAND="build"
+fi

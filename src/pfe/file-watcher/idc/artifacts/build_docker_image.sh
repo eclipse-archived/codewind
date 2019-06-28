@@ -10,6 +10,9 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
+#Import general constants
+source /file-watcher/scripts/constants.sh
+
 projectDir=$1
 imageName=$2
 contextDir=$3
@@ -36,11 +39,14 @@ touch "$WORKSPACE/.logs/$LOGFOLDER/$DOCKER_BUILD.log"
 echo -e "Triggering log file event for: docker container build log"
 $util newLogFileAvailable $PROJECT_ID "build"
 
-docker build -t $imageName -f Dockerfile-idc $contextDir |& tee "$WORKSPACE/.logs/$LOGFOLDER/$DOCKER_BUILD.log"
+$IMAGE_COMMAND $BUILD_COMMAND -t $imageName -f Dockerfile-idc $contextDir |& tee "$WORKSPACE/.logs/$LOGFOLDER/$DOCKER_BUILD.log"
+
 if [[ $? -ne 0 ]]; then
+    echo "Failed to build $imageName"
     rm -rf !(Dockerfile-idc|artifacts)
     exit 1
 fi
 
+echo "Successfully built $imageName"
 # Delete the project files we copied over, make sure we don't delete Dockerfile-idc or the artifacts directory
 rm -rf !(Dockerfile-idc|artifacts|target)

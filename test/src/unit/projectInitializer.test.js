@@ -16,6 +16,10 @@ const git = require('simple-git/promise');
 const fs = require('fs-extra');
 chai.use(chaiAsPromised);
 
+// Mock the global variables.
+global.codewind = {};
+
+
 const ProjectInitializerError = require('../../../src/pfe/portal/modules/utils/errors/ProjectInitializerError');
 const projectInitializer = rewire('../../../src/pfe/portal/modules/projectInitializer');
 const { testTimeout } = require('../../config');
@@ -30,30 +34,31 @@ const dockerCreateContainerMock = () => {
     });
 };
 
-const revert = projectInitializer.__set__('docker.createContainer', dockerCreateContainerMock);;
+const revert = projectInitializer.__set__('docker.createContainer', dockerCreateContainerMock);
 
 const validTestPath = '/tmp/';
+const user = null;
 
 describe('projectInitializer.js', () => {
-    describe('initializeProjectFromLocalDir(projectPath)', () => {
+    describe('initializeProjectFromLocalDir(user, projectPath)', () => {
         describe('Invalid args', () => {
             describe('Invalid path Type', () => {
                 it('throws INVALID_TYPE error', () => {
-                    return (initializeProjectFromLocalDir({}))
+                    return (initializeProjectFromLocalDir(user, {}))
                         .should.eventually.be.rejectedWith(ProjectInitializerError.PATH_INVALID_TYPE);
                 });
             });
             describe('Non-absolute path', () => {
                 it('throws NOT_ABSOLUTE error', () => {
                     const otherwiseValidPath = 'codewind';
-                    return (initializeProjectFromLocalDir(otherwiseValidPath))
+                    return (initializeProjectFromLocalDir(user, otherwiseValidPath))
                         .should.eventually.be.rejectedWith(ProjectInitializerError.NOT_ABSOLUTE);
                 });
             });
             describe('Project path which is not known to docker', () => {
                 it('throws NOT_MOUNTABLE error', function() {
                     this.timeout(testTimeout.short);
-                    return (initializeProjectFromLocalDir(validTestPath))
+                    return (initializeProjectFromLocalDir(user, validTestPath))
                         .should.eventually.be.rejectedWith(ProjectInitializerError.PATH_NOT_MOUNTABLE);
                 });
                 after(() => {
@@ -81,7 +86,7 @@ describe('projectInitializer.js', () => {
                             projectType: 'docker',
                         },
                     };
-                    return initializeProjectFromLocalDir(projectPath)
+                    return initializeProjectFromLocalDir(user, projectPath)
                         .should.eventually.deep.equal(expectedResponse);
                 });
             });
@@ -98,7 +103,7 @@ describe('projectInitializer.js', () => {
                             projectType: 'nodejs',
                         },
                     };
-                    return initializeProjectFromLocalDir(projectPath)
+                    return initializeProjectFromLocalDir(user, projectPath)
                         .should.eventually.deep.equal(expectedResponse);
                 });
             });
@@ -115,7 +120,7 @@ describe('projectInitializer.js', () => {
                             projectType: 'swift',
                         },
                     };
-                    return initializeProjectFromLocalDir(projectPath)
+                    return initializeProjectFromLocalDir(user, projectPath)
                         .should.eventually.deep.equal(expectedResponse);
                 });
             });
@@ -133,7 +138,7 @@ describe('projectInitializer.js', () => {
                             projectType: 'liberty',
                         },
                     };
-                    return initializeProjectFromLocalDir(projectPath)
+                    return initializeProjectFromLocalDir(user, projectPath)
                         .should.eventually.deep.equal(expectedResponse);
                 });
             });
@@ -150,7 +155,7 @@ describe('projectInitializer.js', () => {
                             projectType: 'spring',
                         },
                     };
-                    return initializeProjectFromLocalDir(projectPath)
+                    return initializeProjectFromLocalDir(user, projectPath)
                         .should.eventually.deep.equal(expectedResponse);
                 });
             });

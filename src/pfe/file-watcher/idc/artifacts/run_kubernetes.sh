@@ -42,9 +42,6 @@ export LOGSDIR=$ARTIFACTS/.logs/$LOGFOLDER
 
 export RELEASE_NAME=$CONTAINER_NAME
 
-docker stop $CONTAINER_NAME
-docker rm $CONTAINER_NAME
-
 util=/file-watcher/scripts/util.sh
 
 if [[ -z $PVC_NAME ]]; then
@@ -128,15 +125,13 @@ fi
 # Tag and push the image to the registry
 if [[ ! -z $DEPLOYMENT_REGISTRY ]]; then	
 	# Tag and push the image
-	docker tag $CONTAINER_NAME $DEPLOYMENT_REGISTRY/$CONTAINER_NAME
-	docker push $DEPLOYMENT_REGISTRY/$CONTAINER_NAME
-
+	buildah push --tls-verify=false $CONTAINER_NAME $DEPLOYMENT_REGISTRY/$CONTAINER_NAME
 	if [ $? -eq 0 ]; then
 		echo "Successfully tagged and pushed the application image $DEPLOYMENT_REGISTRY/$CONTAINER_NAME"
 	else
 		echo "Error: $?, could not push application image $DEPLOYMENT_REGISTRY/$CONTAINER_NAME" >&2
 		$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
-		exit 1;
+		exit 7;
 	fi
 	
 	echo "Running install command: helm upgrade --install $RELEASE_NAME --recreate-pods $tmpChart"
