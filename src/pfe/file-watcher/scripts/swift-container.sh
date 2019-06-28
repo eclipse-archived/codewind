@@ -84,11 +84,11 @@ function deployK8s() {
 	tmpChart=/tmp/$projectName/$chartName
 
 	# If the image already exists, remove it as well.
-	if [ "$( docker images -q $project )" ]; then
-		docker rmi -f $project
+	if [ "$( $IMAGE_COMMAND images -q $project )" ]; then
+		$IMAGE_COMMAND rmi -f $project
 	fi
-	if [ "$( docker images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
-		docker rmi -f $DEPLOYMENT_REGISTRY/$project
+	if [ "$( $IMAGE_COMMAND images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
+		$IMAGE_COMMAND rmi -f $DEPLOYMENT_REGISTRY/$project
 	fi
 	# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
 	if [ "$( helm list $project --failed )" ]; then
@@ -117,7 +117,7 @@ function deployK8s() {
  	$util newLogFileAvailable $PROJECT_ID "build"
 
 	echo -e "Docker app log file "$LOG_FOLDER/$DOCKER_APP_LOG.log""
-	docker build -t $project . |& tee "$LOG_FOLDER/$DOCKER_APP_LOG.log"
+	$IMAGE_COMMAND $BUILD_COMMAND -t $project . |& tee "$LOG_FOLDER/$DOCKER_APP_LOG.log"
 	exitCode=$?
 	imageLastBuild=$(($(date +%s)*1000))
 	if [ $exitCode -eq 0 ]; then
@@ -168,15 +168,13 @@ function deployK8s() {
 	# Push app container image to docker registry if one is set up
 	if [[ ! -z $DEPLOYMENT_REGISTRY ]]; then
 		# Tag and push the image to the registry
-		docker tag $project $DEPLOYMENT_REGISTRY/$project
-		docker push $DEPLOYMENT_REGISTRY/$project
-		
+		$IMAGE_COMMAND push --tls-verify=false $project $DEPLOYMENT_REGISTRY/$project
 		if [ $? -eq 0 ]; then
 			echo "Successfully tagged and pushed the application image $DEPLOYMENT_REGISTRY/$project"
 		else
 			echo "Error: $?, could not push application image $DEPLOYMENT_REGISTRY/$project" >&2
 			$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
-			exit 1;
+			exit 7;
 		fi
 
 		# Install the application using Helm
@@ -245,23 +243,27 @@ function deployK8s() {
 
 function dockerRun() {
 	# Remove container if it already exists (could be from a failed attempt)
-	if [ "$(docker ps -aq -f name=$project)" ]; then
-		docker rm -f $project
+	if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then
+		$IMAGE_COMMAND rm -f $project
 	fi
-	docker run --network=codewind_network --name "$project" -dt -P -v $LOCAL_WORKSPACE/"$projectName":/swift-project -w /swift-project "$project"
+
+	workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
+	echo "Workspace path used for volume mounting is: "$workspace""
+
+	$IMAGE_COMMAND run --network=codewind_network --name "$project" -dt -P -v $workspace/"$projectName":/swift-project -w /swift-project "$project"
 }
 
 function deployLocal() {
-	if [ "$(docker ps -q -f name=$project)" ]; then
+	if [ "$($IMAGE_COMMAND ps -q -f name=$project)" ]; then
 		echo "Stopping existing container"
 		$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-		docker kill $(docker ps -q -f name=$project)
+		$IMAGE_COMMAND kill $($IMAGE_COMMAND ps -q -f name=$project)
 	fi
 
-	if [ "$(docker ps -a -f name=$project)" ]; then
+	if [ "$($IMAGE_COMMAND ps -a -f name=$project)" ]; then
 		echo "Remove an old container before trying to build a new one"
-		docker rm -f $project
-		docker rmi -f $project
+		$IMAGE_COMMAND rm -f $project
+		$IMAGE_COMMAND rmi -f $project
 	fi
 
 	echo "$BUILD_IMAGE_INPROGRESS_MSG $projectName-build"
@@ -273,7 +275,7 @@ function deployLocal() {
  	$util newLogFileAvailable $PROJECT_ID "build"
 
 	echo -e "Docker build log file "$LOG_FOLDER/$DOCKER_BUILD_LOG.log""
-	docker build -t $project-build -f Dockerfile-tools . |& tee "$LOG_FOLDER/$DOCKER_BUILD_LOG.log"
+	$IMAGE_COMMAND $BUILD_COMMAND -t $project-build -f Dockerfile-tools . |& tee "$LOG_FOLDER/$DOCKER_BUILD_LOG.log"
 	exitCode=$?
 	imageLastBuild=$(($(date +%s)*1000))
 	if [ $exitCode -eq 0 ]; then
@@ -295,9 +297,9 @@ function deployLocal() {
 
 	# Map container to different port than the project is using
 	echo "PWD BEFORE DOCKER RUN -------- ${PWD}"
-	if [ "$(docker ps -a -q -f name=$project-build)" ]; then
+	if [ "$($IMAGE_COMMAND ps -a -q -f name=$project-build)" ]; then
 		echo "$project-build container exists. Starting container for $project-build..."
-		docker start $project-build > "$LOG_FOLDER/$COMPILE_BUILD.log"
+		$IMAGE_COMMAND start $project-build > "$LOG_FOLDER/$COMPILE_BUILD.log"
 		if [ $? -eq 0 ]; then
 			echo "Start container stage succeeded for $project-build"
 		else
@@ -307,7 +309,9 @@ function deployLocal() {
 		fi
 	else
 		echo "$project-build container does not exist. Starting container for $project-build..."
-		docker run --name $project-build -v "$LOCAL_WORKSPACE/$projectName":/swift-project -w /swift-project $project-build /swift-utils/tools-utils.sh build release > "$LOG_FOLDER/$COMPILE_BUILD.log"
+		workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
+		echo "Workspace path used for volume mounting is: "$workspace""
+		$IMAGE_COMMAND run --name $project-build -v "$workspace/$projectName":/swift-project -w /swift-project $project-build /swift-utils/tools-utils.sh build release > "$LOG_FOLDER/$COMPILE_BUILD.log"
 		if [ $? -eq 0 ]; then
 			echo "Start container stage succeeded for $project-build"
 		else
@@ -329,7 +333,7 @@ function deployLocal() {
  		$util newLogFileAvailable $PROJECT_ID "build"
 
 		echo -e "Docker app log file "$LOG_FOLDER/$DOCKER_APP_LOG.log""
-		docker build -t $project . |& tee "$LOG_FOLDER/$DOCKER_APP_LOG.log"
+		$IMAGE_COMMAND $BUILD_COMMAND -t $project . |& tee "$LOG_FOLDER/$DOCKER_APP_LOG.log"
 		exitCode=$?
 		imageLastBuild=$(($(date +%s)*1000))
 		if [ $exitCode -eq 0 ]; then
@@ -341,8 +345,7 @@ function deployLocal() {
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
 			exit 1
 		fi
-
-		docker rm $project-build;
+		$IMAGE_COMMAND rm $project-build;
 		echo "Starting container for $project..."
 		dockerRun
 		DOCKER_RUN_RC=$?
@@ -378,7 +381,7 @@ function deployLocal() {
 
 	# add the app logs
 	echo -e "App log file "$LOG_FOLDER/$APP_LOG.log""
-	docker logs -f "$CONTAINER_NAME" >> "$LOG_FOLDER/$APP_LOG.log" &
+	$IMAGE_COMMAND logs -f "$CONTAINER_NAME" >> "$LOG_FOLDER/$APP_LOG.log" &
 }
 # Create the application image and container and start it
 if [ "$COMMAND" == "create" ]; then
@@ -405,32 +408,32 @@ elif [ "$COMMAND" == "remove" ]; then
 		fi
 	else
 		# Remove container
-		if [ "$(docker ps -aq -f name=$project)" ]; then
-			docker rm -f $project
+		if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then
+			$IMAGE_COMMAND rm -f $project
 		fi
-
-		if [ "$(docker ps -q -f name=$project-build)" ]; then
-			docker rm -f $project-build
+		
+		if [ "$($IMAGE_COMMAND ps -q -f name=$project-build)" ]; then
+			$IMAGE_COMMAND rm -f $project-build
 		fi
 	fi
 
 	# Remove image
-	if [ "$(docker images -qa -f reference=$project)" ]; then
-		docker rmi -f $project
+	if [ "$($IMAGE_COMMAND images -qa -f reference=$project)" ]; then
+		$IMAGE_COMMAND rmi -f $project
 	else
 		echo The application image $project has already been removed.
 	fi
-
-	if [ "$(docker images -qa -f reference=$project-build)" ]; then
-		docker rmi -f $project-build
+	
+	if [ "$($IMAGE_COMMAND images -qa -f reference=$project-build)" ]; then
+		$IMAGE_COMMAND rmi -f $project-build
 	else
 		echo The application image $project-build has already been removed.
 	fi
 
 	# Remove registry image and Kubernetes image
 	if [ "$IN_K8" == "true" ]; then
-		if [ "$( docker images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
-			docker rmi -f $DEPLOYMENT_REGISTRY/$project
+		if [ "$( $IMAGE_COMMAND images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
+			$IMAGE_COMMAND rmi -f $DEPLOYMENT_REGISTRY/$project
 		fi
 	fi
 

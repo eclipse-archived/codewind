@@ -17,38 +17,47 @@ const log = new Logger(__filename);
 /**
  * API Function to get status of Deployment Registry in Workspace Settings
  */
-router.get('/api/v1/registry', function (req, res) {
+router.get('/api/v1/registry', async function (req, res) {
+  let retval;
   try {
-    let user = req.mc_user;
+    let user = req.cw_user;
     log.debug(`GET /api/v1/registry called`);
-    user.getDeploymentRegistryStatus();
-
-    res.sendStatus(200);
+    retval = await user.getDeploymentRegistryStatus();
+    res.status(retval.statusCode).send(retval);
   } catch (error) {
     log.error(error);
-    res.status(500).send(error);
+    const workspaceSettings = {
+      statusCode: 500,
+      deploymentRegistry: false
+    }
+    res.status(500).send(workspaceSettings);
   }
 });
 
 /**
  * API Function to test Deployment Registry
  */
-router.post('/api/v1/registry', function (req, res) {
+router.post('/api/v1/registry', async function (req, res) {
+  let retval;
   try {
-    let user = req.mc_user;
+    let user = req.cw_user;
     log.debug(`POST /api/v1/registry called`);
     const deploymentRegistry = req.sanitizeBody('deploymentRegistry');
     if (!deploymentRegistry) {
-        res.status(400).send("Missing required parameter, deploymentRegistry is required to be provided.");
-        return;
+      const msg = "Missing required parameter, deploymentRegistry is required to be provided.";
+      const data = { "statusCode": 400, "deploymentRegistryTest": false, "msg": msg}
+      res.status(400).send(data);
     }
     log.debug(`Testing deployment registry: ${deploymentRegistry}`);
-    user.testDeploymentRegistry(deploymentRegistry);
-
-    res.sendStatus(200);
+    retval = await user.testDeploymentRegistry(deploymentRegistry);
+    res.status(retval.statusCode).send(retval);
   } catch (error) {
     log.error(error);
-    res.status(500).send(error);
+    const workspaceSettings = {
+      statusCode: 500,
+      deploymentRegistry: false
+    }
+    res.status(500).send(workspaceSettings);
   }
 });
 

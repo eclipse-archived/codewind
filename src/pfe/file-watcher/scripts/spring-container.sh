@@ -90,7 +90,7 @@ function create() {
 				echo "Finished downloading maven m2 cache to $ROOT"
 
 				echo "Extracting maven m2 cache to $ROOT"
-				$JAVA_HOME/bin/jar -xvf localm2cache.zip
+				unzip -q localm2cache.zip
 				rm -rf localm2cache.zip
 				echo "Finished extracting maven m2 cache to $ROOT"
 
@@ -164,12 +164,13 @@ function deployK8() {
 	# Push app container image to docker registry if one is set up
 	if [[ ! -z $DEPLOYMENT_REGISTRY ]]; then
 		# If the image already exists, remove it as well.
-		if [ "$( docker images -q $project )" ]; then
-			docker rmi -f $project
+		if [ "$( $IMAGE_COMMAND images -q $project )" ]; then
+			$IMAGE_COMMAND rmi -f $project
 		fi
-		if [ "$( docker images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
-			docker rmi -f $DEPLOYMENT_REGISTRY/$project
+		if [ "$( $IMAGE_COMMAND images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
+			$IMAGE_COMMAND rmi -f $DEPLOYMENT_REGISTRY/$project
 		fi
+
 		# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
 		if [ "$( helm list $project --failed )" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
@@ -180,15 +181,14 @@ function deployK8() {
 		modifyDockerfileAndBuild
 
 		# Tag and push the image to the registry
-		docker tag $project $DEPLOYMENT_REGISTRY/$project
-		docker push $DEPLOYMENT_REGISTRY/$project
+		$IMAGE_COMMAND push --tls-verify=false $project $DEPLOYMENT_REGISTRY/$project
 
 		if [ $? -eq 0 ]; then
 			echo "Successfully tagged and pushed the application image $DEPLOYMENT_REGISTRY/$project"
 		else
 			echo "Error: $?, could not push application image $DEPLOYMENT_REGISTRY/$project" >&2
 			$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
-			exit 1;
+			exit 7;
 		fi
 
 		helm upgrade \
@@ -263,29 +263,32 @@ function deployK8() {
 }
 
 function dockerRun() {
+	workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
+	echo "Workspace path used for volume mounting is: "$workspace""
+
 	# Remove container if it already exists (could be from a failed attempt)
-	if [ "$(docker ps -aq -f name=$project)" ]; then
-		docker rm -f $project
+	if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then
+		$IMAGE_COMMAND rm -f $project
 	fi
-	docker run --network=codewind_network \
+	$IMAGE_COMMAND run --network=codewind_network \
 		--entrypoint "/scripts/new_entrypoint.sh" \
 		--name $project \
-		-v "$LOCAL_WORKSPACE/$projectName":/root/app \
-		-v "$LOCAL_WORKSPACE/.logs":/root/logs \
+		-v "$workspace/$projectName":/root/app \
+		-v "$workspace/.logs":/root/logs \
 		--expose 8080 -p 127.0.0.1::$DEBUG_PORT -P -dt $project
 }
 
 function deployLocal() {
-	if [ "$( docker ps -q -f name=$project )" ]; then
+	if [ "$( $IMAGE_COMMAND ps -q -f name=$project )" ]; then
 		echo "Stopping existing container"
 		$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-		docker kill $(docker ps -q -f name=$project)
+		$IMAGE_COMMAND kill $($IMAGE_COMMAND ps -q -f name=$project)
 	fi
 
-	if [ "$( docker ps -qa -f name=$project )" ]; then
+	if [ "$( $IMAGE_COMMAND ps -qa -f name=$project )" ]; then
 		echo "Removing an old container before trying to build a new one"
-		docker rm -f $project
-		docker rmi -f $project
+		$IMAGE_COMMAND rm -f $project
+		$IMAGE_COMMAND rmi -f $project
 	fi
 
 	modifyDockerfileAndBuild
@@ -330,7 +333,7 @@ function deployLocal() {
 
 	# add the app logs
 	echo -e "App log file $LOG_FOLDER/$APP_LOG.log"
-	docker logs -f $CONTAINER_NAME >> "$LOG_FOLDER/$APP_LOG.log" &
+	$IMAGE_COMMAND logs -f $CONTAINER_NAME >> "$LOG_FOLDER/$APP_LOG.log" &
 }
 function initCache() {
 	# Init the cache of file hashes for the project
@@ -353,7 +356,7 @@ function runMavenBuild() {
 		kubectl exec $POD_NAME -- bash "/scripts/spring-build.sh" $logName "$projectName" "$FOLDER_NAME" "$MAVEN_SETTINGS"
 		exit_code=$?
 	else
-		docker exec $project /scripts/spring-build.sh $logName "$projectName" "$FOLDER_NAME" "$MAVEN_SETTINGS"
+		$IMAGE_COMMAND exec $project /scripts/spring-build.sh $logName "$projectName" "$FOLDER_NAME" "$MAVEN_SETTINGS"
 		exit_code=$?
 	fi
 
@@ -391,7 +394,7 @@ function start() {
 		exit_code=$?
 	else
 		echo "Starting the $projectName project in $START_MODE mode"
-		docker exec $project /scripts/spring-start.sh "$projectName" $START_MODE $DEBUG_PORT
+		$IMAGE_COMMAND exec $project /scripts/spring-start.sh "$projectName" $START_MODE $DEBUG_PORT
 		exit_code=$?
 	fi
 
@@ -412,7 +415,7 @@ function stop() {
 		kubectl exec $POD_NAME bash "/scripts/spring-stop.sh" "$projectName"
 		exit_code=$?
 	else
-		docker exec $project /scripts/spring-stop.sh "$projectName"
+		$IMAGE_COMMAND exec $project /scripts/spring-stop.sh "$projectName"
 		exit_code=$?
 	fi
 
@@ -450,8 +453,9 @@ function modifyDockerfileAndBuild() {
  	$util newLogFileAvailable $PROJECT_ID "build"
 
 	echo -e "Docker build log file "$LOG_FOLDER/$DOCKER_BUILD_LOG.log""
-	docker build -t $project -f Dockerfile-$project /tmp/$project-build |& tee "$LOG_FOLDER/$DOCKER_BUILD_LOG.log"
+	$IMAGE_COMMAND $BUILD_COMMAND -t $project -f Dockerfile-$project /tmp/$project-build |& tee "$LOG_FOLDER/$DOCKER_BUILD_LOG.log"
 	exitCode=$?
+	
 	# The last image build timestamp
 	imageLastBuild=$(($(date +%s)*1000))
 	if [ $exitCode -eq 0 ]; then
@@ -529,20 +533,20 @@ elif [ "$COMMAND" == "remove" ]; then
 
 	else
 		# Remove container
-		if [ "$(docker ps -aq -f name=$project)" ]; then
-			docker rm -f $project
+		if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then
+			$IMAGE_COMMAND rm -f $project
 		fi
 	fi
 
 	# Remove image
-	if [ "$(docker images -qa -f reference=$project)" ]; then
-		docker rmi -f $project
+	if [ "$($IMAGE_COMMAND images -qa -f reference=$project)" ]; then
+		$IMAGE_COMMAND rmi -f $project
 	fi
 
 	# Remove registry image and Kubernetes image
 	if [ "$IN_K8" == "true" ]; then
-		if [ "$( docker images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
-			docker rmi -f $DEPLOYMENT_REGISTRY/$project
+		if [ "$( $IMAGE_COMMAND images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
+			$IMAGE_COMMAND rmi -f $DEPLOYMENT_REGISTRY/$project
 		fi
 	fi
 else

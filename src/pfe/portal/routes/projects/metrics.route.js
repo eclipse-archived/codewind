@@ -27,7 +27,7 @@ const log = new Logger(__filename);
 router.get('/api/v1/projects/:id/metrics', function (req, res) {
   const projectID = req.sanitizeParams('id');
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
       const message = `Unable to find project ${projectID}`;
@@ -63,7 +63,7 @@ router.get('/api/v1/projects/:id/metrics', function (req, res) {
 
 router.get('/api/v1/projects/:id/metrics/status', async function (req, res) {
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const projectID = req.sanitizeParams('id');
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
@@ -92,7 +92,7 @@ router.get('/api/v1/projects/:id/metrics/status', async function (req, res) {
 router.post('/api/v1/projects/:id/metrics/types', async function(req, res) {
   const projectID = req.sanitizeParams('id');
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const project = user.projectList.retrieveProject(projectID);
 
     if (!project) {
@@ -137,7 +137,7 @@ router.get('/api/v1/projects/:id/metrics/:type', async function (req, res) {
   const projectID = req.sanitizeParams('id');
   const metricType = req.sanitizeParams('type');
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
       const message = `Unable to find project ${projectID}`;
@@ -178,7 +178,7 @@ router.put('/api/v1/projects/:id/metrics/:testRunTime', async function (req, res
       return;
     }
     const projectID = req.sanitizeParams('id');
-    const user = req.mc_user;
+    const user = req.cw_user;
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
       const message = `Unable to find project ${projectID}`;
@@ -215,7 +215,7 @@ router.put('/api/v1/projects/:id/metrics/:testRunTime', async function (req, res
 router.delete('/api/v1/projects/:id/metrics/:testRunTime', async function (req, res) {
   try {
     const projectID = req.sanitizeParams('id');
-    const user = req.mc_user;
+    const user = req.cw_user;
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
       const message = `Unable to find project ${projectID}`;

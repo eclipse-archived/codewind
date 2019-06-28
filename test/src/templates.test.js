@@ -37,8 +37,8 @@ describe('Template API tests', function() {
     });
 
     describe(`GET|POST|DELETE /api/v1/templates/repositories`, function() {
-        const expectedUrl = 'https://raw.githubusercontent.com/microclimate-dev2ops/codewind-templates/master/devfiles/index.json';
-        const testUrl = 'https://raw.githubusercontent.com/microclimate-dev2ops/codewind-templates/d506f2cff2e6ac24e88730c404f9456c9ad1e05a/devfiles/index.json';
+        const expectedUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
+        const testUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
         it('GET should return a list of available templates repositories', async function() {
             const res = await reqService.chai
                 .get('/api/v1/templates/repositories')
@@ -138,7 +138,8 @@ describe('Template API tests', function() {
                 template.should.be.an('object');
                 template.should.include.all.keys('label', 'description', 'url', 'language');
             });
-            res.body.should.have.length(firstLength*2);
+            // There are 6 templates listed in the revision referenced by testUrl
+            res.body.should.have.length(firstLength + 7);
             // check that we have a template for each supported language
             res.body.map((template) => template.language).should.include.members(expectedLanguages);
         });
@@ -146,7 +147,7 @@ describe('Template API tests', function() {
             const res = await reqService.chai
                 .delete('/api/v1/templates/repositories')
                 .set('Cookie', ADMIN_COOKIE)
-                .send({url: testUrl});
+                .send({ url: testUrl });
             res.should.have.status(200);
             res.body.should.be.an('array');
             res.body.should.have.length(1);

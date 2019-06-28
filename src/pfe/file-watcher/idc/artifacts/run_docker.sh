@@ -52,11 +52,12 @@ if [[ $MICROCLIMATE_WS_ORIGIN &&  "$APPDIR" == '/codewind-workspace'* ]]
 
 		# The app directory is originally in the format /codewind-workspace/<app name>
 		APPDIR=$MICROCLIMATE_ORIGIN_DIR"$APPDIR"
-
+		echo "Application path used for volume mounting is: "$APPDIR""
 		# The artifacts directory is in the main microprofile directory
 		ARTIFACTS=$MICROCLIMATE_ORIGIN_DIR/docker/file-watcher/idc/artifacts
 
 		LOGSDIR=$MICROCLIMATE_WS_ORIGIN/.logs/"$LOGFOLDER"
+		echo "Log path used for volume mounting is: "$LOGSDIR""
 
 		docker run -dt \
 		--entrypoint "/home/default/artifacts/new_entrypoint.sh" \

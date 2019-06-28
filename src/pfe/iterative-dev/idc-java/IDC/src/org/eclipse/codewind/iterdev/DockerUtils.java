@@ -30,7 +30,9 @@ public class DockerUtils {
     public static boolean checkForContainerImage(IDCContext context) throws InterruptedException, IOException {
 		boolean isPresent = false;
 
-		ProcessRunner pr = TaskUtils.runCmd("docker images --format \"{{.Repository}}\"", context, false);
+		String imageCommand = context.getImageCommand();
+		
+		ProcessRunner pr = TaskUtils.runCmd(imageCommand + " images --format \"{{.Repository}}\"", context, false);
 
 		Thread.sleep(1000);
 		for (String str : pr.getReceived().split("\\r?\\n")) {

@@ -10,7 +10,7 @@ services:
       - HOST_WORKSPACE_DIRECTORY=${WORKSPACE_DIRECTORY}
       - CONTAINER_WORKSPACE_DIRECTORY=/codewind-workspace
       - HOST_OS=${HOST_OS}
-      - MICROCLIMATE_VERSION=${TAG}
+      - CODEWIND_VERSION=${TAG}
       - PERFORMANCE_CONTAINER=codewind-performance${PLATFORM}:${TAG}
     depends_on:
       - codewind-performance

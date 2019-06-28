@@ -35,7 +35,7 @@ import * as utils from "../utils/utils";
 import * as logHelper from "../projects/logHelper";
 
 import { Operation } from "./operation";
-import { ProjectInfo, BuildLog, AppLog, UpdateProjectInfoPair } from "./Project";
+import { AppLog, BuildLog, BuildRequest, ProjectInfo, UpdateProjectInfoPair } from "./Project";
 import { projectConstants, ContainerStates, StartModes, MavenFlags } from "./constants";
 import * as locale from "../utils/locale";
 import { appStateMap } from "../controllers/projectStatusController";
@@ -70,12 +70,23 @@ export interface ProjectEvent {
     containerId?: string;
     podName?: string;
     logs?: any;
+    ignoredPaths?: string[];
+    mavenProfiles?: string[];
+    mavenProperties?: string[];
+    watchedFiles?: string[];
+    ignoredFiles?: string[];
 }
 
 export interface ProjectLog {
     app: AppLog;
     build: BuildLog;
 }
+
+const projectEventErrorMsgs = {
+    missingDeploymentRegistry: "The project will not build due to missing Deployment Registry. Run the Set Deployment Registry command to set a new Deployment Registry to build projects.",
+    invalidDeploymentRegistry: "Codewind was unable to push an image to the Deployment Registry. Please make sure it is a valid Deployment Registry with the appropriate permissions.",
+    wrongDeploymentRegistry: "The project will not build with the new Deployment Registry. Please remove and re-add the project to deploy to the new Deployment Registry."
+};
 
 /**
  * @function
@@ -124,25 +135,18 @@ export async function containerCreate(operation: Operation, script: string, comm
         logger.logProjectInfo("Deployment Registry: " + deploymentRegistry, projectID);
 
         if (projectDeploymentRegistry && projectDeploymentRegistry != deploymentRegistry) {
-            const errorMsg = "The project will not build with the new deployment registry. Please unbind and bind the project to build with the new deployment registry.";
-            logger.logProjectError(errorMsg, projectID, projectName);
-            projectEvent.error = errorMsg;
+            logger.logProjectError(projectEventErrorMsgs.wrongDeploymentRegistry, projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.wrongDeploymentRegistry;
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.wrongDeploymentRegistry");
             io.emitOnListener(event, projectEvent);
             return;
         }
 
         if (!deploymentRegistry.length) {
-            const errorMsg = "The project will not build due to missing Deployment Registry. Please enter a deployment registry to build projects.";
-            logger.logProjectError(errorMsg, projectID, projectName);
-            projectEvent.error = errorMsg;
+            logger.logProjectError(projectEventErrorMsgs.missingDeploymentRegistry, projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.missingDeploymentRegistry;
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.missingDeploymentRegistry");
             io.emitOnListener(event, projectEvent);
-            // emit new event for missing registry so that IDE can pick up and act accordingly
-            const data: any = {
-                deploymentRegistry: false
-            };
-            io.emitOnListener("workspaceSettings", data);
             return;
         }
 
@@ -233,25 +237,18 @@ export async function containerUpdate(operation: Operation, script: string, comm
         logger.logProjectInfo("Deployment Registry: " + deploymentRegistry, projectID);
 
         if (projectDeploymentRegistry && projectDeploymentRegistry != deploymentRegistry) {
-            const errorMsg = "The project will not build with the new deployment registry. Please unbind and bind the project to build with the new deployment registry.";
-            logger.logProjectError(errorMsg, projectID, projectName);
-            projectEvent.error = errorMsg;
+            logger.logProjectError(projectEventErrorMsgs.wrongDeploymentRegistry, projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.wrongDeploymentRegistry;
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.wrongDeploymentRegistry");
             io.emitOnListener(event, projectEvent);
             return;
         }
 
         if (!deploymentRegistry.length) {
-            const errorMsg = "The project will not build due to missing Deployment Registry. Please enter a deployment registry to build projects.";
-            logger.logProjectError(errorMsg, projectID, projectName);
-            projectEvent.error = errorMsg;
+            logger.logProjectError(projectEventErrorMsgs.missingDeploymentRegistry, projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.missingDeploymentRegistry;
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.missingDeploymentRegistry");
             io.emitOnListener(event, projectEvent);
-            // emit new event for missing registry so that IDE can pick up and act accordingly
-            const data: any = {
-                deploymentRegistry: false
-            };
-            io.emitOnListener("workspaceSettings", data);
             return;
         }
 
@@ -315,6 +312,22 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
         projectID: operation.projectInfo.projectID
     } as ProjectEvent;
 
+    if (operation.projectInfo.ignoredPaths) {
+        projectInfo.ignoredPaths = operation.projectInfo.ignoredPaths;
+    }
+    if (operation.projectInfo.watchedFiles) {
+        projectInfo.watchedFiles = operation.projectInfo.watchedFiles;
+    }
+    if (operation.projectInfo.ignoredFiles) {
+        projectInfo.ignoredFiles = operation.projectInfo.ignoredFiles;
+    }
+    if (operation.projectInfo.mavenProfiles) {
+        projectInfo.mavenProfiles = operation.projectInfo.mavenProfiles;
+    }
+    if (operation.projectInfo.mavenProperties) {
+        projectInfo.mavenProperties = operation.projectInfo.mavenProperties;
+    }
+
     const projectMetadata = projectsController.getProjectMetadataById(projectID);
     const f = projectMetadata.infoFile;
     const keyValuePair: UpdateProjectInfoPair = {
@@ -343,9 +356,14 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                 try {
                     if (result.exitCode !== 0) {
                         projectInfo.status = "failed";
-                        const errorMsg = `The container failed to start for application ` + projectLocation;
+                        let errorMsg = `The container failed to start for application ` + projectLocation;
                         logger.logProjectError("Error code: " + result.exitCode + " - " + errorMsg, projectID, projectName);
-                        await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.buildFail");
+                        if (result.exitCode == 7) {
+                            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.invalidDeploymentRegistry");
+                            errorMsg = projectEventErrorMsgs.invalidDeploymentRegistry;
+                        } else {
+                            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.buildFail");
+                        }
                         projectInfo.error = errorMsg;
                         io.emitOnListener(event, projectInfo);
                         logger.logProjectInfo("Emitted event: " + event + "\n" + JSON.stringify(projectInfo), projectID, projectName);
@@ -436,6 +454,9 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         }
                         if (containerInfo.internalPort) {
                             projectInfo.ports.internalPort = containerInfo.internalPort;
+                        }
+                        if (operation.projectInfo.debugPort) {
+                            projectInfo.ports.internalDebugPort = operation.projectInfo.debugPort;
                         }
                         if (containerInfo.exposedDebugPort) {
                             projectInfo.ports.exposedDebugPort = containerInfo.exposedDebugPort;
@@ -1142,15 +1163,6 @@ export async function runScript(projectInfo: ProjectInfo, script: string, comman
     return await processManager.spawnDetachedAsync(projectInfo.projectID, script, args, {});
 }
 
-interface BuildRequest {
-    projectLocation: string;
-    LOCAL_WORKSPACE: string;
-    projectID: string;
-    containerName: string;
-    autoBuildEnabled: boolean;
-    logName: string;
-}
-
 /**
  * @function
  * @description Build and run a project.
@@ -1185,13 +1197,25 @@ export async function buildAndRun(operation: Operation): Promise<void> {
         status: "failed"
     };
 
+    if (operation.projectInfo.ignoredPaths) {
+        projectEvent.ignoredPaths = operation.projectInfo.ignoredPaths;
+    }
+    if (operation.projectInfo.watchedFiles) {
+        projectEvent.watchedFiles = operation.projectInfo.watchedFiles;
+    }
+    if (operation.projectInfo.ignoredFiles) {
+        projectEvent.ignoredFiles = operation.projectInfo.ignoredFiles;
+    }
+
     const buildInfo: BuildRequest = {
         projectLocation: projectLocation,
         LOCAL_WORKSPACE: LOCAL_WORKSPACE,
         projectID: projectID,
         containerName: operation.containerName,
         autoBuildEnabled: operation.projectInfo.autoBuildEnabled,
-        logName: logName
+        logName: logName,
+        hostPorts: [],
+        containerPorts: []
     };
 
     const keyValuePair: UpdateProjectInfoPair = {
@@ -1317,25 +1341,18 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         logger.logProjectInfo("Deployment Registry: " + deploymentRegistry, buildInfo.projectID);
 
         if (projectDeploymentRegistry && projectDeploymentRegistry != deploymentRegistry) {
-            const errorMsg = "The project will not build with the new deployment registry. Please unbind and bind the project to build with the new deployment registry.";
-            logger.logProjectError(errorMsg, buildInfo.projectID, projectName);
-            projectEvent.error = errorMsg;
+            logger.logProjectError(projectEventErrorMsgs.wrongDeploymentRegistry, buildInfo.projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.wrongDeploymentRegistry;
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.wrongDeploymentRegistry");
             io.emitOnListener(event, projectEvent);
             return;
         }
 
         if (!deploymentRegistry.length) {
-            const errorMsg = "The project will not build due to missing Deployment Registry. Please enter a deployment registry to build projects.";
-            logger.logProjectError(errorMsg, buildInfo.projectID, projectName);
-            projectEvent.error = errorMsg;
+            logger.logProjectError(projectEventErrorMsgs.missingDeploymentRegistry, buildInfo.projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.missingDeploymentRegistry;
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.missingDeploymentRegistry");
             io.emitOnListener(event, projectEvent);
-            // emit new event for missing registry so that IDE can pick up and act accordingly
-            const data: any = {
-                deploymentRegistry: false
-            };
-            io.emitOnListener("workspaceSettings", data);
             return;
         }
 
@@ -1434,9 +1451,18 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             throw new Error(msg);
         }
 
-        // Tag and push image
-        // Tag and push the docker registry image, which we will use during the helm install
-        await dockerutil.tagAndPushImage(buildInfo.projectID, buildInfo.containerName, deploymentRegistry);
+        try {
+            // Tag and push image
+            // Tag and push the docker registry image, which we will use during the helm install
+            await dockerutil.tagAndPushImage(buildInfo.projectID, buildInfo.containerName, deploymentRegistry);
+        } catch (err) {
+            const msg = "Failed to push image to the registry for " + projectName;
+            logger.logProjectError(msg, buildInfo.projectID, buildInfo.containerName);
+            logger.logProjectError(err, buildInfo.projectID, buildInfo.containerName);
+            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.invalidDeploymentRegistry");
+            await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopped, " ");
+            throw new Error(msg);
+        }
 
         try {
             // Install Helm Deployment
@@ -1530,8 +1556,14 @@ async function runLocalContainer(buildInfo: BuildRequest): Promise<void> {
             logger.logProjectInfo("The existing container was successfully removed.", buildInfo.projectID);
         }
 
+        // Check for pre-existing port mappings so that they can be reused for incremental builds
+        const containerInfo = containerInfoMap.get(buildInfo.projectID);
+        if (containerInfo && containerInfo.hostPorts.length > 0 && containerInfo.containerPorts.length > 0) {
+            buildInfo.hostPorts = containerInfo.hostPorts;
+            buildInfo.containerPorts = containerInfo.containerPorts;
+        }
         logger.logProjectInfo("Starting container...", buildInfo.projectID);
-        await dockerutil.runContainer(buildInfo.projectID, buildInfo.containerName);
+        await dockerutil.runContainer(buildInfo, buildInfo.containerName);
 
         // stream the app container logs - Local
         logger.logProjectInfo("Streaming application logs on Local for " + buildInfo.projectID, buildInfo.projectID);
@@ -1671,13 +1703,13 @@ export async function removeProject(projectInfo: ProjectInfo): Promise<void> {
 
         try {
             // ICP has two docker images - one without registry and one with registry that we tag and push for the helm install, remove them both
-            let result = await processManager.spawnDetachedAsync(projectInfo.projectID, "docker", ["images", "-q", containerName], {});
+            let result = await processManager.spawnDetachedAsync(projectInfo.projectID, "buildah", ["images", "-qa", "-f", "reference=" + containerName], {});
             // If output of the above command is not empty, handle it
             if (result.stdout.length !== 0) {
                 await dockerutil.removeImage(projectInfo.projectID, result.stdout.trim());
             }
 
-            result = await processManager.spawnDetachedAsync(projectInfo.projectID, "docker", ["images", "-q", deploymentRegistry + "/" + containerName], {});
+            result = await processManager.spawnDetachedAsync(projectInfo.projectID, "buildah", ["images", "-q", deploymentRegistry + "/" + containerName], {});
             // If output of the above command is not empty, handle it
             if (result.stdout.length !== 0) {
                 await dockerutil.removeImage(projectInfo.projectID, result.stdout.trim());

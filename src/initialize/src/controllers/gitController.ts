@@ -19,9 +19,14 @@ export async function importProjectFromGitRepo(repo: string, name: string, dest:
   if (fs.readdirSync(dest).length > 0) {
     throw new Error('Git clone failed - directory to clone into is not empty');
   }
-  const options = branch ? [ '--branch', branch ] : [];
-  await git(dest).silent(true).clone(repo, dest, options);
-  fs.removeSync(path.join(dest, '.git'));
+
+  try {
+    const options = branch ? [ '--branch', branch ] : [];
+    await git(dest).silent(true).clone(repo, dest, options);
+    fs.removeSync(path.join(dest, '.git'));
+  } catch (error) {
+    throw new Error('Git clone failed - ensure the repository URL is correct');
+  }
 
   await replacePlaceholderNameWithProjectName(dest, name);
 }

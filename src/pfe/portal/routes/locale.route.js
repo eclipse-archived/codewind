@@ -20,7 +20,7 @@ const log = new Logger(__filename);
  */
 router.post('/api/v1/locale', function (req, res) {
   try {
-    let user = req.mc_user;
+    let user = req.cw_user;
     log.debug(`Locale request is ${req.body}`);
     user.setLocale(req.body);
     res.sendStatus(200);

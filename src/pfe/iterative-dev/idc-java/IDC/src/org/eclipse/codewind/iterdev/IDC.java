@@ -435,6 +435,9 @@ public class IDC {
 				if (id == null) {
 					Logger.error(ErrorCode.containerStartFailed.message());
 					System.exit(ErrorCode.containerStartFailed.ordinal());
+				} else if(id == "registryError") {
+					Logger.info("IDC is returning because of failing to push image to invalid Deployment Registry");
+					System.exit(7);
 				}
 			}
 			

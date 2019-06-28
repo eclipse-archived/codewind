@@ -17,14 +17,13 @@ export async function replacePlaceholderNameWithProjectName(projectDir: string, 
   const options = {
     files: path.join(projectDir, '**'),
     from: /\[PROJ_NAME_PLACEHOLDER\]/g,
-    to: projectName,
+    to: sanitizeName(projectName),
     glob: {
       dot: true
     }
   };
 
   const modifiedFiles = await replaceInFile(options);
-
   await replaceFilenameInFiles(projectDir, '[PROJ_NAME_PLACEHOLDER]', projectName);
 }
 
@@ -42,4 +41,12 @@ async function replaceFilenameInFiles(currentPath: string, stringToReplace: stri
       }
     }),
   );
+}
+
+function sanitizeName(name: string){
+  const newName = name.replace(/[^a-zA-Z0-9._-]/g, "");
+  if (newName.length === 0){
+    return 'PROJ_NAME_PLACEHOLDER'
+  }
+  return newName;
 }

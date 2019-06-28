@@ -50,6 +50,8 @@ async function cloneAndBindProject(projectName, projectType) {
     const projectPath = `${workspace}/${projectName}`;
     await cloneProject(templateOptions[projectType].url, projectPath);
     
+    await validate(projectPath);
+    
     const res = await bindProjectWithoutBuilding({
         name: projectName,
         path: projectPath,
@@ -143,6 +145,14 @@ function completeCreationOptions(options = {}) {
     completeOptions.url = templateOptions[options.type].url;
     
     return completeOptions;
+}
+
+async function validate(projectPath) {
+    const res = await reqService.chai
+        .post('/api/v1/validate')
+        .set('cookie', ADMIN_COOKIE)
+        .send({ projectPath });
+    return res;
 }
 
 /**
@@ -360,7 +370,7 @@ async function runLoad(projectID, description) {
 
 async function cancelLoad(projectID) {
     const res = await reqService.chai
-        .post(`/api/v1/projects/${projectID}/cancelLoad`)
+        .post(`/api/v1/projects/${projectID}/loadtest/cancel`)
         .set('Cookie', ADMIN_COOKIE);
     return res;
 }
@@ -430,6 +440,7 @@ module.exports = {
     cancelLoad,
     getLogStreams,
     startLogStreams,
+    validate,
     bindProject,
     unbindProject,
     deleteProjectDir,

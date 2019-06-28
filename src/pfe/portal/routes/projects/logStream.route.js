@@ -37,7 +37,7 @@ router.post('/api/v1/projects/:id/logs', validateReq, (req, res) => startStreami
 async function startStreamingAll(req, res, startStreams) {
   let projectID = req.sanitizeParams('id');
   try {
-    let user = req.mc_user;
+    let user = req.cw_user;
     let project = user.projectList.retrieveProject(projectID);
     if (project) {
       let logs = await user.getProjectLogs(project);
@@ -87,7 +87,7 @@ async function startStreamingAll(req, res, startStreams) {
 router.delete('/api/v1/projects/:id/logs', validateReq, function stopStreamingAll(req, res) {
   let projectID = req.sanitizeParams('id');
   try {
-    let user = req.mc_user;
+    let user = req.cw_user;
     let project = user.projectList.retrieveProject(projectID);
     if (project) {
       // Ask the project to stop streaming all logs.
@@ -117,7 +117,7 @@ router.post('/api/v1/projects/:id/logs/:type/:name', validateReq, async function
   try {
     let logFile;
     let logOrigin;
-    let user = req.mc_user;
+    let user = req.cw_user;
     let project = user.projectList.retrieveProject(projectID);
     if (project) {
       if (logName == CONTAINER_LOG_NAME && logType == CONTAINER_LOG_TYPE) {
@@ -168,7 +168,7 @@ router.delete('/api/v1/projects/:id/logs/:type/:name', validateReq, function sto
   let logType = req.sanitizeParams('type');
   let logName = req.sanitizeParams('name');
   try {
-    let user = req.mc_user;
+    let user = req.cw_user;
     let project = user.projectList.retrieveProject(projectID);
     if (project) {
       project.stopStreamingLog(logType, logName);

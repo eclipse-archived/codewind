@@ -20,7 +20,7 @@ const log = new Logger(__filename);
  * @return JSON array with the list of supported project types
  */
 router.get('/api/v1/project-types', async (req, res) => {
-  const user = req.mc_user;
+  const user = req.cw_user;
   try {
     const validProjectTypes = await user.projectTypes();
     res.status(200).send(validProjectTypes);

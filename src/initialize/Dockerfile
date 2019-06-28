@@ -1,4 +1,5 @@
 FROM node:current-alpine
+ENV GIT_TERMINAL_PROMPT 0
 RUN apk update && apk upgrade && \
     apk add --no-cache git
 COPY ./package.json /app/package.json
@@ -8,4 +9,4 @@ RUN npm ci
 COPY ./ /app
 RUN npm run build && \
     rm -rf src
-CMD node -e 'require("./out/run-docker.js").run()'
+CMD node out/main.js

@@ -11,7 +11,7 @@
 const chai = require('chai');
 
 const projectService = require('../../modules/project.service');
-const { USING_K8S, testTimeout }= require('../../config');
+const { USING_K8S, testTimeout } = require('../../config');
 
 chai.should();
 
@@ -29,7 +29,7 @@ function intervalFunction() {
     }
 }
 
-// Only run restart tests in local docker (file watcher does not support project restart/debug in ICP)
+// Only run restart tests in local docker (file watcher does not support project restart/debug in kubernetes)
 if (!USING_K8S) describe.skip('Restart Project Tests', function() {
     describe('POST /projects/{id}/restart', function() {
         const restartModes = {
@@ -82,7 +82,7 @@ if (!USING_K8S) describe.skip('Restart Project Tests', function() {
 
         describe('Failure cases', function() {
             describe('400 Invalid Request', function() {
-                describe.skip('', function() { // TODO find out why this incorrectly returns 202 instead of 400. MC behaves correctly in manual tests though
+                describe.skip('', function() { // TODO find out why this incorrectly returns 202 instead of 400. Codewind behaves correctly in manual tests though
                     it('should fail to restart when project is not running', async function() {
                         this.timeout(testTimeout.short);
                         const projectID = projectIDs.restarting[0];

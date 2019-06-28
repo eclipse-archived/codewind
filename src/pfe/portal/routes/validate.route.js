@@ -29,8 +29,9 @@ const log = new Logger(__filename);
 
 router.post('/api/v1/validate', validateReq, async function (req, res) {
   try {
+    const user = req.cw_user;
     const projectPath = req.sanitizeBody('projectPath');
-    const projectInfo = await projectInitializer.initializeProjectFromLocalDir(projectPath);
+    const projectInfo = await projectInitializer.initializeProjectFromLocalDir(user, projectPath);
     res.status(200).send(projectInfo);
   } catch (err) {
     log.error(err);

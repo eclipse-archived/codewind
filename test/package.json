@@ -1,14 +1,14 @@
 {
   "name": "codewind-test",
   "version": "1.0.0",
-  "description": "Test material for microclimate",
+  "description": "Test material for Codewind",
   "main": "index.js",
   "scripts": {
     "test": "scripts/mocha.sh",
     "eslint": "eslint src/**/*.js"
   },
   "bin": {
-    "test-microclimate": "scripts/mocha.sh"
+    "test-codewind": "scripts/mocha.sh"
   },
   "author": "",
   "license": "ISC",

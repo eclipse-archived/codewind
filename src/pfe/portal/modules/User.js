@@ -18,7 +18,7 @@ const LoadRunner = require('./LoadRunner');
 const Project = require('./Project');
 const ExtensionList = require('./ExtensionList');
 const Templates = require('./Templates');
-const mcUtils = require('./utils/sharedFunctions');
+const cwUtils = require('./utils/sharedFunctions');
 const Logger = require('./utils/Logger');
 const LoadRunError = require('./utils/errors/LoadRunError.js');
 const FilewatcherError = require('./utils/errors/FilewatcherError');
@@ -136,7 +136,7 @@ module.exports = class User {
       let cancelLoadResp = await this.loadRunner.cancelRunLoad(project.loadConfig);
       this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID,  status: 'cancelled' });
       return cancelLoadResp;
-    } 
+    }
     throw new LoadRunError("NO_RUN_IN_PROGRESS", `For project ${project.projectID}`);
   }
 
@@ -203,8 +203,10 @@ module.exports = class User {
           }
           const project = {};
           const projName = projFile.name;
-          const pathToMonitor = path.join(projFile.workspace, projName);
-          project.pathToMonitor = pathToMonitor;
+          project.pathToMonitor = path.join(projFile.workspace, projFile.directory);
+          if (process.env.HOST_OS === "windows") {
+            project.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(project.pathToMonitor);
+          }
           project.projectID = projFile.projectID;
           project.ignoredPaths = projFile.ignoredPaths;
           if( projFile.projectWatchStateId == undefined) {
@@ -228,7 +230,10 @@ module.exports = class User {
     } ));
     if (this.workspaceSettingObject == undefined) {
       const workspaceSettingObj = {};
-      workspaceSettingObj.pathToMonitor =  path.join(process.env.HOST_WORKSPACE_DIRECTORY, '/.config');
+      workspaceSettingObj.pathToMonitor  = path.join(process.env.HOST_WORKSPACE_DIRECTORY, '/.config');
+      if (process.env.HOST_OS === "windows") {
+        workspaceSettingObj.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(workspaceSettingObj.pathToMonitor );
+      }
       workspaceSettingObj.projectID = crypto.randomBytes(16).toString("hex");
       workspaceSettingObj.ignoredPaths = [];
       workspaceSettingObj.projectWatchStateId = crypto.randomBytes(16).toString("hex");
@@ -287,7 +292,7 @@ module.exports = class User {
   /**
    * Function to create and add project to the projectList
    * as well as saving it's .inf file so it is present when
-   * microclimate restarts.
+   * codewind restarts.
    * Throws an error if the project already exists
    * @param projectJson, the project to add to the projectList
    */
@@ -452,6 +457,8 @@ module.exports = class User {
       projectID: projectID,
       status: 'success'
     };
+    // Stop streaming the logs files.
+    project.stopStreamingAllLogs();
     // If the project is closed or validating or of unknown language
     // don't check with filewatcher, just delete it
     if (project.isClosed() || project.isValidating()) {
@@ -494,7 +501,7 @@ module.exports = class User {
             state: Project.STATES.closed
           }
           // Set the container key to '' as the container has stopped.
-          const containerKey = (global.microclimate.RUNNING_IN_K8S ? 'podName' : 'containerId');
+          const containerKey = (global.codewind.RUNNING_IN_K8S ? 'podName' : 'containerId');
           projectUpdate[containerKey] = '';
           let updatedProject = await this.user.projectList.updateProject(projectUpdate);
           this.user.uiSocket.emit('projectClosed', {...updatedProject, status: 'success'});
@@ -531,21 +538,13 @@ module.exports = class User {
 
 
   /**
-   * Function to obtain the list of supported project types
-   * from the file-watcher.
+   * Function to obtain the list of supported project types. We get the built-in set
+   * from the file-watcher then add extension project types if any
    * @return the list of project types or undefined.
    */
   async projectTypes() {
-    return this.fw.projectTypes();
-  }
-
-  /**
-   * Function to obtain the type, or possible types of a project
-   * from the file-watcher.
-   * @return the list of project types or undefined.
-   */
-  identifyProjectType(project) {
-    return this.fw.identifyProjectType(project)
+    let projectTypes = await this.fw.projectTypes();
+    return projectTypes.concat(this.extensionList.getProjectTypes());
   }
 
   /**
@@ -573,7 +572,7 @@ module.exports = class User {
     } else if (tries === 0) {
       return false;
     }
-    await mcUtils.timeout(500);
+    await cwUtils.timeout(500);
     return this.checkIfFileWatcherUp(tries - 1);
   }
 
@@ -585,10 +584,20 @@ module.exports = class User {
     let contents;
     let isDeploymentRegistrySet = false;
     log.info(`Checking PFE & workspace settings deployment registry`);
-    
+
     if (await fs.pathExists(workspaceSettingsFile)) {
-      contents = await fs.readJson(workspaceSettingsFile);
-      log.debug(`Workspace settings contents: ` + JSON.stringify(contents));
+      try {
+        contents = await fs.readJson(workspaceSettingsFile);
+        log.debug(`Workspace settings contents: ` + JSON.stringify(contents));
+      } catch (err) {
+        log.error("Error reading file " + workspaceSettingsFile);
+        log.error(err);
+        const workspaceSettings = {
+          statusCode: 500,
+          deploymentRegistry: false
+        }
+        return workspaceSettings;
+      }
     }
 
     if (contents && contents.deploymentRegistry && contents.deploymentRegistry.length > 0) {
@@ -603,12 +612,36 @@ module.exports = class User {
       await this.readWorkspaceSettings();
     }
 
-    let data = {
-      deploymentRegistry: isDeploymentRegistrySet
-    };
-    this.uiSocket.emit('workspaceSettings', data);
-  }
+    let workspaceSettingsFileWatchCtr = 0;
 
+    const retval = await new Promise((resolve) => {
+      const intervaltimer = setInterval(() => {
+        // wait till the watch has been established on the workspace settings file
+        workspaceSettingsFileWatchCtr++;
+        log.debug(`Checking if workspace settings file is being watched`);
+        if (this.workspaceSettingsFileWatchEstablished) {
+          log.info(`Watch had already been established for the workspace settings file`);
+          clearInterval(intervaltimer);
+          const workspaceSettings = {
+            statusCode: 200,
+            deploymentRegistry: isDeploymentRegistrySet
+          }
+          return resolve(workspaceSettings);
+        }
+        if (workspaceSettingsFileWatchCtr == 20) {
+          log.info(`Could not determine if watch for the workspace settings file had been established`);
+          clearInterval(intervaltimer);
+          const workspaceSettings = {
+            statusCode: 500,
+            deploymentRegistry: false
+          }
+          return resolve(workspaceSettings);
+        }
+      }, 1000);
+    });
+
+    return retval;
+  }
   /**
    * Function to read workspace settings
    */
@@ -626,12 +659,14 @@ module.exports = class User {
    * Function to get test deployment registry
    */
   async testDeploymentRegistry(deploymentRegistry) {
+    let retval;
     try{
-      await this.fw.testDeploymentRegistry(deploymentRegistry);
+      retval = await this.fw.testDeploymentRegistry(deploymentRegistry);
     } catch (err) {
       log.error(`Error in testDeploymentRegistry`);
       log.error(err);
     }
+    return retval;
   }
 
   /**

@@ -14,7 +14,7 @@ const { join } = require('path');
 const uuidv1 = require('uuid/v1');
 const deepEqual = require('deep-equal');
 
-const mcUtils = require('./utils/sharedFunctions');
+const cwUtils = require('./utils/sharedFunctions');
 const metricsStatusChecker = require('./utils/metricsStatusChecker');
 const ProjectError = require('./utils/errors/ProjectError');
 const ProjectMetricsError = require('./utils/errors/ProjectMetricsError');
@@ -36,8 +36,8 @@ const STATES = {
 
 const METRIC_TYPES = ['cpu', 'gc', 'memory', 'http']
 
-const MC_SETTINGS_PROPERTIES = [
-  "contextRoot", "internalAppPort", "internalDebugPort",
+const CW_SETTINGS_PROPERTIES = [
+  "contextRoot", "internalPort", "internalDebugPort",
   "healthCheck", "watchedFiles", "mavenProfiles", "mavenProperties"
 ];
 
@@ -52,7 +52,7 @@ module.exports = class Project {
     // TODO evaluate use of just .id instead of .projectID
     this.projectID = args.projectID || uuidv1();
     this.name = args.name;
-    this.microclimateVersion = args.microclimateVersion || process.env.MICROCLIMATE_VERSION;
+    this.codewindVersion = args.codewindVersion || process.env.CODEWIND_VERSION;
     this.language = args.language;
     this.validate = args.validate;
 
@@ -61,6 +61,7 @@ module.exports = class Project {
     if (args.services) this.services = args.services;
     if (args.gitURL) this.gitURL = args.gitURL;
     if (args.validate) this.validate = args.validate;
+    if (args.extension) this.extension = args.extension;
 
     // Project status information
     this.host = args.host || '';
@@ -68,13 +69,13 @@ module.exports = class Project {
     this.applicationPort = args.applicationPort || '';
 
     // workspace is the parent directory of the project
-    // NOT the global.microclimate.CODEWIND_WORKSPACE we store
+    // NOT the global.codewind.CODEWIND_WORKSPACE we store
     // project.inf and log files in.
     this.workspace = args.workspace || workspace;
     this.directory = args.directory || this.name;
     this.infLockFlag = false;
     // locOnDisk is used by the UI and needs to match what it sees.
-    this.locOnDisk = `${global.microclimate.CODEWIND_WORKSPACE}${this.directory}`;
+    this.locOnDisk = `${global.codewind.CODEWIND_WORKSPACE}${this.directory}`;
     this.loadTestPath = join(workspace, this.name, 'load-test');
 
     if (this.language === 'java') {
@@ -100,9 +101,9 @@ module.exports = class Project {
     this.toSettings = function() {
       // clone object to prevent accidental modification
       let obj = {};
-      MC_SETTINGS_PROPERTIES.forEach(function addSettingsProperty(propertyName) {
-        if (propertyName === 'internalAppPort') {
-          obj.internalAppPort = this.ports.internalPort || "";
+      CW_SETTINGS_PROPERTIES.forEach(function addSettingsProperty(propertyName) {
+        if (propertyName === 'internalPort') {
+          obj.internalPort = this.ports.internalPort || "";
         } else if (this.hasOwnProperty(propertyName)) {
           obj[propertyName] = this[propertyName];
         } else if (this.isValidSettingType(propertyName)) {
@@ -122,7 +123,7 @@ module.exports = class Project {
   }
 
   // for any non-java project, or for a java project built with docker, we do not include "maven properties or "maven profiles" in the
-  // MC Settings file defaults.
+  // CW Settings file defaults.
   isValidSettingType(property){
     if ((this.language !== 'java' || this.projectType === "docker") && property.includes("maven")) {
       return false;
@@ -144,7 +145,7 @@ module.exports = class Project {
 
   getPort() {
     let port = this.ports.exposedPort;
-    if (!global.microclimate.RUNNING_IN_K8S) {
+    if (!global.codewind.RUNNING_IN_K8S) {
       port = this.ports.internalPort;
     }
     return port;
@@ -214,7 +215,7 @@ module.exports = class Project {
    * @return this, the project object
    */
   async writeInformationFile() {
-    let infFileDirectory = join(global.microclimate.CODEWIND_WORKSPACE, '/.projects');
+    let infFileDirectory = join(global.codewind.CODEWIND_WORKSPACE, '/.projects');
     let infFile = join(infFileDirectory, `${this.projectID}.inf`);
 
     await fs.ensureDir(infFileDirectory);
@@ -235,7 +236,7 @@ module.exports = class Project {
         break;
       } else {
         // Wait as short a time as possible.
-        await mcUtils.timeout(1);
+        await cwUtils.timeout(1);
       }
     }
     if (!haveLock) {
@@ -243,8 +244,8 @@ module.exports = class Project {
     }
     try {
       // const currentSettings = await this.readSettingsFile();
-      // if (currentSettings.internalAppPort && currentSettings.internalAppPort != this.ports.internalPort) {
-      //   if (this.ports) this.ports.internalPort = currentSettings.internalAppPort;
+      // if (currentSettings.internalPort && currentSettings.internalPort != this.ports.internalPort) {
+      //   if (this.ports) this.ports.internalPort = currentSettings.internalPort;
       // }
       await fs.writeJson(infFile, this, { spaces: '  ' });
       // await this.updateSettingsFileIfNeeded(currentSettings);
@@ -282,7 +283,7 @@ module.exports = class Project {
     }
     // buildLogPath is the single user path the file-watcher sees, we need to
     // fix it for multi-user environments where portal sees all users.
-    return this.buildLogPath.replace('/codewind-workspace/', global.microclimate.CODEWIND_WORKSPACE);
+    return this.buildLogPath.replace('/codewind-workspace/', global.codewind.CODEWIND_WORKSPACE);
   }
 
   /**
@@ -351,8 +352,35 @@ module.exports = class Project {
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
    */
   async deleteMetrics(timeOfTestRun) {
-    const pathToLoadTestDir = await this.getPathToLoadTestDir(timeOfTestRun);
+    let pathToLoadTestDir = null;
+    try {
+      pathToLoadTestDir = await this.getPathToLoadTestDir(timeOfTestRun);
+    } catch (err) {
+      pathToLoadTestDir = await this.getClosestPathToLoadTestDir(timeOfTestRun);
+    }
     await fs.remove(pathToLoadTestDir);
+  }
+
+  /**
+   * Get the folder name closest to the supplied timeOfTestRun. Required since there may be a delay
+   * between when the collection folder was created and the start timestamp of the metrics.
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  async getClosestPathToLoadTestDir(timeOfTestRun) {
+    log.trace(`[getPathToClosestLoadTestDir] timeOfTestRun=${timeOfTestRun}`);
+    const loadTestDirs = await getLoadTestDirs(this.loadTestPath);
+    const intTimeOfTestRun = parseInt(timeOfTestRun);
+    let closestDirectory;
+    loadTestDirs.forEach(testDirectory => {
+      const intDirectory = parseInt(testDirectory);
+      if (!isNaN(intDirectory) && intDirectory <= intTimeOfTestRun) {
+        closestDirectory = intDirectory;
+      }
+    });
+    if (closestDirectory) {
+      return join(this.loadTestPath, `${closestDirectory}`);
+    }
+    throw new ProjectMetricsError('NOT_FOUND', this.projectID, `found no load-test metrics from time ${timeOfTestRun}`)
   }
 
   /**
@@ -363,7 +391,7 @@ module.exports = class Project {
     const loadTestDirs = await getLoadTestDirs(this.loadTestPath);
     const loadTestDir = loadTestDirs.find(dirname => dirname === timeOfTestRun);
     if (!loadTestDir) {
-      throw new ProjectMetricsError('NOT_FOUND', this.projectID, `found no load-test metrics from time ${timeOfTestRun}`)
+      throw new ProjectMetricsError('NOT_FOUND', this.projectID, `found no exact match load-test metrics from time ${timeOfTestRun}`)
     }
     const pathToLoadTestDir = join(this.loadTestPath, loadTestDir);
     return pathToLoadTestDir;
@@ -373,7 +401,12 @@ module.exports = class Project {
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
    */
   async getPathToMetricsFile(timeOfTestRun) {
-    const pathToLoadTestDir = await this.getPathToLoadTestDir(timeOfTestRun);
+    let pathToLoadTestDir;
+    try {
+      pathToLoadTestDir = await this.getPathToLoadTestDir(timeOfTestRun);
+    } catch (err) {
+      pathToLoadTestDir = await this.getClosestPathToLoadTestDir(timeOfTestRun);
+    }
     const pathToMetricsJson = join(pathToLoadTestDir, 'metrics.json');
     return pathToMetricsJson;
   }
@@ -676,4 +709,4 @@ function setDefaultSettingValue(property) {
 
 // Make the states enum accessible from the Projects class.
 module.exports.STATES = STATES;
-module.exports.MC_SETTINGS_PROPERTIES = MC_SETTINGS_PROPERTIES;
+module.exports.CW_SETTINGS_PROPERTIES = CW_SETTINGS_PROPERTIES;

@@ -125,26 +125,44 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
             // timerLock release
         }, {});
 
+        const eventArrayLength = eventArray.length;
+        let isSettingFileChanged = false;
+        let isProjectBuildRequired = false;
+
         try {
-            eventArray.forEach( async element => {
-                if (element.path && element.path.includes(".cw-settings")) {
+            for (let i = 0; i < eventArrayLength; i++) {
+                if (isSettingFileChanged && isProjectBuildRequired) {
+                    // Once we have all the necessary flags, dont process any more events
+                    break;
+                }
+                if (eventArray[i].path && eventArray[i].path.includes(".cw-settings") && !isSettingFileChanged) {
+                    isSettingFileChanged = true;
                     logger.logProjectInfo("cw-settings file changed.", projectID);
                     const settingsFilePath = path.join(projectInfo.location, ".cw-settings");
                     const data = await readFileAsync(settingsFilePath, "utf8");
                     const projectSettings = JSON.parse(data);
                     projectSpecifications.projectSpecificationHandler(projectID, projectSettings);
-                    // to break out of foreach loop
-                    throw new Error("break out");
+                } else if (eventArray[i].path && !eventArray[i].path.includes(".cw-settings")) {
+                    logger.logProjectInfo("Detected other file changes, Codewind will build the project", projectID);
+                    isProjectBuildRequired = true;
                 }
-            });
+            }
         } catch (err) {
-            // out of forEach, do nothing
+            // Log the error and Codewind will proceed to re-build the project
+            isProjectBuildRequired = true;
+            const msg = "Codewind was unable to determine if the .cw-settings file changed or a project build was required. Project will re-build.";
+            logger.logProjectError(msg, projectID);
+            logger.logProjectError(JSON.stringify(err), projectID);
         }
 
-        if (eventArray.length == 1 && eventArray[0].path && eventArray[0].path.includes(".cw-settings")) {
+        if (!isProjectBuildRequired) {
             // .cw-settings file is the only changed file. return succeed status
+            logger.logProjectInfo("Only .cw-settings file change detected. Project will not re-build.", projectID);
             return { "statusCode": 202 };
         }
+
+        logger.logProjectInfo("File change detected. Project will re-build.", projectID);
+
         await lock.acquire("changedFilesLock", done => {
             const oldChangedFiles: IFileChangeEvent[] = changedFilesMap.get(projectID);
             const newChangedFiles: IFileChangeEvent[] = oldChangedFiles ? oldChangedFiles.concat(eventArray) : eventArray;

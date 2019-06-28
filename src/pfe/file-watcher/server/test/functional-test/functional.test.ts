@@ -14,6 +14,7 @@ import * as utils from "./lib/utils";
 // set all the test environmental variables
 utils.setTestEnvVariables();
 import * as app_configs from "./configs/app.config";
+import * as git_configs from "./configs/github.config";
 import { localeTestSuite } from "./tests/locale.test";
 import { createTestSuite } from "./tests/create.test";
 
@@ -32,9 +33,15 @@ describe("Functional Test Suite", () => {
     });
   });
 
-  before("copy fixtures to workspace", (done) => {
-    utils.copyFixtures(done);
-  });
+  for (const chosenType of projectTypes) {
+    if (chosenType === "docker") {
+      for (const chosenDocker of dockerProjects) {
+        cloneProject(chosenType, chosenDocker);
+      }
+    } else {
+      cloneProject(chosenType);
+    }
+  }
 
   before("set up test resources", () => {
     utils.createFWDataDir();
@@ -75,6 +82,15 @@ describe("Functional Test Suite", () => {
       describe("project creation", () => {
         createTestSuite(projData);
       });
+    });
+  }
+
+  function cloneProject(projType: string, dockerType?: string): void {
+    const projectType = dockerType ? dockerType : projType;
+    before(`clone ${projectType} project to workspace`, function (done: any): void {
+      this.timeout(10000);
+      console.log(`Cloning project type: ${projectType}`);
+      utils.cloneProject(app_configs.projectPrefix + projectType, app_configs.microclimateWorkspaceDir, git_configs.repoTemplates[projectType], done);
     });
   }
 });

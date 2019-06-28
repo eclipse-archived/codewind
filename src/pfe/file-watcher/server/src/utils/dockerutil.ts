@@ -18,7 +18,7 @@ import { ProcessResult } from "./processManager";
 import * as logger from "./logger";
 import { ContainerStates } from "../projects/constants";
 import { Stream } from "stream";
-import { ProjectInfo } from "../projects/Project";
+import { BuildRequest, ProjectInfo } from "../projects/Project";
 import { StartModes } from "../projects/constants";
 import * as logHelper from "../projects/logHelper";
 import * as workspaceSettings from "./workspaceSettings";
@@ -34,6 +34,7 @@ export interface ContainerInfo {
   exposedDebugPort: string;
   internalDebugPort: string;
   containerPorts: string[];
+  hostPorts: string[];
 }
 
 /**
@@ -54,7 +55,8 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, cont
     internalPort: "",
     exposedDebugPort: "",
     internalDebugPort: "",
-    containerPorts: []
+    containerPorts: [],
+    hostPorts: []
   };
 
   try {
@@ -139,8 +141,13 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, cont
           // Loop through to get a list of all the exposed container ports
           for (let i = 0; i < keys.length; i++) {
             const key = keys[i];
-            const port = key.split("/")[0];
-            info.containerPorts.push(port);
+            const containerPort = key.split("/")[0];
+            info.containerPorts.push(containerPort);
+            let hostPort = "";
+            if (portObject[key][0]) {
+              hostPort = portObject[key][0].HostPort;
+            }
+            info.hostPorts.push(hostPort);
           }
 
           // log internalPorts and exposedPorts
@@ -153,11 +160,12 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, cont
 
           // log all the exposed container ports
           logger.logProjectInfo("All the exposed container ports: " + JSON.stringify(info.containerPorts), projectInfo.projectID, projectInfo.projectName);
+          logger.logProjectInfo("All the host ports: " + JSON.stringify(info.hostPorts), projectInfo.projectID, projectInfo.projectName);
         }
       }
     }
   } catch (err) {
-    logger.logProjectError(err, projectInfo.projectID);
+    logger.logProjectError(`Failed to retrieve container information: ${err}`, projectInfo.projectID);
   }
   return info;
 }
@@ -373,7 +381,16 @@ const containerExec = function (options: any, container: any, projectID: string)
  * @returns Promise<ProcessResult>
  */
 export async function buildImage(projectID: string, imageName: string, buildOptions: string[], pathOrURL: string, liveStream?: boolean, logFile?: string): Promise<ProcessResult> {
-  const args: string[] = ["build", "--label", "builtBy=microclimate", "-t", imageName]; // initial arguments
+  // Construct the build command
+  const args: string[] = [];
+  if (process.env.IN_K8) {
+    args[0] = "bud";
+  }
+  else {
+    args[0] = "build";
+  }
+  args.push("--label", "builtBy=codewind", "-t", imageName);
+
   for (let i = 0; i < buildOptions.length; i++) {
     args.push(buildOptions[i]);
   }
@@ -385,7 +402,12 @@ export async function buildImage(projectID: string, imageName: string, buildOpti
   } else {
     try {
       args.push(pathOrURL); // final argument is the docker file path or a URL
-      return await runDockerCommand(projectID, args);
+      if (process.env.IN_K8) {
+        return await runBuildahCommand(projectID, args);
+      }
+      else {
+        return await runDockerCommand(projectID, args);
+      }
     } catch (err) {
       throw err;
     }
@@ -401,13 +423,30 @@ export async function buildImage(projectID: string, imageName: string, buildOpti
  *
  * @returns Promise<ProcessResult>
  */
-export async function runContainer(projectID: string, containerName: string): Promise<ProcessResult> {
-  const args: string[] = ["run", "--label", "builtBy=microclimate", "--name", containerName, "--network=codewind_network", "-P", "-dt", containerName]; // initial arguments
+export async function runContainer(buildInfo: BuildRequest, containerName: string): Promise<ProcessResult> {
+  // Default to -P to allow docker to assign ports for the first time
+  let portArgs = ["-P"];
+
+  // If there are existing ports, reuse them
+  if (buildInfo.containerPorts && buildInfo.containerPorts.length > 0 && buildInfo.containerPorts.length === buildInfo.hostPorts.length) {
+    portArgs = [];
+    for (let i = 0; i < buildInfo.containerPorts.length; i++) {
+      if (buildInfo.hostPorts[i] !== "") {
+        portArgs.push("-p");
+        portArgs.push(`127.0.0.1:${buildInfo.hostPorts[i]}:${buildInfo.containerPorts[i]}`);
+      }
+    }
+  }
+
+  const args: string[] = ["run", "--label", "builtBy=microclimate", "--name", containerName, "--network=codewind_network"];
+  args.push(...portArgs);
+  args.push("-dt");
+  args.push(containerName);
   try {
-    logger.logProjectInfo("Run docker container", projectID);
-    return await runDockerCommand(projectID, args);
+    logger.logProjectInfo("Run docker container", buildInfo.projectID);
+    return await runDockerCommand(buildInfo.projectID, args);
   } catch (err) {
-    logger.logProjectError("Error running container", projectID);
+    logger.logProjectError("Error running container", buildInfo.projectID);
     throw err;
   }
 }
@@ -427,8 +466,14 @@ export async function removeContainer(projectID: string, containerName: string):
 
   // Remove container
   try {
-    logger.logProjectInfo("Removing docker container", projectID);
-    response = await runDockerCommand(projectID, rm);
+    logger.logProjectInfo("Removing container", projectID);
+    if (process.env.IN_K8) {
+      response = await runBuildahCommand(projectID, rm);
+    }
+    else {
+      response = await runDockerCommand(projectID, rm);
+    }
+
   } catch (err) {
     logger.logProjectError("Error removing container", projectID);
     logger.logProjectError(err, projectID);
@@ -462,7 +507,13 @@ export async function removeImage(projectID: string, containerName: string): Pro
   // Remove image
   try {
     logger.logProjectInfo("Removing docker image", projectID);
-    response = await runDockerCommand(projectID, rmi);
+    if (process.env.IN_K8) {
+      response = await runBuildahCommand(projectID, rmi);
+    }
+    else {
+      response = await runDockerCommand(projectID, rmi);
+    }
+
   } catch (err) {
     logger.logProjectError("Error removing image", projectID);
     logger.logProjectError(err, projectID);
@@ -480,25 +531,17 @@ export async function removeImage(projectID: string, containerName: string): Pro
  *
  * @returns Promise<ProcessResult>
  */
+
 export async function tagAndPushImage(projectID: string, imageName: string, deploymentRegistry: string): Promise<ProcessResult> {
   const tag: string[] = ["tag", imageName, deploymentRegistry + "/" + imageName];
-  const push: string[] = ["push", deploymentRegistry + "/" + imageName];
-  let response: ProcessResult;
 
-  // Tag Image
-  try {
-    logger.logProjectInfo("Tagging docker image with registry: " + deploymentRegistry, projectID);
-    response = await runDockerCommand(projectID, tag);
-  } catch (err) {
-    logger.logProjectError("Error tagging image", projectID);
-    logger.logProjectError(err, projectID);
-    throw err;
-  }
+  const push: string[] = ["push", "--tls-verify=false", imageName, deploymentRegistry + "/" + imageName];
+  let response: ProcessResult;
 
   // Push image
   try {
-    logger.logProjectInfo("Pushing docker image", projectID);
-    response = await runDockerCommand(projectID, push);
+    logger.logProjectInfo("Pushing image", projectID);
+    response = await runBuildahCommand(projectID, push);
   } catch (err) {
     logger.logProjectError("Error pushing image", projectID);
     logger.logProjectError(err, projectID);
@@ -516,14 +559,18 @@ export async function tagAndPushImage(projectID: string, imageName: string, depl
  */
 export async function removeDanglingImages(): Promise<void> {
   // remove any dangling images
-  const dangling_cmd = "docker images --filter=\"dangling=true\" -q";
+  let image_cmd = "docker";
+  if (process.env.IN_K8) {
+    image_cmd = "buildah";
+  }
+  const dangling_cmd = image_cmd + " images --filter=\"dangling=true\" -q";
   exec(dangling_cmd, (err, stdout) => {
     // if there is an internal error with the command
     if (err) {
       logger.logFileWatcherError("An error was encountered while searching for dangling images.");
       logger.logFileWatcherError(err.message);
     } else if (stdout) { // if the dangling command returned list of dangling images
-      exec("docker rmi -f $(" + dangling_cmd + ")", (err) => {
+      exec( image_cmd + " rmi -f $(" + dangling_cmd + ")", (err) => {
         if (err) {
           logger.logFileWatcherError("An error was encountered while deleting dangling images.");
           logger.logFileWatcherError(err.message);
@@ -550,6 +597,24 @@ async function runDockerCommand(projectID: string, args: string[]): Promise<Proc
   try {
     logger.logProjectInfo("Run docker command: docker " + args, projectID);
     return await processManager.spawnDetachedAsync(projectID, "docker", args, {});
+  } catch (err) {
+    throw err;
+  }
+}
+
+/**
+ * @function
+ * @description Run a buildah command.
+ *
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param args <Required | String[]> - The list of args to pass to the command.
+ *
+ * @returns Promise<ProcessResult>
+ */
+async function runBuildahCommand(projectID: string, args: string[]): Promise<ProcessResult> {
+  try {
+    logger.logProjectInfo("Run buildah command: buildah " + args, projectID);
+    return await processManager.spawnDetachedAsync(projectID, "buildah", args, {});
   } catch (err) {
     throw err;
   }

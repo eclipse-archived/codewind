@@ -209,10 +209,10 @@ describe('Project Metrics tests', function() {
                 });
 
 
-                describe('with a testRunTime param that matches no load-test results', function() {
+                describe('with a testRunTime param that matches no load-test results or has a closest neighbor', function() {
                     it('returns 404 and an informative error message', async function() {
                         this.timeout(testTimeout.short);
-                        const timeOfNonExistentLoadTest = '1234567891234';
+                        const timeOfNonExistentLoadTest = '20150101000000';
                         const res = await deleteProjectMetrics(projectID, timeOfNonExistentLoadTest);
                         res.should.have.status(404);
                         res.body.message.should.include(`Unable to find metrics for project ${projectID}`);
@@ -230,7 +230,7 @@ describe('Project Metrics tests', function() {
                     });
                 });
 
-                describe('with a testRunTime param that matches some load-test results', function() {
+                describe('with a testRunTime param that exactly matches a load-test result directory', function() {
                     it('returns 200, and then we can get all the original metrics except for the one we deleted', async function() {
                         this.timeout(testTimeout.short);
 
@@ -258,6 +258,27 @@ describe('Project Metrics tests', function() {
                             }
                         }
                     }
+                });
+
+                describe('with a testRunTime param that does not match a directory name exactly but is able to delete the closest neighbor', function() {
+                    it('returns 200 and checks the expected directory was removed', async function() {
+                        this.timeout(testTimeout.short);
+                        const timeOfNonExistentLoadTest = '20190326155249';
+                        const res = await deleteProjectMetrics(projectID, timeOfNonExistentLoadTest);
+                        res.should.have.status(200);
+                        // check that the directory was removed
+                        const expectedRemovedDirectory = '20190326155248';
+                        let deleteSuccess = false;
+                        try {
+                            fs.statSync(path.join(projectLoadTestPath, expectedRemovedDirectory));
+                        }
+                        catch (err) {
+                            if (err.code === 'ENOENT') {
+                                deleteSuccess = true;
+                            }
+                        }
+                        deleteSuccess.should.equal(true);
+                    });
                 });
             });
 
@@ -287,7 +308,7 @@ describe('Project Metrics tests', function() {
                 res.should.have.status(200);
 
                 // copy the project's load-test dir to a temp dir to compare them in this test
-                const tmpDir = '/tmp/microclimate-test-metrics/';
+                const tmpDir = '/tmp/codewind-test-metrics/';
                 const localLoadTestPath = path.join(tmpDir, 'load-test');
                 await fs.emptyDir(tmpDir);
                 const _path = USING_K8S ? localLoadTestPath : tmpDir; // kubectl and docker cp commands handle directories differently

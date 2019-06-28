@@ -22,7 +22,7 @@ const log = new Logger(__filename);
  */
 router.get('/api/v1/projects/:id/capabilities', async (req, res) => {
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const projectID = req.sanitizeParams('id');
     const project = user.projectList.retrieveProject(projectID);
     if (project) {

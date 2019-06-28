@@ -53,6 +53,17 @@ export interface BuildLog {
     files: string[];
 }
 
+export interface BuildRequest {
+    projectLocation: string;
+    LOCAL_WORKSPACE: string;
+    projectID: string;
+    containerName: string;
+    autoBuildEnabled: boolean;
+    logName: string;
+    containerPorts: string[];
+    hostPorts: string[];
+}
+
 export interface UpdateProjectInfoPair {
     key: string;
     value: any;

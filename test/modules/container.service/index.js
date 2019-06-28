@@ -30,14 +30,14 @@ const { EXEC_COMMAND, COPY_FROM_COMMAND, COPY_TO_COMMAND } = helperService.getCo
 const sleep = promisify(setTimeout);
 
 const execContainer = async(command, env) => {
-  let envVariables = ' ';
-  if (env) {
-    envVariables = 'env ';
-    Object.keys(env).forEach(key => {
-      envVariables += `${key}=${env[key]} `;
-    });
-  }
-  await exec(`${EXEC_COMMAND} ${envVariables} ${command}`);
+    let envVariables = ' ';
+    if (env) {
+        envVariables = 'env ';
+        Object.keys(env).forEach(key => {
+            envVariables += `${key}=${env[key]} `;
+        });
+    }
+    await exec(`${EXEC_COMMAND} ${envVariables} ${command}`);
 };
 
 const ensureDir = (dir) => exec(`${EXEC_COMMAND} mkdir -p ${dir}`);
@@ -45,11 +45,11 @@ const ensureDir = (dir) => exec(`${EXEC_COMMAND} mkdir -p ${dir}`);
 const removeDir = (dir) => exec(`${EXEC_COMMAND} rm -rf ${dir}`);
 
 function copyFrom(remotePath, localPath) {
-  return exec(`${COPY_FROM_COMMAND}${remotePath} ${localPath} 2>/dev/null`);
+    return exec(`${COPY_FROM_COMMAND}${remotePath} ${localPath} 2>/dev/null`);
 };
 
 function copyTo(localPath, remotePath) {
-  return exec(`${COPY_TO_COMMAND} ${localPath} ${podName || containerName}:${remotePath}`);
+    return exec(`${COPY_TO_COMMAND} ${localPath} ${podName || containerName}:${remotePath}`);
 };
 
 /**
@@ -57,43 +57,48 @@ function copyTo(localPath, remotePath) {
  * @returns {Promise<Boolean>} true, unless the function errored, in which case this returns false
  */
 async function succeeded(func) {
-  try {
-    await func();
-    return true;
-  } catch (err) {
-    return false;
-  }
+    try {
+        await func();
+        return true;
+    } catch (err) {
+        return false;
+    }
 }
 
 function fileExists(filePath) {
-  return succeeded(() => exec(`${EXEC_COMMAND} test -f ${filePath} 2>/dev/null`));
+    return succeeded(() => exec(`${EXEC_COMMAND} test -f ${filePath} 2>/dev/null`));
 }
 
 function dirExists(dirPath) {
-  return succeeded(() => exec(`${EXEC_COMMAND} test -d ${dirPath} 2>/dev/null`));
+    return succeeded(() => exec(`${EXEC_COMMAND} test -d ${dirPath} 2>/dev/null`));
 }
 
 function unlink(filePath) {
-  return succeeded(() => exec(`${EXEC_COMMAND} rm -r ${filePath}`));
+    return succeeded(() => exec(`${EXEC_COMMAND} rm -r ${filePath}`));
 };
 
 async function readFile(filePath) {
-  return (await exec(`${EXEC_COMMAND} cat ${filePath}`)).stdout;
+    return (await exec(`${EXEC_COMMAND} cat ${filePath}`)).stdout;
+};
+
+async function readJson(filePath) {
+    const fileData = await readFile(filePath, 'utf8');
+    return JSON.parse(fileData);
 };
 
 /**
  * @returns {array} of filenames in the given dirPath
  */
 async function readDir(dirPath) {
-  const fileList = (await exec(`${EXEC_COMMAND} ls ${dirPath}`)).stdout;
+    const fileList = (await exec(`${EXEC_COMMAND} ls ${dirPath}`)).stdout;
 
   // Returned value has a trailing carriage return, hence the trim
-  return fileList.trim().split('\n');
+    return fileList.trim().split('\n');
 };
 
 async function getArchitecture() {
-  const architecture = (await exec(`${EXEC_COMMAND} uname -m`)).stdout;
-  return architecture.toString().trim();
+    const architecture = (await exec(`${EXEC_COMMAND} uname -m`)).stdout;
+    return architecture.toString().trim();
 };
 
 /**
@@ -101,8 +106,8 @@ async function getArchitecture() {
  * @returns {Promise<JSON>} projectInfJSON
  */
 async function getProjectInfJSON(projectID) {
-  const filepath = `${WORKSPACE_DIR}/.projects/${projectID}.inf`;
-  return JSON.parse(await readFile(filepath));
+    const filepath = `${WORKSPACE_DIR}/.projects/${projectID}.inf`;
+    return JSON.parse(await readFile(filepath));
 }
 
 /**
@@ -123,15 +128,15 @@ async function getCWSettingsJSON(projectName) {
  * @returns {Promise<Boolean>} resolves to true when the condition is satisfied, else false when the maxWaitingTime has elapsed
  */
 async function awaitCondition(
-  condition,
-  checkingInterval = 500,
-  timeAwaited = 0,
-  maxWaitingTime = 2*60*1000,
+    condition,
+    checkingInterval = 500,
+    timeAwaited = 0,
+    maxWaitingTime = 2 * 60 * 1000,
 ) {
-  if (timeAwaited > maxWaitingTime) return false;
-  if (await condition()) return true;
-  await sleep(checkingInterval);
-  return awaitCondition(condition, checkingInterval, timeAwaited + checkingInterval);
+    if (timeAwaited > maxWaitingTime) return false;
+    if (await condition()) return true;
+    await sleep(checkingInterval);
+    return awaitCondition(condition, checkingInterval, timeAwaited + checkingInterval);
 };
 
 /**
@@ -139,7 +144,7 @@ async function awaitCondition(
  * @returns {Promise<Boolean>} resolves to true when the file is found, else false when the maxWaitingTime has elapsed
  */
 function awaitFile(filePath) {
-  return awaitCondition(() => fileExists(filePath));
+    return awaitCondition(() => fileExists(filePath));
 };
 
 /**
@@ -147,7 +152,7 @@ function awaitFile(filePath) {
  * @returns {Promise<Boolean>} resolves to true when the dir is found, else false when the maxWaitingTime has elapsed
  */
 function awaitDir(dirPath) {
-  return awaitCondition(() => dirExists(dirPath));
+    return awaitCondition(() => dirExists(dirPath));
 };
 
 /**
@@ -155,9 +160,9 @@ function awaitDir(dirPath) {
  * @returns {Promise<JSON>} projectInfJSON
  */
 async function awaitProjectInfFile(projectID) {
-  const filepath = `${WORKSPACE_DIR}/.projects/${projectID}.inf`;
-  await awaitFile(filepath);
-  return getProjectInfJSON(projectID);
+    const filepath = `${WORKSPACE_DIR}/.projects/${projectID}.inf`;
+    await awaitFile(filepath);
+    return getProjectInfJSON(projectID);
 }
 
 /**
@@ -165,28 +170,28 @@ async function awaitProjectInfFile(projectID) {
  * @returns {Promise<JSON>} containerInfo
  */
 async function awaitContainer(projectName, projectID) {
-  const containerInfoList = await helperService.getAppContainers();
-  const containerName = helperService.getContainerName(projectName, projectID);
+    const containerInfoList = await helperService.getAppContainers();
+    const containerName = helperService.getContainerName(projectName, projectID);
 
-  for (const containerInfo of containerInfoList) {
-    containerInfo.should.have.property('name');
-    if(containerInfo.name.startsWith(containerName) && !containerInfo.name.endsWith('-build') ) {
-      return containerInfo;
+    for (const containerInfo of containerInfoList) {
+        containerInfo.should.have.property('name');
+        if (containerInfo.name.startsWith(containerName) && !containerInfo.name.endsWith('-build') ) {
+            return containerInfo;
+        }
     }
-  }
-  await sleep(1000);
-  return awaitContainer(projectName, projectID);
+    await sleep(1000);
+    return awaitContainer(projectName, projectID);
 }
 
 async function createProjectAndZip(name, script, env) {
-  await execContainer(`sh ${script}`, env);
-  await copyFrom(`${containerDir}${name}`, `${dir}${name}`);
-  await exec(`cd ${dir}${name} && zip -r ../${name}.zip ./*`);
+    await execContainer(`sh ${script}`, env);
+    await copyFrom(`${containerDir}${name}`, `${dir}${name}`);
+    await exec(`cd ${dir}${name} && zip -r ../${name}.zip ./*`);
 };
 
 async function createProjectInFolder(name, script, env, dest) {
-  await execContainer(`sh ${script}`, env);
-  await copyFrom(`${containerDir}${name}`, `${dest}/${name}`);
+    await execContainer(`sh ${script}`, env);
+    await copyFrom(`${containerDir}${name}`, `${dest}/${name}`);
 };
 
 /**
@@ -194,50 +199,51 @@ async function createProjectInFolder(name, script, env, dest) {
  * @returns {Promise<Array>} matching file paths
  */
 async function findInFiles(stringToFind, dirToSearch){
-  let output;
-  try {
-    const grep = (await exec(`${EXEC_COMMAND} grep --files-with-matches --recursive "${stringToFind}" ${dirToSearch}`));
-    output = grep.stdout;
-  } catch (err) {
+    let output;
+    try {
+        const grep = (await exec(`${EXEC_COMMAND} grep --files-with-matches --recursive "${stringToFind}" ${dirToSearch}`));
+        output = grep.stdout;
+    } catch (err) {
     // grep returns 0 on matches, 1 on no matches which triggers an exception.
-    if (err.code == 1) {
+        if (err.code == 1) {
       // No matches so use empty output.
-      output = '';
-    } else if (err.code > 1) {
+            output = '';
+        } else if (err.code > 1) {
       // return code > 1 means an error occured.
-      throw err;
+            throw err;
+        }
     }
-  }
-  const matches = output.trim().split('\n').filter(s => s != '');
-  return matches;
+    const matches = output.trim().split('\n').filter(s => s != '');
+    return matches;
 }
 
 async function findStringInFilenames(stringToFind, dirToSearch) {
-  const find = (await exec(`${EXEC_COMMAND} find ${dirToSearch} -name "*${stringToFind}*"`));
-  const output = find.stdout;
-  const fileList = output.trim().split('\n').filter(s => s != '');
-  return fileList;
+    const find = (await exec(`${EXEC_COMMAND} find ${dirToSearch} -name "*${stringToFind}*"`));
+    const output = find.stdout;
+    const fileList = output.trim().split('\n').filter(s => s != '');
+    return fileList;
 }
 
 module.exports = {
-  ensureDir,
-  removeDir,
-  copyFrom,
-  copyTo,
-  fileExists,
-  dirExists,
-  unlink,
-  awaitFile,
-  awaitDir,
-  readFile,
-  readDir,
-  getArchitecture,
-  getProjectInfJSON,
-  getCWSettingsJSON,
-  awaitProjectInfFile,
-  awaitContainer,
-  createProjectAndZip,
-  createProjectInFolder,
-  findInFiles,
-  findStringInFilenames,
+    ensureDir,
+    removeDir,
+    copyFrom,
+    copyTo,
+    fileExists,
+    dirExists,
+    unlink,
+    awaitFile,
+    awaitDir,
+    readFile,
+    readJson,
+    readDir,
+    getArchitecture,
+    getProjectInfJSON,
+    getCWSettingsJSON,
+    awaitProjectInfFile,
+    awaitContainer,
+    createProjectAndZip,
+    createProjectInFolder,
+    findInFiles,
+    findStringInFilenames,
 };

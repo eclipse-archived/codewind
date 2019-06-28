@@ -9,7 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 /**
- * @fileoverview Custom eslint rules for the microclimate portal
+ * @fileoverview Custom eslint rules for the codewind portal
  * @author IBM
  */
 "use strict";

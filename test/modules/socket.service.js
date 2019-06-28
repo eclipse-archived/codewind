@@ -119,7 +119,7 @@ class SocketService {
     }
 
     constructor() {
-        this.socket = socketClient(config.MICROCLIMATE_SOCKET_URL, { rejectUnauthorized: false });
+        this.socket = socketClient(config.CODEWIND_SOCKET_URL, { rejectUnauthorized: false });
         this.expectedEvents = expectedEvents;
         this.receivedMsgs = {};
         for (const event of this.expectedEvents) {
@@ -207,7 +207,7 @@ function isMsgAsExpected(receivedMsg, expectedMsg) {
 
     for (const [expectedKey, expectedValue] of Object.entries(expectedProperties)) {
         const receivedValue = receivedMsg[expectedKey];
-        
+
         // We expect the content of 'logs' only have to have a partial match.
         if (expectedKey === 'logs' && receivedValue.includes(expectedValue)) {
             continue;
@@ -222,7 +222,7 @@ function isMsgAsExpected(receivedMsg, expectedMsg) {
 function isMsgAboutExpectedProject(msg, expectedMsg) {
     if (msg.projectID && expectedMsg.projectID) return (msg.projectID === expectedMsg.projectID);
     if (msg.name) return (msg.name === expectedMsg.name);
-    
+
     return false;
 }
 

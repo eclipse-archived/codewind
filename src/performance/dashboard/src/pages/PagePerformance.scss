@@ -1,0 +1,107 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+******************************************************************************/
+
+@import "~@carbon/colors/scss/colors";
+@import "~@carbon/layout/scss/spacing";
+@import "~@carbon/type/scss/type";
+@import "~@carbon/grid/scss/grid";
+
+.pageTitle {
+  @extend .bx--grid;
+  margin-top: $carbon--spacing-05;
+}
+
+.pageTitle-content {
+  @extend .bx--row;
+}
+
+.pageTitle .main-title {
+  @extend .bx--col-md-8;
+  margin-right: 10px;
+}
+
+.pageTitle .main-text {
+  margin-right: 10px;
+  margin-top: $carbon--spacing-02;
+  @include properties($productive-heading-03);
+  display: inline-block;
+}
+
+.pageTitle .actions-main {
+  display: inline-block;
+}
+
+.pageTitle .actions-utils {
+  @extend .bx--col-lg-4;
+  @extend .bx--col-md-3;
+  @extend .bx--col-sm-2;
+  float: right;
+}
+
+.pageTitle .actions-utils {
+  @extend .bx--col-lg-4;
+  @extend .bx--col-md-3;
+  @extend .bx--col-sm-4;
+  float: right;
+}
+
+.results-row {
+  @extend .bx--grid;
+}
+
+.results-cards {
+  @extend .bx--row;
+}
+
+.results-card_1 {
+  margin-top: $carbon--spacing-08;
+  @extend .bx--col-xlg-5;
+  @extend .bx--col-lg-6;
+  @extend .bx--col-md-4;
+}
+
+.results-card_2 {
+  margin-top: $carbon--spacing-08;
+  @extend .bx--col-xlg-5;
+  @extend .bx--col-lg-6;
+  @extend .bx--offset-lg-1;
+  @extend .bx--col-md-4;
+}
+
+.chart-container {
+  @extend .bx--grid;
+  margin-top: 0 !important;
+}
+
+.chart-row {
+  @extend .bx--row;
+  margin-top: $carbon--spacing-08;
+}
+
+.chart-component {
+  @extend .bx--col-lg-12;
+  @extend .bx--col-md-6;
+  @extend .bx--col-sm-4;
+  margin-bottom: $carbon--spacing-10;
+}
+
+.chart-selection {
+  @extend .bx--col-lg-4;
+  @extend .bx--col-md-2;
+  @extend .bx--col-sm-4;
+}
+
+.footer-container {
+  margin-top: 100px;
+  margin-bottom: 800px;
+  text-align: center;
+  @include properties($productive-heading-05);
+}

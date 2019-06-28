@@ -29,62 +29,63 @@ const WebSocket = require('../../modules/WebSocket');
  * @return 500 if there was an error
  */
 router.put('/api/v1/projects/:id/file-changes/:projectWatchStateId/status', function (req, res) {
-    try {
-        const user = req.mc_user;
-        const projectID = req.sanitizeParams('id');
-        const projectWatchStateId = req.sanitizeParams('projectWatchStateId');
-        let status;
-        if (req.sanitizeBody('success')!= undefined) {
-          status = req.sanitizeBody('success') ?  "success" : "failed" ;
+  try {
+    const user = req.cw_user;
+    const projectID = req.sanitizeParams('id');
+    const projectWatchStateId = req.sanitizeParams('projectWatchStateId');
+    let status;
+    if (req.sanitizeBody('success')!= undefined) {
+      status = req.sanitizeBody('success') ?  "success" : "failed" ;
+    }
+    if (!projectID || !status || !projectWatchStateId) {
+      res.status(400).send("Missing required parameter, projectID, projectWatchStateId and status are required to be provided. ");
+      return;
+    }
+    let project;
+    if ( user.workspaceSettingObject && projectID === user.workspaceSettingObject.projectID) {
+      project = user.workspaceSettingObject;
+      if (project.projectWatchStateId == projectWatchStateId && status === "success") {
+        user.workspaceSettingsFileWatchEstablished = true;
+      } else if (project.projectWatchStateId == projectWatchStateId && status === "failed"){
+        // if the watch to workspace settings file can not be established, retry
+        const projectWatchStateId = crypto.randomBytes(16).toString("hex");
+        const data = {
+          changeType: "add",
+          projectWatchStateId: projectWatchStateId,
+          projectID: project.projectID,
+          pathToMonitor: project.pathToMonitor,
+          ignoredPaths: project.ignoredPaths,
         }
-        if (!projectID || !status || !projectWatchStateId) {
-            res.status(400).send("Missing required parameter, projectID, projectWatchStateId and status are required to be provided. ");
-            return;
-        }
-        let project;
-        if ( user.workspaceSettingObject && projectID === user.workspaceSettingObject.projectID) {
-          project = user.workspaceSettingObject;
-          if (project.projectWatchStateId == projectWatchStateId && status === "success") {
-            user.workspaceSettingsFileWatchEstablished = true;
-          } else if (project.projectWatchStateId == projectWatchStateId && status === "failed"){
-            // if the watch to workspace settings file can not be established, retry
-            const projectWatchStateId = crypto.randomBytes(16).toString("hex");
-            const data = {
-              changeType: "add", 
-              projectWatchStateId: projectWatchStateId,
-              projectID: project.projectID,
-              pathToMonitor: project.pathToMonitor,
-              ignoredPaths: project.ignoredPaths,
-            }
-            user.workspaceSettingObject.projectWatchStateId = projectWatchStateId;
-            WebSocket.watchListChanged(data);
-          }
-        } else {
-          project = user.projectList.retrieveProject(projectID);
-        }
-        if (!project) {
-          res.status(404).send(`Unable to find project ${projectID}`);
-          return;
-        }
-        // ignore if the projectWatchStateId received does not match the latest projectWatchStateId set for this project
-        if(project.projectWatchStateId == projectWatchStateId) {
-          const data = {
-            projectID: projectID,
-            projectWatchStateId: projectWatchStateId,
-            status: status
-          };
-          if (req.query && req.query.clientUUID) {
-              data.clientUUID = req.query.clientUUID;
-          }
-          user.uiSocket.emit("projectWatchStatusChanged", data);
-        }
-        res.sendStatus(200);
-   } catch (err) {
-      log.error(err);
-      res.status(500).send(err);
-   }
-  });
-  
+        user.workspaceSettingObject.projectWatchStateId = projectWatchStateId;
+        WebSocket.watchListChanged(data);
+      }
+    } else {
+      project = user.projectList.retrieveProject(projectID);
+    }
+    if (!project) {
+      res.status(404).send(`Unable to find project ${projectID}`);
+      return;
+    }
+    // ignore if the projectWatchStateId received does not match the latest projectWatchStateId set for this project
+    if(project.projectWatchStateId == projectWatchStateId) {
+      const data = {
+        projectID: projectID,
+        projectWatchStateId: projectWatchStateId,
+        status: status
+      };
+      if (req.query && req.query.clientUUID) {
+        data.clientUUID = req.query.clientUUID;
+      }
+      user.uiSocket.emit("projectWatchStatusChanged", data);
+      log.info("Watch status for projectID " + data.projectID + ": " + data.status);
+    }
+    res.sendStatus(200);
+  } catch (err) {
+    log.error(err);
+    res.status(500).send(err);
+  }
+});
+
 
 /**
  * API Function to post the changedFiles
@@ -95,53 +96,54 @@ router.put('/api/v1/projects/:id/file-changes/:projectWatchStateId/status', func
  * @return 400 if with bad request
  * @return 500 if there was an error
  */
-  router.post('/api/v1/projects/:id/file-changes', async function (req, res) {
-    try {
-        const user = req.mc_user;
-        const projectID = req.sanitizeParams('id');
-        const msg = req.sanitizeBody('msg');
-        if (!projectID || !msg) {
-            res.status(400).send("Missing required parameter, projectID and msg are required to be provided. ");
-            return;
-        }
-        if (!req.query || !req.query.timestamp || !req.query.chunk || !req.query.chunk_total) {
-            res.status(400).send("Missing required query, timestamp, chunk and chunk_total are required to be provided. ");
-            return;
-        }
-        const timestamp = req.query.timestamp;
-        const chunk = req.query.chunk;
-        const chunk_total = req.query.chunk_total;
-        const compressed = buffer.Buffer.from(msg, "base64");
-        const output = await inflateAsync(compressed);
-        const eventArray = JSON.parse(output.toString());
+router.post('/api/v1/projects/:id/file-changes', async function (req, res) {
+  try {
+    const user = req.cw_user;
+    const projectID = req.sanitizeParams('id');
+    const msg = req.sanitizeBody('msg');
+    if (!projectID || !msg) {
+      res.status(400).send("Missing required parameter, projectID and msg are required to be provided. ");
+      return;
+    }
+    if (!req.query || !req.query.timestamp || !req.query.chunk || !req.query.chunk_total) {
+      res.status(400).send("Missing required query, timestamp, chunk and chunk_total are required to be provided. ");
+      return;
+    }
+    const timestamp = req.query.timestamp;
+    const chunk = req.query.chunk;
+    const chunk_total = req.query.chunk_total;
+    const compressed = buffer.Buffer.from(msg, "base64");
+    const output = await inflateAsync(compressed);
+    const eventArray = JSON.parse(output.toString());
 
-        // workspace settings file has been changed
-        if ( user.workspaceSettingObject && projectID === user.workspaceSettingObject.projectID) {
-          try {
-            eventArray.forEach( element => {
-              if (element.path && element.path.includes("settings.json")) {
-                  log.debug("workspace settings file changed.", projectID);
-                  user.readWorkspaceSettings();
-                  // to break out of foreach loop
-                  throw new Error("break out");
-              }
-            });
-          } catch (err) {
-            // out of forEach, do nothing
+    // workspace settings file has been changed
+    if ( user.workspaceSettingObject && projectID === user.workspaceSettingObject.projectID) {
+      try {
+        eventArray.forEach( element => {
+          if (element.path && element.path.includes("settings.json")) {
+            log.debug("workspace settings file changed.", projectID);
+            user.readWorkspaceSettings();
+            // to break out of foreach loop
+            throw new Error("break out");
           }
-          res.sendStatus(200);
-          return;
-        }
-        const project = user.projectList.retrieveProject(projectID);
-        if (!project) {
-          res.status(404).send(`Unable to find project ${projectID}`);
-        }
-        user.fileChanged(projectID, timestamp, chunk, chunk_total, eventArray);
-        res.sendStatus(200);
-   } catch (err) {
-      log.error(err);
-      res.status(500).send(err);
-   }
-  })
-  
-  module.exports = router;
+        });
+      } catch (err) {
+        // out of forEach, do nothing
+      }
+      res.sendStatus(200);
+      return;
+    }
+    const project = user.projectList.retrieveProject(projectID);
+    if (!project) {
+      res.status(404).send(`Unable to find project ${projectID}`);
+      return;
+    }
+    user.fileChanged(projectID, timestamp, chunk, chunk_total, eventArray);
+    res.sendStatus(200);
+  } catch (err) {
+    log.error(err);
+    res.status(500).send(err);
+  }
+})
+
+module.exports = router;

@@ -1,0 +1,33 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+******************************************************************************/
+
+@import "~@carbon/layout/scss/spacing";
+@import "~@carbon/type/scss/type";
+
+@import "../../themes/dark-theme.scss";
+
+.NavBar {
+  background-color: $color-navbar-background;
+  color: $color-navbar-foreground;
+  padding-left: 2rem;
+  height: 50px;
+  line-height: 50px;
+  padding-top: $carbon--spacing-04;
+  @include properties($productive-heading-03);
+  font-weight: carbon--font-weight("semibold");
+}
+
+.NavBar .projectName {
+  margin-left: $carbon--spacing-04;
+  color: $color-navbar-foreground;
+  font-size: 0.875rem;
+  font-weight: carbon--font-weight("light");
+}

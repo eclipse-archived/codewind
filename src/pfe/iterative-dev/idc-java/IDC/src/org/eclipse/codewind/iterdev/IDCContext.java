@@ -56,6 +56,8 @@ public class IDCContext {
 	private final boolean isK8s;
 	
 	private final boolean isWin;
+
+	private final String imageCommand;
 	
 	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String deploymentRegistry, String startMode, String debugPort) throws IOException {
 
@@ -139,6 +141,13 @@ public class IDCContext {
 		}
 		else {
 			this.isK8s = false;
+		}
+		
+		if (this.isK8s) {
+			this.imageCommand = "buildah";
+		}
+		else {
+			this.imageCommand = "docker";
 		}
 	}
 
@@ -345,5 +354,9 @@ public class IDCContext {
 		} else {
 			return "7777";
 		}
+	}
+
+	public String getImageCommand() {
+		return this.imageCommand;
 	}
 }

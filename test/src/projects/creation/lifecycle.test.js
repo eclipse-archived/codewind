@@ -18,7 +18,7 @@ const execAsync = promisify(require('child_process').exec);
 const containerService = require('../../../modules/container.service');
 const projectService = require('../../../modules/project.service');
 const SocketService = require('../../../modules/socket.service');
-const { MICROCLIMATE_HOST, USING_K8S, testTimeout, templateOptions } = require('../../../config');
+const { CODEWIND_HOST, USING_K8S, testTimeout, templateOptions } = require('../../../config');
 
 chai.use(chaiHttp);
 chai.should();
@@ -94,8 +94,8 @@ describe('Project Lifecycle Tests', function() {
                 createOptions[language].parentPath = workspace_location;
                 const res = await projectService.createProjectFromTemplate(createOptions[language]);
                 res.should.have.status(200);
-                
-                bindParams[language] = { 
+
+                bindParams[language] = {
                     ...res.body.result,
                     path: res.body.projectPath,
                     name: createOptions[language].projectName,
@@ -148,7 +148,7 @@ describe('Project Lifecycle Tests', function() {
         });
     });
 
- 
+
 
     describe('Swift', function() {
         before(async function() {
@@ -319,14 +319,14 @@ describe('Project Lifecycle Tests', function() {
                 const projectInf = await containerService.getProjectInfJSON(projectID);
                 port = projectInf.ports.exposedPort;
                 port.should.be.a('string');
-                const url = `${MICROCLIMATE_HOST}:${port}`;
+                const url = `${CODEWIND_HOST}:${port}`;
                 const receivedSuccessResponse = await awaitSuccessResponseFromEndpoint(url, contextRoot);
                 receivedSuccessResponse.should.be.true;
             });
 
             it('should launch a metrics dashboard', async function() {
                 if(!metricsEndpoint) this.skip();
-                const url = `${MICROCLIMATE_HOST}:${port}/${metricsEndpoint}`;
+                const url = `${CODEWIND_HOST}:${port}/${metricsEndpoint}`;
                 const receivedSuccessResponse = await awaitSuccessResponseFromEndpoint(url, contextRoot);
                 receivedSuccessResponse.should.be.true;
             });

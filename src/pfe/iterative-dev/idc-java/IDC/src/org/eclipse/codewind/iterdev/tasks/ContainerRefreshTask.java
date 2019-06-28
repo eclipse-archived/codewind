@@ -20,6 +20,8 @@ public class ContainerRefreshTask {
 
     public static boolean execute(IDCContext context) throws Exception {
         String curLastContainerId = context.getAppDb().get(Constants.DB_LAST_CONTAINER_ID);
+        String imageCommand = context.getImageCommand();
+
         try {
             DBMap appDb = context.getAppDb();
             
@@ -34,13 +36,13 @@ public class ContainerRefreshTask {
                         // Erase the container
                     String lastContainerId = appDb.get(Constants.DB_LAST_CONTAINER_ID);
                     if (lastContainerId != null) {
-                        TaskUtils.runCmd("docker rm -f " + lastContainerId, context, true);
+                        TaskUtils.runCmd(imageCommand + " rm -f " + lastContainerId, context, true);
                         appDb.put(Constants.DB_LAST_CONTAINER_ID, null);
                     }
                 }
             }
             // Erase the container image
-            TaskUtils.runCmd("docker rmi -f " + context.getImageName(), context, true);
+            TaskUtils.runCmd(imageCommand + " rmi -f " + context.getImageName(), context, true);
             appDb.put(Constants.DB_CONTAINER_BUILT, Boolean.FALSE.toString());
             appDb.put(Constants.DB_MASTER_DOCKER_FILE_HASH, null);
 

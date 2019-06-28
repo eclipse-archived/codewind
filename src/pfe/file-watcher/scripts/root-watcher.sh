@@ -9,6 +9,7 @@
 # Contributors:
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
+source /file-watcher/scripts/constants.sh
 source /file-watcher/scripts/.env
 
 if [ -f /file-watcher/server/.env ]; then
@@ -17,53 +18,66 @@ fi
 
 echo "Creating workspace config directory"
 mkdir -p /codewind-workspace/.config
+chmod -R g=rwx /codewind-workspace/.config/
 
-echo "file-watcher container started $(date)"
+echo "codewind-pfe container started $(date)"
 
 LOCAL_WORKSPACE=$1
 CONTAINER_WORKSPACE_DIRECTORY=$2
 
-cache_liberty() {
-	# We're force pulling the latest websphere liberty docker image here,
-	# as a user can have an old cached image which may run on root.
-	# Websphere Liberty has switched to non-root for their latest docker image.
-	echo "Pulling the latest websphere-liberty:webProfile7 docker image";
-	docker pull websphere-liberty:webProfile7
-	# Pre-build the Liberty app image (Only on K8s, on local MC, Liberty app image is prebuilt in mcdev)
-	if [ ! "$( docker images mc-liberty-jdk-cache -q )" ] && [ -f /file-watcher/dockerfiles/liberty/libertyDockerfile ]; then
-		# Create the empty folders needed for the caching
-		mkdir -p /file-watcher/dockerfiles/liberty/target/liberty/wlp/usr/servers/defaultServer
-		mkdir -p /file-watcher/dockerfiles/liberty/target/liberty/wlp/usr/shared/resources
+LIBERTY_BUILD_TEMPLATE="$IMAGE_COMMAND $BUILD_COMMAND -t liberty-app-cache -f"
+LIBERTY_BUILD_CMD="$LIBERTY_BUILD_TEMPLATE /file-watcher/dockerfiles/liberty/libertyDockerfile /file-watcher/dockerfiles/liberty"
+SPRING_BUILD_TEMPLATE="$IMAGE_COMMAND $BUILD_COMMAND -t spring-app-cache -f"
+SPRING_BUILD_CMD="$SPRING_BUILD_TEMPLATE /file-watcher/dockerfiles/spring/springDockerfile /file-watcher/dockerfiles/spring"
 
-		echo "Pre-building the Liberty app image"
-		$LIBERTY_BUILD_CMD
-		if [ ! $? -eq 0 ]; then
-			echo "Failed to build the liberty app image" >&2;
+cache_liberty() {
+	# Pre-build the Liberty app image for local and remote case
+	if [ ! "$( $IMAGE_COMMAND images liberty-app-cache -q )" ]; then
+		if [ -f /file-watcher/dockerfiles/liberty/libertyDockerfile ]; then
+			# Create the empty folders needed for the caching
+			mkdir -p /file-watcher/dockerfiles/liberty/target/liberty/wlp/usr/servers/defaultServer
+			mkdir -p /file-watcher/dockerfiles/liberty/target/liberty/wlp/usr/shared/resources
+
+			echo "Pre-building the Liberty app image"
+			$LIBERTY_BUILD_CMD
+			if [ ! $? -eq 0 ]; then
+				echo "Failed to pre-build the Liberty app image" >&2;
+			else
+				echo "Successfully pre-built the Liberty app image";
+			fi
 		else
-			echo "Successfully built the docker image";
-			docker tag mc-liberty-jdk-cache $DOCKER_REGISTRY/mc-liberty-jdk-cache
-			docker push $DOCKER_REGISTRY/mc-liberty-jdk-cache
+			echo "Cannot pre-build the Liberty app image due to Dockerfile is missing"
 		fi
+	else
+		echo "The Liberty app image already existed"
 	fi
 }
 
 cache_spring() {
-	# Pre-build the Spring app image (Only on K8s, on local MC, Liberty app image is prebuilt in mcdev)
-	if [ ! "$( docker images mc-spring-jdk-cache -q )" ] && [ -f /file-watcher/dockerfiles/spring/springDockerfile ]; then
-		echo "Pre-building the Spring app image"
-		$SPRING_BUILD_CMD
-		if [ ! $? -eq 0 ]; then
-			echo "Failed to pre-build the Spring app image" >&2;
+	# Pre-build the Spring app image for local and remote case
+	if [ ! "$( $IMAGE_COMMAND images spring-app-cache -q )" ]; then
+		if [ -f /file-watcher/dockerfiles/spring/springDockerfile ]; then
+			echo "Pre-building the Spring app image"
+			$SPRING_BUILD_CMD
+			if [ ! $? -eq 0 ]; then
+				echo "Failed to pre-build the Spring app image" >&2;
+			else
+				echo "Successfully pre-built the Spring app image";
+			fi
 		else
-			echo "Successfully pre-built the Spring app image";
-			docker tag mc-spring-jdk-cache $DOCKER_REGISTRY/mc-spring-jdk-cache
-			docker push $DOCKER_REGISTRY/mc-spring-jdk-cache
+			echo "Cannot pre-build the Spring app image due to Dockerfile is missing"
 		fi
+	else
+		echo "The Spring app image already existed"
 	fi
 }
 
 # Make sure the logs directory for build output exists.
 mkdir -p $CONTAINER_WORKSPACE_DIRECTORY/.logs
+
+# Cache the liberty and spring images
+cache_liberty > /codewind-workspace/.logs/liberty-app-cache.log 2>&1 &
+cache_spring > /codewind-workspace/.logs/spring-app-cache.log 2>&1 &
 
 # If running in Kubernetes, initialize helm
 if [ "$IN_K8" == "true" ]; then
@@ -83,10 +97,6 @@ if [ "$IN_K8" == "true" ]; then
 		cp /tmp/secret/.dockercfg /root/.dockercfg
 	fi
 
-	# Cache the liberty and spring images
-	# cache_liberty > ./.logs/liberty_docker_cache.log 2>&1 &
-	# cache_spring > ./.logs/spring_docker_cache.log 2>&1 &
-
 	# Use a helm wrapper if TLS selected for helm
 	if [[ "$USE_HELM_TLS" == "true" ]]; then
 		echo "Creating Helm TLS wrapper"
@@ -103,5 +113,3 @@ if [ "$IN_K8" == "true" ]; then
 		chmod +x /usr/local/bin/kubectl
 	fi
 fi
-
-cd -

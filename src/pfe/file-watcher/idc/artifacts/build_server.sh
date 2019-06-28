@@ -31,13 +31,18 @@ if [ ! -d $HOME/$MAVEN_M2_CACHE ]; then
 	$JAVA_HOME/bin/jar -xvf $APP_DIR/localm2cache.zip
 	rm -rf $APP_DIR/localm2cache.zip
 	echo "Finished extracting maven m2 cache to $HOME"
+fi
 
-	# Verify maven m2 cache
-	if [ -d $HOME/$MAVEN_M2_CACHE ]; then
-		echo "Maven m2 cache is set up for $LOGNAME"
-	else
-		echo "Maven m2 cache is not set up for $LOGNAME"
+# Verify maven m2 cache
+if [ -d $HOME/$MAVEN_M2_CACHE ]; then
+	echo "Maven m2 cache is set up for $LOGNAME"
+
+	# Remove maven m2 cache archive file if it still exists
+	if [ -f $APP_DIR/localm2cache.zip ]; then
+		rm -rf $APP_DIR/localm2cache.zip
 	fi
+else
+	echo "Maven m2 cache is not set up for $LOGNAME"
 fi
 
 cd $APP_DIR

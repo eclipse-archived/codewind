@@ -1,7 +1,7 @@
 {
   "name": "eslint-plugin-microclimate-portal-eslint",
   "version": "0.0.0",
-  "description": "Custom eslint rules for the microclimate portal",
+  "description": "Custom eslint rules for the codewind portal",
   "keywords": [
     "eslint",
     "eslintplugin",

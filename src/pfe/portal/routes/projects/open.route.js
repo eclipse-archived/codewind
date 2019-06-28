@@ -24,7 +24,7 @@ const log = new Logger(__filename);
  */
 router.put('/api/v1/projects/:id/open', async function (req, res) {
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     const id = req.sanitizeParams('id');
     const project = user.projectList.retrieveProject(id);
     if (!project) {

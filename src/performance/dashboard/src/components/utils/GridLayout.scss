@@ -1,0 +1,50 @@
+/*******************************************************************************
+* Copyright (c) 2019 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+******************************************************************************/
+
+@import "~@carbon/grid/scss/grid";
+@import "~@carbon/colors/scss/colors";
+@import "~@carbon/type/scss/type";
+@import "~@carbon/layout/scss/spacing";
+
+.gridLayoutCard {
+  @extend .bx--col-sm-1; // each card is 1 cols
+  @extend .bx--col-md-1; // each card is 1 cols
+  @extend .bx--col-lg-1; // each card is 1 col
+  border: 1px solid $carbon--purple-90;
+  border-radius: 0.25rem;
+  background-color: $carbon--purple-100;
+  color: $carbon--magenta-30;
+  text-align: center;
+  font-size: carbon--type-scale(02);
+}
+
+.gridLayout-container {
+  @extend .bx--grid;
+  margin-top: 0;
+}
+
+.gridLayout-cols {
+  @extend .bx--row;
+}
+
+@each $bp in map-keys($carbon--grid-breakpoints) {
+  @include carbon--breakpoint-up($bp, $carbon--grid-breakpoints) {
+    .gridSizeName {
+      display: inline-block;
+    }
+    .gridSizeName::before {
+      color: $carbon--purple-30;
+      @include properties($code-02);
+      font-size: carbon--type-scale(03);
+      content: "#{$bp}";
+    }
+  }
+}

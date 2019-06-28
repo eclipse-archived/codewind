@@ -9,7 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-const mcUtils = require('./utils/sharedFunctions.js');
+const cwUtils = require('./utils/sharedFunctions.js');
 const dateFormat = require('dateformat');
 const fs = require('fs-extra');
 const io = require('socket.io-client');
@@ -61,7 +61,7 @@ module.exports = class LoadRunner {
         path: `/${metricsContextRoot}/api/v1/collections/`,
         method: 'POST',
       }
-      let metricsRes = await mcUtils.asyncHttpRequest(options);
+      let metricsRes = await cwUtils.asyncHttpRequest(options);
       log.debug('createCollection: metricsRes.statusCode=' + metricsRes.statusCode);
       switch (metricsRes.statusCode) {
       case 201:
@@ -103,7 +103,7 @@ module.exports = class LoadRunner {
     }
     try {
       // Get the metrics collection
-      let metricsRes = await mcUtils.asyncHttpRequest(options);
+      let metricsRes = await cwUtils.asyncHttpRequest(options);
       let metricsJson = "";
       switch (metricsRes.statusCode) {
       case 200:
@@ -179,6 +179,8 @@ module.exports = class LoadRunner {
         }
       }
 
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'preparing' });
+
       // start profiling if supported by current language
       if (this.project.language == 'nodejs') {
         this.beginNodeProfiling();
@@ -188,9 +190,10 @@ module.exports = class LoadRunner {
 
       //  Start collection on metrics endpoint (this must be started AFTER java profiling since java profiling will restart the liberty server)
       this.collectionUri = await this.createCollection();
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'starting' });
 
       // Send the load run request to the loadrunner microservice
-      let loadrunnerRes = await mcUtils.asyncHttpRequest(options, loadConfig);
+      let loadrunnerRes = await cwUtils.asyncHttpRequest(options, loadConfig);
       switch (loadrunnerRes.statusCode) {
       case 202:
         break;
@@ -204,10 +207,45 @@ module.exports = class LoadRunner {
     throw new LoadRunError('CONNECTION_FAILED');
   }
 
+  /**
+   * @param mode false = wait for health to disappear,  true = wait for health to appear
+   */
+  async waitForHealth(mode) {
+    // wait for /health to become available indicating that liberty has restarted
+    const CONST_WAIT = (1000 * 10)  // 10 seconds
+    const CONST_MAX_RETRIES = 12;  // timeout after 12 * 1000
+    for (let i = 0; i < CONST_MAX_RETRIES; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      await cwUtils.timeout(5000);
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        let httpCheckHealth = await cwUtils.asyncHttpRequest({
+          host: this.project.host,
+          port: this.project.getPort(),
+          path: '/health',
+          method: 'GET'
+        });
+        log.info(`httpCheckHealth ${httpCheckHealth.statusCode}`);
+        if (mode && httpCheckHealth.statusCode === 200) {
+          log.info("LibertyServer has responded to /health");
+          break;
+        }
+      } catch (err) {
+        log.info(err);
+        if (mode) {
+          // eslint-disable-next-line no-await-in-loop
+          await cwUtils.timeout(CONST_WAIT);
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
   async beginJavaProfiling(duration) {
     // round up time to next minute
     const durationInMins = Math.ceil(duration / 60);
-    
+
     // the load test directory inside the docker container
     const loadTestDir = path.join('/', 'home', 'default', 'app', 'load-test', this.metricsFolder);
 
@@ -221,9 +259,12 @@ module.exports = class LoadRunner {
 
     // For Java Liberty restart the server in preparation for profiling
     if (this.project.language == 'java' && this.project.projectType == 'liberty') {
-      log.debug(`Restarting liberty server`); 
-      docker.exec(this.project, ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop;  /opt/ibm/wlp/bin/server start;`]);
-      await mcUtils.timeout(30000); // 
+      log.info(`beginJavaProfiling: Stopping liberty server`); 
+      await docker.exec(this.project, ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `]);
+      await this.waitForHealth(false);
+      log.info(`beginJavaProfiling: Starting liberty server`); 
+      await docker.exec(this.project, ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start;`]);
+      await this.waitForHealth(true);
     }
 
     const command = `export javapid=(\`pidof java\`); java -jar $JAVA_HOME/jre/lib/ext/healthcenter.jar ID=\${javapid[-1]} level=headless -Dcom.ibm.java.diagnostics.healthcenter.headless.run.number.of.runs=1 -Dcom.ibm.java.diagnostics.healthcenter.headless.run.duration=${durationInMins} -Dcom.ibm.java.diagnostics.healthcenter.headless.output.directory=${loadTestDir} -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.memorycounters=off -Dcom.ibm.diagnostics.healthcenter.data.cpu=off -Dcom.ibm.diagnostics.healthcenter.data.environment=off -Dcom.ibm.diagnostics.healthcenter.data.locking=off -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.threads=off`;
@@ -287,7 +328,7 @@ module.exports = class LoadRunner {
           'Content-Type': 'application/json'
         }
       }
-      let cancelLoadResp = await mcUtils.asyncHttpRequest(options, loadConfig);
+      let cancelLoadResp = await cwUtils.asyncHttpRequest(options, loadConfig);
       return cancelLoadResp;
     } catch (err) {
       log.error('cancelRunLoad: Error occurred');
@@ -465,7 +506,7 @@ module.exports = class LoadRunner {
       }
       // Send the shutdown HTTP request to the loadrunner so they can close the user's projects. On
       // the 200 response we remove the pod.
-      let loadrunnerRes = await mcUtils.asyncHttpRequest(options);
+      let loadrunnerRes = await cwUtils.asyncHttpRequest(options);
       switch (loadrunnerRes.statusCode) {
       case 200:
       case 400: // no run in progress

@@ -1,7 +1,7 @@
 openapi: 3.0.0
 servers:
   - description: Production
-    url: https://localhost:9090
+    url: http://localhost:9090
 info:
   description: Codewind API
   version: 0.1.0
@@ -314,7 +314,7 @@ paths:
         503:
           description: Project is not running
 
-  /api/v1/projects/{id}/cancelLoad:
+  /api/v1/projects/{id}/loadtest/cancel:
     post:
       summary: Cancels a load-test against a project
       description: Cancel a load-test against a given project
@@ -1125,11 +1125,38 @@ paths:
       summary: Get the status of the Deployment Registry in the Workspace Settings File
       responses:
         200:
-          description: Successful request. Checks for `deploymentRegistry` in `/codewind-workspace/.config/settings.json` Emits a socket event `workspaceSettings` with data `{ deploymentRegistry":" true/false }`.
+          description: Successfully completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 200
+                  deploymentRegistry:
+                    type: boolean
+                    description: true if deployment registry was set
+                    example: true  
         500:
-          description: Internal error
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 400
+                  deploymentRegistry:
+                    type: boolean
+                    description: false if deployment registry was not set
+                    example: false
     post:
       summary: Test the specified Deployment Registry 
+      description: The API also emits a socket event `deploymentRegistryStatus` with data `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
       requestBody:
         content:
           application/json:
@@ -1142,11 +1169,62 @@ paths:
                   type: string
       responses:
         200:
-          description: Successful request. Tests the registry by pushing a simple hello-world docker image. Emits a socket event `deploymentRegistryTest` with data `{ deploymentRegistryTest":" true/false, msg":" The message related to the socket }`.
+          description: Successfully completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 200
+                  deploymentRegistryTest:
+                    type: boolean
+                    description: true if deployment registry is valid
+                    example: true
+                  msg:
+                    type: string
+                    description: Message related to the request
+                    example: Success message 
         400:
-          description: Bad request
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 400
+                  deploymentRegistryTest:
+                    type: boolean
+                    description: false because it is a bad request
+                    example: false
+                  msg:
+                    type: string
+                    description: Message related to the request
+                    example: Reason for failure
         500:
-          description: Internal Error
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 500
+                  deploymentRegistryTest:
+                    type: boolean
+                    description: false if deployment registry is invalid
+                    example: false
+                  msg:
+                    type: string
+                    description: Message related to the request
+                    example: Reason for failure
 
   /api/v1/extensions:
     get:

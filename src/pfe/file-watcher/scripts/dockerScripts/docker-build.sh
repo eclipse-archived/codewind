@@ -10,6 +10,8 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
+source /file-watcher/scripts/constants.sh
+
 set -o pipefail
 
 util=/file-watcher/scripts/util.sh
@@ -19,10 +21,10 @@ PROJECT_FOLDER=$2
 LOG_FILE=$3
 PROJECT_ID=$4
 
-echo -e "Touching docker container build log file: "$LOG_FILE""
+echo -e "Touching container build log file: "$LOG_FILE""
 touch "$LOG_FILE"
-echo -e "Triggering log file event for: docker container build log"
+echo -e "Triggering log file event for: container build log"
 $util newLogFileAvailable $PROJECT_ID "build"
 
-echo "Running docker container build command: docker $ARGS "$PROJECT_FOLDER" |& tee "$LOG_FILE""
-docker $ARGS "$PROJECT_FOLDER" |& tee "$LOG_FILE"
+echo "Running docker container build command: $IMAGE_COMMAND $ARGS "$PROJECT_FOLDER" |& tee "$LOG_FILE""
+$IMAGE_COMMAND $ARGS "$PROJECT_FOLDER" |& tee "$LOG_FILE"

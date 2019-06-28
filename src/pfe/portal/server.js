@@ -18,6 +18,9 @@ main().catch(err => console.dir(err));
 // await to serialize initialisation.
 async function main() {
 
+  // Set the umask for file creation.
+  process.umask(0o002);
+
   if (process.env.APPMETRICS) { // dev mode
     require('appmetrics-dash').monitor({ title: "Application Metrics Dashboard - Monitoring codewind Portal" });
   }
@@ -120,7 +123,7 @@ async function main() {
   app.set('json spaces', 2);
 
   // Setup global variables
-  global.microclimate = {
+  global.codewind = {
     RUNNING_IN_K8S: false,
     MULTI_USER: (process.env.MULTI_USER == 'true') || false,
     EXTENSIONS: (process.env.EXTENSIONS == 'true') || false,
@@ -135,7 +138,7 @@ async function main() {
     k8Client = new K8Client({ config: k8config.getInCluster(), version: '1.9' });
     if (k8Client) {
       log.info('codewind on Kubernetes');
-      global.microclimate.RUNNING_IN_K8S = true;
+      global.codewind.RUNNING_IN_K8S = true;
 
       // get path currently running on
       const k8sServiceName = process.env.SERVICE_NAME;
@@ -180,7 +183,7 @@ async function main() {
   let user = await User.createUser(
     null,
     null,
-    global.microclimate.CODEWIND_WORKSPACE,
+    global.codewind.CODEWIND_WORKSPACE,
     io
   );
   userList.add(user);
@@ -195,7 +198,7 @@ async function main() {
     // Add the user object into the request
     app.all('*', function (req, res, next) {
       if (req.user == undefined) req.user = "default"
-      req.mc_user = userList.retrieve(req.user);
+      req.cw_user = userList.retrieve(req.user);
       next();
     });
 
@@ -236,6 +239,18 @@ async function main() {
         log.error(err);
       }
     });
+
+    app.use('/dashboard/*', function (req, res) {
+      try {
+        let url = `http://codewind-performance:9095${req.originalUrl}`;
+        let r = request(url);
+        req.pipe(r).pipe(res);
+      } catch (err) {
+        log.error(err);
+      }
+    });
+
+
 
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({

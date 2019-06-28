@@ -26,7 +26,8 @@ public class ContainerCleanTask {
 
 	public static boolean execute(IDCContext context) throws Exception {
 		//boolean isK8s = System.getenv(Constants.IN_K8).equals("true");
-		
+		String imageCommand = context.getImageCommand();
+
 		Logger.info("* Cleaning up containers... ");
 		
 		if (context.isK8s()) {
@@ -73,7 +74,7 @@ public class ContainerCleanTask {
 							Logger.info("* Deleting the Helm release. ");
 
 							TaskUtils.runCmd("helm delete " + releaseID + " --purge", context, false);
-							TaskUtils.runCmd("docker image rm " + appDB.get(Constants.DB_CONTAINER_NAME) + " -f", context, false);
+							TaskUtils.runCmd(imageCommand + " image rm " + appDB.get(Constants.DB_CONTAINER_NAME) + " -f", context, false);
 
 							// Delete .idc db and docker dir contents
 							deleteCorrespondingIDCContents(context.getIDCBase(), appDB.get(Constants.DB_APP_ID));
@@ -128,7 +129,7 @@ public class ContainerCleanTask {
 				containers. Print the container image name 
 				and prompt the user before removing the 
 				container.*/
-				ProcessRunner pr = TaskUtils.runCmd("docker ps --format \"{{.Image}}\"", context, false);
+				ProcessRunner pr = TaskUtils.runCmd(imageCommand + " ps --format \"{{.Image}}\"", context, false);
 
 				Thread.sleep(1000);
 				for (String str : pr.getReceived().split("\\r?\\n")) {
@@ -141,9 +142,9 @@ public class ContainerCleanTask {
 								&& IDCUtils.getUserResponse(Constants.missingIDCDirPromptQues).equalsIgnoreCase("yes")) {
 							Logger.info("* Stopping and Removing the Container. ");
 
-							TaskUtils.runCmd("docker stop " + str, context, false);
-							TaskUtils.runCmd("docker rm " + str, context, false);
-							TaskUtils.runCmd("docker image rm " + str, context, false);
+							TaskUtils.runCmd(imageCommand + " stop " + str, context, false);
+							TaskUtils.runCmd(imageCommand + " rm " + str, context, false);
+							TaskUtils.runCmd(imageCommand + " image rm " + str, context, false);
 						}
 					}
 				}
@@ -174,8 +175,8 @@ public class ContainerCleanTask {
 						if (IDCUtils.getUserResponse(Constants.modifiedAppDirPromptQues).equalsIgnoreCase("yes")) {
 							Logger.info("* Stopping and Removing the Container. ");
 
-							TaskUtils.runCmd("docker rm -f " + containerID, context, false);
-							TaskUtils.runCmd("docker image rm " + appDB.get(Constants.DB_CONTAINER_NAME), context,
+							TaskUtils.runCmd(imageCommand + " rm -f " + containerID, context, false);
+							TaskUtils.runCmd(imageCommand + " image rm " + appDB.get(Constants.DB_CONTAINER_NAME), context,
 									false);
 
 							// Delete .idc db and docker dir contents
@@ -192,7 +193,7 @@ public class ContainerCleanTask {
 				ArrayList<String> runningContainers = new ArrayList<String>();
 				Logger.info("Checking if any containers have been explicitly removed without IDC.");
 				Logger.info("If yes, the corresponding .idc db and docker contents will be deleted.");
-				ProcessRunner pr = TaskUtils.runCmd("docker ps --no-trunc -q", context, false);
+				ProcessRunner pr = TaskUtils.runCmd(imageCommand + " ps --no-trunc -q", context, false);
 
 				Thread.sleep(1000);
 				for (String str : pr.getReceived().split("\\r?\\n")) {

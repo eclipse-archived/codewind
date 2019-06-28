@@ -29,7 +29,7 @@ module.exports = class UserList {
   add(user) {
     log.debug(`Adding user to list - id: ${user.user_id}`);
     if (this._list.hasOwnProperty(user.user_id)) throw new UserListError('ALREADY_EXISTS', user.user_id);
-    if (!global.microclimate.MULTI_USER && Object.keys(this._list).length > 0) throw new UserListError('TOO_MANY_USERS', user.user_id); 
+    if (!global.codewind.MULTI_USER && Object.keys(this._list).length > 0) throw new UserListError('TOO_MANY_USERS', user.user_id);
     this._list[user.user_id] = user;
   }
 
@@ -55,7 +55,7 @@ module.exports = class UserList {
    */
   retrieve(id) {
     let normalisedID;
-    if (global.microclimate.MULTI_USER) {
+    if (global.codewind.MULTI_USER) {
       normalisedID = String(id).replace(/@|_|\./g,'-').toLowerCase(); // normalise email userids
     } else {
       normalisedID = id;

@@ -28,12 +28,24 @@ export interface WorkspaceMetadata {
 
 export interface IWorkspaceSettingsSuccess {
     statusCode: 200;
-    workspaceSettings: string;
+    workspaceSettings: any;
 }
 
 export interface IWorkspaceSettingsFailure {
-    statusCode: 400;
-    error: { msg: string };
+    statusCode: 400 | 500;
+    workspaceSettings: any;
+}
+
+export interface IDeploymentRegistryTestSuccess {
+    statusCode: 200;
+    deploymentRegistryTest: boolean;
+    msg: string;
+}
+
+export interface IDeploymentRegistryTestFailure {
+    statusCode: 400 | 500;
+    deploymentRegistryTest: boolean;
+    msg: string;
 }
 
 export let workspaceSettingsInfoCache: string = undefined;
@@ -53,17 +65,44 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
         } else {
             const msg = "The workspace settings file was not found at location: " + workspaceSettingsFile;
             logger.logFileWatcherError(msg);
-            return;
+            const workspaceSettings = {
+                msg: msg
+            };
+            return { "statusCode": 500, "workspaceSettings": workspaceSettings};
         }
     } catch (err) {
         const msg = "Codewind encountered an error when trying to read the workspace settings file";
         logger.logFileWatcherError(err);
-        return { "statusCode": 400, "error": {"msg": msg}};
+        const workspaceSettings = {
+            msg: msg
+        };
+        return { "statusCode": 500, "workspaceSettings": workspaceSettings};
+    }
+
+    // Do validation check on the Deployment Registry
+    // eslint-disable-next-line no-useless-escape
+    const regex = new RegExp(/^[A-Za-z0-9-._~:\/?#\[\]@!\$&'\(\)\*\+;%=,]+$/);
+    if (settingsFileContent.deploymentRegistry && settingsFileContent.deploymentRegistry.length) {
+        const isDeploymentRegistryValid = regex.test(settingsFileContent.deploymentRegistry);
+        logger.logFileWatcherInfo("Deployment Registry Validation: " + isDeploymentRegistryValid);
+        if (!isDeploymentRegistryValid) {
+            const msg = "Codewind detected an error with the Deployment Registry " + settingsFileContent.deploymentRegistry + ". Please ensure it is a valid Deployment Registry.";
+            logger.logFileWatcherError(msg);
+            const data: any = {
+                deploymentRegistryTest: false,
+                msg: msg
+            };
+            io.emitOnListener("deploymentRegistryStatus", data);
+            const workspaceSettings = {
+                msg: msg
+            };
+            return { "statusCode": 200, "workspaceSettings": workspaceSettings };
+        }
     }
 
     await loadWorkspaceSettings(settingsFileContent);
 
-    return { "statusCode": 200, "workspaceSettings": JSON.stringify(settingsFileContent)};
+    return { "statusCode": 200, "workspaceSettings": settingsFileContent};
 }
 
 /**
@@ -144,53 +183,49 @@ export async function getWorkspaceSettingsInfo(): Promise<any> {
 /**
  * @see [[Filewatcher.testDeploymentRegistry]]
  */
-export async function testDeploymentRegistry(deploymentRegistry: string): Promise<IWorkspaceSettingsSuccess | IWorkspaceSettingsFailure> {
+export async function testDeploymentRegistry(deploymentRegistry: string): Promise<IDeploymentRegistryTestSuccess | IDeploymentRegistryTestFailure> {
 
     let deploymentRegistryTest: boolean = false;
 
     logger.logFileWatcherInfo("Testing the deployment registry: " + deploymentRegistry);
     try {
-        await processManager.spawnDetachedAsync("deploymentRegistryTest1", "docker", ["pull", "hello-world"], {});
-        await processManager.spawnDetachedAsync("deploymentRegistryTest1", "docker", ["tag", "hello-world", deploymentRegistry + "/hello-world"], {});
+        await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["pull", "hello-world"], {});
     } catch (err) {
-        const msg = "Codewind was unable to pull and tag an image during the Deployment Registry test.";
+        const msg = "Codewind was unable to pull the hello-world image during the Deployment Registry test.";
         logger.logFileWatcherError(msg);
         logger.logFileWatcherError(err);
-        const deploymentRegistryTestJSON = {
-            msg: msg
-        };
 
         const data: any = {
             deploymentRegistryTest: deploymentRegistryTest,
             msg: msg
         };
-        io.emitOnListener("deploymentRegistryTest", data);
+        io.emitOnListener("deploymentRegistryStatus", data);
 
-        return { "statusCode": 400, "error": deploymentRegistryTestJSON};
+        return { "statusCode": 500, "deploymentRegistryTest": deploymentRegistryTest, "msg": msg};
     }
 
-    let dockerPushOutput;
+    let dockerPushEC = 1;
+    let dockerPush;
 
     try {
-        dockerPushOutput = (await processManager.spawnDetachedAsync("deploymentRegistryTest1", "docker", ["push", deploymentRegistry + "/hello-world"], {})).stdout;
+        dockerPush = (await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["push", "--tls-verify=false", "hello-world", deploymentRegistry + "/hello-world"], {}));
+        dockerPushEC = dockerPush.exitCode;
+        logger.logFileWatcherInfo("testDeploymentRegistry exit code: " + dockerPushEC);
     } catch (err) {
-        const msg = "Codewind was unable to push an image to the Deployment Registry. Please make sure it is a valid Deployment Registry with the appropriate permissions.";
+        const msg = "Codewind was unable to push the hello-world image to the Deployment Registry " + deploymentRegistry +  "/hello-world. Please make sure it is a valid Deployment Registry with the appropriate permissions.";
         logger.logFileWatcherError(msg);
         logger.logFileWatcherError(err);
-        const deploymentRegistryTestJSON = {
-            msg: msg
-        };
 
         const data: any = {
             deploymentRegistryTest: deploymentRegistryTest,
             msg: msg
         };
-        io.emitOnListener("deploymentRegistryTest", data);
+        io.emitOnListener("deploymentRegistryStatus", data);
 
-        return { "statusCode": 400, "error": deploymentRegistryTestJSON};
+        return { "statusCode": 200, "deploymentRegistryTest": deploymentRegistryTest, "msg": msg};
     }
 
-    if (dockerPushOutput.includes("latest: digest:")) {
+    if (dockerPushEC == 0) {
         deploymentRegistryTest = true;
     }
 
@@ -211,13 +246,9 @@ export async function testDeploymentRegistry(deploymentRegistry: string): Promis
         msg: msg
     };
 
-    io.emitOnListener("deploymentRegistryTest", data);
+    io.emitOnListener("deploymentRegistryStatus", data);
 
-    const deploymentRegistryTestJSON = {
-        deploymentRegistryTest: deploymentRegistryTest
-    };
-
-    return { "statusCode": 200, "workspaceSettings": JSON.stringify(deploymentRegistryTestJSON)};
+    return { "statusCode": 200, "deploymentRegistryTest": deploymentRegistryTest, "msg": msg};
 }
 
 /**
@@ -250,19 +281,17 @@ export async function updateDeploymentRegistryStatus(projectID: string, msg: str
 
     logger.logProjectInfo("Updating the Deployment Registry Status", projectID);
 
-    const deploymentRegistryTest: boolean = false;
-
     const translatedMessage = await locale.getTranslation(msg);
 
     const data: any = {
-        deploymentRegistryTest: deploymentRegistryTest,
+        deploymentRegistryTest: false,
         msg: translatedMessage
     };
 
     logger.logProjectInfo("Deployment Registry Status Message: " + translatedMessage, projectID);
     logger.logProjectInfo("Deployment Registry Status: " + JSON.stringify(data), projectID);
 
-    io.emitOnListener("deploymentRegistryTest", data);
+    io.emitOnListener("deploymentRegistryStatus", data);
 }
 
 export interface IDeploymentRegistryStatusParams {

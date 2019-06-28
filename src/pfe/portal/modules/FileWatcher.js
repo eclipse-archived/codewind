@@ -17,6 +17,7 @@ const FilewatcherError = require('./utils/errors/FilewatcherError');
 const ProjectListError = require('./utils/errors/ProjectListError');
 const WebSocket = require('./WebSocket');
 const crypto = require('crypto');
+const cwUtils = require('./utils/sharedFunctions');
 const fw = require('file-watcher');
 const log = new Logger('FileWatcher.js');
 const filewatcher = new fw();
@@ -58,48 +59,53 @@ module.exports = class FileWatcher {
           break;
         }
 
+        case "deploymentRegistryStatus" : {
+          this.user.uiSocket.emit("deploymentRegistryStatus", fwProject);
+          break;
+        }
+
         case "projectDeletion" : {
           logEvent('projectDeletion', fwProject);
           // Delete properties that we don't want to store
           delete fwProject.operationId;
           try {
-              // Retrieve the project information so we can decide how to handle this.
-              let project = this.user.projectList.retrieveProject(fwProject.projectID);
-              if (project.isClosing()) {
-                // Project is being closed
-                const projectID = fwProject.projectID;
-                const data = {
-                  changeType: "delete", 
-                  projectID: projectID
-                }
-                WebSocket.watchListChanged(data);
-                await this.handleProjectClosed(fwProject, project);
-              } else if (project.isDeleting() ) {
-                // Project is being deleted
-                const projectID = fwProject.projectID;
-                const data = {
-                  changeType: "delete", 
-                  projectID: projectID
-                }
-                WebSocket.watchListChanged(data);
-                await this.handleProjectDeleted(fwProject, project);
-              } else {
-                log.error(`Unexpected project deletion event for: ${fwProject.projectID}:`);
-                log.error(fwProject);
+            // Retrieve the project information so we can decide how to handle this.
+            let project = this.user.projectList.retrieveProject(fwProject.projectID);
+            if (project.isClosing()) {
+              // Project is being closed
+              const projectID = fwProject.projectID;
+              const data = {
+                changeType: "delete",
+                projectID: projectID
               }
-            } catch (err) {
-                let data = {
-                  projectID: fwProject.projectID,
-                  status: 'failure',
-                  error: err.message
-                }
-                this.user.uiSocket.emit('projectDeletion', data);
-                log.error(`Error deleting project ${fwProject.projectID}`);
-                log.error(err);
+              WebSocket.watchListChanged(data);
+              await this.handleProjectClosed(fwProject, project);
+            } else if (project.isDeleting() ) {
+              // Project is being deleted
+              const projectID = fwProject.projectID;
+              const data = {
+                changeType: "delete",
+                projectID: projectID
               }
-              break;
+              WebSocket.watchListChanged(data);
+              await this.handleProjectDeleted(fwProject, project);
+            } else {
+              log.error(`Unexpected project deletion event for: ${fwProject.projectID}:`);
+              log.error(fwProject);
+            }
+          } catch (err) {
+            let data = {
+              projectID: fwProject.projectID,
+              status: 'failure',
+              error: err.message
+            }
+            this.user.uiSocket.emit('projectDeletion', data);
+            log.error(`Error deleting project ${fwProject.projectID}`);
+            log.error(err);
+          }
+          break;
         }
-        
+
         case "projectChanged" : {
           await this.handleFWProjectEvent('projectChanged', fwProject);
           break;
@@ -157,6 +163,7 @@ module.exports = class FileWatcher {
 
         case "newProjectAdded": {
           await this.handleFWProjectEvent('newProjectAdded', fwProject);
+          break;
         }
 
         default: {
@@ -199,7 +206,7 @@ module.exports = class FileWatcher {
     await this.performProjectActionRequest(projectAction);
   }
 
-  async logFWReturnedMsg(msg) {
+  logFWReturnedMsg(msg) {
     log.debug("Received filewatcher module response: ")
     log.debug(JSON.stringify(msg));
   }
@@ -210,19 +217,13 @@ module.exports = class FileWatcher {
     let projectAction = {
       projectID: project.projectID,
       projectType: project.projectType,
+      extension: project.extension,
       contextroot: project.contextRoot,
       startMode: project.startMode,
       location: project.projectPath(false),
       applicationPort: project.applicationPort,
       settings: settingsFileContents
     };
-
-    // TODO: EXTENSIONS
-    // if (isExtension(project.projectType)) {
-    //   projectAction.extension = {
-    //     extensionID: getExtensionID(project.projectType)
-    //   };
-    // }
 
     log.info(`Calling createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
     let retval;
@@ -304,28 +305,9 @@ module.exports = class FileWatcher {
     switch (retval.statusCode) {
     case 200:
       if (retval && retval.types) {
-        return appendExtensionProjectTypes(retval.types);
+        return retval.types;
       }
       throw new FilewatcherError('NO_PROJECT_TYPE_LIST', retval.statusCode);
-    case 500:
-      throw new FilewatcherError('FILE_WATCHER_INTERNAL_FAILURE', retval.statusCode);
-    default:
-      throw new FilewatcherError('UNKNOWN_ERROR', retval.statusCode);
-    }
-  }
-
-  async identifyProjectType(project) {
-    const location = project.projectPath(false);
-    const retval = await filewatcher.getProjectTypes(location);
-    this.logFWReturnedMsg(retval);
-    switch (retval.statusCode) {
-    case 200:
-      if (retval && retval.types) {
-        return appendExtensionProjectTypes(retval.types);
-      }
-      throw new FilewatcherError('NO_PROJECT_TYPE_LIST', retval.statusCode);
-    case 404:
-      throw new FilewatcherError('NO_PROJECT_LOCATION', 'identifyProjectType: Project location does not exist', retval.statusCode);
     case 500:
       throw new FilewatcherError('FILE_WATCHER_INTERNAL_FAILURE', retval.statusCode);
     default:
@@ -437,7 +419,7 @@ module.exports = class FileWatcher {
       const retval = await filewatcher.updateProjectForNewChange(projectID, timestamp, chunk, chunk_total, eventArray);
       this.logFWReturnedMsg(retval);
       if (retval.statusCode != 202){
-          throw new Error(`project update ${retval.statusCode} ${retval.err.msg}`);
+        throw new Error(`project update ${retval.statusCode} ${retval.err.msg}`);
       }
     } catch (err) {
       log.error(err);
@@ -486,10 +468,13 @@ module.exports = class FileWatcher {
         const projectID = fwProject.projectID;
         const ignoredPaths = fwProject.ignoredPaths;
         const project = this.user.projectList.retrieveProject(projectID);
-        const pathToMonitor = path.join(project.workspace, project.directory);
+        let pathToMonitor = path.join(project.workspace, project.directory);
+        if (process.env.HOST_OS === "windows") {
+          pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
+        }
         const projectWatchStateId = crypto.randomBytes(16).toString("hex");
         const data = {
-          changeType: changeType, 
+          changeType: changeType,
           projectWatchStateId: projectWatchStateId,
           projectID: projectID,
           pathToMonitor: pathToMonitor,
@@ -516,7 +501,7 @@ module.exports = class FileWatcher {
         state: Project.STATES.closed
       }
       // Set the container key to '' as the container has stopped.
-      const containerKey = (global.microclimate.RUNNING_IN_K8S ? 'podName' : 'containerId');
+      const containerKey = (global.codewind.RUNNING_IN_K8S ? 'podName' : 'containerId');
       projectUpdate[containerKey] = '';
       updatedProject = await this.user.projectList.updateProject(projectUpdate);
       await this.user.projectList.deleteProjectKey(fwProject.projectID, 'action');
@@ -552,16 +537,15 @@ module.exports = class FileWatcher {
   }
 
   async testDeploymentRegistry(deploymentRegistry) {
-    let retval;    
+    let retval;
     try{
       retval = await filewatcher.testDeploymentRegistry(deploymentRegistry);
       this.logFWReturnedMsg(retval);
     } catch (err) {
       log.error(err);
     }
-    if (retval.statusCode != 200) {
-      throw new Error(`testDeploymentRegistry ${retval.statusCode} ${retval.error.msg}`);
-    }
+
+    return retval;
   }
 
   async readWorkspaceSettings() {
@@ -573,7 +557,7 @@ module.exports = class FileWatcher {
       log.error(err);
     }
     if (retval.statusCode != 200) {
-      throw new Error(`readWorkspaceSettings ${retval.statusCode} ${retval.error.msg}`);
+      throw new Error(`readWorkspaceSettings ${retval.statusCode} ${retval.workspaceSettings.msg}`);
     }
   }
 
@@ -632,9 +616,4 @@ function logEvent(event, projectData) {
   }
   log.debug(`${msg} ${projectData.projectID})`);
   log.trace(`${msg}: ${JSON.stringify(projectData, null, 2)})`);
-}
-
-function appendExtensionProjectTypes(types) {
-  // TODO: EXTENSIONS
-  return types;
 }

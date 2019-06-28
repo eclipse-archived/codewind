@@ -21,7 +21,7 @@ const log = new Logger(__filename);
  */
 router.get('/api/v1/extensions', (req, res) => {
   try {
-    const user = req.mc_user;
+    const user = req.cw_user;
     let extensions = [];
     let list = user.extensionList.getNames();
     for (let key of list) {
