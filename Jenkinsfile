@@ -2,6 +2,7 @@
 
 pipeline {
     agent any 
+    
 	options {
         timestamps()
         skipStagesAfterUnstable()
@@ -11,12 +12,27 @@ pipeline {
     	stage('Build Docker image') {
             agent {
                 label "docker-build"
+                      yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: maven
+    image: maven:alpine
+    command:
+    - cat
+    tty: true
+"""
+    			}
             }
             steps {
-				sh '''#!/usr/bin/env bash
-					echo "Starting build for Eclipse Codewind ..."
-					sh './script/build.sh'
-				'''
+            	container('maven') {
+					sh '''#!/usr/bin/env bash
+						echo "Starting build for Eclipse Codewind ..."
+						sh 'mvn -version'
+						sh './script/build.sh'
+					'''
+				}
             }
         }
     }
