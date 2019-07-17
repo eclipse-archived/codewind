@@ -12,13 +12,11 @@ pipeline {
     stages {
         stage('Build Docker image') {
             steps {
-                container('maven') {
-                    sh '''#!/usr/bin/env bash
-                        echo "Starting build for Eclipse Codewind ..."
-                        sh 'mvn -version'
-                        sh './script/build.sh'
-                    '''
-                }
+				sh '''#!/usr/bin/env bash
+					echo "Starting build for Eclipse Codewind ..."
+					sh 'mvn -version'
+					sh './script/build.sh'
+				'''
             }
         }       
     }
