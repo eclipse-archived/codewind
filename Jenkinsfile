@@ -1,18 +1,7 @@
 #!groovy
 pipeline {
     agent {
-            label "docker-build"
-            yaml """
-    apiVersion: v1
-    kind: Pod
-    spec:
-      containers:
-      - name: maven
-        image: maven:alpine
-        command:
-        - cat
-        tty: true
-    """
+        label "docker-build"
     }
     
     options {
