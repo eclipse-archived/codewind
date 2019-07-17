@@ -15,7 +15,7 @@ pipeline {
             steps {
 				sh '''#!/usr/bin/env bash
 					echo "Starting build for Eclipse Codewind ..."
-					sh './scripts/build.sh'
+					sh './script/build.sh'
 				'''
             }
         }
