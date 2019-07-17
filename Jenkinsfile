@@ -1,8 +1,23 @@
 #!groovy​
 
 pipeline {
-    agent any 
-    
+	agent {
+		kubernetes {
+			label "docker-build"
+			yaml """
+	apiVersion: v1
+	kind: Pod
+	spec:
+	  containers:
+	  - name: maven
+		image: maven:alpine
+		command:
+		- cat
+		tty: true
+	"""
+		}
+	}
+	
 	options {
         timestamps()
         skipStagesAfterUnstable()
@@ -10,20 +25,6 @@ pipeline {
 
     stages {
     	stage('Build Docker image') {
-            agent {
-                label "docker-build"
-                      yaml """
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-  - name: maven
-    image: maven:alpine
-    command:
-    - cat
-    tty: true
-"""
-    		}
 			steps {
 				container('maven') {
 					sh '''#!/usr/bin/env bash
@@ -33,6 +34,6 @@ spec:
 					'''
 				}
 			}
-		}
+		}		
     }
 }
