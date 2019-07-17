@@ -23,17 +23,16 @@ spec:
     - cat
     tty: true
 """
-    			}
-            }
-            steps {
-            	container('maven') {
+    		}
+			steps {
+				container('maven') {
 					sh '''#!/usr/bin/env bash
 						echo "Starting build for Eclipse Codewind ..."
 						sh 'mvn -version'
 						sh './script/build.sh'
 					'''
 				}
-            }
-        }
+			}
+		}
     }
 }
