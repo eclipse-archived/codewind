@@ -1,9 +1,9 @@
-#!groovy​
+#!groovy
 pipeline {
-	agent {
-		kubernetes {
-			label "docker-build"
-			yaml """
+    agent {
+        kubernetes {
+            label "docker-build"
+            yaml """
 	apiVersion: v1
 	kind: Pod
 	spec:
