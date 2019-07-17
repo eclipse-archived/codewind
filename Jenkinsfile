@@ -1,7 +1,6 @@
 #!groovy
 pipeline {
     agent {
-        kubernetes {
             label "docker-build"
             yaml """
     apiVersion: v1
@@ -14,7 +13,6 @@ pipeline {
         - cat
         tty: true
     """
-        }
     }
     
     options {
