@@ -25,7 +25,7 @@ pipeline {
                     sh '''#!/usr/bin/env bash
                         # if [ -z $CHANGE_ID ]; then
                         echo "Publishing docker images for Eclipse Codewind ..."
-                        ./scripts/publish.sh eclipse
+                        ./script/publish.sh eclipse
                         # else
                          #   echo "Skip publishing docker images for the PR build"
                         # fi
