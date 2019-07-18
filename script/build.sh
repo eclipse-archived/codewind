@@ -21,6 +21,7 @@ INITIALIZE=initialize
 PERFORMANCE=performance;
 ARCH=`uname -m`;
 TAG=latest;
+REGISTRY=eclipse
 
 # On intel, uname -m returns "x86_64", but the convention for our docker images is "amd64"
 if [ "$ARCH" == "x86_64" ]; then
@@ -64,7 +65,7 @@ do
       echo "+++   UPLOADING $IMAGE_NAME TO DOCKERHUB   +++";
       cd ${DIR};
       # Upload images tagged by architecture.
-      ./script/publish.sh $IMAGE_NAME $TAG;
+      ./script/publish.sh $IMAGE_NAME $REGISTRY;
     fi
  done;
 echo -e "\n+++   ALL DOCKER IMAGES SUCCESSFULLY BUILT   +++\n";
