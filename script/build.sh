@@ -64,7 +64,7 @@ do
       echo "+++   UPLOADING $IMAGE_NAME TO DOCKERHUB   +++";
       cd ${DIR};
       # Upload images tagged by architecture.
-      sudo ./script/publish.sh $IMAGE_NAME $TAG;
+      ./script/publish.sh $IMAGE_NAME $TAG;
     fi
  done;
 echo -e "\n+++   ALL DOCKER IMAGES SUCCESSFULLY BUILT   +++\n";
