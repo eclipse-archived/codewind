@@ -21,6 +21,7 @@ INITIALIZE=initialize
 PERFORMANCE=performance;
 ARCH=`uname -m`;
 TAG=latest;
+REGISTRY=eclipse
 
 # On intel, uname -m returns "x86_64", but the convention for our docker images is "amd64"
 if [ "$ARCH" == "x86_64" ]; then
@@ -58,30 +59,14 @@ do
   echo Building image $IMAGE_NAME;
   cd ${SRC_DIR}/${image};
   time sh build Dockerfile_${ARCH};
+
   if [ $? -eq 0 ]; then
     echo "+++   SUCCESSFULLY BUILT $IMAGE_NAME   +++";
-    # RELEASE CHANGES, change TRAVIS_BRANCH to point to branch to push to artifactory
-    #
-    # WORKAROUND: The build script is run multiple times on the same platform due to the current build matrix setup (portal and filewatcher are run using an environment variable).
-    #             The images only need to be uploaded once. Ideally this can be controlled through Travis build stages however the current build system's Travis version
-    #             does not support it so the UPLOAD_IMAGES check has been added as a workaround to ensure the image upload is only done once.
-    #             Build stages are supported as of Travis Enterprise 2.2.0
-    if [ "$UPLOAD_IMAGES" = "true" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]; then
-      echo "+++   UPLOADING $IMAGE_NAME TO ARTIFACTORY   +++";
+      echo "+++   UPLOADING $IMAGE_NAME TO DOCKERHUB   +++";
       cd ${DIR};
       # Upload images tagged by architecture.
-      sudo ./script/upload.sh $IMAGE_NAME $USERNAME $PASSWORD $TRAVIS_COMMIT $TAG false;
-      if [ $? -eq 0 ]; then
-        sudo ./script/cleanup.sh $IMAGE_NAME $USERNAME $PASSWORD $TRAVIS_COMMIT;
-      else
-        echo "+++   FAILED TO PUSH $IMAGE_NAME TO ARTIFACTORY   +++"
-        exit 12;
-      fi
+      ./script/publish.sh $IMAGE_NAME $REGISTRY;
     fi
-  else
-    echo "+++   FAILED TO BUILD $IMAGE_NAME - exiting.   +++";
-    exit 12;
-  fi
-done;
+ done;
 echo -e "\n+++   ALL DOCKER IMAGES SUCCESSFULLY BUILT   +++\n";
 docker images | grep codewind;
