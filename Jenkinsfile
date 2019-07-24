@@ -39,23 +39,21 @@ pipeline {
                         echo "Publishing docker images for Eclipse Codewind ..."
                         export REGISTRY="eclipse"
                         
+                        echo "Branch name is $GIT_BRANCH"
+
                         if [ "$GIT_BRANCH"=="master" ]; then
                             TAG="latest"
+                            echo "TAG is $TAG"
                         else
                             TAG=$GIT_BRANCH
+                            echo "TAG is $TAG"
                         fi        
 
                         declare -a DOCKER_IMAGE_ARRAY=("codewind-initialize-amd64" 
                                                        "codewind-performance-amd64" 
                                                        "codewind-pfe-amd64")
 
-                        FILE_ATTRIB=$(ls -a ./script/publish.sh)
-                        echo "FILE ATTRIBUTES: $FILE_ATTRIB"
-
                         chmod u+x ./script/publish.sh
-
-                        FILE_ATTRIB2=$(ls -a ./script/publish.sh)
-                        echo "FILE ATTRIBUTES2: $FILE_ATTRIB2"
 
                         for i in "${DOCKER_IMAGE_ARRAY[@]}"
                         do
