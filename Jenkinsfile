@@ -41,12 +41,12 @@ pipeline {
                         
                         echo "Branch name is $GIT_BRANCH"
 
-                        if [ "$GIT_BRANCH"="master" ]; then
+                        if [ "$GIT_BRANCH"="test" ]; then
                             TAG="latest"
-                            echo "TAG is $TAG"
+                            echo "TAG 1 is $TAG"
                         else
-                            TAG=$GIT_BRANCH
-                            echo "TAG is $TAG"
+                            TAG="latest"
+                            echo "TAG 2 is $GIT_BRANCH"
                         fi        
 
                         declare -a DOCKER_IMAGE_ARRAY=("codewind-initialize-amd64" 
