@@ -38,15 +38,12 @@ pipeline {
                     sh '''#!/usr/bin/env bash
                         echo "Publishing docker images for Eclipse Codewind ..."
                         export REGISTRY="eclipse"
-                        
                         echo "Branch name is $GIT_BRANCH"
 
-                        if [ "$GIT_BRANCH"="test" ]; then
+                        if [ "$GIT_BRANCH"="master" ]; then
                             TAG="latest"
-                            echo "TAG 1 is $TAG"
                         else
-                            TAG="latest"
-                            echo "TAG 2 is $GIT_BRANCH"
+                            TAG=$GIT_BRANCH
                         fi        
 
                         declare -a DOCKER_IMAGE_ARRAY=("codewind-initialize-amd64" 
