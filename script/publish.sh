@@ -15,13 +15,15 @@
 
 set -eu
 
-if [ "$#" -ne 2 ]; then
-    echo "usage: $0 <docker image name> <registry-to-push-codewind-to>"
+if [ "$#" -lt 2 ]; then
+    echo "usage: $0 <docker image name> <registry-to-push-codewind-to> <tag>"
     exit 1
 fi
 
 IMAGE_NAME=$1
 REGISTRY=$2
+TAG=${3:-latest}
 
-docker tag $IMAGE_NAME $REGISTRY/$IMAGE_NAME
-docker push $REGISTRY/$IMAGE_NAME
+
+docker tag $IMAGE_NAME:$TAG $REGISTRY/$IMAGE_NAME:$TAG
+docker push $REGISTRY/$IMAGE_NAME:$TAG
