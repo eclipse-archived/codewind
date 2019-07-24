@@ -52,7 +52,7 @@ pipeline {
                         for i in "${DOCKER_IMAGE_ARRAY[@]}"
                         do
                             echo "Publishing $i:$TAG"
-                            ./scripts/publish.sh $i $REGISTRY $TAG
+                            ./script/publish.sh $i $REGISTRY $TAG
                         done
                     '''
                 }
