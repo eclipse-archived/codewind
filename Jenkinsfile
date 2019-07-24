@@ -10,7 +10,7 @@ pipeline {
     }
 
     stages {
-        stage('Build Docker image') {
+        stage('Build Docker images') {
             steps {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                     sh '''#!/usr/bin/env bash
@@ -23,7 +23,7 @@ pipeline {
         }  
         
         
-        stage('Publish Docker image') {
+        stage('Publish Docker images') {
 
             // This when clause disables PR build uploads; you may comment this out if you want your build uploaded.
             when {
@@ -48,6 +48,14 @@ pipeline {
                         declare -a DOCKER_IMAGE_ARRAY=("codewind-initialize-amd64" 
                                                        "codewind-performance-amd64" 
                                                        "codewind-pfe-amd64")
+
+                        FILE_ATTRIB=$(ls -a ./script/publish.sh)
+                        echo "FILE ATTRIBUTES: $FILE_ATTRIB"
+
+                        chmod u+x ./script/publish.sh
+
+                        FILE_ATTRIB2=$(ls -a ./script/publish.sh)
+                        echo "FILE ATTRIBUTES2: $FILE_ATTRIB2"
 
                         for i in "${DOCKER_IMAGE_ARRAY[@]}"
                         do
