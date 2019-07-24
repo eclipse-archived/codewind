@@ -62,10 +62,6 @@ do
 
   if [ $? -eq 0 ]; then
     echo "+++   SUCCESSFULLY BUILT $IMAGE_NAME   +++";
-      echo "+++   UPLOADING $IMAGE_NAME TO DOCKERHUB   +++";
-      cd ${DIR};
-      # Upload images tagged by architecture.
-      ./script/publish.sh $IMAGE_NAME $REGISTRY;
     fi
  done;
 echo -e "\n+++   ALL DOCKER IMAGES SUCCESSFULLY BUILT   +++\n";

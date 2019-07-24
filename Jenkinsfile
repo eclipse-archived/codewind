@@ -22,14 +22,15 @@ pipeline {
             }
         }  
         
-        /*
+        
         stage('Publish Docker image') {
+
             steps {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                     sh '''#!/usr/bin/env bash
                         if [ -z $CHANGE_ID ]; then
                             echo "Publishing docker images for Eclipse Codewind ..."
-                            ./scripts/publish.sh eclipse
+                            ./scripts/publish.sh imageName registry tag
                         else
                             echo "Skip publishing docker images for the PR build"
                         fi
@@ -37,6 +38,6 @@ pipeline {
                 }
 	 	    }
 	    } 
-	    */    
+	       
     }
 }
