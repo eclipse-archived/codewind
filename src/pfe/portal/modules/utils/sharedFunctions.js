@@ -106,17 +106,17 @@ module.exports.updateObject = function updateObject(objectToUpdate, fieldsToAddT
 /** C:\helloThere -> /c/helloThere */
 module.exports.convertFromWindowsDriveLetter = function convertFromWindowsDriveLetter(absolutePath) {
 
-    if (!isWindowsAbsolutePath(absolutePath)) {
-      return absolutePath;
-    }
-    let temp;
-    // Replace \ with /
-    temp = convertBackSlashesToForwardSlashes(absolutePath);
-    const char0 = temp.charAt(0);
-    // Strip first two characters
-    temp = temp.substring(2);
-    temp = "/" + char0.toLowerCase() + temp;
-    return temp;
+  if (!isWindowsAbsolutePath(absolutePath)) {
+    return absolutePath;
+  }
+  let temp;
+  // Replace \ with /
+  temp = convertBackSlashesToForwardSlashes(absolutePath);
+  const char0 = temp.charAt(0);
+  // Strip first two characters
+  temp = temp.substring(2);
+  temp = "/" + char0.toLowerCase() + temp;
+  return temp;
 
 }
 
