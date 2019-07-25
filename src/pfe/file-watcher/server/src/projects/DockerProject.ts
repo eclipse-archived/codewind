@@ -57,7 +57,7 @@ export class DockerProject implements ProjectExtension {
      * .swp, swx, 4913 files are all temporary files created by vim & vi, need to ignore thoses files
      *
      */
-    defaultIgnoredPath: string[] = ["/.project", "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913",
+    defaultIgnoredPath: string[] = ["/.project", "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913", "/load-test*",
         "*/.dockerignore", "*/.gitignore", "*/*~", "/.settings"];
 
     /**
@@ -70,7 +70,7 @@ export class DockerProject implements ProjectExtension {
      */
     async create(operation: Operation): Promise<void> {
         try {
-            await projectUtil.buildAndRun(operation);
+            await projectUtil.buildAndRun(operation, "create");
         } catch (err) {
             logger.logProjectError("There was a problem building the project", operation.projectInfo.projectID);
             logger.logProjectError(err, operation.projectInfo.projectID);
@@ -88,7 +88,7 @@ export class DockerProject implements ProjectExtension {
      */
     async update(operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): Promise<void> {
         try {
-            await projectUtil.buildAndRun(operation);
+            await projectUtil.buildAndRun(operation, "update");
         } catch (err) {
             logger.logProjectError("There was a problem updating the project", operation.projectInfo.projectID);
             logger.logProjectError(err, operation.projectInfo.projectID);

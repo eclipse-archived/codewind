@@ -10,14 +10,13 @@
  *******************************************************************************/
 "use strict";
 import { StartModes } from "./constants";
-import { ProjectInfo, UpdateProjectInfoPair, InotifyArgs, ProjectSettingsEvent } from "./Project";
+import { ProjectInfo, UpdateProjectInfoPair, ProjectSettingsEvent } from "./Project";
 import * as logger from "../utils/logger";
 import * as projectsController from "../controllers/projectsController";
 import * as projectExtensions from "../extensions/projectExtensions";
 import * as projectUtil from "./projectUtil";
 import { Operation } from "./operation";
 import * as io from "../utils/socket";
-import * as processManager from "../utils/processManager";
 const xss = require("xss"); // tslint:disable-line:no-require-imports
 
 export const specificationSettingMap = new Map<string, (args: any, operation: Operation) => any>();
@@ -43,12 +42,11 @@ const changeInternalDebugPort = async function (debugPort: string, operation: Op
     debugPort = debugPort.toString();
     if (process.env.IN_K8 === "true") {
         if (debugPort.trim().length != 0) {
-            const errorMsg = "BAD_REQUEST: debug mode is not supported on ICP. ";
-            logger.logProjectError("changeDebugPort API: Failed with message: " + errorMsg, projectID);
+            const errorMsg = "BAD_REQUEST: debug mode is not supported on Kubernetes. ";
+            logger.logProjectError("Changing the debug port failed: " + errorMsg, projectID);
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
                 projectID: projectID,
-                name: settingName,
                 ports: {
                     internalDebugPort: debugPort
                 },
@@ -62,12 +60,11 @@ const changeInternalDebugPort = async function (debugPort: string, operation: Op
 
     if ( !capabilities || ( !capabilities.hasStartMode("debug") && !capabilities.hasStartMode("debugNoInit") )) {
             const errorMsg = "BAD_REQUEST: The project does not support debug mode.";
-            logger.logProjectError("changeDebugPort API: Failed with message: " + errorMsg, projectID);
+            logger.logProjectError("Changing the debug port failed: " + errorMsg, projectID);
 
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
                 projectID: projectID,
-                name: settingName,
                 ports: {
                     internalDebugPort: debugPort
                 },
@@ -85,7 +82,7 @@ const changeInternalDebugPort = async function (debugPort: string, operation: Op
         } else {
             debugPort = undefined;
         }
-        logger.logProjectInfo("changeDebugPort API: Project debug port is empty, setting to the default debug port: " + debugPort, projectID);
+        logger.logProjectInfo("The debug port is empty, setting to the default debug port: " + debugPort, projectID);
     }
 
     if (projectInfo.debugPort !== debugPort) {
@@ -99,20 +96,29 @@ const changeInternalDebugPort = async function (debugPort: string, operation: Op
             // call project restart to change the debug port
             projectUtil.restartProject(operation, projectInfo.startMode, "projectSettingsChanged");
         } else {
+            // Get the container info with the new ports
+            const containerInfo: any = await projectUtil.getContainerInfo(operation.projectInfo, true);
+            logger.logProjectInfo("changeDebugPort API: The containerInfo: " + JSON.stringify(containerInfo), projectInfo.projectID);
+
             // return success status since no restart required
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
                 projectID: projectID,
-                name: settingName,
                 ports: {
                     internalDebugPort: debugPort
                 },
                 status: "success"
             };
+
+            if (containerInfo.internalPort && containerInfo.exposedPort) {
+                data.ports.exposedPort = containerInfo.exposedPort;
+                data.ports.internalPort = containerInfo.internalPort;
+            }
+
             io.emitOnListener("projectSettingsChanged", data);
         }
     } else {
-        logger.logProjectInfo("changeDebugPort API: Project debug port is already set to: " + debugPort, projectID);
+        logger.logProjectInfo("The debug port is already set to: " + debugPort, projectID);
     }
 
 };
@@ -153,11 +159,11 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             const containerInfo: any = await projectUtil.getContainerInfo(projectInfo, true);
             applicationPort = containerInfo.internalPort;
         }
-        logger.logProjectInfo("changeInternalAppPort API: Project application port is empty, setting to the default application port: " + applicationPort, projectID);
+        logger.logProjectInfo("The application port is empty, setting to the default application port: " + applicationPort, projectID);
     }
 
     if (projectInfo.appPorts[0] == applicationPort) {
-        logger.logProjectInfo("changeInternalAppPort API: Project application port is already set to: " + applicationPort, projectID);
+        logger.logProjectInfo("The application port is already set to: " + applicationPort, projectID);
         return;
     }
 
@@ -188,20 +194,19 @@ const changeInternalPort = async function (applicationPort: string, operation: O
         }
 
         if (!isApplicationPortExposed) {
-            logger.logProjectInfo("changeInternalAppPort API: Application Port requested has not been exposed: " + applicationPort, projectInfo.projectID);
+            logger.logProjectInfo("The requested application port is not exposed: " + applicationPort, projectInfo.projectID);
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
                 projectID: projectID,
-                name: settingName,
                 ports: {
                     internalPort: applicationPort
                 },
                 status: "failed",
-                error: "Application Port requested has not been exposed: " + applicationPort
+                error: "The requested application port is not exposed: " + applicationPort
             };
 
             io.emitOnListener("projectSettingsChanged", data);
-            return { "status": "failed", "error": "Application Port requested has not been exposed" };
+            return { "status": "failed", "error": "The requested application port is not exposed" };
         }
 
         const keyValuePair: UpdateProjectInfoPair = {
@@ -210,21 +215,23 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             saveIntoJsonFile: true
         };
         projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
-        logger.logProjectInfo("changeInternalAppPort API: The projectInfo has been updated: " + JSON.stringify(projectInfo), projectInfo.projectID);
+        logger.logProjectInfo("The project has been updated", projectInfo.projectID);
+        logger.logProjectTrace(JSON.stringify(projectInfo), projectInfo.projectID);
 
         // Set the containerInfoForceRefreshMap for the project to true, so that isApplicationUp/ping can pick up the new port with a force refresh
         projectUtil.containerInfoForceRefreshMap.set(projectID, true);
 
-        logger.logProjectInfo("changeInternalAppPort API: The application port for the project has been set to " + applicationPort, projectInfo.projectID);
+        logger.logProjectInfo("The application port for the project has been set to " + applicationPort, projectInfo.projectID);
 
         // Get the container info with the new ports
         const containerInfo: any = await projectUtil.getContainerInfo(projectInfo, projectUtil.containerInfoForceRefreshMap.get(projectInfo.projectID));
-        logger.logProjectInfo("changeInternalAppPort API: The containerInfo has been refreshed with the requested application port: " + JSON.stringify(containerInfo), projectInfo.projectID);
+        logger.logProjectInfo("The project information has been refreshed.", projectInfo.projectID);
+        logger.logProjectTrace("Container information:", projectInfo.projectID);
+        logger.logProjectTrace(JSON.stringify(containerInfo), projectInfo.projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
             status: "success",
             ports: {
                 exposedPort: containerInfo.exposedPort,
@@ -232,19 +239,28 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             }
         };
 
+        // Get the debug port only for local case
+        if (!process.env.IN_K8) {
+            // if debug port is not present in container info on start mode, then get it from project info
+            if (containerInfo.internalDebugPort) {
+                data.ports.internalDebugPort = containerInfo.internalDebugPort;
+            } else if (projectInfo.debugPort) {
+                data.ports.internalDebugPort = projectInfo.debugPort;
+            }
+        }
+
         io.emitOnListener("projectSettingsChanged", data);
     } catch (err) {
-        logger.logProjectError("changeInternalAppPort API: File-watcher encountered an error while changing the application port: " + err, projectID);
+        logger.logProjectError("An error occurred while changing the application port: " + err, projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
             ports: {
                 internalPort: applicationPort
             },
             status: "failed",
-            error: "File-watcher encountered an error while changing the application port: " + err
+            error: "An error occurred while changing the application port: " + err
         };
 
         io.emitOnListener("projectSettingsChanged", data);
@@ -282,7 +298,6 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
             contextRoot: "/" + contextRoot,
             status: "failed",
             error: errorMsg
@@ -296,16 +311,16 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
     contextRoot = contextRoot.trim();
 
     if (!projectInfo.contextRoot && contextRoot.length == 0) {
-        logger.logProjectInfo("changeContextRoot API: Project's contextRoot is already set to default", projectID);
+        logger.logProjectInfo("The context root is not set.", projectID);
         return;
     }
 
     if (projectInfo.contextRoot == "/" + contextRoot) {
-        logger.logProjectInfo("changeContextRoot API: Project's contextRoot is already set to: " + contextRoot, projectID);
+        logger.logProjectInfo("The context root is set to: " + contextRoot, projectID);
         return;
     }
-    logger.logProjectInfo("changeContextRoot API: Project ID is " + projectID, projectID);
-    logger.logProjectInfo("changeContextRoot API: : Update Project context root to " + contextRoot, projectID);
+    logger.logProjectTrace("The Project ID is " + projectID, projectID);
+    logger.logProjectInfo("Update the context root to " + contextRoot, projectID);
 
     const keyValuePair: UpdateProjectInfoPair = {
         key : "contextRoot",
@@ -319,152 +334,26 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
             contextRoot: "/" + contextRoot,
             status: "success"
         };
 
-        logger.logProjectInfo("changeContextRoot API: Change context root successfully", projectID);
+        logger.logProjectInfo("The context root was updated successfully.", projectID);
 
         io.emitOnListener("projectSettingsChanged", data);
     } catch (err) {
 
-        logger.logProjectError("changeContextRoot API: Failed with message: " + err.message, projectID);
+        logger.logProjectError("Failed to change the context root: " + err.message, projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
             contextRoot: "/" + contextRoot,
             status: "failed",
             error: err.message
         };
 
         io.emitOnListener("projectSettingsChanged", data);
-    }
-};
-
-/**
- * @function
- * @description Reconfig the watched files for a project.
- *
- * @param args <Required | Any> - Required arguments for reconfiguration of watched files.
- *
- * @returns Promise<any>
- */
-const reconfigWatchedFiles = async function (args: any, operation: Operation): Promise<any> {
-    const projectInfo: ProjectInfo = operation.projectInfo;
-    const projectID = projectInfo.projectID;
-    const settingName = "watchedFiles";
-
-    if (!args.includeFiles && !args.excludeFiles) {
-        const errorMsg = "BAD_REQUEST: Neither of includeFiles or excludeFiles path was provided.";
-        logger.logProjectError("reconfigWatchedFiles API: Failed with message: " + errorMsg, projectID);
-
-        const data: ProjectSettingsEvent = {
-            operationId: operation.operationId,
-            projectID: projectID,
-            name: settingName,
-            status: "failed",
-            error: errorMsg
-        };
-
-        io.emitOnListener("projectSettingsChanged", data);
-        return;
-    }
-
-    if ((args.includeFiles && !(args.includeFiles instanceof Array)) || ( args.excludeFiles && !(args.excludeFiles instanceof Array))) {
-        const errorMsg = "BAD_REQUEST: The includeFiles path and excludeFiles path are expecting to be passed in as a string array.";
-        logger.logProjectError("reconfigWatchedFiles API: Failed with message: " + errorMsg, projectID);
-
-        const data: ProjectSettingsEvent = {
-            operationId: operation.operationId,
-            projectID: projectID,
-            name: settingName,
-            status: "failed",
-            error: errorMsg
-        };
-        io.emitOnListener("projectSettingsChanged", data);
-        return;
-    }
-
-    // Ignore the setting if excludeFiles has length greater than 1 and has an empty string because it may cause project-watcher to fail
-    let excludeFilesFlag = true;
-    if (args.excludeFiles && args.excludeFiles.length > 1) {
-        for (let i = 0; i < args.excludeFiles.length; i++) {
-            if (args.excludeFiles[i].trim().length == 0) {
-                excludeFilesFlag = false;
-                break;
-            }
-        }
-
-        if (!excludeFilesFlag) {
-            const errorMsg = "BAD_REQUEST: At least one of the element is empty, File-watcher will ignore the setting watchedFiles.excludeFiles";
-            logger.logProjectError("reconfigWatchedFiles API: Failed with message: " + errorMsg, projectID);
-
-            const data: ProjectSettingsEvent = {
-                operationId: operation.operationId,
-                projectID: projectID,
-                name: settingName,
-                status: "failed",
-                error: errorMsg
-            };
-            io.emitOnListener("projectSettingsChanged", data);
-            return;
-        }
-    }
-
-        // Ignore the setting if includeFiles has length greater than 1 and has an empty string because it may cause project-watcher to fail
-        let includeFilesFlag = true;
-        if (args.includeFiles && args.includeFiles.length > 1) {
-            for (let i = 0; i < args.includeFiles.length; i++) {
-                if (args.includeFiles[i].trim().length == 0) {
-                    includeFilesFlag = false;
-                    break;
-                }
-            }
-
-            if (!includeFilesFlag) {
-                const errorMsg = "BAD_REQUEST: At least one of the element is empty, File-watcher will ignore the setting watchedFiles.includeFiles";
-                logger.logProjectError("reconfigWatchedFiles API: Failed with message: " + errorMsg, projectID);
-
-                const data: ProjectSettingsEvent = {
-                    operationId: operation.operationId,
-                    projectID: projectID,
-                    name: settingName,
-                    status: "failed",
-                    error: errorMsg
-                };
-                io.emitOnListener("projectSettingsChanged", data);
-                return;
-            }
-        }
-
-    args.excludeFiles = (args.excludeFiles && args.excludeFiles[0].trim().length > 0) ? args.excludeFiles : undefined;
-    args.includeFiles = (args.includeFiles && args.includeFiles[0].trim().length > 0) ? args.includeFiles : undefined;
-
-    if (projectInfo.watchedFiles == args.includeFiles && projectInfo.ignoredFiles == args.excludeFiles ) {
-        logger.logProjectInfo("reconfigWatchedFiles API: Project watchedFiles is already set to: " + ((args.includeFiles) ? args.includeFiles.toString() : "default" ), projectID);
-        logger.logProjectInfo("reconfigWatchedFiles API: Project ignoredFiles is already set to: " + ((args.excludeFiles) ? args.excludeFiles.toString() : "default"), projectID);
-        return;
-    }
-
-    const workspaceOrigin = process.argv[2];
-
-    if (!process.env.IN_K8) {
-        const keyValuePair: UpdateProjectInfoPair = {
-            key: "watchedFiles",
-            value: args.includeFiles,
-            saveIntoJsonFile: true
-        };
-        await projectsController.updateProjectInfo(projectID, keyValuePair);
-
-        keyValuePair.key = "ignoredFiles";
-        keyValuePair.value = args.excludeFiles;
-        await projectsController.updateProjectInfo(projectID, keyValuePair);
-        await processManager.killInotifyProcess(projectID);
-        processManager.spawnDetached(projectID, "/file-watcher/scripts/project-watcher.sh", [projectInfo.location, workspaceOrigin, projectID, "localhost", (args.includeFiles && args.includeFiles[0].trim().length > 0) ? args.includeFiles.toString() : undefined, (args.excludeFiles && args.excludeFiles[0].trim().length > 0) ? args.excludeFiles.toString() : undefined, operation.operationId, (process.env.PORTAL_HTTPS == "true") ? "9191" : "9090", "&"], { cwd: projectInfo.location }, (result) => {});
-
     }
 };
 
@@ -477,23 +366,36 @@ const reconfigWatchedFiles = async function (args: any, operation: Operation): P
  * @returns Promise<any>
  */
 const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], operation: Operation): Promise<any> {
-    // ignoredFilesForDeamon is the project settings for filewatcher daemon
-    // will rename the settings name once we removed project-watcher
     const projectInfo: ProjectInfo = operation.projectInfo;
     const projectID = projectInfo.projectID;
     const settingName = "ignoredPaths";
     if (!ignoredPaths) {
         const errorMsg = "BAD_REQUEST: ignoredPaths is required, but was not provided.";
-        logger.logProjectError("reconfigIgnoredFilesForDaemon API: Failed with message: " + errorMsg, projectID);
+        logger.logProjectError("Failed to update ignored path list for file watching: " + errorMsg, projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
+            ignoredPaths: undefined,
             status: "failed",
             error: errorMsg
         };
 
+        io.emitOnListener("projectSettingsChanged", data);
+        return;
+    }
+
+    if (!(ignoredPaths instanceof Array)) {
+        const errorMsg = "BAD_REQUEST: ignoredPaths must be a string array.";
+        logger.logProjectError("Failed to update ignored path list for file watching: " + errorMsg, projectID);
+
+        const data: ProjectSettingsEvent = {
+            operationId: operation.operationId,
+            projectID: projectID,
+            ignoredPaths: undefined,
+            status: "failed",
+            error: errorMsg
+        };
         io.emitOnListener("projectSettingsChanged", data);
         return;
     }
@@ -502,21 +404,13 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
     ignoredPaths = ignoredPaths.filter( el => {
         return el.trim().length > 0 ;
     });
-    logger.logProjectInfo("ignoredPaths after removed any empty strings: " + ignoredPaths, projectID);
+    logger.logProjectInfo("Attempting to set the ignored path list for file watching with: " + ignoredPaths, projectID);
 
-    if (ignoredPaths == undefined || ignoredPaths.length == 0) {
-        const errorMsg = "BAD_REQUEST: The ignoredPaths array is empty, File-watcher will ignore the setting";
-        logger.logProjectError("reconfigWatchedFiles API: Failed with message: " + errorMsg, projectID);
-
-        const data: ProjectSettingsEvent = {
-            operationId: operation.operationId,
-            projectID: projectID,
-            name: settingName,
-            status: "failed",
-            error: errorMsg
-        };
-        io.emitOnListener("projectSettingsChanged", data);
-        return;
+    if (ignoredPaths.length == 0) {
+        const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+        const Msg = "The ignored path list for file watching is empty, the default list will be used instead: " + JSON.stringify(projectHandler.defaultIgnoredPath);
+        logger.logProjectInfo(Msg, projectID);
+        ignoredPaths = projectHandler.defaultIgnoredPath;
     }
 
     if (projectInfo.ignoredPaths.length == ignoredPaths.length
@@ -524,7 +418,7 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
             return element === ignoredPaths[index];
         })
     ) {
-        logger.logProjectInfo("reconfigWatchedFiles API: Project ignoredPaths is already set to: " + ((ignoredPaths) ? ignoredPaths.toString() : "default" ), projectID);
+        logger.logProjectInfo("The ignored path list for file watching is unchanged: " + ((ignoredPaths) ? ignoredPaths.toString() : "default" ), projectID);
         return;
     }
 
@@ -538,14 +432,13 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
     const data: ProjectSettingsEvent = {
         operationId: operation.operationId,
         projectID: projectID,
-        name: settingName,
         status: "success"
     };
     if (ignoredPaths) {
         data.ignoredPaths = ignoredPaths;
     }
 
-    logger.logProjectInfo("reconfigIgnoredFilesForDaemon API: Change ignored files successfully", projectID);
+    logger.logProjectInfo("The ignored path list for file watching was updated successfully.", projectID);
     io.emitOnListener("projectSettingsChanged", data);
 };
 
@@ -580,7 +473,6 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
             healthCheck: "/" + healthCheck,
             status: "failed",
             error: errorMsg
@@ -592,17 +484,17 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
     healthCheck = healthCheck.trim();
 
     if (!projectInfo.healthCheck && healthCheck.length == 0) {
-        logger.logProjectInfo("changeHealthCheck API: Project's healthCheck is already set to default", projectID);
+        logger.logProjectInfo("The health check endpoint is not set.", projectID);
         return;
     }
 
     if (projectInfo.healthCheck == "/" + healthCheck) {
-        logger.logProjectInfo("changeHealthCheck API: Project's healthCheck is already set to: " + healthCheck, projectID);
+        logger.logProjectInfo("The health check endpoint remains unchanged: " + healthCheck, projectID);
         return;
     }
 
-    logger.logProjectInfo("changeHealthCheck API: Project ID is " + projectID, projectID);
-    logger.logProjectInfo("changeHealthCheck API: Update Project health check to " + healthCheck, projectID);
+    logger.logProjectTrace("changeHealthCheck API: Project ID is " + projectID, projectInfo.projectID);
+    logger.logProjectInfo("The health check endpoint is set to: " + healthCheck, projectID);
 
     const keyValuePair: UpdateProjectInfoPair = {
         key : "healthCheck",
@@ -619,10 +511,10 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
             healthCheck: "/" + healthCheck,
             status: "success"
         };
-        logger.logProjectInfo("changeHealthCheck API: Change health check successfully", projectID);
+        logger.logProjectInfo("The health check endpoint was updated successfully", projectID);
         io.emitOnListener("projectSettingsChanged", data);
     } catch (err) {
-        logger.logProjectError("changeHealthCheck API: Failed with message: " + err.message, projectID);
+        logger.logProjectError("Failed to update the health check endpoint: " + err.message, projectID);
         const data = {
             operationId: operation.operationId,
             projectID: projectID,
@@ -652,13 +544,13 @@ const changeMavenProfiles = async function (mavenProfiles: any, operation: Opera
     const settingName = "mavenProfiles";
 
     if (!mavenProfiles) {
-        const errorMsg = "BAD_REQUEST: The mavenProfiles was not passed";
-        logger.logProjectError("changeMavenProfiles API: Failed with message: " + errorMsg, projectID);
+        const errorMsg = "BAD_REQUEST: mavenProfiles is a required parameter.";
+        logger.logProjectError("Failed to change the maven profile list: " + errorMsg, projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
+            mavenProfiles: undefined,
             status: "failed",
             error: errorMsg
         };
@@ -667,13 +559,13 @@ const changeMavenProfiles = async function (mavenProfiles: any, operation: Opera
     }
 
     if (mavenProfiles && !(mavenProfiles instanceof Array)) {
-        const errorMsg = "BAD_REQUEST: The mavenProfiles is expected to be passed in as a string array.";
-        logger.logProjectError("changeMavenProfiles API: Failed with message: " + errorMsg, projectID);
+        const errorMsg = "BAD_REQUEST: mavenProfiles must be a string array.";
+        logger.logProjectError("Failed to change the maven profile list: " + errorMsg, projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
+            mavenProfiles: undefined,
             status: "failed",
             error: errorMsg
         };
@@ -684,7 +576,7 @@ const changeMavenProfiles = async function (mavenProfiles: any, operation: Opera
     if (mavenProfiles && (mavenProfiles instanceof Array)) {
         if (mavenProfiles.length == 1 && mavenProfiles[0].trim().length == 0) {
              // Ignore if settings value is empty like "" or " "
-            logger.logProjectInfo("changeMavenProfiles API: Value empty, File-watcher will ignore the setting mavenProfiles", projectID);
+            logger.logProjectInfo("The maven profile list is empty.", projectID);
             const keyValuePair: UpdateProjectInfoPair = {
                 key : "mavenProfiles",
                 value: undefined,
@@ -697,7 +589,7 @@ const changeMavenProfiles = async function (mavenProfiles: any, operation: Opera
 
     if (projectType == "liberty" || projectType == "spring") {
         if (projectInfo.mavenProfiles && (mavenProfiles.toString() == projectInfo.mavenProfiles.toString())) {
-            logger.logProjectInfo("changeMavenProfiles API: Project mavenProfiles is already set to: " + mavenProfiles, projectID);
+            logger.logProjectInfo("The maven profile list remains unchanged: " + mavenProfiles, projectID);
             return;
         }
         const keyValuePair: UpdateProjectInfoPair = {
@@ -706,23 +598,23 @@ const changeMavenProfiles = async function (mavenProfiles: any, operation: Opera
             saveIntoJsonFile: true
         };
         projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
-        logger.logProjectInfo("changeMavenProfiles API: The projectInfo has been updated: " + JSON.stringify(projectInfo), projectInfo.projectID);
+        logger.logProjectTrace("changeMavenProfiles API: The projectInfo has been updated: " + JSON.stringify(projectInfo), projectInfo.projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
+            mavenProfiles: mavenProfiles,
             status: "success"
         };
         io.emitOnListener("projectSettingsChanged", data);
     } else {
-        logger.logProjectInfo("changeMavenProfiles API: Maven settings cannot be set for a non-Maven project of type: " + projectType, projectInfo.projectID);
+        logger.logProjectInfo("Maven settings cannot be set for a non-Maven project: " + projectType, projectInfo.projectID);
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
                 projectID: projectID,
-                name: settingName,
+                mavenProfiles: mavenProfiles,
                 status: "failed",
-                error: "Maven settings cannot be set for a non-Maven project of type: " + projectType
+                error: "Maven settings cannot be set for a non-Maven project: " + projectType
             };
             io.emitOnListener("projectSettingsChanged", data);
             return;
@@ -748,13 +640,13 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
     const settingName = "mavenProperties";
 
     if (!mavenProperties) {
-        const errorMsg = "BAD_REQUEST: The mavenProperties was not passed";
-        logger.logProjectError("changeMavenProperties API: Failed with message: " + errorMsg, projectID);
+        const errorMsg = "BAD_REQUEST: mavenProperties is a required parameter";
+        logger.logProjectError("Failed to change the maven properties: " + errorMsg, projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
+            mavenProperties: undefined,
             status: "failed",
             error: errorMsg
         };
@@ -763,13 +655,13 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
     }
 
     if (mavenProperties && !(mavenProperties instanceof Array)) {
-        const errorMsg = "BAD_REQUEST: The mavenProperties is expected to be passed in as a string array.";
-        logger.logProjectError("changeMavenProperties API: Failed with message: " + errorMsg, projectID);
+        const errorMsg = "BAD_REQUEST: mavenProperties must be a string array.";
+        logger.logProjectError("Failed to change the maven properties: " + errorMsg, projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
+            mavenProperties: undefined,
             status: "failed",
             error: errorMsg
         };
@@ -780,7 +672,7 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
     if (mavenProperties && (mavenProperties instanceof Array)) {
         if (mavenProperties.length == 1 && mavenProperties[0].trim().length == 0) {
              // Ignore if settings value is empty like "" or " "
-            logger.logProjectInfo("changeMavenProperties API: Value empty, File-watcher will ignore the setting mavenProperties", projectID);
+            logger.logProjectInfo("The maven properties list is empty, the setting will be ignored.", projectID);
             const keyValuePair: UpdateProjectInfoPair = {
                 key : "mavenProperties",
                 value: undefined,
@@ -793,7 +685,7 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
 
     if (projectType == "liberty" || projectType == "spring") {
         if (projectInfo.mavenProperties && (mavenProperties.toString() == projectInfo.mavenProperties.toString())) {
-            logger.logProjectInfo("changeMavenProperties API: Project mavenProperties is already set to: " + mavenProperties, projectID);
+            logger.logProjectInfo("The maven properties list remains unchanged: " + mavenProperties, projectID);
             return;
         }
         const keyValuePair: UpdateProjectInfoPair = {
@@ -802,23 +694,23 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
             saveIntoJsonFile: true
         };
         projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
-        logger.logProjectInfo("changeMavenProperties API: The projectInfo has been updated: " + JSON.stringify(projectInfo), projectInfo.projectID);
+        logger.logProjectTrace("changeMavenProperties API: The projectInfo has been updated: " + JSON.stringify(projectInfo), projectInfo.projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
+            mavenProperties: mavenProperties,
             status: "success"
         };
         io.emitOnListener("projectSettingsChanged", data);
     } else {
-        logger.logProjectInfo("changeMavenProperties API: Maven settings cannot be set for a non-Maven project of type: " + projectType, projectInfo.projectID);
+        logger.logProjectInfo("The maven properties list cannot be set for a non-Maven project: " + projectType, projectInfo.projectID);
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
                 projectID: projectID,
-                name: settingName,
+                mavenProperties: mavenProperties,
                 status: "failed",
-                error: "Maven settings cannot be set for a non-Maven project of type: " + projectType
+                error: "The maven properties list cannot be set for a non-Maven project: " + projectType
             };
             io.emitOnListener("projectSettingsChanged", data);
             return;
@@ -838,8 +730,8 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
  * @returns Promise<{ operationId: string }>
  */
 export async function projectSpecificationHandler(projectID: string, settings: any): Promise<{ operationId: string }> {
-    logger.logProjectInfo("Project settings API: Project ID is " + projectID, projectID);
-    logger.logProjectInfo("Project settings API: Project settings are " + JSON.stringify(settings), projectID);
+    logger.logProjectTrace("Project settings invoked for project ", projectID);
+    logger.logProjectTrace("Project settings are " + JSON.stringify(settings), projectID);
 
     const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
 
@@ -854,25 +746,23 @@ export async function projectSpecificationHandler(projectID: string, settings: a
 
     for (const key in settings) {
         if (!specificationSettingMap.has(key)) {
-            const errorMsg = "BAD_REQUEST: Each setting must have a name and a value. Or the specified setting is not reconfigurable.";
+            const errorMsg = `BAD_REQUEST: ${key} is not a configurable setting.`;
             logger.logProjectError(errorMsg, projectID);
 
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
                 projectID: projectID,
-                name: key,
                 status: "failed",
                 error: errorMsg
             };
             io.emitOnListener("projectSettingsChanged", data);
         } else {
             if (settings[key] == undefined) {
-                const errorMsg = "BAD_REQUEST: Each setting must have a name and a value. Or the specified setting is not reconfigurable.";
+                const errorMsg = "BAD_REQUEST: Each setting must have a name and a value.";
                 logger.logProjectError(errorMsg, projectID);
                 const data: ProjectSettingsEvent = {
                     operationId: operation.operationId,
                     projectID: projectID,
-                    name: key,
                     status: "failed",
                     error: errorMsg
                 };
@@ -883,7 +773,7 @@ export async function projectSpecificationHandler(projectID: string, settings: a
         }
     }
 
-    logger.logProjectInfo("Project settings API: Return operation ID: " + operation.operationId, projectID);
+    logger.logProjectTrace(`${projectID} Project settings API operation ID: ${operation.operationId}`, projectID);
     return { "operationId": operation.operationId };
 }
 
@@ -891,7 +781,6 @@ export async function projectSpecificationHandler(projectID: string, settings: a
 specificationSettingMap.set("internalDebugPort", changeInternalDebugPort);
 specificationSettingMap.set("internalPort", changeInternalPort);
 specificationSettingMap.set("contextRoot", changeContextRoot);
-specificationSettingMap.set("watchedFiles", reconfigWatchedFiles);
 specificationSettingMap.set("healthCheck", changeHealthCheck);
 specificationSettingMap.set("mavenProfiles", changeMavenProfiles);
 specificationSettingMap.set("mavenProperties", changeMavenProperties);

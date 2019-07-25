@@ -1,6 +1,0 @@
-{
-  "events": {
-    "restart": "npm install"
-  },
-  "ignore": ["load-test/"]
-}

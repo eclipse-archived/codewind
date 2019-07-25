@@ -54,8 +54,8 @@ let contents: any = {};
         }
         return contents;
     } catch (err) {
-        logger.logFileWatcherError("Error reading file " + filePath);
-        logger.logFileWatcherError(err);
+        logger.logError("Error reading file " + filePath);
+        logger.logError(err);
         return contents = {};
     }
 }
@@ -91,8 +91,8 @@ export async function asyncCopyFile(file: string, destination: string): Promise<
         await copyAsync(file, destination);
         return true;
     } catch (err) {
-        logger.logFileWatcherError("Error copying file " + file  + " to destination " + destination);
-        logger.logFileWatcherError(err);
+        logger.logError("Error copying file " + file  + " to destination " + destination);
+        logger.logError(err);
         return false;
     }
 }
@@ -109,11 +109,11 @@ export async function asyncCopyFile(file: string, destination: string): Promise<
 export async function asyncCopyDir(src: string, destination: string): Promise<boolean> {
     try {
         await copyDirAsync(src, destination);
-        logger.logFileWatcherInfo("Finished copying dir " + src + " to " + destination);
+        logger.logInfo("Finished copying dir " + src + " to " + destination);
         return true;
     } catch (err) {
-        logger.logFileWatcherError("Error copying dir " + src  + " to destination " + destination);
-        logger.logFileWatcherError(err);
+        logger.logError("Error copying dir " + src  + " to destination " + destination);
+        logger.logError(err);
         return false;
     }
 }
@@ -131,8 +131,8 @@ export async function asyncReadDir(dir: string): Promise<Array<string>> {
         const dirList = await readDirAsync(dir);
         return dirList;
     } catch (err) {
-        logger.logFileWatcherError("Error reading directory " + dir);
-        logger.logFileWatcherError(err);
+        logger.logError("Error reading directory " + dir);
+        logger.logError(err);
         return undefined;
     }
 }

@@ -32,7 +32,7 @@ const LoadRunError = require('./utils/errors/LoadRunError.js');
 module.exports = class LoadRunner {
   constructor(user) {
     this.user = user;
-    this.hostname = 'codewind-performance';
+    this.hostname = process.env.CODEWIND_PERFORMANCE_SERVICE ? process.env.CODEWIND_PERFORMANCE_SERVICE : "codewind-performance"
     this.port = '9095';
     this.project = null;
     this.runDescription = null;

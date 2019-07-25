@@ -56,15 +56,15 @@ export let workspaceSettingsInfoCache: string = undefined;
 export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess | IWorkspaceSettingsFailure> {
 
     const workspaceSettingsFile = constants.workspaceConstants.workspaceSettingsFile;
-    logger.logFileWatcherInfo("Reading the workspace settings file " + workspaceSettingsFile);
+    logger.logInfo("Reading the workspace settings file " + workspaceSettingsFile);
     let settingsFileContent: any;
     try {
         if (await utils.asyncFileExists(workspaceSettingsFile)) {
             settingsFileContent = await utils.asyncReadJSONFile(workspaceSettingsFile);
-            logger.logFileWatcherInfo("Workspace settings file content: " + JSON.stringify(settingsFileContent));
+            logger.logInfo("Workspace settings file content: " + JSON.stringify(settingsFileContent));
         } else {
             const msg = "The workspace settings file was not found at location: " + workspaceSettingsFile;
-            logger.logFileWatcherError(msg);
+            logger.logError(msg);
             const workspaceSettings = {
                 msg: msg
             };
@@ -72,7 +72,7 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
         }
     } catch (err) {
         const msg = "Codewind encountered an error when trying to read the workspace settings file";
-        logger.logFileWatcherError(err);
+        logger.logError(err);
         const workspaceSettings = {
             msg: msg
         };
@@ -84,10 +84,10 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
     const regex = new RegExp(/^[A-Za-z0-9-._~:\/?#\[\]@!\$&'\(\)\*\+;%=,]+$/);
     if (settingsFileContent.deploymentRegistry && settingsFileContent.deploymentRegistry.length) {
         const isDeploymentRegistryValid = regex.test(settingsFileContent.deploymentRegistry);
-        logger.logFileWatcherInfo("Deployment Registry Validation: " + isDeploymentRegistryValid);
+        logger.logInfo("Deployment Registry Validation: " + isDeploymentRegistryValid);
         if (!isDeploymentRegistryValid) {
             const msg = "Codewind detected an error with the Deployment Registry " + settingsFileContent.deploymentRegistry + ". Please ensure it is a valid Deployment Registry.";
-            logger.logFileWatcherError(msg);
+            logger.logError(msg);
             const data: any = {
                 deploymentRegistryTest: false,
                 msg: msg
@@ -119,7 +119,7 @@ export async function loadWorkspaceSettings(workspaceSettings: any): Promise<any
         watcherChunkTimeout: workspaceSettings.watcherChunkTimeout ? workspaceSettings.watcherChunkTimeout : ""
     };
 
-    logger.logFileWatcherInfo("Caching workspace settings: " + JSON.stringify(workspaceSettingsInfo));
+    logger.logInfo("Caching workspace settings: " + JSON.stringify(workspaceSettingsInfo));
 
     await cacheWorkspaceSettingsInfo(workspaceSettingsInfo);
 
@@ -138,7 +138,7 @@ export async function cacheWorkspaceSettingsInfo(workspaceSettings: WorkspaceSet
     return new Promise((resolve) => {
         const workspaceSettingsJSON = JSON.stringify(workspaceSettings);
         workspaceSettingsInfoCache = workspaceSettingsJSON;
-        logger.logFileWatcherInfo("Cached Workspace Settings Info Cache: " + workspaceSettingsInfoCache);
+        logger.logInfo("Cached Workspace Settings Info Cache: " + workspaceSettingsInfoCache);
         resolve();
     });
 }
@@ -152,7 +152,7 @@ export async function cacheWorkspaceSettingsInfo(workspaceSettings: WorkspaceSet
 export async function getWorkspaceSettingsInfo(): Promise<any> {
     const workspaceSettingsFile = constants.workspaceConstants.workspaceSettingsFile;
     if (workspaceSettingsInfoCache) {
-        logger.logFileWatcherInfo("workspaceSettingsInfoCache cache: " + workspaceSettingsInfoCache);
+        logger.logInfo("workspaceSettingsInfoCache cache: " + workspaceSettingsInfoCache);
         return JSON.parse(workspaceSettingsInfoCache);
     }
 
@@ -162,19 +162,19 @@ export async function getWorkspaceSettingsInfo(): Promise<any> {
         watcherChunkTimeout: ""
     };
     try {
-        logger.logFileWatcherInfo("Unable to find the workspace settings cache, reading the workspace settings file: " + workspaceSettingsFile);
+        logger.logInfo("Unable to find the workspace settings cache, reading the workspace settings file: " + workspaceSettingsFile);
         if (await utils.asyncFileExists(workspaceSettingsFile)) {
             data = await utils.asyncReadJSONFile(workspaceSettingsFile);
-            logger.logFileWatcherInfo("Returning workspace settings file content: " + JSON.stringify(data));
+            logger.logInfo("Returning workspace settings file content: " + JSON.stringify(data));
             return data;
         } else {
             const msg = "The workspace settings file was not found at location: " + workspaceSettingsFile;
-            logger.logFileWatcherError(msg);
+            logger.logError(msg);
             // Since the workspace settings cache or the workspace settings file were not found, return an empty workspaceSettingsInfo
             return emptyWorkspaceSettingsInfo;
         }
     } catch (err) {
-        logger.logFileWatcherError("Failed to find workspace settings information related to file " + workspaceSettingsFile);
+        logger.logError("Failed to find workspace settings information related to file " + workspaceSettingsFile);
         // Since the workspace settings cache or the workspace settings file were not found, return an empty workspaceSettingsInfo
         return emptyWorkspaceSettingsInfo;
     }
@@ -187,13 +187,13 @@ export async function testDeploymentRegistry(deploymentRegistry: string): Promis
 
     let deploymentRegistryTest: boolean = false;
 
-    logger.logFileWatcherInfo("Testing the deployment registry: " + deploymentRegistry);
+    logger.logInfo("Testing the deployment registry: " + deploymentRegistry);
     try {
         await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["pull", "hello-world"], {});
     } catch (err) {
         const msg = "Codewind was unable to pull the hello-world image during the Deployment Registry test.";
-        logger.logFileWatcherError(msg);
-        logger.logFileWatcherError(err);
+        logger.logError(msg);
+        logger.logError(err);
 
         const data: any = {
             deploymentRegistryTest: deploymentRegistryTest,
@@ -210,11 +210,11 @@ export async function testDeploymentRegistry(deploymentRegistry: string): Promis
     try {
         dockerPush = (await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["push", "--tls-verify=false", "hello-world", deploymentRegistry + "/hello-world"], {}));
         dockerPushEC = dockerPush.exitCode;
-        logger.logFileWatcherInfo("testDeploymentRegistry exit code: " + dockerPushEC);
+        logger.logInfo("testDeploymentRegistry exit code: " + dockerPushEC);
     } catch (err) {
         const msg = "Codewind was unable to push the hello-world image to the Deployment Registry " + deploymentRegistry +  "/hello-world. Please make sure it is a valid Deployment Registry with the appropriate permissions.";
-        logger.logFileWatcherError(msg);
-        logger.logFileWatcherError(err);
+        logger.logError(msg);
+        logger.logError(err);
 
         const data: any = {
             deploymentRegistryTest: deploymentRegistryTest,
@@ -229,16 +229,16 @@ export async function testDeploymentRegistry(deploymentRegistry: string): Promis
         deploymentRegistryTest = true;
     }
 
-    logger.logFileWatcherInfo("Deployment Registry Test Status: " + deploymentRegistryTest);
+    logger.logInfo("Deployment Registry Test Status: " + deploymentRegistryTest);
     let msg;
     if (deploymentRegistryTest) {
         msg = "Codewind projects on Kubernetes will build with the Deployment Registry: " + deploymentRegistry;
-        logger.logFileWatcherInfo("Successful Deployment Registry test");
-        logger.logFileWatcherInfo(msg);
+        logger.logInfo("Successful Deployment Registry test");
+        logger.logInfo(msg);
     } else {
         msg = "Codewind projects on Kubernetes cannot build with the Deployment Registry, as Codewind encountered an issue when pushing an image to: " + deploymentRegistry + ". Please make sure it is a valid Deployment Registry with the appropriate permissions.";
-        logger.logFileWatcherInfo("Un-successful Deployment Registry test");
-        logger.logFileWatcherInfo(msg);
+        logger.logInfo("Un-successful Deployment Registry test");
+        logger.logInfo(msg);
     }
 
     const data: any = {

@@ -23,6 +23,7 @@ const log = new Logger(__filename);
  * extension, and a codewind.yaml file, e.g.:
  * 
  * name: myExtension
+ * version: 1.0.0
  * description: This is an example of a codewind extension
  * projectType: myCustomType
  * commands:
@@ -43,13 +44,13 @@ module.exports = class Extension {
     this.name = args.name;
     this.path = args.path;
 
+    this.version = null;
     this.description = null;
     this.projectType = null;
     this.commands = [];
     this.detection = null;
     this.templates = null;
-
-    this.initialise();
+    this.config = {};
   }
 
   /**
@@ -61,6 +62,10 @@ module.exports = class Extension {
       let definitionFile = await fs.readFile(path.join(this.path, 'codewind.yaml'));
       let definition = yaml.safeLoad(definitionFile);
 
+      if (definition.hasOwnProperty('version')) {
+        // TODO: validate extension version
+        this.version = definition.version;
+      }
       if (definition.hasOwnProperty('description')) {
         // TODO: validate extension description
         this.description = definition.description;
@@ -80,6 +85,15 @@ module.exports = class Extension {
       if (definition.hasOwnProperty('templates')) {
         // TODO: validate extension templates/devfiles URL
         this.templates = definition.templates;
+      }
+      else {
+        const providerPath = path.join(this.path, 'templatesProvider.js');
+        if (await fs.exists(providerPath))
+          this.templatesProvider = require(providerPath);
+      }
+      if (definition.hasOwnProperty('config')) {
+        // TODO: validate extension configuration
+        this.config = definition.config;
       }
     } catch (err) {
       log.error(`Error initialising extension ${this.name}`);

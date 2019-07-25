@@ -50,7 +50,7 @@ export const supportedType: string = "liberty";
  *
  */
 export const defaultIgnoredPath: string[] = ["/.project", "/Dockerfile-tools", "/target",
-                                             "/mc-target", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore",
+                                             "/mc-target", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore", "/load-test*",
                                              "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913", "*/.dockerignore",
                                              "*/.gitignore", "*/*~", "/.settings", "/localm2cache.zip", "/libertyrepocache.zip"];
 if (!process.env.IN_K8) {

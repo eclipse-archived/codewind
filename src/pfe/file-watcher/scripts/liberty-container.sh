@@ -55,30 +55,60 @@ mkdir -p target/liberty/wlp/usr/shared/resources
 function create() {
 	# If the zip file of liberty feature cache or maven m2 cache doesn't exist then pull it from duckerhub
 	if [ ! -f libertyrepocache.zip ] || [ ! -f localm2cache.zip ]; then
-		echo "Pulling cache image for $ROOT"
-		docker pull ibmcom/codewind-java-project-cache > /dev/null
-		dockerPullExitCode=$?
+		if [ "$IN_K8" == "true" ]; then
+			echo "Pulling cache image for $ROOT using buildah"
+			buildah pull ibmcom/codewind-java-project-cache > /dev/null
+			dockerPullExitCode=$?
 
-		if [ $dockerPullExitCode -eq 0 ]; then
-			echo "Finished pulling cache image for $ROOT"
-			echo "Cache will be used for liberty project $ROOT"
-			CACHE_CONTAINER_ID=$(docker create ibmcom/codewind-java-project-cache)
+			if [ $dockerPullExitCode -eq 0 ]; then
+				echo "Finished pulling cache image for $ROOT using buildah"
+				echo "Cache will be used for liberty project $ROOT"
+				buildah from ibmcom/codewind-java-project-cache
+				CACHE_CONTAINER_ID=$(buildah ps | grep codewind-java-project-cache | cut -d " " -f 1)
+				mnt=$(buildah mount $CACHE_CONTAINER_ID)
 
-			if [ ! -f libertyrepocache.zip ]; then
-				echo "Downloading liberty feature cache to $ROOT"
-				docker cp $CACHE_CONTAINER_ID:/cache/libertyrepocache.zip .
-				echo "Finished downloading liberty feature cache to $ROOT"
-			fi
+				if [ ! -f libertyrepocache.zip ]; then
+					echo "Downloading liberty feature cache to $ROOT"
+					cp $mnt/cache/libertyrepocache.zip .
+					echo "Finished downloading liberty feature cache to $ROOT"
+				fi
 
-			if [ ! -f localm2cache.zip ]; then
-				echo "Downloading maven m2 cache to $ROOT"
-				docker cp $CACHE_CONTAINER_ID:/cache/localm2cache.zip .
-				echo "Finished downloading maven m2 cache to $ROOT"
-			fi
+				if [ ! -f localm2cache.zip ]; then
+					echo "Downloading maven m2 cache to $ROOT"
+					cp $mnt/cache/localm2cache.zip .
+					echo "Finished downloading maven m2 cache to $ROOT"
+				fi
 		
-			docker rm -f $CACHE_CONTAINER_ID
+				buildah rm $CACHE_CONTAINER_ID
+			else
+				echo "Cache cannot be retrieved for liberty project $ROOT because the cache image could not be pulled using buildah"
+			fi
 		else
-			echo "Cache cannot be retrieved for liberty project $ROOT because the cache image could not be pulled"
+			echo "Pulling cache image for $ROOT using docker"
+			docker pull ibmcom/codewind-java-project-cache > /dev/null
+			dockerPullExitCode=$?
+
+			if [ $dockerPullExitCode -eq 0 ]; then
+				echo "Finished pulling cache image for $ROOT using docker"
+				echo "Cache will be used for liberty project $ROOT"
+				CACHE_CONTAINER_ID=$(docker create ibmcom/codewind-java-project-cache)
+
+				if [ ! -f libertyrepocache.zip ]; then
+					echo "Downloading liberty feature cache to $ROOT"
+					docker cp $CACHE_CONTAINER_ID:/cache/libertyrepocache.zip .
+					echo "Finished downloading liberty feature cache to $ROOT"
+				fi
+
+				if [ ! -f localm2cache.zip ]; then
+					echo "Downloading maven m2 cache to $ROOT"
+					docker cp $CACHE_CONTAINER_ID:/cache/localm2cache.zip .
+					echo "Finished downloading maven m2 cache to $ROOT"
+				fi
+		
+				docker rm -f $CACHE_CONTAINER_ID
+			else
+				echo "Cache cannot be retrieved for liberty project $ROOT because the cache image could not be pulled using docker"
+			fi
 		fi
 	fi
 
@@ -173,15 +203,18 @@ function create() {
 	echo "idc build started for $ROOT $(date)"
 	/file-watcher/idc/idc build --mavenSettings="$MAVEN_SETTINGS"
 	exitCode=$?
-	# get the status code of the build, if the build failed, update the status
+	# Get the status code of the build. If the build failed, update the status only if you know the return code
+	# Otherwise, handle build or app status in IDC code
 	if [[ $exitCode -ne 0 ]]; then
 		echo "idc build failed for $ROOT with exit code $exitCode $(date)"
-		if [[ $exitCode -eq 7 ]]; then
-        	$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
-			exit 7;
-    	else
-        	$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "containerBuildTask.containerBuildFailDockerfileGenerate"
-    	fi	
+		# IDC specifically exits with exit code 1
+		if [[ $exitCode -eq 1 ]]; then
+			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.unexpectedError"
+		elif [[ $exitCode -eq 7 ]]; then
+			$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
+			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
+		fi
+		exit 3
 	else
 		echo "idc build finished for $ROOT $(date)"
 		# Start the status tracker
@@ -230,7 +263,7 @@ elif [ "$COMMAND" == "update" ]; then
 		echo "idc build failed for $ROOT with exit code $exitCode $(date)"
 		if [[ $exitCode -eq 7 ]]; then
         	$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
-			exit 7;
+			exit 3
     	fi
 	fi
 

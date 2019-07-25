@@ -1,9 +1,0 @@
----
-applications:
-- instances: 1
-  timeout: 180
-  name: microclimatetestspring
-  buildpack: java_buildpack
-  path: ./target/microclimatetestspring-1.0-SNAPSHOT.jar
-  memory: 1024M
-  random-route: true

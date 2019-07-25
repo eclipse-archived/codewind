@@ -15,6 +15,7 @@ const { promisify } = require('util');
 const git = require('simple-git/promise');
 const fs = require('fs-extra');
 const path = require('path');
+const zlib = require('zlib');
 
 const reqService = require('./request.service');
 const SocketService = require('./socket.service');
@@ -414,6 +415,23 @@ function readCwSettings(projectPath) {
     return fs.readJSONSync(`${projectPath}/.cw-settings`);
 }
 
+async function notifyPfeOfFileChangesAndAwaitMsg(array, projectID) {
+    const deflateAsync = promisify(zlib.deflate);
+    const str = JSON.stringify(array);
+    const strBuffer = await deflateAsync(str);
+    const base64Compressed = strBuffer.toString('base64');
+
+    const req = () => reqService.chai
+        .post(`/api/v1/projects/${projectID}/file-changes?timestamp=${Date.now()}&chunk=1&chunk_total=1`)
+        .set('Cookie', ADMIN_COOKIE)
+        .send({ msg: base64Compressed });
+    const expectedSocketMsg = {
+        projectID,
+        msgType: 'projectChanged',
+    };
+    await reqService.makeReqAndAwaitSocketMsg(req, 200, expectedSocketMsg);
+}
+
 
 module.exports = {
     fastestCreationOptions,
@@ -450,5 +468,6 @@ module.exports = {
     readCwSettings,
     cloneAndBindAndBuildProject,
     cloneAndBindProject,
-    bindProjectAndWaitForMsg
+    bindProjectAndWaitForMsg,
+    notifyPfeOfFileChangesAndAwaitMsg,
 };

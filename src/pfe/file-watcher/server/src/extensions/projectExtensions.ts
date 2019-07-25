@@ -54,7 +54,7 @@ export function isProjectExtensionSupported(projectType: string): boolean {
  */
 export function setProjectExtensionList(projectType: string): void {
     projectExtensionList.push(projectType);
-    logger.logFileWatcherInfo("projectExtensionList has been updated with extension type " + projectType + ": " + projectExtensionList);
+    logger.logInfo("projectExtensionList has been updated with extension type " + projectType + ": " + projectExtensionList);
 }
 
 /**
@@ -67,7 +67,7 @@ export function setProjectExtensionList(projectType: string): void {
  */
 export function removeProjectExtensionList(projectType: string): void {
     projectExtensionList.splice(projectExtensionList.indexOf(projectType), 1);
-    logger.logFileWatcherInfo("Extension type " + projectType + " has been removed from projectExtensionList: " + projectExtensionList);
+    logger.logInfo("Extension type " + projectType + " has been removed from projectExtensionList: " + projectExtensionList);
 }
 
 /**
@@ -101,11 +101,11 @@ export async function getProjectTypes(location: string): Promise<Array<string>> 
  * @returns Promise<Array<string>>
  */
 export async function determineProjectType(location: string): Promise<Array<string>> {
-    logger.logFileWatcherInfo("Determining project type for project at location: " + location);
+    logger.logInfo("Determining project type for project at location: " + location);
 
     if (! await utils.asyncFileExists(location)) {
         const msg = "The location does not exist: " + location;
-        logger.logFileWatcherError(msg);
+        logger.logError(msg);
         const error = new Error("The location does not exist: " + location);
         error.name = "FILE_NOT_EXIST";
         throw error;
@@ -123,7 +123,7 @@ export async function determineProjectType(location: string): Promise<Array<stri
         }
     }
 
-    logger.logFileWatcherInfo("The project location " + location + " matched types: " + types);
+    logger.logInfo("The project location " + location + " matched types: " + types);
     return types;
 }
 
@@ -152,32 +152,34 @@ export function getAllProjectTypes(): Array<string> {
  */
 async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any> {
 
-    try {
-        // is there an extension handler for the type?
-        if (!extensionProjectHandlers[projectInfo.projectType]) {
+    const key = projectInfo.projectID;
+    let handler = extensionProjectHandlers[key];
 
-            const extensionID = projectInfo.extensionID;
+    // is there an extension handler for the project?
+    if (!handler) {
 
-            // try to load extension handler if ID was provided
-            if (extensionID) {
+        const extensionID = projectInfo.extensionID;
+
+        // try to load extension handler if ID was provided
+        if (extensionID) {
+            try {
                 const files = await utils.asyncReadDir(`/codewind-workspace/.extensions/${extensionID}`);
                 if (files) {
                     if (files.includes(".sh-extension")) {
-                        const handler = new ShellExtensionProject(projectInfo.projectType);
-                        await handler.init(extensionID);
-                        extensionProjectHandlers[projectInfo.projectType] = handler;
+                        handler = new ShellExtensionProject(projectInfo.projectType);
+                        await handler.init(projectInfo);
+                        extensionProjectHandlers[key] = handler;
                     }
                 }
             }
+            catch (err) {
+                logger.logError(`Failed to get extension project handler ${extensionID} for ${projectInfo.location}`);
+                return undefined;
+            }
         }
-
-        return extensionProjectHandlers[projectInfo.projectType];
-    }
-    catch (err) {
-        logger.logFileWatcherError(`Failed to get extension project handler ${projectInfo.extensionID} for ${projectInfo.location}`);
     }
 
-    return undefined;
+    return handler;
 }
 
 /**
@@ -208,6 +210,28 @@ export async function getProjectHandler(projectInfo: ProjectInfo): Promise<any> 
         return handler;
 
     return new DockerProject(DOCKER_TYPE);
+}
+
+/**
+ * @function
+ * @description Remove and return the project handler for the given project info. Note that
+ * built-in handlers are never removed.
+ *
+ * @param projectInfo <Required | ProjectInfo> - The project info.
+ *
+ * @returns any
+ */
+export async function removeProjectHandler(projectInfo: ProjectInfo): Promise<any> {
+
+    const handler = getProjectHandler(projectInfo);
+
+    const key = projectInfo.projectID;
+    if (extensionProjectHandlers[key]) {
+        logger.logInfo(`Removing extension project handler ${key}`);
+        delete extensionProjectHandlers[key];
+    }
+
+    return handler;
 }
 
 /**

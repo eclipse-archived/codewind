@@ -22,6 +22,7 @@ import { UpdateProjectInfoPair, ProjectInfo } from "../projects/Project";
 import * as projectSpecifications  from "../projects/projectSpecifications";
 import AsyncLock from "async-lock";
 import * as workspaceSettings from "../utils/workspaceSettings";
+import { writeFile, ensureDir, rmdir, unlink } from "fs-extra";
 const lock = new AsyncLock();
 
 const fileStatAsync = promisify(fs.stat);
@@ -42,63 +43,11 @@ const workspaceSettingsInfo =  workspaceSettings.workspaceSettingsInfoCache ? JS
 const timeout = (workspaceSettingsInfo && workspaceSettingsInfo.watcherChunkTimeout) ? workspaceSettingsInfo.watcherChunkTimeout : 20000;
 
 /**
- * @see [[Filewatcher.updateProject]]
- */
-export async function updateProject(projectID: string): Promise<IUpdateProjectSuccess | IUpdateProjectFailure> {
-    if (!projectID) {
-        return { "statusCode": 400, "error": {"msg": "Bad request, projectID is a required." }};
-    }
-
-    try {
-        const projectMetadata = projectsController.getProjectMetadataById(projectID);
-        try {
-            await fileStatAsync(projectMetadata.infoFile);
-        } catch (err) {
-            if (err.code == "ENOENT") {
-                logger.logFileWatcherError("Project does not exist " + projectID);
-                return { "statusCode": 404, "error": {"msg": "Project does not exist " + projectID }};
-            }
-        }
-        const f = projectMetadata.infoFile;
-        const projectInfo = await projectsController.getProjectInfoFromFile(f);
-        if (!projectInfo.autoBuildEnabled) {
-            logger.logProjectInfo("Auto build disabled so build will not be started", projectID);
-            statusController.buildRequired(projectID, true);
-            // TODO:
-            // currently the statusCode 202 just means the request is accepted.
-            // REST API statusCode does not make sense to a node module. Need to change later.
-            return { "statusCode": 202 };
-        }
-
-        if (!statusController.isBuildInProgress(projectInfo.projectID)) {
-            const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
-            const operation = new projectOperation.Operation("update", projectInfo);
-            projectHandler.update(operation);
-        } else {
-            logger.logProjectInfo("Project "  + projectID + " build is in progress, set build request flag to true", projectID);
-            const keyValuePair: UpdateProjectInfoPair = {
-                key : "buildRequest",
-                value: true,
-                saveIntoJsonFile: false
-            };
-            await projectsController.updateProjectInfo(projectID, keyValuePair);
-        }
-    } catch (err) {
-        const errorMsg = "Internal error occurred when updating project " + projectID;
-        logger.logProjectError(errorMsg, projectID);
-        logger.logProjectError(err, projectID);
-        return { "statusCode": 500, "error": {"msg": errorMsg }};
-    }
-    return { "statusCode": 202 };
-
-}
-
-/**
  * This is a function to receive notification from filewatcher daemon
  * @see [[Filewatcher.updateProjectForNewChange]]
  */
-export async function updateProjectForNewChange(projectID: string, timestamp: number,  chunk: number, chunk_total: number, eventArray: IFileChangeEvent[]): Promise<IUpdateProjectSuccess | IUpdateProjectFailure> {
-    if (!projectID || !timestamp || !eventArray || !chunk || !chunk_total) {
+export async function updateProjectForNewChange(projectID: string, timestamp: number,  chunkNum: number, chunk_total: number, eventArray: IFileChangeEvent[]): Promise<IUpdateProjectSuccess | IUpdateProjectFailure> {
+    if (!projectID || !timestamp || !eventArray || !chunkNum || !chunk_total) {
         return { "statusCode": 400, "error": {"msg": "Bad request. projectID, timestamp, chunk, chunk_total and eventArray are required." }};
     }
 
@@ -109,7 +58,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
             await fileStatAsync(projectMetadata.infoFile);
         } catch (err) {
             if (err.code == "ENOENT") {
-                logger.logFileWatcherError("Project does not exist " + projectID);
+                logger.logError("Project does not exist " + projectID);
                 return { "statusCode": 404, "error": {"msg": "Project does not exist " + projectID }};
             }
         }
@@ -130,6 +79,32 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
         let isProjectBuildRequired = false;
 
         try {
+            // TODO - We should merge the two loops but we never want to stop
+            // this one early.
+            // Check if we are in remote mode, while that mode is experimental and non-default.
+            if (process.env["REMOTE_MODE"] == "true") {
+                for (const event of eventArray) {
+                    // TODO - Check for modify and delete events.
+                    const filePath = path.join(projectInfo.location, event.path);
+                    // console.log(`handling project event, event.hasOwnProperty("content")=${event.hasOwnProperty("content")}, filePath=${filePath}:`);
+                    // console.dir(event);
+                    if (event.type == "DELETE") {
+                        if (event.directory) {
+                            await rmdir(filePath);
+                        } else {
+                            await unlink(filePath);
+                        }
+                    } else if (event.type == "MODIFY") {
+                        const content = event.content;
+                        try {
+                            await ensureDir(path.dirname(filePath));
+                            await writeFile(filePath, content, { encoding: "utf8" });
+                        } catch (err) {
+                            logger.logProjectError(`Codewind was unable to update file ${filePath}`, projectID);
+                        }
+                    }
+                }
+            }
             for (let i = 0; i < eventArrayLength; i++) {
                 if (isSettingFileChanged && isProjectBuildRequired) {
                     // Once we have all the necessary flags, dont process any more events
@@ -312,6 +287,7 @@ export interface IFileChangeEvent {
     timestamp: number;
     type: string;
     directory: boolean;
+    content?: string;
 }
 export interface ChunkRemainingMapValue {
     timestamp: number;

@@ -110,7 +110,7 @@ router.post('/api/v1/projects/:id/file-changes', async function (req, res) {
       return;
     }
     const timestamp = req.query.timestamp;
-    const chunk = req.query.chunk;
+    const chunkNum = req.query.chunk;
     const chunk_total = req.query.chunk_total;
     const compressed = buffer.Buffer.from(msg, "base64");
     const output = await inflateAsync(compressed);
@@ -118,17 +118,13 @@ router.post('/api/v1/projects/:id/file-changes', async function (req, res) {
 
     // workspace settings file has been changed
     if ( user.workspaceSettingObject && projectID === user.workspaceSettingObject.projectID) {
-      try {
-        eventArray.forEach( element => {
-          if (element.path && element.path.includes("settings.json")) {
-            log.debug("workspace settings file changed.", projectID);
-            user.readWorkspaceSettings();
-            // to break out of foreach loop
-            throw new Error("break out");
-          }
-        });
-      } catch (err) {
-        // out of forEach, do nothing
+      for (let element of eventArray) {
+        if (element.path && element.path.includes("settings.json")) {
+          log.debug("workspace settings file changed.", projectID);
+          user.readWorkspaceSettings();
+          // to break out of foreach loop
+          break;
+        }
       }
       res.sendStatus(200);
       return;
@@ -138,7 +134,7 @@ router.post('/api/v1/projects/:id/file-changes', async function (req, res) {
       res.status(404).send(`Unable to find project ${projectID}`);
       return;
     }
-    user.fileChanged(projectID, timestamp, chunk, chunk_total, eventArray);
+    user.fileChanged(projectID, timestamp, chunkNum, chunk_total, eventArray);
     res.sendStatus(200);
   } catch (err) {
     log.error(err);

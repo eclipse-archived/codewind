@@ -45,7 +45,7 @@ export const supportedType = "spring";
  *
  */
 export const defaultIgnoredPath: string[] = ["/.project", "/target", "/Dockerfile-tools",
-                                             "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.m2",
+                                             "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.m2", "/load-test*",
                                              "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx",
                                              "*/4913", "*/.dockerignore", "*/.gitignore", "*/*~", "/.settings", "/localm2cache.zip"];
 if (!process.env.IN_K8) {

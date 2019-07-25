@@ -16,6 +16,7 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 DEVMODE=false
+REMOTE_MODE=false
 
 printf "\n\n${BLUE}Running 'start.sh' to start codewind. $RESET\n";
 
@@ -23,6 +24,7 @@ while [ "$#" -gt 0 ]; do
   case $1 in
     -t|--tag) TAG="$2"; shift 2;;
     --dev) DEVMODE=true; shift 1;;
+    --remote) REMOTE_MODE=true; shift 1;;
     *) shift 1;;
   esac
 done
@@ -44,12 +46,21 @@ rm $GIT_CONFIG
 git config -f $GIT_CONFIG --add user.name "`git config --get user.name || echo 'codewind user'`"
 git config -f $GIT_CONFIG --add user.email "`git config --get user.email || echo 'codewind.user@localhost'`"
 
-# setup for dev mode
-DOCKER_COMPOSE_FILE="docker-compose.yaml"
+
+# Set docker-compose file
+if [ "$REMOTE_MODE" = true ]; then
+  printf "\nRemote mode is enabled\n";
+  DOCKER_COMPOSE_FILE="docker-compose.yaml"
+else
+  printf "\nDefault Local mode is enabled\n";
+  DOCKER_COMPOSE_FILE="docker-compose.yaml -f docker-compose-local.yaml"
+fi
+
 if [ "$DEVMODE" = true ]; then
   printf "\nDev mode is enabled\n";
   DOCKER_COMPOSE_FILE="docker-compose.yaml -f docker-compose-dev.yaml"
 fi
+
 
 # REMOVE PREVIOUS DOCKER PROCESSES FOR CODEWIND
 printf "\n\n${BLUE}CHECKING FOR EXISTING CODEWIND PROCESSES $RESET\n";
@@ -125,6 +136,7 @@ export TAG
 export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
 # Export HOST_OS for fix to Maven failing on Windows only as host
 export HOST_OS=$(uname);
+export REMOTE_MODE;
 
 export ARCH=$(uname -m);
 # Select the right images for this architecture.
@@ -139,6 +151,7 @@ if [ $? -eq 0 ]; then
     # Reset so we don't get conflicts
     unset REPOSITORY;
     unset WORKSPACE_DIRECTORY;
+    unset REMOTE_MODE;
     printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
     printf "\nCurrent running codewind containers\n";
     docker ps --filter name=codewind

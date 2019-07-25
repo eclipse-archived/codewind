@@ -62,11 +62,10 @@ module.exports = class Project {
     if (args.gitURL) this.gitURL = args.gitURL;
     if (args.validate) this.validate = args.validate;
     if (args.extension) this.extension = args.extension;
-
+    
     // Project status information
     this.host = args.host || '';
     this.ports = args.port || '';
-    this.applicationPort = args.applicationPort || '';
 
     // workspace is the parent directory of the project
     // NOT the global.codewind.CODEWIND_WORKSPACE we store
@@ -132,7 +131,14 @@ module.exports = class Project {
   }
 
   async checkIfMetricsAvailable() {
-    const isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath(false), this.language);
+    let isMetricsAvailable;
+    // hardcoding a return of true for appsody projects until we have a better
+    // way of detecting appsody has the dashboard dependency
+    if (this.projectType === "appsodyExtension" && (this.language === 'nodejs' || this.language === 'java' || this.language === 'swift')) {
+      isMetricsAvailable = true;
+    } else {
+      isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath(false), this.language);
+    }
     this.metricsAvailable = isMetricsAvailable;
     await this.writeInformationFile();
     return isMetricsAvailable;
@@ -235,7 +241,7 @@ module.exports = class Project {
         haveLock = true;
         break;
       } else {
-        // Wait as short a time as possible.
+      // Wait as short a time as possible.
         await cwUtils.timeout(1);
       }
     }

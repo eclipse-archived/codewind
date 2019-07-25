@@ -41,7 +41,7 @@ export interface ISetLocaleFailure {
  * @see [[Filewatcher.setLocale]]
  */
 export async function setLocale(localeRequested: string[]): Promise<ISetLocaleSuccess | ISetLocaleFailure> {
-    logger.logFileWatcherInfo("Setting up file-watcher locale. Locale requested: " + localeRequested);
+    logger.logTrace("Setting up locale. Locale requested: " + localeRequested);
 
     if (!localeRequested) {
         return {  "statusCode": 400, "error": { "msg": "Bad request. Locale key not found in request body!" }};
@@ -73,7 +73,7 @@ export async function setLocale(localeRequested: string[]): Promise<ISetLocaleSu
         fwLocale = localePriority[0];
     }
 
-    logger.logFileWatcherInfo("File-watcher locale has been set to: " + fwLocale);
+    logger.logTrace("locale has been set to: " + fwLocale);
 
     if (localeInUse[0] === fwLocale) {
         // No need to re-initialize FW NLS instance
@@ -81,10 +81,10 @@ export async function setLocale(localeRequested: string[]): Promise<ISetLocaleSu
             try {
                 i18TransFn = await initNLSInstance(getLocale());
             } catch (err) {
-                logger.logFileWatcherError("Failed to initialize the NLS instance");
+                logger.logError("Failed to initialize the NLS instance");
             }
         } else {
-            logger.logFileWatcherInfo("Same locale detected, file-watcher will not re-initialize NLS");
+            logger.logTrace("Same locale detected, will not re-initialize NLS");
         }
     } else {
         // locale has changed since the last locale used by FW
@@ -96,11 +96,11 @@ export async function setLocale(localeRequested: string[]): Promise<ISetLocaleSu
         try {
             i18TransFn = await initNLSInstance(getLocale());
         } catch (err) {
-            logger.logFileWatcherError("Failed to initialize the NLS instance");
+            logger.logError("Failed to initialize the NLS instance");
         }
     }
 
-    logger.logFileWatcherInfo("locale.setLocale() isNLSInitialized: " + isNLSInitialized);
+    logger.logTrace("locale.setLocale() isNLSInitialized: " + isNLSInitialized);
 
     return { "statusCode": 200, "locale": fwLocale};
 }
@@ -130,8 +130,8 @@ export async function getTranslation(key: string, options?: i18next.TOptions): P
 
         // Don't try to initialize here anymore, leave it to fw startup or the locale API call.
         // When fw starts up, multiple projects will be trying to exec this function causing timing issues
-        logger.logFileWatcherError("The file-watcher NLS instance had failed to initialize");
-        logger.logFileWatcherError("Attempting to directly parse the translation file");
+        logger.logError("The file-watcher NLS instance had failed to initialize");
+        logger.logError("Attempting to directly parse the translation file");
         return await getMessageFromFile(key);
     }
 
@@ -140,12 +140,12 @@ export async function getTranslation(key: string, options?: i18next.TOptions): P
     // Fail-safe. Incase if for some reason, FW cannot fetch translation after
     // i18next is initialized successfully, parse it from the English translation file
     if (translatedMsg == key) {
-        logger.logFileWatcherError("File-watcher could not fetch the translation using the translation service");
-        logger.logFileWatcherInfo("Attempting to parse the translation file");
+        logger.logError("File-watcher could not fetch the translation using the translation service");
+        logger.logTrace("Attempting to parse the translation file");
         translatedMsg = await getMessageFromFile(key, "en");
     }
 
-    logger.logFileWatcherInfo("Key translated. Returning message: " + translatedMsg);
+    logger.logTrace("Key translated. Returning message: " + translatedMsg);
     return translatedMsg;
 }
 
@@ -170,19 +170,19 @@ export function initNLSInstance(language: string): Promise<i18next.TFunction> {
             saveMissing: true
         }, (err, t) => {
             if (err) {
-                logger.logFileWatcherError("Error initializing File-watcher NLS Instance: " + err);
+                logger.logError("Error initializing File-watcher NLS Instance: " + err);
                 isNLSInitialized = false;
                 reject(err);
                 return;
             }
 
-            logger.logFileWatcherInfo("locale.initNLSInstance() translation test: " + t("buildscripts.buildImage"));
-            logger.logFileWatcherInfo("locale.initNLSInstance(): " + t("filewatcherUtil.fwNLSInitSuccess"));
-            logger.logFileWatcherInfo("locale.initNLSInstance() isInitialized: " + i18next.isInitialized);
+            logger.logTrace("locale.initNLSInstance() translation test: " + t("buildscripts.buildImage"));
+            logger.logTrace("locale.initNLSInstance(): " + t("filewatcherUtil.fwNLSInitSuccess"));
+            logger.logTrace("locale.initNLSInstance() isInitialized: " + i18next.isInitialized);
             if (i18next.isInitialized) {
                 isNLSInitialized = true;
             }
-            logger.logFileWatcherInfo("locale.initNLSInstance() Initialized File-watcher NLS Instance to: " + i18next.language);
+            logger.logTrace("locale.initNLSInstance() Initialized File-watcher NLS Instance to: " + i18next.language);
             i18TransFn = t;
             resolve(t);
         });
@@ -211,15 +211,15 @@ export async function getMessageFromFile(key: string, backupLang?: string): Prom
         for (const element in keyArray) {
             message = message[keyArray[element]];
             if (!message || message == "") {
-                logger.logFileWatcherError("File watcher was unable to find the key in the translation file, the key will be used as the translation value: " + key);
+                logger.logError("File watcher was unable to find the key in the translation file, the key will be used as the translation value: " + key);
                 return key;
             }
         }
     } catch (err) {
-        logger.logFileWatcherError("Error parsing the translation file, the key will be used as the translation value: " + key);
+        logger.logError("Error parsing the translation file, the key will be used as the translation value: " + key);
         return key;
     }
 
-    logger.logFileWatcherInfo("Directly parsed the translation file, returning msg: " + message);
+    logger.logTrace("Directly parsed the translation file, returning msg: " + message);
     return message;
 }

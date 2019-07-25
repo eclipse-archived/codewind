@@ -63,8 +63,8 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
 
         return logList;
     } catch (err) {
-        logger.logFileWatcherError("Failed to get the list of log files from " + logDirectory);
-        logger.logFileWatcherError(err);
+        logger.logError("Failed to get the list of log files from " + logDirectory);
+        logger.logError(err);
         return;
     }
 }
@@ -134,8 +134,8 @@ export async function getLogFilesFromContainer(projectID: string, containerName:
         }
         return logFilesArr;
     } catch (err) {
-        logger.logFileWatcherError("Failed to get the list of log files from " + logDirectory);
-        logger.logFileWatcherError(err);
+        logger.logError("Failed to get the list of log files from " + logDirectory);
+        logger.logError(err);
         return;
     }
 }
@@ -156,9 +156,9 @@ export async function createLogDir(dirName: string, logPath: string): Promise<vo
 
     if (!(await existsSync(folderpath))) {
         await mkdirSync(folderpath);
-        logger.logFileWatcherInfo("Log directory created at: " + folderpath, undefined);
+        logger.logInfo("Log directory created at: " + folderpath);
     } else {
-        logger.logFileWatcherInfo("Log directory found at: " + folderpath + "\nSkipping directory creation.", undefined);
+        logger.logInfo("Log directory found at: " + folderpath + "\nSkipping directory creation.");
     }
     return;
 }
@@ -179,9 +179,9 @@ export async function removeLogDir(dirName: string, logPath: string): Promise<vo
 
     if (await existsSync(folderpath)) {
         await projectsController.deleteFolder(folderpath);
-        logger.logFileWatcherInfo("Log directory removed from: " + folderpath, undefined);
+        logger.logInfo("Log directory removed from: " + folderpath);
     } else {
-        logger.logFileWatcherError("No log directory found at: " + folderpath, undefined);
+        logger.logError("No log directory found at: " + folderpath);
     }
 }
 
@@ -196,7 +196,7 @@ export async function removeLogDir(dirName: string, logPath: string): Promise<vo
  */
 export async function getLogDir(projectID: string, projectName?: string): Promise<string> {
     if (!projectID) {
-        logger.logFileWatcherError("Project id is a required parameter to get the log directory.", projectName);
+        logger.logProjectError("Project id is a required parameter to get the log directory.", undefined, projectName);
         return;
     } else if (!projectName) {
         projectName = await logger.getProjectNameByProjectID(projectID);

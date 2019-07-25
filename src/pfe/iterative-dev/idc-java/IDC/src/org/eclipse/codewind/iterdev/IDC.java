@@ -49,7 +49,7 @@ public class IDC {
 
 			if (args.length < 1 || args[0].equalsIgnoreCase(Constants.OPTION_HELP)) {
 				Logger.printUsage();
-				System.exit(ErrorCode.wrongUsage.ordinal());
+				System.exit(ErrorCode.unexpectedError.ordinal());
 			}
 
 			// If the 'appid' param is used, print the sha1 sum of the current dir and exit.
@@ -436,8 +436,8 @@ public class IDC {
 					Logger.error(ErrorCode.containerStartFailed.message());
 					System.exit(ErrorCode.containerStartFailed.ordinal());
 				} else if(id == "registryError") {
-					Logger.info("IDC is returning because of failing to push image to invalid Deployment Registry");
-					System.exit(7);
+					Logger.error(ErrorCode.invalidDeploymentRegistry.message());
+					System.exit(ErrorCode.invalidDeploymentRegistry.ordinal());
 				}
 			}
 			

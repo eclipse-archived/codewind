@@ -14,15 +14,79 @@ import * as fs from "fs";
 import * as path from "path";
 import { promisify } from "util";
 import * as constants from "../projects/constants";
-import moment from "moment-timezone";
 import * as stackTrace from "stack-trace";
 const chalk = require("chalk"); // tslint:disable-line:no-require-imports
 
+const GENERAL_LOG_FILE_NAME = "Turbine.log";
+import { configure, getLogger } from "log4js";
+
+export interface ISetLogLevelSuccess {
+    status: "success";
+}
+
+export interface ISetLogLevelFailure {
+    status: "failed";
+    error: { msg: string };
+}
+
+const LogLevel = {
+    error: "error",
+    warn: "warn",
+    info: "info",
+    debug: "debug",
+    trace: "trace"
+};
+
+const logPath = process.env.NODE_ENV === "test" ? process.cwd() : "/codewind-workspace/" + ".logs";
+const turbineLogPath = path.join(logPath, GENERAL_LOG_FILE_NAME);
+
+const contextName = "context";
+let logger = getLogger();
+
 const readFileAsync = promisify(fs.readFile);
+let previousProjectInfoLog: String;
+let previousProjectErrorLog: String;
 let previousInfoLog: String;
 let previousErrorLog: String;
-let previousFWInfoLog: String;
-let previousFWErrorLog: String;
+
+setLoggingLevel(LogLevel.info);
+
+export async function setLoggingLevel(level: string): Promise<void> {
+    let logLevel = LogLevel.info;
+    if (level in LogLevel) {
+        logLevel = level;
+    } else {
+        const errMsg = `${level} is not a valid value, the following log levels are available ${JSON.stringify(LogLevel)}`;
+        logError(errMsg);
+        throw new Error(errMsg);
+    }
+    configure({
+        appenders: {
+            "out": {
+                type: "stdout",
+                layout: {
+                    type: "pattern",
+                    pattern: `%[[%d{dd/MM/yy hh:mm:ss} %X{${contextName}}] [%p]%] %m`
+                }
+            },
+            "mainlogfile": {
+                type: "file",
+                filename: turbineLogPath,
+                layout: {
+                    type: "pattern",
+                    pattern: `%[[%d{dd/MM/yy hh:mm:ss} %X{${contextName}}] [%p]%] %m`
+                },
+                maxLogSize: 10458760,
+                backups: 3
+            }
+        },
+        categories: {
+            default: { appenders: ["mainlogfile", "out"], level: logLevel },
+        }
+    });
+    logger = getLogger();
+    logInfo(`The current log level is ${logLevel}`);
+}
 
 /**
  * @function
@@ -59,16 +123,16 @@ export function projectAssert(projectID: string, condition: boolean, message: st
 
 /**
  * @function
- * @description Assert condition on filewatcher state.
+ * @description Log based on whether a condition is false.
  *
- * @param condition <Required | Boolean> - The condition to be executed.
+ * @param condition <Required | Boolean> - The condition to be checked.
  * @param message <Required | String> - The error message to be logged if the condition fails.
  *
  * @returns void
  */
-export function fileWatcherAssert(condition: boolean, message: string): void {
+export function assert(condition: boolean, message: string): void {
     if (!condition) {
-        logFileWatcherError(message);
+        logError(message);
     }
 }
 
@@ -89,51 +153,31 @@ export async function logProjectInfo(msg: string, projectID: string, projectName
         console.log(chalk.red("Log error: A message must be provided"));
         return;
     }
-    if ( previousInfoLog === msg) {
+    if (previousProjectInfoLog === msg) {
         return;
     }
 
-    previousInfoLog = msg;
-    if (!projectID) {
-        if (projectName) {
-            logFileWatcherInfo(msg, projectName);
-        } else {
-            logFileWatcherInfo(msg);
-        }
-        return;
-    }
+    previousProjectInfoLog = msg;
+
     if (!projectName) {
-        try {
-            projectName = await getProjectNameByProjectID(projectID);
-        } catch (err) {
-            // Can't find a project name so log to the general FW logs using the project ID
-            logFileWatcherInfo(`${projectID}: ${msg}`);
+        if (projectID) {
+            try {
+                projectName = await getProjectNameByProjectID(projectID);
+            } catch (err) {
+                // Can't find a project name so log to the general logs using the project ID
+                logInfo(`${projectID}: ${msg}`);
+                return;
+            }
+        } else {
+            // No project name or project ID so log to the general logs
+            logInfo(msg);
             return;
         }
     }
 
-    const logPath = "/codewind-workspace/" + ".logs";
-    const timestamp = moment().tz(moment.tz.guess()).format("ddd MMM D HH:mm:ss z YYYY");
-    const logMsg = chalk.green("[INFO " + timestamp + " | Project: " + projectName + "] ") + msg;
-    const fileWatcherLogPath = path.join(logPath, "FileWatcher.log");
-
-    fs.appendFile(fileWatcherLogPath, "\n" + logMsg, (err) => {
-        if (err) {
-            console.log("File system error: " + err);
-            console.log(err.stack);
-        }
-    });
-
-    const logName = projectName + "-" + projectID;
-    const projectLogPath = path.join(logPath, logName, logName + ".log");
-    fs.appendFile(projectLogPath, "\n" + logMsg, (err) => {
-        if (err) {
-            console.log(chalk.red("File system error: ") + err);
-            console.log(err.stack);
-        }
-    });
-
-    console.log(logMsg);
+    logger.clearContext();
+    logger.addContext(contextName, projectName);
+    logger.info(msg);
 }
 
 /**
@@ -153,137 +197,197 @@ export async function logProjectError(msg: string, projectID: string, projectNam
         console.log(chalk.red("Log error: A message must be provided"));
         return;
     }
-    if ( previousErrorLog === msg) {
+    if (previousProjectErrorLog === msg) {
         return;
     }
 
-    previousErrorLog = msg;
-    if (!projectID) {
-        if (projectName) {
-            logFileWatcherError(msg, projectName);
-        } else {
-            logFileWatcherError(msg);
-        }
-        return;
-    }
+    previousProjectErrorLog = msg;
     if (!projectName) {
-        try {
-            projectName = await getProjectNameByProjectID(projectID);
-        } catch (err) {
-            // Can't find a project name so log to the general FW logs using the project ID
-            logFileWatcherError(`${projectID}: ${msg}`);
+        if (projectID) {
+            try {
+                projectName = await getProjectNameByProjectID(projectID);
+            } catch (err) {
+                // Can't find a project name so log to the general logs using the project ID
+                logError(`${projectID}: ${msg}`);
+                return;
+            }
+        } else {
+            // No project name or project ID so log to the general logs
+            logError(msg);
             return;
         }
     }
 
-    const logPath = "/codewind-workspace/" + ".logs";
     const trace = stackTrace.get();
+    const logMsg = trace[1] ? chalk.red("[ File Name: " + trace[1].getFileName() + " | Function Name: " + trace[1].getFunctionName() + " | Line Number: " + trace[1].getLineNumber() + "] ") + msg : msg;
 
-    const timestamp = moment().tz(moment.tz.guess()).format("ddd MMM D HH:mm:ss z YYYY");
-    // const logMsg = chalk.red("[ERROR " + timestamp + " | Project: " + projectName + " | File Name: " + trace[1].getFileName() + " | Function Name: " + trace[1].getFunctionName() + " | Line Number: " + trace[1].getLineNumber() + "] ") + msg;
-    const logMsg = chalk.red(`[ERROR ${timestamp} | Project: ${projectName}] ${msg}`);
-    const fileWatcherLogPath = path.join(logPath, "FileWatcher.log");
-
-    fs.appendFile(fileWatcherLogPath, "\n" + logMsg, (err) => {
-        if (err) {
-            console.log(chalk.red("File system error: ") + err);
-            console.log(err.stack);
-        }
-    });
-
-    const logName = projectName + "-" + projectID;
-    const projectLogPath = path.join(logPath, logName, logName + ".log");
-    fs.appendFile(projectLogPath, "\n" + logMsg, (err) => {
-        if (err) {
-            console.log(chalk.red("File system error: ") + err);
-            console.log(err.stack);
-        }
-    });
-
-    console.log(logMsg);
+    logger.clearContext();
+    logger.addContext(contextName, projectName);
+    logger.error(logMsg);
 }
 
 /**
  * @function
- * @description Log filewatcher information.
+ * @description Debug level logging for projects.
  *
  * @param msg <Required | String> - The message to be logged.
- * @param projectName <Optional | String> - The project name.
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
  *
  * @returns void
  */
-export function logFileWatcherInfo(msg: string, projectName?: string): void {
+export async function logProjectDebug(msg: string, projectID: string): Promise<void> {
+    if (process.env.NODE_ENV === "test") return;
+
+    if (!msg) {
+        console.log(chalk.red("Log error: A message must be provided"));
+        return;
+    }
+
+    let projectName = "";
+    if (projectID) {
+        try {
+            projectName = await getProjectNameByProjectID(projectID);
+        } catch (err) {
+            // Can't find a project name so log to the general logs using the project ID
+            logDebug(`${projectID}: ${msg}`);
+            return;
+        }
+    } else {
+        // No project name or project ID so log to the general logs
+        logDebug(msg);
+        return;
+    }
+
+    logger.clearContext();
+    logger.addContext(contextName, projectName);
+    logger.debug(msg);
+}
+
+/**
+ * @function
+ * @description Trace level logging for projects.
+ *
+ * @param msg <Required | String> - The message to be logged.
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ *
+ * @returns void
+ */
+export async function logProjectTrace(msg: string, projectID: string): Promise<void> {
+    if (process.env.NODE_ENV === "test") return;
+
+    if (!msg) {
+        console.log(chalk.red("Log error: A message must be provided"));
+        return;
+    }
+
+    let projectName = "";
+    if (projectID) {
+        try {
+            projectName = await getProjectNameByProjectID(projectID);
+        } catch (err) {
+            // Can't find a project name so log to the general logs using the project ID
+            logTrace(`${projectID}: ${msg}`);
+            return;
+        }
+    } else {
+        // No project name or project ID so log to the general logs
+        logTrace(msg);
+        return;
+    }
+
+    logger.clearContext();
+    logger.addContext(contextName, projectName);
+    logger.trace(msg);
+}
+
+/**
+ * @function
+ * @description Info level logging.
+ *
+ * @param msg <Required | String> - The message to be logged.
+ *
+ * @returns void
+ */
+export function logInfo(msg: string): void {
     if (process.env.NODE_ENV === "test") return;
 
     if (!msg) {
         console.log(chalk.red("Log error: A message must be provided"));
     }
-    if ( previousFWInfoLog === msg) {
+    if (previousInfoLog === msg) {
         return;
     }
 
-    previousFWInfoLog = msg;
-    const timestamp = moment().tz(moment.tz.guess()).format("ddd MMM D HH:mm:ss z YYYY");
-    let logMsg: string = undefined;
+    previousInfoLog = msg;
 
-    if (projectName) {
-        logMsg = chalk.green("[INFO " + timestamp + " | Project: " + projectName + "] ") + msg;
-    } else {
-        logMsg = chalk.green("[INFO " + timestamp + " | FileWatcher] ") + msg;
-    }
-
-    const logPath = "/codewind-workspace/" + ".logs";
-    const fileWatcherLogPath = path.join(logPath, "FileWatcher.log");
-
-    fs.appendFile(fileWatcherLogPath, "\n" + logMsg, (err) => {
-        if (err) {
-            console.log(chalk.red("File system error: ") + err);
-            console.log(err.stack);
-        }
-    });
-
-    console.log(logMsg);
+    logger.clearContext();
+    logger.addContext(contextName, "Turbine");
+    logger.info(msg);
 }
 
 /**
  * @function
- * @description Log filewatcher error.
+ * @description Error level logging.
  *
  * @param msg <Required | String> - The message to be logged.
- * @param projectName <Optional | String> - The project name.
  *
  * @returns void
  */
-export function logFileWatcherError(msg: string, projectName?: string): void {
+export function logError(msg: string): void {
     if (process.env.NODE_ENV === "test") return;
 
     if (!msg) {
         console.log(chalk.red("Log error: A message must be provided"));
     }
-    if ( previousFWErrorLog === msg) {
+    if (previousErrorLog === msg) {
         return;
     }
 
-    previousFWErrorLog = msg;
+    previousErrorLog = msg;
     const trace = stackTrace.get();
-    const timestamp = moment().tz(moment.tz.guess()).format("ddd MMM D HH:mm:ss z YYYY");
-    let logMsg: string = undefined;
+    const logMsg = trace[1] ? "[File Name: " + trace[1].getFileName() + " | Function Name: " + trace[1].getFunctionName() + " | Line Number: " + trace[1].getLineNumber() + "] " + msg : msg;
 
-    if (projectName) {
-        logMsg = chalk.red("[ERROR " + timestamp + " | Project: " + projectName + " | File Name: " + trace[1].getFileName() + " | Function Name: " + trace[1].getFunctionName() + " | Line Number: " + trace[1].getLineNumber() + "] ") + msg;
-    } else {
-        logMsg = chalk.red("[ERROR " + timestamp + " | FileWatcher | File Name: " + trace[1].getFileName() + " | Function Name: " + trace[1].getFunctionName() + " | Line Number: " + trace[1].getLineNumber() + "] ") + msg;
+    logger.clearContext();
+    logger.addContext(contextName, "Turbine");
+    logger.error(logMsg);
+}
+
+/**
+ * @function
+ * @description Debug level logging.
+ *
+ * @param msg <Required | String> - The message to be logged.
+ *
+ * @returns void
+ */
+export function logDebug(msg: string): void {
+    if (process.env.NODE_ENV === "test") return;
+
+    if (!msg) {
+        console.log(chalk.red("Log error: A message must be provided"));
     }
 
-    const logPath = "/codewind-workspace/" + ".logs";
-    const fileWatcherLogPath = path.join(logPath, "FileWatcher.log");
+    logger.clearContext();
+    logger.addContext(contextName, "Turbine");
+    logger.debug(msg);
+}
 
-    fs.appendFile(fileWatcherLogPath, "\n" + logMsg, (err) => {
-        if (err) {
-            console.log(chalk.red("File system error: ") + err);
-            console.log(err.stack);
-        }
-    });
+/**
+ * @function
+ * @description Trace level logging.
+ *
+ * @param msg <Required | String> - The message to be logged.
+ *
+ * @returns void
+ */
+export function logTrace(msg: string): void {
+    if (process.env.NODE_ENV === "test") return;
 
-    console.log(logMsg);
+    if (!msg) {
+        console.log(chalk.red("Log error: A message must be provided"));
+    }
+
+    logger.clearContext();
+    logger.addContext(contextName, "Turbine");
+    logger.trace(msg);
 }

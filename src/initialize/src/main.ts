@@ -26,13 +26,13 @@ async function main(): Promise<void> {
   const projectName = process.env.PROJ_NAME;
   const gitRepository = process.env.GIT_REPO;
   const gitBranch =  process.env.GIT_BRANCH;
-
-  let response = await initialiseProject(projectName, projectDirectory, gitRepository, gitBranch)
+  const copyFiles = process.env.COPY_FILES === 'true' ? true : false;
+  const response = await initializeProject(projectName, projectDirectory, gitRepository, gitBranch, copyFiles);
   // This is how we communicate with Portal
   process.stdout.write(JSON.stringify(response));
 }
 
-export async function initialiseProject(projectName: string, projectDirectory: string, gitRepository?: string, gitBranch?: string) {
+export async function initializeProject(projectName: string, projectDirectory: string, gitRepository?: string, gitBranch?: string, copyFiles?: boolean) {
   let initializeResult: InitializeResult;
   let response: InitializeResultResponse;
 
@@ -46,6 +46,10 @@ export async function initialiseProject(projectName: string, projectDirectory: s
       initializeResult = await projectInitializer.initializeProjectFromGit(gitRepository, gitBranch);
     } else {
       initializeResult = await projectInitializer.initializeExistingProject();
+    }
+
+    if (copyFiles) {
+      await projectInitializer.copyFiles();
     }
 
     response = {

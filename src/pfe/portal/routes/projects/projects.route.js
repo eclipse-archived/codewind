@@ -82,7 +82,12 @@ router.post('/api/v1/projects', validateReq, async function (req, res) {
     }
     log.info(`Trying to clone ${gitInfo.repo} into ${projectPath}`);
     const projectInfo = await projectInitializer.initializeProjectFromTemplate(user, projectPath, projectName, gitInfo);
-    res.status(200).send(projectInfo);
+    let returnCode = 200;
+    // If the initialize container failed, set the status code to 400
+    if (projectInfo.status === 'failed') {
+      returnCode = 400;
+    }
+    res.status(returnCode).send(projectInfo);
   } catch (err) {
     log.error(err);
     if (err.code === 'PATH_NOT_RESOLVED'

@@ -11,6 +11,8 @@
 const chai = require('chai');
 
 const projectService = require('../../modules/project.service');
+const SocketService = require('../../modules/socket.service');
+
 const { USING_K8S, testTimeout } = require('../../config');
 
 chai.should();
@@ -18,6 +20,9 @@ chai.should();
 // Interval ticker used for keeping long-running tests alive on travis
 let ticker;
 let ticking = false;
+
+let socketService;
+const projectNames = [];
 
 // Ticker function, outputs a tab then a dot at each interval
 function intervalFunction() {
@@ -30,7 +35,7 @@ function intervalFunction() {
 }
 
 // Only run restart tests in local docker (file watcher does not support project restart/debug in kubernetes)
-if (!USING_K8S) describe.skip('Restart Project Tests', function() {
+if (!USING_K8S) describe('Restart Project Tests', function() {
     describe('POST /projects/{id}/restart', function() {
         const restartModes = {
             valid: ['run', 'debugNoInit'],
@@ -43,24 +48,52 @@ if (!USING_K8S) describe.skip('Restart Project Tests', function() {
             restartable: [],
         };
 
-        before(function() {
+        before(async function() {
             ticker = setInterval(intervalFunction, 60000); // 60 second ticker
             ticking = false; // initialise ticker
+
+            socketService = await SocketService.createSocket();
         });
 
-        after('Delete this test\'s projects', async function() {
+        after(async function() {
             this.timeout(testTimeout.med * numProjects);
-            const ids = flatten(Object.values(projectIDs));
-            await projectService.deleteProjects(ids);
             clearInterval(ticker);
+
+            socketService.close();
+            socketService = undefined;
+
+            // unbind and delete directories for all projects
+            const allProjectIDs = projectIDs.restartable.concat(projectIDs.restarting);
+            await Promise.all(allProjectIDs.map(projectID =>
+                projectService.unbindProject(projectID)
+            ));
+            await Promise.all(projectNames.map(name =>
+                projectService.deleteProjectDir(name)
+            ));
         });
 
         const thisTestTimeout = 3 * testTimeout.maxTravis;
         describe(`[Setup] create ${numProjects} projects and wait ${thisTestTimeout}ms for them to start`, function() {
             it('should wait for them to start', async function() {
                 this.timeout(thisTestTimeout);
-                const promises = range(numProjects).map(() => projectService.createProjectAndAwaitID({}, 202, true));
-                projectIDs.restartable = await Promise.all(promises);
+
+                // start the clone and bind for each project
+                const projectIdPromises = range(numProjects).map(i => {
+                    const projectName = `restart-node-${Date.now()}-${i}`;
+                    projectNames.push(projectName);
+                    return projectService.cloneAndBindAndBuildProject(projectName, 'nodejs');
+                });
+
+                // create the project started listeners, which resolve when the projects reach status of started
+                const projectStartedPromises = projectIdPromises.map((promise) => promise.then(projectID => {
+                    return socketService.checkForMsg({ projectID, msgType: 'projectStarted' });
+                }));
+
+                // get the project ID of each one
+                projectIDs.restartable = await Promise.all(projectIdPromises);
+
+                // wait for the projects to start
+                await Promise.all(projectStartedPromises);
             });
         });
 
@@ -128,8 +161,4 @@ if (!USING_K8S) describe.skip('Restart Project Tests', function() {
 function range(n) {
     const arrayOfLengthN = [...Array(n).keys()];
     return arrayOfLengthN;
-}
-
-function flatten(array) {
-    return [].concat.apply([], array);
 }
