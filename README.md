@@ -2,8 +2,8 @@
 Tools to help building high-quality cloud-native applications for Kubernetes, regardless of which IDE or language you use.
 
 ![platforms](https://img.shields.io/badge/runtime-Java%20%7C%20Swift%20%7C%20Node-yellow.svg)
-[![Eclipse License](https://img.shields.io/badge/license-Eclipse-brightgreen.svg)](https://github.ibm.com/dev-ex/tempest/blob/master/LICENSE)
-[![Build Status](https://travis.ibm.com/dev-ex/tempest.svg?token=jLZpzPrJozeLHsb1tpsR&branch=master)](https://travis.ibm.com/dev-ex/tempest)
+[![License](https://img.shields.io/badge/License-EPL%202.0-red.svg?label=license&logo=eclipse)](https://www.eclipse.org/legal/epl-2.0/)
+[![Chat](https://img.shields.io/static/v1.svg?label=chat&message=mattermost&color=145dbf)](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind)
 
 The goal of Eclipse Codewind is to provide tools to help building high-quality cloud-native applications for Kubernetes, regardless of which IDE or language you use. This includes the capability to rapidly create an application from template or sample, support for launching, updating, testing, and debugging in Docker containers on the desktop, and support for the same directly on Kubernetes regardless of where the source is. The tools will also provide help to move an existing application to Docker and Kuberenetes, and validation to ensure that applications follow best practises.
 
@@ -12,9 +12,9 @@ To support this, Codewind will include plugins to the Eclipse platform and Eclip
 
 ## Getting started
 
-You can start by installing Codewind using the VSCode extension or Eclipse plugin. Details on the installation instructions:
-1. [VSCode extension](https://github.com/microclimate-dev2ops/codewind-vscode)
-1. [Eclipse plugin](https://github.com/microclimate-dev2ops/codewind-eclipse)
+You can start by installing Codewind using the VS Code extension or Eclipse plugin. Details of the installation instructions:
+1. [VS Code extension](https://github.com/eclipse/codewind-vscode)
+1. [Eclipse plugin](https://github.com/eclipse/codewind-eclipse)
 
 ## Contributing
 We welcome submitting issues and contributions.
