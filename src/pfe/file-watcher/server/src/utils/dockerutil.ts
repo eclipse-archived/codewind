@@ -306,10 +306,10 @@ export async function getFilesInContainerWithTimestamp(projectID: string, contai
     // get all data from the container exec
     const data: string = await containerExec(options, container, projectID);
     if (data.indexOf("No such file or directory") > -1) {
-      logger.logFileWatcherInfo("No files were found");
+      logger.logInfo("No files were found");
       return [];
     } else {
-      logger.logFileWatcherInfo("At least one file was found");
+      logger.logInfo("At least one file was found");
       const files = data.replace(/\n/g, " ").replace(/[^ -~]+/g, "").split(" ").filter((entry: string) => { return entry.trim() != ""; });
       const fileIndex = 8; // file is the 9th argument from the above command
       const filesTimestamp: Array<logHelper.LogFiles> = [];
@@ -385,6 +385,7 @@ export async function buildImage(projectID: string, imageName: string, buildOpti
   const args: string[] = [];
   if (process.env.IN_K8) {
     args[0] = "bud";
+    args[1] = "--layers";
   }
   else {
     args[0] = "build";
@@ -396,7 +397,7 @@ export async function buildImage(projectID: string, imageName: string, buildOpti
   }
 
   if (liveStream && logFile) {
-    logger.fileWatcherAssert(logFile != undefined, "Log file is a required parameter if live stream option is passed");
+    logger.assert(logFile != undefined, "Log file is a required parameter if live stream option is passed");
     const newArgs = [args.join(" "), pathOrURL, logFile, projectID];
     return await processManager.spawnDetachedAsync(projectID, "/file-watcher/scripts/dockerScripts/docker-build.sh", newArgs, {});
   } else {
@@ -567,19 +568,19 @@ export async function removeDanglingImages(): Promise<void> {
   exec(dangling_cmd, (err, stdout) => {
     // if there is an internal error with the command
     if (err) {
-      logger.logFileWatcherError("An error was encountered while searching for dangling images.");
-      logger.logFileWatcherError(err.message);
+      logger.logError("An error was encountered while searching for dangling images.");
+      logger.logError(err.message);
     } else if (stdout) { // if the dangling command returned list of dangling images
       exec( image_cmd + " rmi -f $(" + dangling_cmd + ")", (err) => {
         if (err) {
-          logger.logFileWatcherError("An error was encountered while deleting dangling images.");
-          logger.logFileWatcherError(err.message);
+          logger.logError("An error was encountered while deleting dangling images.");
+          logger.logError(err.message);
         } else {
-          logger.logFileWatcherInfo(`Successfully removed dangling images`);
+          logger.logInfo(`Successfully removed dangling images`);
         }
       });
     } else { // if no images were returned
-      logger.logFileWatcherInfo("No dangling images were found.");
+      logger.logInfo("No dangling images were found.");
     }
   });
 }
@@ -595,7 +596,7 @@ export async function removeDanglingImages(): Promise<void> {
  */
 async function runDockerCommand(projectID: string, args: string[]): Promise<ProcessResult> {
   try {
-    logger.logProjectInfo("Run docker command: docker " + args, projectID);
+    logger.logProjectDebug("Run docker command: docker " + args, projectID);
     return await processManager.spawnDetachedAsync(projectID, "docker", args, {});
   } catch (err) {
     throw err;
@@ -613,7 +614,7 @@ async function runDockerCommand(projectID: string, args: string[]): Promise<Proc
  */
 async function runBuildahCommand(projectID: string, args: string[]): Promise<ProcessResult> {
   try {
-    logger.logProjectInfo("Run buildah command: buildah " + args, projectID);
+    logger.logProjectDebug("Run buildah command: buildah " + args, projectID);
     return await processManager.spawnDetachedAsync(projectID, "buildah", args, {});
   } catch (err) {
     throw err;

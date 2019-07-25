@@ -22,8 +22,11 @@ import NavBar from './components/navBar/NavBar';
 import PagePerformance from './pages/PagePerformance';
 import SocketContext from './utils/sockets/SocketContext';
 import * as ProjectIDChecker from './utils/projectUtils';
+import * as AppConstants from './AppConstants';
 
-const socket = io('http://localhost:9090/default', { timeout: '5000' })
+let socketURL = `${AppConstants.API_SERVER}/default`;
+
+const socket = io(socketURL, { timeout: '5000' });
 
 function App() {
 

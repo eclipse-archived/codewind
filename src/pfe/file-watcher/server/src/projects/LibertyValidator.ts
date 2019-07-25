@@ -124,7 +124,7 @@ export class LibertyValidator extends Validator {
                                         });
                                     }
                                 } catch (ex) {
-                                    logger.logFileWatcherInfo("No microclimate activation property was found.");
+                                    logger.logInfo("No microclimate activation property was found.");
                                 }
 
                                 if (!activationFound) {
@@ -187,7 +187,7 @@ export class LibertyValidator extends Validator {
                                         });
                                     }
                                 } catch (ex) {
-                                    logger.logFileWatcherInfo("No liberty-maven-plugin was found.");
+                                    logger.logInfo("No liberty-maven-plugin was found.");
                                 }
 
                                 if (!libertyPluginFound) {
@@ -204,11 +204,11 @@ export class LibertyValidator extends Validator {
                             }
                         }));
                     } catch (err) {
-                        logger.logFileWatcherError("The project does not specify any build profiles.");
+                        logger.logError("The project does not specify any build profiles.");
                     }
 
                     if (!microclimateProfileFound) {
-                        logger.logFileWatcherInfo("A microclimate profile was not found");
+                        logger.logInfo("A microclimate profile was not found");
                         const result = new ValidationResult(
                             Severity.error,
                             filename,

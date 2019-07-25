@@ -142,13 +142,14 @@ public class Constants {
 	public static final String DB_CHARTDIR_HASH = "CHARTDIR_HASH";
 	
 	enum ErrorCode {
-		wrongUsage("The arguments used are invalid"),
+		dummyEC("Error Code needs to start from exit code 1"),
 		unexpectedError("An unexpected error occurred"),
 		containerBuildFailed("Container build failed."),
 		containerStartFailed("Unable to start container."),
 		containerRemoveFailed("The container was not successfully removed"),
 		containerCleanupFailed("The container cleanup was not successful"),
-		applicationBuildFailed("Application build failed.");
+		applicationBuildFailed("Application build failed."),
+		invalidDeploymentRegistry("Failed to push image to invalid Deployment Registry");
 
 		private String msg;
 	

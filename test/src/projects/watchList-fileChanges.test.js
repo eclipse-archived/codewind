@@ -168,7 +168,7 @@ describe('watchList and file-changes route tests', function() {
             await reqService.makeReq(req, 500);
         });
 
-        it('should trigger a build and receive projectCreation event', async function() {
+        it('should trigger a build and receive projectChanged event', async function() {
             this.timeout(testTimeout.med);
             const array = [{
                 path: '/app.py' ,
@@ -176,19 +176,7 @@ describe('watchList and file-changes route tests', function() {
                 type: 'MODIFY',
                 directory: false,
             }];
-            const str = JSON.stringify(array);
-            const strBuffer = await deflateAsync(str);
-            const base64Compressed = strBuffer.toString('base64');
-
-            const req = () => reqService.chai
-                .post(`/api/v1/projects/${projectID}/file-changes?timestamp=${Date.now()}&chunk=1&chunk_total=1`)
-                .set('Cookie', ADMIN_COOKIE)
-                .send({ msg: base64Compressed });
-            const expectedSocketMsg = {
-                projectID,
-                msgType: 'projectCreation',
-            };
-            await reqService.makeReqAndAwaitSocketMsg(req, 200, expectedSocketMsg);
+            await projectService.notifyPfeOfFileChangesAndAwaitMsg(array, projectID);
         });
     });
 

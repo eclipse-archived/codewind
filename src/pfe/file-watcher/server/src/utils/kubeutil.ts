@@ -228,7 +228,7 @@ export async function isContainerActive(containerName: string): Promise<any> {
         return containerState;
     } catch (err) {
         const msg = "Error getting container status: " + err;
-        logger.logFileWatcherError(msg);
+        logger.logError(msg);
         return {error: err};
     }
 }

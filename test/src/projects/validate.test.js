@@ -14,19 +14,11 @@ const fs = require('fs-extra');
 const projectService = require('../../modules/project.service');
 const { testTimeout, templateOptions } = require('../../config');
 
+const { defaultLibertySettings, defaultDockerSettings } = require('../../utils/default-cw-settings.js');
+
 chai.should();
 
 describe('Validate API', function() {
-    const expectedCwSettingsData = {
-        contextRoot: '',
-        internalPort: '',
-        healthCheck: '',
-        watchedFiles: {
-            includeFiles: [''],
-            excludeFiles: [''],
-        },
-    };
-
     let workspaceLocation;
 
     before(async function() {
@@ -68,7 +60,7 @@ describe('Validate API', function() {
 
         it('writes the .cw-settings file and adds the correct data', function() {
             const cwSettingsData = projectService.readCwSettings(projectPath);
-            cwSettingsData.should.deep.equal(expectedCwSettingsData);
+            cwSettingsData.should.deep.equal(defaultLibertySettings);
         });
     });
 
@@ -98,7 +90,7 @@ describe('Validate API', function() {
 
         it('writes the .cw-settings file and adds the correct data', function() {
             const cwSettingsData = projectService.readCwSettings(projectPath);
-            cwSettingsData.should.deep.equal(expectedCwSettingsData);
+            cwSettingsData.should.deep.equal(defaultDockerSettings);
         });
     });
 

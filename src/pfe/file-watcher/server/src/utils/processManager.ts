@@ -83,7 +83,7 @@ export function spawnDetached(processKey: string, command: string, args: Array<s
 
     proc.stdout.on("data", (data) => {
         stdoutBuffer += data.toString();
-        logger.logProjectInfo(data.toString(), processKey);
+        logger.logProjectTrace(data.toString(), processKey);
     });
 
     proc.stderr.on("data", (data) => {
@@ -151,27 +151,6 @@ export function killRunningProcesses(processKey: string, projectName: string): v
 
 /**
  * @function
- * @description Kill iNotify processes.
- *
- * @param processKey <Required | String> - The process key.
- *
- * @returns void
- */
-export function killInotifyProcess(processKey: string): void {
-    if (runningProcesses.has(processKey)) {
-        const processes = runningProcesses.get(processKey);
-        for (let i = 0; i < processes.length; i++ ) {
-            if (processes[i].command.indexOf("project-watcher") !== -1) {
-                process.kill(processes[i].childprocess.pid * -1, "SIGTERM");
-                logger.logProjectInfo("Killed the running inotify processes for project " + processKey, processKey);
-                runningProcesses.get(processKey).splice(runningProcesses.get(processKey).indexOf(processes[i]), 1);
-            }
-        }
-    }
-}
-
-/**
- * @function
  * @description Print out the running processes.
  *
  * @param projectName <Required | String> - The project name.
@@ -185,8 +164,8 @@ export function printRunningProcesses(projectName: string): void {
         data += chunk.toString("utf-8");
     });
     ps.stdout.on("end", () => {
-        logger.logFileWatcherInfo("Running processes:", projectName);
-        logger.logFileWatcherInfo(data, projectName);
+        logger.logTrace(`[${projectName}] Running processes:`);
+        logger.logTrace(`[${projectName}] ${data}`);
     });
 }
 

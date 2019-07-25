@@ -17,6 +17,7 @@ import org.eclipse.codewind.iterdev.IDCContext;
 import org.eclipse.codewind.iterdev.Logger;
 import org.eclipse.codewind.iterdev.ProcessRunner;
 import org.eclipse.codewind.iterdev.ProcessRunner.ConsoleStream;
+import org.eclipse.codewind.iterdev.StatusTracker;
 
 public class ContainerRunTask {
 
@@ -80,9 +81,11 @@ public class ContainerRunTask {
                 return "registryError";
             }
 
-        		// Get the release name, deployment, and pod IDs (last three lines of output)
+        	// Get the release name, deployment, and pod IDs (last three lines of output)
             if (lines.length < 3) {
+                String statusMsg = "containerRunTask.containerRunTaskFailed";	
                 Logger.error("Start container stage failed: failed to get deploymentID/podID/releaseID");
+                StatusTracker.updateProjectState(context, "build", "failed", statusMsg, null);	
                 return null;
             }
 

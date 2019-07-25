@@ -1,9 +1,0 @@
----
-applications:
-- instances: 1
-  timeout: 180
-  name: springfolderimporttest
-  buildpack: java_buildpack
-  path: ./target/springfolderimporttest-1.0-SNAPSHOT.jar
-  memory: 1024M
-  random-route: true

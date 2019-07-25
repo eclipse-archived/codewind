@@ -15,20 +15,18 @@ const fs = require('fs-extra');
 const projService = require('../../../modules/project.service');
 const { testTimeout, templateOptions } = require('../../../config');
 
+const {
+    defaultSpringSettings,
+    defaultLibertySettings,
+    defaultNodeSettings,
+    defaultSwiftSettings,
+    defaultDockerSettings,
+} = require('../../../utils/default-cw-settings');
+
 chai.should();
 
 describe('Project Creation Tests (POST /projects)', function() {
     let workspace_location;
-
-    const expectedCwSettingsData = {
-        contextRoot: '',
-        internalPort: '',
-        healthCheck: '',
-        watchedFiles: {
-            includeFiles: [''],
-            excludeFiles: [''],
-        },
-    };
 
     before(async function(){
         workspace_location = await projService.findWorkspaceLocation();
@@ -71,7 +69,7 @@ describe('Project Creation Tests (POST /projects)', function() {
 
             it('writes the .cw-settings file and adds the correct data', function() {
                 const cwSettingsData = projService.readCwSettings(projectPath);
-                cwSettingsData.should.deep.equal(expectedCwSettingsData);
+                cwSettingsData.should.deep.equal(defaultSpringSettings,);
             });
 
             it('fails (with status 400) to create a project if a non-empty parentPath is specified', async function() {
@@ -118,7 +116,7 @@ describe('Project Creation Tests (POST /projects)', function() {
 
             it('writes the .cw-settings file and adds the correct data', function() {
                 const cwSettingsData = projService.readCwSettings(projectPath);
-                cwSettingsData.should.deep.equal(expectedCwSettingsData);
+                cwSettingsData.should.deep.equal(defaultLibertySettings);
             });
         });
 
@@ -158,7 +156,7 @@ describe('Project Creation Tests (POST /projects)', function() {
 
             it('writes the .cw-settings file and adds the correct data', function() {
                 const cwSettingsData = projService.readCwSettings(projectPath);
-                cwSettingsData.should.deep.equal(expectedCwSettingsData);
+                cwSettingsData.should.deep.equal(defaultNodeSettings);
             });
         });
 
@@ -198,7 +196,7 @@ describe('Project Creation Tests (POST /projects)', function() {
 
             it('writes the .cw-settings file and adds the correct data', function() {
                 const cwSettingsData = projService.readCwSettings(projectPath);
-                cwSettingsData.should.deep.equal(expectedCwSettingsData);
+                cwSettingsData.should.deep.equal(defaultDockerSettings);
             });
         });
 
@@ -238,7 +236,7 @@ describe('Project Creation Tests (POST /projects)', function() {
 
             it('writes the .cw-settings file and adds the correct data', function() {
                 const cwSettingsData = projService.readCwSettings(projectPath);
-                cwSettingsData.should.deep.equal(expectedCwSettingsData);
+                cwSettingsData.should.deep.equal(defaultSwiftSettings);
             });
         });
     });
@@ -257,21 +255,21 @@ describe('Project Creation Tests (POST /projects)', function() {
 
         describe('Invalid types', () => {
             it('fails (with status 400) to create from template when projectName is of incorrect type', async function() {
-                const options = modifyOptions(validOptions, { projectName : true });
+                const options = modifyOptions(validOptions, { projectName: true });
                 const res = await projService.createProjectFromTemplate(options);
                 res.should.have.status(400);
                 res.error.text.should.equal('Error while validating request: request.body.projectName should be string');
             });
 
-            it('fails (with status 400) to create a project if url is incorrect', async function() {
-                const options =  modifyOptions(validOptions, { url : true });
+            it('fails (with status 400) to create a project if url is incorrect type', async function() {
+                const options =  modifyOptions(validOptions, { url: true });
                 const res = await projService.createProjectFromTemplate(options);
                 res.should.have.status(400);
                 res.error.text.should.equal('Error while validating request: request.body.url should be string');
             });
 
             it('fails (with status 400) to create a project if parentPath is of incorrect type', async function() {
-                const options =  modifyOptions(validOptions, { parentPath : true });
+                const options =  modifyOptions(validOptions, { parentPath: true });
                 const res = await projService.createProjectFromTemplate(options);
                 res.should.have.status(400);
                 res.error.text.should.equal('Error while validating request: request.body.parentPath should be string');
@@ -281,17 +279,27 @@ describe('Project Creation Tests (POST /projects)', function() {
         describe('Invalid parentPaths', () => {
             it('fails (with status 400) if parentPath is not absolute', async function() {
                 this.timeout(testTimeout.short);
-                const options = modifyOptions(validOptions, { parentPath : 'Documents/'});
+                const options = modifyOptions(validOptions, { parentPath: 'Documents/' });
                 const res = await projService.createProjectFromTemplate(options);
                 res.should.have.status(400);
                 res.body.message.should.include('PATH_NOT_ABSOLUTE');
             });
         });
 
+        describe('Invalid url', () => {
+            it('fails (with status 400) if supplied url is not a git repository', async function() {
+                this.timeout(testTimeout.short);
+                const options = modifyOptions(validOptions, { url: 'https://github.com/microclimate-dev2ops/blahblah/' });
+                const res = await projService.createProjectFromTemplate(options);
+                res.should.have.status(400);
+                res.body.result.should.equal('Git clone failed - ensure the repository URL is correct');
+            });
+        });
+
         describe('Invalid projectName', () => {
             it('fails (with status 400) if projectName contains an illegal character', async function() {
                 this.timeout(testTimeout.short);
-                const options = modifyOptions(validOptions, { projectName : '&isnotallowed'});
+                const options = modifyOptions(validOptions, { projectName: '&isnotallowed' });
                 const res = await projService.createProjectFromTemplate(options);
                 res.should.have.status(400);
                 res.body.message.should.equal('Project name is invalid: invalid characters : ["&"]');

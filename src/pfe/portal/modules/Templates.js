@@ -30,6 +30,7 @@ module.exports = class Templates {
     this.needsRefresh = true;
     this.repositoryFile = path.join(workspace, '.config/repository_list.json');
     this.repositoryList = DEFAULT_REPOSITORY_LIST;
+    this.providers = {};
   }
 
   async initializeRepositoryList() {
@@ -90,6 +91,17 @@ module.exports = class Templates {
       }
     }));
 
+    // query providers
+    for (let provider of Object.values(this.providers)) {
+      try {
+        const templates = await provider.getTemplates();
+        newProjectTemplates.push(...templates);
+      }
+      catch (err) {
+        log.error(err.message);
+      }
+    }
+
     newProjectTemplates.sort((a, b) => {
       return a.label.localeCompare(b.label);
     });
@@ -135,5 +147,9 @@ module.exports = class Templates {
     this.repositoryList = this.repositoryList.filter((repo) => repo.url != repositoryUrl);
     this.needsRefresh = true;
     this.writeRepositoryList();
+  }
+
+  addProvider(name, provider) {
+    this.providers[name] = provider;
   }
 }

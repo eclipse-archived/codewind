@@ -10,6 +10,8 @@
  *******************************************************************************/
 
 import { logHelperTestModule } from "../tests/logHelper.module.test";
+import { utilsTestModule } from "../tests/utils.module.test";
+import { localeTestModule } from "../tests/locale.module.test";
 
 interface ModuleExtension {
     moduleName: string;
@@ -21,4 +23,14 @@ const logHelperModule: ModuleExtension = {
     moduleFunc: logHelperTestModule
 };
 
-export const moduleLists: Array<ModuleExtension> = [logHelperModule];
+const utilsModule: ModuleExtension = {
+    moduleName: "utils",
+    moduleFunc: utilsTestModule
+};
+
+const localeModule: ModuleExtension = {
+    moduleName: "locale",
+    moduleFunc: localeTestModule
+};
+
+export const moduleLists: Array<ModuleExtension> = [logHelperModule, utilsModule, localeModule];

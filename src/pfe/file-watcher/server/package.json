@@ -12,12 +12,13 @@
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "eslint": "eslint .",
     "test": "npm run unit:test && npm run functional:test",
-    "unit:test": "NODE_ENV=test nyc mocha test/unit-test/unit.test.ts",
+    "unit:test": "NODE_ENV=test CW_LOCALES_DIR=$(pwd)/src/utils/locales/ nyc mocha test/unit-test/unit.test.ts",
     "unit:test:xml": "NODE_ENV=test nyc mocha test/unit-test/unit.test.ts --colors --reporter mocha-jenkins-reporter",
     "functional:test": "NODE_ENV=test nyc mocha test/functional-test/functional.test.ts",
     "functional:test:xml": "NODE_ENV=test nyc mocha test/functional-test/functional.test.ts --colors --reporter mocha-jenkins-reporter",
     "coverage": "nyc report",
-    "pushLocal": "npm run build && docker cp dist $(docker ps -f name=codewind-pfe -q):/file-watcher/server"
+    "pushLocal": "npm run build && docker cp dist $(docker ps -f name=codewind-pfe -q):/file-watcher/server",
+    "pushK8": "npm run build && kubectl cp dist $CW_WS:/file-watcher/server"
   },
   "nyc": {
     "extension": [
@@ -42,6 +43,7 @@
     "i18next": "^15.0.9",
     "i18next-node-fs-backend": "^2.1.3",
     "kubernetes-client": "^6.11.0",
+    "log4js": "^3.0.6",
     "moment-timezone": "^0.5.17",
     "stack-trace": "0.0.10",
     "xml2js": "~0.4.19",

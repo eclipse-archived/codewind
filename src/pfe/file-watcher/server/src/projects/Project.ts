@@ -27,12 +27,11 @@ export interface ProjectInfo {
     sentProjectInfo?: boolean;
     forceAction?: string;
     startMode: string;
-    watchedFiles?: string[];
-    ignoredFiles?: string[];
     mavenProfiles?: string[];
     mavenProperties?: string[];
     ignoredPaths?: string[];
     extensionID?: string;
+    language?: string;
 }
 
 export interface ProjectMetadata {
@@ -70,31 +69,21 @@ export interface UpdateProjectInfoPair {
     saveIntoJsonFile?: boolean;
 }
 
-export interface InotifyArgs {
-    projectLocation: String;
-    workspaceOrigin: String;
-    projectID: String;
-    watchedFiles: string[];
-    ignoredFiles: string[];
-    operationId?: String;
-    serverPort: String;
-}
-
 export interface ProjectSettingsEvent {
     operationId: String;
     projectID: String;
-    name: String;
     status: String;
     ports?: {
         exposedPort?: string;
-        internalPort: string;
-    } | {
-        internalDebugPort: string;
+        internalPort?: string;
+        internalDebugPort?: string;
     };
     error?: String;
     contextRoot?: String;
     healthCheck?: string;
     ignoredPaths?: string[];
+    mavenProfiles?: string[];
+    mavenProperties?: string[];
 }
 
 /**

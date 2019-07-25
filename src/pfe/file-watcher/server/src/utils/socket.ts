@@ -31,7 +31,7 @@ const registeredListeners: Array<FWEventHandler> = [];
  */
 export function emitOnListener (event: string, data: any): void {
     const projectID = data.projectID;
-    logger.logProjectInfo("Emitting event over listener \n message: " + event + "\n data: " + JSON.stringify(data, undefined, 2), projectID);
+    logger.logProjectInfo("Emitting event \n message: " + event + "\n data: " + JSON.stringify(data, undefined, 2), projectID);
     registeredListeners.map( x => x.handleEvent(event, data));
 }
 
@@ -40,6 +40,6 @@ export function emitOnListener (event: string, data: any): void {
  * @see [[Filewatcher.registerListener]]
  */
 export function registerListener(listener: FWEventHandler): void {
-    logger.logFileWatcherInfo("Registered listener: " + listener.name);
+    logger.logInfo("Registered listener: " + listener.name);
     registeredListeners.push(listener);
 }

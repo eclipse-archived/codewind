@@ -12,10 +12,13 @@
 import fs from 'fs-extra';
 import path from 'path';
 
+import { projectTypesWithInternalDebugPort,
+  projectTypesWithMavenSettings  } from  '../config/cwSettingsFields';
+
 import { CWSettings } from '../types/initializeTypes';
 
-export function writeCwSettings(projectMountDirectory: string): void {
-  const emptyCwSettings: CWSettings = createEmptyCwSettingsObject();
+export function writeCwSettings(projectMountDirectory: string, projectType: string): void {
+  const emptyCwSettings: CWSettings = createEmptyCwSettingsObject(projectType);
 
   const settingsPath: string = path.join(projectMountDirectory, '.cw-settings');
   const legacySettingsPath: string = path.join(projectMountDirectory, '.mc-settings');
@@ -26,20 +29,30 @@ export function writeCwSettings(projectMountDirectory: string): void {
 
   // write .cw-settings file if it doesn't already exist
   } else if (!fs.existsSync(settingsPath)) {
-    fs.writeFileSync(settingsPath, JSON.stringify(emptyCwSettings, null, 2));
+    fs.writeFileSync(settingsPath, JSON.stringify(emptyCwSettings, undefined, 2));
   }
 }
 
-export function createEmptyCwSettingsObject(): CWSettings {
+export function createEmptyCwSettingsObject(projectType: string): CWSettings {
   const settings: CWSettings = {
     contextRoot: '',
     internalPort: '',
     healthCheck: '',
+    ignoredPaths: [''],
     watchedFiles: {
       includeFiles: [''],
       excludeFiles: [''],
     },
   };
+
+  if (projectTypesWithInternalDebugPort.includes(projectType)) {
+    settings.internalDebugPort = '';
+  }
+
+  if (projectTypesWithMavenSettings.includes(projectType)) {
+    settings.mavenProfiles = [''];
+    settings.mavenProperties = [''];
+  }
 
   return settings;
 }

@@ -101,12 +101,12 @@ class ProjectState {
     }
 }
 
-logger.logFileWatcherInfo("Initialize application state map");
+logger.logInfo("Initialize application state map");
 initAppStateMap();
-logger.logFileWatcherInfo("Initialize build state map");
+logger.logInfo("Initialize build state map");
 initBuildStateMap();
 projectUtil.setprojectList();
-logger.logFileWatcherInfo("Starting application ping intervals");
+logger.logInfo("Starting application ping intervals");
 
 setInterval(pingApplications, pingInterval);
 setInterval(pingInTransitApplications, inTransitPingInterval);
@@ -266,8 +266,8 @@ export async function updateProjectStatus(type: string, projectID: string, statu
                 data.appErrorStatus = (newError == " ") ? newError : await locale.getTranslation(newError);
             }
 
-            if (detailedAppStatus) {
-                data.detailedAppStatus = detailedAppStatus;
+            if (newDetailedState) {
+                data.detailedAppStatus = newDetailedState;
             }
             io.emitOnListener("projectStatusChanged", data);
         }
@@ -497,8 +497,13 @@ function pingInTransitApplications(): void {
                                 } else if (oldState === AppState.stopping && newMsg) {
                                     newState = AppState.stopped;
                                 }
-                                const detailedAppStatus = appStateMap.get(projectID).detailedAppStatus;
-                                appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, detailedAppStatus));
+
+                                if (newState === AppState.started) {
+                                    appStateMap.set(projectID, new ProjectState(newState, newMsg));
+                                } else {
+                                    const detailedAppStatus = appStateMap.get(projectID).detailedAppStatus;
+                                    appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, detailedAppStatus));
+                                }
 
                                 // Ensure that only new messages are logged
                                 if (newMsg && (newMsg.toString() !== (oldMsg ? oldMsg.toString() : oldMsg))) {
@@ -508,10 +513,15 @@ function pingInTransitApplications(): void {
                                 // Update the state only if it has changed
                                 if (newState !== oldState) {
                                     logger.logProjectInfo("pingInTransitApplications: Application state for project " + projectID + " has changed from " + oldState + " to " + newState, projectID);
-                                    const data = {
+                                    const data: any = {
                                         projectID: projectID,
                                         appStatus: newState
                                     };
+
+                                    if (newState === AppState.started) {
+                                        data.detailedAppStatus = " ";
+                                    }
+
                                     io.emitOnListener("projectStatusChanged", data);
                                 }
                             }

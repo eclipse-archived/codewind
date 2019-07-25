@@ -39,6 +39,7 @@ export interface CWSettings {
   internalPort: string;
   internalDebugPort?: string;
   healthCheck: string;
+  ignoredPaths?: string[];
   watchedFiles: {
     includeFiles: string[];
     excludeFiles: string[];
