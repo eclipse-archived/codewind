@@ -12,9 +12,10 @@ To support this, Codewind will include plugins to the Eclipse platform and Eclip
 
 ## Getting started
 
-You can start by installing Codewind using the VS Code extension or Eclipse plugin. Details of the installation instructions:
+You can start by installing Codewind using the VS Code extension, Eclipse plugin, or Eclipse Che plugin. Details of the installation instructions:
 1. [VS Code extension](https://github.com/eclipse/codewind-vscode)
-1. [Eclipse plugin](https://github.com/eclipse/codewind-eclipse)
+2. [Eclipse plugin](https://github.com/eclipse/codewind-eclipse)
+3. [Eclipse Che plugin](https://github.com/eclipse/codewind-che-plugin)
 
 ## Contributing
 We welcome submitting issues and contributions.
