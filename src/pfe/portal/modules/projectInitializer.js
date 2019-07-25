@@ -20,8 +20,7 @@ const dockerImage = 'codewind-initialize-amd64'
 const dockerTag = process.env.CODEWIND_VERSION || 'latest';
 const fs = require('fs-extra');
 
-console.log('dockerTag');
-console.log(dockerTag);
+log.info('dockerTag = ' + dockerTag);
 
 let initialize;
 if (global.codewind.RUNNING_IN_K8S) {
