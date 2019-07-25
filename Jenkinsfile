@@ -40,7 +40,7 @@ pipeline {
                         export REGISTRY="eclipse"
                         echo "Branch name is $GIT_BRANCH"
 
-                        if [[ $GIT_BRANCH == "master" ]]; then
+                        if [[ $GIT_BRANCH == "master" || $GIT_BRANCH == "merge" ]]; then
                             TAG="latest"
                         else
                             TAG=$GIT_BRANCH
