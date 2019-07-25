@@ -1,9 +1,9 @@
 # Codewind
-Tools to help building high-quality cloud-native applications for Kubernetes, regardless of which IDE or language you use.
-
 ![platforms](https://img.shields.io/badge/runtime-Java%20%7C%20Swift%20%7C%20Node-yellow.svg)
 [![License](https://img.shields.io/badge/License-EPL%202.0-red.svg?label=license&logo=eclipse)](https://www.eclipse.org/legal/epl-2.0/)
 [![Chat](https://img.shields.io/static/v1.svg?label=chat&message=mattermost&color=145dbf)](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind)
+
+Tools to help building high-quality cloud-native applications for Kubernetes, regardless of which IDE or language you use.
 
 The goal of Eclipse Codewind is to provide tools to help building high-quality cloud-native applications for Kubernetes, regardless of which IDE or language you use. This includes the capability to rapidly create an application from template or sample, support for launching, updating, testing, and debugging in Docker containers on the desktop, and support for the same directly on Kubernetes regardless of where the source is. The tools will also provide help to move an existing application to Docker and Kuberenetes, and validation to ensure that applications follow best practises.
 
