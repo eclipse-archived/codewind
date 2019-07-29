@@ -11,18 +11,25 @@
 import * as path from "path";
 import * as fs from "fs-extra";
 import * as request from "request";
+import * as _ from "lodash";
 
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
 
-const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + pfe_configs.pfe.PORT + pfe_configs.pfeAPIs.projects;
+const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + pfe_configs.pfe.PORT;
 
 const mcWorkspace = app_configs.microclimateWorkspaceDir;
 
 const fixtures = app_configs.fixturesDir;
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
-    return request.get(pfeURL, {rejectUnauthorized: false}, callback);
+    const pingUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.projects;
+    return request.get(pingUrl, {rejectUnauthorized: false}, callback);
+}
+
+export function getRegistry(callback: request.RequestCallback): request.Request {
+    const registryUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.registry;
+    return request.get(registryUrl, {rejectUnauthorized: false}, callback);
 }
 
 export function cloneProject(projectName: string, parentPath: string, url: string, callback: request.RequestCallback): request.Request {

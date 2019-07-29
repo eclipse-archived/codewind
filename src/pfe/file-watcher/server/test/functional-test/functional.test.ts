@@ -9,11 +9,15 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 import { expect } from "chai";
+import fs from "fs";
+import path from "path";
 
 import * as utils from "./lib/utils";
 // set all the test environmental variables
 utils.setTestEnvVariables();
 import * as app_configs from "./configs/app.config";
+import * as pfe_configs from "./configs/pfe.config";
+
 import { localeTestSuite } from "./tests/locale.test";
 import { createTestSuite } from "./tests/create.test";
 import { deleteTestSuite } from "./tests/delete.test";
@@ -36,9 +40,30 @@ describe("Functional Test Suite", () => {
     });
   });
 
-  before(() => {
+  before("registering socket listener", () => {
     socket.registerListener("PFE Functional Test Listener");
   });
+
+  if (process.env.IN_K8) {
+    before("set deployment registry", (done) => {
+      const workspace_settings_file_content = { deploymentRegistry: pfe_configs.deploymentRegistry };
+      const workspace_settings_file_content_json = JSON.stringify(workspace_settings_file_content);
+      const workspace_settings_file = path.join(app_configs.microclimateWorkspaceDir, ".config", "settings.json");
+
+      fs.writeFile(workspace_settings_file, workspace_settings_file_content_json, (err) => {
+        if (err) done(err);
+        utils.getRegistry((err, res, body) => {
+          if (err) done(err);
+          expect(res);
+          expect(body);
+          body = JSON.parse(body);
+          expect(body.statusCode).to.equal(200);
+          expect(body.deploymentRegistry).to.equal(true);
+          done();
+        });
+      });
+    });
+  }
 
   describe("generic suite", () => {
     describe("setLocale", () => {

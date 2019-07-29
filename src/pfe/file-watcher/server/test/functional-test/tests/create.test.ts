@@ -54,12 +54,13 @@ export function createTestSuite(socket: SocketIO, projData: ProjectCreation): vo
             expect(event.eventData["projectID"]).to.equal(projData.projectID);
             expect(event.eventData).to.haveOwnProperty("status");
             expect(event.eventData["status"]).to.equal("success");
-            expect(event.eventData).to.haveOwnProperty("ignoredPaths");
-            expect(event.eventData).to.haveOwnProperty("host");
+            if (!process.env.IN_K8) expect(event.eventData).to.haveOwnProperty("ignoredPaths");
+            if (!process.env.IN_K8) expect(event.eventData).to.haveOwnProperty("host");
+            if (process.env.IN_K8) expect(event.eventData).to.haveOwnProperty("podName");
             expect(event.eventData).to.haveOwnProperty("ports");
             expect(event.eventData["ports"]).to.haveOwnProperty("exposedPort");
             expect(event.eventData["ports"]).to.haveOwnProperty("internalPort");
-            expect(event.eventData).to.haveOwnProperty("containerId");
+            if (!process.env.IN_K8) expect(event.eventData).to.haveOwnProperty("containerId");
             expect(event.eventData).to.haveOwnProperty("logs");
             expect(event.eventData["logs"]).to.haveOwnProperty("build");
             expect(event.eventData["logs"]["build"]).to.haveOwnProperty("origin");
