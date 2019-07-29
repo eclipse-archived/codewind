@@ -11,9 +11,6 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
-# When this script is called from CI/Travis, parameters are userid and password for artifactory
-USERNAME=$1;
-PASSWORD=$2;
 DIR=`pwd`;
 SRC_DIR=$DIR/src;
 PFE=pfe
