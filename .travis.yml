@@ -23,7 +23,9 @@ matrix:
     - os: linux
       env: TEST_SCOPE=codewind-pfe UPLOAD_IMAGES=true
     - os: linux
-      env: TEST_SCOPE=file-watcher-pfe-all
+      env: TEST_SCOPE=turbine-unit-tests
+    - os: linux
+      env: TEST_SCOPE=turbine-functional-tests
     # - os: linux
     #   env: TEST_SCOPE=codewind-pfe-smoke-tests
     # - os: linux

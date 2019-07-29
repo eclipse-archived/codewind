@@ -43,17 +43,14 @@ elif [ "$TEST_SCOPE" == "filewatcher2" ]; then
   printf "\n${MAGENTA}********** Running filewatcher test bucket 2 **********${RESET}\n\n"
   ./src/pfe/iterative-dev/test/microclimate-test/scripts/test_microclimate.sh local $ARCH
   exit $?;
-elif [ "$TEST_SCOPE" == "file-watcher-pfe-all" ]; then
-  printf "\n${MAGENTA}********** Running file-watcher pfe unit test bucket **********${RESET}\n\n"
+elif [ "$TEST_SCOPE" == "turbine-unit-tests" ]; then
+  printf "\n${MAGENTA}********** Running turbine unit test bucket **********${RESET}\n\n"
   ./src/pfe/file-watcher/server/test/cronjob-main.sh master unit
-  if [ $? -ne 0 ]; then
-    echo -e "${RED}>> Unit test failed. Will not run functional test.${RESET}"
-    exit 1
-  else
-    printf "\n${MAGENTA}********** Running file-watcher pfe functional test bucket **********${RESET}\n\n"
-    ./src/pfe/file-watcher/server/test/cronjob-main.sh master functional
-    exit $?;
-  fi
+  exit $?;
+elif [ "$TEST_SCOPE" == "turbine-functional-tests" ]; then
+  printf "\n${MAGENTA}********** Running turbine functional test bucket **********${RESET}\n\n"
+  ./src/pfe/file-watcher/server/test/scripts/test.sh -t local -s functional -d y
+  exit $?;
 fi
 
 # Run eslint
