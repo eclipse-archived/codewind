@@ -17,14 +17,26 @@ import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
 
 export function deleteTestSuite(socket: SocketIO, projectID: string): void {
-    it("delete a project with invalid id", async () => {
-        const info: any = await deleteProject("invalidId");
+    it("delete a project with missing id", async () => {
+        const invalidId: any = undefined;
+        const info: any = await deleteProject(invalidId);
         expect(info).to.exist;
         expect(info.statusCode).to.exist;
         expect(info.statusCode).to.equal(400);
         expect(info.error).to.exist;
         expect(info.error.msg).to.exist;
-        expect(info.error.msg).to.equal("Bad request");
+        expect(info.error.msg).to.equal(`Bad request`);
+    });
+
+    it("delete a project with invalid id", async () => {
+        const invalidId = "invalidId";
+        const info: any = await deleteProject(invalidId);
+        expect(info).to.exist;
+        expect(info.statusCode).to.exist;
+        expect(info.statusCode).to.equal(404);
+        expect(info.error).to.exist;
+        expect(info.error.msg).to.exist;
+        expect(info.error.msg).to.equal(`Project does not exist ${invalidId}`);
     });
 
     it("delete project", async () => {
