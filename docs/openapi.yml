@@ -10,8 +10,8 @@ info:
     name: API support
     email: example@ibm.com
   license:
-    name: Microclimate Developer License
-    url: 'https://github.ibm.com/dev-ex/codewind/blob/master/LICENSE/LICENSE.md'
+    name: Codewind Developer License
+    url: 'https://github.com/eclipse/codewind/blob/master/LICENSE/LICENSE.md'
 
 # tags:
   # - name: users
