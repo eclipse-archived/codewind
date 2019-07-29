@@ -9,7 +9,9 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
- import { expect } from "chai";
+import { expect } from "chai";
+import * as _ from "lodash";
+
 import { ProjectCreation, createProject } from "../lib/project";
 import { SocketIO } from "../lib/socket-io";
 import * as eventConfigs from "../configs/event.config";
@@ -17,6 +19,30 @@ import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
 
 export function createTestSuite(socket: SocketIO, projData: ProjectCreation): void {
+    it("create a project without projectID", async () => {
+        const invalidData = _.cloneDeep(projData);
+        delete invalidData.projectID;
+        const info: any = await createProject(invalidData);
+        expect(info).to.exist;
+        expect(info.statusCode).to.exist;
+        expect(info.statusCode).to.equal(400);
+        expect(info.error).to.exist;
+        expect(info.error.msg).to.exist;
+        expect(info.error.msg).to.equal("projectID, projectType and location are required parameters");
+    });
+
+    it("create a project without projectType", async () => {
+        const invalidData = _.cloneDeep(projData);
+        delete invalidData.projectType;
+        const info: any = await createProject(invalidData);
+        expect(info).to.exist;
+        expect(info.statusCode).to.exist;
+        expect(info.statusCode).to.equal(400);
+        expect(info.error).to.exist;
+        expect(info.error.msg).to.exist;
+        expect(info.error.msg).to.equal("projectID, projectType and location are required parameters");
+    });
+
     it("create project", async () => {
         const info: any = await createProject(projData);
         expect(info).to.exist;
