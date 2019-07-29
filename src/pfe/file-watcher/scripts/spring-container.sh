@@ -68,7 +68,7 @@ set -o pipefail
 
 function create() {
 	# Fix to stop file-watcher from attempting the rebuild procedure
-	STOP_WATCHING_CHECK="$ROOT/microclimate-stop-watching-flag";
+	STOP_WATCHING_CHECK="$ROOT/codewind-stop-watching-flag";
 	echo $STOP_WATCHING_CHECK;
 	if [ -f "$STOP_WATCHING_CHECK" ]; then
 		echo "Stop watching flag found. Doing nothing.";
@@ -172,7 +172,7 @@ function deployK8() {
 	# Render the chart template
 	helm template $tmpChart \
 		--name $project \
-		--values=/file-watcher/scripts/override-values-icp.yaml \
+		--values=/file-watcher/scripts/override-values.yaml \
 		--set image.repository=$DEPLOYMENT_REGISTRY/$project \
 		--output-dir=$parentDir
 
@@ -413,7 +413,7 @@ function start() {
 	# Start the spring application
 
 	if [[ "$IN_K8" == "true" ]]; then
-		# Debug not supported on ICP
+		# Debug not supported on Kubernetes
 		echo "Starting the $projectName project in run mode"
 		POD_NAME="$( kubectl get po --selector=release=$project | grep 'Running' | cut -d ' ' -f 1 )"
 		kubectl exec $POD_NAME bash "/scripts/spring-start.sh" "$projectName" run

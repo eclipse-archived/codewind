@@ -1,6 +1,6 @@
 # FileWatcher
 
-This directory consists of the filewatcher modules used to build the respective microclimate container.
+This directory consists of the filewatcher modules used in the Codewind PFE container.
 
 ## Directory Structure
 ```

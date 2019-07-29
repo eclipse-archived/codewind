@@ -11,9 +11,9 @@
 #FROM centos:7
 
 FROM centos@sha256:b5e66c4651870a1ad435cd75922fe2cb943c9e973a9673822d1414824a1d0475 as codewind-pfe-base
-LABEL org.label-schema.name="Microclimate Portal" org.label-schema.description="Microclimate Portal" \
-      org.label-schema.url="https://microclimate-dev2ops.github.io/" \
-      org.label-schema.vcs-url="https://github.ibm.com/dev-ex/microclimate-devops" org.label-schema.vendor="IBM"
+LABEL org.label-schema.name="Codewind PFE" org.label-schema.description="Codewind PFE" \
+      org.label-schema.url="https://codewind.dev/" \
+      org.label-schema.vcs-url="https://github.com/eclipse/codewind" org.label-schema.vendor="IBM"
 
 ARG BUILDAH_RPM=http://download-ib01.fedoraproject.org/pub/fedora/linux/updates/30/Everything/x86_64/Packages/b/buildah-1.9.0-1.git00eb895.fc30.x86_64.rpm
 

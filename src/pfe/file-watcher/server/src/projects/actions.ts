@@ -280,7 +280,7 @@ const restart = async function(args: IProjectActionParams): Promise<{ operationI
         throw error;
     }
     if (process.env.IN_K8 === "true") {
-        const error = new Error("Restart is not supported for ICP");
+        const error = new Error("Restart is not supported for Kubernetes");
         error.name = "BAD_REQUEST";
         throw error;
     }

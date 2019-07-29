@@ -148,7 +148,7 @@ let getCounterNames = function (mcAPIData, metricType) {
 }
 
 /**
- * Formats the data from the Microclimate metrics API into something which can 
+ * Formats the data from the Codewind metrics API into something which can 
  * be plotted in a chart.  Only selected metrics (metricNames) will be returned
  * @param  mcAPIData the data loaded from the REST service
  * @param  metricType  the type of metric being parsed eg  'memory' or 'cpu' or 'http' etc
@@ -211,7 +211,7 @@ let getPathFromURL = function (url) {
 }
 
 /**
- * Formats the data from the Microclimate metrics API into something which can 
+ * Formats the data from the Codewind metrics API into something which can 
  * be plotted in a chart
  * @param  mcAPIData the data loaded from the REST service
  * @param  scaleFactor data multiplication factor

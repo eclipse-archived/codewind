@@ -92,7 +92,7 @@ class ApplicationContainerLogStream {
       logStream.firstChunk = true;
       logStream.stream = stream;
       stream.on('data', (chunk) => {
-        // if on ICP, ignore logs about rpc error no such container
+        // if on Kubernetes, ignore logs about rpc error no such container
         // these are issued when the project changes as the pods change
         const errorString = 'rpc error: code = Unknown desc = Error: No such container:'
         const chunkString = chunk.toString('utf8')

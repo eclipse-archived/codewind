@@ -790,7 +790,7 @@ export async function hasDebugPortChanged(projectInfo: ProjectInfo): Promise<boo
 
     const containerName = await getContainerName(projectInfo);
     if (process.env.IN_K8 === "true") {
-        // do nothing for now, since ICP does not support debug mode
+        // do nothing for now, since Kubernetes does not support debug mode
         return false;
     } else {
         return await dockerutil.hasDebugPortChanged(projectInfo, containerName);
@@ -1367,7 +1367,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         const dirList = await utils.asyncReadDir(defaultChartLocation);
         let chartDirCounter = 0;
         for (const chartDir of dirList) {
-            // Sometimes when we are pushing images to ICP, .DS_Store files also get copied. Skip them...
+            // Sometimes when we are pushing images to Kubernetes, .DS_Store files also get copied. Skip them...
             if (chartDir === ".DS_Store") {
                 continue;
             }
@@ -1398,7 +1398,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         try {
             // Render the chart template
             const microclimateReleaseName: string = process.env.MICROCLIMATE_RELEASE_NAME;
-            await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["template", defaultChartLocation, "--name", buildInfo.containerName, "--values=/file-watcher/scripts/override-values-icp.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + buildInfo.containerName, "--output-dir=" + chartParentFolder], {});
+            await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["template", defaultChartLocation, "--name", buildInfo.containerName, "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + buildInfo.containerName, "--output-dir=" + chartParentFolder], {});
 
             // Find the locations of the deployment and service file
             const deploymentFile = (await processManager.spawnDetachedAsync(buildInfo.projectID, "bash", ["/file-watcher/scripts/kubeScripts/find-kube-resource.sh", defaultChartLocation, "Deployment"], {})).stdout;
@@ -1819,8 +1819,8 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
             logger.logProjectInfo("No containerInfo", projectID, projectName);
         }
 
-        // stream the app container logs - ICP
-        logger.logProjectInfo("Streaming application logs on ICP for " + projectInfo.projectID, projectInfo.projectID);
+        // stream the app container logs - Kubernetes
+        logger.logProjectInfo("Streaming application logs on Kubernetes for " + projectInfo.projectID, projectInfo.projectID);
         await processManager.spawnDetachedAsync(projectID, "/file-watcher/scripts/dockerScripts/docker-app-log.sh", [appLog, operation.containerName,
             process.env.IN_K8, projectID], {});
 
@@ -1847,7 +1847,7 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
     }
 
     logger.logProjectInfo("Container build and helm install stage complete", projectID, projectName);
-    // END: ICP K8S environment
+    // END: Kubernetes environment
 }
 
 
