@@ -18,7 +18,7 @@ import * as pfe_configs from "../configs/pfe.config";
 
 const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + pfe_configs.pfe.PORT;
 
-const mcWorkspace = app_configs.microclimateWorkspaceDir;
+const mcWorkspace = app_configs.codewindWorkspaceDir;
 
 const fixtures = app_configs.fixturesDir;
 
@@ -74,18 +74,19 @@ export function createFWDataDir(): any {
 
 export function cleanUpLogsDir(): any {
     const regex = new RegExp(/microclimatetest*/g);
-    fs.readdirSync(app_configs.microclimateWorkspaceLogsDir)
+    fs.readdirSync(app_configs.codewindWorkspaceLogsDir)
         .filter(folder => regex.test(folder))
         .map((folder) => {
-            const folderPath = path.join(app_configs.microclimateWorkspaceLogsDir, folder);
+            const folderPath = path.join(app_configs.codewindWorkspaceLogsDir, folder);
             fs.rmdirSync(folderPath);
         });
 }
 
 export function setTestEnvVariables(): void {
     process.env.CW_LOCALES_DIR = app_configs.localesDir;
-    process.env.CW_WORKSPACE = app_configs.microclimateWorkspaceDir;
-    process.env.CW_LOGS_DIR = app_configs.microclimateWorkspaceLogsDir;
+    process.env.CW_WORKSPACE = app_configs.codewindWorkspaceDir;
+    process.env.CW_LOGS_DIR = app_configs.codewindWorkspaceLogsDir;
     process.env.CW_FWDATA_DIR = app_configs.fwDataDir;
     process.env.CW_PROJECTDATA_DIR = app_configs.projectDataDir;
+    process.env.IN_K8_REGISTRY = "sakibh";
 }

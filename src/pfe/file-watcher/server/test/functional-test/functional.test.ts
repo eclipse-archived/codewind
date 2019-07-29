@@ -48,7 +48,7 @@ describe("Functional Test Suite", () => {
     before("set deployment registry", (done) => {
       const workspace_settings_file_content = { deploymentRegistry: pfe_configs.deploymentRegistry };
       const workspace_settings_file_content_json = JSON.stringify(workspace_settings_file_content);
-      const workspace_settings_file = path.join(app_configs.microclimateWorkspaceDir, ".config", "settings.json");
+      const workspace_settings_file = path.join(app_configs.codewindWorkspaceDir, ".config", "settings.json");
 
       fs.writeFile(workspace_settings_file, workspace_settings_file_content_json, (err) => {
         if (err) done(err);
