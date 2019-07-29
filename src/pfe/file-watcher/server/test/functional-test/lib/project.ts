@@ -8,18 +8,20 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+import Filewatcher from "../../../src/index";
 
-export const pfe = {
-    "PROTOCOL": process.env.PFE_PROTOCOL || process.env.IN_K8 ? "https" : "http",
-    "HOST": process.env.PFE_HOST || "localhost",
-    "PORT": process.env.PFE_PORT || process.env.IN_K8 ? "9191" : "9090",
-};
+const filewatcher = new Filewatcher();
 
-const apis = ["/api/v1/"];
+export interface ProjectCreation {
+  projectID: string;
+  projectType: string;
+  location: string;
+}
 
-export const deploymentRegistry = process.env.IN_K8_REGISTRY || "sakibh"; // need to change the default registry to the fallback of the che registry installed for test
+export async function createProject(projectInfo: ProjectCreation): Promise<any> {
+  return await filewatcher.createProject(projectInfo);
+}
 
-export const pfeAPIs = {
-    "projects": apis + "projects",
-    "registry": apis + "registry"
-};
+export async function deleteProject(projectID: string): Promise<any> {
+  return await filewatcher.deleteProject(projectID);
+}

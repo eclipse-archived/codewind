@@ -13,13 +13,14 @@ import * as fse from "fs-extra";
 import * as request from "request";
 import * as fs from "fs";
 import { promisify } from "util";
+import * as _ from "lodash";
 
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
 
-const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + pfe_configs.pfe.PORT + pfe_configs.pfeAPIs.projects;
+const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + pfe_configs.pfe.PORT;
 
-const mcWorkspace = app_configs.microclimateWorkspaceDir;
+const mcWorkspace = app_configs.codewindWorkspaceDir;
 
 const fixtures = app_configs.fixturesDir;
 
@@ -30,7 +31,13 @@ export const rmdirAsync = promisify(fs.rmdir);
 export const unlinkAsync = promisify(fs.unlink);
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
-    return request.get(pfeURL, callback);
+    const pingUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.projects;
+    return request.get(pingUrl, {rejectUnauthorized: false}, callback);
+}
+
+export function getRegistry(callback: request.RequestCallback): request.Request {
+    const registryUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.registry;
+    return request.get(registryUrl, {rejectUnauthorized: false}, callback);
 }
 
 export function cloneProject(projectName: string, parentPath: string, url: string, callback: request.RequestCallback): request.Request {
@@ -75,19 +82,28 @@ export function createFWDataDir(): any {
 
 export function cleanUpLogsDir(): any {
     const regex = new RegExp(/microclimatetest*/g);
+<<<<<<< HEAD
     fse.readdirSync(app_configs.microclimateWorkspaceLogsDir)
         .filter(folder => regex.test(folder))
         .map((folder) => {
             const folderPath = path.join(app_configs.microclimateWorkspaceLogsDir, folder);
             fse.rmdirSync(folderPath);
+=======
+    fs.readdirSync(app_configs.codewindWorkspaceLogsDir)
+        .filter(folder => regex.test(folder))
+        .map((folder) => {
+            const folderPath = path.join(app_configs.codewindWorkspaceLogsDir, folder);
+            fs.rmdirSync(folderPath);
+>>>>>>> 4574ab6... Add socket events to functional test
         });
 }
 
 export function setTestEnvVariables(): void {
     process.env.CW_LOCALES_DIR = app_configs.localesDir;
-    process.env.CW_WORKSPACE = app_configs.microclimateWorkspaceDir;
-    process.env.CW_LOGS_DIR = app_configs.microclimateWorkspaceLogsDir;
+    process.env.CW_WORKSPACE = app_configs.codewindWorkspaceDir;
+    process.env.CW_LOGS_DIR = app_configs.codewindWorkspaceLogsDir;
     process.env.CW_FWDATA_DIR = app_configs.fwDataDir;
     process.env.CW_PROJECTDATA_DIR = app_configs.projectDataDir;
     process.env.CW_WORKSPACESETTINGS_DIR = app_configs.workspaceSettingsDir;
+    process.env.IN_K8_REGISTRY = "sakibh";
 }
