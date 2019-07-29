@@ -138,7 +138,7 @@ async function main() {
   try {
     k8Client = new K8Client({ config: k8config.getInCluster(), version: '1.9' });
     if (k8Client) {
-      log.info('codewind on Kubernetes');
+      log.info('starting codewind on Kubernetes');
       global.codewind.RUNNING_IN_K8S = true;
 
       // get path currently running on
@@ -151,7 +151,7 @@ async function main() {
     }
   } catch (err) {
     // Not in K8s
-    log.info('codewind on Docker');
+    log.error('failed to start codewind on Kubernetes');
     originsWhitelist.push('http://localhost:*');
   }
 
