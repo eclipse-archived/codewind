@@ -1,6 +1,6 @@
 {
   "filewatcherUtil": {
-    "fwNLSInitSuccess": "File-watcher NLS has been initialized successfully"
+    "fwNLSInitSuccess": "Turbine NLS has been initialized successfully"
   },
   "action": {
     "calculateDifference": "Calculating difference"
