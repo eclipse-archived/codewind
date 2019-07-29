@@ -14,15 +14,18 @@ import * as utils from "./lib/utils";
 // set all the test environmental variables
 utils.setTestEnvVariables();
 import * as app_configs from "./configs/app.config";
-import * as git_configs from "./configs/github.config";
 import { localeTestSuite } from "./tests/locale.test";
 import { createTestSuite } from "./tests/create.test";
+import { deleteTestSuite } from "./tests/delete.test";
 
-import { ProjectCreation } from "./lib/project-creation";
+import { ProjectCreation } from "./lib/project";
+import { SocketIO } from "./lib/socket-io";
 
 const projectTypes = app_configs.projectTypes;
 const dockerProjects = app_configs.supportedDockerProjects;
 const projectConfigs = app_configs.projectConfigs;
+
+const socket = new SocketIO();
 
 describe("Functional Test Suite", () => {
   beforeEach("check for pfe to be up", (done) => {
@@ -33,25 +36,8 @@ describe("Functional Test Suite", () => {
     });
   });
 
-  for (const chosenType of projectTypes) {
-    if (chosenType === "docker") {
-      for (const chosenDocker of dockerProjects) {
-        cloneProject(chosenType, chosenDocker);
-      }
-    } else {
-      cloneProject(chosenType);
-    }
-  }
-
-  before("set up test resources", () => {
-    utils.createFWDataDir();
-  });
-
-  after("clean up test resources", () => {
-    utils.cleanWorkspace();
-    utils.removeFWDataDir();
-    // remove logs dir only for now till the delete project test has been added
-    utils.cleanUpLogsDir();
+  before(() => {
+    socket.registerListener("PFE Functional Test Listener");
   });
 
   describe("generic suite", () => {
@@ -79,18 +65,12 @@ describe("Functional Test Suite", () => {
     };
 
     describe(projectType, () => {
-      describe("project creation", () => {
-        createTestSuite(projData);
+      describe("project creation", async () => {
+        createTestSuite(socket, projData);
       });
-    });
-  }
-
-  function cloneProject(projType: string, dockerType?: string): void {
-    const projectType = dockerType ? dockerType : projType;
-    before(`clone ${projectType} project to workspace`, function (done: any): void {
-      this.timeout(10000);
-      console.log(`Cloning project type: ${projectType}`);
-      utils.cloneProject(app_configs.projectPrefix + projectType, app_configs.microclimateWorkspaceDir, git_configs.repoTemplates[projectType], done);
+      describe("project deletion", async () => {
+        deleteTestSuite(socket, projData.projectID);
+      });
     });
   }
 });

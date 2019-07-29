@@ -22,7 +22,7 @@ const mcWorkspace = app_configs.microclimateWorkspaceDir;
 const fixtures = app_configs.fixturesDir;
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
-    return request.get(pfeURL, callback);
+    return request.get(pfeURL, {rejectUnauthorized: false}, callback);
 }
 
 export function cloneProject(projectName: string, parentPath: string, url: string, callback: request.RequestCallback): request.Request {

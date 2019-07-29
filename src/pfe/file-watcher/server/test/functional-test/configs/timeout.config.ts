@@ -8,16 +8,11 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-import Filewatcher from "../../../src/index";
 
- const filewatcher = new Filewatcher();
+import ms from "ms";
 
- export interface ProjectCreation {
-  projectID: string;
-  projectType: string;
-  location: string;
-}
+export const createTestTimeout = ms("10m");
+export const deleteTestTimeout = ms("1m");
 
- export async function createProject(projectInfo: ProjectCreation): Promise<any> {
-  return await filewatcher.createProject(projectInfo);
-}
+export const createEventInterval = ms("10s");
+export const deleteEventInterval = ms("10s");
