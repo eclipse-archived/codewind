@@ -17,6 +17,7 @@ export const microclimateWorkspaceLogsDir =  process.env.CW_LOGS_DIR || path.joi
 export const localesDir = process.env.CW_LOCALES_DIR || path.resolve(__dirname, "..", "..", "..", "src", "utils", "locales") + path.sep;
 export const fwDataDir = process.env.CW_FWDATA_DIR || path.join(process.env.HOME, "fwdata");
 export const projectDataDir = process.env.CW_PROJECTDATA_DIR || path.join(fwDataDir, "projects");
+export const workspaceSettingsDir = process.env.CW_PROJECTDATA_DIR || path.join(microclimateWorkspaceLogsDir, ".config");
 
 export const projectPrefix = "microclimatetest";
 export const projectConfigs = {

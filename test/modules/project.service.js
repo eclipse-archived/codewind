@@ -258,7 +258,7 @@ async function deleteProjectDir(projectName){
 /**
  *
  * @param {String} projectID
- * @param {String} [startMode] see https://pages.github.ibm.com/dev-ex/tempest/#/paths/~1api~1v1~1projects~1{id}~1restart/post for permitted startModes
+ * @param {String} [startMode] "run", "debug", and "debugNoInit" are permitted startModes
  * @param {number} [expectedResStatus] default 202
  * @param {boolean} [awaitSocketConfirmation] false by default, so won't wait for projectStart. Set to true to make it wait until the project is starting
  */
