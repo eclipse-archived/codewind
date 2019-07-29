@@ -39,4 +39,8 @@ export class SocketIO {
     getAllEvents(): Array<PFEEvent> {
         return this.allEvents;
     }
+
+    clearEvents(): void {
+        this.allEvents = [];
+    }
 }

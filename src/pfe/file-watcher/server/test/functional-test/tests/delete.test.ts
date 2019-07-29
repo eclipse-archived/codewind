@@ -17,6 +17,10 @@ import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
 
 export function deleteTestSuite(socket: SocketIO, projectID: string): void {
+    after("clear socket events for delete test", () => {
+        socket.clearEvents();
+    });
+
     it("delete a project with missing id", async () => {
         const invalidId: any = undefined;
         const info: any = await deleteProject(invalidId);

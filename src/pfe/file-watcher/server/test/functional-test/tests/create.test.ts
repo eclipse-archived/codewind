@@ -19,6 +19,10 @@ import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
 
 export function createTestSuite(socket: SocketIO, projData: ProjectCreation): void {
+    after("clear socket events for create test", () => {
+        socket.clearEvents();
+    });
+
     it("create a project without projectID", async () => {
         const invalidData = _.cloneDeep(projData);
         delete invalidData.projectID;
