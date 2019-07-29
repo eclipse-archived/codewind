@@ -52,7 +52,7 @@ export function localeTestModule(): void {
             },
             "combo3": {
                 "key": "filewatcherUtil.fwNLSInitSuccess",
-                "result": "File-watcher NLS has been initialized successfully"
+                "result": "Turbine NLS has been initialized successfully"
             },
         };
 
