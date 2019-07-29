@@ -37,7 +37,7 @@ const LogLevel = {
     trace: "trace"
 };
 
-const logPath = process.env.NODE_ENV === "test" ? process.cwd() : "/codewind-workspace/" + ".logs";
+const logPath = constants.projectConstants.projectsLogDir;
 const turbineLogPath = path.join(logPath, GENERAL_LOG_FILE_NAME);
 
 const contextName = "context";
