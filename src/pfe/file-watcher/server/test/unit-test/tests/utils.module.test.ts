@@ -255,7 +255,7 @@ export function utilsTestModule(): void {
         const filePath = path.resolve(parentfolderpath, testFile);
         const destFilePath = path.resolve(childfolderpath, testFile);
 
-        before("create test directoreis with some files", async () => {
+        before("create test directories with some files", async () => {
             if (!(await existsAsync(parentfolderpath))) {
                 await mkdirAsync(parentfolderpath);
             }
