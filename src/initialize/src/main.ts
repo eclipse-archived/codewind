@@ -42,7 +42,9 @@ export async function initializeProject(projectName: string, projectDirectory: s
   const projectInitializer = new ProjectInitializer(projectName, projectDirectory);
 
   try {
-    if (isGitCloneRequired(projectName, gitRepository)) {
+    if (gitRepository.endsWith("tar.gz")) {
+      initializeResult = await projectInitializer.initializeProjectFromTar(gitRepository);
+    } else if (isGitCloneRequired(projectName, gitRepository)) {
       initializeResult = await projectInitializer.initializeProjectFromGit(gitRepository, gitBranch);
     } else {
       initializeResult = await projectInitializer.initializeExistingProject();
