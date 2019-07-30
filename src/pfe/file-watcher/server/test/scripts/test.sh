@@ -50,11 +50,11 @@ function setup {
     declare -A PROJECT_URLS
     PROJECT_URLS["codewindtestpython"]="https://github.com/microclimate-dev2ops/SVTPythonTemplate"
     PROJECT_URLS["codewindtestgo"]="https://github.com/microclimate-dev2ops/microclimateGoTemplate"
-    # PROJECT_URLS["codewindtestlagom"]="https://github.com/microclimate-dev2ops/lagomJavaTemplate"
-    # PROJECT_URLS["testspring"]="https://github.com/microclimate-dev2ops/springJavaTemplate"
-    # PROJECT_URLS["testmicroprofile"]="https://github.com/microclimate-dev2ops/javaMicroProfileTemplate"
-    # PROJECT_URLS["testnodejs"]="https://github.com/microclimate-dev2ops/nodeExpressTemplate.git"
-    # PROJECT_URLS["testswift"]="https://github.com/microclimate-dev2ops/swiftTemplate"
+    PROJECT_URLS["codewindtestlagom"]="https://github.com/microclimate-dev2ops/lagomJavaTemplate"
+    PROJECT_URLS["testspring"]="https://github.com/microclimate-dev2ops/springJavaTemplate"
+    PROJECT_URLS["testmicroprofile"]="https://github.com/microclimate-dev2ops/javaMicroProfileTemplate"
+    PROJECT_URLS["testnodejs"]="https://github.com/microclimate-dev2ops/nodeExpressTemplate.git"
+    PROJECT_URLS["testswift"]="https://github.com/microclimate-dev2ops/swiftTemplate"
     for PROJECT_NAME in ${!PROJECT_URLS[@]}; do
         clone $PROJECT_NAME $CW_DIR/codewind-workspace ${PROJECT_URLS[$PROJECT_NAME]}
     done
