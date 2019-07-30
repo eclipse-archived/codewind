@@ -27,31 +27,9 @@ printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
 
 # Run eslint
 echo $PATH
-export CURRENTDIR=$PWD
 
-cd ~
-mkdir -p .local/bin
-mkdir -p .local/node
-cd .local/node
-echo before curl
-curl -O http://nodejs.org/dist/v10.9.0/node-v10.9.0-linux-x64.tar.gz
-tar -xzf node-v10.9.0-linux-x64.tar.gz
-ln -s node-v10.9.0-linux-x64 latest
-echo tobes 2
-cd ../bin
-echo tobes 3
-echo $PWD
-ls -al ../node/latest/bin
-
-ln -s ../node/latest/bin/node
-echo tobes 4
-ln -s ../node/latest/bin/npm
-./npm -v
-echo tobes 5
-echo 'export PATH=$HOME/.local/bin:$PATH'
-echo $PATH
-cd $CURRENTDIR
-
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+nvm i 10
 
 cd src/pfe/portal
 npm install
