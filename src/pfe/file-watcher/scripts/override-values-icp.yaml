@@ -1,4 +1,0 @@
-image:
-  tag: latest
-  pullPolicy: Always
-  pullSecret: microclimate-registry-secret
