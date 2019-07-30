@@ -29,8 +29,8 @@ function setup {
     if [[ -z $TEST_BRANCH ]]; then
         TEST_BRANCH="master"
     fi
-    git clone $CODEWIND_REPO -b $TEST_BRANCH
-    && ./$CW_DIR/run.sh
+    git clone $CODEWIND_REPO -b $TEST_BRANCH \
+    && $CW_DIR/run.sh
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}Setup is failed. ${RESET}\n"
@@ -43,7 +43,7 @@ function setup {
 # 2 Remove Codewind and Codewind app images
 # 3 Remove Codewind repository
 function cleanup {
-    ./$CW_DIR/stop.sh
+    $CW_DIR/stop.sh \
     && rm -rf $CW_DIR
 
     if [[ $? -ne 0 ]]; then
