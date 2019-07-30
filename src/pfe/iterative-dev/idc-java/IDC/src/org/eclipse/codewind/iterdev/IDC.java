@@ -305,7 +305,7 @@ public class IDC {
 			}
 			
 			// Determine if the user has modified any *.yaml files in the chart subdirectory 
-			// and trigger container build as necessary for ICP scenarios
+			// and trigger container build as necessary for Kubernetes scenarios
 			{
 				if ( context.isK8s() && new File(appDir, "chart").exists() ) {
 					String chartDir = appDir.getAbsolutePath() + "/chart";

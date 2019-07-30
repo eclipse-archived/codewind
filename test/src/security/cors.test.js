@@ -38,7 +38,7 @@ const nonWhitelistedURL = 'naughtywebsite.com';
  */
 describe('CORS Security Vulnerability', () => {
 
-    // in ICP a 404 is returned by ICP before our code is even hit.
+    // On Kubernetes a 404 is returned before our code is even hit.
     const expectedRejectCode = USING_K8S ? 404 : 403;
 
     it('rejects requests from non-whitelisted URLs', () => {

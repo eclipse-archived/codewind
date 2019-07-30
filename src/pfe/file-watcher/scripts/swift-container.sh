@@ -55,7 +55,7 @@ set -o pipefail
 
 function create() {
 	# Fix to stop file-watcher from attempting the rebuild procedure
-	STOP_WATCHING_CHECK="$ROOT/microclimate-stop-watching-flag";
+	STOP_WATCHING_CHECK="$ROOT/codewind-stop-watching-flag";
 	echo $STOP_WATCHING_CHECK;
 	if [ -f "$STOP_WATCHING_CHECK" ]; then
 		echo "Stop watching flag found. Doing nothing.";
@@ -138,7 +138,7 @@ function deployK8s() {
 	# Render the template yamls for the chart
 	helm template $tmpChart \
 		--name $project \
-		--values=/file-watcher/scripts/override-values-icp.yaml \
+		--values=/file-watcher/scripts/override-values.yaml \
 		--set image.repository=$DEPLOYMENT_REGISTRY/$project \
 		--output-dir=$parentDir
 

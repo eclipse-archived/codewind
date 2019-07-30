@@ -568,19 +568,28 @@ module.exports = class User {
     let isDeploymentRegistrySet = false;
     log.info(`Checking PFE & workspace settings deployment registry`);
 
-    if (await fs.pathExists(workspaceSettingsFile)) {
-      try {
+    try {
+      if (await fs.pathExists(workspaceSettingsFile)) {
         contents = await fs.readJson(workspaceSettingsFile);
         log.debug(`Workspace settings contents: ` + JSON.stringify(contents));
-      } catch (err) {
-        log.error("Error reading file " + workspaceSettingsFile);
-        log.error(err);
-        const workspaceSettings = {
-          statusCode: 200,
-          deploymentRegistry: false
-        }
-        return workspaceSettings;
+      } else {
+        log.debug("Settings file " + workspaceSettingsFile + " does not exist");
+        // Due to network PV issues, sometimes the file does not get detected in the Codewind container
+        // Reading the dir forces the settings file to be available to the Codewind container
+        let files = await fs.readdir(this.directories["config"]);
+        log.debug(this.directories["config"] + " file listing: ");
+        files.forEach(function (file) {
+          log.debug(file);
+        });
       }
+    } catch (err) {
+      log.error("Error reading file " + workspaceSettingsFile);
+      log.error(err);
+      const workspaceSettings = {
+        statusCode: 500,
+        deploymentRegistry: false
+      }
+      return workspaceSettings;
     }
 
     if (contents && contents.deploymentRegistry && contents.deploymentRegistry.length > 0) {

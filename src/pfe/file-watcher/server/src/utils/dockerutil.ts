@@ -439,7 +439,7 @@ export async function runContainer(buildInfo: BuildRequest, containerName: strin
     }
   }
 
-  const args: string[] = ["run", "--label", "builtBy=microclimate", "--name", containerName, "--network=codewind_network"];
+  const args: string[] = ["run", "--label", "builtBy=codewind", "--name", containerName, "--network=codewind_network"];
   args.push(...portArgs);
   args.push("-dt");
   args.push(containerName);
