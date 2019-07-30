@@ -45,6 +45,7 @@ ls -al
 ln -s ../node/latest/bin/node
 echo tobes 4
 ln -s ../node/latest/bin/npm
+npm -v
 echo tobes 5
 echo 'export PATH=$HOME/.local/bin:$PATH'
 echo $PATH
