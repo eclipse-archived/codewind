@@ -41,6 +41,7 @@ echo tobes 2
 cd ../bin
 echo tobes 3
 echo $PWD
+ls -al
 ln -s ../node/latest/bin/node
 echo tobes 4
 ln -s ../node/latest/bin/npm
