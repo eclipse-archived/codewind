@@ -19,6 +19,8 @@ import * as app_configs from "./configs/app.config";
 import * as pfe_configs from "./configs/pfe.config";
 
 import { localeTestSuite } from "./tests/locale.test";
+import { loggingTestSuite } from "./tests/logging.test";
+
 import { createTestSuite } from "./tests/create.test";
 import { deleteTestSuite } from "./tests/delete.test";
 
@@ -66,8 +68,12 @@ describe("Functional Test Suite", () => {
   }
 
   describe("generic suite", () => {
-    describe("setLocale", () => {
+    describe("locale", () => {
       localeTestSuite();
+    });
+
+    describe("logging", () => {
+      loggingTestSuite();
     });
   });
 
@@ -93,6 +99,7 @@ describe("Functional Test Suite", () => {
       describe("project creation", async () => {
         createTestSuite(socket, projData);
       });
+
       describe("project deletion", async () => {
         deleteTestSuite(socket, projData.projectID);
       });

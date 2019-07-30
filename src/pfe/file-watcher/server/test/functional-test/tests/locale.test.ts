@@ -12,7 +12,7 @@ import { expect } from "chai";
 
 import * as genericLib from "../lib/generic";
 
- export function localeTestSuite(): void {
+export function localeTestSuite(): void {
     const combinations: any = {
         "combo1": {
           "locale": undefined,

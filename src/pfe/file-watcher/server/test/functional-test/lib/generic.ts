@@ -12,6 +12,10 @@ import Filewatcher from "../../../src/index";
 
 const filewatcher = new Filewatcher();
 
- export async function setLocaleAPI(locale: any): Promise<any> {
+export async function setLocaleAPI(locale: any): Promise<any> {
     return await filewatcher.setLocale(locale);
+}
+
+export async function setLoggingLevel(level: string): Promise<void> {
+    return await filewatcher.setLoggingLevel(level);
 }

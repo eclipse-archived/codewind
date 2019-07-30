@@ -8,7 +8,6 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-
 import { expect } from "chai";
 import * as _ from "lodash";
 
