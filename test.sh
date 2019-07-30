@@ -33,14 +33,19 @@ cd ~
 mkdir -p .local/bin
 mkdir -p .local/node
 cd .local/node
+echo before curl
 curl -O http://nodejs.org/dist/v10.9.0/node-v10.9.0-linux-x64.tar.gz
 tar -xzf node-v10.9.0-linux-x64.tar.gz
 ln -s node-v10.9.0-linux-x64 latest
+echo tobes 2
 cd ../bin
+echo tobes 3
 ln -s ../node/latest/bin/node
+echo tobes 4
 ln -s ../node/latest/bin/npm
-echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
-
+echo tobes 5
+echo 'export PATH=$HOME/.local/bin:$PATH'
+echo $PATH
 cd $CURRENTDIR
 
 
