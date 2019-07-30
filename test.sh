@@ -28,8 +28,20 @@ printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
 # Run eslint
 echo $PATH
 
-sudo apt-get install nodejs
-sudo apt-get install npm
+cd ~
+mkdir -p .local/bin
+mkdir -p .local/node
+cd .local/node
+curl -O http://nodejs.org/dist/v10.9.0/node-v10.9.0-linux-x64.tar.gz
+tar -xzf node-v10.9.0-linux-x64.tar.gz
+ln -s node-v10.9.0-linux-x64 latest
+cd ../bin
+ln -s ../node/latest/bin/node
+ln -s ../node/latest/bin/npm
+echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
+
+
+
 
 cd src/pfe/portal
 npm install
