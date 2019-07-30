@@ -40,6 +40,7 @@ ln -s node-v10.9.0-linux-x64 latest
 echo tobes 2
 cd ../bin
 echo tobes 3
+echo $PWD
 ln -s ../node/latest/bin/node
 echo tobes 4
 ln -s ../node/latest/bin/npm
