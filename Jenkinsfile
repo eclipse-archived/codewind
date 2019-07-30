@@ -23,13 +23,15 @@ pipeline {
         }  
 
         stage('Run Codewind test suite') {
-            steps {
-                withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
-                    sh '''#!/usr/bin/env bash
+            withEnv(["PATH=$PATH:~/.local/bin"]){
+                steps {
+                    withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
+                        sh '''#!/usr/bin/env bash
                         echo "Starting tests for Eclipse Codewind ..."
                         export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
                         ./test.sh
-                    '''
+                        '''
+                    }
                 }
             }
         }  
