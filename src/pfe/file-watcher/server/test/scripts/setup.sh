@@ -14,18 +14,18 @@ function usage {
     cat <<EOF
 Usage: [-<option letter> <options value> | -h]
 Options:
-    -t # Test type, currently support local and kube - Mandatory
-    -b # Test branch
-    -f # Function, currently support setup and cleanup - Mandatory
+    -t # Test type, currently support 'local' and 'kube' - Mandatory
+    -b # Test branch - Optional
+    -f # Setup function, currently support 'install' and 'uninstall' - Mandatory
     -h # Display the man page
 EOF
 }
 
-# Setup function does the following things
+# Install function does the following things
 # 1 Download Codewind repository
 # 2 Build Codewind images
 # 3 Run Codewind containers
-function setup {
+function install {
     if [[ -z $TEST_BRANCH ]]; then
         TEST_BRANCH="master"
     fi
@@ -38,11 +38,11 @@ function setup {
     fi
 }
 
-# Cleanup function does the following things
+# Uninstall function does the following things
 # 1 Remove Codewind and Codewind app containers
 # 2 Remove Codewind and Codewind app images
 # 3 Remove Codewind repository
-function cleanup {
+function uninstall {
     $CW_DIR/stop.sh \
     && rm -rf $CW_DIR
 
@@ -57,7 +57,7 @@ while getopts "t:b:h" OPTION; do
         t) 
             TEST_TYPE=$OPTARG
             # Check if test type argument is correct
-            if [[ ($TEST_TYPE != "setup") && ($TEST_TYPE != "kube") ]]; then
+            if [[ ($TEST_TYPE != "local") && ($TEST_TYPE != "kube") ]]; then
                 echo -e "${RED}Test type argument is not correct. ${RESET}\n"
                 usage
                 exit 1
@@ -67,9 +67,9 @@ while getopts "t:b:h" OPTION; do
             TEST_BRANCH=$OPTARG
             ;;
         f)
-            RUN_FUNCTION=$OPTARG
+            SETUP_FUNCTION=$OPTARG
             # Check if function argument is correct
-            if [[ ($RUN_FUNCTION != "setup") && ($RUN_FUNCTION != "cleanup") ]]; then
+            if [[ ($SETUP_FUNCTION != "install") && ($SETUP_FUNCTION != "uninstall") ]]; then
                 echo -e "${RED}Function argument is not correct. ${RESET}\n"
                 usage
                 exit 1
@@ -83,14 +83,14 @@ while getopts "t:b:h" OPTION; do
 done
 
 # Chekc if the mandatory arguments have been set up
-if [[ (-z $TEST_TYPE) || (-z $RUN_FUNCTION) ]]; then
+if [[ (-z $TEST_TYPE) || (-z $SETUP_FUNCTION) ]]; then
     echo -e "${RED}Mandatory arguments are not set up. ${RESET}\n"
     usage
     exit 1
 fi
 
-if [[ $RUN_FUNCTION == "setup" ]];then
-    setup
-elif [[ $RUN_FUNCTION == "cleanup" ]];then
-    cleanup
+if [[ $SETUP_FUNCTION == "install" ]];then
+    install
+elif [[ $SETUP_FUNCTION == "uninstall" ]];then
+    uninstall
 fi

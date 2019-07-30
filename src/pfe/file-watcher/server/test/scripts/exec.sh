@@ -14,9 +14,8 @@ function usage {
     cat <<EOF
 Usage: $me: [-<option letter> <options value> | -h]
 Options:
-    -t # Test type, currently support local and kube - Mandatory
-    -s # Test suite, currently support functional - Mandatory
-    -d # Development run, if set it to y then test results will not be posted to test dashboard, currently support y and n - Optional
+    -t # Test type, currently support 'local' and 'kube' - Mandatory
+    -s # Test suite, currently support 'functional' - Mandatory
     -h # Display the man page
 EOF
 }
@@ -65,14 +64,14 @@ function run {
     docker cp $CODEWIND_CONTAINER_ID:/test_output.xml $TEST_OUTPUT
     echo -e "${BLUE}Test logs available at: $TEST_LOG ${RESET}"
 
-    if [[ -z $DEVELOPMENT_RUN || $DEVELOPMENT_RUN == "n" ]]; then
+    if [[ -z $DEVELOPMENT_RUN ]]; then
         echo -e "${BLUE}Upload test results to test dashboard. ${RESET}"
         $WEBSERVER_FILE $TEST_OUTPUT_DIR > /dev/null
-        curl --header "Content-Type:text/xml" --data-binary @$TEST_OUTPUT --insecure "https://9.37.138.217/postxmlresult/$BUCKET_NAME/test" > /dev/null
+        curl --header "Content-Type:text/xml" --data-binary @$TEST_OUTPUT --insecure "https://$DASHBOARD_IP/postxmlresult/$BUCKET_NAME/test" > /dev/null
     fi
 }
 
-while getopts "t:s:d:h" OPTION; do
+while getopts "t:s:h" OPTION; do
     case "$OPTION" in
         t) 
             TEST_TYPE=$OPTARG
@@ -88,15 +87,6 @@ while getopts "t:s:d:h" OPTION; do
             # Check if test bucket argument is corrent
             if [[ ($TEST_SUITE != "functional") ]]; then
                 echo -e "${RED}Test bucket argument is not correct. ${RESET}\n"
-                usage
-                exit 1
-            fi
-            ;;
-        d)
-            DEVELOPMENT_RUN=$OPTARG
-            # Check if development run argument is corrent
-            if [[ ($DEVELOPMENT_RUN != "y") && ($DEVELOPMENT_RUN != "n") ]]; then
-                echo -e "${RED}Development run argument is not correct. ${RESET}\n"
                 usage
                 exit 1
             fi
