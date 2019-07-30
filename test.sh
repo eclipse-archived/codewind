@@ -27,6 +27,7 @@ printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
 
 # Run eslint
 echo $PATH
+export CURRENTDIR=$PWD
 
 cd ~
 mkdir -p .local/bin
@@ -40,7 +41,7 @@ ln -s ../node/latest/bin/node
 ln -s ../node/latest/bin/npm
 echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
 
-
+cd $CURRENTDIR
 
 
 cd src/pfe/portal
