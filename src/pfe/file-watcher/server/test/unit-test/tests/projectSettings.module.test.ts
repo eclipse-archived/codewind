@@ -29,6 +29,7 @@ export function projectSettingsTestModule(): void {
         let healthCheckStatus = "";
         let mavenProfilesStatus = "";
         let mavenPropertiesStatus = "";
+        let ignoredPathsStatus = "";
 
         socket.registerListener({
             name: "codewindunittest",
@@ -42,6 +43,8 @@ export function projectSettingsTestModule(): void {
                         mavenProfilesStatus = data.status;
                     } else if (data.mavenProperties || (data.error && data.error.includes("mavenProperties"))) {
                         mavenPropertiesStatus = data.status;
+                    } else if (data.ignoredPaths || (data.error && data.error.includes("ignoredPaths"))) {
+                        ignoredPathsStatus = data.status;
                     }
                 }
             }
@@ -283,6 +286,53 @@ export function projectSettingsTestModule(): void {
 
                     await projectSettings.projectSpecificationHandler(projectID, mavenPropertiesSettings);
                     expect(mavenPropertiesStatus).to.equal(expectedResult);
+                });
+            }
+        });
+
+        describe("Combinational testing of reconfigIgnoredFilesForDaemon function", () => {
+
+            const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+            const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+            const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+            before("create test directories", async () => {
+                if (!(await existsAsync(nodeProjectMetadataPath))) {
+                    await mkdirAsync(nodeProjectMetadataPath);
+                    await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+                }
+            });
+
+            after("remove test directories", async () => {
+                if ((await existsAsync(nodeProjectMetadataPath))) {
+                    await unlinkAsync(nodeTestProjectMetadata);
+                    await rmdirAsync(nodeProjectMetadataPath);
+                }
+            });
+
+            const combinations: any = {
+                "combo1": {
+                    "ignoredPathsSettings": {
+                        "ignoredPaths": "Dockerfile"
+                    },
+                    "result": "failed"
+                }, "combo2": {
+                    "ignoredPathsSettings": {
+                        "ignoredPaths": ["Dockerfile"]
+                    },
+                    "result": "success"
+                }
+            };
+
+            for (const combo of Object.keys(combinations)) {
+                const ignoredPathsSettings = combinations[combo]["ignoredPathsSettings"];
+                const expectedResult = combinations[combo]["result"];
+
+                it(combo + " => ignoredPathsSettings: " + JSON.stringify(ignoredPathsSettings), async () => {
+                    const projectID: string = "dummynodeproject";
+
+                    await projectSettings.projectSpecificationHandler(projectID, ignoredPathsSettings);
+                    expect(ignoredPathsStatus).to.equal(expectedResult);
                 });
             }
         });
