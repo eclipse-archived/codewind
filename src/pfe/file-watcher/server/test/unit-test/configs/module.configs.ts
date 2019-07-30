@@ -36,6 +36,11 @@ const localeModule: ModuleExtension = {
     moduleFunc: localeTestModule
 };
 
+const workspaceSettingsModule: ModuleExtension = {
+    moduleName: "workspaceSettings",
+    moduleFunc: workspaceSettingsTestModule
+};
+
 const projectSettingsModule: ModuleExtension = {
     moduleName: "projectSettings",
     moduleFunc: projectSettingsTestModule
