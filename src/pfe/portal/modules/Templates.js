@@ -109,6 +109,18 @@ module.exports = class Templates {
     return this.projectTemplates;
   }
 
+  async getTemplatesOfStyle(projectStyle) {
+    const allTemplates = await this.getTemplateList();
+    let relevantTemplates = allTemplates.filter(template =>
+      template.projectStyle === projectStyle
+    );
+    if (projectStyle === 'codewind') {
+      const templatesWithoutSpecifiedStyle = allTemplates.filter(template => !template.projectStyle);
+      relevantTemplates = [...relevantTemplates, ...templatesWithoutSpecifiedStyle];
+    }
+    return relevantTemplates;
+  }
+
   writeRepositoryList() {
     // Use a callback here so we don't block the response to the request.
     fs.writeJson(this.repositoryFile, this.repositoryList, { spaces: '  ' }, err => {
@@ -151,5 +163,12 @@ module.exports = class Templates {
 
   addProvider(name, provider) {
     this.providers[name] = provider;
+  }
+
+  async getTemplateStyles() {
+    const templates = await this.getTemplateList();
+    const styles = templates.map(template => template.projectStyle || 'codewind');
+    const uniqueStyles = [...new Set(styles)];
+    return uniqueStyles;
   }
 }
