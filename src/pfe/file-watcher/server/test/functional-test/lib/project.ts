@@ -8,6 +8,8 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+import * as projectsController from "../../../src/controllers/projectsController";
+
 import Filewatcher from "../../../src/index";
 
 const filewatcher = new Filewatcher();
@@ -24,4 +26,8 @@ export async function createProject(projectInfo: ProjectCreation): Promise<any> 
 
 export async function deleteProject(projectID: string): Promise<any> {
   return await filewatcher.deleteProject(projectID);
+}
+
+export async function getProjectCapabilities(projectID: string): Promise<projectsController.IGetProjectCapabilitiesSuccess | projectsController.IGetProjectCapabilitiesFailure> {
+  return await filewatcher.getProjectCapabilities(projectID);
 }

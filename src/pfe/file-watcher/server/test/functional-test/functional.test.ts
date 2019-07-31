@@ -21,9 +21,11 @@ import * as pfe_configs from "./configs/pfe.config";
 
 import { localeTestSuite } from "./tests/locale.test";
 import { loggingTestSuite } from "./tests/logging.test";
+import { projectSettingsTestSuite } from "./tests/project-settings.test";
 import { workspaceSettingsTestSuite } from "./tests/workspace-settings.test";
 
 import { createTestSuite } from "./tests/create.test";
+import { projectCapabilityTestSuite } from "./tests/project-capabilities.test";
 import { deleteTestSuite } from "./tests/delete.test";
 
 import { ProjectCreation } from "./lib/project";
@@ -84,6 +86,10 @@ describe("Functional Test Suite", () => {
     describe("workspace settings", () => {
       workspaceSettingsTestSuite(socket);
     });
+
+    describe("project settings", () => {
+      projectSettingsTestSuite();
+    });
   });
 
   for (const chosenType of projectTypes) {
@@ -107,6 +113,10 @@ describe("Functional Test Suite", () => {
     describe(projectType, () => {
       describe("project creation", async () => {
         createTestSuite(socket, projData);
+      });
+
+      describe("project capabaility", async () => {
+        projectCapabilityTestSuite(projType, projData.projectID);
       });
 
       describe("project deletion", async () => {

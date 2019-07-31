@@ -9,6 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 import * as locale from "../../../src/utils/locale";
+import * as projectsController from "../../../src/controllers/projectsController";
 import * as workspaceSettings from "../../../src/utils/workspaceSettings";
 
 import Filewatcher from "../../../src/index";
@@ -33,4 +34,8 @@ export async function testDeploymentRegistry(pushRegistry: string, pullImage?: s
 
 export async function deploymentRegistryStatus(request: workspaceSettings.IDeploymentRegistryStatusParams): Promise<workspaceSettings.IDeploymentRegistryStatusSuccess | workspaceSettings.IDeploymentRegistryStatusFailure> {
     return await filewatcher.deploymentRegistryStatus(request);
+}
+
+export async function getProjectTypes(location?: string): Promise<projectsController.IGetProjectTypesSuccess | projectsController.IGetProjectTypesFailure> {
+    return await filewatcher.getProjectTypes(location);
 }
