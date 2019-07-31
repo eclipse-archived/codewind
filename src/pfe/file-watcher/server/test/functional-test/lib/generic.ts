@@ -25,3 +25,7 @@ export async function setLoggingLevel(level: string): Promise<void> {
 export async function readWorkspaceSettings(): Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure> {
     return await filewatcher.readWorkspaceSettings();
 }
+
+export async function testDeploymentRegistry(pushRegistry: string, pullImage?: string): Promise<workspaceSettings.IDeploymentRegistryTestSuccess | workspaceSettings.IDeploymentRegistryTestFailure> {
+    return await filewatcher.testDeploymentRegistry(pushRegistry, pullImage);
+}

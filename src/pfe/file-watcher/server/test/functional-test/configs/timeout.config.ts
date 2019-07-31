@@ -13,6 +13,7 @@ import ms from "ms";
 
 export const createTestTimeout = ms("10m");
 export const deleteTestTimeout = ms("1m");
+export const testDeploymentRegistryTimeout = ms("20s");
 
 export const createEventInterval = ms("10s");
 export const deleteEventInterval = ms("10s");

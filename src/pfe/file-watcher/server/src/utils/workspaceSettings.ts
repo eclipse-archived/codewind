@@ -172,15 +172,16 @@ export async function getWorkspaceSettingsInfo(): Promise<any> {
 /**
  * @see [[Filewatcher.testDeploymentRegistry]]
  */
-export async function testDeploymentRegistry(deploymentRegistry: string): Promise<IDeploymentRegistryTestSuccess | IDeploymentRegistryTestFailure> {
+export async function testDeploymentRegistry(deploymentRegistry: string, pullImage?: string): Promise<IDeploymentRegistryTestSuccess | IDeploymentRegistryTestFailure> {
 
     let deploymentRegistryTest: boolean = false;
+    pullImage = pullImage || "hello-world";
 
     logger.logInfo("Testing the deployment registry: " + deploymentRegistry);
     try {
-        await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["pull", "hello-world"], {});
+        await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["pull", pullImage], {});
     } catch (err) {
-        const msg = "Codewind was unable to pull the hello-world image during the Deployment Registry test.";
+        const msg = `Codewind was unable to pull the ${pullImage} image during the Deployment Registry test.`;
         logger.logError(msg);
         logger.logError(err);
 
@@ -197,11 +198,11 @@ export async function testDeploymentRegistry(deploymentRegistry: string): Promis
     let dockerPush;
 
     try {
-        dockerPush = (await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["push", "--tls-verify=false", "hello-world", deploymentRegistry + "/hello-world"], {}));
+        dockerPush = (await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["push", "--tls-verify=false", pullImage, `${deploymentRegistry}/${pullImage}`], {}));
         dockerPushEC = dockerPush.exitCode;
         logger.logInfo("testDeploymentRegistry exit code: " + dockerPushEC);
     } catch (err) {
-        const msg = "Codewind was unable to push the hello-world image to the Deployment Registry " + deploymentRegistry +  "/hello-world. Please make sure it is a valid Deployment Registry with the appropriate permissions.";
+        const msg = `Codewind was unable to push the ${pullImage} image to the Deployment Registry ${deploymentRegistry}/${pullImage}. Please make sure it is a valid Deployment Registry with the appropriate permissions.`;
         logger.logError(msg);
         logger.logError(err);
 

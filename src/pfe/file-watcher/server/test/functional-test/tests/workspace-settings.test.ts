@@ -12,23 +12,25 @@ import { expect } from "chai";
 import * as _ from "lodash";
 import path from "path";
 import fs from "fs";
-
-import * as genericLib from "../lib/generic";
-import * as eventConfigs from "../configs/event.config";
-import * as timeoutConfigs from "../configs/timeout.config";
-import * as app_configs from "../configs/app.config";
-import { SocketIO } from "../lib/socket-io";
 import { fail } from "assert";
 
-export function workspaceSettingsTestSuite(socket: SocketIO): void {
-    describe("readWorkspaceSettings function", () => {
-        const settingsPath = path.join(app_configs.codewindWorkspaceDir, ".config", "settings.json");
-        const backup_settingsPath = path.join(app_configs.codewindWorkspaceDir, ".config", "settings_bk.json");
-        const settingsContent = {
-            deploymentRegistry: "someregistry",
-            watcherChunkTimeout: 50000
-        };
+import * as genericLib from "../lib/generic";
+import { SocketIO } from "../lib/socket-io";
 
+import * as app_configs from "../configs/app.config";
+import * as eventConfigs from "../configs/event.config";
+import * as pfe_configs from "../configs/pfe.config";
+import * as timeoutConfigs from "../configs/timeout.config";
+
+export function workspaceSettingsTestSuite(socket: SocketIO): void {
+    const settingsPath = path.join(app_configs.codewindWorkspaceDir, ".config", "settings.json");
+    const backup_settingsPath = path.join(app_configs.codewindWorkspaceDir, ".config", "settings_bk.json");
+    const settingsContent = {
+        deploymentRegistry: "someregistry",
+        watcherChunkTimeout: 50000
+    };
+
+    describe("readWorkspaceSettings function", () => {
         afterEach("delete backup settings file, revert back original file and load the current workspace settings", async () => {
             if (await fs.existsSync(backup_settingsPath)) {
                 await fs.renameSync(backup_settingsPath, settingsPath);
@@ -76,7 +78,6 @@ export function workspaceSettingsTestSuite(socket: SocketIO): void {
                 expect(Object.keys(info.workspaceSettings)).to.deep.equal(Object.keys(settingsContent));
                 expect(info.workspaceSettings.deploymentRegistry).to.equal(settingsContent.deploymentRegistry);
                 expect(info.workspaceSettings.watcherChunkTimeout).to.equal(settingsContent.watcherChunkTimeout);
-                console.log("Done test...");
             });
         });
 
@@ -137,4 +138,54 @@ export function workspaceSettingsTestSuite(socket: SocketIO): void {
             }).timeout(timeoutConfigs.deleteTestTimeout);
         });
     });
+
+    if (process.env.IN_K8) {
+        describe("testDeploymentRegistry function", () => {
+            const invalidPullImage = "someimage";
+
+            it("with invalid push registry", async () => {
+                const info = await genericLib.testDeploymentRegistry(settingsContent.deploymentRegistry);
+                expect(info);
+                expect(info.statusCode);
+                expect(info.statusCode).to.equal(200);
+                expect(info.deploymentRegistryTest);
+                expect(info.deploymentRegistryTest).to.equal(false);
+                expect(info.msg);
+                expect(info.msg).to.equal(`Codewind was unable to push the hello-world image to the Deployment Registry ${settingsContent.deploymentRegistry}/hello-world. Please make sure it is a valid Deployment Registry with the appropriate permissions.`);
+            }).timeout(timeoutConfigs.testDeploymentRegistryTimeout);
+
+            it("with invalid push registry and pull image", async () => {
+                const info = await genericLib.testDeploymentRegistry(settingsContent.deploymentRegistry, invalidPullImage);
+                expect(info);
+                expect(info.statusCode);
+                expect(info.statusCode).to.equal(500);
+                expect(info.deploymentRegistryTest);
+                expect(info.deploymentRegistryTest).to.equal(false);
+                expect(info.msg);
+                expect(info.msg).to.equal(`Codewind was unable to pull the ${invalidPullImage} image during the Deployment Registry test.`);
+            }).timeout(timeoutConfigs.testDeploymentRegistryTimeout);
+
+            it("with valid push registry and invalid pull image", async () => {
+                const info = await genericLib.testDeploymentRegistry(pfe_configs.deploymentRegistry, invalidPullImage);
+                expect(info);
+                expect(info.statusCode);
+                expect(info.statusCode).to.equal(500);
+                expect(info.deploymentRegistryTest);
+                expect(info.deploymentRegistryTest).to.equal(false);
+                expect(info.msg);
+                expect(info.msg).to.equal(`Codewind was unable to pull the ${invalidPullImage} image during the Deployment Registry test.`);
+            }).timeout(timeoutConfigs.testDeploymentRegistryTimeout);
+
+            it("with valid push registry and default pull image", async () => {
+                const info = await genericLib.testDeploymentRegistry(pfe_configs.deploymentRegistry);
+                expect(info);
+                expect(info.statusCode);
+                expect(info.statusCode).to.equal(200);
+                expect(info.deploymentRegistryTest);
+                expect(info.deploymentRegistryTest).to.equal(true);
+                expect(info.msg);
+                expect(info.msg).to.equal(`Codewind projects on Kubernetes will build with the Deployment Registry: ${pfe_configs.deploymentRegistry}`);
+            }).timeout(timeoutConfigs.testDeploymentRegistryTimeout);
+        });
+    }
 }
