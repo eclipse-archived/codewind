@@ -31,29 +31,12 @@ export function projectStatusControllerTestModule(): void {
         expect(actualResult).to.equal(false);
     });
 
-
-
-    it("getAppState of a non-exist project", async() => {
-        const actualResult = await projectStatusController.getAppState(projectID);
-        expect(actualResult).to.equal(projectStatusController.AppState.unknown);
-    });
-
-    it("getBuildState of a non-exist project", async() => {
-        const actualResult = await projectStatusController.getBuildState(projectID);
-        expect(actualResult).to.equal(projectStatusController.BuildState.unknown);
-    });
-
-    it("isBuildRequired of a non-exist project", async() => {
-        const actualResult = await projectStatusController.isBuildRequired(projectID);
-        expect(actualResult).to.equal(false);
-    });
-
     describe("combinational testing of updateProjectStatus function", () => {
-        before("create workspace settings directory with config file", async () => {
+        before("add project to buildStateMap and appStateMap", async () => {
             await projectStatusController.addProject(projectID);
         });
 
-        after("remove the test directory", async () => {
+        after("remove the test project", async () => {
             projectStatusController.deleteProject(projectID);
             const appStateResult = await projectStatusController.getAppState(projectID);
             expect(appStateResult).to.equal(projectStatusController.AppState.unknown);
@@ -155,11 +138,11 @@ export function projectStatusControllerTestModule(): void {
 
 
     describe("combinational testing of buildRequired function", () => {
-        before("create workspace settings directory with config file", async () => {
+        before("add project to buildStateMap and appStateMap", async () => {
             await projectStatusController.addProject(projectID);
         });
 
-        after("remove the test directory", async () => {
+        after("remove the test project", async () => {
             projectStatusController.deleteProject(projectID);
             const appStateResult = await projectStatusController.getAppState(projectID);
             expect(appStateResult).to.equal(projectStatusController.AppState.unknown);
