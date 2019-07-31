@@ -8,6 +8,7 @@ codewind-workspace/
 .DS_Store
 .vscode/tasks.json
 .project
+.logs
 node_modules/
 package-lock.json
 src/performance/webclient/build/
