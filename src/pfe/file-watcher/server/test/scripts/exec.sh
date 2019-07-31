@@ -6,6 +6,7 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
+# Set up variables
 cd ../../../../../
 CW_DIR=$(pwd)
 cd -
