@@ -8,6 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+import mocha from "mocha";
 import { expect } from "chai";
 import fs from "fs";
 import path from "path";
@@ -20,6 +21,7 @@ import * as pfe_configs from "./configs/pfe.config";
 
 import { localeTestSuite } from "./tests/locale.test";
 import { loggingTestSuite } from "./tests/logging.test";
+import { workspaceSettingsTestSuite } from "./tests/workspace-settings.test";
 
 import { createTestSuite } from "./tests/create.test";
 import { deleteTestSuite } from "./tests/delete.test";
@@ -52,16 +54,19 @@ describe("Functional Test Suite", () => {
       const workspace_settings_file_content_json = JSON.stringify(workspace_settings_file_content);
       const workspace_settings_file = path.join(app_configs.codewindWorkspaceDir, ".config", "settings.json");
 
-      fs.writeFile(workspace_settings_file, workspace_settings_file_content_json, (err) => {
+      utils.writeToFile(workspace_settings_file, workspace_settings_file_content_json, (err) => {
         if (err) done(err);
-        utils.getRegistry((err, res, body) => {
+        fs.chown(workspace_settings_file, 1001, 2004, (err) => {
           if (err) done(err);
-          expect(res);
-          expect(body);
-          body = JSON.parse(body);
-          expect(body.statusCode).to.equal(200);
-          expect(body.deploymentRegistry).to.equal(true);
-          done();
+          utils.getRegistry((err, res, body) => {
+            if (err) done(err);
+            expect(res);
+            expect(body);
+            body = JSON.parse(body);
+            expect(body.statusCode).to.equal(200);
+            expect(body.deploymentRegistry).to.equal(true);
+            done();
+          });
         });
       });
     });
@@ -74,6 +79,10 @@ describe("Functional Test Suite", () => {
 
     describe("logging", () => {
       loggingTestSuite();
+    });
+
+    describe("workspace settings", () => {
+      workspaceSettingsTestSuite(socket);
     });
   });
 

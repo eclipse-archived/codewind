@@ -9,13 +9,19 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 import Filewatcher from "../../../src/index";
+import * as workspaceSettings from "../../../src/utils/workspaceSettings";
+import * as locale from "../../../src/utils/locale";
 
 const filewatcher = new Filewatcher();
 
-export async function setLocaleAPI(locale: any): Promise<any> {
+export async function setLocaleAPI(locale: any): Promise<locale.ISetLocaleSuccess | locale.ISetLocaleFailure> {
     return await filewatcher.setLocale(locale);
 }
 
 export async function setLoggingLevel(level: string): Promise<void> {
     return await filewatcher.setLoggingLevel(level);
+}
+
+export async function readWorkspaceSettings(): Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure> {
+    return await filewatcher.readWorkspaceSettings();
 }

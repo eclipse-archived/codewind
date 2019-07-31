@@ -82,19 +82,11 @@ export function createFWDataDir(): any {
 
 export function cleanUpLogsDir(): any {
     const regex = new RegExp(/microclimatetest*/g);
-<<<<<<< HEAD
-    fse.readdirSync(app_configs.microclimateWorkspaceLogsDir)
-        .filter(folder => regex.test(folder))
-        .map((folder) => {
-            const folderPath = path.join(app_configs.microclimateWorkspaceLogsDir, folder);
-            fse.rmdirSync(folderPath);
-=======
-    fs.readdirSync(app_configs.codewindWorkspaceLogsDir)
+    fse.readdirSync(app_configs.codewindWorkspaceLogsDir)
         .filter(folder => regex.test(folder))
         .map((folder) => {
             const folderPath = path.join(app_configs.codewindWorkspaceLogsDir, folder);
-            fs.rmdirSync(folderPath);
->>>>>>> 4574ab6... Add socket events to functional test
+            fse.rmdirSync(folderPath);
         });
 }
 
@@ -106,4 +98,11 @@ export function setTestEnvVariables(): void {
     process.env.CW_PROJECTDATA_DIR = app_configs.projectDataDir;
     process.env.CW_WORKSPACESETTINGS_DIR = app_configs.workspaceSettingsDir;
     process.env.IN_K8_REGISTRY = "sakibh";
+}
+
+export function writeToFile(path: string, content: string, callback: (err: Error, msg: string) => void): void {
+    fs.writeFile(path, content, (err) => {
+        if (err) callback(err, undefined);
+        callback(undefined, `Successfully written content to ${path}`);
+    });
 }

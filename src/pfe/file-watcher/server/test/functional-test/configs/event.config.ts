@@ -11,5 +11,6 @@
 
 export const events = {
     "creation": "projectCreation",
-    "deletion": "projectDeletion"
+    "deletion": "projectDeletion",
+    "deploymentRegistryStatus": "deploymentRegistryStatus"
 };

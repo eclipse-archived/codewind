@@ -48,6 +48,7 @@ export function createTestSuite(socket: SocketIO, projData: ProjectCreation): vo
 
     it("create project", async () => {
         const info: any = await createProject(projData);
+        const targetEvent = eventConfigs.events.creation;
         expect(info).to.exist;
         expect(info.statusCode).to.exist;
         expect(info.statusCode).to.equal(202);
@@ -62,7 +63,7 @@ export function createTestSuite(socket: SocketIO, projData: ProjectCreation): vo
                 const events = socket.getAllEvents();
                 if (events && events.length >= 1) {
                     event =  events.filter((value) => {
-                        if (value.eventName === eventConfigs.events.creation) return value;
+                        if (value.eventName === targetEvent) return value;
                     })[0];
                     if (event) {
                         eventFound = true;
@@ -76,7 +77,7 @@ export function createTestSuite(socket: SocketIO, projData: ProjectCreation): vo
         if (eventFound && event) {
             expect(event);
             expect(event.eventName);
-            expect(event.eventName).to.equal(eventConfigs.events.creation);
+            expect(event.eventName).to.equal(targetEvent);
             expect(event.eventData);
             expect(event.eventData).to.haveOwnProperty("operationId");
             expect(event.eventData).to.haveOwnProperty("projectID");
@@ -98,7 +99,7 @@ export function createTestSuite(socket: SocketIO, projData: ProjectCreation): vo
             expect(event.eventData["logs"]["app"]).to.haveOwnProperty("origin");
             expect(event.eventData["logs"]["app"]).to.haveOwnProperty("files");
         } else {
-            fail("create project test failed");
+            fail(`create project test failed to listen for ${targetEvent}`);
         }
     }).timeout(timeoutConfigs.createTestTimeout);
 }

@@ -44,6 +44,7 @@ export function deleteTestSuite(socket: SocketIO, projectID: string): void {
 
     it("delete project", async () => {
         const info: any = await deleteProject(projectID);
+        const targetEvent = eventConfigs.events.deletion;
         expect(info).to.exist;
         expect(info.statusCode).to.exist;
         expect(info.statusCode).to.equal(202);
@@ -56,7 +57,7 @@ export function deleteTestSuite(socket: SocketIO, projectID: string): void {
                 const events = socket.getAllEvents();
                 if (events && events.length >= 1) {
                     event =  events.filter((value) => {
-                        if (value.eventName === eventConfigs.events.deletion) return value;
+                        if (value.eventName === targetEvent) return value;
                     })[0];
                     if (event) {
                         eventFound = true;
@@ -70,7 +71,7 @@ export function deleteTestSuite(socket: SocketIO, projectID: string): void {
         if (eventFound && event) {
             expect(event);
             expect(event.eventName);
-            expect(event.eventName).to.equal(eventConfigs.events.deletion);
+            expect(event.eventName).to.equal(targetEvent);
             expect(event.eventData);
             expect(event.eventData).to.haveOwnProperty("operationId");
             expect(event.eventData).to.haveOwnProperty("projectID");
@@ -78,7 +79,7 @@ export function deleteTestSuite(socket: SocketIO, projectID: string): void {
             expect(event.eventData).to.haveOwnProperty("status");
             expect(event.eventData["status"]).to.equal("success");
         } else {
-            fail("delete project test failed");
+            fail(`delete project test failed to listen for ${targetEvent}`);
         }
     }).timeout(timeoutConfigs.createTestTimeout);
 }

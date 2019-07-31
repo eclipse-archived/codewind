@@ -16,3 +16,4 @@ export const deleteTestTimeout = ms("1m");
 
 export const createEventInterval = ms("10s");
 export const deleteEventInterval = ms("10s");
+export const deploymentRegistryStatusInterval = ms("5s");
