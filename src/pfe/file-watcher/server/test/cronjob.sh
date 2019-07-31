@@ -74,7 +74,7 @@ fi
 
 rm -rf $CW_DIR \
 && git clone $CODEWIND_REPO -b $TEST_BRANCH \
-&& cd $CW_TEST_DIR
+&& cd $CW_TEST_DIR \
 && ./test.sh -t $TEST_TYPE -s $TEST_SUITE -p $POST_CLEANUP -c $TEST_CONFIGURATION \
 && rm -rf $CW_DIR
 
