@@ -91,6 +91,8 @@ if [[ (-z $TEST_TYPE) || (-z $SETUP_FUNCTION) ]]; then
     exit 1
 fi
 
+cd ~
+
 if [[ $SETUP_FUNCTION == "install" ]];then
     install
 elif [[ $SETUP_FUNCTION == "uninstall" ]];then
