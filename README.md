@@ -3,16 +3,13 @@
 [![License](https://img.shields.io/badge/License-EPL%202.0-red.svg?label=license&logo=eclipse)](https://www.eclipse.org/legal/epl-2.0/)
 [![Chat](https://img.shields.io/static/v1.svg?label=chat&message=mattermost&color=145dbf)](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind)
 
-Tools to help building high-quality cloud-native applications for Kubernetes, regardless of which IDE or language you use.
+Build high-quality cloud-native applications for Kubernetes, regardless of your IDE or language.
 
-The goal of Eclipse Codewind is to provide tools to help building high-quality cloud-native applications for Kubernetes, regardless of which IDE or language you use. This includes the capability to rapidly create an application from template or sample, support for launching, updating, testing, and debugging in Docker containers on the desktop, and support for the same directly on Kubernetes regardless of where the source is. The tools will also provide help to move an existing application to Docker and Kuberenetes, and validation to ensure that applications follow best practises.
-
-To support this, Codewind will include plugins to the Eclipse platform and Eclipse Che, and a Visual Studio Code extension. A common library will be used by all of these tools to provide the function (e.g. creating, testing, and deploying applications) in a consistent way across the IDEs.
-
+Codewind enables you to create applications from a template or sample and includes support for launching, updating, testing, and debugging in  Docker containers on the desktop. Codewind also supports these features on Kubernetes. You can use Codewind to move existing applications to Docker and Kuberenetes. Codewind provides validation to ensure that applications follow best practices.
 
 ## Getting started
 
-You can start by installing Codewind using the VS Code extension, Eclipse plugin, or Eclipse Che plugin. Details of the installation instructions:
+Use the following instructions to install Codewind with your choice of editor:
 1. [VS Code extension](https://github.com/eclipse/codewind-vscode)
 2. [Eclipse plugin](https://github.com/eclipse/codewind-eclipse)
 3. [Eclipse Che plugin](https://github.com/eclipse/codewind-che-plugin)
