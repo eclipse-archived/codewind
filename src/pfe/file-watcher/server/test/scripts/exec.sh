@@ -12,7 +12,7 @@ WEBSERVER_FILE="$CW_DIR/src/pfe/iterative-dev/test/microclimate-test/scripts/web
 function usage {
     me=$(basename $0)
     cat <<EOF
-Usage: $me: [-<option letter> <options value> | -h]
+Usage: $me: [-<option letter> <option value> | -h]
 Options:
     -t # Test type, currently support 'local' and 'kube' - Mandatory
     -s # Test suite, currently support 'functional' - Mandatory
@@ -36,7 +36,6 @@ function setup {
     CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
 
     mkdir -p $TEST_OUTPUT_DIR \
-    && docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; npm install" \
     && docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; npm install --only=dev" \
     && docker cp $TEST_DIR/test $CODEWIND_CONTAINER_ID:$TEST_DIR_CONTAINER
 
@@ -50,10 +49,10 @@ function setup {
     PROJECT_URLS["codewindtestpython"]="https://github.com/microclimate-dev2ops/SVTPythonTemplate"
     PROJECT_URLS["codewindtestgo"]="https://github.com/microclimate-dev2ops/microclimateGoTemplate"
     PROJECT_URLS["codewindtestlagom"]="https://github.com/microclimate-dev2ops/lagomJavaTemplate"
-    PROJECT_URLS["testspring"]="https://github.com/microclimate-dev2ops/springJavaTemplate"
-    PROJECT_URLS["testmicroprofile"]="https://github.com/microclimate-dev2ops/javaMicroProfileTemplate"
-    PROJECT_URLS["testnodejs"]="https://github.com/microclimate-dev2ops/nodeExpressTemplate.git"
-    PROJECT_URLS["testswift"]="https://github.com/microclimate-dev2ops/swiftTemplate"
+    PROJECT_URLS["codewindtestspring"]="https://github.com/microclimate-dev2ops/springJavaTemplate"
+    PROJECT_URLS["codewindtestmicroprofile"]="https://github.com/microclimate-dev2ops/javaMicroProfileTemplate"
+    PROJECT_URLS["codewindtestnodejs"]="https://github.com/microclimate-dev2ops/nodeExpressTemplate.git"
+    PROJECT_URLS["codewindtestswift"]="https://github.com/microclimate-dev2ops/swiftTemplate"
     for PROJECT_NAME in ${!PROJECT_URLS[@]}; do
         clone $PROJECT_NAME $CW_DIR/codewind-workspace ${PROJECT_URLS[$PROJECT_NAME]}
     done
@@ -64,8 +63,13 @@ function run {
     docker cp $CODEWIND_CONTAINER_ID:/test_output.xml $TEST_OUTPUT
     echo -e "${BLUE}Test logs available at: $TEST_LOG ${RESET}"
 
-    if [[ -z $DEVELOPMENT_RUN ]]; then
-        echo -e "${BLUE}Upload test results to test dashboard. ${RESET}"
+    # Cronjob machines need to set up CRONJOB_RUN=y to push test restuls to dashboard
+    if [[ (-n $CRONJOB_RUN) ]]; then
+        echo -e "${BLUE}Upload test results to test dashboard. ${RESET}\n"
+        if [[ (-z $DASHBOARD_IP) ]]; then
+            echo -e "${RED}Dashboard IP is not set up. ${RESET}\n"
+            exit 1
+        fi
         $WEBSERVER_FILE $TEST_OUTPUT_DIR > /dev/null
         curl --header "Content-Type:text/xml" --data-binary @$TEST_OUTPUT --insecure "https://$DASHBOARD_IP/postxmlresult/$BUCKET_NAME/test" > /dev/null
     fi
