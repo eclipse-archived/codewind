@@ -112,56 +112,6 @@ setInterval(pingApplications, pingInterval);
 setInterval(pingInTransitApplications, inTransitPingInterval);
 
 /**
- * @function
- * @description Provide the latest status for a project and status type.
- *
- * @param type <Required | String> - The status type. Supported types include: 'appState' and 'buildState'.
- * @param projectID <Required | String> - An alphanumeric identifier for a project.
- *
- * @returns Promise<{data: {}}>
- */
-export async function getProjectStatus(type: string, projectID: string): Promise<{data: {}}> {
-
-    const response: any = {};
-
-    if (type == STATE_TYPES.appState) {
-        const appState: ProjectState = appStateMap.get(projectID);
-        const data: any = {
-            appStatus: appState.state
-        };
-        if (appState.hasMsg()) {
-           data.appErrorStatus = await locale.getTranslation(appState.msg);
-        }
-        if (appState.detailedAppStatus) {
-           data.detailedAppStatus = appState.detailedAppStatus;
-        }
-        response.data = data;
-        return response;
-    } else if (type == STATE_TYPES.buildState) {
-        const buildState: ProjectState = buildStateMap.get(projectID);
-        let buildRequired = false;
-        if (buildRequiredMap.get(projectID)) {
-            buildRequired = buildRequiredMap.get(projectID);
-        }
-        const data: any = {
-            buildStatus: buildState.state,
-            buildRequired: buildRequired
-        };
-        if (buildState.hasMsg()) {
-            data.detailedBuildStatus = await locale.getTranslation(buildState.msg);
-        }
-        if (buildState.lastbuild) {
-            data.lastbuild = buildState.lastbuild;
-        }
-        response.data = data;
-        return response;
-    } else {
-        logger.logProjectError("Unrecognized status type: " + type, projectID);
-        throw new Error("Unrecognized type: " + type);
-    }
-}
-
-/**
  * @see [[Filewatcher.updateStatus]]
  */
 export async function updateStatus(req: IUpdateStatusParams): Promise<IUpdateStatusSuccess | IUpdateStatusFailure> {
