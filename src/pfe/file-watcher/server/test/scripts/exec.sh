@@ -6,7 +6,9 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
-CW_DIR=~/codewind
+cd ../../../../../
+CW_DIR=$(pwd)
+cd -
 WEBSERVER_FILE="$CW_DIR/src/pfe/iterative-dev/test/microclimate-test/scripts/webserver.sh"
 
 function usage {
