@@ -6,6 +6,11 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
+# Set up variables
+cd ../../../../../
+CW_DIR=$(pwd)
+cd -
+
 # Set up default options value for test
 TEST_BRANCH="master"
 
@@ -24,7 +29,7 @@ EOF
 # 1 Build Codewind images
 # 2 Run Codewind containers
 function install {
-    ../../../../../run.sh
+    $CW_DIR/run.sh
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}Setup is failed. ${RESET}\n"
@@ -36,7 +41,7 @@ function install {
 # 1 Remove Codewind and Codewind app containers
 # 2 Remove Codewind and Codewind app images
 function uninstall {
-    ../../../../../stop.sh
+    $CW_DIR/stop.sh
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}Cleanup is failed. ${RESET}\n"
