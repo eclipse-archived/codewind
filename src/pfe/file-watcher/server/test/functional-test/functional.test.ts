@@ -19,14 +19,8 @@ utils.setTestEnvVariables();
 import * as app_configs from "./configs/app.config";
 import * as pfe_configs from "./configs/pfe.config";
 
-import { localeTestSuite } from "./tests/locale.test";
-import { loggingTestSuite } from "./tests/logging.test";
-import { projectSettingsTestSuite } from "./tests/project-settings.test";
-import { workspaceSettingsTestSuite } from "./tests/workspace-settings.test";
-
-import { createTestSuite } from "./tests/create.test";
-import { projectCapabilityTestSuite } from "./tests/project-capabilities.test";
-import { deleteTestSuite } from "./tests/delete.test";
+import GenericTestSuite from "./suites/generic/index";
+import ProjectTestSuite from "./suites/project/index";
 
 import { ProjectCreation } from "./lib/project";
 import { SocketIO } from "./lib/socket-io";
@@ -36,6 +30,8 @@ const dockerProjects = app_configs.supportedDockerProjects;
 const projectConfigs = app_configs.projectConfigs;
 
 const socket = new SocketIO();
+const genericSuite = new GenericTestSuite(socket);
+const projectSuite = new ProjectTestSuite(socket);
 
 describe("Functional Test Suite", () => {
   beforeEach("check for pfe to be up", (done) => {
@@ -74,54 +70,28 @@ describe("Functional Test Suite", () => {
     });
   }
 
-  describe("generic suite", () => {
-    describe("locale", () => {
-      localeTestSuite();
-    });
+  runAllTests();
 
-    describe("logging", () => {
-      loggingTestSuite();
-    });
-
-    describe("workspace settings", () => {
-      workspaceSettingsTestSuite(socket);
-    });
-
-    describe("project settings", () => {
-      projectSettingsTestSuite();
-    });
-  });
-
-  for (const chosenType of projectTypes) {
-    if (chosenType === "docker") {
-      for (const chosenDocker of dockerProjects) {
-        runTest(chosenType, chosenDocker);
+  function runAllTests(): void {
+    genericSuite.runTest();
+    for (const chosenType of projectTypes) {
+      if (chosenType === "docker") {
+        for (const chosenDocker of dockerProjects) {
+          runProjectSpecificTest(chosenType, chosenDocker);
+        }
+      } else {
+        runProjectSpecificTest(chosenType);
       }
-    } else {
-      runTest(chosenType);
     }
   }
 
-  function runTest(projType: string, dockerType?: string): void {
+  function runProjectSpecificTest(projType: string, dockerType?: string): void {
     const projectType = dockerType ? dockerType : projType;
     const projData: ProjectCreation = {
       projectID: projectType + projectConfigs.appSuffix,
       projectType: projType,
       location: projectConfigs.appDirectory + projectType
     };
-
-    describe(projectType, () => {
-      describe("project creation", async () => {
-        createTestSuite(socket, projData);
-      });
-
-      describe("project capabaility", async () => {
-        projectCapabilityTestSuite(projType, projData.projectID);
-      });
-
-      describe("project deletion", async () => {
-        deleteTestSuite(socket, projData.projectID);
-      });
-    });
+    projectSuite.runTest(projData);
   }
 });
