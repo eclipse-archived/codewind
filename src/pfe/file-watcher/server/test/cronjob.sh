@@ -10,6 +10,7 @@ RESET='\033[0m'
 CW_DIR=~/codewind
 CW_TEST_DIR=$CW_DIR/src/pfe/file-watcher/server/test
 CODEWIND_REPO=git@github.com:eclipse/codewind.git
+TEST_BRANCH="master"
 
 # Make all options mandatory to ensure cronjob admin knows what exectly each cronjob does, it's for debug purpose
 function usage {
