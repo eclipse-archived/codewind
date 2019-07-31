@@ -6,31 +6,25 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
-CW_DIR=~/codewind
-CODEWIND_REPO=git@github.com:eclipse/codewind.git
+# Set up default options value for test
+TEST_BRANCH="master"
 
 function usage {
     me=$(basename $0)
     cat <<EOF
-Usage: [-<option letter> <options value> | -h]
+Usage: [-<option letter> <option value> | -h]
 Options:
     -t # Test type, currently support 'local' and 'kube' - Mandatory
-    -b # Test branch - Optional
     -f # Setup function, currently support 'install' and 'uninstall' - Mandatory
     -h # Display the man page
 EOF
 }
 
 # Install function does the following things
-# 1 Download Codewind repository
-# 2 Build Codewind images
-# 3 Run Codewind containers
+# 1 Build Codewind images
+# 2 Run Codewind containers
 function install {
-    if [[ -z $TEST_BRANCH ]]; then
-        TEST_BRANCH="master"
-    fi
-    git clone $CODEWIND_REPO -b $TEST_BRANCH \
-    && $CW_DIR/run.sh
+    ../../../../../run.sh
 
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}Setup is failed. ${RESET}\n"
@@ -41,16 +35,12 @@ function install {
 # Uninstall function does the following things
 # 1 Remove Codewind and Codewind app containers
 # 2 Remove Codewind and Codewind app images
-# 3 Remove Codewind repository
 function uninstall {
-    if [[ -d $CW_DIR ]]; then
-        $CW_DIR/stop.sh \
-        && rm -rf $CW_DIR
+    ../../../../../stop.sh
 
-        if [[ $? -ne 0 ]]; then
-            echo -e "${RED}Cleanup is failed. ${RESET}\n"
-            exit 1
-        fi
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}Cleanup is failed. ${RESET}\n"
+        exit 1
     fi
 }
 
@@ -64,9 +54,6 @@ while getopts "t:b:h" OPTION; do
                 usage
                 exit 1
             fi
-            ;;
-        b) 
-            TEST_BRANCH=$OPTARG
             ;;
         f)
             SETUP_FUNCTION=$OPTARG
@@ -90,8 +77,6 @@ if [[ (-z $TEST_TYPE) || (-z $SETUP_FUNCTION) ]]; then
     usage
     exit 1
 fi
-
-cd ~
 
 if [[ $SETUP_FUNCTION == "install" ]];then
     install

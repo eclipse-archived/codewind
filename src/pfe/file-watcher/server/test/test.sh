@@ -6,70 +6,25 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
+# Set up default options value for test
+TEST_TYPE="local"
+TEST_SUITE="functional"
+POST_CLEANUP="n"
+
 function usage {
     me=$(basename $0)
     cat <<EOF
-Usage: $me: [-<option letter> <options value> | -h]
+Usage: $me: [-<option letter> <option value> | -h]
 Options:
-    -t # Test type, currently support 'local' and 'kube' - Mandatory
-    -b # Test branch - Mandatory
-    -s # Test suite - Mandatory
-    -i # Ignore post cleanup, ignore post test automation cleanup for debug purpose, currently support 'y' and 'n' - Optional
+    -t # Test type, currently support 'local' and 'kube' - Optional
+    -s # Test suite - Optional
+    -p # Post cleanup, post test automation cleanup for cronjob, currently support 'y' and 'n' - Optional
     -c # Test configuration - currently support 'setup' for install and uninstall PFE container - Optional
     -h # Display the man page
 EOF
 }
 
-while getopts "t:b:s:i:c:h" OPTION; do
-    case "$OPTION" in
-        t) 
-            TEST_TYPE=$OPTARG
-            # Check if test type argument is corrent
-            if [[ ($TEST_TYPE != "local") && ($TEST_TYPE != "kube") ]]; then
-                echo -e "${RED}Test type argument is not correct. ${RESET}\n"
-                usage
-                exit 1
-            fi
-            ;;
-        b) 
-            TEST_BRANCH=$OPTARG
-            ;;
-        s) 
-            TEST_SUITE=$OPTARG
-            ;;
-        i)
-            IGNORE_POST_CLEANUP=$OPTARG
-            # Check if ignore post cleanup argument is corrent
-            if [[ ($IGNORE_POST_CLEANUP != "y") && ($IGNORE_POST_CLEANUP != "n") ]]; then
-                echo -e "${RED}Ignore post cleanup argument is not correct. ${RESET}\n"
-                usage
-                exit 1
-            fi
-            ;;
-        c) 
-            TEST_CONFIGURATION=$OPTARG
-            # Check if test configuration argument is corrent
-            if [[ ($TEST_CONFIGURATION != "setup") ]]; then
-                echo -e "${RED}Test configuration argument is not correct. ${RESET}\n"
-                usage
-                exit 1
-            fi
-            ;;
-        *)
-            usage
-            exit 0
-            ;;
-    esac
-done
-
-# Chekc mandatory arguments have been set up
-if [[ (-z $TEST_TYPE) || (-z $TEST_BRANCH) || (-z $TEST_SUITE) ]]; then
-    echo -e "${RED}Mandatory arguments are not set up. ${RESET}\n"
-    usage
-    exit 1
-fi
-
-if [[ (-z $TEST_CONFIGURATION) ]]; then
+function runWithoutSetup {
     # Run test cases
     ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE
     if [[ $? -eq 0 ]]; then
@@ -78,7 +33,9 @@ if [[ (-z $TEST_CONFIGURATION) ]]; then
         echo -e "${RED}Run test cases is failed. ${RESET}\n"
         exit 1
     fi
-else
+}
+
+function runWithSetup {
     # Pre test automation cleanup
     ./scripts/setup.sh -t $TEST_TYPE -f uninstall
     if [[ $? -eq 0 ]]; then
@@ -107,7 +64,8 @@ else
     fi
 
     # Post test automation cleanup
-    if [[ -z $IGNORE_POST_CLEANUP || $IGNORE_POST_CLEANUP == "n" ]]; then
+    # Cronjob machines need to set up POST_CLEANUP=y to do post test automation cleanup
+    if [[ $POST_CLEANUP == "y" ]]; then
         ./setup.sh -t $TEST_TYPE -f uninstall
         if [[ $? -eq 0 ]]; then
             echo -e "${GREEN}Post test automation cleanup is successful. ${RESET}\n"
@@ -116,4 +74,49 @@ else
             exit 1
         fi
     fi
+}
+
+while getopts "t:s:p:c:h" OPTION; do
+    case "$OPTION" in
+        t) 
+            TEST_TYPE=$OPTARG
+            # Check if test type argument is corrent
+            if [[ ($TEST_TYPE != "local") && ($TEST_TYPE != "kube") ]]; then
+                echo -e "${RED}Test type argument is not correct. ${RESET}\n"
+                usage
+                exit 1
+            fi
+            ;;
+        s) 
+            TEST_SUITE=$OPTARG
+            ;;
+        p)
+            POST_CLEANUP=$OPTARG
+            # Check if post cleanup argument is corrent
+            if [[ ($POST_CLEANUP != "y") && ($POST_CLEANUP != "n") ]]; then
+                echo -e "${RED}Post cleanup argument is not correct. ${RESET}\n"
+                usage
+                exit 1
+            fi
+            ;;
+        c) 
+            TEST_CONFIGURATION=$OPTARG
+            # Check if test configuration argument is corrent
+            if [[ ($TEST_CONFIGURATION != "setup") ]]; then
+                echo -e "${RED}Test configuration argument is not correct. ${RESET}\n"
+                usage
+                exit 1
+            fi
+            ;;
+        *)
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+if [[ (-z $TEST_CONFIGURATION) ]]; then
+    runWithoutSetup
+else
+    runWithSetup
 fi
