@@ -71,7 +71,7 @@ fi
 
 if [[ (-z $TEST_CONFIGURATION) ]]; then
     # Run test cases
-    ./exec.sh -t $TEST_TYPE -s $TEST_SUITE
+    ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE
     if [[ $? -eq 0 ]]; then
         echo -e "${GREEN}Run test cases is successful. ${RESET}\n"
     else
@@ -80,7 +80,7 @@ if [[ (-z $TEST_CONFIGURATION) ]]; then
     fi
 else
     # Pre test automation cleanup
-    ./setup.sh -t $TEST_TYPE -f uninstall
+    ./scripts/setup.sh -t $TEST_TYPE -f uninstall
     if [[ $? -eq 0 ]]; then
         echo -e "${GREEN}Pre test automation cleanup is successful. ${RESET}\n"
     else
@@ -89,7 +89,7 @@ else
     fi
 
     # Set up test automation
-    ./setup.sh -t $TEST_TYPE -b $TEST_BRANCH -f install
+    ./scripts/setup.sh -t $TEST_TYPE -b $TEST_BRANCH -f install
     if [[ $? -eq 0 ]]; then
         echo -e "${GREEN}Set up test automation is successful. ${RESET}\n"
     else
@@ -98,7 +98,7 @@ else
     fi
 
     # Run test cases
-    ./exec.sh -t $TEST_TYPE -s $TEST_SUITE
+    ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE
     if [[ $? -eq 0 ]]; then
         echo -e "${GREEN}Run test cases is successful. ${RESET}\n"
     else

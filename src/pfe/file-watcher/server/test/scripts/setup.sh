@@ -43,12 +43,14 @@ function install {
 # 2 Remove Codewind and Codewind app images
 # 3 Remove Codewind repository
 function uninstall {
-    $CW_DIR/stop.sh \
-    && rm -rf $CW_DIR
+    if [[ -d $CW_DIR ]]; then
+        $CW_DIR/stop.sh \
+        && rm -rf $CW_DIR
 
-    if [[ $? -ne 0 ]]; then
-        echo -e "${RED}Cleanup is failed. ${RESET}\n"
-        exit 1
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}Cleanup is failed. ${RESET}\n"
+            exit 1
+        fi
     fi
 }
 
