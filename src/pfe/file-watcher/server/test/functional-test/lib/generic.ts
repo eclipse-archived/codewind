@@ -29,3 +29,7 @@ export async function readWorkspaceSettings(): Promise<workspaceSettings.IWorksp
 export async function testDeploymentRegistry(pushRegistry: string, pullImage?: string): Promise<workspaceSettings.IDeploymentRegistryTestSuccess | workspaceSettings.IDeploymentRegistryTestFailure> {
     return await filewatcher.testDeploymentRegistry(pushRegistry, pullImage);
 }
+
+export async function deploymentRegistryStatus(request: workspaceSettings.IDeploymentRegistryStatusParams): Promise<workspaceSettings.IDeploymentRegistryStatusSuccess | workspaceSettings.IDeploymentRegistryStatusFailure> {
+    return await filewatcher.deploymentRegistryStatus(request);
+}

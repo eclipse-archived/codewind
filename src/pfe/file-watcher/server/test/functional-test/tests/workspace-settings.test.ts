@@ -39,6 +39,10 @@ export function workspaceSettingsTestSuite(socket: SocketIO): void {
             }
         });
 
+        after("clear socket events for create test", () => {
+            socket.clearEvents();
+        });
+
         describe("read workspace settings without file", () => {
             before("create a backup for original settings file and remove the original file", async () => {
                 if (await fs.existsSync(settingsPath)) {
@@ -137,6 +141,81 @@ export function workspaceSettingsTestSuite(socket: SocketIO): void {
                 }
             }).timeout(timeoutConfigs.deleteTestTimeout);
         });
+    });
+
+    describe("deploymentRegistryStatus function", () => {
+        const deploymentRegistryRequest = {
+            "projectID": "1234",
+            "detailedDeploymentRegistryStatus": "some status"
+        };
+
+        after("clear socket events for create test", () => {
+            socket.clearEvents();
+        });
+
+        it("set deployment registry status with missing projectId", async () => {
+            const request = _.cloneDeep(deploymentRegistryRequest);
+            delete request.projectID;
+            const info: any = await genericLib.deploymentRegistryStatus(request);
+            expect(info);
+            expect(info.statusCode);
+            expect(info.statusCode).to.equal(400);
+            expect(info.error);
+            expect(info.error).to.haveOwnProperty("msg");
+            expect(info.error["msg"]).to.equal("Missing request parameters projectID or detailedDeploymentRegistryStatus for deployment registry status");
+        });
+
+        it("set deployment registry status with missing status", async () => {
+            const request = _.cloneDeep(deploymentRegistryRequest);
+            delete request.detailedDeploymentRegistryStatus;
+            const info: any = await genericLib.deploymentRegistryStatus(request);
+            expect(info);
+            expect(info.statusCode);
+            expect(info.statusCode).to.equal(400);
+            expect(info.error);
+            expect(info.error).to.haveOwnProperty("msg");
+            expect(info.error["msg"]).to.equal("Missing request parameters projectID or detailedDeploymentRegistryStatus for deployment registry status");
+        });
+
+        it("set deployment registry status with valid data", async () => {
+            const request = _.cloneDeep(deploymentRegistryRequest);
+            const targetEvent = eventConfigs.events.deploymentRegistryStatus;
+            const info: any = await genericLib.deploymentRegistryStatus(request);
+            expect(info);
+            expect(info.statusCode);
+            expect(info.statusCode).to.equal(200);
+            let eventFound = false;
+            let event: any;
+            await new Promise((resolve) => {
+                const timer = setInterval(() => {
+                    const events = socket.getAllEvents();
+                    if (events && events.length >= 1) {
+                        event =  events.filter((value) => {
+                            if (value.eventName === targetEvent) return value;
+                        })[0];
+                        if (event) {
+                            eventFound = true;
+                            clearInterval(timer);
+                            return resolve();
+                        }
+                    }
+                }, timeoutConfigs.deploymentRegistryStatusInterval);
+            });
+
+
+            if (eventFound && event) {
+                expect(event);
+                expect(event.eventName);
+                expect(event.eventName).to.equal(targetEvent);
+                expect(event.eventData);
+                expect(event.eventData).to.haveOwnProperty("deploymentRegistryTest");
+                expect(event.eventData).to.haveOwnProperty("msg");
+                expect(event.eventData["deploymentRegistryTest"]).to.equal(false);
+                expect(event.eventData["msg"]).to.equal(request.detailedDeploymentRegistryStatus);
+            } else {
+                fail(`read workspace settings test failed to listen for ${targetEvent}`);
+            }
+        }).timeout(timeoutConfigs.deleteTestTimeout);
     });
 
     if (process.env.IN_K8) {
