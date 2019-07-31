@@ -8,9 +8,10 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-import Filewatcher from "../../../src/index";
-import * as workspaceSettings from "../../../src/utils/workspaceSettings";
 import * as locale from "../../../src/utils/locale";
+import * as workspaceSettings from "../../../src/utils/workspaceSettings";
+
+import Filewatcher from "../../../src/index";
 
 const filewatcher = new Filewatcher();
 

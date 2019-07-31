@@ -216,6 +216,13 @@ export function workspaceSettingsTestSuite(socket: SocketIO): void {
                 fail(`read workspace settings test failed to listen for ${targetEvent}`);
             }
         }).timeout(timeoutConfigs.deleteTestTimeout);
+
+        it("check for an event from the registered listener", async () => {
+            const events = await socket.getAllEvents();
+            expect(events);
+            expect(Array.isArray(events));
+            expect(Object.keys(events[0])).to.deep.equal(["eventName", "eventData"]);
+        });
     });
 
     if (process.env.IN_K8) {
