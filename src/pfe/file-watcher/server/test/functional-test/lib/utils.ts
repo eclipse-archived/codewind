@@ -9,8 +9,10 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 import * as path from "path";
-import * as fs from "fs-extra";
+import * as fse from "fs-extra";
 import * as request from "request";
+import * as fs from "fs";
+import { promisify } from "util";
 
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
@@ -21,6 +23,12 @@ const mcWorkspace = app_configs.microclimateWorkspaceDir;
 
 const fixtures = app_configs.fixturesDir;
 
+export const existsAsync = promisify(fs.exists);
+export const mkdirAsync = promisify(fs.mkdir);
+export const copyAsync = promisify(fs.copyFile);
+export const rmdirAsync = promisify(fs.rmdir);
+export const unlinkAsync = promisify(fs.unlink);
+
 export function pingPFE(callback: request.RequestCallback): request.Request {
     return request.get(pfeURL, callback);
 }
@@ -30,15 +38,15 @@ export function cloneProject(projectName: string, parentPath: string, url: strin
 }
 
 export function deleteFixtures(callback: any): any {
-    fs.remove(fixtures, callback);
+    fse.remove(fixtures, callback);
 }
 
 export function copyFixtures(callback: any): any {
-    fs.copy(fixtures, mcWorkspace, callback);
+    fse.copy(fixtures, mcWorkspace, callback);
 }
 
 export function cleanWorkspace(): any {
-    fs.readdir(mcWorkspace, (err, folders) => {
+    fse.readdir(mcWorkspace, (err, folders) => {
         if (err) {
             console.error(err);
         }
@@ -46,32 +54,32 @@ export function cleanWorkspace(): any {
             const match = folder.match(/microclimatetest*/);
             if (match) {
                 const toDelete = path.join(mcWorkspace, folder);
-                fs.removeSync(toDelete);
+                fse.removeSync(toDelete);
             }
         }
     });
 }
 
 export function createFWDataDir(): any {
-    if (!fs.existsSync(app_configs.fwDataDir)) {
-        fs.mkdirSync(app_configs.fwDataDir);
-        fs.mkdirSync(app_configs.projectDataDir);
+    if (!fse.existsSync(app_configs.fwDataDir)) {
+        fse.mkdirSync(app_configs.fwDataDir);
+        fse.mkdirSync(app_configs.projectDataDir);
     }
 }
 
  export function removeFWDataDir(): any {
-    if (fs.existsSync(app_configs.fwDataDir)) {
-        fs.removeSync(app_configs.fwDataDir);
+    if (fse.existsSync(app_configs.fwDataDir)) {
+        fse.removeSync(app_configs.fwDataDir);
     }
 }
 
 export function cleanUpLogsDir(): any {
     const regex = new RegExp(/microclimatetest*/g);
-    fs.readdirSync(app_configs.microclimateWorkspaceLogsDir)
+    fse.readdirSync(app_configs.microclimateWorkspaceLogsDir)
         .filter(folder => regex.test(folder))
         .map((folder) => {
             const folderPath = path.join(app_configs.microclimateWorkspaceLogsDir, folder);
-            fs.rmdirSync(folderPath);
+            fse.rmdirSync(folderPath);
         });
 }
 
