@@ -32,6 +32,7 @@ pipeline {
                     changeRequest()
                 }
             }
+            
 
             steps {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
