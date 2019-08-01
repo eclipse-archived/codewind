@@ -24,15 +24,20 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
   const projectStyle = req.query.projectStyle;
 
-  const projectTemplates = (projectStyle)
-    ? await user.templates.getTemplatesOfStyle(projectStyle)
-    : await user.templates.getTemplateList();
+  try {
+    const projectTemplates = (projectStyle)
+      ? await user.templates.getTemplatesOfStyle(projectStyle)
+      : await user.templates.getTemplateList();
 
-  if (projectTemplates.length == 0) {
-    log.warn('No templates found');
-    res.sendStatus(204);
-  } else {
-    res.status(200).json(projectTemplates);
+    if (projectTemplates.length == 0) {
+      log.warn('No templates found');
+      res.sendStatus(204);
+    } else {
+      res.status(200).json(projectTemplates);
+    }
+  } catch (error) {
+    log.error(error);
+    res.status(500).json(error);
   }
 });
 
