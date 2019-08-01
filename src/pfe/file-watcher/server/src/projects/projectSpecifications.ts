@@ -37,7 +37,6 @@ const changeInternalDebugPort = async function (debugPort: string, operation: Op
     const projectID = projectInfo.projectID;
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     const capabilities = projectExtensions.getProjectCapabilities(projectHandler);
-    const settingName = "internalDebugPort";
 
     debugPort = debugPort.toString();
     if (process.env.IN_K8 === "true") {
@@ -137,7 +136,6 @@ const changeInternalPort = async function (applicationPort: string, operation: O
     let projectInfo: ProjectInfo = operation.projectInfo;
     const projectID = projectInfo.projectID;
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
-    const settingName = "internalPort";
 
     applicationPort = applicationPort.toString();
 
@@ -280,7 +278,6 @@ const changeInternalPort = async function (applicationPort: string, operation: O
 const changeContextRoot = async function(args: any, operation: Operation): Promise<any> {
     const projectInfo: ProjectInfo = operation.projectInfo;
     const projectID = projectInfo.projectID;
-    const settingName = "contextRoot";
 
     // File watcher removes all leading and trailing forward slashes of the context root that portal passes to file watcher for filter context root purpose
     let contextRoot = args.replace(/^\/+/, "").replace(/\/+$/, "");
@@ -329,7 +326,7 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
     };
 
     try {
-        projectsController.updateProjectInfo(projectID, keyValuePair);
+        await projectsController.updateProjectInfo(projectID, keyValuePair);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
@@ -337,7 +334,6 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
             contextRoot: "/" + contextRoot,
             status: "success"
         };
-
         logger.logProjectInfo("The context root was updated successfully.", projectID);
 
         io.emitOnListener("projectSettingsChanged", data);
@@ -368,7 +364,6 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
 const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], operation: Operation): Promise<any> {
     const projectInfo: ProjectInfo = operation.projectInfo;
     const projectID = projectInfo.projectID;
-    const settingName = "ignoredPaths";
     if (!ignoredPaths) {
         const errorMsg = "BAD_REQUEST: ignoredPaths is required, but was not provided.";
         logger.logProjectError("Failed to update ignored path list for file watching: " + errorMsg, projectID);
@@ -456,7 +451,6 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
  const changeHealthCheck = async function(args: any, operation: Operation): Promise<any> {
     const projectID = operation.projectInfo.projectID;
     const projectInfo: ProjectInfo = operation.projectInfo;
-    const settingName = "healthCheck";
 
     // File watcher removes all leading and trailing forward slashes of the health check that portal passes to file watcher for filter health check purpose
     let healthCheck = args.replace(/^\/+/, "").replace(/\/+$/, "");
@@ -503,7 +497,7 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
     };
 
     try {
-        projectsController.updateProjectInfo(projectID, keyValuePair);
+        await projectsController.updateProjectInfo(projectID, keyValuePair);
         const data = {
             operationId: operation.operationId,
             projectID: projectID,
@@ -518,7 +512,6 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
         const data = {
             operationId: operation.operationId,
             projectID: projectID,
-            name: settingName,
             healthCheck: "/" + healthCheck,
             status: "failed",
             error: err.message
@@ -541,7 +534,6 @@ const changeMavenProfiles = async function (mavenProfiles: any, operation: Opera
     let projectInfo: ProjectInfo = operation.projectInfo;
     const projectID = projectInfo.projectID;
     const projectType = projectInfo.projectType;
-    const settingName = "mavenProfiles";
 
     if (!mavenProfiles) {
         const errorMsg = "BAD_REQUEST: mavenProfiles is a required parameter.";
@@ -637,7 +629,6 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
     let projectInfo: ProjectInfo = operation.projectInfo;
     const projectID = projectInfo.projectID;
     const projectType = projectInfo.projectType;
-    const settingName = "mavenProperties";
 
     if (!mavenProperties) {
         const errorMsg = "BAD_REQUEST: mavenProperties is a required parameter";

@@ -33,7 +33,7 @@ export interface IWorkspaceSettingsSuccess {
 
 export interface IWorkspaceSettingsFailure {
     statusCode: 400 | 500;
-    workspaceSettings: any;
+    msg: string;
 }
 
 export interface IDeploymentRegistryTestSuccess {
@@ -65,18 +65,12 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
         } else {
             const msg = "The workspace settings file was not found at location: " + workspaceSettingsFile;
             logger.logError(msg);
-            const workspaceSettings = {
-                msg: msg
-            };
-            return { "statusCode": 500, "workspaceSettings": workspaceSettings};
+            return { "statusCode": 500, "msg": msg};
         }
     } catch (err) {
         const msg = "Codewind encountered an error when trying to read the workspace settings file";
         logger.logError(err);
-        const workspaceSettings = {
-            msg: msg
-        };
-        return { "statusCode": 500, "workspaceSettings": workspaceSettings};
+        return { "statusCode": 500, "msg": msg};
     }
 
     // Do validation check on the Deployment Registry
@@ -93,16 +87,13 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
                 msg: msg
             };
             io.emitOnListener("deploymentRegistryStatus", data);
-            const workspaceSettings = {
-                msg: msg
-            };
-            return { "statusCode": 200, "workspaceSettings": workspaceSettings };
+            return { "statusCode": 500, "msg": msg };
         }
     }
 
-    await loadWorkspaceSettings(settingsFileContent);
+   const workspaceSettingsCache = JSON.parse( await loadWorkspaceSettings(settingsFileContent) );
 
-    return { "statusCode": 200, "workspaceSettings": settingsFileContent};
+    return { "statusCode": 200, "workspaceSettings": workspaceSettingsCache};
 }
 
 /**
@@ -121,9 +112,7 @@ export async function loadWorkspaceSettings(workspaceSettings: any): Promise<any
 
     logger.logInfo("Caching workspace settings: " + JSON.stringify(workspaceSettingsInfo));
 
-    await cacheWorkspaceSettingsInfo(workspaceSettingsInfo);
-
-    return;
+    return await cacheWorkspaceSettingsInfo(workspaceSettingsInfo);
 }
 
 /**
@@ -134,12 +123,12 @@ export async function loadWorkspaceSettings(workspaceSettings: any): Promise<any
  *
  * @returns void
  */
-export async function cacheWorkspaceSettingsInfo(workspaceSettings: WorkspaceSettingsInfo): Promise<void> {
+export async function cacheWorkspaceSettingsInfo(workspaceSettings: WorkspaceSettingsInfo): Promise<string> {
     return new Promise((resolve) => {
         const workspaceSettingsJSON = JSON.stringify(workspaceSettings);
         workspaceSettingsInfoCache = workspaceSettingsJSON;
         logger.logInfo("Cached Workspace Settings Info Cache: " + workspaceSettingsInfoCache);
-        resolve();
+        resolve(workspaceSettingsInfoCache);
     });
 }
 

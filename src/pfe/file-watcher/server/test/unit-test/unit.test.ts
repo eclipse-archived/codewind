@@ -11,6 +11,8 @@
 
 import * as utils from "../functional-test/lib/utils";
 import * as module_configs from "./configs/module.configs";
+import * as mocha from "mocha";
+
 // set all the test environmental variables
 utils.setTestEnvVariables();
 

@@ -120,7 +120,7 @@ function deployK8s() {
 	# Render the template yamls for the chart
 	helm template $tmpChart \
 		--name $project \
-		--values=/file-watcher/scripts/override-values-icp.yaml \
+		--values=/file-watcher/scripts/override-values.yaml \
 		--set image.repository=$DEPLOYMENT_REGISTRY/$project \
 		--output-dir=$parentDir
 
@@ -413,7 +413,7 @@ elif [ "$COMMAND" == "update" ]; then
 		create
 	elif [ "$action" == "RESTART" ]; then
 		if [ "$IN_K8" == "true" ]; then
-			# Currently in ICP, changed files are only copied over through docker build
+			# On Kubernetes, changed files are only copied over through docker build
 			echo "Rebuilding project: $projectName"
 			create
 		else
@@ -426,7 +426,7 @@ elif [ "$COMMAND" == "update" ]; then
 		fi
 	else
 		if [ "$IN_K8" == "true" ]; then
-			# No nodemon in ICP and changed files are only copied over through docker build
+			# No nodemon on Kubernetes and changed files are only copied over through docker build
 			echo "Rebuilding project: $projectName"
 			create
 		elif [ "$AUTO_BUILD_ENABLED" != "true" ]; then
@@ -439,12 +439,12 @@ elif [ "$COMMAND" == "update" ]; then
 		fi
 	fi
 
-# Stop the application (not supported for ICP)
+# Stop the application (not supported on Kubernetes)
 elif [ "$COMMAND" == "stop" ]; then
 	echo "Stopping node.js project $projectName"
 	$IMAGE_COMMAND exec $project /scripts/noderun.sh stop
 	$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-# Start the application (not supported for ICP)
+# Start the application (not supported on Kubernetes)
 elif [ "$COMMAND" == "start" ]; then
 	echo "Starting node.js project $projectName"
 	# Clear the cache since restarting node will pick up any changes to package.json or nodemon.json
