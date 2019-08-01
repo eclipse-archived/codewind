@@ -38,11 +38,10 @@ export default class GenericTestSuite {
         this.suite = "Generic Suite";
         this.socket = socket;
 
-        this.localeTest = new LocaleTest();
-        this.loggingTest = new LoggingTest();
-        this.projectTest = new ProjectTest();
-        this.workspaceTest = new WorkspaceTest();
-
+        this.localeTest = new LocaleTest("locale test");
+        this.loggingTest = new LoggingTest("logging test");
+        this.projectTest = new ProjectTest("project test");
+        this.workspaceTest = new WorkspaceTest("workspace test");
     }
 
     /**
@@ -50,23 +49,12 @@ export default class GenericTestSuite {
      * @description The run test function that triggers all generic test classes.
      *
      */
-    runTest(): void {
-        describe(this.suite, () => {
-            describe("locale", () => {
-              this.localeTest.run();
-            });
-
-            describe("logging", () => {
-              this.loggingTest.run();
-            });
-
-            describe("project", () => {
-                this.projectTest.run();
-            });
-
-            describe("workspace", () => {
-                this.workspaceTest.run(this.socket);
-            });
+    runTest(runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)(this.suite, () => {
+            this.localeTest.run();
+            this.loggingTest.run();
+            this.projectTest.run();
+            this.workspaceTest.run(this.socket);
         });
     }
 }

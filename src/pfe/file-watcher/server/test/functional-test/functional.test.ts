@@ -33,7 +33,7 @@ const socket = new SocketIO();
 const genericSuite = new GenericTestSuite(socket);
 const projectSuite = new ProjectTestSuite(socket);
 
-describe("Functional Test Suite", () => {
+describe("PFE - functional test", () => {
   beforeEach("check for pfe to be up", (done) => {
     utils.pingPFE((err: any, res: any) => {
       if (err) done(err);
@@ -71,27 +71,27 @@ describe("Functional Test Suite", () => {
   }
 
   runAllTests();
+});
 
-  function runAllTests(): void {
-    genericSuite.runTest();
-    for (const chosenType of projectTypes) {
-      if (chosenType === "docker") {
-        for (const chosenDocker of dockerProjects) {
-          runProjectSpecificTest(chosenType, chosenDocker);
-        }
-      } else {
-        runProjectSpecificTest(chosenType);
+function runAllTests(): void {
+  genericSuite.runTest();
+  for (const chosenType of projectTypes) {
+    if (chosenType === "docker") {
+      for (const chosenDocker of dockerProjects) {
+        runProjectSpecificTest(chosenType, chosenDocker);
       }
+    } else {
+      runProjectSpecificTest(chosenType);
     }
   }
+}
 
-  function runProjectSpecificTest(projType: string, dockerType?: string): void {
-    const projectType = dockerType ? dockerType : projType;
-    const projData: ProjectCreation = {
-      projectID: projectType + projectConfigs.appSuffix,
-      projectType: projType,
-      location: projectConfigs.appDirectory + projectType
-    };
-    projectSuite.runTest(projData);
-  }
-});
+function runProjectSpecificTest(projType: string, dockerType?: string): void {
+  const projectType = dockerType ? dockerType : projType;
+  const projData: ProjectCreation = {
+    projectID: projectType + projectConfigs.appSuffix,
+    projectType: projType,
+    location: projectConfigs.appDirectory + projectType
+  };
+  projectSuite.runTest(projData, projectType);
+}

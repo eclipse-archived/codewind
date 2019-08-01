@@ -38,9 +38,9 @@ export default class ProjectTestSuite {
         this.suite = "Project Specific Suite";
         this.socket = socket;
 
-        this.createTest = new CreateTest();
-        this.deleteTest = new DeleteTest();
-        this.projectTest = new ProjectTest();
+        this.createTest = new CreateTest("create test");
+        this.deleteTest = new DeleteTest("delete test");
+        this.projectTest = new ProjectTest("project test");
     }
 
     /**
@@ -48,19 +48,11 @@ export default class ProjectTestSuite {
      * @description The run test function that triggers all project specific test classes.
      *
      */
-    runTest(projectData: ProjectCreation): void {
-        describe(this.suite, () => {
-            describe("creation", async () => {
-                this.createTest.run(this.socket, projectData);
-            });
-
-            describe("project", async () => {
-                this.projectTest.run(projectData);
-            });
-
-            describe("deletion", async () => {
-                this.deleteTest.run(this.socket, projectData.projectID);
-            });
+    runTest(projectData: ProjectCreation, projectLang: string, runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)(`${this.suite}: ${projectLang}`, () => {
+            this.createTest.run(this.socket, projectData);
+            this.projectTest.run(projectData);
+            this.deleteTest.run(this.socket, projectData.projectID);
         });
     }
 }

@@ -13,27 +13,35 @@ import { expect } from "chai";
 import * as genericLib from "../../../lib/generic";
 
 export default class LocaleTest {
-  run(): void {
-    const combinations: any = {
-      "combo1": {
-        "locale": undefined,
-        "result": {"statusCode": 400, "error": {"msg": "Bad request. Locale key not found in request body!"}}
-      },
-      "combo2": {
-        "locale": "some string",
-        "result": { "statusCode": 400, "error": { "msg": "Bad request. locale must be an array." }}
-      },
-      "combo3": {
-        "locale": ["en"],
-        "result": { statusCode: 200, locale: "en" }
-      },
-    };
+  testName: string;
 
-    for (const combo of Object.keys(combinations)) {
-      it (combo + " => " + "locale: " + combinations[combo]["locale"], async () => {
-        const info = await genericLib.setLocaleAPI(combinations[combo]["locale"]);
-        expect(info).to.deep.equal(combinations[combo]["result"]);
-      });
-    }
+  constructor(testName: string) {
+      this.testName = testName;
+  }
+
+  run(runOnly?: boolean): void {
+    (runOnly ? describe.only : describe)(this.testName, () => {
+      const combinations: any = {
+        "combo1": {
+          "locale": undefined,
+          "result": {"statusCode": 400, "error": {"msg": "Bad request. Locale key not found in request body!"}}
+        },
+        "combo2": {
+          "locale": "some string",
+          "result": { "statusCode": 400, "error": { "msg": "Bad request. locale must be an array." }}
+        },
+        "combo3": {
+          "locale": ["en"],
+          "result": { statusCode: 200, locale: "en" }
+        },
+      };
+
+      for (const combo of Object.keys(combinations)) {
+        it(combo + " => " + "locale: " + combinations[combo]["locale"], async () => {
+          const info = await genericLib.setLocaleAPI(combinations[combo]["locale"]);
+          expect(info).to.deep.equal(combinations[combo]["result"]);
+        });
+      }
+    });
   }
 }

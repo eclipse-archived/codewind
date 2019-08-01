@@ -17,8 +17,16 @@ import * as genericLib from "../../../lib/generic";
 import * as app_configs from "../../../configs/app.config";
 
 export default class ProjectTest {
-    run(): void {
-        this.runGetProjectTypes();
+    testName: string;
+
+    constructor(testName: string) {
+        this.testName = testName;
+    }
+
+    run(runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)(this.testName, () => {
+            this.runGetProjectTypes();
+        });
     }
 
     private runGetProjectTypes(): void {

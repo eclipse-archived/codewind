@@ -17,8 +17,16 @@ import { ProjectCreation, getProjectCapabilities } from "../../../lib/project";
 import * as app_configs from "../../../configs/app.config";
 
 export default class ProjectTest {
-    run(projData: ProjectCreation): void {
-        this.runProjectCapabilityTest(projData.projectType, projData.projectID);
+    testName: string;
+
+    constructor(testName: string) {
+        this.testName = testName;
+    }
+
+    run(projData: ProjectCreation, runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)(this.testName, () => {
+            this.runProjectCapabilityTest(projData.projectType, projData.projectID);
+        });
     }
 
     private runProjectCapabilityTest(projectType: string, projectID: string): void {

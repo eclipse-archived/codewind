@@ -16,11 +16,19 @@ import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
 export default class DeleteTest {
-    run(socket: SocketIO, projectID: string): void {
-        this.runDeleteWithMissingProjectID();
-        this.runDeleteWithInvalidProjectID();
-        this.runDeleteWithValidData(socket, projectID);
-        this.afterAllHook(socket);
+    testName: string;
+
+    constructor(testName: string) {
+        this.testName = testName;
+    }
+
+    run(socket: SocketIO, projectID: string, runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)(this.testName, () => {
+            this.runDeleteWithMissingProjectID();
+            this.runDeleteWithInvalidProjectID();
+            this.runDeleteWithValidData(socket, projectID);
+            this.afterAllHook(socket);
+        });
     }
 
     private afterAllHook(socket: SocketIO): void {

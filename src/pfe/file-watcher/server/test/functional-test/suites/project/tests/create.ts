@@ -18,11 +18,19 @@ import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
 export default class CreateTest {
-    run(socket: SocketIO, projData: ProjectCreation): void {
-        this.runCreateWithoutProjectID(projData);
-        this.runCreateWithoutProjectType(projData);
-        this.runCreateWithValidData(socket, projData);
-        this.afterAllHook(socket);
+    testName: string;
+
+    constructor(testName: string) {
+        this.testName = testName;
+    }
+
+    run(socket: SocketIO, projData: ProjectCreation, runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)(this.testName, () => {
+            this.runCreateWithoutProjectID(projData);
+            this.runCreateWithoutProjectType(projData);
+            this.runCreateWithValidData(socket, projData);
+            this.afterAllHook(socket);
+        });
     }
 
     private afterAllHook(socket: SocketIO): void {

@@ -15,26 +15,32 @@ import * as genericLib from "../../../lib/generic";
 import { fail } from "assert";
 
 export default class LoggingTest {
-    run(): void {
-        const logLevels = ["info", "warn", "error", "trace", "debug", "invalid"];
-        const invalidLevel = _.cloneDeep(logLevels).pop();
+    testName: string;
 
-        for (const level of logLevels) {
-            it(`set logging level to ${level}`, async () => {
-                try {
-                    await genericLib.setLoggingLevel(level);
-                } catch (err) {
-                    if (level === invalidLevel) {
-                        expect(err);
-                        expect(err.message).to.equal(`${level} is not a valid value, the following log levels are available {"error":"error","warn":"warn","info":"info","debug":"debug","trace":"trace"}`);
-                    } else {
-                        fail(`setting log level test failed when setting it to ${level}`);
+    constructor(testName: string) {
+        this.testName = testName;
+    }
+
+    run(runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)(this.testName, () => {
+            const logLevels = ["info", "warn", "error", "trace", "debug", "invalid"];
+            const invalidLevel = _.cloneDeep(logLevels).pop();
+            for (const level of logLevels) {
+                it(`set logging level to ${level}`, async () => {
+                    try {
+                        await genericLib.setLoggingLevel(level);
+                    } catch (err) {
+                        if (level === invalidLevel) {
+                            expect(err);
+                            expect(err.message).to.equal(`${level} is not a valid value, the following log levels are available {"error":"error","warn":"warn","info":"info","debug":"debug","trace":"trace"}`);
+                        } else {
+                            fail(`setting log level test failed when setting it to ${level}`);
+                        }
                     }
-                }
-            });
-        }
-
-        this.afterAllHook();
+                });
+            }
+            this.afterAllHook();
+        });
     }
 
     private afterAllHook(): void {

@@ -23,30 +23,41 @@ import * as pfe_configs from "../../../configs/pfe.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 
 export default class WorkspaceTest {
-    run(socket: SocketIO): void {
-        const settingsPath = path.join(app_configs.codewindWorkspaceDir, ".config", "settings.json");
-        const backupSettingsPath = path.join(app_configs.codewindWorkspaceDir, ".config", "settings_bk.json");
-        const settingsContent = {
-            deploymentRegistry: "someregistry",
-            watcherChunkTimeout: 50000
-        };
-        this.runReadWorkspaceSettings(socket, settingsPath, settingsContent, backupSettingsPath);
-        this.runDeploymentRegistryStatus(socket);
-        if (process.env.IN_K8) {
-            this.runTestDeploymentRegistry(settingsContent);
-        }
+    testName: string;
+
+    constructor(testName: string) {
+        this.testName = testName;
+    }
+
+    run(socket: SocketIO, runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)(this.testName, () => {
+            const settingsPath = path.join(app_configs.codewindWorkspaceDir, ".config", "settings.json");
+            const backupSettingsPath = path.join(app_configs.codewindWorkspaceDir, ".config", "settings_bk.json");
+            const settingsContent = {
+                deploymentRegistry: "someregistry",
+                watcherChunkTimeout: 50000
+            };
+            this.afterEachHook(settingsPath, backupSettingsPath);
+            this.runReadWorkspaceSettings(socket, settingsPath, settingsContent, backupSettingsPath);
+            this.runDeploymentRegistryStatus(socket);
+            if (process.env.IN_K8) {
+                this.runTestDeploymentRegistry(settingsContent);
+            }
+        });
+    }
+
+    private afterEachHook(settingsPath: string, backupSettingsPath: string): void {
+        afterEach("delete backup settings file, revert back original file and load the current workspace settings", async () => {
+            if (await fs.existsSync(backupSettingsPath)) {
+                await fs.renameSync(backupSettingsPath, settingsPath);
+                await fs.chownSync(settingsPath, 1001, 2004);
+                await genericLib.readWorkspaceSettings();
+            }
+        });
     }
 
     private runReadWorkspaceSettings(socket: SocketIO, settingsPath: string, settingsContent: any, backupSettingsPath: string): void {
         describe("readWorkspaceSettings function", () => {
-            afterEach("delete backup settings file, revert back original file and load the current workspace settings", async () => {
-                if (await fs.existsSync(backupSettingsPath)) {
-                    await fs.renameSync(backupSettingsPath, settingsPath);
-                    await fs.chownSync(settingsPath, 1001, 2004);
-                    await genericLib.readWorkspaceSettings();
-                }
-            });
-
             after("clear socket events for create test", () => {
                 socket.clearEvents();
             });
@@ -59,13 +70,12 @@ export default class WorkspaceTest {
                 });
 
                 it("read workspace settings without file", async () => {
-                    const info = await genericLib.readWorkspaceSettings();
+                    const info: any = await genericLib.readWorkspaceSettings();
                     expect(info);
                     expect(info.statusCode);
                     expect(info.statusCode).to.equal(500);
-                    expect(info.workspaceSettings);
-                    expect(info.workspaceSettings["msg"]);
-                    expect(info.workspaceSettings.msg).to.equal(`The workspace settings file was not found at location: ${settingsPath}`);
+                    expect(info.msg);
+                    expect(info.msg).to.equal(`The workspace settings file was not found at location: ${settingsPath}`);
                 });
             });
 
@@ -81,7 +91,7 @@ export default class WorkspaceTest {
                 });
 
                 it("read workspace settings with valid contents ", async () => {
-                    const info = await genericLib.readWorkspaceSettings();
+                    const info: any = await genericLib.readWorkspaceSettings();
                     expect(info);
                     expect(info.statusCode);
                     expect(info.statusCode).to.equal(200);
@@ -108,15 +118,15 @@ export default class WorkspaceTest {
                 });
 
                 it("read workspace settings with invalid deployment registry", async () => {
-                    const info = await genericLib.readWorkspaceSettings();
+                    const info: any = await genericLib.readWorkspaceSettings();
                     const failureMsg = "Codewind detected an error with the Deployment Registry x^72@!$&. Please ensure it is a valid Deployment Registry.";
                     const targetEvent = eventConfigs.events.deploymentRegistryStatus;
+                    console.log("Info: %j", info);
                     expect(info);
                     expect(info.statusCode);
-                    expect(info.statusCode).to.equal(200);
-                    expect(info.workspaceSettings);
-                    expect(info.workspaceSettings["msg"]);
-                    expect(info.workspaceSettings.msg).to.equal(failureMsg);
+                    expect(info.statusCode).to.equal(500);
+                    expect(info.msg);
+                    expect(info.msg).to.equal(failureMsg);
                     let eventFound = false;
                     let event: any;
                     await new Promise((resolve) => {
