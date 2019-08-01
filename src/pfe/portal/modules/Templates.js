@@ -111,13 +111,9 @@ module.exports = class Templates {
 
   async getTemplatesOfStyle(projectStyle) {
     const allTemplates = await this.getTemplateList();
-    let relevantTemplates = allTemplates.filter(template =>
-      template.projectStyle === projectStyle
+    const relevantTemplates = allTemplates.filter(template =>
+      getTemplateStyle(template) === projectStyle
     );
-    if (projectStyle === 'IBM Cloud') {
-      const templatesWithoutSpecifiedStyle = allTemplates.filter(template => !template.projectStyle);
-      relevantTemplates = [...relevantTemplates, ...templatesWithoutSpecifiedStyle];
-    }
     return relevantTemplates;
   }
 
@@ -167,8 +163,13 @@ module.exports = class Templates {
 
   async getTemplateStyles() {
     const templates = await this.getTemplateList();
-    const styles = templates.map(template => template.projectStyle || 'IBM Cloud');
+    const styles = templates.map(template => getTemplateStyle(template));
     const uniqueStyles = [...new Set(styles)];
     return uniqueStyles;
   }
+}
+
+function getTemplateStyle(template) {
+  // if a project's style isn't specified, it defaults to 'Codewind'
+  return template.projectStyle || 'Codewind';
 }

@@ -964,7 +964,7 @@ paths:
                 items:
                   description: project style
                   type: string
-                  enum: ['IBM Cloud', 'Appsody']
+                  enum: ['Codewind', 'Appsody']
   /api/v1/project-types:
     get:
       summary: List all project types Codewind is aware of
