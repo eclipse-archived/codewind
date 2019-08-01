@@ -286,7 +286,7 @@ export default class Filewatcher {
      *  @property 400: Error when attempting to test the registry
      *
      */
-    testDeploymentRegistry: (deploymentRegistry: string) => Promise<workspaceSettings.IDeploymentRegistryTestSuccess | workspaceSettings.IDeploymentRegistryTestFailure>;
+    testDeploymentRegistry: (deploymentRegistry: string, pullImage?: string) => Promise<workspaceSettings.IDeploymentRegistryTestSuccess | workspaceSettings.IDeploymentRegistryTestFailure>;
 
     /**
      * @function

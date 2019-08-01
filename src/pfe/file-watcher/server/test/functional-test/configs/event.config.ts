@@ -8,17 +8,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-import { expect } from "chai";
-import { ProjectCreation, createProject } from "../lib/project-creation";
 
- export function createTestSuite(projData: ProjectCreation): void {
-    it("create project", async () => {
-        const info: any = await createProject(projData);
-        expect(info).to.exist;
-        expect(info.statusCode).to.exist;
-        expect(info.statusCode).to.equal(202);
-        expect(info.operationId).to.exist;
-        expect(info.logs).to.exist;
-        expect(info.logs.build).to.exist;
-    });
-}
+export const events = {
+    "creation": "projectCreation",
+    "deletion": "projectDeletion",
+    "deploymentRegistryStatus": "deploymentRegistryStatus",
+    "projectValidated": "projectValidated",
+    "statusChanged": "projectStatusChanged",
+    "restartResult": "projectRestartResult"
+};
