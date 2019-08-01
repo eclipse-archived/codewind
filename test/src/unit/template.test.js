@@ -13,7 +13,7 @@ const chai = require('chai');
 const Templates = require('../../../src/pfe/portal/modules/Templates');
 
 chai.should();
-const sampleCodewindTemplate = {
+const sampleIbmCloudTemplate = {
     label: 'Go template',
     description: 'Sample microservice for simple go app',
     language: 'go',
@@ -26,14 +26,14 @@ const sampleAppsodyTemplate = {
     language: 'nodejs',
     url: 'https://github.com/appsody/template/repo',
     projectType: 'nodejs',
-    projectStyle: 'appsody',
+    projectStyle: 'Appsody',
 };
 
 describe('Templates.js', function() {
     describe('getTemplateStyles() when Codewind is aware of:', function() {
-        describe('codewind and appsody templates', function() {
+        describe('IBM Cloud and Appsody templates', function() {
             const sampleTemplateList = [
-                sampleCodewindTemplate,
+                sampleIbmCloudTemplate,
                 sampleAppsodyTemplate,
             ];
             let templateController;
@@ -42,25 +42,25 @@ describe('Templates.js', function() {
                 templateController.projectTemplates = sampleTemplateList;
                 templateController.needsRefresh = false;
             });
-            it(`returns ['codewind', 'appsody']`, async function() {
+            it(`returns ['IBM Cloud', 'Appsody']`, async function() {
                 const output = await templateController.getTemplateStyles();
-                output.should.deep.equal(['codewind', 'appsody']);
+                output.should.deep.equal(['IBM Cloud', 'Appsody']);
             });
         });
-        describe('only codewind templates', function() {
-            const sampleTemplateList = [sampleCodewindTemplate];
+        describe('only IBM Cloud templates', function() {
+            const sampleTemplateList = [sampleIbmCloudTemplate];
             let templateController;
             before(() => {
                 templateController = new Templates('');
                 templateController.projectTemplates = sampleTemplateList;
                 templateController.needsRefresh = false;
             });
-            it(`returns ['codewind']`, async function() {
+            it(`returns ['IBM Cloud']`, async function() {
                 const output = await templateController.getTemplateStyles();
-                output.should.deep.equal(['codewind']);
+                output.should.deep.equal(['IBM Cloud']);
             });
         });
-        describe('only appsody templates', function() {
+        describe('only Appsody templates', function() {
             const sampleTemplateList = [sampleAppsodyTemplate];
             let templateController;
             before(() => {
@@ -68,15 +68,15 @@ describe('Templates.js', function() {
                 templateController.projectTemplates = sampleTemplateList;
                 templateController.needsRefresh = false;
             });
-            it(`returns ['appsody']`, async function() {
+            it(`returns ['Appsody']`, async function() {
                 const output = await templateController.getTemplateStyles();
-                output.should.deep.equal(['appsody']);
+                output.should.deep.equal(['Appsody']);
             });
         });
     });
     describe('getTemplates()', function() {
         const sampleTemplateList = [
-            sampleCodewindTemplate,
+            sampleIbmCloudTemplate,
             sampleAppsodyTemplate,
         ];
         let templateController;
@@ -91,20 +91,20 @@ describe('Templates.js', function() {
         });
     });
     describe('getTemplatesOfStyle(projectStyle)', function() {
-        describe('(codewind)', function() {
-            const sampleTemplateList = [sampleCodewindTemplate];
+        describe('(IBM Cloud)', function() {
+            const sampleTemplateList = [sampleIbmCloudTemplate];
             let templateController;
             before(() => {
                 templateController = new Templates('');
                 templateController.projectTemplates = sampleTemplateList;
                 templateController.needsRefresh = false;
             });
-            it('returns only codewind templates', async function() {
-                const output = await templateController.getTemplatesOfStyle('codewind');
+            it('returns only IBM Cloud templates', async function() {
+                const output = await templateController.getTemplatesOfStyle('IBM Cloud');
                 output.should.deep.equal(sampleTemplateList);
             });
         });
-        describe('(appsody)', function() {
+        describe('(Appsody)', function() {
             const sampleTemplateList = [sampleAppsodyTemplate];
             let templateController;
             before(() => {
@@ -112,8 +112,8 @@ describe('Templates.js', function() {
                 templateController.projectTemplates = sampleTemplateList;
                 templateController.needsRefresh = false;
             });
-            it('returns only appsody templates', async function() {
-                const output = await templateController.getTemplatesOfStyle('appsody');
+            it('returns only Appsody templates', async function() {
+                const output = await templateController.getTemplatesOfStyle('Appsody');
                 output.should.deep.equal(sampleTemplateList);
             });
         });

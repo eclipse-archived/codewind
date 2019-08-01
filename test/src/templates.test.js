@@ -32,7 +32,7 @@ describe('Template API tests', function() {
                 res.body.map((template) => template.language).should.include.members(expectedLanguages);
             });
         });
-        for (const projectStyle of ['codewind', 'appsody']) {
+        for (const projectStyle of ['IBM Cloud']) {  // Add 'Appsody' when we ship them by default
             describe(projectStyle, function() {
                 it(`should return only ${projectStyle} templates`, async function() {
                     const res = await getTemplates(projectStyle);
@@ -150,7 +150,7 @@ describe('Template API tests', function() {
         it('should return a list of available template styles', async function() {
             const res = await getTemplateStyles();
             res.should.have.status(200);
-            res.body.should.deep.equal(['codewind', 'appsody']);
+            res.body.should.deep.equal(['IBM Cloud']);  // Add 'Appsody' when we ship them by default
         });
     });
 });

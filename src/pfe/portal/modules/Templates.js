@@ -114,7 +114,7 @@ module.exports = class Templates {
     let relevantTemplates = allTemplates.filter(template =>
       template.projectStyle === projectStyle
     );
-    if (projectStyle === 'codewind') {
+    if (projectStyle === 'IBM Cloud') {
       const templatesWithoutSpecifiedStyle = allTemplates.filter(template => !template.projectStyle);
       relevantTemplates = [...relevantTemplates, ...templatesWithoutSpecifiedStyle];
     }
@@ -167,7 +167,7 @@ module.exports = class Templates {
 
   async getTemplateStyles() {
     const templates = await this.getTemplateList();
-    const styles = templates.map(template => template.projectStyle || 'codewind');
+    const styles = templates.map(template => template.projectStyle || 'IBM Cloud');
     const uniqueStyles = [...new Set(styles)];
     return uniqueStyles;
   }
