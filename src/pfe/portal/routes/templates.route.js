@@ -18,7 +18,6 @@ const { validateReq } = require('../middleware/reqValidator');
 
 /**
  * API Function to return a list of available templates
- * @queryparam {String} the set of language extensions as a JSON array of strings
  * @return the set of language extensions as a JSON array of strings
  */
 router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
