@@ -13,15 +13,14 @@ import * as fse from "fs-extra";
 import * as request from "request";
 import * as fs from "fs";
 import { promisify } from "util";
+import * as _ from "lodash";
 
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
 
-const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + pfe_configs.pfe.PORT + pfe_configs.pfeAPIs.projects;
+const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + pfe_configs.pfe.PORT;
 
 const mcWorkspace = app_configs.codewindWorkspaceDir;
-
-const fixtures = app_configs.fixturesDir;
 
 export const existsAsync = promisify(fs.exists);
 export const mkdirAsync = promisify(fs.mkdir);
@@ -34,19 +33,17 @@ export const openAsync = promisify(fs.open);
 export const readAsync = promisify(fs.readFile);
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
-    return request.get(pfeURL, callback);
+    const pingUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.projects;
+    return request.get(pingUrl, {rejectUnauthorized: false}, callback);
+}
+
+export function getRegistry(callback: request.RequestCallback): request.Request {
+    const registryUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.registry;
+    return request.get(registryUrl, {rejectUnauthorized: false}, callback);
 }
 
 export function cloneProject(projectName: string, parentPath: string, url: string, callback: request.RequestCallback): request.Request {
     return request.post({"url": pfeURL, "form": {"projectName": projectName, "parentPath": parentPath, "url": url}}, callback);
-}
-
-export function deleteFixtures(callback: any): any {
-    fse.remove(fixtures, callback);
-}
-
-export function copyFixtures(callback: any): any {
-    fse.copy(fixtures, mcWorkspace, callback);
 }
 
 export function cleanWorkspace(): any {
@@ -95,4 +92,12 @@ export function setTestEnvVariables(): void {
     process.env.CW_PROJECTDATA_DIR = app_configs.projectDataDir;
     process.env.CW_WORKSPACESETTINGS_DIR = app_configs.workspaceSettingsDir;
     process.env.CW_EXTENSION_DIR = app_configs.extensionDir;
+    process.env.IN_K8_REGISTRY = "sakibh";
+}
+
+export function writeToFile(path: string, content: string, callback: (err: Error, msg: string) => void): void {
+    fs.writeFile(path, content, (err) => {
+        if (err) callback(err, undefined);
+        callback(undefined, `Successfully written content to ${path}`);
+    });
 }
