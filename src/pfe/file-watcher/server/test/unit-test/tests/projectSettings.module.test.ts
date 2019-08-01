@@ -24,6 +24,9 @@ export function projectSettingsTestModule(): void {
     let mavenProfilesStatus = "";
     let mavenPropertiesStatus = "";
     let ignoredPathsStatus = "";
+    let internalDebugPortStatus = "";
+    let internalPortStatus = "";
+    let projectSettingsStatus = "";
 
     socket.registerListener({
         name: "codewindunittest",
@@ -39,8 +42,128 @@ export function projectSettingsTestModule(): void {
                     mavenPropertiesStatus = data.status;
                 } else if (data.ignoredPaths || (data.error && data.error.includes("ignoredPaths"))) {
                     ignoredPathsStatus = data.status;
+                } else if ((data.ports && data.ports.internalDebugPort)) {
+                    internalDebugPortStatus = data.status;
+                } else if ((data.ports && data.ports.internalPort)) {
+                    internalPortStatus = data.status;
+                } else {
+                    projectSettingsStatus = data.status;
                 }
             }
+        }
+    });
+
+    describe("combinational testing of internalDebugPort function", () => {
+
+        const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+        const swiftProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyswiftproject");
+        const swiftOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyswiftproject.json");
+        const swiftTestProjectMetadata = path.join(swiftProjectMetadataPath, "dummyswiftproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(nodeProjectMetadataPath))) {
+                await mkdirAsync(nodeProjectMetadataPath);
+                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+            }
+
+            if (!(await existsAsync(swiftProjectMetadataPath))) {
+                await mkdirAsync(swiftProjectMetadataPath);
+                await copyAsync(swiftOriginalProjectMetadata, swiftTestProjectMetadata);
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(nodeProjectMetadataPath))) {
+                await unlinkAsync(nodeTestProjectMetadata);
+                await rmdirAsync(nodeProjectMetadataPath);
+            }
+
+            if ((await existsAsync(swiftProjectMetadataPath))) {
+                await unlinkAsync(swiftTestProjectMetadata);
+                await rmdirAsync(swiftProjectMetadataPath);
+            }
+        });
+
+        const combinations: any = {
+            "combo1": {
+                "internalDebugPortSettings": {
+                    "internalDebugPort": "1234"
+                },
+                "result": "failed"
+            },
+            "combo2": {
+                "internalDebugPortSettings": {
+                    "internalDebugPort": "1234"
+                },
+                "result": "success"
+            },
+            "combo3": {
+                "internalDebugPortSettings": {
+                    "internalDebugPort": ""
+                },
+                "result": "success"
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const internalDebugPortSettings = combinations[combo]["internalDebugPortSettings"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => internalDebugPortSettings: " + JSON.stringify(internalDebugPortSettings), async () => {
+                let projectID: string = "dummynodeproject";
+
+                if (combo == "combo1") {
+                    projectID = "dummyswiftproject";
+                }
+
+                await projectSettings.projectSpecificationHandler(projectID, internalDebugPortSettings);
+                expect(internalDebugPortStatus).to.equal(expectedResult);
+            });
+        }
+    });
+
+    describe("combinational testing of internalPort function", () => {
+
+        const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(nodeProjectMetadataPath))) {
+                await mkdirAsync(nodeProjectMetadataPath);
+                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(nodeProjectMetadataPath))) {
+                await unlinkAsync(nodeTestProjectMetadata);
+                await rmdirAsync(nodeProjectMetadataPath);
+            }
+        });
+
+        const combinations: any = {
+            "combo1": {
+                "internalPortSettings": {
+                    "internalPort": "1234"
+                },
+                "result": "failed"
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const internalPortSettings = combinations[combo]["internalPortSettings"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => internalPortSettings: " + JSON.stringify(internalPortSettings), async () => {
+                const projectID: string = "dummynodeproject";
+
+                await projectSettings.projectSpecificationHandler(projectID, internalPortSettings);
+                expect(internalPortStatus).to.equal(expectedResult);
+            });
         }
     });
 
@@ -76,6 +199,12 @@ export function projectSettingsTestModule(): void {
                     "contextRoot": "<script>alert(\"xss\");</script>"
                 },
                 "result": "failed"
+            },
+            "combo3": {
+                "contextSettings": {
+                    "contextRoot": ""
+                },
+                "result": "success"
             }
         };
 
@@ -124,6 +253,12 @@ export function projectSettingsTestModule(): void {
                     "healthCheck": "<script>alert(\"xss\");</script>"
                 },
                 "result": "failed"
+            },
+            "combo3": {
+                "healthSettings": {
+                    "healthCheck": ""
+                },
+                "result": "success"
             }
         };
 
@@ -192,6 +327,12 @@ export function projectSettingsTestModule(): void {
                     "mavenProfiles": ["hi"]
                 },
                 "result": "success"
+            },
+            "combo4": {
+                "mavenProfilesSettings": {
+                    "mavenProfiles": []
+                },
+                "result": "success"
             }
         };
 
@@ -202,7 +343,7 @@ export function projectSettingsTestModule(): void {
             it(combo + " => mavenProfilesSettings: " + JSON.stringify(mavenProfilesSettings), async () => {
                 let projectID: string = "dummynodeproject";
 
-                if (combo == "combo3") {
+                if (combo == "combo3" || combo == "combo4") {
                     projectID = "dummyspringproject";
                 }
 
@@ -264,6 +405,12 @@ export function projectSettingsTestModule(): void {
                     "mavenProperties": ["hi=hi"]
                 },
                 "result": "success"
+            },
+            "combo4": {
+                "mavenPropertiesSettings": {
+                    "mavenProperties": []
+                },
+                "result": "success"
             }
         };
 
@@ -274,7 +421,7 @@ export function projectSettingsTestModule(): void {
             it(combo + " => mavenPropertiesSettings: " + JSON.stringify(mavenPropertiesSettings), async () => {
                 let projectID: string = "dummynodeproject";
 
-                if (combo == "combo3") {
+                if (combo == "combo3" || combo == "combo4") {
                     projectID = "dummyspringproject";
                 }
 
@@ -315,6 +462,11 @@ export function projectSettingsTestModule(): void {
                     "ignoredPaths": ["Dockerfile"]
                 },
                 "result": "success"
+            }, "combo3": {
+                "ignoredPathsSettings": {
+                    "ignoredPaths": []
+                },
+                "result": "success"
             }
         };
 
@@ -327,6 +479,54 @@ export function projectSettingsTestModule(): void {
 
                 await projectSettings.projectSpecificationHandler(projectID, ignoredPathsSettings);
                 expect(ignoredPathsStatus).to.equal(expectedResult);
+            });
+        }
+    });
+
+    describe("combinational testing of projectSpecificationHandler function", () => {
+
+        const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(nodeProjectMetadataPath))) {
+                await mkdirAsync(nodeProjectMetadataPath);
+                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(nodeProjectMetadataPath))) {
+                await unlinkAsync(nodeTestProjectMetadata);
+                await rmdirAsync(nodeProjectMetadataPath);
+            }
+        });
+
+        const combinations: any = {
+            "combo1": {
+                "projectSpecificationHandlerSetting": {
+                    "garbageKey": "Dockerfile"
+                },
+                "result": "failed"
+            },
+            "combo2": {
+                "projectSpecificationHandlerSetting": {
+                    "internalPort": undefined
+                },
+                "result": "failed"
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const projectSpecificationHandlerSetting = combinations[combo]["projectSpecificationHandlerSetting"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => projectSpecificationHandlerSetting: " + JSON.stringify(projectSpecificationHandlerSetting), async () => {
+                const projectID: string = "dummynodeproject";
+
+                await projectSettings.projectSpecificationHandler(projectID, projectSpecificationHandlerSetting);
+                expect(projectSettingsStatus).to.equal(expectedResult);
             });
         }
     });
