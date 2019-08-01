@@ -106,7 +106,7 @@ export async function determineProjectType(location: string): Promise<Array<stri
     if (! await utils.asyncFileExists(location)) {
         const msg = "The location does not exist: " + location;
         logger.logError(msg);
-        const error = new Error("The location does not exist: " + location);
+        const error = new Error(msg);
         error.name = "FILE_NOT_EXIST";
         throw error;
     }
