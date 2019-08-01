@@ -31,3 +31,7 @@ export async function deleteProject(projectID: string): Promise<any> {
 export async function getProjectCapabilities(projectID: string): Promise<projectsController.IGetProjectCapabilitiesSuccess | projectsController.IGetProjectCapabilitiesFailure> {
   return await filewatcher.getProjectCapabilities(projectID);
 }
+
+export async function projectAction(req: projectsController.IProjectActionParams): Promise<projectsController.IProjectActionSuccess | projectsController.IProjectActionFailure> {
+  return await filewatcher.performProjectAction(req);
+}

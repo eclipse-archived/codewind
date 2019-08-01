@@ -22,8 +22,6 @@ const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + p
 
 const mcWorkspace = app_configs.codewindWorkspaceDir;
 
-const fixtures = app_configs.fixturesDir;
-
 export const existsAsync = promisify(fs.exists);
 export const mkdirAsync = promisify(fs.mkdir);
 export const copyAsync = promisify(fs.copyFile);
@@ -42,14 +40,6 @@ export function getRegistry(callback: request.RequestCallback): request.Request 
 
 export function cloneProject(projectName: string, parentPath: string, url: string, callback: request.RequestCallback): request.Request {
     return request.post({"url": pfeURL, "form": {"projectName": projectName, "parentPath": parentPath, "url": url}}, callback);
-}
-
-export function deleteFixtures(callback: any): any {
-    fse.remove(fixtures, callback);
-}
-
-export function copyFixtures(callback: any): any {
-    fse.copy(fixtures, mcWorkspace, callback);
 }
 
 export function cleanWorkspace(): any {

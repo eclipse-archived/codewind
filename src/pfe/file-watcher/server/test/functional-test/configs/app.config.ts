@@ -25,9 +25,6 @@ export const projectConfigs = {
     "appDirectory": path.join(codewindWorkspaceDir, projectPrefix)
 };
 
-export const FIXTURES = "idc-fixtures";
-export const fixturesDir = path.resolve(__dirname, "..", "..", FIXTURES);
-
 export const projectTypes = ["docker"];
 export const supportedDockerProjects = ["go", "python"];
 
@@ -36,4 +33,8 @@ export const projectCapabilities: any = {
         "startModes": ["run"],
         "controlCommands": []
     }
+};
+
+export const restartCapabilities: any = {
+    "docker": false
 };

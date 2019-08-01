@@ -51,7 +51,7 @@ export default class ProjectTestSuite {
     runTest(projectData: ProjectCreation, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(`${this.suite}: ${projectLang}`, () => {
             this.createTest.run(this.socket, projectData);
-            this.projectTest.run(projectData);
+            this.projectTest.run(this.socket, projectData);
             this.deleteTest.run(this.socket, projectData.projectID);
         });
     }
