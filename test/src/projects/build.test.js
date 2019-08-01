@@ -40,7 +40,7 @@ describe('Project Build Tests', function() {
                 });
                 /** 
                  * Currently, projects created with { autobuild: false } do not actually build.
-                 * Issue raised at https://github.ibm.com/dev-ex/iterative-dev/issues/1144
+                 * Issue raised at https://github.com/eclipse/codewind/issues/54
                  */
                 it.skip('verifies that the project is now building', async function() {
                     this.timeout(testTimeout.short);

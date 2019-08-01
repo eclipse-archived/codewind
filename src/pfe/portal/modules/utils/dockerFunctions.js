@@ -13,6 +13,8 @@ const docker = new dockerApi();
 const Logger = require('../utils/Logger');
 const log = new Logger('dockerFunctions.js');
 
+const { spawn } = require('child_process');
+
 /**
  * Exported function to stream the Docker container log for a given project
  * @param project, the project to get the container log for
@@ -69,6 +71,13 @@ module.exports.exec = async function exec(project, command) {
   // .then(stream => {
   //   container.modem.demuxStream(stream.output, process.stdout, process.stderr);
   // });
+}
+
+// Use spawn to run a given command inside the container and return the resulting
+// child process.
+module.exports.spawnContainerProcess = function spawnContainerProcess(project, commandArray) {
+  const cmdArray = ['exec', '-i', project.containerId].concat(commandArray);
+  return spawn('/usr/bin/docker', cmdArray);
 }
 
 module.exports.run = async function(containerName, command, volumes) {

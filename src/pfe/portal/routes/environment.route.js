@@ -15,10 +15,37 @@ const Logger = require('../modules/utils/Logger');
 const router = express.Router();
 const log = new Logger(__filename);
 
+const Client = require('kubernetes-client').Client
+const config = require('kubernetes-client').config;
+
+/**
+ * This function determines the ingress endpoint of the tekton dashboard if
+ * its deployed and running 
+ */
+async function getTektonDashboard() {
+  let tekton_dashboard_url = '';
+
+  try {
+    const client = new Client({ config: config.getInCluster(), version: '1.9'});
+
+    if (global.codewind.RUNNING_IN_K8S){
+      let ingress = await client.apis.extensions.v1beta1.namespaces(process.env.TEKTON_PIPELINE).ingress().get();
+      if (ingress) {
+        tekton_dashboard_url = (ingress.body.items[0].spec.rules[0].host) || '';
+      } 
+    }
+  } catch (err) {
+    log.error(err);
+  }
+
+  return tekton_dashboard_url;
+}
+
 /**
  * API Function to provide codewind runtime information to the UI
  */
-router.get('/api/v1/environment', (req, res) => {
+router.get('/api/v1/environment', async (req, res) => {
+
   try {
     let body = {};
     body = {
@@ -28,6 +55,7 @@ router.get('/api/v1/environment', (req, res) => {
       codewind_version: process.env.CODEWIND_VERSION,
       workspace_location: process.env.HOST_WORKSPACE_DIRECTORY,
       os_platform: process.env.HOST_OS || 'Linux',
+      tekton_dashboard_url: await getTektonDashboard()
     }
     res.status(200).send(body);
   } catch (err) {

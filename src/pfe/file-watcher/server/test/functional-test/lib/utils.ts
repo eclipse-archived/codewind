@@ -81,4 +81,5 @@ export function setTestEnvVariables(): void {
     process.env.CW_LOGS_DIR = app_configs.microclimateWorkspaceLogsDir;
     process.env.CW_FWDATA_DIR = app_configs.fwDataDir;
     process.env.CW_PROJECTDATA_DIR = app_configs.projectDataDir;
+    process.env.CW_WORKSPACESETTINGS_DIR = app_configs.workspaceSettingsDir;
 }

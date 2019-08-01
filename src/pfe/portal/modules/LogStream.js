@@ -36,19 +36,18 @@ module.exports = class LogStream {
    */
   static createLogStream(project, uiSocket, logType, logOrigin, logName, logFile) {
 
-    logger.debug(`Creating LogStream for: ${logType} ${logOrigin} ${logName} ${logFile} `)
+    logger.debug(`Creating LogStream for: ${logType} ${logOrigin} ${logName} ${logFile} `);
 
-    if (logOrigin == 'container' && logType == 'app') {
+    if (logOrigin == 'container' && logName == '-') {
       return new ApplicationContainerLogStream(project, uiSocket, logType);
     } else if (logOrigin == 'workspace') {
       return new WorkspaceFileLogStream(project, uiSocket, logType, logName, logFile);
-    }
-    // TODO (when needed) - Files in containers and build logs from build containers.
+    // TODO (when needed) - Build logs from build containers.
     // } else if (logOrigin == 'container' && logType == 'build') {
     //   return new BuildContainerLogStream(project, uiSocket);
-    // } else if (logOrigin == 'workspace') {
-    //   return new ContainerFileLogStream(project, uiSocket, logName, logFile);
-    // }
+    } else if (logOrigin == 'container') {
+      return new ContainerFileLogStream(project, uiSocket, logType, logName, logFile);
+    }
     throw new Error('Unknown log type.');
   }
 }
@@ -154,7 +153,7 @@ class WorkspaceFileLogStream {
     // Start streaming by stopping the existing stream.
     this.tail = spawn('tail', ['-q', '-F', '-c', '+0', this.logFile]);
     logger.debug(`Log tailing command is: ${this.tail.spawnargs.join(' ')}`);
-    // TODO - check if process is still running..... listening to event
+    // TODO - check if process is still running..... listening to events
     // might be too late.
     this.tail.on('error', function (err) {
       logger.debug(`tail failed with:`);
@@ -201,6 +200,92 @@ class WorkspaceFileLogStream {
       this.tail.stderr.removeAllListeners();
       this.tail.kill();
       this.tail = undefined;
+    }
+  }
+}
+
+class ContainerFileLogStream {
+
+  constructor (project, uiSocket, logType, logName, logFile) {
+    this.project = project;
+    this.uiSocket = uiSocket;
+    this.logType = logType;
+    this.logName = logName;
+    this.logFile = logFile;
+    this.logPath = path.dirname(logFile);
+    this.firstChunk = true;
+    this.dockerExec = undefined;
+    this.sendQueue = [];
+    this.stopped = true;
+  }
+
+  resetStream() {
+    logger.debug(`Resetting stream for ${this.logType} ${this.logName}.`);
+    // Throw away any unsent messages.
+    this.sendQueue = [];
+    this.firstChunk = true;
+  }
+
+  /**
+   * Function to start streaming a log file
+   */
+  streamLog() {
+    // Make 'this' accessible in the callback.
+    const logStream = this;
+    logStream.stopped = false;
+    // Start streaming by running tail. Run under a shell so we can send Ctrl-C
+    // later to kill the process. (Otherwise we leak tail processes in the remote
+    // container.)
+    this.dockerExec = cwUtils.spawnContainerProcess(this.project, ['tail', '-q', '-F', '-c', '+0', this.logFile]);
+    logger.debug(`Log tailing command is: ${this.dockerExec.spawnargs.join(' ')}`);
+    this.dockerExec.on('error', function (err) {
+      logger.debug(`tail failed with:`);
+      logger.debug(err);
+    })
+    this.dockerExec.on('close', function (code, signal) {
+      logger.debug(`tail exited with rc = ${code} via signal ${signal}`);
+    })
+    this.dockerExec.stderr.on('data', (chunk) => {
+      logger.debug(`tail stderr: ${chunk}`);
+      // This should mean the file has been re-created.
+      this.firstChunk = true;
+    });
+    this.dockerExec.stdout.on('data', (chunk) => {
+      const chunkString = chunk.toString('utf8');
+      logStream.sendQueue.push(chunkString);
+      logger.debug(`Emit queued for ${this.project.name}, ${this.project.projectID}`);
+    });
+    this.dockerExec.stdout.on('error', (err) => {
+      logger.debug(err);
+      this.stop();
+    });
+    this.dockerExec.stdout.on('finish', () => {
+      logger.debug(`log ${this.logName}, file: ${this.logFile} end reached.`);
+      // TODO - Should we restart here if this happened because
+      // the file was reset. (If so pass the callback - how do we tell
+      // the stream wasn't closed deliberately rather than by the log changing.)
+      this.stop();
+    });
+    // Emit every one second to prevent us sending hundreds of messages
+    // in one go when re-opening large logs but keep the UI responsive.
+    setTimeout(emitQueued, LOG_EMIT_TIMEOUT, logStream);
+  }
+
+  /**
+   * Function to stop streaming a log file
+   */
+  stop() {
+    logger.debug(`Stopping streaming: ${this.logFile} for ${this.project.name}, ${this.project.projectID}`);
+    this.stopped = true;
+    if (this.dockerExec) {
+      // Stop listening now so we don't get events triggered by kill()
+      // The process we spawn in the container won't automatically be killed
+      // if we kill docker exec, we need to log in and clean it up manually.
+      cwUtils.spawnContainerProcess(this.project, ['sh', '-c', `ps -aux | grep 'tail -q -F -c +0 ${this.logFile}' | awk '{print $2}' | xargs kill -9`]);
+      this.dockerExec.stdout.removeAllListeners();
+      this.dockerExec.stderr.removeAllListeners();
+      this.dockerExec.kill();
+      this.dockerExec = undefined;
     }
   }
 }
