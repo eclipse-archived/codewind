@@ -18,13 +18,6 @@ const log = new Logger(__filename);
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
 
-
-router.get('/api/v1/gettobes', async (req, res) => {
-
-  res.status(200).send("environment tobes");
-
-})
-
 /**
  * This function determines the ingress endpoint of the tekton dashboard if
  * its deployed and running 
