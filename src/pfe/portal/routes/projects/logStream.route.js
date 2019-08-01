@@ -49,6 +49,8 @@ async function startStreamingAll(req, res, startStreams) {
           let logObject = {logName: logName}
           if (logs[logType].origin == 'workspace') {
             logObject.workspaceLogPath = path.dirname(file);
+          } else if (logs[logType].origin == 'container') {
+            logObject.containerLogPath = path.dirname(file);
           }
           logTypes[logType].push(logObject);
           let logFile = file;
@@ -64,7 +66,7 @@ async function startStreamingAll(req, res, startStreams) {
           logTypes[CONTAINER_LOG_TYPE] = [];
         }
         // Use '-' for stdout (ie the container log).
-        logTypes[CONTAINER_LOG_TYPE].push({logName: '-'});
+        logTypes[CONTAINER_LOG_TYPE].push({origin: 'container', logName: '-'});
         if (startStreams) {
           project.startStreamingLog(user.uiSocket, CONTAINER_LOG_TYPE, 'container', CONTAINER_LOG_NAME, CONTAINER_LOG_NAME);
         }
