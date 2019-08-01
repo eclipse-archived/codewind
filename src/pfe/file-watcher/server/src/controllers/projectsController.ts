@@ -850,7 +850,7 @@ export async function getProjectInfoFromFile(infoFile: string, ignoreLog?: boole
  *
  * @returns Promise<void>
  */
-function deleteFile(dir: string, file: string): Promise<void> {
+export function deleteFile(dir: string, file: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const currentPath = path.join(dir, file);
 
