@@ -15,7 +15,9 @@ import { connect } from 'react-redux';
 
 import { fetchProjectConfig } from '../../store/actions/projectInfoActions';
 import * as AppConstants from '../../AppConstants';
+import logo from './logo@1x.png';
 import './NavBar.scss';
+
 
 class NavBar extends React.Component {
     constructor() {
@@ -43,7 +45,9 @@ class NavBar extends React.Component {
     render() {
         return (
             <div className='NavBar'>
-                <span className='appTitle'>{AppConstants.APP_NAME}</span>
+                <span className='logo'> <img src={logo}/> </span>
+                <span className='appTitle_1'>code</span>
+                <span className='appTitle_2'>wind</span>
                 <span className='projectName'>{this.state.projectName}</span>
             </div>
         )

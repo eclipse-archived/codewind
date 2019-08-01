@@ -1,6 +1,6 @@
 {
   "filewatcherUtil": {
-    "fwNLSInitSuccess": "File-watcher NLS has been initialized successfully"
+    "fwNLSInitSuccess": "Turbine NLS has been initialized successfully"
   },
   "action": {
     "calculateDifference": "Calculating difference"
@@ -25,7 +25,8 @@
       "invalidMavenSettings": "Build aborted. Failed to get the user Maven settings",
       "missingDeploymentRegistry": "The project will not build due to missing Deployment Registry. Run the Set Deployment Registry command to set a new Deployment Registry to build projects.",
       "invalidDeploymentRegistry": "Codewind was unable to push an image to the Deployment Registry. Please make sure it is a valid Deployment Registry with the appropriate permissions.",
-      "wrongDeploymentRegistry": "The project will not build with the new Deployment Registry. Please remove and re-add the project to deploy to the new Deployment Registry."
+      "wrongDeploymentRegistry": "The project will not build with the new Deployment Registry. Please remove and re-add the project to deploy to the new Deployment Registry.",
+      "unexpectedError": "An unexpected error occurred"
   },
   "buildApplicationTask": {
     "pomChangeDetected": "pom.xml change detected, running clean build",
@@ -36,7 +37,8 @@
     "configBuildFail": "Application build for server config change failed. Please check the build log view for more details.",
     "compileApplication": "Compiling application",
     "buildFail": "Application build failed. Please check the log in the build log view for more details.",
-    "missingServerXml": "The Liberty server configuration file was not found at {{- path}}.\n\tPlease move the server.xml to this location, or copy one in from another Microprofile project."
+    "missingServerXml": "The Liberty server configuration file was not found at {{- path}}.\n\tPlease move the server.xml to this location, or copy one in from another Microprofile project.",
+    "invalidIDCOption": "Invalid idc command option"
   },
   "containerBuildTask": {
     "containerBuild": "Building container image",
@@ -46,6 +48,9 @@
     "containerBuildFailArtifactsMissing": "Container image failed to build: the image could not be built because the artifacts directory was not found",
     "containerBuildFail": "Container image failed to build: failed on running build command",
     "containerBuildSuccess": "Container image has been built successfully"
+  },
+  "containerRunTask": {
+    "containerRunTaskFailed": "Start container stage failed: failed to get deploymentID/podID/releaseID"
   },
   "projectStatusController": {
     "projectInfoError": "No current build information available",

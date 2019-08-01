@@ -10,17 +10,16 @@
  *******************************************************************************/
 "use strict";
 import { promisify } from "util";
-import { spawn } from "child_process";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
-
+import AsyncLock from "async-lock";
 // local imports
 import { actionMap } from "../projects/actions";
 import * as projectSpecifications from "../projects/projectSpecifications";
 import { Operation } from "../projects/operation";
 import * as localeTrans from "../utils/locale";
-import { AppLog, BuildLog, ProjectInfo, ProjectMetadata, ProjectCapabilities, UpdateProjectInfoPair, InotifyArgs, ProjectSettingsEvent } from "../projects/Project";
+import { AppLog, BuildLog, ProjectInfo, ProjectMetadata, ProjectCapabilities, UpdateProjectInfoPair } from "../projects/Project";
 import * as io from "../utils/socket";
 import * as utils from "../utils/utils";
 import * as constants from "../projects/constants";
@@ -31,7 +30,6 @@ import * as statusController from "./projectStatusController";
 import * as projectExtensions from "../extensions/projectExtensions";
 import * as processManager from "../utils/processManager";
 import { Validator } from "../projects/Validator";
-import { Environment } from "../utils/environment";
 
 
 interface ProjectInfoCache {
@@ -43,6 +41,7 @@ interface BuildQueueType {
     handler: any;
 }
 
+const lock = new AsyncLock();
 const readFileAsync = promisify(fs.readFile);
 const mkDirAsync = promisify(fs.mkdir);
 const fileStatAsync = promisify(fs.stat);
@@ -84,7 +83,7 @@ export async function getProjectTypes(location: string): Promise<IGetProjectType
             returnCode = 500;
 
         const msg = "The project type cannot be determined for project " + location + "\n " + err;
-        logger.logFileWatcherError(msg);
+        logger.logError(msg);
         return { "statusCode": returnCode, "error": { "msg": msg }};
     }
     return { "statusCode": 200, "types": types};
@@ -153,7 +152,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     const projectName = projectLocation.split("/").pop();
 
     // create log storing directory for the project
-    logger.logFileWatcherInfo("Creating project logs directory");
+    logger.logInfo("Creating project logs directory");
     const dirName = await logHelper.getLogDir(projectID, projectName);
     await logHelper.createLogDir(dirName, constants.projectConstants.projectsLogDir);
 
@@ -181,7 +180,8 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
 
         projInfo = {
             projectType: projectType,
-            location: projectLocation
+            location: projectLocation,
+            language: req.language
         } as ProjectInfo;
 
         if (req.extension)
@@ -213,7 +213,8 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         autoBuildEnabled: true,
         startMode: "run",
         appPorts: [],
-        extensionID: projInfo.extensionID
+        extensionID: projInfo.extensionID,
+        language: projInfo.language
     };
     const startMode = req.startMode;
     if (startMode) {
@@ -301,43 +302,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                     }
 
                 }
-            } else if (key == "watchedFiles") {
-                const includeFiles = settings.watchedFiles.includeFiles;
-                const excludeFiles = settings.watchedFiles.excludeFiles;
-                let excludeFilesFlag = true;
-                let includeFilesFlag = true;
-                if (includeFiles && (includeFiles instanceof Array) && includeFiles.length > 0) {
-                    for (let i = 0; i < includeFiles.length; i++) {
-                        if (includeFiles[i].trim().length == 0) {
-                            includeFilesFlag = false;
-                            break;
-                        }
-                    }
-
-                    if (!includeFilesFlag) {
-                        logger.logProjectInfo("At least one of the element is empty, File-watcher will ignore the setting watchedFiles.includeFiles", projectID, projectName);
-                    } else {
-                        projectInfo.watchedFiles = settings[key]["includeFiles"];
-                    }
-                }
-
-                if (excludeFiles && (excludeFiles instanceof Array) && excludeFiles.length > 0) {
-
-                    for (let i = 0; i < excludeFiles.length; i++) {
-                        if (excludeFiles[i].trim().length == 0) {
-                            excludeFilesFlag = false;
-                            break;
-                        }
-                    }
-
-                    if (!excludeFilesFlag) {
-                        logger.logProjectInfo("At least one of the element is empty, File-watcher will ignore the setting watchedFiles.excludeFiles", projectID, projectName);
-                    } else {
-                        projectInfo.ignoredFiles = settings[key]["excludeFiles"];
-                    }
-                }
-            // ignoredFilesForDeamon is the project settings for filewatcher daemon
-            } else if (key == "ignoredPaths") {
+            } else if (key == "ignoredPaths" && (settings.ignoredPaths instanceof Array)) {
                 let ignoredPaths = settings.ignoredPaths;
                     // Ignore empty strings in ignoredPaths
                 ignoredPaths = ignoredPaths.filter( el => {
@@ -364,8 +329,12 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         }
     }
 
-    // Save project metadata
-    await saveProjectInfo(projectID, projectInfo);
+    try {
+        // Save project metadata
+        await saveProjectInfo(projectID, projectInfo);
+    } catch (err) {
+        logger.logProjectError(JSON.stringify(err), projectID);
+    }
 
     // Add the project to the status controller
     statusController.addProject(projectID);
@@ -388,21 +357,28 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         operation: operation,
         handler: selectedProjectHandler
     };
+    let target: BuildQueueType = undefined;
 
-    // Check if project is already in the build queue, if it is then no need to add it
-    const target = buildQueue.find((item) => {
-        return item.operation.projectInfo.projectID === project.operation.projectInfo.projectID;
-    });
-    if (target) {
-        logger.logProjectInfo("The project is already in the build queue so it won't be added again", projectID, projectName);
-    } else {
-        logger.logProjectInfo("Pushing project to build queue", projectID, projectName);
-        buildQueue.push(project);
+    await lock.acquire("buildQueueLock", done => {
+        // Check if project is already in the build queue, if it is then no need to add it
+        target = buildQueue.find((item) => {
+            return item.operation.projectInfo.projectID === project.operation.projectInfo.projectID;
+        });
+        if (target) {
+            logger.logProjectInfo("The project is already in the build queue so it won't be added again", projectID, projectName);
+        } else {
+            logger.logProjectInfo("Pushing project to build queue", projectID, projectName);
+            buildQueue.push(project);
+        }
+        done();
+    }, async () => {
+        // buildQueueLock release
         // emit updated queued project ranks
-        await emitProjectRanks();
-    }
-
-    await checkBuildQueue();
+        if (target) {
+            await emitProjectRanks();
+        }
+        await checkBuildQueue();
+    }, {});
 
     return {
             "statusCode": 202,
@@ -418,36 +394,43 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
  * @returns void
  */
 async function checkBuildQueue(): Promise<void> {
-    // assert the builds in progress is always between 0 to MAX_BUILDS inclusive
-    logger.fileWatcherAssert(runningBuilds.length >= 0 && runningBuilds.length <= MAX_BUILDS, "Builds in progress must be between [0, MAX_BUILDS]");
+    let buildQueueLength = 0;
+    await lock.acquire(["buildQueueLock", "runningBuildsLock"], done => {
+        // assert the builds in progress is always between 0 to MAX_BUILDS inclusive
+        logger.assert(runningBuilds.length >= 0 && runningBuilds.length <= MAX_BUILDS, "Builds in progress must be between [0, MAX_BUILDS]");
+        // if we have builds in the queue
+        buildQueueLength = buildQueue.length;
+        if (buildQueueLength > 0) {
+            logger.logDebug("Found at least one build in the queue");
 
-    // if we have builds in the queue
-    if (buildQueue.length > 0) {
-        logger.logFileWatcherInfo("Found at least one build in the queue");
+            // check und update builds in progress
+            checkInProgressBuilds();
 
-        // check und update builds in progress
-        checkInProgressBuilds();
+            // if we have space for builds to trigger, trigger the build, remove it from the queue, increase the number of builds in progress and push it on to in progress array
+            if (runningBuilds.length < MAX_BUILDS) {
+                logger.logDebug("Space available to trigger the next build");
 
-        // if we have space for builds to trigger, trigger the build, remove it from the queue, increase the number of builds in progress and push it on to in progress array
-        if (runningBuilds.length < MAX_BUILDS) {
-            logger.logFileWatcherInfo("Space available to trigger the next build");
+                // remove the first project off the queue
+                const buildToBeTriggered = buildQueue.shift();
 
-            // remove the first project off the queue
-            const buildToBeTriggered = buildQueue.shift();
+                logger.logDebug("Metadata for next build: " + JSON.stringify(buildToBeTriggered));
 
-            logger.logFileWatcherInfo("Metadata for next build: " + JSON.stringify(buildToBeTriggered));
-
-            triggerBuild(buildToBeTriggered);
-            runningBuilds.push(buildToBeTriggered);
-
-            // emit updated queued project ranks
-            await emitProjectRanks();
+                triggerBuild(buildToBeTriggered);
+                runningBuilds.push(buildToBeTriggered);
+            }
         }
-    } else {
-        // check und update builds in progress
-        // we do this check because we need to clear runningBuilds when there are no projects in the buildQueue
-        checkInProgressBuilds();
-    }
+        done();
+    }, async () => {
+        // buildQueueLock,  runningBuildsLock release
+        // emit updated queued project ranks
+        if (buildQueueLength > 0) {
+            await emitProjectRanks();
+        } else {
+            // check und update builds in progress
+            // we do this check because we need to clear runningBuilds when there are no projects in the buildQueue
+            checkInProgressBuilds();
+        }
+    }, {});
 }
 
 /**
@@ -462,12 +445,7 @@ async function triggerBuild(project: BuildQueueType): Promise<void> {
     const projectInfo = project.operation.projectInfo;
 
     const projectID = projectInfo.projectID;
-    const projectLocation = projectInfo.location;
-    let watchedFiles = projectInfo.watchedFiles;
-    const ignoredFiles = projectInfo.ignoredFiles;
     const selectedProjectHandler = project.handler;
-
-    const workspaceOrigin = process.argv[2];
 
     const operation = project.operation;
 
@@ -491,28 +469,6 @@ async function triggerBuild(project: BuildQueueType): Promise<void> {
     logger.logProjectInfo("Handing create operation to the selected project handler", projectID);
     selectedProjectHandler.create(operation);
 
-    // if is project extention but does not specify watchedFile, watch entire project directory
-    if (watchedFiles == undefined && projectInfo.projectType == projectExtensions.DOCKER_TYPE)
-        // add an extra / at the end of projectLocation
-        // so that we don't match projects that begin with the same name as this project when searching for inotify process
-        watchedFiles = [projectLocation + "/"];
-
-    // begin monitoring the application for file changes
-    if (!process.env.IN_K8) {
-        // upon filewatcher restart, we lost track of running processes in processManager
-        // need to grep all running processes in fw and kill the inotify processes to prevent from multiple inotify running concurrently
-        const ps = spawn("ps", ["aux"]);
-        let data: string = "";
-        ps.stdout.on("data", (chunk: any) => {
-            data += chunk.toString("utf-8");
-        });
-        ps.stdout.on("end", () => {
-            logger.logProjectInfo("Running processes:", projectID);
-            logger.logProjectInfo(data, projectID);
-            killProcesses(data, projectID, projectLocation);
-            processManager.spawnDetached(projectID, "/file-watcher/scripts/project-watcher.sh", [projectLocation, workspaceOrigin, projectID, "localhost", (watchedFiles) ? watchedFiles.toString() : undefined, (ignoredFiles) ? ignoredFiles.toString() : undefined, undefined, (process.env.PORTAL_HTTPS == "true") ? "9191" : "9090", "&"], { cwd: projectLocation }, (result) => { });
-        });
-    }
     // To notify filewatcher daemon that the project has been added
     const eventData: NewProjectAddedEvent = {
         projectID: projectID,
@@ -528,27 +484,32 @@ async function triggerBuild(project: BuildQueueType): Promise<void> {
  * @returns void
  */
 function checkInProgressBuilds(): void {
-    // filter out all projects that are completed and reduce the build in progress by 1 for each such project
-    runningBuilds = runningBuilds.filter((project: BuildQueueType) => {
-        const projectID = project.operation.projectInfo.projectID;
-        const buildStatus = statusController.getBuildState(projectID);
-        if (buildStatus === statusController.BuildState.success || buildStatus === statusController.BuildState.failed) {
-            logger.logProjectInfo("Build completed for " + projectID, projectID);
-            return false;
-        } else {
-            return true;
-        }
-    });
+    lock.acquire("runningBuildsLock", async done => {
+        // filter out all projects that are completed and reduce the build in progress by 1 for each such project
+        runningBuilds = runningBuilds.filter((project: BuildQueueType) => {
+            const projectID = project.operation.projectInfo.projectID;
+            const buildStatus = statusController.getBuildState(projectID);
+            if (buildStatus === statusController.BuildState.success || buildStatus === statusController.BuildState.failed) {
+                logger.logProjectInfo("Build completed for " + projectID, projectID);
+                return false;
+            } else {
+                return true;
+            }
+        });
 
-    if (runningBuilds.length > 0) {
-        // Only log the runningBuilds details if there is a project building, else we do not want to spam the FW log
-        const currentBuilds: Array<String> = [];
-        for (let i = 0; i < runningBuilds.length; i++) {
-            currentBuilds.push(runningBuilds[i].operation.projectInfo.projectID);
+        if (runningBuilds.length > 0) {
+            // Only log the runningBuilds details if there is a project building to avoid spamming the logs
+            const currentBuilds: Array<String> = [];
+            for (let i = 0; i < runningBuilds.length; i++) {
+                currentBuilds.push(runningBuilds[i].operation.projectInfo.projectID);
+            }
+            logger.logDebug(`Running Builds queue: ${JSON.stringify(currentBuilds)}`);
+            logger.logDebug(`Builds in progress: ${runningBuilds.length}`);
         }
-        logger.logFileWatcherInfo("Running Builds queue: " + JSON.stringify(currentBuilds));
-        logger.logFileWatcherInfo("There are " + runningBuilds.length + " builds in progress");
-    }
+        done();
+    }, () => {
+        // runningBuildsLock release
+    }, {});
 }
 
 /**
@@ -558,19 +519,24 @@ function checkInProgressBuilds(): void {
  * @returns Promise<void>
  */
 async function emitProjectRanks(): Promise<void> {
-    logger.logFileWatcherInfo("Emitting project ranks");
-    buildQueue = buildQueue.filter(temp => {
-        return temp != undefined;
-    });
-    buildQueue.forEach( async (project, index) => {
-        if (project) {
-            const rank = index + 1;
-            const length = buildQueue.length;
-            const rankStr = rank + "/" + length;
-            logger.logProjectInfo("Setting rank for projectID " + project.operation.projectInfo.projectID + ": " + rankStr, project.operation.projectInfo.projectID);
-            await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.queued, BUILD_KEY, undefined, undefined, await localeTrans.getTranslation(BUILD_KEY, { rank: rankStr.toString() }));
-        }
-    });
+    logger.logTrace("Emitting project ranks");
+    await lock.acquire("buildQueueLock", async done => {
+        buildQueue = buildQueue.filter(temp => {
+            return temp != undefined;
+        });
+        buildQueue.forEach( async (project, index) => {
+            if (project) {
+                const rank = index + 1;
+                const length = buildQueue.length;
+                const rankStr = rank + "/" + length;
+                logger.logProjectTrace("Setting rank for projectID " + project.operation.projectInfo.projectID + ": " + rankStr, project.operation.projectInfo.projectID);
+                await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.queued, BUILD_KEY, undefined, undefined, await localeTrans.getTranslation(BUILD_KEY, { rank: rankStr.toString() }));
+            }
+        });
+        done();
+    }, () => {
+            // buildQueueLock release
+    }, {});
 }
 
 /**
@@ -589,7 +555,7 @@ export async function deleteProject(projectID: string): Promise<IDeleteProjectSu
             await fileStatAsync(projectMetadata.infoFile);
         } catch (err) {
             if (err.code == "ENOENT") {
-                logger.logFileWatcherError("Project does not exist " + projectID);
+                logger.logError("Project does not exist " + projectID);
                 return { "statusCode": 404, "error": {"msg": "Project does not exist " + projectID }};
             }
         }
@@ -598,9 +564,9 @@ export async function deleteProject(projectID: string): Promise<IDeleteProjectSu
         const projectLocation = projectInfo.location;
         const projectName = projectLocation.split("/").pop();
 
-        logger.logProjectInfo("Retrieved project information for project " + projectMetadata.infoFile, projectID, projectName);
-        logger.logProjectInfo(JSON.stringify(projectInfo), projectID, projectName);
-        logger.logProjectInfo("Project location: " + projectInfo.location, projectID, projectName);
+        logger.logProjectTrace("Retrieved project information for project " + projectMetadata.infoFile, projectID);
+        logger.logProjectTrace(JSON.stringify(projectInfo), projectID);
+        logger.logProjectTrace("Project location: " + projectInfo.location, projectID);
 
         // Create operation
         const operation = new Operation("delete", projectInfo);
@@ -622,34 +588,43 @@ export async function deleteProject(projectID: string): Promise<IDeleteProjectSu
 
         let deleteQueuedBuildOccured = false;
 
-        const initialLength = buildQueue.length;
-
-        // remove the project from build queue only if the project deleted hasn't been started yet and update the other project ranks
-        buildQueue = buildQueue.filter((project: BuildQueueType) => {
-            if (project.operation.projectInfo.projectID === projectID) {
-                logger.logFileWatcherInfo("Removing " + projectID + " from build queue due to a delete request", projectName);
-                deleteQueuedBuildOccured = true;
-                return false;
-            } else {
-                return true;
+        let initialLength = 0;
+        await lock.acquire("buildQueueLock", async done => {
+            initialLength = buildQueue.length;
+            // remove the project from build queue only if the project deleted hasn't been started yet and update the other project ranks
+            buildQueue = buildQueue.filter((project: BuildQueueType) => {
+                if (project.operation.projectInfo.projectID === projectID) {
+                    logger.logProjectInfo("Removing " + projectID + " from build queue due to a delete request", projectID, projectName);
+                    deleteQueuedBuildOccured = true;
+                    return false;
+                } else {
+                    return true;
+                }
+            });
+            done();
+        }, () => {
+            // buildQueueLock release
+            // if a delete occured for a queued build, we need to restore the rank of the rest of the builds in queue
+            if (deleteQueuedBuildOccured) {
+                emitProjectRanks();
+                logger.assert((initialLength - buildQueue.length) === 1, "If project was deleted, the difference in build queue length should be exactly one");
             }
-        });
+        }, {});
 
-        // if a delete occured for a queued build, we need to restore the rank of the rest of the builds in queue
-        if (deleteQueuedBuildOccured) {
-            emitProjectRanks();
-            logger.fileWatcherAssert((initialLength - buildQueue.length) === 1, "If project was deleted, the difference in build queue length should be exactly one");
-        }
-
-        // remove the project from in-progress queue only if the project deleted was in the in-progress build
-        runningBuilds = runningBuilds.filter((project: BuildQueueType) => {
-            if (project.operation.projectInfo.projectID === projectID) {
-                logger.logFileWatcherInfo("Removing " + projectID + " from running builds due to a delete request", projectName);
-                return false;
-            } else {
-                return true;
-            }
-        });
+        await lock.acquire("runningBuildsLock", async done => {
+            // remove the project from in-progress queue only if the project deleted was in the in-progress build
+            runningBuilds = runningBuilds.filter((project: BuildQueueType) => {
+                if (project.operation.projectInfo.projectID === projectID) {
+                    logger.logProjectInfo("Removing " + projectID + " from running builds due to a delete request", projectID, projectName);
+                    return false;
+                } else {
+                    return true;
+                }
+            });
+            done();
+        }, () => {
+            // runningBuildsLock release
+        }, {});
 
         projectDeletion(projectID).then(returnCode => {
             switch (returnCode) {
@@ -671,8 +646,8 @@ export async function deleteProject(projectID: string): Promise<IDeleteProjectSu
             io.emitOnListener(event, result);
         }).catch(err => {
             const errMsg = "Internal error occurred. Failed to remove project " + projectID;
-            logger.logFileWatcherError(errMsg, projectName);
-            logger.logFileWatcherError(err, projectName);
+            logger.logProjectError(errMsg, projectID, projectName);
+            logger.logProjectError(err, projectID, projectName);
             result.error = errMsg;
             io.emitOnListener(event, result);
         });
@@ -713,7 +688,7 @@ export async function logs(projectID: string): Promise<IGetLogsSuccess | IGetLog
             return { "statusCode": 404, "error": { "msg": errMsg } };
         }
 
-        logger.logFileWatcherInfo("Fetching logs for project " + projectID);
+        logger.logInfo("Fetching logs for project " + projectID);
         const logsJson = await projectUtil.getProjectLogs(projectInfo);
         const logsResult: IGetLogsSuccess = {
             statusCode: 200,
@@ -738,90 +713,25 @@ export async function logs(projectID: string): Promise<IGetLogsSuccess | IGetLog
  */
 export async function shutdown(): Promise<IShutdownSuccess | IShutdownFailure> {
     try {
-        logger.logFileWatcherInfo("Shutting down filewatcher.");
+        logger.logInfo("Shutting down filewatcher.");
 
         // clear build queue before shutdowning down all projects
         // by setting the original array length to 0 to avoid creating a new empty array
-        buildQueue.length = 0;
-        runningBuilds.length = 0;
+        await lock.acquire(["buildQueueLock", "runningBuildsLock"], done => {
+            buildQueue.length = 0;
+            runningBuilds.length = 0;
+            done();
+        }, () => {
+            // buildQueueLock, runningBuildsLock release
+        }, {});
 
         await projectUtil.shutdownProjects();
         return { statusCode: 202 };
     } catch (err) {
-        logger.logFileWatcherError("Shutting down filewatcher projects.");
+        logger.logError("Shutting down filewatcher projects.");
         return { statusCode: 500, "error": { "msg": "Internal error occurred during filewatcher shutdown." } };
     }
 
-}
-
-/**
- * @function
- * @description Kill all processes related to the project.
- *
- * @param psOutput <Required | String> - The output of the ps command for watched processes.
- * @param projectID <Required | String> - An alphanumeric identifier for a project.
- * @param projectLocation <Required | String> - The project location in the workspace.
- *
- * @returns void
- */
-function killProcesses(psOutput: string, projectID: string, projectLocation: string): void {
-    let projectName = projectLocation.split("/").pop();
-
-    if (projectLocation.endsWith("/")) {
-        projectLocation = projectLocation.substring(0, projectLocation.length - 2);
-        projectName = projectLocation.split("/").pop();
-        logger.logProjectInfo("projectLocation: " + projectLocation, projectID, projectName);
-    }
-    // Try to match a project-watcher process similar to the following
-    // 76 root       0:00 {project-watcher} /bin/bash /file-watcher/scripts/project-watcher.sh /codewind-workspace/springy /Users/rajiv/git/microclimate/codewind-workspace &
-    const projectWatcherProcessIdentifier = "/file-watcher/scripts/project-watcher.sh " + projectLocation + " "; // the space is required here so that we don't match projects that begin with the same name as this project
-
-    // Try to match an inotifywait process similar to the following
-    // 105 root       0:00 inotifywait --format %T:%f --timefmt %s -e CREATE -e CLOSE_WRITE -e MODIFY -e DELETE -r -m /codewind-workspace/springy/src /codewind-workspace/springy/pom.xml /microclim
-    const inotifywaitProcessIdentifier = projectLocation + "/";
-
-    const inotifywaitIds = [];
-    const projectWatcherIds = [];
-
-    const watcherProcesses = psOutput.split(/\r?\n/);
-    // Look up the watcher processes for this project and kill them
-    for (let i = 0; i < watcherProcesses.length; i++) {
-        const psLine = watcherProcesses[i];
-        let id;
-        if (psLine.includes(projectWatcherProcessIdentifier) && psLine.includes("{project-watcher}")) {
-            id = psLine.match(/[^\s]+/).toString();
-            projectWatcherIds.push(id);
-            logger.logProjectInfo("Found project watcher process with id " + id, projectID, projectName);
-        } else if (psLine.includes(inotifywaitProcessIdentifier) && psLine.includes("inotifywait")) {
-            id = psLine.match(/[^\s]+/).toString();
-            inotifywaitIds.push(id);
-            logger.logProjectInfo("Found inotifywait process with id " + id, projectID, projectName);
-        }
-    }
-
-    for (let i = 0; i < inotifywaitIds.length; i++) {
-        const id = inotifywaitIds[i];
-        if (id && !isNaN(parseInt(id))) {
-            logger.logProjectInfo("Killed inotify process with id " + id + " for project " + projectID, projectID, projectName);
-            try {
-                process.kill(parseInt(id));
-            } catch (err) {
-                logger.logProjectError("Failed to kill process " + id + " : " + err, projectID, projectName);
-            }
-        }
-    }
-
-    for (let i = 0; i < projectWatcherIds.length; i++) {
-        const id = projectWatcherIds[i];
-        if (id && !isNaN(parseInt(id))) {
-            logger.logProjectInfo("Killed watcher process with id " + id + " for project " + projectID, projectID, projectName);
-            try {
-                process.kill(parseInt(id));
-            } catch (err) {
-                logger.logProjectError("Failed to kill process " + id + " : " + err, projectID, projectName);
-            }
-        }
-    }
 }
 
 /**
@@ -841,40 +751,19 @@ export async function projectDeletion(projectID: string): Promise<number> {
         const projectLocation = projectInfo.location;
         const projectName = projectLocation.split("/").pop();
 
-        logger.logProjectInfo("Retrieved project information for project " + projectMetadata.infoFile, projectID, projectName);
-        logger.logProjectInfo(JSON.stringify(projectInfo), projectID, projectName);
-        logger.logProjectInfo("Project location: " + projectInfo.location, projectID, projectName);
-        logger.logProjectInfo("Deleting project " + projectID, projectID);
+        logger.logProjectTrace("Retrieved project information for project " + projectMetadata.infoFile, projectID);
+        logger.logProjectTrace(JSON.stringify(projectInfo), projectID);
+        logger.logProjectTrace("Project location: " + projectInfo.location, projectID);
+        logger.logProjectTrace("Deleting project " + projectID, projectID);
 
         // Stop monitoring the project
         statusController.deleteProject(projectID);
         projectUtil.deleteProjectFromList(projectID);
 
-        // Kill processes associated with the project
-        if (process.env.IN_K8) {
-            const inotifyArgs: any = {
-                projectID: projectID,
-                projectLocation: projectLocation
-            };
-            projectList.delete(projectID);
-        }
-        else {
-            const ps = spawn("ps", ["aux"]);
-            let data: string = "";
-            ps.stdout.on("data", (chunk: any) => {
-                data += chunk.toString("utf-8");
-            });
-            ps.stdout.on("end", () => {
-                logger.logProjectInfo("Running processes:", projectID);
-                logger.logProjectInfo(data, projectID);
-                killProcesses(data, projectID, projectLocation);
-            });
-        }
-
-
         // Call delete on the associated project handler
         if (projectInfo.projectType) {
-            const selectedProjectHandler = await projectExtensions.getProjectHandler(projectInfo);
+            // first we find and remove the project handler (note: built-in handers are not actually removed)
+            const selectedProjectHandler = await projectExtensions.removeProjectHandler(projectInfo);
             const returnVal = await selectedProjectHandler.deleteContainer(projectInfo);
             if (returnVal instanceof Error) {
                 returnCode = 500;
@@ -890,7 +779,7 @@ export async function projectDeletion(projectID: string): Promise<number> {
         logger.logProjectInfo("Successfully deleted " + projectID, projectID, projectName);
 
         // removing log directory for the project
-        logger.logFileWatcherInfo("Removing project logs directory");
+        logger.logInfo("Removing project logs directory");
         const dirName = await logHelper.getLogDir(projectID, projectName);
         await logHelper.removeLogDir(dirName, constants.projectConstants.projectsLogDir);
 
@@ -945,27 +834,11 @@ export async function getProjectInfoFromFile(infoFile: string, ignoreLog?: boole
         data = await readFileAsync(infoFile, "utf8");
     } catch (err) {
         if (!ignoreLog) {
-            logger.logFileWatcherError("Failed to find project information related to file " + infoFile);
+            logger.logError("Failed to find project information related to file " + infoFile);
         }
     }
 
     return data ? JSON.parse(data) : data;
-}
-
-/**
- * @function
- * @description Get the project id by providing the project name.
- *
- * @param projectName <Required | String> - The name of the project.
- *
- * @returns Promise<any>
- */
-export async function getProjecIDByProjectName(projectName: string): Promise<any> {
-    const projectInfoFile = constants.projectConstants.projectsInfoDir + projectName + ".inf";
-    const data = await readFileAsync(projectInfoFile, "utf8");
-    const projectInfo = JSON.parse(data);
-    const projectID = projectInfo.projectID;
-    return projectID;
 }
 
 /**
@@ -977,7 +850,7 @@ export async function getProjecIDByProjectName(projectName: string): Promise<any
  *
  * @returns Promise<void>
  */
-function deleteFile(dir: string, file: string): Promise<void> {
+export function deleteFile(dir: string, file: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const currentPath = path.join(dir, file);
 
@@ -1063,7 +936,7 @@ export async function projectAction(req: IProjectActionParams): Promise<IProject
 
     try {
         let statusCode;
-        if (requestedAction === "disableautobuild" || requestedAction === "reconfigWatchedFiles") {
+        if (requestedAction === "disableautobuild") {
             statusCode = 200;
         } else {
             // validate, enableautobuild and action build are all async calls
@@ -1084,7 +957,7 @@ export async function projectAction(req: IProjectActionParams): Promise<IProject
         }
 
         const msg = `An error occurred while executing projectAction:\n ${JSON.stringify(req)}\n ${returnCode}: ${err.message}`;
-        logger.logFileWatcherError(msg);
+        logger.logError(msg);
 
         return { "statusCode": returnCode, "status": "failed", "error": { "msg": err.message } };
     }
@@ -1155,7 +1028,14 @@ export async function updateProjectInfo(projectID: string, keyValuePair: UpdateP
         keyValuePair.saveIntoJsonFile = true;
     }
 
-    await saveProjectInfo(projectID, projectInfo, keyValuePair.saveIntoJsonFile);
+    try {
+        await saveProjectInfo(projectID, projectInfo, keyValuePair.saveIntoJsonFile);
+    } catch (err) {
+        // If there was an issue saving projectInfo, we have to catch and throw an error
+        // We cannot return the incorrect projectInfo to the function caller
+        logger.logProjectError(JSON.stringify(err), projectID);
+        throw new Error(err.message);
+    }
 
     return projectInfo;
 }
@@ -1170,20 +1050,22 @@ export async function updateProjectInfo(projectID: string, keyValuePair: UpdateP
  *
  * @returns void
  */
-export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, saveIntoJsonFile: boolean = true): Promise<void> {
-    return new Promise((resolve) => {
+export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, saveIntoJsonFile: boolean = true): Promise<any> {
+    return new Promise((resolve, reject) => {
         const projectJSON = JSON.stringify(projectInfo);
         const infoFile = getProjectMetadataById(projectID).infoFile;
         projectInfoCache[infoFile] = projectJSON;
         const projectName = projectInfo.location.split("/").pop();
-        logger.logProjectInfo(JSON.stringify(projectInfoCache), projectID, projectName);
+        logger.logProjectTrace(JSON.stringify(projectInfoCache), projectID);
         if (saveIntoJsonFile) {
             fs.writeFile(infoFile, projectJSON, "utf8", (err) => {
                 if (err) {
                     logger.logProjectError("Error writing project info to file " + infoFile, projectID, projectName);
                     logger.logProjectError(err.message, projectID, projectName);
+                    reject(err);
+                } else {
+                    logger.logProjectTrace("Finished writing file " + infoFile, projectID);
                 }
-                logger.logProjectInfo("Finished writing file " + infoFile, projectID, projectName);
                 resolve();
             });
         } else {
@@ -1208,7 +1090,7 @@ export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, sav
         const projectMetadata = getProjectMetadataById(projectID);
         const projectInfo = await getProjectInfoFromFile(projectMetadata.infoFile);
 
-        logger.logFileWatcherInfo("Fetching logs for project " + projectID);
+        logger.logInfo("Fetching logs for project " + projectID);
         const logsJson: projectUtil.ProjectLog = await projectUtil.getProjectLogs(projectInfo);
         let result: ILogFilesResult;
         if (type === "build") {
@@ -1277,6 +1159,7 @@ export interface ICreateProjectParams {
     settings?: IProjectSettings;
     startMode?: string;
     extension?: IProjectExtension;
+    language?: string;
 }
 
 export interface IProjectExtension {
@@ -1291,7 +1174,6 @@ export interface IProjectSettings {
     healthCheck?: string;
     mavenProfiles?: string[];
     mavenProperties?: string[];
-    watchedFiles?: IWatchedFiles;
     ignoredPaths?: string[];
 }
 
@@ -1306,11 +1188,6 @@ export interface IProjectActionParams {
 export interface IProjectSpecificationParams {
     projectID: string;
     settings: IProjectSettings;
-}
-
-export interface IWatchedFiles {
-    includeFiles?: string[];
-    excludeFiles?: string[];
 }
 
 export interface ICreateProjectSuccess {

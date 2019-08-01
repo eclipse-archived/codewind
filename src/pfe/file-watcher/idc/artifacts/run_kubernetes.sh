@@ -99,7 +99,7 @@ parentDir=$( dirname $tmpChart )
 # Render the template yamls for the chart
 helm template $tmpChart \
 	--name $RELEASE_NAME \
-	--values=/file-watcher/scripts/override-values-icp.yaml \
+	--values=/file-watcher/scripts/override-values.yaml \
 	--set image.repository=$DEPLOYMENT_REGISTRY/$CONTAINER_NAME \
 	--output-dir=$parentDir
 

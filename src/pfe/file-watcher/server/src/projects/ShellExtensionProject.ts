@@ -19,6 +19,16 @@ import { Validator } from "./Validator";
 import * as logHelper from "./logHelper";
 import * as projectEventsController from "../controllers/projectEventsController";
 import { IExtensionProject } from "../extensions/IExtensionProject";
+import * as processManager from "../utils/processManager";
+import * as logger from "../utils/logger";
+
+/**
+ * @interface
+ * @description Interface for port mappings per language.
+ */
+interface PortMappings {
+    [language: string]: string | string[];
+}
 
 /**
  * @interface
@@ -28,8 +38,8 @@ interface ShellExtensionProjectConfig {
     requiredFiles: string[];
     buildLogs: string[];
     appLogs: string[];
-    appPort?: string | string[];
-    debugPort?: string;
+    appPort?: string[] | PortMappings; // string[] for backward compatibility
+    debugPort?: PortMappings;
     capabilities?: ProjectCapabilities;
     container?: {
         prefix: string;
@@ -50,6 +60,7 @@ export class ShellExtensionProject implements IExtensionProject {
 
     private id: string;
     private config: ShellExtensionProjectConfig;
+    private language: string;
 
     /**
      * @constructor
@@ -63,13 +74,50 @@ export class ShellExtensionProject implements IExtensionProject {
 
     /**
      * @function
+     * @description Set the language. Value may be adjusted by the entrypoint.sh script.
+     *
+     * @param projectInfo <Required | ProjectInfo> - The metadata information for the project.
+     */
+    private setLanguage = async (projectInfo: ProjectInfo): Promise<void> => {
+
+        const args = [
+            projectInfo.location,
+            projectUtil.LOCAL_WORKSPACE,
+            projectInfo.projectID,
+            projectInfo.language
+        ];
+
+        try {
+            const result = await processManager.spawnDetachedAsync(
+                projectInfo.projectID,
+                `/codewind-workspace/.extensions/${this.id}/entrypoint.sh`,
+                args,
+                {});
+
+            if (!result.stderr) {
+                const lastLine = result.stdout.substring(result.stdout.lastIndexOf("\n") + 1);
+                const json = JSON.parse(lastLine);
+                this.language = json.language;
+                return;
+            }
+        }
+        catch (err) {
+            logger.logError(err.message);
+        }
+
+        this.language = projectInfo.language;
+    }
+
+    /**
+     * @function
      * @description Initialize this extension project.
      *
-     * @param id <Required | string> - The extension id.
+     * @param projectInfo <Required | ProjectInfo> - The metadata information for the project.
      */
-    init = async (id: string): Promise<void> => {
-        this.id = id;
+    init = async (projectInfo: ProjectInfo): Promise<void> => {
+        this.id = projectInfo.extensionID;
         this.config = await fs.readJson(`/codewind-workspace/.extensions/${this.id}/.sh-extension`);
+        await this.setLanguage(projectInfo);
     }
 
     /**
@@ -171,12 +219,38 @@ export class ShellExtensionProject implements IExtensionProject {
 
     /**
      * @function
+     * @description Get ports defined for language. If no ports are defined this function returns "undefined".
+     * Otherwise it returns a single port value or an array of port values. This function never returns an empty array.
+     *
+     * @returns string | string[]
+     */
+    private getPorts = (map: PortMappings): string | string[] => {
+
+        let ports: string | string[];
+
+        if (map) {
+            ports = map[this.language];
+            // ensure we return undefined rather than empty array
+            if (Array.isArray(ports) && ports.length == 0)
+                return undefined;
+        }
+
+        return ports;
+    }
+
+    /**
+     * @function
      * @description Get the all possible app port(s) for projects that this handler handles.
      *
      * @returns string | string[]
      */
     getDefaultAppPort = (): string | string[] => {
-        return this.config.appPort;
+
+        // for backward compatibility
+        if (Array.isArray(this.config.appPort))
+            return this.config.appPort;
+
+        return this.getPorts(this.config.appPort);
     }
 
     /**
@@ -186,7 +260,12 @@ export class ShellExtensionProject implements IExtensionProject {
      * @returns string
      */
     getDefaultDebugPort = (): string => {
-        return this.config.debugPort;
+
+        const ports = this.getPorts(this.config.debugPort);
+        if (Array.isArray(ports))
+            return ports[0];
+
+        return ports;
     }
 
     /**

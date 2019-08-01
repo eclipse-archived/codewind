@@ -49,7 +49,7 @@ public class IDC {
 
 			if (args.length < 1 || args[0].equalsIgnoreCase(Constants.OPTION_HELP)) {
 				Logger.printUsage();
-				System.exit(ErrorCode.wrongUsage.ordinal());
+				System.exit(ErrorCode.unexpectedError.ordinal());
 			}
 
 			// If the 'appid' param is used, print the sha1 sum of the current dir and exit.
@@ -305,7 +305,7 @@ public class IDC {
 			}
 			
 			// Determine if the user has modified any *.yaml files in the chart subdirectory 
-			// and trigger container build as necessary for ICP scenarios
+			// and trigger container build as necessary for Kubernetes scenarios
 			{
 				if ( context.isK8s() && new File(appDir, "chart").exists() ) {
 					String chartDir = appDir.getAbsolutePath() + "/chart";
@@ -436,8 +436,8 @@ public class IDC {
 					Logger.error(ErrorCode.containerStartFailed.message());
 					System.exit(ErrorCode.containerStartFailed.ordinal());
 				} else if(id == "registryError") {
-					Logger.info("IDC is returning because of failing to push image to invalid Deployment Registry");
-					System.exit(7);
+					Logger.error(ErrorCode.invalidDeploymentRegistry.message());
+					System.exit(ErrorCode.invalidDeploymentRegistry.ordinal());
 				}
 			}
 			

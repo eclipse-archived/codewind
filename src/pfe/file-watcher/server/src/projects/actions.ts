@@ -13,16 +13,14 @@ import { AppState } from "../controllers/projectStatusController";
 import { StartModes } from "./constants";
 import { ControlCommands } from "./constants";
 import { Operation } from "./operation";
-import { ProjectInfo, UpdateProjectInfoPair, InotifyArgs } from "./Project";
+import { ProjectInfo, UpdateProjectInfoPair } from "./Project";
 import { Validator } from "./Validator";
-import * as io from "../utils/socket";
 import * as logger from "../utils/logger";
 import * as projectsController from "../controllers/projectsController";
 import * as projectExtensions from "../extensions/projectExtensions";
 import * as projectUtil from "./projectUtil";
 import * as statusController from "../controllers/projectStatusController";
 import * as utils from "../utils/utils";
-import * as processManager from "../utils/processManager";
 import { IProjectActionParams } from "../controllers/projectsController";
 import * as projectEventsController from "../controllers/projectEventsController";
 
@@ -78,7 +76,8 @@ const validate = async function(args: IProjectActionParams): Promise<{ operation
     // Create operation
     const operation = new Operation("validate", projectInfo);
 
-    logger.logProjectInfo("Validating project: " + JSON.stringify(projectInfo) + " using operationId: " + operation.operationId, projectID, projectName);
+    logger.logProjectInfo("Validating project using operationId: " + operation.operationId, projectID, projectName);
+    logger.logTrace(JSON.stringify(projectInfo));
 
     if (projectHandler.validate) {
         projectHandler.validate(operation);
@@ -281,7 +280,7 @@ const restart = async function(args: IProjectActionParams): Promise<{ operationI
         throw error;
     }
     if (process.env.IN_K8 === "true") {
-        const error = new Error("Restart is not supported for ICP");
+        const error = new Error("Restart is not supported for Kubernetes");
         error.name = "BAD_REQUEST";
         throw error;
     }

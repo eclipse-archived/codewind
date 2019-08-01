@@ -103,6 +103,9 @@ module.exports = class ProjectList {
         currentProject[key] = updatedProject[key];
       if (key === 'appStatus' && currentProject[key] === 'started') {
         log.info(`Project ${currentProject.name} started (project ID: ${currentProject.projectID})`);
+        if (process.env.CHE_INGRESS_HOST) {
+          currentProject.host = process.env.CHE_INGRESS_HOST;
+        }
       }
     }
     this._list[updatedProject.projectID] = currentProject;

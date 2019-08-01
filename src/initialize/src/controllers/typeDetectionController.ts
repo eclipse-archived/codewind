@@ -33,7 +33,6 @@ export async function detectType(projectMountDirectory: string): Promise<Initial
   const extensionProjectType = await determineExtensionProjectType(projectMountDirectory);
   if (extensionProjectType)
     projectType = extensionProjectType;
-
   return { language, projectType };
 }
 

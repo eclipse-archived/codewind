@@ -9,9 +9,21 @@ rm -rf initialize
 mkdir -p initialize
 cp -r ../initialize/*.json ../initialize/src ./initialize
 
+# read and source the .env file
+env_file=./devbuild.env
+if [ -f $env_file ]; then
+    set -o allexport
+    source $env_file
+    set +o allexport
+else
+    # by default fallback to production mode
+    NODE_ENV=production
+fi
+
 docker build -t codewind-pfe-$(../../script/platform.sh) \
 --file $1 \
 --label "org.label-schema.build-date=$(date '+%Y-%m-%dT%k:%M:%S%z')" \
 --label "org.label-schema.vcs-ref=$(git rev-parse HEAD)" \
 --label "org.label-schema.version=" \
+--build-arg NODE_ENV=$NODE_ENV \
 .

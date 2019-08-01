@@ -6,19 +6,18 @@ services:
     # Run as root (not mcuser) in local docker so portal can access the docker socket
     user: root
     environment:
-      - FILE_WATCHER_IMAGE=${REPOSITORY}microclimate-file-watcher${PLATFORM}:${TAG}
       - HOST_WORKSPACE_DIRECTORY=${WORKSPACE_DIRECTORY}
       - CONTAINER_WORKSPACE_DIRECTORY=/codewind-workspace
       - HOST_OS=${HOST_OS}
       - CODEWIND_VERSION=${TAG}
       - PERFORMANCE_CONTAINER=codewind-performance${PLATFORM}:${TAG}
+      - REMOTE_MODE=${REMOTE_MODE}
     depends_on:
       - codewind-performance
     ports:
       - "127.0.0.1:9090:9090"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${WORKSPACE_DIRECTORY}:/codewind-workspace
     networks:
       - network
 

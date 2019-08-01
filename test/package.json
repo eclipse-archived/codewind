@@ -27,8 +27,9 @@
     "dockerode": "^2.5.2",
     "find-in-files": "^0.5.0",
     "fs-extra": "^5.0.0",
+    "klaw-sync": "^6.0.0",
     "kubernetes-client": "^6.10.0",
-    "mocha": "^6.0.0",
+    "mocha": "^6.2.0",
     "mocha-junit-reporter": "^1.17.0",
     "mocha-logger": "^1.0.6",
     "mocha-multi-reporters": "^1.1.7",
@@ -37,7 +38,6 @@
     "sinon": "^7.3.2",
     "socket.io-client": "^2.0.4",
     "uuid": "^3.3.2",
-    "walk": "^2.3.13",
     "yamljs": "^0.3.0",
     "zlib": "^1.0.5"
   },

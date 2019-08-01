@@ -68,40 +68,73 @@ set -o pipefail
 
 function create() {
 	# Fix to stop file-watcher from attempting the rebuild procedure
-	STOP_WATCHING_CHECK="$ROOT/microclimate-stop-watching-flag";
+	STOP_WATCHING_CHECK="$ROOT/codewind-stop-watching-flag";
 	echo $STOP_WATCHING_CHECK;
 	if [ -f "$STOP_WATCHING_CHECK" ]; then
 		echo "Stop watching flag found. Doing nothing.";
 	else
 		# If the maven m2 cache doesn't exist then pull it from duckerhub
 		if [ ! -d $MAVEN_M2_CACHE ]; then
-			echo "Pulling maven m2 cache image for $ROOT"
-			docker pull ibmcom/codewind-java-project-cache > /dev/null
-			dockerPullExitCode=$?
+			if [ "$IN_K8" == "true" ]; then
+				echo "Pulling maven m2 cache image for $ROOT using buildah"
+				buildah pull ibmcom/codewind-java-project-cache > /dev/null
+				dockerPullExitCode=$?
 
-			if [ $dockerPullExitCode -eq 0 ]; then
-				echo "Finished pulling maven m2 cache image for $ROOT"
-				echo "Maven m2 cache will be used for spring project $ROOT"
-				CACHE_CONTAINER_ID=$(docker create ibmcom/codewind-java-project-cache)
+				if [ $dockerPullExitCode -eq 0 ]; then
+					echo "Finished pulling maven m2 cache image for $ROOT using buildah"
+					echo "Maven m2 cache will be used for spring project $ROOT"
+					buildah from ibmcom/codewind-java-project-cache
+					CACHE_CONTAINER_ID=$(buildah ps | grep codewind-java-project-cache | cut -d " " -f 1)
+					mnt=$(buildah mount $CACHE_CONTAINER_ID)
 
-				echo "Downloading maven m2 cache to $ROOT"
-				docker cp $CACHE_CONTAINER_ID:/cache/localm2cache.zip .
-				docker rm -f $CACHE_CONTAINER_ID
-				echo "Finished downloading maven m2 cache to $ROOT"
+					echo "Downloading maven m2 cache to $ROOT"		
+					cp $mnt/cache/localm2cache.zip .
+					buildah rm $CACHE_CONTAINER_ID
+					echo "Finished downloading maven m2 cache to $ROOT"
 
-				echo "Extracting maven m2 cache to $ROOT"
-				unzip -q localm2cache.zip
-				rm -rf localm2cache.zip
-				echo "Finished extracting maven m2 cache to $ROOT"
+					echo "Extracting maven m2 cache to $ROOT"
+					unzip -q localm2cache.zip
+					rm -rf localm2cache.zip
+					echo "Finished extracting maven m2 cache to $ROOT"
 
-				# Verify maven m2 cache
-				if [ -d $MAVEN_M2_CACHE ]; then
-					echo "Maven m2 cache is set up for $ROOT"
+					# Verify maven m2 cache
+					if [ -d $MAVEN_M2_CACHE ]; then
+						echo "Maven m2 cache is set up for $ROOT"
+					else
+						echo "Maven m2 cache is not set up for $ROOT"
+					fi
 				else
-					echo "Maven m2 cache is not set up for $ROOT"
+					echo "Maven m2 cache cannot be retrieved for spring project $ROOT because the cache image could not be pulled using buildah"
 				fi
 			else
-				echo "Maven m2 cache cannot be retrieved for spring project $ROOT because the cache image could not be pulled"
+				echo "Pulling maven m2 cache image for $ROOT using docker"
+				docker pull ibmcom/codewind-java-project-cache > /dev/null
+				dockerPullExitCode=$?
+
+				if [ $dockerPullExitCode -eq 0 ]; then
+					echo "Finished pulling maven m2 cache image for $ROOT using docker"
+					echo "Maven m2 cache will be used for spring project $ROOT"
+					CACHE_CONTAINER_ID=$(docker create ibmcom/codewind-java-project-cache)
+
+					echo "Downloading maven m2 cache to $ROOT"
+					docker cp $CACHE_CONTAINER_ID:/cache/localm2cache.zip .
+					docker rm -f $CACHE_CONTAINER_ID
+					echo "Finished downloading maven m2 cache to $ROOT"
+
+					echo "Extracting maven m2 cache to $ROOT"
+					unzip -q localm2cache.zip
+					rm -rf localm2cache.zip
+					echo "Finished extracting maven m2 cache to $ROOT"
+
+					# Verify maven m2 cache
+					if [ -d $MAVEN_M2_CACHE ]; then
+						echo "Maven m2 cache is set up for $ROOT"
+					else
+						echo "Maven m2 cache is not set up for $ROOT"
+					fi
+				else
+					echo "Maven m2 cache cannot be retrieved for spring project $ROOT because the cache image could not be pulled using docker"
+				fi
 			fi
 		fi
 
@@ -122,7 +155,7 @@ function deployK8() {
 		if [[ ! -d "$chartDir" ]]; then
 			echo "Exiting, unable to find the Helm chart for project $projectName"
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.noHelmChart"
-			exit 1;
+			exit 3
 		fi
 	fi
 	chartName=$( basename $chartDir )
@@ -139,7 +172,7 @@ function deployK8() {
 	# Render the chart template
 	helm template $tmpChart \
 		--name $project \
-		--values=/file-watcher/scripts/override-values-icp.yaml \
+		--values=/file-watcher/scripts/override-values.yaml \
 		--set image.repository=$DEPLOYMENT_REGISTRY/$project \
 		--output-dir=$parentDir
 
@@ -163,14 +196,6 @@ function deployK8() {
 
 	# Push app container image to docker registry if one is set up
 	if [[ ! -z $DEPLOYMENT_REGISTRY ]]; then
-		# If the image already exists, remove it as well.
-		if [ "$( $IMAGE_COMMAND images -q $project )" ]; then
-			$IMAGE_COMMAND rmi -f $project
-		fi
-		if [ "$( $IMAGE_COMMAND images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
-			$IMAGE_COMMAND rmi -f $DEPLOYMENT_REGISTRY/$project
-		fi
-
 		# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
 		if [ "$( helm list $project --failed )" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
@@ -188,7 +213,8 @@ function deployK8() {
 		else
 			echo "Error: $?, could not push application image $DEPLOYMENT_REGISTRY/$project" >&2
 			$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
-			exit 7;
+			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
+			exit 3
 		fi
 
 		helm upgrade \
@@ -212,7 +238,7 @@ function deployK8() {
 	else
 		echo "Helm install failed for $projectName with exit code $?, exiting" >&2
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
-		exit 1
+		exit 3
 	fi
 
 	# Wait until the pod is up and running
@@ -231,7 +257,7 @@ function deployK8() {
 
 			helm delete $project --purge
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPED "$errorMsg"
-			exit 1;
+			exit 3
 		fi
 		sleep 1;
 	done
@@ -311,7 +337,7 @@ function deployLocal() {
 		if [ $DOCKER_RUN_RC -ne 0 ]; then
 			echo "Start container stage failed for $project with exit code $DOCKER_RUN_RC" >&2
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
-			exit 1
+			exit 3
 		fi
 	fi
 
@@ -364,7 +390,7 @@ function runMavenBuild() {
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_SUCCESS " "
 	else
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildMavenFail"
-		exit 1
+		exit 3
 	fi
 }
 
@@ -387,7 +413,7 @@ function start() {
 	# Start the spring application
 
 	if [[ "$IN_K8" == "true" ]]; then
-		# Debug not supported on ICP
+		# Debug not supported on Kubernetes
 		echo "Starting the $projectName project in run mode"
 		POD_NAME="$( kubectl get po --selector=release=$project | grep 'Running' | cut -d ' ' -f 1 )"
 		kubectl exec $POD_NAME bash "/scripts/spring-start.sh" "$projectName" run
@@ -402,7 +428,9 @@ function start() {
 		$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 	else
 		echo "Project start failed for: $projectName"
-		exit 1
+		errorMsg="Application $projectName failed to start"
+		$util updateAppState $PROJECT_ID $APP_STATE_STOPPED "$errorMsg"
+		exit 3
 	fi
 }
 
@@ -423,7 +451,7 @@ function stop() {
 		$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
 	else
 		echo "Project stop failed for: $projectName"
-		exit 1
+		exit 3
 	fi
 }
 
@@ -465,7 +493,7 @@ function modifyDockerfileAndBuild() {
 	else
 		echo "$BUILD_IMAGE_FAILED_MSG $projectName" >&2
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
-		exit 1
+		exit 3
 	fi
 
 	cd "$ROOT"
@@ -527,9 +555,6 @@ elif [ "$COMMAND" == "remove" ]; then
 		pgrep -f "_kubectl logs -f" | xargs kill -9
 
 		helm delete $project --purge
-		if [[ "$(kubectl get images $CONTAINER_NAME)" ]]; then
-			kubectl delete image $CONTAINER_NAME --force --grace-period=0
-		fi
 
 	else
 		# Remove container
@@ -541,13 +566,6 @@ elif [ "$COMMAND" == "remove" ]; then
 	# Remove image
 	if [ "$($IMAGE_COMMAND images -qa -f reference=$project)" ]; then
 		$IMAGE_COMMAND rmi -f $project
-	fi
-
-	# Remove registry image and Kubernetes image
-	if [ "$IN_K8" == "true" ]; then
-		if [ "$( $IMAGE_COMMAND images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
-			$IMAGE_COMMAND rmi -f $DEPLOYMENT_REGISTRY/$project
-		fi
 	fi
 else
 	echo "ERROR: $COMMAND is not a recognized command" >&2

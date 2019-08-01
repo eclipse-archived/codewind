@@ -41,6 +41,13 @@ describe('ProjectInitializer', () => {
     projectInitializer = new ProjectInitializer('projectName', '/initialize');
   });
 
+  beforeEach(() => {
+    detectTypeStub.returns({
+      language: 'java',
+      projectType: 'spring'
+    });
+  });
+
   afterEach(() => {
     importFromGitStub.reset();
     detectTypeStub.reset();

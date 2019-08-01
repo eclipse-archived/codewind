@@ -228,7 +228,7 @@ export async function isContainerActive(containerName: string): Promise<any> {
         return containerState;
     } catch (err) {
         const msg = "Error getting container status: " + err;
-        logger.logFileWatcherError(msg);
+        logger.logError(msg);
         return {error: err};
     }
 }
@@ -295,7 +295,7 @@ export async function printHelmStatus(projectID: string, releaseName: string): P
  */
 export async function installChart(projectID: string, deploymentName: string, chartLocation: string, deploymentRegistry: string): Promise<ProcessResult> {
     const microclimateReleaseName: string = process.env.MICROCLIMATE_RELEASE_NAME;
-    const installDeployment: string[] = ["upgrade", "--install", deploymentName, "--recreate-pods", "--values=/file-watcher/scripts/override-values-icp.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + deploymentName, "--set", "microclimate.release.name=" + microclimateReleaseName, chartLocation];
+    const installDeployment: string[] = ["upgrade", "--install", deploymentName, "--recreate-pods", "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + deploymentName, "--set", "microclimate.release.name=" + microclimateReleaseName, chartLocation];
     let response: ProcessResult;
 
     // Install deployment

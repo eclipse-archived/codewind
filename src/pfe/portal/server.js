@@ -129,7 +129,8 @@ async function main() {
     EXTENSIONS: (process.env.EXTENSIONS == 'true') || false,
     // Workspace location *inside* the our container.
     // Volume is mounted from WORKSPACE_DIRECTORY in docker-compose.yaml.
-    CODEWIND_WORKSPACE: '/codewind-workspace/'
+    CODEWIND_WORKSPACE: '/codewind-workspace/',
+    REMOTE_MODE: (process.env.REMOTE_MODE == 'true') || false,
   };
 
   // find if running in kubernetes and build up a whitelist of allowed origins
@@ -137,7 +138,7 @@ async function main() {
   try {
     k8Client = new K8Client({ config: k8config.getInCluster(), version: '1.9' });
     if (k8Client) {
-      log.info('codewind on Kubernetes');
+      log.info('starting codewind on Kubernetes');
       global.codewind.RUNNING_IN_K8S = true;
 
       // get path currently running on
@@ -150,7 +151,7 @@ async function main() {
     }
   } catch (err) {
     // Not in K8s
-    log.info('codewind on Docker');
+    log.error('failed to start codewind on Kubernetes');
     originsWhitelist.push('http://localhost:*');
   }
 
@@ -176,6 +177,7 @@ async function main() {
 
   let userList = new UserList();
 
+  app.get('/', (req, res) => { res.sendStatus(200); });
   app.get('/health', (req, res) => { res.sendStatus(200); });
   app.use(securityMiddleware);
 
@@ -195,6 +197,13 @@ async function main() {
    * be set up first, before this function is run.
    */
   function setRoutes() {
+
+    // if we are running in Che use the workspace codewind performance service,  else use the codewind container name of "codewind-performance"
+    const performance_host = process.env.CODEWIND_PERFORMANCE_SERVICE ? process.env.CODEWIND_PERFORMANCE_SERVICE : "codewind-performance";
+    const performance_port = ':9095';
+
+    log.info(`PerformanceHost: ${performance_host}`);
+
     // Add the user object into the request
     app.all('*', function (req, res, next) {
       if (req.user == undefined) req.user = "default"
@@ -229,28 +238,22 @@ async function main() {
       extensions: ['sh']
     }));
 
-    /* Performance container routes */
+    /* Proxy Performance container routes */
     app.use('/performance/*', function (req, res) {
       try {
-        let url = `http://codewind-performance:9095${req.originalUrl}`;
+        log.info(`req.originalUrl = ${req.originalUrl}`);
+        let url = `http://${performance_host}${performance_port}${req.originalUrl}`;
+        log.info(`url = ${url}`);
+
         let r = request(url);
-        req.pipe(r).pipe(res);
+        req.pipe(r).on('error', function(err) {
+          log.error(err);
+          res.status(502).send({ error: err.code});
+        }).pipe(res);
       } catch (err) {
         log.error(err);
       }
     });
-
-    app.use('/dashboard/*', function (req, res) {
-      try {
-        let url = `http://codewind-performance:9095${req.originalUrl}`;
-        let r = request(url);
-        req.pipe(r).pipe(res);
-      } catch (err) {
-        log.error(err);
-      }
-    });
-
-
 
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({

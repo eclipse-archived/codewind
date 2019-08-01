@@ -10,8 +10,8 @@ info:
     name: API support
     email: example@ibm.com
   license:
-    name: Microclimate Developer License
-    url: 'https://github.ibm.com/dev-ex/codewind/blob/master/LICENSE/LICENSE.md'
+    name: Codewind Developer License
+    url: 'https://github.com/eclipse/codewind/blob/master/LICENSE/LICENSE.md'
 
 # tags:
   # - name: users
@@ -99,9 +99,7 @@ paths:
                   - $ref: '#/components/schemas/InitializeSuccess'
                   - $ref: '#/components/schemas/InitializeError'
         400:
-          description: Input values are incorrect
-        404:
-          description: URL isn't found
+          description: Supplied values are invalid
         500:
           description: Any other error
 
@@ -1476,6 +1474,9 @@ components:
         name:
           type: string
           example: "knappExtension"
+        version:
+          type: string
+          example: "1.0.0"
         description:
           type: string
           example: "Codewind extension for knapp support"
@@ -1488,6 +1489,9 @@ components:
         templates:
           type: string
           example: "https://github.com/microclimate-dev2ops/myTemplates"
+        config:
+          description: Extra configuration properties for the extension
+          type: object
     ExtensionCommand:
       type: object
       properties:

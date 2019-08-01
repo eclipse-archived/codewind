@@ -11,20 +11,20 @@
 #FROM centos:7
 
 FROM centos@sha256:b5e66c4651870a1ad435cd75922fe2cb943c9e973a9673822d1414824a1d0475 as codewind-pfe-base
-LABEL org.label-schema.name="Microclimate Portal" org.label-schema.description="Microclimate Portal" \
-      org.label-schema.url="https://microclimate-dev2ops.github.io/" \
-      org.label-schema.vcs-url="https://github.ibm.com/dev-ex/microclimate-devops" org.label-schema.vendor="IBM"
+LABEL org.label-schema.name="Codewind PFE" org.label-schema.description="Codewind PFE" \
+      org.label-schema.url="https://codewind.dev/" \
+      org.label-schema.vcs-url="https://github.com/eclipse/codewind" org.label-schema.vendor="IBM"
 
-ARG BUILDAH_RPM=http://download-ib01.fedoraproject.org/pub/fedora/linux/updates/30/Everything/x86_64/Packages/b/buildah-1.9.0-1.git00eb895.fc30.x86_64.rpm
+ARG BUILDAH_RPM=https://download-ib01.fedoraproject.org/pub/fedora/linux/updates/30/Everything/x86_64/Packages/b/buildah-1.9.2-2.fc30.x86_64.rpm
 
 # Download the buildah RPM
-RUN curl -o buildah.rpm $BUILDAH_RPM
+RUN curl -f -o buildah.rpm $BUILDAH_RPM
 
 # Download and set up Node 10.x RPM
 RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 
 RUN yum install -y epel-release \
-    && yum -y --enablerepo=epel install inotify-tools zip unzip git sudo wget ca-certificates openssl nodejs buildah.rpm \
+    && yum -y --enablerepo=epel install zip unzip git sudo wget ca-certificates openssl nodejs buildah.rpm \
     && yum clean all \
     && rm -rf /var/cache/yum
 
@@ -122,9 +122,9 @@ WORKDIR /portal
 COPY /portal/package.json /portal/package-lock.json /portal/
 COPY /portal/sudoers /etc/sudoers
 
-# Use npm ci --production otherwise dev dependencies are installed.
-RUN npm ci --production \
-    && npm cache clean -f
+COPY /portal/npm-start.sh /portal/nodemon.json /portal/
+COPY /portal/eslint-rules /portal/eslint-rules
+RUN chmod -R +rx /portal/npm-start.sh
 
 COPY /portal/server.js /portal/
 COPY /portal/modules /portal/modules
@@ -144,6 +144,12 @@ COPY --from=codewind-pfe-portal /portal /portal
 # to satisfy requirement from legal
 COPY /portal/LICENSE.md /LICENSE
 COPY /portal/NOTICE.md /LICENSE
+
+WORKDIR /portal
+ARG NODE_ENV
+ENV NODE_ENV=${NODE_ENV}
+RUN npm ci \
+    && npm cache clean -f
 
 # Do the idc copy at the end since IDC is rebuilt as part of the build process and will cause the docker cache at this step to change
 # and trigger all steps after this one to be executed instead of using the docker image cache. All steps after this one should be short

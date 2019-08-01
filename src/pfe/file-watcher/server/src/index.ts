@@ -15,6 +15,7 @@ import * as projectsController from "./controllers/projectsController";
 import * as projectStatusController from "./controllers/projectStatusController";
 import * as projectEventsController from "./controllers/projectEventsController";
 import * as locale from "./utils/locale";
+import * as logger from "./utils/logger";
 import * as workspaceSettings from "./utils/workspaceSettings";
 import * as socket from "./utils/socket";
 import fs from "fs";
@@ -222,7 +223,7 @@ export default class Filewatcher {
 
     /**
      * @function
-     * @description Set the locale of the file watcher. All translated messages will be using the locale.
+     * @description Set the locale to use for translated messages.
      *
      * @param locale <Required | String[]>:- An array list of locale in priority order (first one higher priority)
      *
@@ -230,7 +231,7 @@ export default class Filewatcher {
      *
      * @returns Promise<ISetLocaleSuccess|ISetLocaleFailure>
      *  @property locale<string>: The file watcher locale has been set to
-     *  @property error <Complex>: A JSON object container an error message
+     *  @property error <Complex>: A JSON object containing an error message
      *  @property statusCode <number>:
      *  200: Successfully set locale
      *  500: Locale could not be set due to an internal error
@@ -244,6 +245,18 @@ export default class Filewatcher {
      * ```
      */
     setLocale: (locale: string[]) => Promise<locale.ISetLocaleSuccess | locale.ISetLocaleFailure>;
+
+    /**
+     * @function
+     * @description Set the logging level.
+     *
+     * @param level <Required | String>:- One of error, warn, info, debug, trace
+     *
+     * @example await filewatcher.setLogLevel("trace")
+     *
+     * @returns Promise<void>
+     */
+    setLoggingLevel: (level: string) => Promise<void>;
 
     /**
      * @function
@@ -303,8 +316,7 @@ export default class Filewatcher {
      *  @property location <Required | String>: The project location URI within the file-watcher filesystem.
      *  @property startMode <Optional | String>: An optional start mode for the application.
      *  @property contextroot <Optional | String>: An optional context root path for the application.
-     *  @property watchedFiles <Optional | String[]>: An optional string array of absolute file paths for files want to be watched for the project.
-     *  @property ignoredFiles <Optional | String[]>: An optional string array of absolute file paths for files want to be ignored for changes.
+     *  @property ignoredPaths <Optional | String[]>: An optional string array of relative file paths or regex for files want to be ignored for changes.
      *
      * @example await filewatcher.createProject(req)
      * ```json
@@ -598,22 +610,6 @@ export default class Filewatcher {
 
     /**
      * @function
-     * @description Signal the occurrence of an update event related to a particular project.
-     *
-     * @param projectID <Required | String>: An alphanumeric identifier for a project.
-     *
-     * @returns Promise<IUpdateProjectSuccess | IUpdateProjectFailure>
-     * Response codes:
-     *  @property 202: Success
-     *  @property 400: Bad Request: projectID is a required parameter
-     *  @property 404: Project does not exist
-     *  @property 500: Retrieving start modes failed due to an internal error
-     *
-     */
-    updateProject: (projectID: string) => Promise<projectEventsController.IUpdateProjectSuccess | projectEventsController.IUpdateProjectFailure>;
-
-    /**
-     * @function
      * @description Check for when a new log file is available
      * @param projectID <Required | String> - An alphanumeric identifier for a project.
      * @param type <Required | String> - Either `build` or `app`
@@ -650,6 +646,7 @@ export default class Filewatcher {
         this.createProjectsDataDir();
 
         this.setLocale = locale.setLocale;
+        this.setLoggingLevel = logger.setLoggingLevel;
         this.readWorkspaceSettings = workspaceSettings.readWorkspaceSettings;
         this.testDeploymentRegistry = workspaceSettings.testDeploymentRegistry;
         this.registerListener = socket.registerListener;
@@ -663,7 +660,6 @@ export default class Filewatcher {
         this.deleteProject = projectsController.deleteProject;
         this.updateStatus = projectStatusController.updateStatus;
         this.deploymentRegistryStatus = workspaceSettings.deploymentRegistryStatus;
-        this.updateProject = projectEventsController.updateProject;
         this.checkNewLogFile = projectsController.checkNewLogFile;
         this.updateProjectForNewChange = projectEventsController.updateProjectForNewChange;
     }

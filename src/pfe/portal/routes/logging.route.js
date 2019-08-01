@@ -34,15 +34,17 @@ router.get('/api/v1/logging', async function (req, res) {
  */
 router.put('/api/v1/logging', async function (req, res) {
   try {
+    const user = req.cw_user;
     const level = req.sanitizeBody('level');
     await Logger.setLoggingLevel(level);
+    await user.setLoggingLevel(level);
     log.info(`logging level set to ${level}`);
     res.sendStatus(200);
   } catch (err) {
     log.error(err);
     if (err instanceof LoggingError && err.code === 'INVALID_LEVEL') {
       res.status(400).send(err.message);
-    }else {
+    } else {
       res.status(500).send(err.info || err);
     }
   }

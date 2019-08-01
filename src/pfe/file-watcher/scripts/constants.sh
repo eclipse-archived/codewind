@@ -34,7 +34,7 @@ export MAVEN_BUILD_FAILED_MSG="Maven build stage failed for" # :NLS
 
 if [ "$IN_K8" == "true" ]; then
 	export IMAGE_COMMAND="buildah"
-	export BUILD_COMMAND="bud"
+	export BUILD_COMMAND="bud --layers"
 else
 	export IMAGE_COMMAND="docker"
 	export BUILD_COMMAND="build"

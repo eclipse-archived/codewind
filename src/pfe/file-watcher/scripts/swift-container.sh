@@ -55,7 +55,7 @@ set -o pipefail
 
 function create() {
 	# Fix to stop file-watcher from attempting the rebuild procedure
-	STOP_WATCHING_CHECK="$ROOT/microclimate-stop-watching-flag";
+	STOP_WATCHING_CHECK="$ROOT/codewind-stop-watching-flag";
 	echo $STOP_WATCHING_CHECK;
 	if [ -f "$STOP_WATCHING_CHECK" ]; then
 		echo "Stop watching flag found. Doing nothing.";
@@ -77,19 +77,12 @@ function deployK8s() {
 		if [[ ! -d "$chartDir" ]]; then
 			echo "Exiting, unable to find the Helm chart for project $projectName"
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.noHelmChart"
-			exit 1;
+			exit 3
 		fi
 	fi
 	chartName=$( basename $chartDir )
 	tmpChart=/tmp/$projectName/$chartName
 
-	# If the image already exists, remove it as well.
-	if [ "$( $IMAGE_COMMAND images -q $project )" ]; then
-		$IMAGE_COMMAND rmi -f $project
-	fi
-	if [ "$( $IMAGE_COMMAND images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
-		$IMAGE_COMMAND rmi -f $DEPLOYMENT_REGISTRY/$project
-	fi
 	# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
 	if [ "$( helm list $project --failed )" ]; then
 		$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
@@ -126,7 +119,7 @@ function deployK8s() {
 	else
 		echo "$BUILD_IMAGE_FAILED_MSG $projectName" >&2
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
-		exit 1
+		exit 3
 	fi
 
 	# Get rid of the temp folder
@@ -145,7 +138,7 @@ function deployK8s() {
 	# Render the template yamls for the chart
 	helm template $tmpChart \
 		--name $project \
-		--values=/file-watcher/scripts/override-values-icp.yaml \
+		--values=/file-watcher/scripts/override-values.yaml \
 		--set image.repository=$DEPLOYMENT_REGISTRY/$project \
 		--output-dir=$parentDir
 
@@ -153,13 +146,13 @@ function deployK8s() {
 	if [[ -z $deploymentFile ]]; then
 		echo "Error, unable to find a deployment file in the Helm chart."
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.noDeployment"
-		exit 1
+		exit 3
 	fi
 	serviceFile=$( /file-watcher/scripts/kubeScripts/find-kube-resource.sh $tmpChart Service )
 	if [[ -z $serviceFile ]]; then
 		echo "Error, unable to find a service file in the Helm chart."
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.noService"
-		exit 1
+		exit 3
 	fi
 
 	# Add the necessary labels and serviceaccount to the chart
@@ -174,7 +167,8 @@ function deployK8s() {
 		else
 			echo "Error: $?, could not push application image $DEPLOYMENT_REGISTRY/$project" >&2
 			$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
-			exit 7;
+			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
+			exit 3
 		fi
 
 		# Install the application using Helm
@@ -196,7 +190,7 @@ function deployK8s() {
 	else
 		echo "Helm install failed for $projectName with exit code $?, exiting" >&2
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
-		exit 1
+		exit 3
 	fi
 
 	# Wait until the pod is up and running
@@ -208,13 +202,14 @@ function deployK8s() {
 		elif [[ -z "$RESULT" || $RESULT = *"Failure"* || $RESULT = *"Unknown"* || $RESULT = *"ImagePullBackOff"* || $RESULT = *"CrashLoopBackOff"* ]]; then
 			echo "Error: Pod for Helm release $project failed to start" >&2
 			errorMsg="Error starting project $projectName: pod for helm release $project failed to start."  # :NLS
-			$util updateAppState $PROJECT_ID $APP_STATE_STOPPED "$errorMsg"
 
 			# Print the Helm status before deleting the release
 			helm status $project
 
 			helm delete $project --purge
-			exit 1;
+
+			$util updateAppState $PROJECT_ID $APP_STATE_STOPPED "$errorMsg"
+			exit 3
 		fi
 		sleep 1;
 	done
@@ -285,7 +280,7 @@ function deployLocal() {
 	else
 		echo "$BUILD_IMAGE_FAILED_MSG $projectName-build" >&2
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
-		exit 1
+		exit 3
 	fi
 
 	$util updateBuildState $PROJECT_ID $BUILD_STATE_INPROGRESS "buildscripts.compileApplication"
@@ -305,7 +300,7 @@ function deployLocal() {
 		else
 			echo "Start container stage failed for $project-build" >&2
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.compileFail"
-			exit 1
+			exit 3
 		fi
 	else
 		echo "$project-build container does not exist. Starting container for $project-build..."
@@ -317,7 +312,7 @@ function deployLocal() {
 		else
 			echo "Start container stage failed for $project-build" >&2
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.compileFail"
-			exit 1
+			exit 3
 		fi
 	fi
 
@@ -343,7 +338,7 @@ function deployLocal() {
 		else
 			echo "$BUILD_IMAGE_FAILED_MSG $projectName" >&2
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
-			exit 1
+			exit 3
 		fi
 		$IMAGE_COMMAND rm $project-build;
 		echo "Starting container for $project..."
@@ -364,14 +359,14 @@ function deployLocal() {
 			if [ $DOCKER_RUN_RC -ne 0 ]; then
 				errorMsg="Error starting project $projectName: container start failed for $project"  # :NLS
 				$util updateAppState $PROJECT_ID $APP_STATE_STOPPED "$errorMsg"
-				exit 1
+				exit 3
 			fi
 		fi
 		echo "Swift project launched"
 	else
 		echo "Swift build complete - result: FAILED" >&2
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
-		exit 1
+		exit 3
 	fi
 
 	echo -e "Touching application log file: "$LOG_FOLDER/$APP_LOG.log""
@@ -403,9 +398,6 @@ elif [ "$COMMAND" == "remove" ]; then
 
 		# Remove the helm release
 		helm delete $project --purge
-		if [[ "$(kubectl get images $CONTAINER_NAME)" ]]; then
-			kubectl delete image $CONTAINER_NAME --force --grace-period=0
-		fi
 	else
 		# Remove container
 		if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then
@@ -428,13 +420,6 @@ elif [ "$COMMAND" == "remove" ]; then
 		$IMAGE_COMMAND rmi -f $project-build
 	else
 		echo The application image $project-build has already been removed.
-	fi
-
-	# Remove registry image and Kubernetes image
-	if [ "$IN_K8" == "true" ]; then
-		if [ "$( $IMAGE_COMMAND images -q $DEPLOYMENT_REGISTRY/$project )" ]; then
-			$IMAGE_COMMAND rmi -f $DEPLOYMENT_REGISTRY/$project
-		fi
 	fi
 
 else

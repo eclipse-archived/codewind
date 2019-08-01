@@ -1,0 +1,13 @@
+{
+    "ignoreRoot": [
+        ".git",
+        ".nyc_output",
+        ".sass-cache",
+        "bower-components",
+        "coverage"
+    ],
+    "ignore" : [
+        "node_modules/!(file-watcher)/**/*",
+        "node_modules/file-watcher/node_modules/**/*"
+    ]
+}

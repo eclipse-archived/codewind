@@ -9,6 +9,11 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
+import fs from 'fs-extra';
+import path from 'path';
+
+import http from 'http';
+
 import { detectType } from '../controllers/typeDetectionController';
 import { writeCwSettings } from '../controllers/cwSettingsController';
 import { importProjectFromGitRepo } from '../controllers/gitController';
@@ -24,17 +29,72 @@ export default class ProjectInitializer {
   }
 
   async initializeExistingProject(): Promise<InitializeResult> {
-    const projectType = await detectType(this.projectMountDirectory);
-
-    writeCwSettings(this.projectMountDirectory);
-
-    return projectType;
+    const initializeResult = await detectType(this.projectMountDirectory);
+    writeCwSettings(this.projectMountDirectory, initializeResult.projectType);
+    return initializeResult;
   }
 
-  async initializeProjectFromGit(gitRepo: string, gitBranch?: string): Promise<InitializeResult> {
-    await importProjectFromGitRepo(gitRepo, this.projectName, this.projectMountDirectory, gitBranch);
-
+  async initializeProjectFromGit(
+    gitRepo: string,
+    gitBranch?: string
+  ): Promise<InitializeResult> {
+    await importProjectFromGitRepo(
+      gitRepo,
+      this.projectName,
+      this.projectMountDirectory,
+      gitBranch
+    );
     return this.initializeExistingProject();
   }
+
+  copyFiles() {
+    this.traverseFileSystem(this.projectMountDirectory);
+  }
+
+  traverseFileSystem = async(currentPath: any) => {
+    const files = fs.readdirSync(currentPath);
+    for (const i in files) {
+      const currentFile = `${currentPath}/${files[i]}`;
+      const stats = fs.statSync(currentFile);
+      if (stats.isFile()) {
+        asyncHttpRequest(this.createOptions(), this.createBody(fs.readFileSync(currentFile, 'utf-8'), files[i]));
+      } else if (stats.isDirectory()) {
+        this.traverseFileSystem(currentFile);
+      }
+    }
+  };
+
+  createBody = (fileContent: any, fileName: any) => {
+    return JSON.stringify({
+      fileName,
+      fileContent,
+    });
+  };
+
+  createOptions = () => {
+    return {
+      host: 'docker.for.mac.localhost',
+      port: '9092',
+      path: '/api/v1/projects/2/fileCatcher',
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+        // 'Content-Length': body.length,
+      }
+    };
+  };
 }
 
+function asyncHttpRequest(options: any, body: any, secure = false) {
+  return new Promise(function(resolve, reject) {
+    // const protocol = secure ? https : http;
+    const req = http.request(options, res => {});
+    if (body) {
+      req.write(body);
+    }
+    req.on('error', (err: any) => {
+      console.dir(err);
+    });
+    req.end();
+  });
+}

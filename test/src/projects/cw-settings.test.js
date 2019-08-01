@@ -6,6 +6,7 @@ const containerService = require('../../modules/container.service');
 const SocketService = require('../../modules/socket.service');
 
 const { WORKSPACE_DIR, testTimeout } = require('../../config');
+const { defaultNodeSettings, defaultLibertySettings } = require('../../utils/default-cw-settings');
 
 chai.should();
 
@@ -37,19 +38,7 @@ describe('CWSettings Tests', function() {
             it('an .cw-settings file is created with the correct (default) fields', async function() {
                 this.timeout(testTimeout.med);
                 const cwSettingsObject = await containerService.readJson(pathToCWSettings);
-                cwSettingsObject.should.deep.equal({
-                    contextRoot: '',
-                    internalPort: '',
-                    healthCheck: '',
-                    watchedFiles: {
-                        includeFiles: [
-                            '',
-                        ],
-                        excludeFiles: [
-                            '',
-                        ],
-                    },
-                });
+                cwSettingsObject.should.deep.equal(defaultNodeSettings);
             });
         });
     });
@@ -77,19 +66,7 @@ describe('CWSettings Tests', function() {
             it('an .cw-settings file is created with the correct (default) fields', async function() {
                 this.timeout(testTimeout.med);
                 const cwSettingsObject = await containerService.readJson(pathToCWSettings);
-                cwSettingsObject.should.deep.equal({
-                    contextRoot: '',
-                    internalPort: '',
-                    healthCheck: '',
-                    watchedFiles: {
-                        includeFiles: [
-                            '',
-                        ],
-                        excludeFiles: [
-                            '',
-                        ],
-                    },
-                });
+                cwSettingsObject.should.deep.equal(defaultLibertySettings);
             });
         });
     });

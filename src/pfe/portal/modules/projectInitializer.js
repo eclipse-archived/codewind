@@ -20,8 +20,7 @@ const dockerImage = 'codewind-initialize-amd64'
 const dockerTag = process.env.CODEWIND_VERSION || 'latest';
 const fs = require('fs-extra');
 
-console.log('dockerTag');
-console.log(dockerTag);
+log.info('dockerTag = ' + dockerTag);
 
 let initialize;
 if (global.codewind.RUNNING_IN_K8S) {
@@ -56,7 +55,7 @@ const initializeProjectFromTemplate = async (user, projectPath, projectName, git
     try {
       // The bind mount for docker creates the path in the docker case.
       await fs.ensureDir(projectPath);
-      projectInfo = await initialize.initialiseProject(projectName, projectPath, gitInfo.repo, gitInfo.branch);
+      projectInfo = await initialize.initializeProject(projectName, projectPath, gitInfo.repo, gitInfo.branch);
       projectInfo.projectPath = projectPath;
     } catch (err) {
       log.error(err)
@@ -85,7 +84,7 @@ const initializeProjectFromLocalDir = async (user, projectPath) => {
     try {
       // The bind mount for docker creates the path in the docker case.
       await fs.ensureDir(projectPath);
-      projectInfo = await initialize.initialiseProject(undefined, projectPath);
+      projectInfo = await initialize.initializeProject(undefined, projectPath);
       projectInfo.projectPath = projectPath;
     } catch (err) {
       log.error(err)

@@ -10,6 +10,13 @@
  *******************************************************************************/
 
 import { logHelperTestModule } from "../tests/logHelper.module.test";
+import { utilsTestModule } from "../tests/utils.module.test";
+import { localeTestModule } from "../tests/locale.module.test";
+import { workspaceSettingsTestModule } from "../tests/workspaceSettings.module.test";
+import { projectSettingsTestModule } from "../tests/projectSettings.module.test";
+import { projectStatusControllerTestModule } from "../tests/projectStatusController.test";
+import { projectsControllerTestModule } from "../tests/projectsController.module.test";
+import * as mocha from "mocha";
 
 interface ModuleExtension {
     moduleName: string;
@@ -21,4 +28,40 @@ const logHelperModule: ModuleExtension = {
     moduleFunc: logHelperTestModule
 };
 
-export const moduleLists: Array<ModuleExtension> = [logHelperModule];
+const utilsModule: ModuleExtension = {
+    moduleName: "utils",
+    moduleFunc: utilsTestModule
+};
+
+const localeModule: ModuleExtension = {
+    moduleName: "locale",
+    moduleFunc: localeTestModule
+};
+
+const workspaceSettingsModule: ModuleExtension = {
+    moduleName: "workspaceSettings",
+    moduleFunc: workspaceSettingsTestModule
+};
+
+const projectSettingsModule: ModuleExtension = {
+    moduleName: "projectSettings",
+    moduleFunc: projectSettingsTestModule
+};
+
+const projectStatusControllerModule: ModuleExtension = {
+    moduleName: "projectStatusController",
+    moduleFunc: projectStatusControllerTestModule
+};
+
+const projectControllerModule: ModuleExtension = {
+    moduleName: "projectsController",
+    moduleFunc: projectsControllerTestModule
+};
+
+export const moduleLists: Array<ModuleExtension> = [logHelperModule,
+                                                    utilsModule,
+                                                    localeModule,
+                                                    workspaceSettingsModule,
+                                                    projectSettingsModule,
+                                                    projectStatusControllerModule,
+                                                    projectControllerModule];

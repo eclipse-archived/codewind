@@ -28,8 +28,9 @@ module.exports = class ExtensionList {
   /**
    * Function to load all extensions found in the extensions directory
    * @param extensionsPath, directory path of the extensions directory
+   * @param templates, reference to the templates registry
    */
-  async initialise(extensionsPath) {
+  async initialise(extensionsPath, templates) {
     try {
       // Read the extensions directory, create and add extensions to the list
       let entries = await fs.readdir(extensionsPath);
@@ -37,7 +38,15 @@ module.exports = class ExtensionList {
         let fstats = await fs.lstat(path.join(extensionsPath, entries[i]));
         // Extensions are in sub-directories of the top-level extensions directory
         if (fstats.isDirectory()) {
-          this.add(new Extension({path: path.join(extensionsPath, entries[i]), name: entries[i]}));
+          const extension = new Extension({path: path.join(extensionsPath, entries[i]), name: entries[i]});
+          await extension.initialise();
+          this.add(extension);
+          if (extension.templates)
+            templates.addRepository(extension.templates, extension.description);
+          else if (extension.templatesProvider) {
+            templates.addProvider(extension.name, extension.templatesProvider);
+            delete extension.templatesProvider;
+          }
         }
       }
     } catch(err) {

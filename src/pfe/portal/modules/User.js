@@ -75,16 +75,17 @@ module.exports = class User {
       // Add the projectList to args
       await this.initialiseExistingProjects();
 
+      this.templates = new Templates(this.workspace);
+      await this.templates.initializeRepositoryList();
+
       // Create the list of codewind extensions
       this.extensionList = new ExtensionList();
       try {
-        await this.extensionList.initialise(this.directories.extensions);
+        await this.extensionList.initialise(this.directories.extensions, this.templates);
       } catch (error) {
         log.error('Codewind extensions failed to load');
         log.error(error);
       }
-      this.templates = new Templates(this.workspace);
-      await this.templates.initializeRepositoryList();
 
       // Create the FileWatcher and LoadRunner classes for this user
       this.fw = new FileWatcher(this);
@@ -254,13 +255,13 @@ module.exports = class User {
  * @param projectID, an identifier for a project
  * @param timestamp, the timestamp for the file change list
  * @param chunk, the current chunk number
- * @param chunk_total, the total chunks expected for this timestamp
+ * @param chunkTotal, the total chunks expected for this timestamp
  * @param eventArray, the file change event array
  */
-  async fileChanged(projectID, timestamp, chunk, chunk_total, eventArray) {
+  async fileChanged(projectID, timestamp, chunkNum, chunkTotal, eventArray) {
     try {
-      log.debug(`Project ${projectID} file change list received on ${timestamp}. chunk number ${chunk} with total chunk ${chunk_total} for this timestamp.`);
-      await this.fw.projectFileChanged(projectID, timestamp, chunk, chunk_total, eventArray);
+      log.debug(`Project ${projectID} file change list received on ${timestamp}. chunk number ${chunkNum} with total chunk ${chunkTotal} for this timestamp.`);
+      await this.fw.projectFileChanged(projectID, timestamp, chunkNum, chunkTotal, eventArray);
     } catch (err) {
       log.error('Error in function fileChanged');
       log.error(err);
@@ -394,24 +395,6 @@ module.exports = class User {
       await this.projectList.updateProject(updatedProject);
       this.uiSocket.emit('projectClosed', updatedProject);
     }
-  }
-
-  /**
-   * Function to notify file-watcher that the project settings have been changed.
-   * @param project, an instance of the Project class
-   */
-  async projectSettingsChanged(project) {
-    log.info(`Project ${project.projectID} settings changed`);
-    await this.fw.projectSettingsChanged(project);
-  }
-
-  /**
-   * Function to notify file-watcher that it needs to update a given project
-   * @param project, an instance of the Project class
-   */
-  async updateProject(project) {
-    log.info(`Updating project ${project.projectID}.`);
-    await this.fw.updateProject(project);
   }
 
   async updateStatus(body) {
@@ -585,19 +568,28 @@ module.exports = class User {
     let isDeploymentRegistrySet = false;
     log.info(`Checking PFE & workspace settings deployment registry`);
 
-    if (await fs.pathExists(workspaceSettingsFile)) {
-      try {
+    try {
+      if (await fs.pathExists(workspaceSettingsFile)) {
         contents = await fs.readJson(workspaceSettingsFile);
         log.debug(`Workspace settings contents: ` + JSON.stringify(contents));
-      } catch (err) {
-        log.error("Error reading file " + workspaceSettingsFile);
-        log.error(err);
-        const workspaceSettings = {
-          statusCode: 500,
-          deploymentRegistry: false
-        }
-        return workspaceSettings;
+      } else {
+        log.debug("Settings file " + workspaceSettingsFile + " does not exist");
+        // Due to network PV issues, sometimes the file does not get detected in the Codewind container
+        // Reading the dir forces the settings file to be available to the Codewind container
+        let files = await fs.readdir(this.directories["config"]);
+        log.debug(this.directories["config"] + " file listing: ");
+        files.forEach(function (file) {
+          log.debug(file);
+        });
       }
+    } catch (err) {
+      log.error("Error reading file " + workspaceSettingsFile);
+      log.error(err);
+      const workspaceSettings = {
+        statusCode: 500,
+        deploymentRegistry: false
+      }
+      return workspaceSettings;
     }
 
     if (contents && contents.deploymentRegistry && contents.deploymentRegistry.length > 0) {
@@ -670,9 +662,21 @@ module.exports = class User {
   }
 
   /**
-   * Function to set locale on the file watcher
+   * Function to set locale
    */
   setLocale(locale) {
     this.fw.setLocale(locale);
+  }
+
+  /**
+   * Function to set log level
+   */
+  async setLoggingLevel(level) {
+    try {
+      await this.fw.setLoggingLevel(level);
+    } catch (err){
+      log.error(`Error setting log level on filewatcher module`);
+      log.error(err);
+    }
   }
 }

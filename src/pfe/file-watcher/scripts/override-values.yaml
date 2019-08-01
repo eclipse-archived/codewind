@@ -1,3 +1,3 @@
 image:
   tag: latest
-  pullPolicy: Never
+  pullPolicy: Always

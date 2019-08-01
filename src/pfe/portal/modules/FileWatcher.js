@@ -52,8 +52,9 @@ module.exports = class FileWatcher {
 
         case "projectSettingsChanged" : {
           logEvent("projectSettingsChanged", fwProject);
-          if (fwProject.name == "ignoredPaths") {
-            await this.handleFWProjectEvent("projectSettingsChanged", fwProject);
+          // Handle the projectSettingsChanged event only when we get a success
+          if(fwProject.status === 'success') {
+            await this.handleNewOrUpdatedProject("projectSettingsChanged", fwProject);
           }
           this.user.uiSocket.emit("projectSettingsChanged", fwProject);
           break;
@@ -162,7 +163,7 @@ module.exports = class FileWatcher {
         }
 
         case "newProjectAdded": {
-          await this.handleFWProjectEvent('newProjectAdded', fwProject);
+          await this.handleNewOrUpdatedProject('newProjectAdded', fwProject);
           break;
         }
 
@@ -222,7 +223,8 @@ module.exports = class FileWatcher {
       startMode: project.startMode,
       location: project.projectPath(false),
       applicationPort: project.applicationPort,
-      settings: settingsFileContents
+      settings: settingsFileContents,
+      language: project.language 
     };
 
     log.info(`Calling createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
@@ -360,35 +362,6 @@ module.exports = class FileWatcher {
     return retval;
   }
 
-  async projectSettingsChanged(fwProject) {
-    logEvent('projectSettingsFileChanged', fwProject);
-    const newProjectProperties = await this.user.projectList.reloadSettingsFile(fwProject);
-    const settingsFileContents = await newProjectProperties.readSettingsFile();
-    let body = { 'projectID': fwProject.projectID, 'settings': settingsFileContents};
-    try{
-      const retval = await filewatcher.reconfigProjectSpecification(body);
-      this.logFWReturnedMsg(retval);
-      if (retval.statusCode != 202){
-        throw new Error(`project settings ${retval.statusCode} ${retval.err.msg}`);
-      }
-    } catch (err) {
-      log.error(err);
-    }
-
-  }
-
-  async updateProject(fwProject) {
-    try{
-      const retval = await filewatcher.updateProject(fwProject.projectID);
-      this.logFWReturnedMsg(retval);
-      if (retval.statusCode != 202){
-        throw new Error(`project update ${retval.statusCode} ${retval.err.msg}`);
-      }
-    } catch (err) {
-      log.error(err);
-    }
-  }
-
   async updateStatus(body) {
     try{
       const retval = await filewatcher.updateStatus(body);
@@ -426,6 +399,49 @@ module.exports = class FileWatcher {
     }
   }
 
+  /**
+   * Function to specifically handle fw newProjectAdded and
+   * projectSettingsChanged events
+   */
+  async handleNewOrUpdatedProject(event, fwProject) {
+    try {
+      const projectID = fwProject.projectID;
+      const project = this.user.projectList.retrieveProject(projectID);
+
+      if (fwProject.ignoredPaths || event == "newProjectAdded") {
+        // Send all file watcher clients project related data when a new project is added or ignored paths has changed
+        let changeType;
+        if (event == "newProjectAdded") {
+          changeType = "add";
+        }
+        if (event == 'projectSettingsChanged') {
+          changeType = "update";
+        }
+        const ignoredPaths = fwProject.ignoredPaths;
+        let pathToMonitor = path.join(project.workspace, project.directory);
+        if (process.env.HOST_OS === "windows") {
+          pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
+        }
+        const projectWatchStateId = crypto.randomBytes(16).toString("hex");
+        const data = {
+          changeType: changeType,
+          projectWatchStateId: projectWatchStateId,
+          projectID: projectID,
+          pathToMonitor: pathToMonitor,
+          ignoredPaths: ignoredPaths,
+        }
+        let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
+        await this.handleFWProjectEvent(event, projectUpdate);
+        WebSocket.watchListChanged(data);
+      } else if (fwProject.contextRoot || fwProject.ports || fwProject.mavenProfiles || fwProject.mavenProperties) {
+        // Update the project.inf on project settings change
+        await this.handleFWProjectEvent(event, fwProject);
+      }
+    } catch (err) {
+      log.error(err);
+    }
+  }
+
 
   /**
    * Response function to fw create / changed socket events
@@ -456,33 +472,6 @@ module.exports = class FileWatcher {
         // Reset app logs. Don't check if the app came up successfully,
         // we will want to see logs for failing apps.
         updatedProject.resetLogStream('app');
-      }
-      if (event == 'newProjectAdded' || event == 'projectSettingsChanged') {
-        let changeType;
-        if (event == "newProjectAdded") {
-          changeType = "add";
-        }
-        if (event == 'projectSettingsChanged') {
-          changeType = "update";
-        }
-        const projectID = fwProject.projectID;
-        const ignoredPaths = fwProject.ignoredPaths;
-        const project = this.user.projectList.retrieveProject(projectID);
-        let pathToMonitor = path.join(project.workspace, project.directory);
-        if (process.env.HOST_OS === "windows") {
-          pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
-        }
-        const projectWatchStateId = crypto.randomBytes(16).toString("hex");
-        const data = {
-          changeType: changeType,
-          projectWatchStateId: projectWatchStateId,
-          projectID: projectID,
-          pathToMonitor: pathToMonitor,
-          ignoredPaths: ignoredPaths,
-        }
-        let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId };
-        await this.user.projectList.updateProject(projectUpdate);
-        WebSocket.watchListChanged(data);
       }
     } catch (err) {
       log.error(err);
@@ -580,6 +569,15 @@ module.exports = class FileWatcher {
     } else {
       // The file watcher isn't running/reachable, just remove disconnect the socket
       this.up = false;
+    }
+  }
+
+  async setLoggingLevel(level) {
+    this.level = level;
+    try {
+      await filewatcher.setLoggingLevel(this.level);
+    } catch (err) {
+      log.error(err);
     }
   }
 

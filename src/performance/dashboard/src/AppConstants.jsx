@@ -10,7 +10,7 @@
 ******************************************************************************/
 
 export const APP_NAME = "codewind";
-export const API_SERVER = "http://localhost:9090";
+export const API_SERVER = `${location.protocol}//${location.host}`;
 export const MAX_DESC_LENGTH = 80;
 
 export const ROUTES_CHARTS = 'charts';

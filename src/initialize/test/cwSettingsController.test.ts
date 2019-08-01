@@ -6,6 +6,14 @@ import path from 'path';
 import sinon from 'sinon';
 import proxyquire from 'proxyquire';
 
+const {
+  defaultSpringSettings,
+  defaultLibertySettings,
+  defaultNodeSettings,
+  defaultSwiftSettings,
+  defaultDockerSettings,
+} = require('../../../test/utils/default-cw-settings');
+
 chai.use(sinonChai);
 chai.use(chaiAsPromised);
 chai.should();
@@ -37,16 +45,45 @@ describe('cwSettingsController', () => {
     const settingsPath: string = path.join(projectMountDirectory, '.cw-settings');
     const legacySettingsPath: string = path.join(projectMountDirectory, '.mc-settings');
 
+    const checkSettingsMatch = (expectedDefaultSettings) => {
+      const writeFileArgs = fsStub.writeFileSync.getCall(0).args;
+      // path to write to
+      writeFileArgs[0].should.equal(settingsPath);
+      // content to write
+      JSON.parse(writeFileArgs[1]).should.deep.equal(expectedDefaultSettings);
+    };
+
     describe('when no settings files already exist in the project', () => {
-      it('writes a blank .cw-settings file', () => {
-        cwSettingsController.writeCwSettings(projectMountDirectory);
+      describe('(spring)', () => {
+        it('writes correct default .cw-settings', () => {
+          cwSettingsController.writeCwSettings(projectMountDirectory, 'spring');
+          checkSettingsMatch(defaultSpringSettings);
+        });
+      });
+      describe('(liberty)', () => {
+        it('writes correct default .cw-settings', () => {
+          cwSettingsController.writeCwSettings(projectMountDirectory, 'liberty');
+          checkSettingsMatch(defaultLibertySettings);
+        });
+      });
 
-        const writeFileArgs = fsStub.writeFileSync.getCall(0).args;
-
-        // path to write to
-        writeFileArgs[0].should.equal(settingsPath);
-        // content to write
-        isValidCWSettings(writeFileArgs[1]).should.be.true;
+      describe('(node)', () => {
+        it('writes correct default .cw-settings', () => {
+          cwSettingsController.writeCwSettings(projectMountDirectory, 'nodejs');
+          checkSettingsMatch(defaultNodeSettings);
+        });
+      });
+      describe('(swift)', () => {
+        it('writes correct default .cw-settings', () => {
+          cwSettingsController.writeCwSettings(projectMountDirectory, 'swift');
+          checkSettingsMatch(defaultSwiftSettings);
+        });
+      });
+      describe('(docker)', () => {
+        it('writes correct default .cw-settings', () => {
+          cwSettingsController.writeCwSettings(projectMountDirectory, 'docker');
+          checkSettingsMatch(defaultDockerSettings);
+        });
       });
     });
 
@@ -83,12 +120,3 @@ describe('cwSettingsController', () => {
     });
   });
 });
-
-function isValidCWSettings(text: string): boolean {
-  const object = JSON.parse(text);
-
-  return 'contextRoot' in object
-      && 'internalPort' in object
-      && 'healthCheck' in object
-      && 'watchedFiles' in object
-}

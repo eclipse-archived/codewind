@@ -57,7 +57,7 @@ if [ ! -d $HOME/artifacts/$LIBERTY_REPO_CACHE ]; then
 	cd $HOME/artifacts
 
 	echo "Extracting liberty feature cache to $HOME/artifacts"
-	$JAVA_HOME/bin/jar -xvf $APP_DIR/libertyrepocache.zip
+	$JAVA_HOME/bin/jar -xf $APP_DIR/libertyrepocache.zip
 	rm -rf $APP_DIR/libertyrepocache.zip
 	mkdir -p /opt/ibm/wlp/etc
     cp $HOME/artifacts/repositories.properties /opt/ibm/wlp/etc/repositories.properties

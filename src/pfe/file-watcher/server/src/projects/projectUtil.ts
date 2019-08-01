@@ -54,7 +54,7 @@ const containerInfoMap = new Map();
 
 export const containerInfoForceRefreshMap = new Map();
 
-const LOCAL_WORKSPACE = process.argv[2] ? process.argv[2] : process.env.HOST_WORKSPACE_DIRECTORY;
+export const LOCAL_WORKSPACE = process.argv[2] ? process.argv[2] : process.env.HOST_WORKSPACE_DIRECTORY;
 
 const projectList: Array<string> = [];
 
@@ -73,8 +73,7 @@ export interface ProjectEvent {
     ignoredPaths?: string[];
     mavenProfiles?: string[];
     mavenProperties?: string[];
-    watchedFiles?: string[];
-    ignoredFiles?: string[];
+    contextRoot?: string;
 }
 
 export interface ProjectLog {
@@ -150,7 +149,7 @@ export async function containerCreate(operation: Operation, script: string, comm
             return;
         }
 
-        logger.logFileWatcherInfo("Deployment Registry: " + deploymentRegistry);
+        logger.logInfo("Deployment Registry: " + deploymentRegistry);
     }
 
     const keyValuePair: UpdateProjectInfoPair = {
@@ -159,7 +158,7 @@ export async function containerCreate(operation: Operation, script: string, comm
         saveIntoJsonFile: true
     };
     const projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
-    logger.logProjectInfo("The projectInfo has been updated for deploymentRegistry: " + JSON.stringify(projectInfo), projectInfo.projectID);
+    logger.logTrace("The projectInfo has been updated for deploymentRegistry: " + JSON.stringify(projectInfo));
 
 
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command,
@@ -175,7 +174,7 @@ export async function containerCreate(operation: Operation, script: string, comm
                 userMavenSettings = await getProjectMavenSettings(operation.projectInfo);
             } catch (err) {
                 const errorMsg = "The project will not build due to invalid maven settings for project: " + projectName;
-                logger.logProjectError(errorMsg.concat("\n  Cause: " + err).concat("\n " + err.stack), projectID, projectName);
+                logger.logProjectError(errorMsg.concat("\n  Cause: " + err.message).concat("\n " + err.stack), projectID, projectName);
                 projectEvent.error = errorMsg;
                 await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.invalidMavenSettings");
                 io.emitOnListener(event, projectEvent);
@@ -252,7 +251,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
             return;
         }
 
-        logger.logFileWatcherInfo("Deployment Registry: " + deploymentRegistry);
+        logger.logInfo("Deployment Registry: " + deploymentRegistry);
     }
 
     const keyValuePair: UpdateProjectInfoPair = {
@@ -261,7 +260,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
         saveIntoJsonFile: true
     };
     const projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
-    logger.logProjectInfo("The projectInfo has been updated for deploymentRegistry: " + JSON.stringify(projectInfo), projectInfo.projectID);
+    logger.logTrace("The projectInfo has been updated for deploymentRegistry: " + JSON.stringify(projectInfo));
 
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
         String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
@@ -276,7 +275,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
             userMavenSettings = await getProjectMavenSettings(operation.projectInfo);
         } catch (err) {
             const errorMsg = "The project will not build due to invalid maven settings for project: " + projectName;
-            logger.logProjectError(errorMsg.concat("\n  Cause: " + err).concat("\n " + err.stack), projectID, projectName);
+            logger.logProjectError(errorMsg.concat("\n  Cause: " + err.message).concat("\n " + err.stack), projectID, projectName);
             projectEvent.error = errorMsg;
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.invalidMavenSettings");
             io.emitOnListener(event, projectEvent);
@@ -315,17 +314,14 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
     if (operation.projectInfo.ignoredPaths) {
         projectInfo.ignoredPaths = operation.projectInfo.ignoredPaths;
     }
-    if (operation.projectInfo.watchedFiles) {
-        projectInfo.watchedFiles = operation.projectInfo.watchedFiles;
-    }
-    if (operation.projectInfo.ignoredFiles) {
-        projectInfo.ignoredFiles = operation.projectInfo.ignoredFiles;
-    }
     if (operation.projectInfo.mavenProfiles) {
         projectInfo.mavenProfiles = operation.projectInfo.mavenProfiles;
     }
     if (operation.projectInfo.mavenProperties) {
         projectInfo.mavenProperties = operation.projectInfo.mavenProperties;
+    }
+    if (operation.projectInfo.contextRoot) {
+        projectInfo.contextRoot = operation.projectInfo.contextRoot;
     }
 
     const projectMetadata = projectsController.getProjectMetadataById(projectID);
@@ -356,17 +352,18 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                 try {
                     if (result.exitCode !== 0) {
                         projectInfo.status = "failed";
-                        let errorMsg = `The container failed to start for application ` + projectLocation;
+                        const errorMsg = `The container failed to start for application ` + projectLocation;
                         logger.logProjectError("Error code: " + result.exitCode + " - " + errorMsg, projectID, projectName);
-                        if (result.exitCode == 7) {
-                            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.invalidDeploymentRegistry");
-                            errorMsg = projectEventErrorMsgs.invalidDeploymentRegistry;
-                        } else {
+
+                        // Explicitly handle exit code of 1 and set the build status to failed with a failure message for any unexpected script exec errors
+                        // Otherwise handle all build/app statuses in the project script and exit with 3
+                        if (result.exitCode == 1) {
                             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.buildFail");
                         }
+
                         projectInfo.error = errorMsg;
                         io.emitOnListener(event, projectInfo);
-                        logger.logProjectInfo("Emitted event: " + event + "\n" + JSON.stringify(projectInfo), projectID, projectName);
+                        logger.logTrace(`Emitted event for project ${projectName}: ${event} \n` + JSON.stringify(projectInfo));
                         return;
                     }
                     logger.logProjectInfo(`The container was started successfully for application ` + projectLocation, projectID, projectName);
@@ -793,7 +790,7 @@ export async function hasDebugPortChanged(projectInfo: ProjectInfo): Promise<boo
 
     const containerName = await getContainerName(projectInfo);
     if (process.env.IN_K8 === "true") {
-        // do nothing for now, since ICP does not support debug mode
+        // do nothing for now, since Kubernetes does not support debug mode
         return false;
     } else {
         return await dockerutil.hasDebugPortChanged(projectInfo, containerName);
@@ -827,11 +824,11 @@ export async function getProjectInfo(projectID: string, ignoreLog?: boolean): Pr
 export async function getAllProjectInfo(handler: any): Promise<void> {
     const projectsDataDir = projectConstants.projectsDataDir;
     if (! await utils.asyncFileExists(projectsDataDir)) {
-        logger.logFileWatcherInfo("The project folder does not exist yet: " + projectsDataDir);
+        logger.logInfo("The project folder does not exist yet: " + projectsDataDir);
         return;
     }
 
-    logger.logFileWatcherInfo("Looking up project files in " + projectsDataDir);
+    logger.logInfo("Looking up project files in " + projectsDataDir);
     try {
         const folders = await readDirAsync(projectsDataDir);
         folders.forEach(async (folder: string) => {
@@ -843,10 +840,10 @@ export async function getAllProjectInfo(handler: any): Promise<void> {
                     if (subfile === folder + ".json") {
                         const f = currentFolder + "/" + subfile;
 
-                        logger.logFileWatcherInfo("Getting project info from: " + subfile);
+                        logger.logInfo("Getting project info from: " + subfile);
                         const projectInfo = await projectsController.getProjectInfoFromFile(f);
 
-                        logger.logFileWatcherInfo("Project info for file " + subfile + " is: " + projectInfo);
+                        logger.logInfo("Project info for file " + subfile + " is: " + projectInfo);
                         if (projectInfo) {
                             handler(projectInfo);
                         }
@@ -855,8 +852,8 @@ export async function getAllProjectInfo(handler: any): Promise<void> {
             }
         });
     } catch (err) {
-        logger.logFileWatcherError("Error getting info for all projects in " + projectsDataDir);
-        logger.logFileWatcherError(err);
+        logger.logError("Error getting info for all projects in " + projectsDataDir);
+        logger.logError(err);
     }
 }
 
@@ -900,7 +897,7 @@ export async function isContainerActive(projectID: string, handler: any): Promis
         }
     } catch (err) {
         const msg = "Error getting container status: " + err;
-        logger.logFileWatcherError(msg);
+        logger.logError(msg);
     }
 }
 
@@ -949,25 +946,24 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             return;
         }
 
-        let path = "/health";
-        let pingPathInfo = "/health or /";
+        const defaultPath = "/health";
+        let isDefaultPath: boolean = true;
+        let path: string = defaultPath;
 
         if (projectInfo.contextRoot) {
+            isDefaultPath = false;
             path = projectInfo.contextRoot;
-            pingPathInfo = projectInfo.contextRoot;
         }
 
         if (projectInfo.healthCheck) {
+            isDefaultPath = false;
             path = projectInfo.healthCheck;
-            pingPathInfo = projectInfo.healthCheck;
         }
 
-        const oldState = appStateMap.get(projectID).state;
-        const oldMsg = appStateMap.get(projectID).msg;
-        const pingPathMsg = "The project path that file watcher pings is " + pingPathInfo;
-
-        if (oldState === AppState.starting) {
-            await projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathMsg);
+        if (isDefaultPath) {
+            updateDetailedAppStatus(projectID, containerInfo.ip, port, path, isDefaultPath);
+        } else {
+            updateDetailedAppStatus(projectID, containerInfo.ip, port, path);
         }
 
         // Try to ping the application
@@ -1079,35 +1075,35 @@ export async function shutdownProjects(): Promise<void> {
     try {
         if (projectListTemp === undefined || projectListTemp.length === 0) {
             // projectListTemp is empty
-            logger.logFileWatcherInfo("There are no projects with deployments");
+            logger.logInfo("There are no projects with deployments");
             const data = {
                 status: "success"
             };
             io.emitOnListener("filewatcherShutdown", data);
-            logger.logFileWatcherInfo("Shutdown complete " + JSON.stringify(data));
+            logger.logInfo("Shutdown complete " + JSON.stringify(data));
         } else {
             // projectListTemp is not empty
-            logger.logFileWatcherInfo("Project list: " + projectListTemp);
+            logger.logInfo("Project list: " + projectListTemp);
             projectListTemp.forEach(async projectID => {
                 try {
                     await projectsController.projectDeletion(projectID).then(returnCode => {
                         switch (returnCode) {
                             case 200: {
-                                logger.logFileWatcherInfo("DeleteProject: Project deleted " + projectID);
+                                logger.logInfo("DeleteProject: Project deleted " + projectID);
                                 break;
                             }
                             case 404: {
                                 const error = "DeleteProject: Project does not exist " + projectID;
-                                logger.logFileWatcherError(error);
+                                logger.logError(error);
                                 break;
                             }
                             case 500: {
                                 const error = "DeleteProject: Internal error for project " + projectID;
-                                logger.logFileWatcherError(error);
+                                logger.logError(error);
                                 break;
                             }
                             default: {
-                                logger.logFileWatcherError("DeleteProject: Project deletion failed with an unknown error " + projectID);
+                                logger.logError("DeleteProject: Project deletion failed with an unknown error " + projectID);
                             }
                         }
                     });
@@ -1121,7 +1117,7 @@ export async function shutdownProjects(): Promise<void> {
                             status: "success"
                         };
                         io.emitOnListener("filewatcherShutdown", data);
-                        logger.logFileWatcherInfo("Shutdown complete " + JSON.stringify(data));
+                        logger.logInfo("Shutdown complete " + JSON.stringify(data));
                     }
                 } catch (err) {
                     const errMsg = "Failed to remove project " + projectID;
@@ -1136,8 +1132,8 @@ export async function shutdownProjects(): Promise<void> {
             error: err
         };
         io.emitOnListener("filewatcherShutdown", data);
-        logger.logFileWatcherError("Error occurred during shutdown " + err);
-        logger.logFileWatcherError(JSON.stringify(data));
+        logger.logError("Error occurred during shutdown " + err);
+        logger.logError(JSON.stringify(data));
     }
 }
 
@@ -1171,9 +1167,15 @@ export async function runScript(projectInfo: ProjectInfo, script: string, comman
  *
  * @returns Promise<void>
  */
-export async function buildAndRun(operation: Operation): Promise<void> {
+export async function buildAndRun(operation: Operation, command: string): Promise<void> {
 
-    const event = "projectCreation";
+    let event;
+
+    if (command === "create") {
+        event = "projectCreation";
+    } else if (command == "update") {
+        event = "projectChanged";
+    }
 
     const projectLocation = operation.projectInfo.location;
     const projectID = operation.projectInfo.projectID;
@@ -1200,13 +1202,9 @@ export async function buildAndRun(operation: Operation): Promise<void> {
     if (operation.projectInfo.ignoredPaths) {
         projectEvent.ignoredPaths = operation.projectInfo.ignoredPaths;
     }
-    if (operation.projectInfo.watchedFiles) {
-        projectEvent.watchedFiles = operation.projectInfo.watchedFiles;
+    if (operation.projectInfo.contextRoot) {
+        projectEvent.contextRoot = operation.projectInfo.contextRoot;
     }
-    if (operation.projectInfo.ignoredFiles) {
-        projectEvent.ignoredFiles = operation.projectInfo.ignoredFiles;
-    }
-
     const buildInfo: BuildRequest = {
         projectLocation: projectLocation,
         LOCAL_WORKSPACE: LOCAL_WORKSPACE,
@@ -1225,7 +1223,8 @@ export async function buildAndRun(operation: Operation): Promise<void> {
     };
     await projectsController.updateProjectInfo(projectID, keyValuePair);
 
-    logger.logProjectInfo("In K8 environment: " + process.env.IN_K8, projectID, projectName);
+    const in_k8 = process.env.IN_K8 ? "true" : "false";
+    logger.logProjectInfo("In K8 environment: " + in_k8, projectID, projectName);
     if (process.env.IN_K8 === "true") {
         // Kubernetes environment
         await projectsController.updateProjectInfo(projectID, keyValuePair);
@@ -1235,7 +1234,7 @@ export async function buildAndRun(operation: Operation): Promise<void> {
             await containerBuildAndRun(event, buildInfo, operation);
         } catch (err) {
             const errorMsg = `The container failed to start for project ` + projectName;
-            logger.logProjectError(errorMsg.concat("\n  Cause: " + err).concat("\n " + err.stack), projectID, projectName);
+            logger.logProjectError(errorMsg.concat("\n  Cause: " + err.message).concat("\n " + err.stack), projectID, projectName);
             projectEvent.error = errorMsg;
             io.emitOnListener(event, projectEvent);
             return;
@@ -1254,7 +1253,7 @@ export async function buildAndRun(operation: Operation): Promise<void> {
             await containerBuildAndRun(event, buildInfo, operation);
         } catch (err) {
             const errorMsg = `The container failed to start for project ` + projectName;
-            logger.logProjectError(errorMsg.concat("\n  Cause: " + err).concat("\n " + err.stack), projectID, projectName);
+            logger.logProjectError(errorMsg.concat("\n  Cause: " + err.message).concat("\n " + err.stack), projectID, projectName);
             projectEvent.error = errorMsg;
             io.emitOnListener(event, projectEvent);
             return;
@@ -1336,7 +1335,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         };
 
         const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo();
-        logger.logFileWatcherInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo));
+        logger.logInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo));
         const deploymentRegistry: string = workspaceSettingsInfo.deploymentRegistry.trim();
         logger.logProjectInfo("Deployment Registry: " + deploymentRegistry, buildInfo.projectID);
 
@@ -1368,7 +1367,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         const dirList = await utils.asyncReadDir(defaultChartLocation);
         let chartDirCounter = 0;
         for (const chartDir of dirList) {
-            // Sometimes when we are pushing images to ICP, .DS_Store files also get copied. Skip them...
+            // Sometimes when we are pushing images to Kubernetes, .DS_Store files also get copied. Skip them...
             if (chartDir === ".DS_Store") {
                 continue;
             }
@@ -1399,7 +1398,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         try {
             // Render the chart template
             const microclimateReleaseName: string = process.env.MICROCLIMATE_RELEASE_NAME;
-            await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["template", defaultChartLocation, "--name", buildInfo.containerName, "--values=/file-watcher/scripts/override-values-icp.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + buildInfo.containerName, "--output-dir=" + chartParentFolder], {});
+            await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["template", defaultChartLocation, "--name", buildInfo.containerName, "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + buildInfo.containerName, "--output-dir=" + chartParentFolder], {});
 
             // Find the locations of the deployment and service file
             const deploymentFile = (await processManager.spawnDetachedAsync(buildInfo.projectID, "bash", ["/file-watcher/scripts/kubeScripts/find-kube-resource.sh", defaultChartLocation, "Deployment"], {})).stdout;
@@ -1702,14 +1701,7 @@ export async function removeProject(projectInfo: ProjectInfo): Promise<void> {
         await processManager.spawnDetachedAsync(projectID, "/file-watcher/scripts/dockerScripts/docker-remove.sh", [containerName, process.env.IN_K8], {});
 
         try {
-            // ICP has two docker images - one without registry and one with registry that we tag and push for the helm install, remove them both
-            let result = await processManager.spawnDetachedAsync(projectInfo.projectID, "buildah", ["images", "-qa", "-f", "reference=" + containerName], {});
-            // If output of the above command is not empty, handle it
-            if (result.stdout.length !== 0) {
-                await dockerutil.removeImage(projectInfo.projectID, result.stdout.trim());
-            }
-
-            result = await processManager.spawnDetachedAsync(projectInfo.projectID, "buildah", ["images", "-q", deploymentRegistry + "/" + containerName], {});
+            const result = await processManager.spawnDetachedAsync(projectInfo.projectID, "buildah", ["images", "-qa", "-f", "reference=" + containerName], {});
             // If output of the above command is not empty, handle it
             if (result.stdout.length !== 0) {
                 await dockerutil.removeImage(projectInfo.projectID, result.stdout.trim());
@@ -1757,7 +1749,7 @@ export function getUserFriendlyProjectType(internalProjectType: string): string 
             // Possibly return the language? So if it's a docker, python project, return "Python" ?
             return "Docker";
         default:
-            logger.logFileWatcherInfo("Possible extension project type " + internalProjectType);
+            logger.logInfo("Possible extension project type " + internalProjectType);
             return internalProjectType.charAt(0).toUpperCase() + internalProjectType.slice(1);
     }
 }
@@ -1786,6 +1778,13 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
         key: "buildRequest",
         value: false
     };
+
+    if (operation.projectInfo.ignoredPaths) {
+        projectInfo.ignoredPaths = operation.projectInfo.ignoredPaths;
+    }
+    if (operation.projectInfo.contextRoot) {
+        projectInfo.contextRoot = operation.projectInfo.contextRoot;
+    }
 
     const logDir = await logHelper.getLogDir(projectID, projectName);
     const appLog = path.resolve(projectLocation + "/../.logs/" + logDir, logHelper.appLogs.app + logHelper.logExtension);
@@ -1820,8 +1819,8 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
             logger.logProjectInfo("No containerInfo", projectID, projectName);
         }
 
-        // stream the app container logs - ICP
-        logger.logProjectInfo("Streaming application logs on ICP for " + projectInfo.projectID, projectInfo.projectID);
+        // stream the app container logs - Kubernetes
+        logger.logProjectInfo("Streaming application logs on Kubernetes for " + projectInfo.projectID, projectInfo.projectID);
         await processManager.spawnDetachedAsync(projectID, "/file-watcher/scripts/dockerScripts/docker-app-log.sh", [appLog, operation.containerName,
             process.env.IN_K8, projectID], {});
 
@@ -1848,7 +1847,7 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
     }
 
     logger.logProjectInfo("Container build and helm install stage complete", projectID, projectName);
-    // END: ICP K8S environment
+    // END: Kubernetes environment
 }
 
 
@@ -1991,5 +1990,31 @@ export async function restartProject(operation: Operation, startMode: string, ev
                 projectInfo.startMode = cachedStartMode;
             }
         });
+    }
+}
+
+/**
+ * @function
+ * @description Update detailed app status.
+ *
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param ip <Required | String> - The project ip that Turbine pings.
+ * @param port <Required | String> - The project port that Turbine pings.
+ * @param path <Required | String> - The project path that Turbine pings.
+ *
+ * @returns void
+ */
+export function updateDetailedAppStatus(projectID: string, ip: string, port: string, path: string, isDefaultPath?: boolean): void {
+    const oldState = appStateMap.get(projectID).state;
+    const oldMsg = appStateMap.get(projectID).msg;
+
+    let pingPathMsg = `Pinging http://${ip}:${port}${path}`;
+
+    if (isDefaultPath) {
+        pingPathMsg = `${pingPathMsg} and http://${ip}:${port}/`;
+    }
+
+    if (oldState === AppState.starting) {
+        projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathMsg);
     }
 }

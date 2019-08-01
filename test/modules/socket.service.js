@@ -48,6 +48,10 @@ const expectedMsgTypes = {
         event: 'projectCreation',
         expectedProperties: { status: 'success' } ,
     },
+    projectChanged: {
+        event: 'projectChanged',
+        expectedProperties: { status: 'success' } ,
+    },
     projectBind: {
         event: 'projectBind',
         expectedProperties: { status: 'success' } ,
