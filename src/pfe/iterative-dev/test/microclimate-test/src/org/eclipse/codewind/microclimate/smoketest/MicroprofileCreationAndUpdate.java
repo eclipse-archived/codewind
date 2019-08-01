@@ -120,8 +120,6 @@ public class MicroprofileCreationAndUpdate extends AbstractMicroclimateTest {
 //		}
 	}
 
-// Test currently quarantined until portal fixes their issue: https://github.ibm.com/dev-ex/portal/issues/841
-
 //	@Test(timeout=420000) // 5 mins timeout
 //	public void TestGautoBuild() {
 //		Logger.println(MicroprofileCreationAndUpdate.class, "TestGautoBuild()", ">>> MicroprofileCreationAndUpdate.TestGautoBuild");
