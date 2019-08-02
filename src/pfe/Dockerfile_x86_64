@@ -24,7 +24,7 @@ RUN curl -f -o buildah.rpm $BUILDAH_RPM
 RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 
 RUN yum install -y epel-release \
-    && yum -y --enablerepo=epel install zip unzip sudo wget ca-certificates openssl nodejs buildah.rpm \
+    && yum -y --enablerepo=epel install zip unzip sudo ca-certificates openssl nodejs buildah.rpm \
     && yum clean all \
     && rm -rf /var/cache/yum
 
@@ -39,7 +39,7 @@ RUN cd /tmp \
 
 # Download OpenJ9 JRE, fixed to jre8u212-b04_openj9-0.14.2 version
 RUN cd /tmp \
-    && wget -q https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u212-b04_openj9-0.14.2/OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz \
+    && curl -sL -O https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u212-b04_openj9-0.14.2/OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz \
     && echo 'b0c0aac53694b2ada3a9fdcbb3e9461257a54b50b4573d786d7b0778d6356805  OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz' | sha256sum -c - \
     && tar -xvf OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz \
     && OPENJ9_JRE=$(find *jre | head -n 1) \
@@ -55,7 +55,7 @@ ENV JAVA_HOME=/opt/java/jre \
 # Install the latest version of yq
 RUN LATEST_RELEASE=$(curl -L -s -H 'Accept: application/json' https://github.com/mikefarah/yq/releases/latest) \
     && LATEST_VERSION=$(echo $LATEST_RELEASE | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/') \
-    && wget -q https://github.com/mikefarah/yq/releases/download/$LATEST_VERSION/yq_linux_amd64 \
+    && curl -sL -O https://github.com/mikefarah/yq/releases/download/$LATEST_VERSION/yq_linux_amd64 \
     && mv ./yq_linux_amd64 /usr/local/bin/yq \
     && chmod +x /usr/local/bin/yq
 
