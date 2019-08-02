@@ -18,44 +18,63 @@ const log = new Logger(__filename);
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
 
+const tktErrRes = "error";
+const tktNotInstalledRes = "not-installed";
+
 /**
  * This function determines the ingress endpoint of the tekton dashboard if
- * its deployed and running 
+ * its deployed and running
  */
-async function getTektonDashboard() {
-  let tekton_dashboard_url = '';
+async function getTektonDashboardUrl() {
+  log.debug("Determining Tekton dashboard URL");
+  if (!global.codewind.RUNNING_IN_K8S) {
+    // no tekton in local case
+    return "";
+  }
 
   try {
     const client = new Client({ config: config.getInCluster(), version: '1.9'});
-
-    if (global.codewind.RUNNING_IN_K8S){
-      let ingress = await client.apis.extensions.v1beta1.namespaces(process.env.TEKTON_PIPELINE).ingress().get();
-      if (ingress) {
-        tekton_dashboard_url = (ingress.body.items[0].spec.rules[0].host) || '';
-      } 
+    const tktNamespaceName = process.env.TEKTON_PIPELINE;
+    log.info(`Looking for ingresses in Tekton namespace ${tktNamespaceName}`);
+    const ingresses = await client.apis.extensions.v1beta1.namespaces(tktNamespaceName).ingress().get();
+    if (ingresses && ingresses.body && ingresses.body.items[0]) {
+      return (ingresses.body.items[0].spec.rules[0].host || tktErrRes);
     }
+    log.info(`No ingress was found in Tekton namespace ${tktNamespaceName}. Is Tekton installed?`);
+    return tktNotInstalledRes;
   } catch (err) {
-    log.error(err);
+    log.error(`Unexpected error getting Tekton URL: ${JSON.stringify(err)}`);
   }
-
-  return tekton_dashboard_url;
+  return tktErrRes;
 }
+
+let tektonDashboardUrl;
+let tektonDashboardUrlPromise;
 
 /**
  * API Function to provide codewind runtime information to the UI
  */
 router.get('/api/v1/environment', async (req, res) => {
 
+  if (!tektonDashboardUrl) {
+    // just await on this promise if it exists so we only call getTektonDashboardUrl once
+    if (!tektonDashboardUrlPromise) {
+      tektonDashboardUrlPromise = getTektonDashboardUrl()
+        .then((tektonUrl) => log.info(`Initialized Tekton dashboard url as "${tektonUrl}"`));
+    }
+    tektonDashboardUrl = await tektonDashboardUrlPromise;
+  }
+
   try {
     let body = {};
     body = {
-      running_on_icp: global.codewind.RUNNING_IN_K8S,
+      running_on_k8s: global.codewind.RUNNING_IN_K8S,
       user_string: req.cw_user.userString,
       socket_namespace: req.cw_user.uiSocketNamespace,
       codewind_version: process.env.CODEWIND_VERSION,
       workspace_location: process.env.HOST_WORKSPACE_DIRECTORY,
       os_platform: process.env.HOST_OS || 'Linux',
-      tekton_dashboard_url: await getTektonDashboard()
+      tekton_dashboard_url: tektonDashboardUrl,
     }
     res.status(200).send(body);
   } catch (err) {
