@@ -137,7 +137,7 @@ export async function validate(operation: Operation): Promise<void> {
         logger.logProjectError("server.xml not found at: " + fullServerXmlPath, operation.projectInfo.projectID);
 
         const missingServerXmlMsg = await getTranslation("buildApplicationTask.missingServerXml", { path: fullServerXmlPath });
-        logBuildEvent(operation.projectInfo, missingServerXmlMsg, true);
+        await logBuildEvent(operation.projectInfo, missingServerXmlMsg, true);
     }
 
     const filepath = operation.projectInfo.location + "/pom.xml";
@@ -158,28 +158,6 @@ export async function validate(operation: Operation): Promise<void> {
             ProblemType.invalid,
             await locale.getTranslation("libertyProject.pomParsingError"),
             "POM parsing error: " + err
-        );
-        validator.results.push(result);
-    }
-    const dockerfileBuildPath = operation.projectInfo.location + "/Dockerfile-build";
-    try {
-        if (await utils.asyncFileExists(dockerfileBuildPath)) {
-            const dockerfileBuildResults = await validator.validateDockerfileBuild(dockerfileBuildPath);
-            dockerfileBuildResults.forEach((val: any) => { validator.results.push(val); });
-        }
-    } catch (err) {
-        logger.logProjectError("Dockerfile-Build validation encountered an error.", operation.projectInfo.projectID);
-        logger.logProjectError(err, operation.projectInfo.projectID);
-
-        const filename = Validator.prototype.getFileName(dockerfileBuildPath);
-        const relativePath = dockerfileBuildPath.replace("/codewind-workspace/", "");
-        const result = new ValidationResult(
-            Severity.error,
-            filename,
-            relativePath,
-            ProblemType.invalid,
-            await locale.getTranslation("libertyProject.DockerfileBuildParsingError"),
-            "Dockerfile-Build parsing error: " + err
         );
         validator.results.push(result);
     }
@@ -218,7 +196,7 @@ export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isErr
 
     logger.logProjectInfo(`Writing to build log at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
 
-    fs.appendFile(buildLogPath, fullMsg, (err) => {
+    await fs.appendFile(buildLogPath, fullMsg, (err) => {
         if (err) {
             logger.logProjectError("File system error writing to build log: " + err, projectInfo.projectID);
         }

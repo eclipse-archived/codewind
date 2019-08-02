@@ -90,7 +90,7 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
         }
     }
 
-     return logs;
+    return logs;
 }
 
  /**

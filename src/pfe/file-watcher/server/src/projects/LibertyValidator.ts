@@ -224,37 +224,4 @@ export class LibertyValidator extends Validator {
             });
         });
     }
-
-    validateDockerfileBuild(fileLocation: string): Promise<ValidationResult[]> {
-        return new Promise((resolve, reject) => {
-            const resultsArr: ValidationResult[] = [];
-
-            fs.readFile(fileLocation, async (err, data) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                const CHECK_STRING_1 = "PATH=/root/java/jre/bin:/opt/mvn/apache-maven/bin:$PATH";
-                const CHECK_STRING_2 = "tar xf /opt/mvn/apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt/mvn";
-                // check if Dockerfile-Build still has root user settings for java and mvn path
-                if (data.toString().trim().indexOf(CHECK_STRING_1) > -1 ||
-                    data.toString().trim().indexOf(CHECK_STRING_2) > -1) {
-                    const filename = Validator.prototype.getFileName(fileLocation);
-                    fileLocation = fileLocation.replace("/codewind-workspace/", "");
-                    const result = new ValidationResult(
-                        Severity.error,
-                        filename,
-                        fileLocation,
-                        ProblemType.invalid,
-                        await locale.getTranslation("libertyProject.validator.migrateNonRootUser.label"),
-                        await locale.getTranslation("libertyProject.validator.migrateNonRootUser.details")
-                    );
-                    resultsArr.push(result);
-                }
-                resolve(resultsArr);
-            });
-        });
-
-    }
-
 }

@@ -16,6 +16,8 @@ import { workspaceSettingsTestModule } from "../tests/workspaceSettings.module.t
 import { projectSettingsTestModule } from "../tests/projectSettings.module.test";
 import { projectStatusControllerTestModule } from "../tests/projectStatusController.test";
 import { projectsControllerTestModule } from "../tests/projectsController.module.test";
+import { libertyProjectTestModule } from "../tests/libertyProject.module.test";
+import { springProjectTestModule } from "../tests/springProject.module.test";
 import * as mocha from "mocha";
 
 interface ModuleExtension {
@@ -58,10 +60,22 @@ const projectControllerModule: ModuleExtension = {
     moduleFunc: projectsControllerTestModule
 };
 
+const libertyProjectModule: ModuleExtension = {
+    moduleName: "libertyProject",
+    moduleFunc: libertyProjectTestModule
+};
+
+const springProjectModule: ModuleExtension = {
+    moduleName: "springProject",
+    moduleFunc: springProjectTestModule
+};
+
 export const moduleLists: Array<ModuleExtension> = [logHelperModule,
                                                     utilsModule,
                                                     localeModule,
                                                     workspaceSettingsModule,
                                                     projectSettingsModule,
                                                     projectStatusControllerModule,
-                                                    projectControllerModule];
+                                                    projectControllerModule,
+                                                    libertyProjectModule,
+                                                    springProjectModule];

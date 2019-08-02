@@ -28,6 +28,8 @@ export const mkdirAsync = promisify(fs.mkdir);
 export const copyAsync = promisify(fs.copyFile);
 export const rmdirAsync = promisify(fs.rmdir);
 export const unlinkAsync = promisify(fs.unlink);
+export const openAsync = promisify(fs.open);
+export const readAsync = promisify(fs.readFile);
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
     return request.get(pfeURL, callback);
