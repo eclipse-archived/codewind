@@ -129,10 +129,10 @@ export function projectExtensionsTestModule(): void {
 
             it(combo + " => determineProjectType: " + location, async () => {
                 try {
-                    const projectTypes: string[] = await projectExtensions.getProjectTypes(location);
+                    const projectTypes: string[] = await projectExtensions.determineProjectType(location);
                     expect(projectTypes.toString()).to.equal(expectedResult.toString());
                 } catch (err) {
-                    expect(err.message).to.contain(expectedResult);
+                    expect(err.name).to.equal(expectedResult);
                 }
             });
         }
