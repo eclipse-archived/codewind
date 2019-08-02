@@ -141,17 +141,20 @@ async function main() {
       log.info('starting codewind on Kubernetes');
       global.codewind.RUNNING_IN_K8S = true;
 
-      // get path currently running on
-      const k8sServiceName = process.env.SERVICE_NAME;
-      const k8sNameSpace = process.env.KUBE_NAMESPACE || 'default';
-      let currentIngress = await k8Client.apis.extensions.v1beta1.namespaces(k8sNameSpace).ingress(k8sServiceName).get();
-      let k8sIngressPath = currentIngress.body.spec.rules[0].host;
+      // get current ingress path running on
+      const k8sIngressPath = process.env.CHE_INGRESS_HOST;
+      log.info("Ingress path is " + k8sIngressPath);
+      if (!k8sIngressPath) {
+        throw new Error("Ingress host env var was not set");
+      }
       const protocol = process.env.PORTAL_HTTPS == 'true' ? 'https://' : 'http://'
       originsWhitelist.push(protocol + k8sIngressPath);
     }
   } catch (err) {
-    // Not in K8s
-    log.error('failed to start codewind on Kubernetes');
+    log.error(`Error initializing codewind on Kubernetes: ${JSON.stringify(err)}`);
+  }
+
+  if (!global.codewind.RUNNING_IN_K8S) {
     originsWhitelist.push('http://localhost:*');
   }
 
