@@ -2,7 +2,7 @@
 name: Bug
 about: Reporting bugs and problems in Codewind
 title: Complete the bug template to report problems found in Codewind.
-labels: ''
+labels: kind/bug
 assignees: ''
 
 ---

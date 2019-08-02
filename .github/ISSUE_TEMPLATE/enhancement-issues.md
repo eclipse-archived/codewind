@@ -2,7 +2,7 @@
 name: Enhancement
 about: Suggesting enhancements for Codewind
 title: Complete the enhancement template to suggest improvements to Codewind.
-labels: ''
+labels: kind/enhancement
 assignees: ''
 
 ---
