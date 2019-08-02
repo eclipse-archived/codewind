@@ -1,14 +1,20 @@
 ---
 name: Question
-about: Asking questions about Eclipse Codewind
-title: Complete the question template to ask a question about Eclipse Codewind.
+about: Asking questions about Codewind
+title: Complete the question template to ask a question about Codewind.
 labels: ''
 assignees: ''
 
 ---
 
-**Codewind version:** Which version of Codewind, such as 19.02, does this question apply to?
-**Extension version (if applicable):** Which version of an extension, such as 19.2.0, do you currently use?
-**IDE version (if applicable):** Which IDE and version, such as VS Code 1.32.1, do you currently use?
-**OS:** Which operating system do you currently use?
+Please fill out the following form to ask a quesstion. If some fields do not apply to your situation, feel free to skip them.
+
+**Codewind version:**
+**OS:**
+
+**Che version:**
+**IDE extension version:**
+**IDE version:**
+**Kubernetes cluster:**
+
 **Question synopsis:** What question can we help you with?
