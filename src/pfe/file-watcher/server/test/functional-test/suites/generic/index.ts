@@ -8,6 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+import mocha from "mocha";
 import { SocketIO } from "../../lib/socket-io";
 
 import LocaleTest from "./tests/locale";

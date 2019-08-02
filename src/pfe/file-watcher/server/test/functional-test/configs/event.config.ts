@@ -15,5 +15,6 @@ export const events = {
     "deploymentRegistryStatus": "deploymentRegistryStatus",
     "projectValidated": "projectValidated",
     "statusChanged": "projectStatusChanged",
-    "restartResult": "projectRestartResult"
+    "restartResult": "projectRestartResult",
+    "settingsChanged": "projectSettingsChanged"
 };
