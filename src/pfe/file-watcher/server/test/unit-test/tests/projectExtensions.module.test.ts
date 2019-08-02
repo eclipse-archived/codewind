@@ -17,12 +17,29 @@ import * as projectsController from "../../../src/controllers/projectsController
 import * as projectUtil from "../../../src/projects/projectUtil";
 import * as app_configs from "../../functional-test/configs/app.config";
 import { ProjectInfo, UpdateProjectInfoPair, ProjectCapabilities } from "../../../src/projects/Project";
+import { workspaceConstants } from "../../../src/projects/constants";
 import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync } from "../../functional-test/lib/utils";
 
 export function projectExtensionsTestModule(): void {
 
     const someRandomExtension: string = "someRandomExtension";
     const defaultCodewindProjectTypes: string[] = ["liberty", "spring", "swift", "nodejs", "docker"];
+
+    const libertyDummyProjectPath = path.join(app_configs.projectDataDir, "libertyDummyProject");
+    const originalLibertyPOM = path.join(app_configs.projectDataDir, "dummymicroprofilepom.xml");
+    const testLibertyPOM = path.join(libertyDummyProjectPath, "pom.xml");
+
+    const appsodyNodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyappsodyproject");
+    const appsodyNodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyappsodyproject.json");
+    const appsodyNodeTestProjectMetadata = path.join(appsodyNodeProjectMetadataPath, "dummyappsodyproject.json");
+
+    const extensionsPath = workspaceConstants.workspaceExtensionDir;
+    const appsodyExtensionPath = path.join(extensionsPath, "appsodyExtension");
+
+    const appsodyExtensionOriginalArtifactPath1 = path.join(app_configs.projectDataDir, ".sh-extension");
+    const appsodyExtensionOriginalArtifactPath2 = path.join(app_configs.projectDataDir, "entrypoint.sh");
+    const appsodyExtensionTestArtifactPath1 = path.join(appsodyExtensionPath, ".sh-extension");
+    const appsodyExtensionTestArtifactPath2 = path.join(appsodyExtensionPath, "entrypoint.sh");
 
     it("setProjectExtensionList: " + someRandomExtension + " & isProjectExtensionSupported: " + someRandomExtension, async () => {
         projectExtensions.setProjectExtensionList(someRandomExtension);
@@ -42,11 +59,6 @@ export function projectExtensionsTestModule(): void {
     });
 
     describe("Combinational testing of getProjectTypes function", () => {
-
-        const libertyDummyProjectPath = path.join(app_configs.projectDataDir, "libertyDummyProject");
-        const originalLibertyPOM = path.join(app_configs.projectDataDir, "dummymicroprofilepom.xml");
-        const testLibertyPOM = path.join(libertyDummyProjectPath, "pom.xml");
-
 
         before("create test directories", async () => {
             if (!(await existsAsync(libertyDummyProjectPath))) {
@@ -85,11 +97,6 @@ export function projectExtensionsTestModule(): void {
     });
 
     describe("Combinational testing of determineProjectType function", () => {
-
-        const libertyDummyProjectPath = path.join(app_configs.projectDataDir, "libertyDummyProject");
-        const originalLibertyPOM = path.join(app_configs.projectDataDir, "dummymicroprofilepom.xml");
-        const testLibertyPOM = path.join(libertyDummyProjectPath, "pom.xml");
-
 
         before("create test directories", async () => {
             if (!(await existsAsync(libertyDummyProjectPath))) {
@@ -166,6 +173,20 @@ export function projectExtensionsTestModule(): void {
                 await mkdirAsync(swiftProjectMetadataPath);
                 await copyAsync(swiftOriginalProjectMetadata, swiftTestProjectMetadata);
             }
+
+            if (!(await existsAsync(appsodyNodeProjectMetadataPath))) {
+                await mkdirAsync(appsodyNodeProjectMetadataPath);
+                await copyAsync(appsodyNodeOriginalProjectMetadata, appsodyNodeTestProjectMetadata);
+            }
+
+            if (!(await existsAsync(extensionsPath))) {
+                await mkdirAsync(extensionsPath);
+                if (!await existsAsync(appsodyExtensionPath)) {
+                    await mkdirAsync(appsodyExtensionPath);
+                    await copyAsync(appsodyExtensionOriginalArtifactPath1, appsodyExtensionTestArtifactPath1);
+                    await copyAsync(appsodyExtensionOriginalArtifactPath2, appsodyExtensionTestArtifactPath2);
+                }
+            }
         });
 
         after("remove test directories", async () => {
@@ -182,6 +203,20 @@ export function projectExtensionsTestModule(): void {
             if ((await existsAsync(swiftProjectMetadataPath))) {
                 await unlinkAsync(swiftTestProjectMetadata);
                 await rmdirAsync(swiftProjectMetadataPath);
+            }
+
+            if ((await existsAsync(appsodyNodeProjectMetadataPath))) {
+                await unlinkAsync(appsodyNodeTestProjectMetadata);
+                await rmdirAsync(appsodyNodeProjectMetadataPath);
+            }
+
+            if ((await existsAsync(extensionsPath))) {
+                if (await existsAsync(appsodyExtensionPath)) {
+                    await unlinkAsync(appsodyExtensionTestArtifactPath1);
+                    await unlinkAsync(appsodyExtensionTestArtifactPath2);
+                    await rmdirAsync(appsodyExtensionPath);
+                }
+                await rmdirAsync(extensionsPath);
             }
         });
 
@@ -208,6 +243,14 @@ export function projectExtensionsTestModule(): void {
                 "resultProjectCapabilities": {
                     startModes: ["run"],
                     controlCommands: []
+                }
+            },
+            "combo4": {
+                "projectID": "dummyappsodyproject",
+                "resultProjectHandler": "appsodyExtension",
+                "resultProjectCapabilities": {
+                    startModes: ["run"],
+                    controlCommands: ["restart"]
                 }
             }
         };
@@ -236,5 +279,50 @@ export function projectExtensionsTestModule(): void {
                 expect(projectCapabilities.toString()).to.equal(expectedResultProjectCapabilities.toString());
             });
         }
+    });
+
+    describe("testing of removeProjectHandler function", () => {
+
+        const projectID: string = "dummyappsodyproject";
+
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(appsodyNodeProjectMetadataPath))) {
+                await mkdirAsync(appsodyNodeProjectMetadataPath);
+                await copyAsync(appsodyNodeOriginalProjectMetadata, appsodyNodeTestProjectMetadata);
+            }
+
+            if (!(await existsAsync(extensionsPath))) {
+                await mkdirAsync(extensionsPath);
+                if (!await existsAsync(appsodyExtensionPath)) {
+                    await mkdirAsync(appsodyExtensionPath);
+                    await copyAsync(appsodyExtensionOriginalArtifactPath1, appsodyExtensionTestArtifactPath1);
+                    await copyAsync(appsodyExtensionOriginalArtifactPath2, appsodyExtensionTestArtifactPath2);
+                }
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(appsodyNodeProjectMetadataPath))) {
+                await unlinkAsync(appsodyNodeTestProjectMetadata);
+                await rmdirAsync(appsodyNodeProjectMetadataPath);
+            }
+
+            if ((await existsAsync(extensionsPath))) {
+                if (await existsAsync(appsodyExtensionPath)) {
+                    await unlinkAsync(appsodyExtensionTestArtifactPath1);
+                    await unlinkAsync(appsodyExtensionTestArtifactPath2);
+                    await rmdirAsync(appsodyExtensionPath);
+                }
+                await rmdirAsync(extensionsPath);
+            }
+        });
+
+        it("removeProjectHandler: " + projectID, async () => {
+            const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
+            const projectHandler: any = await projectExtensions.removeProjectHandler(projectInfo);
+            expect(projectHandler).to.exist;
+            expect(projectHandler.supportedType).to.equal("appsodyExtension");
+        });
     });
 }
