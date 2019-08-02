@@ -22,7 +22,8 @@ export const projectConstants = {
 // workspace constants
 export const workspaceConstants = {
     workspaceSettingsDir: process.env.CW_WORKSPACESETTINGS_DIR ||  path.join(workspaceDir, ".config", path.sep),
-    workspaceSettingsFile: path.join(process.env.CW_WORKSPACESETTINGS_DIR ||  path.join(workspaceDir, ".config", path.sep), "settings.json")
+    workspaceSettingsFile: path.join(process.env.CW_WORKSPACESETTINGS_DIR ||  path.join(workspaceDir, ".config", path.sep), "settings.json"),
+    workspaceExtensionDir: path.join(workspaceDir, ".extensions", path.sep)
 };
 
 export enum eventTypes { projectCreation, projectChanged }

@@ -10,7 +10,7 @@
  *******************************************************************************/
 "use strict";
 
-import fs from "fs-extra";
+import * as path from "path";
 
 import * as logger from "../utils/logger";
 import * as utils from "../utils/utils";
@@ -23,6 +23,7 @@ import * as nodeProject from "../projects/nodejsProject";
 import { DockerProject } from "../projects/DockerProject";
 import { ShellExtensionProject } from "../projects/ShellExtensionProject";
 import { ProjectInfo, ProjectCapabilities, defaultProjectCapabilities } from "../projects/Project";
+import { workspaceConstants } from "../projects/constants";
 
 export const DOCKER_TYPE = "docker";
 
@@ -163,7 +164,7 @@ async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any
         // try to load extension handler if ID was provided
         if (extensionID) {
             try {
-                const files = await utils.asyncReadDir(`/codewind-workspace/.extensions/${extensionID}`);
+                const files = await utils.asyncReadDir(path.join(workspaceConstants.workspaceExtensionDir, extensionID));
                 if (files) {
                     if (files.includes(".sh-extension")) {
                         handler = new ShellExtensionProject(projectInfo.projectType);
