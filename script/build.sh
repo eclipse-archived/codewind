@@ -59,7 +59,10 @@ do
 
   if [ $? -eq 0 ]; then
     echo "+++   SUCCESSFULLY BUILT $IMAGE_NAME   +++";
-    fi
- done;
+  else
+    echo "+++   FAILED TO BUILD $IMAGE_NAME - exiting.   +++";
+    exit 12;
+  fi
+done;
 echo -e "\n+++   ALL DOCKER IMAGES SUCCESSFULLY BUILT   +++\n";
 docker images | grep codewind;

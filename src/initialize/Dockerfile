@@ -1,7 +1,6 @@
 FROM node:current-alpine
-ENV GIT_TERMINAL_PROMPT 0
 RUN apk update && apk upgrade && \
-    apk add --no-cache git
+    apk add --no-cache unzip
 COPY ./package.json /app/package.json
 COPY ./package-lock.json /app/package-lock.json
 WORKDIR /app
