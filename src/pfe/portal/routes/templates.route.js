@@ -20,16 +20,24 @@ const { validateReq } = require('../middleware/reqValidator');
  * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
  */
-router.get('/api/v1/templates', async (req, res, _next) => {
+router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
-  log.trace(`requesting list of templates`);
-  let projectTemplates = await user.templates.getTemplateList();
+  const projectStyle = req.query.projectStyle;
 
-  if (projectTemplates.length == 0) {
-    log.warn('no templates found');
-    res.status(204).send("No templates found");
-  } else {
-    res.status(200).json(projectTemplates);
+  try {
+    const projectTemplates = (projectStyle)
+      ? await user.templates.getTemplatesOfStyle(projectStyle)
+      : await user.templates.getTemplateList();
+
+    if (projectTemplates.length == 0) {
+      log.warn('No templates found');
+      res.sendStatus(204);
+    } else {
+      res.status(200).json(projectTemplates);
+    }
+  } catch (error) {
+    log.error(error);
+    res.status(500).json(error);
   }
 });
 
@@ -70,5 +78,14 @@ function sendRepositories(req, res, _next) {
   const repositoryList = user.templates.getRepositories();
   res.status(200).json(repositoryList);
 }
+
+/**
+ * @return {[String]} the list of template styles
+ */
+router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
+  const user = req.cw_user;
+  const styles = await user.templates.getTemplateStyles();
+  res.status(200).json(styles);
+});
 
 module.exports = router;
