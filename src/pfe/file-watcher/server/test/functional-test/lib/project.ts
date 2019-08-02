@@ -35,3 +35,7 @@ export async function getProjectCapabilities(projectID: string): Promise<project
 export async function projectAction(req: projectsController.IProjectActionParams): Promise<projectsController.IProjectActionSuccess | projectsController.IProjectActionFailure> {
   return await filewatcher.performProjectAction(req);
 }
+
+export async function projectSpecification(req: projectsController.IProjectSpecificationParams): Promise<projectsController.IProjectSpecificationFailure | projectsController.IProjectSpecificationSuccess> {
+  return await filewatcher.reconfigProjectSpecification(req);
+}

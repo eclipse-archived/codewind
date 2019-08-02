@@ -8,6 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+import mocha from "mocha";
 import { expect } from "chai";
 import { deleteProject } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";

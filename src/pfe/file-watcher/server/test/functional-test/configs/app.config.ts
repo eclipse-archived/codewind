@@ -39,3 +39,17 @@ export const projectCapabilities: any = {
 export const restartCapabilities: any = {
     "docker": false
 };
+
+export const debugCapabilities: any = {
+    "docker": false
+};
+
+export const exposedPorts: any = {
+    "go": ["8000"],
+    "python": ["5000"]
+};
+
+export const exposedDebugPorts: any = {
+    "go": ["1000"], // fake debug ports - go doesn't support debug
+    "python": ["1000"], // fake debug ports - lagom doesn't support debug
+};
