@@ -2,7 +2,7 @@
 name: Question
 about: Asking questions about Codewind
 title: Complete the question template to ask a question about Codewind.
-labels: kind/feature
+labels: kind/question
 assignees: ''
 
 ---
