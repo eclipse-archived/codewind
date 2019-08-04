@@ -51,9 +51,7 @@ paths:
                   tekton_dashboard_url:
                     type: string
                     example: '9.20.195.90.nip.io'
-                    description: "Ingress URL of Tekton dashboard if it's available. On local Codewind, it is the empty string.\
-                      If there is an error determining the URL, it is 'error'.\
-                      This is usually caused by Tekton not being set up, eg the Tekton namespace is missing or RBAC has not been set up."
+                    description: "Ingress URL of Tekton dashboard if it's available. On local Codewind, it is the empty string. May also be 'error' or 'not-installed'."
         500:
           description: Internal error occurred
   /api/v1/projects:
