@@ -141,11 +141,13 @@ async function main() {
       log.info('starting codewind on Kubernetes');
       global.codewind.RUNNING_IN_K8S = true;
 
-      // get current ingress path running on
-      const k8sIngressPath = process.env.CHE_INGRESS_HOST;
-      log.info("Ingress path is " + k8sIngressPath);
+      // get current ingress path - it is passed in an env var
+      // https://github.com/eclipse/codewind-che-plugin/blob/master/codewind-che-sidecar/scripts/kube/codewind_template.yaml#L135
+      const INGRESS_HOST_ENVVAR = 'CHE_INGRESS_HOST';
+      const k8sIngressPath = process.env[INGRESS_HOST_ENVVAR];
+      log.info(`Ingress path is "${k8sIngressPath}"`);
       if (!k8sIngressPath) {
-        throw new Error("Ingress host env var was not set");
+        throw new Error(`${INGRESS_HOST_ENVVAR} was not set in the environment`);
       }
       const protocol = process.env.PORTAL_HTTPS == 'true' ? 'https://' : 'http://'
       originsWhitelist.push(protocol + k8sIngressPath);
