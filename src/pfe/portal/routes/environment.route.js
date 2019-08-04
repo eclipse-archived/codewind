@@ -60,14 +60,16 @@ router.get('/api/v1/environment', async (req, res) => {
     // just await on this promise if it exists so we only call getTektonDashboardUrl once
     if (!tektonDashboardUrlPromise) {
       tektonDashboardUrlPromise = getTektonDashboardUrl()
-        .then((tektonUrl) => log.info(`Initialized Tekton dashboard url as "${tektonUrl}"`));
+        .then((tektonUrl) => {
+          log.info(`Initialized Tekton dashboard url as "${tektonUrl}"`)
+          return tektonUrl;
+        });
     }
     tektonDashboardUrl = await tektonDashboardUrlPromise;
   }
 
   try {
-    let body = {};
-    body = {
+    const envData = {
       running_on_k8s: global.codewind.RUNNING_IN_K8S,
       user_string: req.cw_user.userString,
       socket_namespace: req.cw_user.uiSocketNamespace,
@@ -76,7 +78,7 @@ router.get('/api/v1/environment', async (req, res) => {
       os_platform: process.env.HOST_OS || 'Linux',
       tekton_dashboard_url: tektonDashboardUrl,
     }
-    res.status(200).send(body);
+    res.status(200).send(envData);
   } catch (err) {
     log.error(err);
     res.status(500).send(err);

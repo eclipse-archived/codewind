@@ -134,11 +134,19 @@ async function main() {
   };
 
   // find if running in kubernetes and build up a whitelist of allowed origins
-  const originsWhitelist = []
+
   try {
     k8Client = new K8Client({ config: k8config.getInCluster(), version: '1.9' });
+  }
+  catch (err) {
+    log.info('Codewind does not appear to be running in k8s')
+    global.codewind.RUNNING_IN_K8S = false;
+  }
+
+  const originsWhitelist = []
+  try {
     if (k8Client) {
-      log.info('starting codewind on Kubernetes');
+      log.info('Codewind is running in k8s');
       global.codewind.RUNNING_IN_K8S = true;
 
       // get current ingress path - it is passed in an env var
@@ -157,6 +165,7 @@ async function main() {
   }
 
   if (!global.codewind.RUNNING_IN_K8S) {
+    log.info('Codewind is running locally');
     originsWhitelist.push('http://localhost:*');
   }
 
