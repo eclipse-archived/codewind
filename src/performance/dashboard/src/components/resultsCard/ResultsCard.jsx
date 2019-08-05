@@ -14,7 +14,7 @@ import PropTypes from 'prop-types'
 import IconUp from '@carbon/icons-react/es/arrow--up/16'
 import IconDown from '@carbon/icons-react/es/arrow--down/16'
 import IconEven from '@carbon/icons-react/es/subtract/20'
-import { TooltipDefinition } from 'carbon-components-react'
+import { TooltipIcon } from 'carbon-components-react'
 import MetricsUtils from '../../modules/MetricsUtils'
 import DescriptionEditor from './DescriptionEditor'
 import './ResultsCard.scss'
@@ -114,11 +114,11 @@ export default class ResultsCard extends Component {
                                         <div className='metrics-label'>Response</div>
                                         <div className='metrics-delta'>
 
-                                            <TooltipDefinition tooltipText={responseTooltipText} align="end" >
+                                            <TooltipIcon tooltipText={responseTooltipText} align="end" >
                                                 {responseDelta > 0 ? <IconUp className='bx--btn__icon' /> : <Fragment />}
                                                 {responseDelta === 0 ? <IconEven className='bx--btn__icon' /> : <Fragment />}
                                                 {responseDelta < 0 ? <IconDown className='bx--btn__icon' /> : <Fragment />}
-                                            </TooltipDefinition>
+                                            </TooltipIcon>
                                         </div>
                                     </div>
                                 </Fragment> : <Fragment />}
@@ -129,11 +129,11 @@ export default class ResultsCard extends Component {
                             <div className='metrics-type'>
                                 <div className='metrics-label'>CPU</div>
                                 <div className='metrics-delta'>
-                                    <TooltipDefinition tooltipText={cpuTooltipText} align="start" >
+                                    <TooltipIcon tooltipText={cpuTooltipText} align="start" >
                                         {cpuDelta > 0 ? <IconUp className='bx--btn__icon' /> : <Fragment />}
                                         {cpuDelta === 0 ? <IconEven className='bx--btn__icon' /> : <Fragment />}
                                         {cpuDelta < 0 ? <IconDown className='bx--btn__icon' /> : <Fragment />}
-                                    </TooltipDefinition>
+                                    </TooltipIcon>
                                 </div>
                             </div>
                         </div>
@@ -142,11 +142,11 @@ export default class ResultsCard extends Component {
                             <div className='metrics-type'>
                                 <div className='metrics-label'>Memory</div>
                                 <div className='metrics-delta'>
-                                    <TooltipDefinition tooltipText={memoryTooltipText} align="center" direction="bottom">
+                                    <TooltipIcon tooltipText={memoryTooltipText} align="center" direction="bottom">
                                         {memoryDelta > 0 ? <IconUp className='bx--btn__icon' /> : <Fragment />}
                                         {memoryDelta === 0 ? <IconEven className='bx--btn__icon' /> : <Fragment />}
                                         {memoryDelta < 0 ? <IconDown className='bx--btn__icon' /> : <Fragment />}
-                                    </TooltipDefinition>
+                                    </TooltipIcon>
                                 </div>
                             </div>
                         </div>
