@@ -30,7 +30,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  running_on_icp:
+                  running_in_k8s:
                     type: boolean
                     example: false
                   user_string:
@@ -48,6 +48,10 @@ paths:
                   os_platform:
                     type: string
                     example: 'Linux'
+                  tekton_dashboard_url:
+                    type: string
+                    example: '9.20.195.90.nip.io'
+                    description: "Ingress URL of Tekton dashboard if it's available. On local Codewind, it is the empty string. May also be 'error' or 'not-installed'."
         500:
           description: Internal error occurred
   /api/v1/projects:
@@ -854,6 +858,13 @@ paths:
   /api/v1/templates:
     get:
       summary: List all templates Codewind is aware of
+      parameters:
+        - name: projectStyle
+          in: query
+          schema:
+            type: string
+          required: false
+          description: Specify this to filter templates returned by project style
       responses:
         200:
           description: Returns all the templates that Codewind can generate a project from
@@ -884,7 +895,7 @@ paths:
                     description:
                       type: string
     post:
-      summary: Add a template repositories to the list Codewind is aware of
+      summary: Make Codewind aware of a template repository
       requestBody:
         description: repository details
         content:
@@ -944,7 +955,20 @@ paths:
                       type: string
         400:
           description: Bad request
-
+  /api/v1/templates/styles:
+    get:
+      summary: List all project styles for which Codewind has templates
+      responses:
+        200:
+          description: Returns all project styles for which Codewind has templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  description: project style
+                  type: string
+                  enum: ['Codewind', 'Appsody']
   /api/v1/project-types:
     get:
       summary: List all project types Codewind is aware of
@@ -1003,7 +1027,7 @@ paths:
                     items:
                       type: string
                       example: ['trace', 'debug', 'info', 'warn', 'error']
-        500: 
+        500:
           description: Internal Error
 
   /api/v1/projects/watchlist:
@@ -1056,7 +1080,7 @@ paths:
                 success:
                   type: boolean
                   example: true
-      
+
       responses:
         200:
           description: if successfully received the request
@@ -1136,7 +1160,7 @@ paths:
                   deploymentRegistry:
                     type: boolean
                     description: true if deployment registry was set
-                    example: true  
+                    example: true
         500:
           description: Internal Server Error
           content:
@@ -1153,7 +1177,7 @@ paths:
                     description: false if deployment registry was not set
                     example: false
     post:
-      summary: Test the specified Deployment Registry 
+      summary: Test the specified Deployment Registry
       description: The API also emits a socket event `deploymentRegistryStatus` with data `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
       requestBody:
         content:
@@ -1184,7 +1208,7 @@ paths:
                   msg:
                     type: string
                     description: Message related to the request
-                    example: Success message 
+                    example: Success message
         400:
           description: Bad Request
           content:
@@ -1362,7 +1386,7 @@ components:
                     - unknown
                 buildType:
                   type: string
-    LoadrunnerConfig: 
+    LoadrunnerConfig:
       type: object
       required:
         - path
@@ -1420,7 +1444,7 @@ components:
           type: string
           example: 'docker.build.log'
         workspaceLogPath:
-          type: path
+          type: string
     WatchList:
       type: object
       required:
@@ -1444,9 +1468,9 @@ components:
           type: string
           format: uuid
           example: "e3f3ba629b5a9e75ebb0818934575a66"
-    FileChangeList: 
+    FileChangeList:
         type: object
-        required: 
+        required:
           - path
           - timestamp
           - type

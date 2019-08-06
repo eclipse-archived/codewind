@@ -42,7 +42,7 @@ export function workspaceSettingsTestModule(): void {
             "combo1": {
                 "file": path.join(workspaceSettingsDir, "testconfig.json"),
                 "data": '{ "deploymentRegistry": "testRegistry" }',
-                "result": {"deploymentRegistry":"", "watcherChunkTimeout":""}
+                "result": {"deploymentRegistry": "", "watcherChunkTimeout": ""}
             },
             "combo2": {
                 "file": workspaceSettingsFile,
@@ -52,7 +52,7 @@ export function workspaceSettingsTestModule(): void {
             "combo3": {
                 "file": workspaceSettingsFile,
                 "data": '{ "test": "data" }',
-                "result": {"test":"data"}
+                "result": {"test": "data"}
             },
             "combo4": {
                 "file": workspaceSettingsFile,
@@ -113,17 +113,17 @@ export function workspaceSettingsTestModule(): void {
             "combo2": {
                 "file": workspaceSettingsFile,
                 "data": "non-json data",
-                "result": {"statusCode": 200, "workspaceSettings": {"deploymentRegistry":"", "watcherChunkTimeout":""}}
+                "result": {"statusCode": 200, "workspaceSettings": {"deploymentRegistry": "", "watcherChunkTimeout": ""}}
             },
             "combo3": {
                 "file": workspaceSettingsFile,
                 "data": '{ "test": "data" }',
-                "result": {"statusCode": 200, "workspaceSettings": {"deploymentRegistry":"", "watcherChunkTimeout":""}}
+                "result": {"statusCode": 200, "workspaceSettings": {"deploymentRegistry": "", "watcherChunkTimeout": ""}}
             },
             "combo4": {
                 "file": workspaceSettingsFile,
                 "data": '{ "deploymentRegistry": "testRegistry" }',
-                "result": {"statusCode": 200, "workspaceSettings": {"deploymentRegistry": "testRegistry", "watcherChunkTimeout":""}}
+                "result": {"statusCode": 200, "workspaceSettings": {"deploymentRegistry": "testRegistry", "watcherChunkTimeout": ""}}
             },
             "combo5": {
                 "file": workspaceSettingsFile,
@@ -145,7 +145,7 @@ export function workspaceSettingsTestModule(): void {
             it(combo + " => file: " + file + ", data: " + data, async() => {
                 fs.writeFileSync(file, data);
                 expect(fs.statSync(file)).to.exist;
-                const actualResult = await workspaceSettings.readWorkspaceSettings();
+                const actualResult: any = await workspaceSettings.readWorkspaceSettings();
                 if (actualResult.statusCode === 500) {
                     expect(actualResult.msg).to.contains(expectedResult);
                 } else {
