@@ -38,7 +38,7 @@ const wrapper = (
     </Provider>
 )
 
-// Supress modal dataIconPath warnings
+// Mute modal dataIconPath warnings
 console.error = () => { }
 
 // dont leak state
