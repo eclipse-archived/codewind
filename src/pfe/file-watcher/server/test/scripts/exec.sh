@@ -43,12 +43,12 @@ function setup {
     && docker cp $TEST_DIR/test $CODEWIND_CONTAINER_ID:$TEST_DIR_CONTAINER
 
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED}Setup is failed. ${RESET}\n"
+        echo -e "${RED}Test setup failed. ${RESET}\n"
         exit 1
     fi
     
     # Clone projects to workspace
-    declare -A PROJECT_URLS
+    declare -a PROJECT_URLS
     PROJECT_URLS["codewindtestpython"]="https://github.com/microclimate-dev2ops/SVTPythonTemplate"
     PROJECT_URLS["codewindtestgo"]="https://github.com/microclimate-dev2ops/microclimateGoTemplate"
     PROJECT_URLS["codewindtestlagom"]="https://github.com/microclimate-dev2ops/lagomJavaTemplate"
@@ -56,7 +56,10 @@ function setup {
     PROJECT_URLS["codewindtestmicroprofile"]="https://github.com/microclimate-dev2ops/javaMicroProfileTemplate"
     PROJECT_URLS["codewindtestnodejs"]="https://github.com/microclimate-dev2ops/nodeExpressTemplate.git"
     PROJECT_URLS["codewindtestswift"]="https://github.com/microclimate-dev2ops/swiftTemplate"
+    
+    echo -e "${BLUE}Cloning projects to $CW_DIR/codewind-workspace ${RESET}\n"
     for PROJECT_NAME in ${!PROJECT_URLS[@]}; do
+        echo -e "${BLUE}Cloning ${PROJECT_URLS[$PROJECT_NAME]}. ${RESET}\n"
         clone $PROJECT_NAME $CW_DIR/codewind-workspace ${PROJECT_URLS[$PROJECT_NAME]}
     done
 }
@@ -68,9 +71,9 @@ function run {
 
     # Cronjob machines need to set up CRONJOB_RUN=y to push test restuls to dashboard
     if [[ (-n $CRONJOB_RUN) ]]; then
-        echo -e "${BLUE}Upload test results to test dashboard. ${RESET}\n"
+        echo -e "${BLUE}Upload test results to the test dashboard. ${RESET}\n"
         if [[ (-z $DASHBOARD_IP) ]]; then
-            echo -e "${RED}Dashboard IP is not set up. ${RESET}\n"
+            echo -e "${RED}Dashboard IP is required to upload test results. ${RESET}\n"
             exit 1
         fi
         $WEBSERVER_FILE $TEST_OUTPUT_DIR > /dev/null
@@ -113,9 +116,9 @@ if [[ (-z $TEST_TYPE) ]]; then
 fi
 
 # Setup test cases run
-echo -e "${BLUE}Setup test cases run. ${RESET}\n"
+echo -e "${BLUE}Starting pre-test setup. ${RESET}\n"
 setup
 
 # Run test cases
-echo -e "${BLUE}\nRun $TEST_SUITE test cases. ${RESET}\n"
+echo -e "${BLUE}\nRunning $TEST_SUITE tests. ${RESET}\n"
 run

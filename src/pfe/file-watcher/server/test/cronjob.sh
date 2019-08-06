@@ -65,7 +65,7 @@ while getopts "t:s:p:c:h" OPTION; do
     esac
 done
 
-# Chekc if the mandatory arguments have been set up
+# Check if the mandatory arguments have been set up
 if [[ (-z $TEST_TYPE) || (-z $TEST_SUITE) || (-z $POST_CLEANUP) || (-z $TEST_CONFIGURATION) ]]; then
     echo -e "${RED}Mandatory arguments are not set up. ${RESET}\n"
     usage
@@ -79,7 +79,7 @@ rm -rf $CW_DIR \
 && rm -rf $CW_DIR
 
 if [[ $? -ne 0 ]]; then
-    echo -e "${RED}Cronjob is failed. ${RESET}\n"
+    echo -e "${RED}Cronjob has failed. ${RESET}\n"
     exit 1
 fi
 
