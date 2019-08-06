@@ -64,6 +64,7 @@ class ModalRunTest extends React.Component {
     return (
       <div>
         <Modal
+          id="ModalRunTest"
           open
           danger={false}
           shouldsubmitonenter="false"

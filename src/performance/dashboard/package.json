@@ -27,7 +27,7 @@
     "dev": "webpack-dev-server  --open --hot --mode development ",
     "build": "webpack --mode=production",
     "test-watch": "jest --watchAll",
-    "test": "jest",
+    "test": "jest --verbose",
     "config": "webpack --display-error-details"
   },
   "browserslist": {
