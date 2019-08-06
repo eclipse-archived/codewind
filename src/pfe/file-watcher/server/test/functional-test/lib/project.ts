@@ -9,6 +9,10 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 import * as projectsController from "../../../src/controllers/projectsController";
+import * as dockerUtil from "../../../src/utils/dockerutil";
+import * as kubeUtil from "../../../src/utils/kubeutil";
+import * as project from "../../../src/projects/Project";
+import * as operation from "../../../src/projects/operation";
 
 import Filewatcher from "../../../src/index";
 
@@ -38,4 +42,12 @@ export async function projectAction(req: projectsController.IProjectActionParams
 
 export async function projectSpecification(req: projectsController.IProjectSpecificationParams): Promise<projectsController.IProjectSpecificationFailure | projectsController.IProjectSpecificationSuccess> {
   return await filewatcher.reconfigProjectSpecification(req);
+}
+
+export async function getApplicationContainerInfo(projectInfo: project.ProjectInfo, containerName: string): Promise<dockerUtil.ContainerInfo> {
+  return await dockerUtil.getApplicationContainerInfo(projectInfo, containerName);
+}
+
+export async function getApplicationContainerInfoInK8(projectInfo: project.ProjectInfo, operation: operation.Operation): Promise<kubeUtil.PodInfo> {
+  return await kubeUtil.getApplicationContainerInfo(projectInfo, operation);
 }
