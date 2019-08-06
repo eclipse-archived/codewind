@@ -10,331 +10,524 @@
  *******************************************************************************/
 import { expect } from "chai";
 import * as path from "path";
-import * as fs from "fs";
-import { promisify } from "util";
+
 import * as projectSettings from "../../../src/projects/projectSpecifications";
 import * as socket from "../../../src/utils/socket";
 import * as app_configs from "../../functional-test/configs/app.config";
+import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync } from "../../functional-test/lib/utils";
 
-const existsAsync = promisify(fs.exists);
-const mkdirAsync = promisify(fs.mkdir);
-const copyAsync = promisify(fs.copyFile);
-const rmdirAsync = promisify(fs.rmdir);
-const unlinkAsync = promisify(fs.unlink);
 
 export function projectSettingsTestModule(): void {
 
-    describe("Project Settings Unit Test", () => {
-        let contextRootStatus = "";
-        let healthCheckStatus = "";
-        let mavenProfilesStatus = "";
-        let mavenPropertiesStatus = "";
-        let ignoredPathsStatus = "";
+    let contextRootStatus = "";
+    let healthCheckStatus = "";
+    let mavenProfilesStatus = "";
+    let mavenPropertiesStatus = "";
+    let ignoredPathsStatus = "";
+    let internalDebugPortStatus = "";
+    let internalPortStatus = "";
+    let projectSettingsStatus = "";
 
-        socket.registerListener({
-            name: "codewindunittest",
-            handleEvent: (event, data) => {
-                if (event === "projectSettingsChanged") {
-                    if (data.contextRoot) {
-                        contextRootStatus = data.status;
-                    } else if (data.healthCheck) {
-                        healthCheckStatus = data.status;
-                    } else if (data.mavenProfiles || (data.error && data.error.includes("mavenProfiles"))) {
-                        mavenProfilesStatus = data.status;
-                    } else if (data.mavenProperties || (data.error && data.error.includes("mavenProperties"))) {
-                        mavenPropertiesStatus = data.status;
-                    } else if (data.ignoredPaths || (data.error && data.error.includes("ignoredPaths"))) {
-                        ignoredPathsStatus = data.status;
-                    }
+    socket.registerListener({
+        name: "codewindunittest",
+        handleEvent: (event, data) => {
+            if (event === "projectSettingsChanged") {
+                if (data.contextRoot) {
+                    contextRootStatus = data.status;
+                } else if (data.healthCheck) {
+                    healthCheckStatus = data.status;
+                } else if (data.mavenProfiles || (data.error && data.error.includes("mavenProfiles"))) {
+                    mavenProfilesStatus = data.status;
+                } else if (data.mavenProperties || (data.error && data.error.includes("mavenProperties"))) {
+                    mavenPropertiesStatus = data.status;
+                } else if (data.ignoredPaths || (data.error && data.error.includes("ignoredPaths"))) {
+                    ignoredPathsStatus = data.status;
+                } else if ((data.ports && data.ports.internalDebugPort)) {
+                    internalDebugPortStatus = data.status;
+                } else if ((data.ports && data.ports.internalPort)) {
+                    internalPortStatus = data.status;
+                } else {
+                    projectSettingsStatus = data.status;
                 }
+            }
+        }
+    });
+
+    describe("combinational testing of internalDebugPort function", () => {
+
+        const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+        const swiftProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyswiftproject");
+        const swiftOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyswiftproject.json");
+        const swiftTestProjectMetadata = path.join(swiftProjectMetadataPath, "dummyswiftproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(nodeProjectMetadataPath))) {
+                await mkdirAsync(nodeProjectMetadataPath);
+                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+            }
+
+            if (!(await existsAsync(swiftProjectMetadataPath))) {
+                await mkdirAsync(swiftProjectMetadataPath);
+                await copyAsync(swiftOriginalProjectMetadata, swiftTestProjectMetadata);
             }
         });
 
-        describe("Combinational testing of changeContextRoot function", () => {
+        after("remove test directories", async () => {
+            if ((await existsAsync(nodeProjectMetadataPath))) {
+                await unlinkAsync(nodeTestProjectMetadata);
+                await rmdirAsync(nodeProjectMetadataPath);
+            }
 
-            const projectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
-            const originalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
-            const testProjectMetadata = path.join(projectMetadataPath, "dummynodeproject.json");
-
-            before("create test directories", async () => {
-                if (!(await existsAsync(projectMetadataPath))) {
-                    await mkdirAsync(projectMetadataPath);
-                    await copyAsync(originalProjectMetadata, testProjectMetadata);
-                }
-            });
-
-            after("remove test directories", async () => {
-                if ((await existsAsync(projectMetadataPath))) {
-                    await unlinkAsync(testProjectMetadata);
-                    await rmdirAsync(projectMetadataPath);
-                }
-            });
-
-            const combinations: any = {
-                "combo1": {
-                    "contextSettings": {
-                        "contextRoot": "hi"
-                    },
-                    "result": "success"
-                },
-                "combo2": {
-                    "contextSettings": {
-                        "contextRoot": "<script>alert(\"xss\");</script>"
-                    },
-                    "result": "failed"
-                }
-            };
-
-            for (const combo of Object.keys(combinations)) {
-                const contextSettings = combinations[combo]["contextSettings"];
-                const expectedResult = combinations[combo]["result"];
-
-                it(combo + " => contextSettings: " + JSON.stringify(contextSettings), async () => {
-                    const projectID: string = "dummynodeproject";
-
-                    await projectSettings.projectSpecificationHandler(projectID, contextSettings);
-                    expect(contextRootStatus).to.equal(expectedResult);
-                });
+            if ((await existsAsync(swiftProjectMetadataPath))) {
+                await unlinkAsync(swiftTestProjectMetadata);
+                await rmdirAsync(swiftProjectMetadataPath);
             }
         });
 
-        describe("Combinational testing of changeHealthCheck function", () => {
-
-            const projectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
-            const originalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
-            const testProjectMetadata = path.join(projectMetadataPath, "dummynodeproject.json");
-
-            before("create test directories", async () => {
-                if (!(await existsAsync(projectMetadataPath))) {
-                    await mkdirAsync(projectMetadataPath);
-                    await copyAsync(originalProjectMetadata, testProjectMetadata);
-                }
-            });
-
-            after("remove test directories", async () => {
-                if ((await existsAsync(projectMetadataPath))) {
-                    await unlinkAsync(testProjectMetadata);
-                    await rmdirAsync(projectMetadataPath);
-                }
-            });
-
-            const combinations: any = {
-                "combo1": {
-                    "healthSettings": {
-                        "healthCheck": "hi"
-                    },
-                    "result": "success"
+        const combinations: any = {
+            "combo1": {
+                "internalDebugPortSettings": {
+                    "internalDebugPort": "1234"
                 },
-                "combo2": {
-                    "healthSettings": {
-                        "healthCheck": "<script>alert(\"xss\");</script>"
-                    },
-                    "result": "failed"
+                "result": "failed"
+            },
+            "combo2": {
+                "internalDebugPortSettings": {
+                    "internalDebugPort": "1234"
+                },
+                "result": "success"
+            },
+            "combo3": {
+                "internalDebugPortSettings": {
+                    "internalDebugPort": ""
+                },
+                "result": "success"
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const internalDebugPortSettings = combinations[combo]["internalDebugPortSettings"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => internalDebugPortSettings: " + JSON.stringify(internalDebugPortSettings), async () => {
+                let projectID: string = "dummynodeproject";
+
+                if (combo == "combo1") {
+                    projectID = "dummyswiftproject";
                 }
-            };
 
-            for (const combo of Object.keys(combinations)) {
-                const healthSettings = combinations[combo]["healthSettings"];
-                const expectedResult = combinations[combo]["result"];
+                await projectSettings.projectSpecificationHandler(projectID, internalDebugPortSettings);
+                expect(internalDebugPortStatus).to.equal(expectedResult);
+            });
+        }
+    });
 
-                it(combo + " => healthSettings: " + JSON.stringify(healthSettings), async () => {
-                    const projectID: string = "dummynodeproject";
+    describe("combinational testing of internalPort function", () => {
 
-                    await projectSettings.projectSpecificationHandler(projectID, healthSettings);
-                    expect(healthCheckStatus).to.equal(expectedResult);
-                });
+        const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(nodeProjectMetadataPath))) {
+                await mkdirAsync(nodeProjectMetadataPath);
+                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
             }
         });
 
-        describe("Combinational testing of changeMavenProfiles function", () => {
-
-            const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
-            const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
-            const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
-
-            const springProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyspringproject");
-            const springOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyspringproject.json");
-            const springTestProjectMetadata = path.join(springProjectMetadataPath, "dummyspringproject.json");
-
-            before("create test directories", async () => {
-                if (!(await existsAsync(nodeProjectMetadataPath))) {
-                    await mkdirAsync(nodeProjectMetadataPath);
-                    await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
-                }
-
-                if (!(await existsAsync(springProjectMetadataPath))) {
-                    await mkdirAsync(springProjectMetadataPath);
-                    await copyAsync(springOriginalProjectMetadata, springTestProjectMetadata);
-                }
-            });
-
-            after("remove test directories", async () => {
-                if ((await existsAsync(nodeProjectMetadataPath))) {
-                    await unlinkAsync(nodeTestProjectMetadata);
-                    await rmdirAsync(nodeProjectMetadataPath);
-                }
-
-                if ((await existsAsync(springProjectMetadataPath))) {
-                    await unlinkAsync(springTestProjectMetadata);
-                    await rmdirAsync(springProjectMetadataPath);
-                }
-            });
-
-            const combinations: any = {
-                "combo1": {
-                    "mavenProfilesSettings": {
-                        "mavenProfiles": "hi"
-                    },
-                    "result": "failed"
-                },
-                "combo2": {
-                    "mavenProfilesSettings": {
-                        "mavenProfiles": ["hi"]
-                    },
-                    "result": "failed"
-                },
-                "combo3": {
-                    "mavenProfilesSettings": {
-                        "mavenProfiles": ["hi"]
-                    },
-                    "result": "success"
-                }
-            };
-
-            for (const combo of Object.keys(combinations)) {
-                const mavenProfilesSettings = combinations[combo]["mavenProfilesSettings"];
-                const expectedResult = combinations[combo]["result"];
-
-                it(combo + " => mavenProfilesSettings: " + JSON.stringify(mavenProfilesSettings), async () => {
-                    let projectID: string = "dummynodeproject";
-
-                    if (combo == "combo3") {
-                        projectID = "dummyspringproject";
-                    }
-
-                    await projectSettings.projectSpecificationHandler(projectID, mavenProfilesSettings);
-                    expect(mavenProfilesStatus).to.equal(expectedResult);
-                });
+        after("remove test directories", async () => {
+            if ((await existsAsync(nodeProjectMetadataPath))) {
+                await unlinkAsync(nodeTestProjectMetadata);
+                await rmdirAsync(nodeProjectMetadataPath);
             }
         });
 
-        describe("Combinational testing of changeMavenProperties function", () => {
-
-            const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
-            const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
-            const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
-
-            const springProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyspringproject");
-            const springOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyspringproject.json");
-            const springTestProjectMetadata = path.join(springProjectMetadataPath, "dummyspringproject.json");
-
-            before("create test directories", async () => {
-                if (!(await existsAsync(nodeProjectMetadataPath))) {
-                    await mkdirAsync(nodeProjectMetadataPath);
-                    await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
-                }
-
-                if (!(await existsAsync(springProjectMetadataPath))) {
-                    await mkdirAsync(springProjectMetadataPath);
-                    await copyAsync(springOriginalProjectMetadata, springTestProjectMetadata);
-                }
-            });
-
-            after("remove test directories", async () => {
-                if ((await existsAsync(nodeProjectMetadataPath))) {
-                    await unlinkAsync(nodeTestProjectMetadata);
-                    await rmdirAsync(nodeProjectMetadataPath);
-                }
-
-                if ((await existsAsync(springProjectMetadataPath))) {
-                    await unlinkAsync(springTestProjectMetadata);
-                    await rmdirAsync(springProjectMetadataPath);
-                }
-            });
-
-            const combinations: any = {
-                "combo1": {
-                    "mavenPropertiesSettings": {
-                        "mavenProperties": "hi=hi"
-                    },
-                    "result": "failed"
+        const combinations: any = {
+            "combo1": {
+                "internalPortSettings": {
+                    "internalPort": "1234"
                 },
-                "combo2": {
-                    "mavenPropertiesSettings": {
-                        "mavenProperties": ["hi=hi"]
-                    },
-                    "result": "failed"
-                },
-                "combo3": {
-                    "mavenPropertiesSettings": {
-                        "mavenProperties": ["hi=hi"]
-                    },
-                    "result": "success"
-                }
-            };
+                "result": "failed"
+            }
+        };
 
-            for (const combo of Object.keys(combinations)) {
-                const mavenPropertiesSettings = combinations[combo]["mavenPropertiesSettings"];
-                const expectedResult = combinations[combo]["result"];
+        for (const combo of Object.keys(combinations)) {
+            const internalPortSettings = combinations[combo]["internalPortSettings"];
+            const expectedResult = combinations[combo]["result"];
 
-                it(combo + " => mavenPropertiesSettings: " + JSON.stringify(mavenPropertiesSettings), async () => {
-                    let projectID: string = "dummynodeproject";
+            it(combo + " => internalPortSettings: " + JSON.stringify(internalPortSettings), async () => {
+                const projectID: string = "dummynodeproject";
 
-                    if (combo == "combo3") {
-                        projectID = "dummyspringproject";
-                    }
+                await projectSettings.projectSpecificationHandler(projectID, internalPortSettings);
+                expect(internalPortStatus).to.equal(expectedResult);
+            });
+        }
+    });
 
-                    await projectSettings.projectSpecificationHandler(projectID, mavenPropertiesSettings);
-                    expect(mavenPropertiesStatus).to.equal(expectedResult);
-                });
+    describe("combinational testing of changeContextRoot function", () => {
+
+        const projectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const originalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const testProjectMetadata = path.join(projectMetadataPath, "dummynodeproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(projectMetadataPath))) {
+                await mkdirAsync(projectMetadataPath);
+                await copyAsync(originalProjectMetadata, testProjectMetadata);
             }
         });
 
-        describe("Combinational testing of reconfigIgnoredFilesForDaemon function", () => {
-
-            const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
-            const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
-            const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
-
-            before("create test directories", async () => {
-                if (!(await existsAsync(nodeProjectMetadataPath))) {
-                    await mkdirAsync(nodeProjectMetadataPath);
-                    await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
-                }
-            });
-
-            after("remove test directories", async () => {
-                if ((await existsAsync(nodeProjectMetadataPath))) {
-                    await unlinkAsync(nodeTestProjectMetadata);
-                    await rmdirAsync(nodeProjectMetadataPath);
-                }
-            });
-
-            const combinations: any = {
-                "combo1": {
-                    "ignoredPathsSettings": {
-                        "ignoredPaths": "Dockerfile"
-                    },
-                    "result": "failed"
-                }, "combo2": {
-                    "ignoredPathsSettings": {
-                        "ignoredPaths": ["Dockerfile"]
-                    },
-                    "result": "success"
-                }
-            };
-
-            for (const combo of Object.keys(combinations)) {
-                const ignoredPathsSettings = combinations[combo]["ignoredPathsSettings"];
-                const expectedResult = combinations[combo]["result"];
-
-                it(combo + " => ignoredPathsSettings: " + JSON.stringify(ignoredPathsSettings), async () => {
-                    const projectID: string = "dummynodeproject";
-
-                    await projectSettings.projectSpecificationHandler(projectID, ignoredPathsSettings);
-                    expect(ignoredPathsStatus).to.equal(expectedResult);
-                });
+        after("remove test directories", async () => {
+            if ((await existsAsync(projectMetadataPath))) {
+                await unlinkAsync(testProjectMetadata);
+                await rmdirAsync(projectMetadataPath);
             }
         });
+
+        const combinations: any = {
+            "combo1": {
+                "contextSettings": {
+                    "contextRoot": "hi"
+                },
+                "result": "success"
+            },
+            "combo2": {
+                "contextSettings": {
+                    "contextRoot": "<script>alert(\"xss\");</script>"
+                },
+                "result": "failed"
+            },
+            "combo3": {
+                "contextSettings": {
+                    "contextRoot": ""
+                },
+                "result": "success"
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const contextSettings = combinations[combo]["contextSettings"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => contextSettings: " + JSON.stringify(contextSettings), async () => {
+                const projectID: string = "dummynodeproject";
+
+                await projectSettings.projectSpecificationHandler(projectID, contextSettings);
+                expect(contextRootStatus).to.equal(expectedResult);
+            });
+        }
+    });
+
+    describe("combinational testing of changeHealthCheck function", () => {
+
+        const projectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const originalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const testProjectMetadata = path.join(projectMetadataPath, "dummynodeproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(projectMetadataPath))) {
+                await mkdirAsync(projectMetadataPath);
+                await copyAsync(originalProjectMetadata, testProjectMetadata);
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(projectMetadataPath))) {
+                await unlinkAsync(testProjectMetadata);
+                await rmdirAsync(projectMetadataPath);
+            }
+        });
+
+        const combinations: any = {
+            "combo1": {
+                "healthSettings": {
+                    "healthCheck": "hi"
+                },
+                "result": "success"
+            },
+            "combo2": {
+                "healthSettings": {
+                    "healthCheck": "<script>alert(\"xss\");</script>"
+                },
+                "result": "failed"
+            },
+            "combo3": {
+                "healthSettings": {
+                    "healthCheck": ""
+                },
+                "result": "success"
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const healthSettings = combinations[combo]["healthSettings"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => healthSettings: " + JSON.stringify(healthSettings), async () => {
+                const projectID: string = "dummynodeproject";
+
+                await projectSettings.projectSpecificationHandler(projectID, healthSettings);
+                expect(healthCheckStatus).to.equal(expectedResult);
+            });
+        }
+    });
+
+    describe("combinational testing of changeMavenProfiles function", () => {
+
+        const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+        const springProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyspringproject");
+        const springOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyspringproject.json");
+        const springTestProjectMetadata = path.join(springProjectMetadataPath, "dummyspringproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(nodeProjectMetadataPath))) {
+                await mkdirAsync(nodeProjectMetadataPath);
+                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+            }
+
+            if (!(await existsAsync(springProjectMetadataPath))) {
+                await mkdirAsync(springProjectMetadataPath);
+                await copyAsync(springOriginalProjectMetadata, springTestProjectMetadata);
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(nodeProjectMetadataPath))) {
+                await unlinkAsync(nodeTestProjectMetadata);
+                await rmdirAsync(nodeProjectMetadataPath);
+            }
+
+            if ((await existsAsync(springProjectMetadataPath))) {
+                await unlinkAsync(springTestProjectMetadata);
+                await rmdirAsync(springProjectMetadataPath);
+            }
+        });
+
+        const combinations: any = {
+            "combo1": {
+                "mavenProfilesSettings": {
+                    "mavenProfiles": "hi"
+                },
+                "result": "failed"
+            },
+            "combo2": {
+                "mavenProfilesSettings": {
+                    "mavenProfiles": ["hi"]
+                },
+                "result": "failed"
+            },
+            "combo3": {
+                "mavenProfilesSettings": {
+                    "mavenProfiles": ["hi"]
+                },
+                "result": "success"
+            },
+            "combo4": {
+                "mavenProfilesSettings": {
+                    "mavenProfiles": []
+                },
+                "result": "success"
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const mavenProfilesSettings = combinations[combo]["mavenProfilesSettings"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => mavenProfilesSettings: " + JSON.stringify(mavenProfilesSettings), async () => {
+                let projectID: string = "dummynodeproject";
+
+                if (combo == "combo3" || combo == "combo4") {
+                    projectID = "dummyspringproject";
+                }
+
+                await projectSettings.projectSpecificationHandler(projectID, mavenProfilesSettings);
+                expect(mavenProfilesStatus).to.equal(expectedResult);
+            });
+        }
+    });
+
+    describe("combinational testing of changeMavenProperties function", () => {
+
+        const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+        const springProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyspringproject");
+        const springOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyspringproject.json");
+        const springTestProjectMetadata = path.join(springProjectMetadataPath, "dummyspringproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(nodeProjectMetadataPath))) {
+                await mkdirAsync(nodeProjectMetadataPath);
+                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+            }
+
+            if (!(await existsAsync(springProjectMetadataPath))) {
+                await mkdirAsync(springProjectMetadataPath);
+                await copyAsync(springOriginalProjectMetadata, springTestProjectMetadata);
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(nodeProjectMetadataPath))) {
+                await unlinkAsync(nodeTestProjectMetadata);
+                await rmdirAsync(nodeProjectMetadataPath);
+            }
+
+            if ((await existsAsync(springProjectMetadataPath))) {
+                await unlinkAsync(springTestProjectMetadata);
+                await rmdirAsync(springProjectMetadataPath);
+            }
+        });
+
+        const combinations: any = {
+            "combo1": {
+                "mavenPropertiesSettings": {
+                    "mavenProperties": "hi=hi"
+                },
+                "result": "failed"
+            },
+            "combo2": {
+                "mavenPropertiesSettings": {
+                    "mavenProperties": ["hi=hi"]
+                },
+                "result": "failed"
+            },
+            "combo3": {
+                "mavenPropertiesSettings": {
+                    "mavenProperties": ["hi=hi"]
+                },
+                "result": "success"
+            },
+            "combo4": {
+                "mavenPropertiesSettings": {
+                    "mavenProperties": []
+                },
+                "result": "success"
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const mavenPropertiesSettings = combinations[combo]["mavenPropertiesSettings"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => mavenPropertiesSettings: " + JSON.stringify(mavenPropertiesSettings), async () => {
+                let projectID: string = "dummynodeproject";
+
+                if (combo == "combo3" || combo == "combo4") {
+                    projectID = "dummyspringproject";
+                }
+
+                await projectSettings.projectSpecificationHandler(projectID, mavenPropertiesSettings);
+                expect(mavenPropertiesStatus).to.equal(expectedResult);
+            });
+        }
+    });
+
+    describe("combinational testing of reconfigIgnoredFilesForDaemon function", () => {
+
+        const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(nodeProjectMetadataPath))) {
+                await mkdirAsync(nodeProjectMetadataPath);
+                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(nodeProjectMetadataPath))) {
+                await unlinkAsync(nodeTestProjectMetadata);
+                await rmdirAsync(nodeProjectMetadataPath);
+            }
+        });
+
+        const combinations: any = {
+            "combo1": {
+                "ignoredPathsSettings": {
+                    "ignoredPaths": "Dockerfile"
+                },
+                "result": "failed"
+            }, "combo2": {
+                "ignoredPathsSettings": {
+                    "ignoredPaths": ["Dockerfile"]
+                },
+                "result": "success"
+            }, "combo3": {
+                "ignoredPathsSettings": {
+                    "ignoredPaths": []
+                },
+                "result": "success"
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const ignoredPathsSettings = combinations[combo]["ignoredPathsSettings"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => ignoredPathsSettings: " + JSON.stringify(ignoredPathsSettings), async () => {
+                const projectID: string = "dummynodeproject";
+
+                await projectSettings.projectSpecificationHandler(projectID, ignoredPathsSettings);
+                expect(ignoredPathsStatus).to.equal(expectedResult);
+            });
+        }
+    });
+
+    describe("combinational testing of projectSpecificationHandler function", () => {
+
+        const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(nodeProjectMetadataPath))) {
+                await mkdirAsync(nodeProjectMetadataPath);
+                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(nodeProjectMetadataPath))) {
+                await unlinkAsync(nodeTestProjectMetadata);
+                await rmdirAsync(nodeProjectMetadataPath);
+            }
+        });
+
+        const combinations: any = {
+            "combo1": {
+                "projectSpecificationHandlerSetting": {
+                    "garbageKey": "Dockerfile"
+                },
+                "result": "failed"
+            },
+            "combo2": {
+                "projectSpecificationHandlerSetting": {
+                    "internalPort": undefined
+                },
+                "result": "failed"
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const projectSpecificationHandlerSetting = combinations[combo]["projectSpecificationHandlerSetting"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => projectSpecificationHandlerSetting: " + JSON.stringify(projectSpecificationHandlerSetting), async () => {
+                const projectID: string = "dummynodeproject";
+
+                await projectSettings.projectSpecificationHandler(projectID, projectSpecificationHandlerSetting);
+                expect(projectSettingsStatus).to.equal(expectedResult);
+            });
+        }
     });
 }

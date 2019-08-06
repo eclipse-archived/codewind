@@ -11,12 +11,43 @@
 import { expect } from "chai";
 import * as path from "path";
 import * as fs from "fs";
-
-import * as constants from "../../../../server/src/projects/constants";
+import * as crypto from "crypto";
+import { TransformOptions } from "stream";
 import * as projectUtil from "../../../../server/src/projects/projectUtil";
-
+import * as logHelperModule from "../lib/logHelper.module";
+import * as logHelper from "../../../../server/src/projects/logHelper";
+import * as libertyProject from "../../../../server/src/projects/libertyProject";
+import { existsAsync, mkdirAsync, writeAsync } from "../../functional-test/lib/utils";
+import * as projectsController from "../../../../server/src/controllers/projectsController";
+import { projectConstants } from "../../../../server/src/projects/constants";
 
 export function projectUtilTestModule(): void {
+
+    it("test of getLogName function", async () => {
+        const projectID = "testProjectID";
+        const projectLocation = "directory/testproject";
+        const hash = crypto.createHash("sha1", <TransformOptions>"utf8").update(projectLocation);
+
+        const expectedResult  = projectConstants.containerPrefix + projectID + "-" + hash.digest("hex");
+        const actualResult = await projectUtil.getLogName(projectID, projectLocation);
+        expect(actualResult).to.equal(expectedResult);
+    });
+
+    it("test of getLogName function on Kube", () => {
+        const projectID = "testProjectID";
+        const projectLocation = "directory/testproject";
+        const hash = crypto.createHash("sha1", <TransformOptions>"utf8").update(projectLocation);
+        let expectedResult  = projectConstants.containerPrefix + projectID + "-" + hash.digest("hex");
+        if (expectedResult.length > 53) {
+            expectedResult = expectedResult.substring(0, 53);
+        }
+        process.env.IN_K8 = "true";
+        const actualResult = projectUtil.getLogName(projectID, projectLocation);
+        expect(actualResult).to.equal(expectedResult);
+        process.env.IN_K8 = "false";
+    });
+
+
     describe("combinational testing of getProjectMavenSettings function", () => {
         const projectID = "testProjectID";
         const combinations: any = {
@@ -80,11 +111,229 @@ export function projectUtilTestModule(): void {
             it(combo + " => data: " + JSON.stringify(data), async() => {
                 try {
                     const actualResult = await projectUtil.getProjectMavenSettings(data);
-                    console.log("actualResult: " + actualResult);
                     expect(actualResult).to.equal(expectedResult);
                 } catch (err) {
                     expect(err.toString()).to.equal(expectedResult);
                 }
+            });
+        }
+    });
+
+
+    describe("combinational testing of getProjectLogs function", () => {
+        const testProjectId = "1234";
+        const testProjectName = "abcd";
+        let logDirectory: string;
+        let dirName: string;
+        let appLogDirectory: string;
+        const projectFolder = process.env.CW_WORKSPACE + "/" + testProjectName;
+
+        before("create a log directory with some fake log files", async () => {
+            process.chdir(process.env.CW_LOGS_DIR);
+
+            dirName = await logHelper.getLogDir(testProjectId, testProjectName);
+            logDirectory = path.resolve(process.cwd(), dirName);
+
+            await logHelper.createLogDir(dirName, process.cwd());
+            expect(fs.statSync(logDirectory)).to.exist;
+
+            appLogDirectory = path.resolve(process.env.CW_WORKSPACE + "/" + testProjectName + "/mc-target/liberty/wlp/usr/servers/defaultServer/logs/");
+            if (!(await existsAsync(appLogDirectory))) {
+                await mkdirAsync(appLogDirectory, { recursive: true });
+            }
+            expect(fs.statSync(appLogDirectory)).to.exist;
+
+        });
+
+        after("remove the log directory", async () => {
+            await logHelper.removeLogDir(dirName, process.cwd());
+            try {
+                fs.statSync(logDirectory);
+            } catch (err) {
+                expect(err.code).to.equal("ENOENT");
+            }
+            await projectsController.deleteFolder(projectFolder);
+            try {
+                fs.statSync(projectFolder);
+            } catch (err) {
+                expect(err.code).to.equal("ENOENT");
+            }
+        });
+        const combinations: any = {
+            "combo1": {
+                "data": {
+                    projectID: testProjectId,
+                    location: projectFolder,
+                    logSuffixes: ["log1"],
+                    projectType: "liberty"
+                },
+                "result":  {
+                    "build": {
+                        "origin": "workspace",
+                        "files": []
+                    },
+                    "app": {
+                        "origin": "workspace",
+                        "files": []
+                    }}
+            },
+            "combo2": {
+                "data": {
+                    projectID: testProjectId,
+                    location: projectFolder,
+                    logSuffixes: [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.mavenBuild],
+                    projectType: "liberty"
+                },
+                "result":  {
+                    "build": {
+                        "origin": "workspace",
+                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.mavenBuild + ".log", process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
+                    },
+                    "app": {
+                        "origin": "workspace",
+                        "files": []
+                    }}
+            },
+            "combo3": {
+                "data": {
+                    projectID: testProjectId,
+                    location: projectFolder,
+                    logSuffixes: [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.mavenBuild],
+                    projectType: "liberty"
+                },
+                "appLogTest": true,
+                "result":  {
+                    "build": {
+                        "origin": "workspace",
+                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.mavenBuild + ".log", process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
+                    },
+                    "app": {
+                        "origin": "workspace",
+                        "dir": process.env.CW_WORKSPACE + "/" + testProjectName + "/mc-target/liberty/wlp/usr/servers/defaultServer/logs/ffdc",
+                        "files": [ process.env.CW_WORKSPACE + "/" + testProjectName + "/mc-target/liberty/wlp/usr/servers/defaultServer/logs/console.log",  process.env.CW_WORKSPACE + "/" + testProjectName + "/mc-target/liberty/wlp/usr/servers/defaultServer/logs/messages.log"]
+                    }}
+            },
+            "combo4": {
+                "data": {
+                    projectID: testProjectId,
+                    location: projectFolder,
+                    logSuffixes: [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.mavenBuild],
+                    projectType: "spring"
+                },
+                "appLogTest": true,
+                "result":  {
+                    "build": {
+                        "origin": "workspace",
+                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.mavenBuild + ".log", process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
+                    },
+                    "app": {
+                        "origin": "workspace",
+                        "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.appLogs.app + ".log"]
+                    }}
+            },
+            "combo5": {
+                "data": {
+                    projectID: "invalidProjectID",
+                    location: "invalidProjectLocation",
+                    logSuffixes: ["log1"],
+                    projectType: "invalidProjectType"
+                },
+                "result":  {
+                    "build": {
+                        "origin": "workspace",
+                        "files": []
+                    },
+                    "app": {
+                        "origin": "workspace",
+                        "files": []
+                    }}
+            },
+            "combo6": {
+                "data": {
+                    projectID: testProjectId,
+                    location: projectFolder,
+                    logSuffixes: [logHelper.buildLogs.dockerBuild],
+                    projectType: "nodejs"
+                },
+                "appLogTest": true,
+                "result":  {
+                    "build": {
+                        "origin": "workspace",
+                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
+                    },
+                    "app": {
+                        "origin": "workspace",
+                        "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.appLogs.app + ".log"]
+                    }}
+            },
+            "combo7": {
+                "data": {
+                    projectID: testProjectId,
+                    location: projectFolder,
+                    logSuffixes: [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.dockerApp, logHelper.buildLogs.appCompilation],
+                    projectType: "swift"
+                },
+                "appLogTest": true,
+                "result":  {
+                    "build": {
+                        "origin": "workspace",
+                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log",  process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerApp + ".log", process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.appCompilation + ".log"]
+                    },
+                    "app": {
+                        "origin": "workspace",
+                        "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.appLogs.app + ".log"]
+                    }}
+            },
+            "combo8": {
+                "data": {
+                    projectID: testProjectId,
+                    location: projectFolder,
+                    logSuffixes: [logHelper.buildLogs.dockerBuild],
+                    projectType: "docker"
+                },
+                "appLogTest": true,
+                "result":  {
+                    "build": {
+                        "origin": "workspace",
+                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
+                    },
+                    "app": {
+                        "origin": "workspace",
+                        "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.appLogs.app + ".log"]
+                    }}
+            },
+        };
+        for (const combo of Object.keys(combinations)) {
+
+            const data = combinations[combo]["data"];
+            const expectedResult = combinations[combo]["result"];
+            const appLogTest = combinations[combo]["appLogTest"];
+            const logSuffixes: string[] = data.logSuffixes;
+            it(combo + " => data: " + JSON.stringify(data), async() => {
+                    for (const suffix of logSuffixes) {
+                        const file = suffix + logHelperModule.getlogExtension();
+                        const filePath = path.resolve(logDirectory, file);
+                        await writeAsync(filePath, "some data");
+                    }
+                    if (appLogTest && data.projectType === "liberty") {
+                        const consoleLogPath = path.resolve(appLogDirectory, libertyProject.libertyAppLogs.console + ".log" );
+                        await writeAsync(consoleLogPath, "some data");
+                        const messagesLogPath = path.resolve(appLogDirectory, libertyProject.libertyAppLogs.messages + ".log");
+                        await writeAsync(messagesLogPath, "some data");
+                        const ffdcDir = path.resolve(appLogDirectory, "ffdc" );
+                        await mkdirAsync(ffdcDir);
+                    } else if (appLogTest) {
+                        const appLogPath = path.resolve(process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId, logHelper.appLogs.app + ".log");
+                        await writeAsync(appLogPath, "some data");
+                    }
+                    const actualResult = await projectUtil.getProjectLogs(data);
+                    expect(actualResult.build.files.length).to.equal(expectedResult.build.files.length);
+                    expect(actualResult.build.files).to.have.all.members(expectedResult.build.files);
+                    expect(actualResult.app.files.length).to.equal(expectedResult.app.files.length);
+                    expect(actualResult.app.files).to.have.all.members(expectedResult.app.files);
+                    if (expectedResult.app.dir) {
+                        expect(actualResult.app.dir).to.equal(expectedResult.app.dir);
+                    }
             });
         }
     });

@@ -646,7 +646,6 @@ export function getLogName(projectID: string, projectLocation: string): string {
 
     let logName = projectConstants.containerPrefix + projectID + "-" + hash.digest("hex");
     const projectName = projectLocation.split("/").pop();
-
     if (process.env.IN_K8 === "true" && logName.length > 53) {
         logName = logName.substring(0, 53);
     }

@@ -11,12 +11,10 @@
 import { expect } from "chai";
 import * as path from "path";
 import * as fs from "fs";
-import { promisify } from "util";
+
 import * as utils from "../../../../server/src/utils/utils";
 import * as projectsController from "../../../../server/src/controllers/projectsController";
-
-const existsAsync = promisify(fs.exists);
-const mkdirAsync = promisify(fs.mkdir);
+import { existsAsync, mkdirAsync } from "../../functional-test/lib/utils";
 
 export function utilsTestModule(): void {
     const testWD = __dirname;

@@ -16,6 +16,7 @@ import { workspaceSettingsTestModule } from "../tests/workspaceSettings.module.t
 import { projectSettingsTestModule } from "../tests/projectSettings.module.test";
 import { projectStatusControllerTestModule } from "../tests/projectStatusController.test";
 import { projectUtilTestModule } from "../tests/projectUtil.module.test";
+import { projectsControllerTestModule } from "../tests/projectsController.module.test";
 import * as mocha from "mocha";
 
 interface ModuleExtension {
@@ -53,16 +54,22 @@ const projectStatusControllerModule: ModuleExtension = {
     moduleFunc: projectStatusControllerTestModule
 };
 
-
 const projectUtilModule: ModuleExtension = {
     moduleName: "projectUtil",
     moduleFunc: projectUtilTestModule
+};
+
+const projectControllerModule: ModuleExtension = {
+    moduleName: "projectsController",
+    moduleFunc: projectsControllerTestModule
 };
 
 // export const moduleLists: Array<ModuleExtension> = [logHelperModule,
 //                                                     utilsModule,
 //                                                     localeModule,
 //                                                     workspaceSettingsModule,
-//                                                     projectSettingsModule];
+//                                                     projectSettingsModule,
+//                                                     projectStatusControllerModule,
+//                                                     projectControllerModule];
 
 export const moduleLists: Array<ModuleExtension> = [projectUtilModule];
