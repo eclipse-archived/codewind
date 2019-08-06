@@ -16,6 +16,7 @@ import { ProjectCreation, projectAction } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
 import * as app_configs from "../../../configs/app.config";
+import * as project_configs from "../../../configs/project.config";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
@@ -95,7 +96,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         });
 
         after("restart in run mode to reset the app", async () => {
-            if (app_configs.restartCapabilities[projData.projectType]) {
+            if (project_configs.restartCapabilities[projData.projectType]) {
                 setProjectActionTest(combinations["combo5"], "run");
             }
         });
@@ -114,7 +115,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
 
         _.forEach(combinations, (combo) => {
             if (combo.action.toLowerCase() === "restart") {
-                if (!app_configs.restartCapabilities[projData.projectType]) return;
+                if (!project_configs.restartCapabilities[projData.projectType]) return;
                 for (const mode of startModes) {
                     setProjectActionTest(combo, mode);
                 }

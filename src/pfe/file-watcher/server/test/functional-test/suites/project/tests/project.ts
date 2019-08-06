@@ -12,13 +12,15 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 
-import { ProjectCreation, getProjectCapabilities } from "../../../lib/project";
+import { ProjectCreation, getProjectCapabilities, getProjectLogs } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
 import { projectActionTest } from "./project-action";
 import { projectSpecificationTest } from "./project-specification";
 
 import * as app_configs from "../../../configs/app.config";
+import * as project_configs from "../../../configs/project.config";
+import * as log_configs from "../../../configs/log.config";
 
 export default class ProjectTest {
     testName: string;
@@ -27,11 +29,12 @@ export default class ProjectTest {
         this.testName = testName;
     }
 
-    run(socket: SocketIO, projData: ProjectCreation, projectLang: string, runOnly?: boolean): void {
+    run(socket: SocketIO, projData: ProjectCreation, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
             this.runProjectCapabilityTest(projData.projectType, projData.projectID);
             this.runProjectActionTest(socket, projData);
-            this.runProjectSpecificationTest(socket, projData, projectLang);
+            this.runProjectSpecificationTest(socket, projData);
+            this.runProjectLogsTest(projData);
         });
     }
 
@@ -53,7 +56,7 @@ export default class ProjectTest {
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(200);
                 expect(info.capabilities);
-                expect(info.capabilities).to.deep.equal(app_configs.projectCapabilities[projectType]);
+                expect(info.capabilities).to.deep.equal(project_configs.projectCapabilities[projectType]);
             });
         });
     }
@@ -62,7 +65,67 @@ export default class ProjectTest {
         projectActionTest(socket, projData);
     }
 
-    private runProjectSpecificationTest(socket: SocketIO, projData: ProjectCreation, projectLang: string): void {
-        projectSpecificationTest(socket, projData, projectLang);
+    private runProjectSpecificationTest(socket: SocketIO, projData: ProjectCreation): void {
+        projectSpecificationTest(socket, projData);
+    }
+
+    private runProjectLogsTest(projData: ProjectCreation): void {
+        describe("getProjectLogs function", () => {
+            it("get project logs with missing id", async () => {
+                const info: any = await getProjectLogs(undefined);
+                expect(info);
+                expect(info.statusCode);
+                expect(info.statusCode).to.equal(400);
+                expect(info.error);
+                expect(info.error).to.haveOwnProperty("msg");
+                expect(info.error.msg).to.equal("Bad request");
+            });
+
+            it("get project logs with invalid id", async () => {
+                const badProjectId = "1234someid";
+                const info: any = await getProjectLogs(badProjectId);
+                expect(info);
+                expect(info.statusCode);
+                expect(info.statusCode).to.equal(404);
+                expect(info.error);
+                expect(info.error).to.haveOwnProperty("msg");
+                expect(info.error.msg).to.equal(`Project does not exist ${badProjectId}`);
+            });
+
+            it("get project logs with valid id", async () => {
+                const info: any = await getProjectLogs(projData.projectID);
+                expect(info);
+                expect(info.statusCode);
+                expect(info.statusCode).to.equal(200);
+                expect(info.logs);
+                expect(info.logs).to.haveOwnProperty("build");
+                expect(info.logs.build).to.haveOwnProperty("origin");
+                expect(info.logs.build).to.haveOwnProperty("files");
+                expect(info.logs.build.files[0].indexOf(projData.projectID) > -1);
+                expect(info.logs).to.haveOwnProperty("app");
+                expect(info.logs.app).to.haveOwnProperty("origin");
+                expect(info.logs.app).to.haveOwnProperty("files");
+                expect(info.logs.app.files[0].indexOf(projData.projectID) > -1);
+
+                if (log_configs.logFileMappings[projData.projectType]) {
+                    const actualBuildLogFiles = log_configs.logFileMappings[projData.projectType].build;
+                    const actualAppLogFiles = log_configs.logFileMappings[projData.projectType].app;
+
+                    const expectedBuildLogFiles = info.logs.build.files;
+                    for (const logFile of expectedBuildLogFiles) {
+                        const tokens = logFile.split("/");
+                        const fileName = tokens[tokens.length - 1];
+                        expect(_.includes(actualBuildLogFiles, fileName));
+                    }
+
+                    const expectedAppLogFiles = info.logs.app.files;
+                    for (const logFile of expectedAppLogFiles) {
+                        const tokens = logFile.split("/");
+                        const fileName = tokens[tokens.length - 1];
+                        expect(_.includes(actualAppLogFiles, fileName));
+                    }
+                }
+            });
+        });
     }
 }
