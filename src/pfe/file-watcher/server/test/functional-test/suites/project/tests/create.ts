@@ -68,7 +68,7 @@ export default class CreateTest {
         });
     }
 
-    private runCreateWithValidData(socket: SocketIO, projData: ProjectCreation): void {
+    runCreateWithValidData(socket: SocketIO, projData: ProjectCreation): void {
         it("create project", async () => {
             const info: any = await createProject(projData);
             const targetEvent = eventConfigs.events.creation;

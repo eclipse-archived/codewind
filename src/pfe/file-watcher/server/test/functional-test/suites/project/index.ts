@@ -15,6 +15,7 @@ import { ProjectCreation } from "../../lib/project";
 import CreateTest from "./tests/create";
 import DeleteTest from "./tests/delete";
 import ProjectTest from "./tests/project";
+import ShutdownTest from "./tests/shutdown";
 
 /**
  * @class
@@ -29,6 +30,7 @@ export default class ProjectTestSuite {
     createTest: CreateTest;
     deleteTest: DeleteTest;
     projectTest: ProjectTest;
+    shutdownTest: ShutdownTest;
 
     /**
      * @constructor
@@ -42,6 +44,7 @@ export default class ProjectTestSuite {
         this.createTest = new CreateTest("create test");
         this.deleteTest = new DeleteTest("delete test");
         this.projectTest = new ProjectTest("project test");
+        this.shutdownTest = new ShutdownTest("shutdown test");
     }
 
     /**
@@ -54,6 +57,7 @@ export default class ProjectTestSuite {
             this.createTest.run(this.socket, projectData);
             this.projectTest.run(this.socket, projectData);
             this.deleteTest.run(this.socket, projectData.projectID);
+            this.shutdownTest.run(this.socket, projectData, projectLang);
         });
     }
 }

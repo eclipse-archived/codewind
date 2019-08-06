@@ -55,3 +55,7 @@ export async function getApplicationContainerInfo(projectInfo: project.ProjectIn
 export async function getApplicationContainerInfoInK8(projectInfo: project.ProjectInfo, operation: operation.Operation): Promise<kubeUtil.PodInfo> {
   return await kubeUtil.getApplicationContainerInfo(projectInfo, operation);
 }
+
+export async function shutdown(): Promise<projectsController.IShutdownSuccess | projectsController.IShutdownFailure> {
+  return await filewatcher.shutdown();
+}

@@ -15,7 +15,6 @@ import * as _ from "lodash";
 import { ProjectCreation, projectAction } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
-import * as app_configs from "../../../configs/app.config";
 import * as project_configs from "../../../configs/project.config";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
