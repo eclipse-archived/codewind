@@ -12,13 +12,16 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 
-import { ProjectCreation, projectSpecification } from "../../../lib/project";
+import { ProjectCreation, projectSpecification, getApplicationContainerInfoInK8, getApplicationContainerInfo } from "../../../lib/project";
 
 import * as app_configs from "../../../configs/app.config";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { SocketIO } from "../../../lib/socket-io";
 import { fail } from "assert";
+import { Operation } from "../../../../../src/projects/operation";
+import { ProjectInfo } from "../../../../../src/projects/Project";
+import * as projectUtil from "../../../../../src/projects/projectUtil";
 
 export function projectSpecificationTest(socket: SocketIO, projData: ProjectCreation, projectLang: string): void {
     describe("projectSpecification function", () => {
@@ -196,13 +199,21 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             }
         }).timeout(timeoutConfigs.defaultTimeout);
 
-        _.forEach(combinations, (combo) => {
+        _.forEach(combinations, async (combo) => {
             const setting = combo["setting"];
             let value = combo["value"];
 
             if (setting === "internalPort") {
-                const internalPorts = app_configs.defaultInternalPorts[projectLang];
-                value = internalPorts[Math.floor(Math.random() * internalPorts.length)];
+                const projectInfo = _.cloneDeep(projData) as ProjectInfo;
+                projectInfo["autoBuildEnabled"] = true;
+                projectInfo["startMode"] = "run";
+                if (process.env.IN_K8) {
+                    const internalPorts = await getApplicationContainerInfoInK8(projectInfo, new Operation("general", projectInfo));
+                    value = internalPorts.podPorts[Math.floor(Math.random() * internalPorts.podPorts.length)];
+                } else {
+                    const internalPorts = await getApplicationContainerInfo(projectInfo, await projectUtil.getContainerName(projectInfo));
+                    value = internalPorts.containerPorts[Math.floor(Math.random() * internalPorts.containerPorts.length)];
+                }
             }
             if (setting === "internalDebugPort") {
                 if (process.env.IN_K8) return; // internal debug port setting is not supported in kube
