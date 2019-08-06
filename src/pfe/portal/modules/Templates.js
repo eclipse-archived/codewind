@@ -54,7 +54,32 @@ module.exports = class Templates {
     }
 
     let newProjectTemplates = [];
-    await Promise.all(this.repositoryList.map(async function getTemplates(repository) {
+
+    // reduce function, want to take repository list and index
+    // them by url, and use that to avoid processing duplicate entries
+    const reducer = (repos, repo) => {
+      if (repo.url && !repos[repo.url])
+        repos[repo.url] = repo;
+      return repos;
+    };
+
+    // apply reduce function to create a copy of the repository list index by url
+    const repos = this.repositoryList.reduce(reducer, {});
+
+    // query providers for more repositories
+    for (let provider of Object.values(this.providers)) {
+      try {
+        const extraRepos = await provider.getRepositories();
+        if (Array.isArray(extraRepos))
+          // apply reduce function here again, urls that we already have are ignored
+          extraRepos.reduce(reducer, repos);
+      }
+      catch (err) {
+        log.error(err.message);
+      }
+    }
+
+    await Promise.all(Object.values(repos).map(async function getTemplates(repository) {
 
       let repositoryUrl = new URL(repository.url);
 
@@ -90,17 +115,6 @@ module.exports = class Templates {
         log.warn(err);
       }
     }));
-
-    // query providers
-    for (let provider of Object.values(this.providers)) {
-      try {
-        const templates = await provider.getTemplates();
-        newProjectTemplates.push(...templates);
-      }
-      catch (err) {
-        log.error(err.message);
-      }
-    }
 
     newProjectTemplates.sort((a, b) => {
       return a.label.localeCompare(b.label);
@@ -158,7 +172,8 @@ module.exports = class Templates {
   }
 
   addProvider(name, provider) {
-    this.providers[name] = provider;
+    if (provider && typeof provider.getRepositories == 'function')
+      this.providers[name] = provider;
   }
 
   async getTemplateStyles() {
