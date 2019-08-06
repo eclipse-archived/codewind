@@ -10,6 +10,7 @@
 *******************************************************************************/
 const chai = require('chai');
 
+global.codewind = { RUNNING_IN_K8S: false };
 const Templates = require('../../../src/pfe/portal/modules/Templates');
 
 chai.should();
@@ -116,6 +117,77 @@ describe('Templates.js', function() {
                 const output = await templateController.getTemplatesOfStyle('Appsody');
                 output.should.deep.equal(sampleTemplateList);
             });
+        });
+    });
+    describe('template provider tests', function() {
+
+        let templates;
+        let expected;
+
+        before(async function() {
+            
+            const { WORKSPACE_DIR } = require('../../config');
+            templates = new Templates(WORKSPACE_DIR);
+
+            await templates.initializeRepositoryList();
+            expected = (await templates.getTemplateList()).length;
+        });
+
+        it('getTemplateList should ignore invalid template providers', async function() {
+
+            // null provider is ignored
+            templates.addProvider('null', null);
+
+            // empty provider is ignored (no getRepositories function)
+            templates.addProvider('empty', {});
+
+            const list = await templates.getTemplateList();
+            list.length.should.equal(expected);
+        });
+
+        it('getTemplateList should ignore invalid or duplicate repository entries from template provider', async function() {
+
+            // add a template provider that returns the wrong type
+            templates.addProvider('invalid_provider', {
+                getRepositories: async function() {
+                    return 'wrong type';
+                }
+            });
+
+            // add a template provider that contains invalid or duplicate entries
+            templates.addProvider('invalid_provider', {
+                getRepositories: async function() {
+                    return [
+                        'wrong type',
+                        { description: 'missing url'},
+                        {
+                            url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
+                            description: 'duplicate repo'
+                        }
+                    ];
+                }
+            });
+
+            const list = await templates.getTemplateList();
+            list.length.should.equal(expected);
+        });
+
+        it('getTemplateList should include additional templates from template provider', async function() {
+
+            // add a template provider that returns a valid entry
+            templates.addProvider('valid_provider', {
+                getRepositories: async function() {
+                    return [
+                        {
+                            url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
+                            description: 'valid repo'
+                        }
+                    ];
+                }
+            });
+
+            const list = await templates.getTemplateList();
+            list.length.should.be.above(expected);
         });
     });
 });
