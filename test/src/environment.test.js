@@ -26,7 +26,7 @@ describe('Environment API tests', function() {
 
         res.should.have.status(200);
         res.should.have.ownProperty('body');
-        res.body.should.have.ownProperty('running_on_k8s', USING_K8S);
+        res.body.should.have.ownProperty('running_in_k8s', USING_K8S);
         res.body.should.have.ownProperty('user_string');
         res.body.should.have.ownProperty('socket_namespace', SOCKET_NAMESPACE);
         res.body.should.have.ownProperty('codewind_version');

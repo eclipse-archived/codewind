@@ -70,7 +70,7 @@ router.get('/api/v1/environment', async (req, res) => {
 
   try {
     const envData = {
-      running_on_k8s: global.codewind.RUNNING_IN_K8S,
+      running_in_k8s: global.codewind.RUNNING_IN_K8S,
       user_string: req.cw_user.userString,
       socket_namespace: req.cw_user.uiSocketNamespace,
       codewind_version: process.env.CODEWIND_VERSION,
