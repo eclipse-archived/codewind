@@ -134,24 +134,38 @@ async function main() {
   };
 
   // find if running in kubernetes and build up a whitelist of allowed origins
-  const originsWhitelist = []
+
   try {
     k8Client = new K8Client({ config: k8config.getInCluster(), version: '1.9' });
+  }
+  catch (err) {
+    log.info('Codewind does not appear to be running in k8s')
+    global.codewind.RUNNING_IN_K8S = false;
+  }
+
+  const originsWhitelist = []
+  try {
     if (k8Client) {
-      log.info('starting codewind on Kubernetes');
+      log.info('Codewind is running in k8s');
       global.codewind.RUNNING_IN_K8S = true;
 
-      // get path currently running on
-      const k8sServiceName = process.env.SERVICE_NAME;
-      const k8sNameSpace = process.env.KUBE_NAMESPACE || 'default';
-      let currentIngress = await k8Client.apis.extensions.v1beta1.namespaces(k8sNameSpace).ingress(k8sServiceName).get();
-      let k8sIngressPath = currentIngress.body.spec.rules[0].host;
+      // get current ingress path - it is passed in an env var
+      // https://github.com/eclipse/codewind-che-plugin/blob/master/codewind-che-sidecar/scripts/kube/codewind_template.yaml#L135
+      const INGRESS_HOST_ENVVAR = 'CHE_INGRESS_HOST';
+      const k8sIngressPath = process.env[INGRESS_HOST_ENVVAR];
+      log.info(`Ingress path is "${k8sIngressPath}"`);
+      if (!k8sIngressPath) {
+        throw new Error(`${INGRESS_HOST_ENVVAR} was not set in the environment`);
+      }
       const protocol = process.env.PORTAL_HTTPS == 'true' ? 'https://' : 'http://'
       originsWhitelist.push(protocol + k8sIngressPath);
     }
   } catch (err) {
-    // Not in K8s
-    log.error('failed to start codewind on Kubernetes');
+    log.error(`Error initializing codewind on Kubernetes: ${JSON.stringify(err)}`);
+  }
+
+  if (!global.codewind.RUNNING_IN_K8S) {
+    log.info('Codewind is running locally');
     originsWhitelist.push('http://localhost:*');
   }
 
