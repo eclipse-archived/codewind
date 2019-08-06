@@ -44,7 +44,7 @@
     "semi-spacing": ["warn", {"before": false, "after": true}],
     "quote-props":["warn", "as-needed"],
     "prefer-template":"warn",
-    "quotes":["warn", "single", { "avoidEscape": true }],
+    "quotes":["warn", "single", { "avoidEscape": true, "allowTemplateLiterals": true }],
     "no-irregular-whitespace":"warn",
     "object-curly-spacing":["warn", "always"],
     "comma-dangle":["warn", "always-multiline"],
