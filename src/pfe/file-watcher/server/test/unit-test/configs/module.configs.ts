@@ -15,8 +15,8 @@ import { localeTestModule } from "../tests/locale.module.test";
 import { workspaceSettingsTestModule } from "../tests/workspaceSettings.module.test";
 import { projectSettingsTestModule } from "../tests/projectSettings.module.test";
 import { projectStatusControllerTestModule } from "../tests/projectStatusController.test";
-import { projectsControllerTestModule } from "../tests/projectsController.module.test";
 import { projectUtilTestModule } from "../tests/projectUtil.module.test";
+import { projectsControllerTestModule } from "../tests/projectsController.module.test";
 import * as mocha from "mocha";
 
 interface ModuleExtension {
@@ -54,14 +54,14 @@ const projectStatusControllerModule: ModuleExtension = {
     moduleFunc: projectStatusControllerTestModule
 };
 
-const projectControllerModule: ModuleExtension = {
-    moduleName: "projectsController",
-    moduleFunc: projectsControllerTestModule
-};
-
 const projectUtilModule: ModuleExtension = {
     moduleName: "projectUtil",
     moduleFunc: projectUtilTestModule
+};
+
+const projectControllerModule: ModuleExtension = {
+    moduleName: "projectsController",
+    moduleFunc: projectsControllerTestModule
 };
 
 export const moduleLists: Array<ModuleExtension> = [logHelperModule,
@@ -72,4 +72,3 @@ export const moduleLists: Array<ModuleExtension> = [logHelperModule,
                                                     projectStatusControllerModule,
                                                     projectControllerModule,
                                                     projectUtilModule];
-

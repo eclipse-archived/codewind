@@ -646,7 +646,6 @@ export function getLogName(projectID: string, projectLocation: string): string {
 
     let logName = projectConstants.containerPrefix + projectID + "-" + hash.digest("hex");
     const projectName = projectLocation.split("/").pop();
-
     if (process.env.IN_K8 === "true" && logName.length > 53) {
         logName = logName.substring(0, 53);
     }
@@ -721,12 +720,13 @@ export function getDefaultContainerName(projectID: string, projectLocation: stri
  *
  * @returns string
  */
-async function getContainerName(projectInfo: ProjectInfo): Promise<string> {
+export async function getContainerName(projectInfo: ProjectInfo): Promise<string> {
 
     const projectID: string = projectInfo.projectID;
     const projectLocation: string = projectInfo.location;
 
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+    logger.logInfo("typeof projectHandler.getContainerName is " + typeof projectHandler.getContainerName);
     if (projectHandler && projectHandler.hasOwnProperty("getContainerName") && typeof projectHandler.getContainerName === "function") {
         return projectHandler.getContainerName(projectID, projectLocation);
     }
