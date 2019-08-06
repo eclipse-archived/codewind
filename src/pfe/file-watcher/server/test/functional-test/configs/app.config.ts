@@ -10,19 +10,20 @@
  *******************************************************************************/
 import * as path from "path";
 
-const MC_WORKSPACE = "codewind-workspace";
 
-export const microclimateWorkspaceDir =  process.env.CW_WORKSPACE || path.resolve(__dirname, "..", "..", "..", "..", "..", "..", "..", MC_WORKSPACE);
-export const microclimateWorkspaceLogsDir =  process.env.CW_LOGS_DIR || path.join(microclimateWorkspaceDir, ".logs");
+const CW_WORKSPACE = "codewind-workspace";
+export const codewindWorkspaceDir =  process.env.CW_WORKSPACE || path.resolve(__dirname, "..", "..", "..", "..", "..", "..", "..", CW_WORKSPACE);
+export const codewindWorkspaceLogsDir =  process.env.CW_LOGS_DIR || path.join(codewindWorkspaceDir, ".logs");
 export const localesDir = process.env.CW_LOCALES_DIR || path.resolve(__dirname, "..", "..", "..", "src", "utils", "locales") + path.sep;
 export const fwDataDir = process.env.CW_FWDATA_DIR || path.join(process.env.HOME, "fwdata");
 export const projectDataDir = process.env.CW_PROJECTDATA_DIR || path.join(fwDataDir, "projects");
-export const workspaceSettingsDir = process.env.CW_WORKSPACESETTINGS_DIR || path.join(microclimateWorkspaceDir, ".config");
+export const workspaceSettingsDir = process.env.CW_WORKSPACESETTINGS_DIR || path.join(codewindWorkspaceDir, ".config");
+export const extensionDir = process.env.CW_EXTENSION_DIR || path.join(codewindWorkspaceDir, ".extensions") + path.sep;
 
 export const projectPrefix = "microclimatetest";
 export const projectConfigs = {
     "appSuffix": Date.now(),
-    "appDirectory": path.join(microclimateWorkspaceDir, projectPrefix)
+    "appDirectory": path.join(codewindWorkspaceDir, projectPrefix)
 };
 
 export const FIXTURES = "idc-fixtures";
