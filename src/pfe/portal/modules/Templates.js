@@ -164,6 +164,7 @@ module.exports = class Templates {
   }
 
   addProvider(name, provider) {
-    this.providers[name] = provider;
+    if (provider && typeof provider.getRepositories == 'function')
+      this.providers[name] = provider;
   }
 }
