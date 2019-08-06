@@ -30,7 +30,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  running_on_k8s:
+                  running_in_k8s:
                     type: boolean
                     example: false
                   user_string:
