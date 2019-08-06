@@ -16,5 +16,6 @@ export const events = {
     "projectValidated": "projectValidated",
     "statusChanged": "projectStatusChanged",
     "restartResult": "projectRestartResult",
-    "settingsChanged": "projectSettingsChanged"
+    "settingsChanged": "projectSettingsChanged",
+    "filewatcherShutdown": "filewatcherShutdown"
 };
