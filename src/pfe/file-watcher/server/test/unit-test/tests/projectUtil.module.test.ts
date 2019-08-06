@@ -36,6 +36,20 @@ export function projectUtilTestModule(): void {
         expect(actualResult).to.equal(expectedResult);
     });
 
+    it("test of getLogName function on Kube", () => {
+        const projectID = "testProjectID";
+        const projectLocation = "directory/testproject";
+        const hash = crypto.createHash("sha1", <TransformOptions>"utf8").update(projectLocation);
+        let expectedResult  = projectConstants.containerPrefix + projectID + "-" + hash.digest("hex");
+        if (expectedResult.length > 53) {
+            expectedResult = expectedResult.substring(0, 53);
+        }
+        process.env.IN_K8 = "true";
+        const actualResult = projectUtil.getLogName(projectID, projectLocation);
+        expect(actualResult).to.equal(expectedResult);
+        process.env.IN_K8 = "false";
+    });
+
     describe("combinational testing of of getContainerName function", async () => {
         before("create the extension directory with some fake files", async () => {
             if (!(await existsAsync(extensionIDDir))) {
