@@ -44,6 +44,10 @@ export async function projectSpecification(req: projectsController.IProjectSpeci
   return await filewatcher.reconfigProjectSpecification(req);
 }
 
+export async function getProjectLogs(projectID: string): Promise<projectsController.IGetLogsSuccess | projectsController.IGetLogsFailure> {
+  return await filewatcher.getProjectLogs(projectID);
+}
+
 export async function getApplicationContainerInfo(projectInfo: project.ProjectInfo, containerName: string): Promise<dockerUtil.ContainerInfo> {
   return await dockerUtil.getApplicationContainerInfo(projectInfo, containerName);
 }

@@ -15,6 +15,7 @@ import * as _ from "lodash";
 import { ProjectCreation, projectSpecification, getApplicationContainerInfoInK8, getApplicationContainerInfo } from "../../../lib/project";
 
 import * as app_configs from "../../../configs/app.config";
+import * as project_configs from "../../../configs/project.config";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { SocketIO } from "../../../lib/socket-io";
@@ -23,7 +24,7 @@ import { Operation } from "../../../../../src/projects/operation";
 import { ProjectInfo } from "../../../../../src/projects/Project";
 import * as projectUtil from "../../../../../src/projects/projectUtil";
 
-export function projectSpecificationTest(socket: SocketIO, projData: ProjectCreation, projectLang: string): void {
+export function projectSpecificationTest(socket: SocketIO, projData: ProjectCreation): void {
     describe("projectSpecification function", () => {
         const data: any = {
             "projectID": projData.projectID
@@ -217,11 +218,11 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             }
             if (setting === "internalDebugPort") {
                 if (process.env.IN_K8) return; // internal debug port setting is not supported in kube
-                const exposedDebugPorts = app_configs.exposedDebugPorts[projectLang];
+                const exposedDebugPorts = project_configs.exposedDebugPorts[projData.projectType];
                 value = exposedDebugPorts[Math.floor(Math.random() * exposedDebugPorts.length)];
             }
             if (setting === "mavenProfiles" || setting === "mavenProperties") {
-                if (!app_configs.mavenProfileCapabilities[projData.projectType]) {
+                if (!project_configs.mavenProfileCapabilities[projData.projectType]) {
                     value = [];
                     combo["eventKeys"].push("error");
                 }
@@ -240,7 +241,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 expect(info.operationId);
 
                 if (combo["socketEvent"] && combo["eventKeys"]) {
-                    if (setting === "internalDebugPort" && !app_configs.debugCapabilities[projData.projectType]) {
+                    if (setting === "internalDebugPort" && !project_configs.debugCapabilities[projData.projectType]) {
                         combo["eventKeys"].push("error");
                     }
 
@@ -285,7 +286,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                                 expect(event.eventData[eventKey]).to.equal(testHealthCheck);
                             }
 
-                            if (setting === "internalDebugPort" && !app_configs.debugCapabilities[projData.projectType]) {
+                            if (setting === "internalDebugPort" && !project_configs.debugCapabilities[projData.projectType]) {
                                 expect(event.eventData.error);
                                 expect(event.eventData.error).to.equal(`BAD_REQUEST: The project does not support debug mode.`);
                             }
@@ -293,11 +294,11 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                                 expect(event.eventData.error);
                                 expect(event.eventData.error).to.equal(`BAD_REQUEST: debug mode is not supported on Kubernetes.`);
                             }
-                            if (setting === "mavenProfiles" && !app_configs.mavenProfileCapabilities[projData.projectType]) {
+                            if (setting === "mavenProfiles" && !project_configs.mavenProfileCapabilities[projData.projectType]) {
                                 expect(event.eventData.error);
                                 expect(event.eventData.error).to.equal(`Maven settings cannot be set for a non-Maven project: ${projData.projectType}`);
                             }
-                            if (setting === "mavenProperties" && !app_configs.mavenProfileCapabilities[projData.projectType]) {
+                            if (setting === "mavenProperties" && !project_configs.mavenProfileCapabilities[projData.projectType]) {
                                 expect(event.eventData.error);
                                 expect(event.eventData.error).to.equal(`The maven properties list cannot be set for a non-Maven project: ${projData.projectType}`);
                             }

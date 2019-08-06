@@ -27,35 +27,4 @@ export const projectConfigs = {
 };
 
 export const projectTypes = ["docker"];
-export const supportedDockerProjects = ["lagom"];
-
-export const projectCapabilities: any = {
-    "docker": {
-        "startModes": ["run"],
-        "controlCommands": []
-    }
-};
-
-export const restartCapabilities: any = {
-    "docker": false
-};
-
-export const debugCapabilities: any = {
-    "docker": false
-};
-
-export const mavenProfileCapabilities: any = {
-    "docker":  false,
-};
-
-// export const defaultInternalPorts: any = {
-//     "go": ["8000"],
-//     "python": ["5000"],
-//     "lagom": ["8778", "9779"]
-// };
-
-export const exposedDebugPorts: any = {
-    "go": ["1000"], // fake debug ports - go doesn't support debug
-    "python": ["1000"], // fake debug ports - python doesn't support debug
-    "lagom": ["1000"], // fake debug ports - python doesn't support debug
-};
+export const supportedDockerProjects = ["go", "python", "lagom"];
