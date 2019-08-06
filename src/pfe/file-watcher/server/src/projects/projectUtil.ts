@@ -501,34 +501,26 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
  *
  * @returns string
  */
-async function getProjectMavenSettings(projectInfo: ProjectInfo): Promise<string> {
+export async function getProjectMavenSettings(projectInfo: ProjectInfo): Promise<string> {
 
     logger.logProjectInfo("mavenProfiles: " + projectInfo.mavenProfiles, projectInfo.projectID);
     logger.logProjectInfo("mavenProperties: " + projectInfo.mavenProperties, projectInfo.projectID);
 
-    const profiles = projectInfo.mavenProfiles;
+    const profilesArr = projectInfo.mavenProfiles;
 
     const propertiesArr = projectInfo.mavenProperties;
-    let properties;
-    if (propertiesArr) {
-        properties = propertiesArr.toString();
-    }
 
     let userMavenSettings = "";
 
-    if (profiles && profiles.length > 0) {
-        if (profiles.length == 1 && profiles[0] == "") {
-            userMavenSettings = "";
-        } else {
-            userMavenSettings = userMavenSettings.concat(MavenFlags.profile.concat(profiles.toString()));
+    if (profilesArr && profilesArr.length > 0) {
+        if (! (profilesArr.length == 1 && profilesArr[0] == "") ) {
+            userMavenSettings = userMavenSettings.concat(MavenFlags.profile.concat(profilesArr.toString()));
         }
     }
 
-    if (properties && properties.length > 0) {
-        if (properties.length == 1 && properties[0] == "") {
-            userMavenSettings = userMavenSettings.concat("");
-        } else {
-            properties = "";
+    if (propertiesArr && propertiesArr.length > 0) {
+        if (!(propertiesArr.length == 1 && propertiesArr[0] == "")) {
+            let properties = "";
             for (const value of propertiesArr) {
                 properties = properties.concat(MavenFlags.properties).concat(value);
                 properties = properties.concat(" ");
