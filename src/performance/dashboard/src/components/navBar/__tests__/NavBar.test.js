@@ -17,12 +17,12 @@ import  NavBar from '../NavBar';
 import reducers from '../../../store/reducers/index';
 import * as DataProjectInfo from '../../../tests/data/ProjectInfo';
 
-// initialise component props
+// initialize component props
 const componentProps = {
     projectID:  DataProjectInfo.projectInfo.projectID
 }
 
-// Initialise redux stores
+// initialize redux stores
 const store = createStore(reducers, {
     projectInfoReducer: { config: DataProjectInfo.projectInfo, receivedAt: Date.now(), fetched: true }
 });

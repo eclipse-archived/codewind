@@ -19,13 +19,13 @@ import * as DataProjectInfo from '../../../tests/data/ProjectInfo';
 import * as LoadRunnerConfig from '../../../tests/data/LoadRunnerConfig';
 import ModalModifyLoadTests from '../ModalModifyLoadTests';
 
-// initialise component props
+// initialize component props
 const componentProps = {
     open: true,
     closeModalWindow: jest.fn()
 }
 
-// Initialise redux stores
+// Initialize redux stores
 const store = createStore(reducers, {
     projectInfoReducer: { config: DataProjectInfo.projectInfo, receivedAt: Date.now(), fetched: true },
     loadRunnerConfigReducer: { config: LoadRunnerConfig.projectLoadRunnerConfig, receivedAt: Date.now(), fetched: true }
