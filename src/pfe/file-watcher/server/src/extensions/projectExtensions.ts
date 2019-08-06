@@ -184,6 +184,7 @@ async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any
             }
             catch (err) {
                 logger.logError(`Failed to get extension project handler ${extensionID} for ${projectInfo.location}`);
+                logger.logError(err);
                 return undefined;
             }
         }

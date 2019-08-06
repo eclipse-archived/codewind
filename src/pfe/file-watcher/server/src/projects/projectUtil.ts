@@ -721,12 +721,13 @@ export function getDefaultContainerName(projectID: string, projectLocation: stri
  *
  * @returns string
  */
-async function getContainerName(projectInfo: ProjectInfo): Promise<string> {
+export async function getContainerName(projectInfo: ProjectInfo): Promise<string> {
 
     const projectID: string = projectInfo.projectID;
     const projectLocation: string = projectInfo.location;
 
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+    logger.logInfo("typeof projectHandler.getContainerName is " + typeof projectHandler.getContainerName);
     if (projectHandler && projectHandler.hasOwnProperty("getContainerName") && typeof projectHandler.getContainerName === "function") {
         return projectHandler.getContainerName(projectID, projectLocation);
     }
