@@ -44,6 +44,10 @@ export const debugCapabilities: any = {
     "docker": false
 };
 
+export const mavenProfileCapabilities: any = {
+    "docker":  false,
+};
+
 export const defaultInternalPorts: any = {
     "go": ["8000"],
     "python": ["5000"],
