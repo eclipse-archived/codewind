@@ -27,7 +27,7 @@ export const projectConfigs = {
 };
 
 export const projectTypes = ["docker"];
-export const supportedDockerProjects = ["go", "python"];
+export const supportedDockerProjects = ["go", "python", "lagom"];
 
 export const projectCapabilities: any = {
     "docker": {
@@ -44,12 +44,14 @@ export const debugCapabilities: any = {
     "docker": false
 };
 
-export const exposedPorts: any = {
+export const defaultInternalPorts: any = {
     "go": ["8000"],
-    "python": ["5000"]
+    "python": ["5000"],
+    "lagom": ["8778", "9779"]
 };
 
 export const exposedDebugPorts: any = {
     "go": ["1000"], // fake debug ports - go doesn't support debug
-    "python": ["1000"], // fake debug ports - lagom doesn't support debug
+    "python": ["1000"], // fake debug ports - python doesn't support debug
+    "lagom": ["1000"], // fake debug ports - python doesn't support debug
 };

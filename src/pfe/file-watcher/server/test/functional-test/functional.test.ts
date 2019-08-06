@@ -18,6 +18,7 @@ import * as utils from "./lib/utils";
 utils.setTestEnvVariables();
 import * as app_configs from "./configs/app.config";
 import * as pfe_configs from "./configs/pfe.config";
+import * as timoutConfigs from "./configs/timeout.config";
 
 import GenericTestSuite from "./suites/generic/index";
 import ProjectTestSuite from "./suites/project/index";
@@ -47,7 +48,8 @@ describe("PFE - functional test", () => {
   });
 
   if (process.env.IN_K8) {
-    before("set deployment registry", (done) => {
+    before("set deployment registry", function (done: any): void {
+      this.timeout(timoutConfigs.defaultTimeout);
       const workspace_settings_file_content = { deploymentRegistry: pfe_configs.deploymentRegistry };
       const workspace_settings_file_content_json = JSON.stringify(workspace_settings_file_content);
       const workspace_settings_file = path.join(app_configs.codewindWorkspaceDir, ".config", "settings.json");

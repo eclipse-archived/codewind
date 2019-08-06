@@ -163,8 +163,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             const setting = combo["setting"];
             let value = combo["value"];
             if (setting === "internalPort") {
-                const exposedPorts = app_configs.exposedPorts[projectLang];
-                value = exposedPorts[Math.floor(Math.random() * exposedPorts.length)];
+                const internalPorts = app_configs.defaultInternalPorts[projectLang];
+                value = internalPorts[Math.floor(Math.random() * internalPorts.length)];
             } else if (setting === "internalDebugPort") {
                 if (process.env.IN_K8) return; // internal debug port setting is not supported in kube
                 const exposedDebugPorts = app_configs.exposedDebugPorts[projectLang];
