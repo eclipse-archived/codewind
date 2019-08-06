@@ -17,12 +17,13 @@ import * as projectUtil from "../../../../server/src/projects/projectUtil";
 import * as logHelperModule from "../lib/logHelper.module";
 import * as logHelper from "../../../../server/src/projects/logHelper";
 import * as libertyProject from "../../../../server/src/projects/libertyProject";
-import { existsAsync, mkdirAsync, writeAsync } from "../../functional-test/lib/utils";
+import { existsAsync, mkdirAsync, writeAsync, copyAsync } from "../../functional-test/lib/utils";
 import * as projectsController from "../../../../server/src/controllers/projectsController";
 import { projectConstants } from "../../../../server/src/projects/constants";
+import * as app_configs from "../../functional-test/configs/app.config";
 
 export function projectUtilTestModule(): void {
-
+    const extensionIDDir = path.join(process.env.CW_EXTENSION_DIR, "extensionProject");
     it("test of getLogName function", async () => {
         const projectID = "testProjectID";
         const projectLocation = "directory/testproject";
@@ -45,6 +46,72 @@ export function projectUtilTestModule(): void {
         const actualResult = projectUtil.getLogName(projectID, projectLocation);
         expect(actualResult).to.equal(expectedResult);
         process.env.IN_K8 = "false";
+    });
+
+    describe("combinational testing of of getContainerName function", async () => {
+        before("create the extension directory with some fake files", async () => {
+            if (!(await existsAsync(extensionIDDir))) {
+                await mkdirAsync(extensionIDDir, { recursive: true });
+            }
+            expect(fs.statSync(extensionIDDir)).to.exist;
+            const filePath = path.resolve(extensionIDDir, ".sh-extension");
+            await writeAsync(filePath, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
+            const entryPoint = path.resolve(extensionIDDir, "entrypoint.sh");
+            await writeAsync(entryPoint, "echo $(pwd)");
+            fs.chmodSync(entryPoint, 0o777);
+        });
+
+        after("remove the extension directory", async () => {
+            await projectsController.deleteFolder(extensionIDDir);
+            try {
+                fs.statSync(extensionIDDir);
+            } catch (err) {
+                expect(err.code).to.equal("ENOENT");
+            }
+            process.env.IN_K8 = "false";
+        });
+
+        const combinations: any = {
+            "combo1": {
+                "data": {
+                    projectID: "testProjectID",
+                    location: "directory/testproject",
+                    extensionID: "extensionProject",
+                    projectType: "extensionProject"
+                },
+                "result": "testprefix-testproject-testsuffix"
+            },
+            "combo2": {
+                "data": {
+                    projectID: "testProjectID",
+                    location: "directory/testproject",
+                    projectType: "liberty"
+                },
+                "result": projectConstants.containerPrefix + "testproject-testProjectID"
+            },
+            "combo3": {
+                "data": {
+                    projectID: "veryveryveryveryveryve-rylongtestProjectID",
+                    location: "directory/veryveryveryveryveryveryveryverylongTestProject/",
+                    projectType: "liberty"
+                },
+                "K8": true,
+                "result": "cw-veryveryveryveryveryver-veryveryveryveryveryve"
+            },
+        };
+        for (const combo of Object.keys(combinations)) {
+
+            const data = combinations[combo]["data"];
+            const expectedResult = combinations[combo]["result"];
+            const K8 = combinations[combo]["K8"];
+            it(combo + " => data: " + JSON.stringify(data), async() => {
+                if (K8) {
+                    process.env.IN_K8 = "true";
+                }
+                const actualResult = await projectUtil.getContainerName(data);
+                expect(actualResult).to.equal(expectedResult);
+            });
+        }
     });
 
 
@@ -143,6 +210,16 @@ export function projectUtilTestModule(): void {
             }
             expect(fs.statSync(appLogDirectory)).to.exist;
 
+            if (!(await existsAsync(extensionIDDir))) {
+                await mkdirAsync(extensionIDDir, { recursive: true });
+            }
+            expect(fs.statSync(extensionIDDir)).to.exist;
+            const filePath = path.resolve(extensionIDDir, ".sh-extension");
+            await writeAsync(filePath, '{"buildLogs": ["buildLog"], "appLogs": ["appLog"]}');
+            const entryPoint = path.resolve(extensionIDDir, "entrypoint.sh");
+            await writeAsync(entryPoint, "echo $(pwd)");
+            fs.chmodSync(entryPoint, 0o777);
+
         });
 
         after("remove the log directory", async () => {
@@ -155,6 +232,12 @@ export function projectUtilTestModule(): void {
             await projectsController.deleteFolder(projectFolder);
             try {
                 fs.statSync(projectFolder);
+            } catch (err) {
+                expect(err.code).to.equal("ENOENT");
+            }
+            await projectsController.deleteFolder(extensionIDDir);
+            try {
+                fs.statSync(extensionIDDir);
             } catch (err) {
                 expect(err.code).to.equal("ENOENT");
             }
@@ -302,6 +385,25 @@ export function projectUtilTestModule(): void {
                         "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.appLogs.app + ".log"]
                     }}
             },
+            "combo9": {
+                "data": {
+                    projectID: testProjectId,
+                    location: projectFolder,
+                    logSuffixes: ["buildLog", "appLog"],
+                    extensionID: "extensionProject",
+                    projectType: "extensionProject"
+                },
+                "appLogTest": true,
+                "result":  {
+                    "build": {
+                        "origin": "workspace",
+                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/buildLog.log"]
+                    },
+                    "app": {
+                        "origin": "workspace",
+                        "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/appLog.log"]
+                    }}
+            },
         };
         for (const combo of Object.keys(combinations)) {
 
@@ -334,6 +436,87 @@ export function projectUtilTestModule(): void {
                     if (expectedResult.app.dir) {
                         expect(actualResult.app.dir).to.equal(expectedResult.app.dir);
                     }
+            });
+        }
+    });
+
+    describe("combinational testing of of setprojectList function", () => {
+
+        const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const nodeTestProjectMetadata = path.join(nodeProjectMetadataPath, "dummynodeproject.json");
+
+        const swiftProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyswiftproject");
+        const swiftOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyswiftproject.json");
+        const swiftTestProjectMetadata = path.join(swiftProjectMetadataPath, "dummyswiftproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(nodeProjectMetadataPath))) {
+                await mkdirAsync(nodeProjectMetadataPath);
+                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+            }
+
+            if (!(await existsAsync(swiftProjectMetadataPath))) {
+                await mkdirAsync(swiftProjectMetadataPath);
+                await copyAsync(swiftOriginalProjectMetadata, swiftTestProjectMetadata);
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(nodeProjectMetadataPath))) {
+                await projectsController.deleteFolder(nodeProjectMetadataPath);
+            }
+            try {
+                fs.statSync(nodeProjectMetadataPath);
+            } catch (err) {
+                expect(err.code).to.equal("ENOENT");
+            }
+
+            if ((await existsAsync(swiftProjectMetadataPath))) {
+                await projectsController.deleteFolder(swiftProjectMetadataPath);
+            }
+            try {
+                fs.statSync(swiftProjectMetadataPath);
+            } catch (err) {
+                expect(err.code).to.equal("ENOENT");
+            }
+        });
+    });
+
+    describe("combinational testing of of getUserFriendlyProjectType function", () => {
+        const combinations: any = {
+            "combo1": {
+                "projectType": "liberty",
+                "result": "Microprofile"
+            },
+            "combo2": {
+                "projectType": "spring",
+                "result": "Spring"
+            },
+            "combo3": {
+                "projectType": "swift",
+                "result": "Swift"
+            },
+            "combo4": {
+                "projectType": "nodejs",
+                "result": "Node.js"
+            },
+            "combo5": {
+                "projectType": "docker",
+                "result": "Docker"
+            },
+            "combo6": {
+                "projectType": "testprojecttype",
+                "result": "Testprojecttype"
+            },
+        };
+        for (const combo of Object.keys(combinations)) {
+
+            const projectType = combinations[combo]["projectType"];
+            const expectedResult = combinations[combo]["result"];
+            it(combo + " => projectType: " + projectType, async() => {
+                const actualResult = await projectUtil.getUserFriendlyProjectType(projectType);
+                expect(actualResult).to.equal(expectedResult);
             });
         }
     });

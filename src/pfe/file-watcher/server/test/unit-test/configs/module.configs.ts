@@ -64,12 +64,11 @@ const projectControllerModule: ModuleExtension = {
     moduleFunc: projectsControllerTestModule
 };
 
-// export const moduleLists: Array<ModuleExtension> = [logHelperModule,
-//                                                     utilsModule,
-//                                                     localeModule,
-//                                                     workspaceSettingsModule,
-//                                                     projectSettingsModule,
-//                                                     projectStatusControllerModule,
-//                                                     projectControllerModule];
-
-export const moduleLists: Array<ModuleExtension> = [projectUtilModule];
+export const moduleLists: Array<ModuleExtension> = [logHelperModule,
+                                                    utilsModule,
+                                                    localeModule,
+                                                    workspaceSettingsModule,
+                                                    projectSettingsModule,
+                                                    projectStatusControllerModule,
+                                                    projectControllerModule,
+                                                    projectUtilModule];
