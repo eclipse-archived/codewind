@@ -15,7 +15,11 @@ import { localeTestModule } from "../tests/locale.module.test";
 import { workspaceSettingsTestModule } from "../tests/workspaceSettings.module.test";
 import { projectSettingsTestModule } from "../tests/projectSettings.module.test";
 import { projectStatusControllerTestModule } from "../tests/projectStatusController.test";
+<<<<<<< HEAD
 import { projectsControllerTestModule } from "../tests/projectsController.module.test";
+=======
+>>>>>>> 1992da5... first commit for projectUtil unittests
+import { projectUtilTestModule } from "../tests/projectUtil.module.test";
 import * as mocha from "mocha";
 
 interface ModuleExtension {
@@ -53,15 +57,35 @@ const projectStatusControllerModule: ModuleExtension = {
     moduleFunc: projectStatusControllerTestModule
 };
 
+<<<<<<< HEAD
 const projectControllerModule: ModuleExtension = {
     moduleName: "projectsController",
     moduleFunc: projectsControllerTestModule
 };
+=======
+>>>>>>> 1992da5... first commit for projectUtil unittests
 
+const projectUtilModule: ModuleExtension = {
+    moduleName: "projectUtil",
+    moduleFunc: projectUtilTestModule
+};
+
+<<<<<<< HEAD
 export const moduleLists: Array<ModuleExtension> = [logHelperModule,
                                                     utilsModule,
                                                     localeModule,
                                                     workspaceSettingsModule,
                                                     projectSettingsModule,
                                                     projectStatusControllerModule,
-                                                    projectControllerModule];
+                                                    projectControllerModule,
+                                                    projectUtilModule];
+
+=======
+// export const moduleLists: Array<ModuleExtension> = [logHelperModule,
+//                                                     utilsModule,
+//                                                     localeModule,
+//                                                     workspaceSettingsModule,
+//                                                     projectSettingsModule];
+
+export const moduleLists: Array<ModuleExtension> = [projectUtilModule];
+>>>>>>> 1992da5... first commit for projectUtil unittests
