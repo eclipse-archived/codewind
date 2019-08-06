@@ -26,6 +26,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             "projectID": projData.projectID
         };
 
+        const testContextRoot = "/hello";
+        const testHealthCheck = "/health";
+
         const combinations: any = {
             "combo1": {
                 "setting": "internalPort",
@@ -36,6 +39,40 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 "setting": "internalDebugPort",
                 "socketEvent": eventConfigs.events.settingsChanged,
                 "eventKeys": ["operationId", "projectID", "status", "ports"]
+            },
+            "combo3": {
+                "setting": "contextRoot",
+                "value":  testContextRoot,
+                "socketEvent": eventConfigs.events.settingsChanged,
+                "eventKeys": ["operationId", "projectID", "contextRoot", "status"]
+            },
+            "combo4": {
+                "setting": "healthCheck",
+                "value":  testHealthCheck,
+                "socketEvent": eventConfigs.events.settingsChanged,
+                "eventKeys": ["operationId", "projectID", "name", "healthCheck", "status"]
+            },
+            "combo5": {
+                "setting": "mavenProfiles",
+                "socketEvent": eventConfigs.events.settingsChanged,
+                "eventKeys": ["operationId", "projectID", "mavenProfiles", "status"]
+            },
+            "combo6": {
+                "setting": "mavenProperties",
+                "socketEvent": eventConfigs.events.settingsChanged,
+                "eventKeys": ["operationId", "projectID", "mavenProperties", "status"]
+            },
+            "combo7": {
+                "setting": "ignoredPaths",
+                "value": [
+                    "*/node_modules*",
+                    "*/.git/*",
+                    "*/.DS_Store",
+                    "*/.dockerignore",
+                    "*/.gitignore",
+                ],
+                "socketEvent": eventConfigs.events.settingsChanged,
+                "eventKeys": ["operationId", "projectID", "ignoredPaths", "status"]
             }
         };
 
@@ -162,13 +199,22 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         _.forEach(combinations, (combo) => {
             const setting = combo["setting"];
             let value = combo["value"];
+
             if (setting === "internalPort") {
                 const internalPorts = app_configs.defaultInternalPorts[projectLang];
                 value = internalPorts[Math.floor(Math.random() * internalPorts.length)];
-            } else if (setting === "internalDebugPort") {
+            }
+            if (setting === "internalDebugPort") {
                 if (process.env.IN_K8) return; // internal debug port setting is not supported in kube
                 const exposedDebugPorts = app_configs.exposedDebugPorts[projectLang];
                 value = exposedDebugPorts[Math.floor(Math.random() * exposedDebugPorts.length)];
+            }
+            if (setting === "mavenProfiles" || setting === "mavenProperties") {
+                if (!app_configs.mavenProfileCapabilities[projData.projectType]) {
+                    value = [];
+                    combo["eventKeys"].push("error");
+                }
+                // for spring and liberty project types support maven profiles we need to set the value here
             }
 
             it(`config project specification settings ${setting} to ${value}`, async () => {
@@ -214,12 +260,20 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
                         for (const eventKey of combo["eventKeys"]) {
                             expect(event.eventData).to.haveOwnProperty(eventKey);
+
                             if (eventKey === "projectID") {
                                 expect(event.eventData[eventKey]).to.equal(projData.projectID);
                             }
                             if (eventKey === "ports") {
                                 expect(event.eventData[eventKey][setting]).to.equal(value);
                             }
+                            if (eventKey === "contextRoot") {
+                                expect(event.eventData[eventKey]).to.equal(testContextRoot);
+                            }
+                            if (eventKey === "healthCheck") {
+                                expect(event.eventData[eventKey]).to.equal(testHealthCheck);
+                            }
+
                             if (setting === "internalDebugPort" && !app_configs.debugCapabilities[projData.projectType]) {
                                 expect(event.eventData.error);
                                 expect(event.eventData.error).to.equal(`BAD_REQUEST: The project does not support debug mode.`);
@@ -227,6 +281,14 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                             if (setting === "internalDebugPort" && process.env.IN_K8) {
                                 expect(event.eventData.error);
                                 expect(event.eventData.error).to.equal(`BAD_REQUEST: debug mode is not supported on Kubernetes.`);
+                            }
+                            if (setting === "mavenProfiles" && !app_configs.mavenProfileCapabilities[projData.projectType]) {
+                                expect(event.eventData.error);
+                                expect(event.eventData.error).to.equal(`Maven settings cannot be set for a non-Maven project: ${projData.projectType}`);
+                            }
+                            if (setting === "mavenProperties" && !app_configs.mavenProfileCapabilities[projData.projectType]) {
+                                expect(event.eventData.error);
+                                expect(event.eventData.error).to.equal(`The maven properties list cannot be set for a non-Maven project: ${projData.projectType}`);
                             }
                         }
                     } else {
