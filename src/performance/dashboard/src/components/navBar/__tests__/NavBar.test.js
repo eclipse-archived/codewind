@@ -13,13 +13,13 @@ import React from 'react';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
 import { render, cleanup } from '@testing-library/react';
-import  NavBar from '../NavBar';
+import NavBar from '../NavBar';
 import reducers from '../../../store/reducers/index';
 import * as DataProjectInfo from '../../../tests/data/ProjectInfo';
 
 // initialize component props
 const componentProps = {
-    projectID:  DataProjectInfo.projectInfo.projectID
+    projectID: DataProjectInfo.projectInfo.projectID
 }
 
 // initialize redux stores
@@ -30,7 +30,7 @@ const store = createStore(reducers, {
 // component to render
 const wrapper = (
     <Provider store={store}>
-        <NavBar {...componentProps} /> 
+        <NavBar {...componentProps} />
     </Provider>
 )
 
@@ -39,27 +39,27 @@ afterEach(cleanup);
 
 // run test
 describe('<NavBar />', () => {
-    
-    test('has the correct branding title',() => {
-        render( wrapper )
+
+    test('has the correct branding title', () => {
+        render(wrapper)
         expect(document.querySelector('.appTitle_1').innerHTML).toBe('code');
         expect(document.querySelector('.appTitle_2').innerHTML).toBe('wind');
     });
 
-    test('displays the correct project name',() => {
-        render( wrapper )
+    test('displays the correct project name', () => {
+        render(wrapper)
         expect(document.querySelector('.projectName').innerHTML).toBe('SampleProjectName');
     });
 
-    it('updates title on props change"`', () => {
+    it('updates project name on a props change when it is different to current value', () => {
         const CONST_NEW_PROJECT_NAME = 'ProjectNameHasChanged'
         const { rerender, container } = render(wrapper);
         const projectInfo = DataProjectInfo.projectInfo;
-        projectInfo.name=CONST_NEW_PROJECT_NAME;
+        projectInfo.name = CONST_NEW_PROJECT_NAME;
 
         const wrapper_withUpdatedProps_Undefined = (
             <Provider store={store}>
-                <NavBar {...componentProps} projectInfo={undefined} /> 
+                <NavBar {...componentProps} projectInfo={undefined} />
             </Provider>
         );
         rerender(wrapper_withUpdatedProps_Undefined);
@@ -67,7 +67,7 @@ describe('<NavBar />', () => {
 
         const wrapper_withUpdatedProps = (
             <Provider store={store}>
-                <NavBar {...componentProps} projectInfo={projectInfo} /> 
+                <NavBar {...componentProps} projectInfo={projectInfo} />
             </Provider>
         );
         rerender(wrapper_withUpdatedProps);
@@ -75,5 +75,3 @@ describe('<NavBar />', () => {
     });
 
 });
-
-

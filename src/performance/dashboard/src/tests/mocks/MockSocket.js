@@ -42,10 +42,10 @@
 let socketEvents = {}
 
 /*
-* Mock socket implementation supports 3 functions:   on, emit and initEvents 
+* Mock socket implementation supports 3 functions: on, emit and initEvents 
 * on: watch for a socket event
 * emit: send an event through the socket
-* initEvents:  a collection of event types which the socket can process
+* initEvents: a collection of event types which the socket can process
 */
 const socket = {
     on(socketEventName, eventFunction) {

@@ -58,149 +58,151 @@ describe('<ModalModifyLoadTests />', () => {
         expect(document.querySelector('.ModalModifyLoadTest .bx--modal-header__heading').innerHTML).toBe('Load test configuration');
     });
 
-    test('there is an active cancel button', () => {
-        const { getByText } = render(wrapper);
-        const cancelButton = getByText('Cancel');
-        expect(cancelButton.disabled).toEqual(false)
+    describe('Tests inputs on path field', () => {
+        test('the dialog has a path field that accepts a valid input', () => {
+            const sampleFieldValue = '/rootedPath';
+            const { getByPlaceholderText, getByText } = render(wrapper);
+            const textField = getByPlaceholderText(/eg: \/myapi/i);
+            fireEvent.input(textField, { target: { value: sampleFieldValue } });
+            expect(textField.value).toEqual(sampleFieldValue);
+            expect(textField.getAttribute("aria-invalid")).toBeNull();
+            expect(document.querySelector('#path-error-msg')).toBeNull();
+        });
+
+        test('the dialog has a path field rejects invalid input', () => {
+            const sampleFieldValue = 'nonRootedPath';
+            const { getByPlaceholderText, getByText } = render(wrapper);
+            const textField = getByPlaceholderText(/eg: \/myapi/i);
+            fireEvent.input(textField, { target: { value: sampleFieldValue } });
+            expect(textField.value).toEqual(sampleFieldValue);
+            expect(textField.getAttribute("aria-invalid")).toBe("true");
+            expect(document.querySelector('#path-error-msg').innerHTML).toBe('Must contain a valid path eg: /')
+        });
+    });
+
+    describe('Tests inputs on requestsPerSecond field', () => {
+        test('the dialog has a requestsPerSecond field that accepts a valid input', () => {
+            const sampleFieldValue = '30';
+            const { getByPlaceholderText } = render(wrapper);
+            const textField = getByPlaceholderText(/Requests per second eg: 30/i);
+            fireEvent.input(textField, { target: { value: sampleFieldValue } });
+            expect(textField.value).toEqual(sampleFieldValue);
+            expect(textField.getAttribute("aria-invalid")).toBeNull();
+            expect(document.querySelector('#requestsPerSecond-error-msg')).toBeNull();
+        });
+
+        test('the requestsPerSecond field rejects invalid input', () => {
+            const sampleFieldValue = '999999';
+            const { getByPlaceholderText } = render(wrapper);
+            const textField = getByPlaceholderText(/Requests per second eg: 30/i);
+            fireEvent.input(textField, { target: { value: sampleFieldValue } });
+            expect(textField.value).toEqual(sampleFieldValue);
+            expect(textField.getAttribute("aria-invalid")).toBe("true");
+            expect(document.querySelector('#requestsPerSecond-error-msg').innerHTML).toBe('Must be an integer between 1 and 3600');
+        });
+    });
+
+   
+    describe('Tests inputs on concurrency field', () => {
+        test('the dialog has a concurrency field that accepts a valid input', () => {
+            const sampleFieldValue = '30';
+            const { getByPlaceholderText } = render(wrapper);
+            const textField = getByPlaceholderText(/Concurrent threads/i);
+            fireEvent.input(textField, { target: { value: sampleFieldValue } });
+            expect(textField.value).toEqual(sampleFieldValue);
+            expect(textField.getAttribute("aria-invalid")).toBeNull();
+            expect(document.querySelector('#concurrency-error-msg')).toBeNull();
+        })
+
+        test('the concurrency field rejects invalid input', () => {
+            const sampleFieldValue = '0';
+            const { getByPlaceholderText } = render(wrapper);
+            const textField = getByPlaceholderText(/Concurrent threads/i);
+            fireEvent.input(textField, { target: { value: sampleFieldValue } });
+            expect(textField.value).toEqual(sampleFieldValue);
+            expect(textField.getAttribute("aria-invalid")).toBe("true");
+            expect(document.querySelector('#concurrency-error-msg').innerHTML).toBe('Must be an integer between 1 and 100')
+        })
+    });
+
+    describe('Tests inputs on duration field', () => {
+        test('the dialog has a duration field that accepts a valid input', () => {
+            const sampleFieldValue = '30';
+            const { getByPlaceholderText } = render(wrapper);
+            const textField = getByPlaceholderText(/Test run duration/i);
+            fireEvent.input(textField, { target: { value: sampleFieldValue } });
+            expect(textField.value).toEqual(sampleFieldValue);
+            expect(textField.getAttribute("aria-invalid")).toBeNull();
+            expect(document.querySelector('#maxSeconds-error-msg')).toBeNull();
+        })
+
+        test('the duration field rejects invalid input', () => {
+            const sampleFieldValue = '0';
+            const { getByPlaceholderText } = render(wrapper);
+            const textField = getByPlaceholderText(/Test run duration/i);
+            fireEvent.input(textField, { target: { value: sampleFieldValue } });
+            expect(textField.value).toEqual(sampleFieldValue);
+            expect(textField.getAttribute("aria-invalid")).toBe("true");
+            expect(document.querySelector('#maxSeconds-error-msg').innerHTML).toBe('Must be an integer between 10 and 500')
+        })
     })
+        
+    describe('Tests inputs on body field', () => {
+        test('the dialog has a body field that accepts a valid json', () => {
+            const sampleFieldValue = '{"field1":"test1", "field2":"test2"}';
+            const { getByPlaceholderText } = render(wrapper);
+            const textField = getByPlaceholderText(/{"id": 1, "message":"hello"}/i);
+            fireEvent.input(textField, { target: { value: sampleFieldValue } });
+            expect(textField.value).toEqual(sampleFieldValue);
+            expect(textField.getAttribute("aria-invalid")).toBeNull();
+            expect(document.querySelector('#body-error-msg')).toBeNull();
+        })
 
-    test('there is a disabled submit button', () => {
-        const { getByText } = render(wrapper);
-        const submitButton = getByText('Save')
-        expect(submitButton.disabled).toEqual(true)
-    })
+        test('the body field that rejects invalid json', () => {
+            const invalidJSONPayload = '{"field1"::::::::"test1",,,,,,"field2":"test2"}'; 
+            const { getByPlaceholderText } = render(wrapper);
+            const textField = getByPlaceholderText(/{"id": 1, "message":"hello"}/i);
+            fireEvent.input(textField, { target: { value: invalidJSONPayload } });
+            expect(textField.value).toEqual(invalidJSONPayload);
+            expect(textField.getAttribute("aria-invalid")).toBe("true");
+            expect(document.querySelector('#body-error-msg').innerHTML).toBe('SyntaxError: Unexpected token : in JSON at position 10');
+        })
+    });
+ 
+    describe('Test dialog button status', () => {
+        test('there is an active cancel button', () => {
+            const { getByText } = render(wrapper);
+            const cancelButton = getByText('Cancel');
+            expect(cancelButton.disabled).toEqual(false);
+        });
+    
+        test('there is a disabled submit button on initial load', () => {
+            const { getByText } = render(wrapper);
+            const submitButton = getByText('Save');
+            expect(submitButton.disabled).toEqual(true);
+        });
 
-    // Test Path Field
-    ////////////////////////////////////////////
-    test('the dialog has a path field that accepts a valid input', () => {
-        const sampleFieldValue = '/rootedPath';
-        const { getByPlaceholderText, getByText } = render(wrapper);
-        const textField = getByPlaceholderText(/eg: \/myapi/i);
-        fireEvent.input(textField, { target: { value: sampleFieldValue } });
-        expect(textField.value).toEqual(sampleFieldValue);
-        expect(textField.getAttribute("aria-invalid")).toBeNull();
-        expect(document.querySelector('#path-error-msg')).toBeNull();
-    })
+        test('submit button is enabled when all fields are populated correctly', () => {
+            const { getByText, getByPlaceholderText } = render(wrapper);
+            fireEvent.input(document.querySelector("#method"), { target: { selectedItem: { id: 'GET', text: 'GET' } } });
+            fireEvent.input(getByPlaceholderText(/eg: \/myapi/i), { target: { value: '/rootedPath' } });
+            fireEvent.input(getByPlaceholderText(/Requests per second eg: 30/i), { target: { value: '30' } });
+            fireEvent.input(getByPlaceholderText(/Concurrent threads/i), { target: { value: '30' } });
+            fireEvent.input(getByPlaceholderText(/Test run duration/i), { target: { value: '30' } });
+            fireEvent.input(getByPlaceholderText(/{"id": 1, "message":"hello"}/i), { target: { value: '{"field1":"test1", "field2":"test2"}' } });
+            const submitButton = getByText('Save');
+            expect(submitButton.disabled).toEqual(false);
+        });
+    });
 
-    test('the dialog has a path field rejects invalid input', () => {
-        const sampleFieldValue = 'nonRootedPath';
-        const { getByPlaceholderText, getByText } = render(wrapper);
-        const textField = getByPlaceholderText(/eg: \/myapi/i);
-        fireEvent.input(textField, { target: { value: sampleFieldValue } });
-        expect(textField.value).toEqual(sampleFieldValue);
-        expect(textField.getAttribute("aria-invalid")).toBe("true");
-        expect(document.querySelector('#path-error-msg').innerHTML).toBe('Must contain a valid path eg: /')
-    })
-
-    // Test requestsPerSecond Field
-    ////////////////////////////////////////////
-    test('the dialog has a requestsPerSecond field that accepts a valid input', () => {
-        const sampleFieldValue = '30';
-        const { getByPlaceholderText } = render(wrapper);
-        const textField = getByPlaceholderText(/Requests per second eg: 30/i);
-        fireEvent.input(textField, { target: { value: sampleFieldValue } });
-        expect(textField.value).toEqual(sampleFieldValue);
-        expect(textField.getAttribute("aria-invalid")).toBeNull();
-        expect(document.querySelector('#requestsPerSecond-error-msg')).toBeNull();
-    })
-
-    test('the dialog has a requestsPerSecond field rejects invalid input', () => {
-        const sampleFieldValue = '999999';
-        const { getByPlaceholderText } = render(wrapper);
-        const textField = getByPlaceholderText(/Requests per second eg: 30/i);
-        fireEvent.input(textField, { target: { value: sampleFieldValue } });
-        expect(textField.value).toEqual(sampleFieldValue);
-        expect(textField.getAttribute("aria-invalid")).toBe("true");
-        expect(document.querySelector('#requestsPerSecond-error-msg').innerHTML).toBe('Must be an integer between 1 and 3600')
-    })
-
-    // Test concurrency Field
-    ////////////////////////////////////////////
-    test('the dialog has a concurrency field that accepts a valid input', () => {
-        const sampleFieldValue = '30';
-        const { getByPlaceholderText } = render(wrapper);
-        const textField = getByPlaceholderText(/Concurrent threads/i);
-        fireEvent.input(textField, { target: { value: sampleFieldValue } });
-        expect(textField.value).toEqual(sampleFieldValue);
-        expect(textField.getAttribute("aria-invalid")).toBeNull();
-        expect(document.querySelector('#concurrency-error-msg')).toBeNull();
-    })
-
-    test('the dialog has a concurrency field rejects invalid input', () => {
-        const sampleFieldValue = '0';
-        const { getByPlaceholderText } = render(wrapper);
-        const textField = getByPlaceholderText(/Concurrent threads/i);
-        fireEvent.input(textField, { target: { value: sampleFieldValue } });
-        expect(textField.value).toEqual(sampleFieldValue);
-        expect(textField.getAttribute("aria-invalid")).toBe("true");
-        expect(document.querySelector('#concurrency-error-msg').innerHTML).toBe('Must be an integer between 1 and 100')
-    })
-
-
-    // Test duration Field
-    ////////////////////////////////////////////
-    test('the dialog has a duration field that accepts a valid input', () => {
-        const sampleFieldValue = '30';
-        const { getByPlaceholderText } = render(wrapper);
-        const textField = getByPlaceholderText(/Test run duration/i);
-        fireEvent.input(textField, { target: { value: sampleFieldValue } });
-        expect(textField.value).toEqual(sampleFieldValue);
-        expect(textField.getAttribute("aria-invalid")).toBeNull();
-        expect(document.querySelector('#maxSeconds-error-msg')).toBeNull();
-    })
-
-    test('the dialog has a duration field rejects invalid input', () => {
-        const sampleFieldValue = '0';
-        const { getByPlaceholderText } = render(wrapper);
-        const textField = getByPlaceholderText(/Test run duration/i);
-        fireEvent.input(textField, { target: { value: sampleFieldValue } });
-        expect(textField.value).toEqual(sampleFieldValue);
-        expect(textField.getAttribute("aria-invalid")).toBe("true");
-        expect(document.querySelector('#maxSeconds-error-msg').innerHTML).toBe('Must be an integer between 10 and 500')
-    })
-
-    // Test JSON BODY
-    ////////////////////////////////////////////
-    test('the dialog has a body field that accepts a valid json', () => {
-        const sampleFieldValue = '{"field1":"test1", "field2":"test2"}';
-        const { getByPlaceholderText } = render(wrapper);
-        const textField = getByPlaceholderText(/{"id": 1, "message":"hello"}/i);
-        fireEvent.input(textField, { target: { value: sampleFieldValue } });
-        expect(textField.value).toEqual(sampleFieldValue);
-        expect(textField.getAttribute("aria-invalid")).toBeNull();
-        expect(document.querySelector('#body-error-msg')).toBeNull();
-    })
-
-    test('the dialog has a body field that rejects invalid json', () => {
-        const sampleFieldValue = '{"field1"::"test1", "field2":"test2"}'; // invalid JSON ::
-        const { getByPlaceholderText } = render(wrapper);
-        const textField = getByPlaceholderText(/{"id": 1, "message":"hello"}/i);
-        fireEvent.input(textField, { target: { value: sampleFieldValue } });
-        expect(textField.value).toEqual(sampleFieldValue);
-        expect(textField.getAttribute("aria-invalid")).toBe("true");
-        expect(document.querySelector('#body-error-msg').innerHTML).toBe('SyntaxError: Unexpected token : in JSON at position 10')
-    })
-
-
-    // Check form is complete and valid
-    test('submit button is enabled when all fields are populated correctly', () => {
-        const { getByText, getByPlaceholderText } = render(wrapper);
-        fireEvent.input(document.querySelector("#method"), { target: { selectedItem: { id: 'GET', text: 'GET' } } });
-        fireEvent.input(getByPlaceholderText(/eg: \/myapi/i), { target: { value: '/rootedPath' } });
-        fireEvent.input(getByPlaceholderText(/Requests per second eg: 30/i), { target: { value: '30' } });
-        fireEvent.input(getByPlaceholderText(/Concurrent threads/i), { target: { value: '30' } });
-        fireEvent.input(getByPlaceholderText(/Test run duration/i), { target: { value: '30' } });
-        fireEvent.input(getByPlaceholderText(/{"id": 1, "message":"hello"}/i), { target: { value: '{"field1":"test1", "field2":"test2"}' } });
-        const submitButton = getByText('Save');
-        expect(submitButton.disabled).toEqual(false);
-    })
-
-    test('calls dialog close when the "cancel" button is clicked', () => {
-        const { getByText } = render(wrapper)
-        const cancelButton = getByText('Cancel');
-        fireEvent.click(cancelButton);
-        const onClickFunction = componentProps.closeModalWindow;
-        expect(onClickFunction).toHaveBeenCalled();
+    describe('Test dialog button actions', () => {
+        test('calls dialog close when the "cancel" button is clicked', () => {
+            const { getByText } = render(wrapper);
+            const cancelButton = getByText('Cancel');
+            fireEvent.click(cancelButton);
+            const onClickFunction = componentProps.closeModalWindow;
+            expect(onClickFunction).toHaveBeenCalled();
+        });
     });
 
 });
