@@ -146,6 +146,11 @@ else
   export PLATFORM="-$ARCH"
 fi
 
+# If using Mingw64/Msys2 (a faux-Linux build environment on Windows), replace mingw with windows
+if [[ $HOST_OS == *"MINGW"* ]]; then
+  export HOST_OS=windows
+fi
+
 docker-compose -f $DOCKER_COMPOSE_FILE up -d;
 if [ $? -eq 0 ]; then
     # Reset so we don't get conflicts
