@@ -14,7 +14,6 @@ import * as _ from "lodash";
 
 import { ProjectCreation, projectSpecification, getApplicationContainerInfoInK8, getApplicationContainerInfo } from "../../../lib/project";
 
-import * as app_configs from "../../../configs/app.config";
 import * as project_configs from "../../../configs/project.config";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
@@ -24,7 +23,9 @@ import { Operation } from "../../../../../src/projects/operation";
 import { ProjectInfo } from "../../../../../src/projects/Project";
 import * as projectUtil from "../../../../../src/projects/projectUtil";
 
-export function projectSpecificationTest(socket: SocketIO, projData: ProjectCreation): void {
+import * as utils from "../../../lib/utils";
+
+export function projectSpecificationTest(socket: SocketIO, projData: ProjectCreation, projectLang: string): void {
     describe("projectSpecification function", () => {
         const data: any = {
             "projectID": projData.projectID
@@ -83,6 +84,64 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         afterEach("clear socket events", () => {
             socket.clearEvents();
         });
+
+        after("reset context root", async function (): Promise<void> {
+            this.timeout(timeoutConfigs.defaultTimeout);
+
+            const testData = _.cloneDeep(data);
+            testData["settings"] = {
+                [combinations["combo4"]["setting"]]: project_configs.defaultContextRoot[projectLang] || "/"
+            };
+
+            const info: any = await projectSpecification(testData);
+            expect(info);
+            expect(info.statusCode);
+            expect(info.statusCode).to.equal(202);
+            expect(info.operationId);
+
+            if (testData["socketEvent"] && testData["eventKeys"]) {
+                const targetEvent = testData["socketEvent"];
+                let eventFound = false;
+                let event: any;
+                await new Promise((resolve) => {
+                    const timer = setInterval(() => {
+                        const events = socket.getAllEvents();
+                        if (events && events.length >= 1) {
+                            event =  events.filter((value) => {
+                                if (value.eventName === targetEvent && _.isEqual(_.sortBy(Object.keys(value.eventData)), _.sortBy(testData["eventKeys"]))) return value;
+                            })[0];
+                            if (event) {
+                                eventFound = true;
+                                clearInterval(timer);
+                                return resolve();
+                            }
+                        }
+                    }, timeoutConfigs.defaultInterval);
+                });
+
+                if (eventFound && event) {
+                    expect(event);
+                    expect(event.eventName);
+                    expect(event.eventName).to.equal(targetEvent);
+                    expect(event.eventData);
+
+                    for (const eventKey of testData["eventKeys"]) {
+                        expect(event.eventData).to.haveOwnProperty(eventKey);
+
+                        if (eventKey === "projectID") {
+                            expect(event.eventData[eventKey]).to.equal(projData.projectID);
+                        }
+                        if (eventKey === "contextRoot") {
+                            expect(event.eventData[eventKey]).to.equal(testData["settings"][combinations["combo4"]["setting"]]);
+                        }
+                    }
+                } else {
+                    fail(`failed to find ${targetEvent} for setting contextRoot`);
+                }
+            }
+        });
+
+        utils.rebuildProjectAfterHook(socket, projData);
 
         it("set project specification without project id", async () => {
             const testData = _.cloneDeep(data);

@@ -30,3 +30,7 @@ export const mavenProfileCapabilities: any = {
 export const exposedDebugPorts: any = {
     "docker": ["1000"]
 };
+
+export const defaultContextRoot: any = {
+    "lagom": "/api/hello/you"
+};
