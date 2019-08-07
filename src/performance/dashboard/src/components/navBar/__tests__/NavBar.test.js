@@ -51,6 +51,29 @@ describe('<NavBar />', () => {
         expect(document.querySelector('.projectName').innerHTML).toBe('SampleProjectName');
     });
 
+    it('updates title on props change"`', () => {
+        const CONST_NEW_PROJECT_NAME = 'ProjectNameHasChanged'
+        const { rerender, container } = render(wrapper);
+        const projectInfo = DataProjectInfo.projectInfo;
+        projectInfo.name=CONST_NEW_PROJECT_NAME;
+
+        const wrapper_withUpdatedProps_Undefined = (
+            <Provider store={store}>
+                <NavBar {...componentProps} projectInfo={undefined} /> 
+            </Provider>
+        );
+        rerender(wrapper_withUpdatedProps_Undefined);
+        expect(container.querySelector('.projectName').innerHTML).toBe(CONST_NEW_PROJECT_NAME);
+
+        const wrapper_withUpdatedProps = (
+            <Provider store={store}>
+                <NavBar {...componentProps} projectInfo={projectInfo} /> 
+            </Provider>
+        );
+        rerender(wrapper_withUpdatedProps);
+        expect(container.querySelector('.projectName').innerHTML).toBe(CONST_NEW_PROJECT_NAME);
+    });
+
 });
 
 
