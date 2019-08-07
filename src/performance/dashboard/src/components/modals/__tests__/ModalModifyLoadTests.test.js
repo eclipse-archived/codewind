@@ -102,7 +102,6 @@ describe('<ModalModifyLoadTests />', () => {
         });
     });
 
-   
     describe('Tests inputs on concurrency field', () => {
         test('the dialog has a concurrency field that accepts a valid input', () => {
             const sampleFieldValue = '30';
@@ -158,7 +157,7 @@ describe('<ModalModifyLoadTests />', () => {
             expect(document.querySelector('#body-error-msg')).toBeNull();
         })
 
-        test('the body field that rejects invalid json', () => {
+        test('the body field rejects invalid json', () => {
             const invalidJSONPayload = '{"field1"::::::::"test1",,,,,,"field2":"test2"}'; 
             const { getByPlaceholderText } = render(wrapper);
             const textField = getByPlaceholderText(/{"id": 1, "message":"hello"}/i);
