@@ -55,7 +55,7 @@ pipeline {
 
                         for i in "${DOCKER_IMAGE_ARRAY[@]}"
                         do
-                            echo "Publishing $i:$TAG"
+                            echo "Publishing $REGISTRY/$i:$TAG"
                             ./script/publish.sh $i $REGISTRY $TAG
                         done
                     '''

@@ -22,9 +22,7 @@ fi
 
 IMAGE_NAME=$1
 REGISTRY=$2
-TAG=${3}
-
-echo "DEBUG: docker tag $IMAGE_NAME:$TAG $REGISTRY/$IMAGE_NAME:$TAG"
+TAG=${3:-latest}
 
 docker tag $IMAGE_NAME $REGISTRY/$IMAGE_NAME:$TAG
 docker push $REGISTRY/$IMAGE_NAME:$TAG
