@@ -42,7 +42,7 @@ module.exports = class ExtensionList {
           await extension.initialise();
           this.add(extension);
           if (extension.templates)
-            templates.addRepository(extension.templates, extension.description);
+            await templates.addRepository(extension.templates, extension.description);
           else if (extension.templatesProvider) {
             templates.addProvider(extension.name, extension.templatesProvider);
             delete extension.templatesProvider;

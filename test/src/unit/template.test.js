@@ -9,25 +9,40 @@
  *     IBM Corporation - initial API and implementation
 *******************************************************************************/
 const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+const fs = require('fs-extra');
+const path = require('path');
 
 const Templates = require('../../../src/pfe/portal/modules/Templates');
+const { styledTemplates } = require('../../modules/template.service');
 
+chai.use(chaiAsPromised);
 chai.should();
-const sampleCodewindTemplate = {
-    label: 'Go template',
-    description: 'Sample microservice for simple go app',
-    language: 'go',
-    url: 'https://github.com/microclimate-dev2ops/microclimateGoTemplate',
-    projectType: 'docker',
+const testWorkspaceDir = './src/unit/temp/';
+const testWorkspaceConfigDir = path.join(testWorkspaceDir, '.config/');
+
+const sampleCodewindTemplate = styledTemplates.codewind;
+const sampleAppsodyTemplate = styledTemplates.appsody;
+
+const sampleRepoEnabled = {
+    url: '1',
+    description: '1',
+    enabled: true,
 };
-const sampleAppsodyTemplate = {
-    label: 'Appsody template',
-    description: 'Appsody stack',
-    language: 'nodejs',
-    url: 'https://github.com/appsody/template/repo',
-    projectType: 'nodejs',
-    projectStyle: 'Appsody',
+const sampleRepoDisabled = {
+    url: '2',
+    description: '2',
+    enabled: false,
 };
+const sampleRepoNoEnabledStatus = {
+    url: '3',
+    description: '3',
+};
+const sampleRepoList = [
+    sampleRepoEnabled,
+    sampleRepoDisabled,
+    sampleRepoNoEnabledStatus,
+];
 
 describe('Templates.js', function() {
     describe('getTemplateStyles() when Codewind is aware of:', function() {
@@ -74,7 +89,7 @@ describe('Templates.js', function() {
             });
         });
     });
-    describe('getTemplates()', function() {
+    describe('getTemplateList()', function() {
         const sampleTemplateList = [
             sampleCodewindTemplate,
             sampleAppsodyTemplate,
@@ -90,31 +105,218 @@ describe('Templates.js', function() {
             output.should.deep.equal(sampleTemplateList);
         });
     });
-    describe('getTemplatesOfStyle(projectStyle)', function() {
-        describe('(Codewind)', function() {
-            const sampleTemplateList = [sampleCodewindTemplate];
-            let templateController;
-            before(() => {
-                templateController = new Templates('');
-                templateController.projectTemplates = sampleTemplateList;
-                templateController.needsRefresh = false;
-            });
-            it('returns only Codewind templates', async function() {
-                const output = await templateController.getTemplatesOfStyle('Codewind');
-                output.should.deep.equal(sampleTemplateList);
+    describe('getRepositories()', function() {
+        let templateController;
+        before(() => {
+            templateController = new Templates('');
+            templateController.repositoryList = sampleRepoList;
+            templateController.needsRefresh = false;
+        });
+        it('returns all repos', function() {
+            const output = templateController.getRepositories();
+            output.should.deep.equal(sampleRepoList);
+        });
+    });
+    describe('getEnabledRepositories()', function() {
+        let templateController;
+        before(() => {
+            templateController = new Templates('');
+            templateController.repositoryList = sampleRepoList;
+            templateController.needsRefresh = false;
+        });
+        it('returns only enabled repos', function() {
+            const output = templateController.getEnabledRepositories();
+            output.should.deep.equal([sampleRepoEnabled, sampleRepoNoEnabledStatus]);
+        });
+    });
+    describe('enableRepository(url)', function() {
+        let templateController;
+        beforeEach(() => {
+            fs.ensureDirSync(testWorkspaceConfigDir);
+            templateController = new Templates(testWorkspaceDir);
+            templateController.repositoryList = sampleRepoList;
+            templateController.needsRefresh = false;
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspaceDir);
+        });
+        describe('(existing url)', function() {
+            it('enables the correct repo', async function() {
+                const expectedRepoDetails = {
+                    url: '2',
+                    description: '2',
+                    enabled: true,
+                };
+                await templateController.enableRepository('2');
+                templateController.getRepositories().should.deep.include(expectedRepoDetails);
+
+                const repoFile = fs.readJsonSync(templateController.repositoryFile);
+                repoFile.should.deep.include(expectedRepoDetails);
             });
         });
-        describe('(Appsody)', function() {
-            const sampleTemplateList = [sampleAppsodyTemplate];
-            let templateController;
-            before(() => {
-                templateController = new Templates('');
-                templateController.projectTemplates = sampleTemplateList;
-                templateController.needsRefresh = false;
+        describe('(non-existent url)', function() {
+            it('throws a useful error', function() {
+                const func = () => templateController.enableRepository('non-existent');
+                func().should.eventually.be.rejectedWith(`no repository found with URL 'non-existent'`);
             });
-            it('returns only Appsody templates', async function() {
-                const output = await templateController.getTemplatesOfStyle('Appsody');
-                output.should.deep.equal(sampleTemplateList);
+        });
+    });
+    describe('disableRepository(url)', function() {
+        let templateController;
+        beforeEach(() => {
+            fs.ensureDirSync(testWorkspaceConfigDir);
+            templateController = new Templates(testWorkspaceDir);
+            templateController.repositoryList = sampleRepoList;
+            templateController.needsRefresh = false;
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspaceDir);
+        });
+        describe('(existing url)', function() {
+            it('disables the correct repo', async function() {
+                await templateController.disableRepository('1');
+
+                const expectedRepoDetails = {
+                    url: '1',
+                    description: '1',
+                    enabled: false,
+                };
+                templateController.getRepositories().should.deep.include(expectedRepoDetails);
+
+                const repoFile = fs.readJsonSync(templateController.repositoryFile);
+                repoFile.should.deep.include(expectedRepoDetails);
+            });
+        });
+        describe('(non-existent url)', function() {
+            it('throws a useful error', function() {
+                const func = () => templateController.disableRepository('non-existent');
+                func().should.eventually.be.rejectedWith(`no repository found with URL 'non-existent'`);
+            });
+        });
+    });
+    describe('performOperation(operation)', function() {
+        let templateController;
+        beforeEach(() => {
+            fs.ensureDirSync(testWorkspaceConfigDir);
+            templateController = new Templates(testWorkspaceDir);
+            templateController.repositoryList = sampleRepoList;
+            templateController.needsRefresh = false;
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspaceDir);
+        });
+        describe('when `operation.path` is an existing url', function() {
+            const tests = {
+                'enable an existing repo': {
+                    input: {
+                        op: 'enable',
+                        path: '1',
+                        value: 'true',
+                    },
+                    output: {
+                        status: 200,
+                        requestedOperation: {
+                            op: 'enable',
+                            path: '1',
+                            value: 'true',
+                        },
+                    },
+                    expectedRepoDetails: {
+                        url: '1',
+                        description: '1',
+                        enabled: true,
+                    },
+                },
+                'disable an existing repo': {
+                    input: {
+                        op: 'enable',
+                        path: '1',
+                        value: 'false',
+                    },
+                    output: {
+                        status: 200,
+                        requestedOperation: {
+                            op: 'enable',
+                            path: '1',
+                            value: 'false',
+                        },
+                    },
+                    expectedRepoDetails: {
+                        url: '1',
+                        description: '1',
+                        enabled: false,
+                    },
+                },
+            };
+            for (const [testName, test] of Object.entries(tests)) {
+                describe(testName, function() { // eslint-disable-line
+                    it(`returns the expected operation info`, async function() {
+                        const output = await templateController.performOperation(test.input);
+                        output.should.deep.equal(test.output);
+
+                        const repoFile = fs.readJsonSync(templateController.repositoryFile);
+                        repoFile.should.deep.include(test.expectedRepoDetails);
+                    });
+                });
+            }
+        });
+        describe('when `operation.path` is an unknown url', function() {
+            const tests = {
+                'enable an unknown repo': {
+                    input: {
+                        op: 'enable',
+                        path: 'unknownRepoUrl',
+                        value: 'true',
+                    },
+                    output: {
+                        status: 404,
+                        error: 'Unknown repository URL',
+                        requestedOperation: {
+                            op: 'enable',
+                            path: 'unknownRepoUrl',
+                            value: 'true',
+                        },
+                    },
+                },
+                'disable an unknown repo': {
+                    input: {
+                        op: 'enable',
+                        path: 'unknownRepoUrl',
+                        value: 'false',
+                    },
+                    output: {
+                        status: 404,
+                        error: 'Unknown repository URL',
+                        requestedOperation: {
+                            op: 'enable',
+                            path: 'unknownRepoUrl',
+                            value: 'false',
+                        },
+                    },
+                },
+            };
+            for (const [testName, test] of Object.entries(tests)) {
+                describe(testName, function() { // eslint-disable-line
+                    it(`returns the expected operation info`, async function() {
+                        const output = await templateController.performOperation(test.input);
+                        output.should.deep.equal(test.output);
+                    });
+                });
+            }
+        });
+    });
+    describe('filterTemplatesByStyle(templates, projectStyle)', function() {
+        const templates = [sampleCodewindTemplate, sampleAppsodyTemplate];
+        describe(`projectStyle='Codewind'`, function() {
+            it('returns only Codewind templates', function() {
+                const output = Templates.filterTemplatesByStyle(templates, 'Codewind');
+                output.should.deep.equal([sampleCodewindTemplate]);
+            });
+        });
+        describe(`projectStyle='Appsody'`, function() {
+            it('returns only Appsody templates', function() {
+                const output = Templates.filterTemplatesByStyle(templates, 'Appsody');
+                output.should.deep.equal([sampleAppsodyTemplate]);
             });
         });
     });

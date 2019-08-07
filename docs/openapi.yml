@@ -888,12 +888,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    url:
-                      type: string
-                    description:
-                      type: string
+                  $ref: '#/components/schemas/TemplateRepo'
     post:
       summary: Make Codewind aware of a template repository
       requestBody:
@@ -901,15 +896,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - url
-                - description
-              properties:
-                url:
-                    type: string
-                description:
-                    type: string
+              $ref: '#/components/schemas/TemplateRepo'
       responses:
         200:
           description: Returns all the templates repositories that Codewind will use to find templates
@@ -926,6 +913,36 @@ paths:
                       type: string
         400:
           description: Bad request
+    patch:
+      summary: Change settings for a template repository of which Codewind is aware
+      requestBody:
+        description: repository settings
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TemplateRepoSetting'
+      responses:
+        207:
+          description: Returns success/failure statuses of settings operations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - status
+                    - requestedOperation
+                  properties:
+                    status:
+                      type: integer
+                    requestedOperation:
+                      $ref: '#/components/schemas/TemplateRepoSetting'
+                    error:
+                      type: string
+
     delete:
       summary: Remove a template repository from the list Codewind is aware of
       requestBody:
@@ -947,12 +964,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    url:
-                      type: string
-                    description:
-                      type: string
+                  $ref: '#/components/schemas/TemplateRepo'
         400:
           description: Bad request
   /api/v1/templates/styles:
@@ -1309,6 +1321,12 @@ components:
       example: 20190326154749
     Template:
       type: object
+      required:
+        - label
+        - description
+        - language
+        - url
+        - projectType
       properties:
         label:
           example: "python hello world"
@@ -1320,6 +1338,38 @@ components:
           example: "https://github.com/microclimate-dev2ops/SVTPythonTemplate"
         projectType:
           example: "docker"
+        projectStyle:
+          example: "Codewind"
+    TemplateRepo:
+      type: object
+      required:
+        - url
+        - description
+      properties:
+        url:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+    TemplateRepoSetting:
+      type: object
+      required:
+        - op
+        - path
+        - value
+      properties:
+        op:
+          description: repository setting to change
+          type: string
+          enum: [enable]
+        path:
+          description: path of the modified resource (i.e., the URL of the target template repository)
+          type: string
+          example: https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json
+        value:
+          type: string
+          example: true
     BasicMetric:
       properties:
         time:
