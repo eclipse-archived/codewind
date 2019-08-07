@@ -10,7 +10,7 @@
 *******************************************************************************/
 const chai = require('chai');
 
-global.codewind = { RUNNING_IN_K8S: false };
+global.codewind = {};
 const Templates = require('../../../src/pfe/portal/modules/Templates');
 
 chai.should();
