@@ -27,14 +27,11 @@ describe('Enabling a template repository', function() {
         const res = await getTemplateRepos();
         originalTemplateRepos = res.body;
         repoUrl = originalTemplateRepos[0].url;
+        console.log('can list template repositories');
+        console.log(res.body);
     });
     after(async() => {
         await resetTemplateRepos(originalTemplateRepos);
-    });
-    it(`can list template repositories`, async function() {
-        const res = await getTemplateRepos();
-        res.should.have.status(200);
-        res.body.should.deep.equal(originalTemplateRepos);
     });
     it(`enabling a template repo returns 207 and sub-status 200`, async function() {
         const res = await enableTemplateRepo(repoUrl);
@@ -44,6 +41,8 @@ describe('Enabling a template repository', function() {
     it(`repo appears as enabled in list of template repos`, async function() {
         const res = await getTemplateRepos();
         res.should.have.status(200);
+        console.log('repo appears as enabled in list of template repos: res.body');
+        console.log(res.body);
         res.body.should.deep.include({
             url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
             description: 'Default codewind templates.',
@@ -58,6 +57,8 @@ describe('Enabling a template repository', function() {
     it(`repo appears as disabled in list of template repos`, async function() {
         const res = await getTemplateRepos();
         res.should.have.status(200);
+        console.log('repo appears as disabled in list of template repos: res.body');
+        console.log(res.body);
         res.body.should.deep.include({
             url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
             description: 'Default codewind templates.',
