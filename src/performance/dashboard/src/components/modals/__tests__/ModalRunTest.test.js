@@ -41,6 +41,7 @@ afterEach(cleanup);
 
 // constants
 const TEST_DESCRIPTION = "A short description describing the test"
+const MAX_DESCRIPTION_LENGTH = 80;
 
 /** 
  * Test functionality of the ModelRunTest dialog
@@ -75,7 +76,7 @@ describe('<ModalRunTest />', () => {
 
     test('the textarea is empty by default', () => {
         render(wrapper)
-        expect(document.querySelector('.charCounter').innerHTML).toBe('0 / 80');
+        expect(document.querySelector('.charCounter').innerHTML).toBe(`0 / ${MAX_DESCRIPTION_LENGTH}`);
     });
 
     test('the text field can receive input and updates character count', () => {
@@ -83,7 +84,31 @@ describe('<ModalRunTest />', () => {
         const textAreaField = getByPlaceholderText(/Describe this new test/i);
         fireEvent.input(textAreaField, { target: { value: TEST_DESCRIPTION } });
         expect(textAreaField.value).toEqual(TEST_DESCRIPTION);
-        expect(document.querySelector('.charCounter').innerHTML).toBe(`${TEST_DESCRIPTION.length} / 80`);
+        expect(document.querySelector('.charCounter').innerHTML).toBe(`${TEST_DESCRIPTION.length} / ${MAX_DESCRIPTION_LENGTH}`);
+    });
+
+    test(`counter warning appears after ${MAX_DESCRIPTION_LENGTH-9} characters typed`, () => {
+        const TEST_DESC =  "a".repeat(MAX_DESCRIPTION_LENGTH - 9);
+        const { getByPlaceholderText } = render(wrapper)
+        const textAreaField = getByPlaceholderText(/Describe this new test/i);
+        fireEvent.input(textAreaField, { target: { value: TEST_DESC } });
+        expect(document.querySelector('.charCounter').classList).toContain("warning");
+    });
+
+    test(`counter almost full appears after ${MAX_DESCRIPTION_LENGTH-7} characters typed`, () => {
+        const TEST_DESC =  "a".repeat(MAX_DESCRIPTION_LENGTH - 7);
+        const { getByPlaceholderText } = render(wrapper)
+        const textAreaField = getByPlaceholderText(/Describe this new test/i);
+        fireEvent.input(textAreaField, { target: { value: TEST_DESC } });
+        expect(document.querySelector('.charCounter').classList).toContain("danger");
+    });
+
+    test(`textarea rejects over ${MAX_DESCRIPTION_LENGTH} characters from being typed/pasted`, () => {
+        const TEST_DESC =  "a".repeat(MAX_DESCRIPTION_LENGTH + 1);
+        const { getByPlaceholderText } = render(wrapper)
+        const textAreaField = getByPlaceholderText(/Describe this new test/i);
+        fireEvent.input(textAreaField, { target: { value: TEST_DESC } });
+        expect(document.querySelector('.charCounter').innerHTML).toBe(`0 / ${MAX_DESCRIPTION_LENGTH}`);
     });
 
     test('calls dialog close when the "cancel" button is clicked', () => {
