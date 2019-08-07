@@ -18,13 +18,13 @@ import reducers from '../../../store/reducers/index';
 import * as DataProjectInfo from '../../../tests/data/ProjectInfo';
 import ModalRunTest from '../ModalRunTest';
 
-// initialise component props
+// initialize component props
 const componentProps = {
     handleRunTestDlgClose: jest.fn(),
     handleRunTestDlgStart: jest.fn()
 }
 
-// Initialise redux stores
+// Initialize redux stores
 const store = createStore(reducers, {
     projectInfoReducer: { config: DataProjectInfo.projectInfo, receivedAt: Date.now(), fetched: true }
 });
