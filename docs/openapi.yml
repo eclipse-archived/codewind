@@ -30,7 +30,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  running_on_icp:
+                  running_in_k8s:
                     type: boolean
                     example: false
                   user_string:
@@ -48,6 +48,10 @@ paths:
                   os_platform:
                     type: string
                     example: 'Linux'
+                  tekton_dashboard_url:
+                    type: string
+                    example: '9.20.195.90.nip.io'
+                    description: "Ingress URL of Tekton dashboard if it's available. On local Codewind, it is the empty string. May also be 'error' or 'not-installed'."
         500:
           description: Internal error occurred
   /api/v1/projects:

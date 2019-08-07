@@ -1,13 +1,13 @@
 ---
 name: Question
 about: Asking questions about Codewind
-title: Complete the question template to ask a question about Codewind.
+title: ''
 labels: kind/question
 assignees: ''
 
 ---
 
-Please fill out the following form to ask a quesstion. If some fields do not apply to your situation, feel free to skip them.
+<!-- Please fill out the following form to ask a quesstion. If some fields do not apply to your situation, feel free to skip them.-->
 
 **Codewind version:**
 **OS:**
@@ -17,4 +17,5 @@ Please fill out the following form to ask a quesstion. If some fields do not app
 **IDE version:**
 **Kubernetes cluster:**
 
-**Question synopsis:** What question can we help you with?
+**Question synopsis:**
+<!-- What question can we help you with?-->

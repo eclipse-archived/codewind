@@ -39,37 +39,3 @@ module.exports.copyNodemonFile = async function copyNodemonFile(directory) {
   let nodemonFile = path.join(directory, 'nodemon.json');
   await fs.copy(NODEMON_JSON_LOCATION, nodemonFile, { overwrite: false });
 }
-
-/**
- * Function to initialise the project as a Git repository
- * @param directory, the directory to to initialise
- * @param projectName, the name of the project, used in the commit message
- */
-module.exports.initialiseGitRepository = async function initialiseGitRepository(directory, projectName) {
-  log.debug(`initialiseGitRepository directory: ${directory} project:${projectName}`);
-  let git = require('simple-git/promise')(directory);
-  let configDirectory = path.join(directory, '../.config/git.config');
-  // Check if the directory is already a Git repo
-  let isGitRepo = await git.checkIsRepo();
-  if (!isGitRepo) {
-    await git.init();
-  }
-  let userName = await git.raw(['config', '-f', configDirectory, '--get', 'user.name']) || 'Codewind User';
-  let userEmail = await git.raw(['config', '-f', configDirectory, '--get', 'user.email']) || 'codewind.user@localhost';
-  await git.addConfig('user.name', userName);
-  await git.addConfig('user.email', userEmail);
-  if (process.env.EXTRA_GIT_OPTION) {
-    let argArray = process.env.EXTRA_GIT_OPTION.split(' ');
-    await git.raw(['config'].concat(argArray), (err, result) => {
-      if (err) {
-        log.error("Unable to process: git config " + process.env.EXTRA_GIT_OPTION);
-        log.error(result);
-      }
-    }).catch(function(error) {
-      log.error("Unable to process: git config" + process.env.EXTRA_GIT_OPTION);
-      log.error(error);
-    });
-  }
-  await git.add('.');
-  await git.commit(`Microclimatizing ${projectName}`);
-}

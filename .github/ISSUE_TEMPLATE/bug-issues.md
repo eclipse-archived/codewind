@@ -1,13 +1,13 @@
 ---
 name: Bug
 about: Reporting bugs and problems in Codewind
-title: Complete the bug template to report problems found in Codewind.
+title: ''
 labels: kind/bug
 assignees: ''
 
 ---
 
-Please fill out the following form to report a bug. If some fields do not apply to your situation, feel free to skip them.
+<!-- Please fill out the following form to report a bug. If some fields do not apply to your situation, feel free to skip them.-->
 
 **Codewind version:**
 **OS:**
@@ -17,5 +17,9 @@ Please fill out the following form to report a bug. If some fields do not apply 
 **IDE version:**
 **Kubernetes cluster:**
 
-**Description of the bug:** Please describe the bug with enough detail so that it can be reproduced by others.
-**Workaround:** Did you find a way to work around the bug? If so, please describe how you worked around it.
+**Description of the bug:**
+<!-- Please describe the bug with enough detail so that it can be reproduced by others.-->
+
+**Workaround:** 
+<!-- Did you find a way to work around the bug? If so, please describe how you worked around it.-->
+
