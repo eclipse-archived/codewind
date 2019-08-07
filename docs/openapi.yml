@@ -865,6 +865,13 @@ paths:
             type: string
           required: false
           description: Specify this to filter templates returned by project style
+        - name: showEnabledOnly
+          in: query
+          schema:
+            type: string
+            enum: ['true', 'false']
+          required: false
+          description: Set this to 'true' to return only templates from enabled repositories
       responses:
         200:
           description: Returns all the templates that Codewind can generate a project from
