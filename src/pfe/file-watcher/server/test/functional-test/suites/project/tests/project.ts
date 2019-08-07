@@ -12,15 +12,15 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 
-import { ProjectCreation, getProjectCapabilities, getProjectLogs, projectAction } from "../../../lib/project";
+import { ProjectCreation, getProjectCapabilities } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
 import { projectActionTest } from "./project-action";
 import { projectSpecificationTest } from "./project-specification";
+import { logsTest } from "./logs";
 import { updateStatusTest } from "./update-status";
 
 import * as project_configs from "../../../configs/project.config";
-import * as log_configs from "../../../configs/log.config";
 
 export default class ProjectTest {
     testName: string;
@@ -34,7 +34,7 @@ export default class ProjectTest {
             this.runProjectCapabilityTest(projData.projectType, projData.projectID);
             this.runProjectActionTest(socket, projData);
             this.runProjectSpecificationTest(socket, projData, projectLang);
-            this.runProjectLogsTest(projData);
+            this.runProjectLogsTest(socket, projData);
             this.runUpdateStatusTest(socket, projData);
         });
     }
@@ -70,64 +70,8 @@ export default class ProjectTest {
         projectSpecificationTest(socket, projData, projectLang);
     }
 
-    private runProjectLogsTest(projData: ProjectCreation): void {
-        describe("getProjectLogs function", () => {
-            it("get project logs with missing id", async () => {
-                const info: any = await getProjectLogs(undefined);
-                expect(info);
-                expect(info.statusCode);
-                expect(info.statusCode).to.equal(400);
-                expect(info.error);
-                expect(info.error).to.haveOwnProperty("msg");
-                expect(info.error.msg).to.equal("Bad request");
-            });
-
-            it("get project logs with invalid id", async () => {
-                const badProjectId = "1234someid";
-                const info: any = await getProjectLogs(badProjectId);
-                expect(info);
-                expect(info.statusCode);
-                expect(info.statusCode).to.equal(404);
-                expect(info.error);
-                expect(info.error).to.haveOwnProperty("msg");
-                expect(info.error.msg).to.equal(`Project does not exist ${badProjectId}`);
-            });
-
-            it("get project logs with valid id", async () => {
-                const info: any = await getProjectLogs(projData.projectID);
-                expect(info);
-                expect(info.statusCode);
-                expect(info.statusCode).to.equal(200);
-                expect(info.logs);
-                expect(info.logs).to.haveOwnProperty("build");
-                expect(info.logs.build).to.haveOwnProperty("origin");
-                expect(info.logs.build).to.haveOwnProperty("files");
-                expect(info.logs.build.files[0].indexOf(projData.projectID) > -1);
-                expect(info.logs).to.haveOwnProperty("app");
-                expect(info.logs.app).to.haveOwnProperty("origin");
-                expect(info.logs.app).to.haveOwnProperty("files");
-                expect(info.logs.app.files[0].indexOf(projData.projectID) > -1);
-
-                if (log_configs.logFileMappings[projData.projectType]) {
-                    const actualBuildLogFiles = log_configs.logFileMappings[projData.projectType].build;
-                    const actualAppLogFiles = log_configs.logFileMappings[projData.projectType].app;
-
-                    const expectedBuildLogFiles = info.logs.build.files;
-                    for (const logFile of expectedBuildLogFiles) {
-                        const tokens = logFile.split("/");
-                        const fileName = tokens[tokens.length - 1];
-                        expect(_.includes(actualBuildLogFiles, fileName));
-                    }
-
-                    const expectedAppLogFiles = info.logs.app.files;
-                    for (const logFile of expectedAppLogFiles) {
-                        const tokens = logFile.split("/");
-                        const fileName = tokens[tokens.length - 1];
-                        expect(_.includes(actualAppLogFiles, fileName));
-                    }
-                }
-            });
-        });
+    private runProjectLogsTest(socket: SocketIO, projData: ProjectCreation): void {
+        logsTest(socket, projData);
     }
 
     private runUpdateStatusTest(socket: SocketIO, projData: ProjectCreation): void {
