@@ -10,7 +10,6 @@
 *******************************************************************************/
 const chai = require('chai');
 
-global.codewind = {};
 const Templates = require('../../../src/pfe/portal/modules/Templates');
 
 chai.should();
