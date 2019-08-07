@@ -11,8 +11,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const NODEMON_JSON_LOCATION = './scripts/nodemon.json';
-const Logger = require('../utils/Logger');
-const log = new Logger('acclimatise.js');
 
 /**
  * Function to add "acclimatise" a project by:
