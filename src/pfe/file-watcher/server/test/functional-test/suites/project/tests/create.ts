@@ -71,7 +71,6 @@ export default class CreateTest {
     runCreateWithValidData(socket: SocketIO, projData: ProjectCreation): void {
         it("create project", async () => {
             const info: any = await createProject(projData);
-            const targetEvent = eventConfigs.events.creation;
             expect(info).to.exist;
             expect(info.statusCode).to.exist;
             expect(info.statusCode).to.equal(202);
@@ -79,6 +78,13 @@ export default class CreateTest {
             expect(info.logs).to.exist;
             expect(info.logs.build).to.exist;
 
+            await waitForCreationEvent();
+            await waitForProjectStartedEvent();
+
+        }).timeout(timeoutConfigs.createTestTimeout);
+
+        async function waitForCreationEvent(): Promise<void> {
+            const targetEvent = eventConfigs.events.creation;
             let eventFound = false;
             let event: any;
             await new Promise((resolve) => {
@@ -124,6 +130,44 @@ export default class CreateTest {
             } else {
                 fail(`create project test failed to listen for ${targetEvent}`);
             }
-        }).timeout(timeoutConfigs.createTestTimeout);
+        }
+
+        async function waitForProjectStartedEvent(): Promise<void> {
+            const targetEvent = eventConfigs.events.statusChanged;
+            const data = {
+                "projectID": projData.projectID,
+                "appStatus": "started"
+            };
+            let eventFound = false;
+            let event: any;
+            await new Promise((resolve) => {
+                const timer = setInterval(() => {
+                    const events = socket.getAllEvents();
+                    if (events && events.length >= 1) {
+                        event =  events.filter((value) => {
+                            if (value.eventName === targetEvent && _.isMatch(value.eventData, data)) return value;
+                        })[0];
+                        if (event) {
+                            eventFound = true;
+                            clearInterval(timer);
+                            return resolve();
+                        }
+                    }
+                }, timeoutConfigs.createEventInterval);
+            });
+
+            if (eventFound && event) {
+                expect(event);
+                expect(event.eventName);
+                expect(event.eventName).to.equal(targetEvent);
+                expect(event.eventData);
+                expect(event.eventData).to.haveOwnProperty("projectID");
+                expect(event.eventData).to.haveOwnProperty("appStatus");
+                expect(event.eventData["projectID"]).to.equal(projData.projectID);
+                expect(event.eventData["appStatus"]).to.equal("started");
+            } else {
+                fail(`create project test failed to listen for ${targetEvent}`);
+            }
+        }
     }
 }

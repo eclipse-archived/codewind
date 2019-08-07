@@ -20,6 +20,8 @@ import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
+import * as utils from "../../../lib/utils";
+
 export function projectActionTest(socket: SocketIO, projData: ProjectCreation): void {
     const data: any = {
         action: "restart",
@@ -99,6 +101,8 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
                 setProjectActionTest(combinations["combo5"], "run");
             }
         });
+
+        utils.rebuildProjectAfterHook(socket, projData);
 
         it("set project action with undefined action type", async () => {
             const testData = _.cloneDeep(data);

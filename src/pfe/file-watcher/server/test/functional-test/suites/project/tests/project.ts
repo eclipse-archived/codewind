@@ -12,13 +12,13 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 
-import { ProjectCreation, getProjectCapabilities, getProjectLogs } from "../../../lib/project";
+import { ProjectCreation, getProjectCapabilities, getProjectLogs, projectAction } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
 import { projectActionTest } from "./project-action";
 import { projectSpecificationTest } from "./project-specification";
+import { updateStatusTest } from "./update-status";
 
-import * as app_configs from "../../../configs/app.config";
 import * as project_configs from "../../../configs/project.config";
 import * as log_configs from "../../../configs/log.config";
 
@@ -29,12 +29,13 @@ export default class ProjectTest {
         this.testName = testName;
     }
 
-    run(socket: SocketIO, projData: ProjectCreation, runOnly?: boolean): void {
+    run(socket: SocketIO, projData: ProjectCreation, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
             this.runProjectCapabilityTest(projData.projectType, projData.projectID);
             this.runProjectActionTest(socket, projData);
-            this.runProjectSpecificationTest(socket, projData);
+            this.runProjectSpecificationTest(socket, projData, projectLang);
             this.runProjectLogsTest(projData);
+            this.runUpdateStatusTest(socket, projData);
         });
     }
 
@@ -65,8 +66,8 @@ export default class ProjectTest {
         projectActionTest(socket, projData);
     }
 
-    private runProjectSpecificationTest(socket: SocketIO, projData: ProjectCreation): void {
-        projectSpecificationTest(socket, projData);
+    private runProjectSpecificationTest(socket: SocketIO, projData: ProjectCreation, projectLang: string): void {
+        projectSpecificationTest(socket, projData, projectLang);
     }
 
     private runProjectLogsTest(projData: ProjectCreation): void {
@@ -127,5 +128,9 @@ export default class ProjectTest {
                 }
             });
         });
+    }
+
+    private runUpdateStatusTest(socket: SocketIO, projData: ProjectCreation): void {
+        updateStatusTest(socket, projData);
     }
 }
