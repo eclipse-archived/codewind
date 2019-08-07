@@ -55,14 +55,6 @@ module.exports = class Templates {
 
     let newProjectTemplates = [];
 
-    // reduce function, want to take repository list and index
-    // them by url, and use that to avoid processing duplicate entries
-    const reducer = (repos, repo) => {
-      if (repo.url && !repos[repo.url])
-        repos[repo.url] = repo;
-      return repos;
-    };
-
     // apply reduce function to create a copy of the repository list index by url
     const repos = this.repositoryList.reduce(reducer, {});
 
@@ -187,4 +179,12 @@ module.exports = class Templates {
 function getTemplateStyle(template) {
   // if a project's style isn't specified, it defaults to 'Codewind'
   return template.projectStyle || 'Codewind';
+}
+
+// reduce function, want to take repository list and index
+// them by url, and use that to avoid processing duplicate entries
+function reducer(repos, repo) {
+  if (repo.url && !repos[repo.url])
+    repos[repo.url] = repo;
+  return repos;
 }
