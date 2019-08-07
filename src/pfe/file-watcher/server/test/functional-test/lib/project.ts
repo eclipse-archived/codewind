@@ -9,6 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 import * as projectsController from "../../../src/controllers/projectsController";
+import * as projectStatusController from "../../../src/controllers/projectStatusController";
 import * as dockerUtil from "../../../src/utils/dockerutil";
 import * as kubeUtil from "../../../src/utils/kubeutil";
 import * as project from "../../../src/projects/Project";
@@ -58,4 +59,8 @@ export async function getApplicationContainerInfoInK8(projectInfo: project.Proje
 
 export async function shutdown(): Promise<projectsController.IShutdownSuccess | projectsController.IShutdownFailure> {
   return await filewatcher.shutdown();
+}
+
+export async function updateStatus(req: projectStatusController.IUpdateStatusParams): Promise<projectStatusController.IUpdateStatusSuccess | projectStatusController.IUpdateStatusFailure> {
+  return await filewatcher.updateStatus(req);
 }
