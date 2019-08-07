@@ -147,14 +147,14 @@ describe('Templates.js', function() {
         it('getTemplateList should ignore invalid or duplicate repository entries from template provider', async function() {
 
             // add a template provider that returns the wrong type
-            templates.addProvider('invalid_provider', {
+            templates.addProvider('invalid_provider1', {
                 getRepositories: async function() {
                     return 'wrong type';
                 }
             });
 
             // add a template provider that contains invalid or duplicate entries
-            templates.addProvider('invalid_provider', {
+            templates.addProvider('invalid_provider2', {
                 getRepositories: async function() {
                     return [
                         'wrong type',
