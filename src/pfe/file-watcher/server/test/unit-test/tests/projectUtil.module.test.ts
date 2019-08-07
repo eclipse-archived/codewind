@@ -23,6 +23,7 @@ import * as projectsController from "../../../../server/src/controllers/projects
 import { projectConstants } from "../../../../server/src/projects/constants";
 import * as app_configs from "../../functional-test/configs/app.config";
 import * as constants from "../../../../server/src/projects/constants";
+import { threadId } from "worker_threads";
 
 export function projectUtilTestModule(): void {
     const extensionIDDir = path.join(process.env.CW_EXTENSION_DIR, "extensionProject");
@@ -179,7 +180,6 @@ export function projectUtilTestModule(): void {
             it(combo + " => data: " + JSON.stringify(data), async() => {
                 try {
                     const actualResult = await projectUtil.getProjectMavenSettings(data);
-                    console.log("actualResult: " + actualResult);
                     expect(actualResult).to.equal(expectedResult);
                 } catch (err) {
                     expect(err.toString()).to.equal(expectedResult);
@@ -441,7 +441,7 @@ export function projectUtilTestModule(): void {
         }
     });
 
-    describe("combinational testing of of getUserFriendlyProjectType function", () => {
+    describe("combinational testing of getUserFriendlyProjectType function", () => {
         const combinations: any = {
             "combo1": {
                 "projectType": "liberty",
