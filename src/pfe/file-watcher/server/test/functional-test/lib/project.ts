@@ -64,3 +64,7 @@ export async function shutdown(): Promise<projectsController.IShutdownSuccess | 
 export async function updateStatus(req: projectStatusController.IUpdateStatusParams): Promise<projectStatusController.IUpdateStatusSuccess | projectStatusController.IUpdateStatusFailure> {
   return await filewatcher.updateStatus(req);
 }
+
+export async function checkNewLogFile(projectID: string, type: string): Promise<projectsController.ICheckNewLogFileSuccess | projectsController.ICheckNewLogFileFailure> {
+  return await filewatcher.checkNewLogFile(projectID, type);
+}
