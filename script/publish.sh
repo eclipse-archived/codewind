@@ -25,5 +25,4 @@ REGISTRY=$2
 TAG=${3:-latest}
 
 docker tag $IMAGE_NAME $REGISTRY/$IMAGE_NAME:$TAG
-docker images | grep codewind;
 docker push $REGISTRY/$IMAGE_NAME:$TAG
