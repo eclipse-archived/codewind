@@ -22,35 +22,30 @@ chai.should();
 
 describe('Enabling a template repository', function() {
     let originalTemplateRepos;
-    let repoUrl;
+    let repoToTest;
     before(async() => {
         const res = await getTemplateRepos();
         originalTemplateRepos = res.body;
-        repoUrl = originalTemplateRepos[0].url;
-        console.log('can list template repositories');
-        console.log(res.body);
+        repoToTest = originalTemplateRepos[0];
     });
     after(async() => {
         await resetTemplateRepos(originalTemplateRepos);
     });
     it(`enabling a template repo returns 207 and sub-status 200`, async function() {
-        const res = await enableTemplateRepo(repoUrl);
+        const res = await enableTemplateRepo(repoToTest.url);
         res.should.have.status(207);
         res.body[0].status.should.equal(200);
     });
     it(`repo appears as enabled in list of template repos`, async function() {
         const res = await getTemplateRepos();
         res.should.have.status(200);
-        console.log('repo appears as enabled in list of template repos: res.body');
-        console.log(res.body);
         res.body.should.deep.include({
-            url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-            description: 'Default codewind templates.',
+            ...repoToTest,
             enabled: true,
         });
     });
     it(`disabling that template repo returns 207 and sub-status 200`, async function() {
-        const res = await disableTemplateRepo(repoUrl);
+        const res = await disableTemplateRepo(repoToTest.url);
         res.should.have.status(207);
         res.body[0].status.should.equal(200);
     });
@@ -60,8 +55,7 @@ describe('Enabling a template repository', function() {
         console.log('repo appears as disabled in list of template repos: res.body');
         console.log(res.body);
         res.body.should.deep.include({
-            url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-            description: 'Default codewind templates.',
+            ...repoToTest,
             enabled: false,
         });
     });
