@@ -188,24 +188,23 @@ const createEnvForContainerCreation = (user, projectName, gitInfo) => {
   }
   env.push(`CW_EXTENSIONS=${JSON.stringify(cwExtensions)}`);
 
-  if (projectName && gitInfo.repo.endsWith("tar.gz")) {
-    env.push(
-      `PROJ_NAME=${projectName}`,
-      `TAR_FILE=${gitInfo.repo}`,
-    );
-    return env;
-  }
-
   if (projectName && gitInfo.repo) {
-    env.push(
-      `PROJ_NAME=${projectName}`,
-      `GIT_REPO=${gitInfo.repo}`,
-    );
-    if (gitInfo.branch) {
-      env.push(`GIT_BRANCH=${gitInfo.branch}`);
+    if (gitInfo.repo.endsWith(".tar.gz")) {
+      env.push(
+        `PROJ_NAME=${projectName}`,
+        `TAR_FILE=${gitInfo.repo}`,
+      );
+    } else {
+      env.push(
+        `PROJ_NAME=${projectName}`,
+        `GIT_REPO=${gitInfo.repo}`,
+      );
+      if (gitInfo.branch) {
+        env.push(`GIT_BRANCH=${gitInfo.branch}`);
+      }
     }
-    return env;
   }
+  return env;
 }
 
 module.exports = {
