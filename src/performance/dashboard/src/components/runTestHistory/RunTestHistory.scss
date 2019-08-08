@@ -21,6 +21,10 @@
   margin-top: 20px;
 }
 
+.RunTestHistory .bx--data-table td {
+  background-color:$inverse-01;
+}
+
 .RunTestHistory .bx--data-table th,
 .bx--data-table td {
   padding-left: 0;
