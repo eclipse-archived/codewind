@@ -17,8 +17,9 @@ assignees: ''
 **IDE version:**
 **Kubernetes cluster:**
 
-**Description of the bug:**
-<!-- Please describe the bug with enough detail so that it can be reproduced by others.-->
+**Description:**
+
+**Steps to reproduce:**
 
 **Workaround:** 
 <!-- Did you find a way to work around the bug? If so, please describe how you worked around it.-->
