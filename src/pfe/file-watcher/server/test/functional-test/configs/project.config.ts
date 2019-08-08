@@ -34,3 +34,12 @@ export const exposedDebugPorts: any = {
 export const defaultContextRoot: any = {
     "lagom": "/api/hello/you"
 };
+
+export const filesToUpdate: any = {
+    "go": ["Dockerfile", "main.go"],
+    "python": ["Dockerfile", "app.py"],
+    "lagom": ["Dockerfile",
+        "hello-api/src/main/java/com/example/rp/test/lagomendpoints/api/HelloService.java",
+        "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloModule.java",
+        "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloServiceImpl.java"]
+};
