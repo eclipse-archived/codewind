@@ -7,16 +7,14 @@
 *
 * Contributors:
 *     IBM Corporation - initial API and implementation
-*******************************************************************************/
+******************************************************************************/
 
-import React from 'react';
-import { shallow } from 'enzyme';
-import NavBar from './NavBar';
 
-describe('<NavBar />', () => {
+// Sample data from the API:  /api/vi/projects/{projectID}
 
-  it('Shallow renders without crashing', () => {
-    shallow(<NavBar />);
-  });
+export const projectInfo = {
+    projectID: '4a8ccb90-7887-11e9-b7bb-6fc798faec9b',
+    name: 'SampleProjectName',
+    codewindVersion: 'latest'
+}
 
-});

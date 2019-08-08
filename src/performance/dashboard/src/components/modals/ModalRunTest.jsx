@@ -35,13 +35,6 @@ class ModalRunTest extends React.Component {
     this.checkInputLength = this.checkInputLength.bind(this);
   }
 
-
-
-  showRunTestModal() {
-    this.setState({ runTestDescription: '', showModalRunTest: true })
-  }
-
-
   checkInputLength(e) {
     let value = e.target.value;
     if (value.length <= MAX_DESC_LENGTH) {
@@ -64,6 +57,7 @@ class ModalRunTest extends React.Component {
     return (
       <div>
         <Modal
+          id="ModalRunTest"
           open
           danger={false}
           shouldsubmitonenter="false"
