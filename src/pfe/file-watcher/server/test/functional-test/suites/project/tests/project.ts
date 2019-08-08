@@ -16,6 +16,7 @@ import { ProjectCreation, getProjectCapabilities } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
 import { projectActionTest } from "./project-action";
+import { projectEventTest } from "./project-event";
 import { projectSpecificationTest } from "./project-specification";
 import { logsTest } from "./logs";
 import { updateStatusTest } from "./update-status";
@@ -31,10 +32,11 @@ export default class ProjectTest {
 
     run(socket: SocketIO, projData: ProjectCreation, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
-            this.runProjectCapabilityTest(projData.projectType, projData.projectID);
             this.runProjectActionTest(socket, projData);
-            this.runProjectSpecificationTest(socket, projData, projectLang);
+            this.runProjectCapabilityTest(projData.projectType, projData.projectID);
+            this.runProjectEventTest(socket, projData, projectLang);
             this.runProjectLogsTest(socket, projData);
+            this.runProjectSpecificationTest(socket, projData, projectLang);
             this.runUpdateStatusTest(socket, projData);
         });
     }
@@ -76,5 +78,9 @@ export default class ProjectTest {
 
     private runUpdateStatusTest(socket: SocketIO, projData: ProjectCreation): void {
         updateStatusTest(socket, projData);
+    }
+
+    private runProjectEventTest(socket: SocketIO, projData: ProjectCreation, projectLang: string): void {
+        projectEventTest(socket, projData, projectLang);
     }
 }
