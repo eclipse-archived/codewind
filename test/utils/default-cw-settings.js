@@ -3,10 +3,6 @@ const defaultSpringSettings = {
     internalPort: '',
     healthCheck: '',
     ignoredPaths: [''],
-    watchedFiles: {
-        includeFiles: [''],
-        excludeFiles: [''],
-    },
     internalDebugPort: '',
     mavenProfiles: [''],
     mavenProperties: [''],
@@ -18,10 +14,6 @@ const defaultLibertySettings = {
     internalDebugPort: '',
     healthCheck: '',
     ignoredPaths: [''],
-    watchedFiles: {
-        includeFiles: [''],
-        excludeFiles: [''],
-    },
     mavenProfiles: [''],
     mavenProperties: [''],
 };
@@ -32,10 +24,6 @@ const defaultNodeSettings = {
     internalDebugPort: '',
     healthCheck: '',
     ignoredPaths: [''],
-    watchedFiles: {
-        includeFiles: [''],
-        excludeFiles: [''],
-    },
 };
 
 const defaultSwiftSettings = {
@@ -43,10 +31,6 @@ const defaultSwiftSettings = {
     internalPort: '',
     healthCheck: '',
     ignoredPaths: [''],
-    watchedFiles: {
-        includeFiles: [''],
-        excludeFiles: [''],
-    },
 };
 
 const defaultDockerSettings = {
@@ -54,10 +38,6 @@ const defaultDockerSettings = {
     internalPort: '',
     healthCheck: '',
     ignoredPaths: [''],
-    watchedFiles: {
-        includeFiles: [''],
-        excludeFiles: [''],
-    },
 };
 
 module.exports = {
