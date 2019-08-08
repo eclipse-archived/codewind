@@ -188,6 +188,14 @@ const createEnvForContainerCreation = (user, projectName, gitInfo) => {
   }
   env.push(`CW_EXTENSIONS=${JSON.stringify(cwExtensions)}`);
 
+  if (projectName && gitInfo.repo.endsWith("tar.gz")) {
+    env.push(
+      `PROJ_NAME=${projectName}`,
+      `TAR_FILE=${gitInfo.repo}`,
+    );
+    return env;
+  }
+
   if (projectName && gitInfo.repo) {
     env.push(
       `PROJ_NAME=${projectName}`,
