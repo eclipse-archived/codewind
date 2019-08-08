@@ -184,7 +184,7 @@ class ModalModifyLoadTests extends React.Component {
                             <table className="formTable">
                                 <tbody>
                                     <tr>
-                                        <td className='fieldLabel'>Method</td>
+                                        <td className='fieldLabel'><label for="method">Method</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -193,7 +193,7 @@ class ModalModifyLoadTests extends React.Component {
                                                     light
                                                     hideLabel
                                                     label="Method"
-                                                    ariaLabel="Dropdown"
+                                                    ariaLabel="Method dropdown"
                                                     invalid={false}
                                                     items={AppConstants.LOADRUN_METHODS}
                                                     selectedItem={AppConstants.LOADRUN_METHODS.find(item => item.text === formFields['method'])}
@@ -205,7 +205,7 @@ class ModalModifyLoadTests extends React.Component {
                                     </tr>
 
                                     <tr>
-                                        <td className='fieldLabel'>Path</td>
+                                        <td className='fieldLabel'><label for="path">Path</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -216,8 +216,8 @@ class ModalModifyLoadTests extends React.Component {
                                                     autoComplete="off"
                                                     invalid={!isPathValid.valid}
                                                     invalidText={`${isPathValid.message}`}
-                                                    labelText=''
                                                     hideLabel
+                                                    ariaLabel="Path"
                                                     value={formFields['path']}
                                                     onChange={e => this.fieldValueChanged(e)}
                                                     placeholder='eg: /myapi' />
@@ -225,7 +225,7 @@ class ModalModifyLoadTests extends React.Component {
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td className='fieldLabel'>Requests/second</td>
+                                        <td className='fieldLabel'><label for="requestsPerSecond">Requests/second</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -238,6 +238,7 @@ class ModalModifyLoadTests extends React.Component {
                                                     invalidText={`${isRequestsValid.message}`}
                                                     labelText=''
                                                     hideLabel
+                                                    ariaLabel="Requests per second"
                                                     value={formFields['requestsPerSecond']}
                                                     onChange={e => this.fieldValueChanged(e)}
                                                     placeholder='Requests per second eg: 30' />
@@ -245,7 +246,7 @@ class ModalModifyLoadTests extends React.Component {
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td className='fieldLabel'>Concurrent</td>
+                                        <td className='fieldLabel'><label for="concurrency">Concurrent</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -258,6 +259,7 @@ class ModalModifyLoadTests extends React.Component {
                                                     invalidText={`${isConcurrentValid.message}`}
                                                     labelText=''
                                                     hideLabel
+                                                    ariaLabel="Concurrency"
                                                     value={formFields['concurrency']}
                                                     onChange={e => this.fieldValueChanged(e)}
                                                     placeholder='Concurrent threads' />
@@ -265,7 +267,7 @@ class ModalModifyLoadTests extends React.Component {
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td className='fieldLabel'>Duration</td>
+                                        <td className='fieldLabel'><label for="maxSeconds">Duration</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -278,6 +280,7 @@ class ModalModifyLoadTests extends React.Component {
                                                     invalidText={`${isDurationValid.message}`}
                                                     labelText=''
                                                     hideLabel
+                                                    ariaLabel="Duration"
                                                     value={formFields['maxSeconds']}
                                                     onChange={e => this.fieldValueChanged(e)}
                                                     placeholder='Test run duration' />
@@ -285,7 +288,7 @@ class ModalModifyLoadTests extends React.Component {
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td className='fieldLabel'>JSON Body</td>
+                                        <td className='fieldLabel'><label for="body">JSON Body</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -299,10 +302,11 @@ class ModalModifyLoadTests extends React.Component {
                                                     invalid={!isBodyValid.valid}
                                                     invalidText={`${isBodyValid.message}`}
                                                     labelText=''
+                                                    ariaLabel="JSON body"
                                                     hideLabel
                                                     value={formFields['body']}
                                                     onChange={e => this.fieldValueChanged(e)}
-                                                    placeholder='{"id": 1, "message":"hello"}' />
+                                                placeholder='{"id": 1, "message":"hello"}' />
                                             }
                                         </td>
                                     </tr>
