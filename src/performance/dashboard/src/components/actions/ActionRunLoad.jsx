@@ -201,8 +201,7 @@ class ActionRunLoad extends React.Component {
                             </Fragment>
                         ) : (
                                 <Fragment>
-                                    <Button className="actionButton" small={this.props.small} kind={this.props.kind} renderIcon={IconRun} onClick={() => this.showRunTestModal()}>Run Load Test</Button>
-
+                                    <Button className="actionButton" small={this.props.small} kind={this.props.kind} renderIcon={IconRun} iconDescription="Stop the load run" onClick={() => this.showRunTestModal()}>Run Load Test</Button>
                                 </Fragment>
                             )
                     }
