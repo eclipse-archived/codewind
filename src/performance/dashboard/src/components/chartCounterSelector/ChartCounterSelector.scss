@@ -79,6 +79,11 @@
     color: $carbon--gray-40;
 }
 
+.chart-selection .innerContainer .options.expanded button {
+    font-size:0.9rem;
+    color: white;
+}
+
 .nodata-container {
     text-align: center;
     background-color: $carbon--gray-80;

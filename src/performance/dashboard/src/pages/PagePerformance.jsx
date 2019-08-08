@@ -156,7 +156,7 @@ class PagePerformance extends React.Component {
         return (
             <Fragment>
 
-                <div className='pageTitle'>
+                <div className='pageTitle' role="main">
                     <div className='pageTitle-content'>
                         <div className='main-title'>
                             <div className='main-text'>Performance</div>
@@ -169,7 +169,7 @@ class PagePerformance extends React.Component {
                         </div>
                     </div>
                 </div>
-                <div className='results-row'>
+                <div className='results-row' role="complementary" aria-label="Result Summaries">
                     <div className='results-cards'>
                         <div className='results-card_1'>
                             <ErrorBoundary>
@@ -193,7 +193,7 @@ class PagePerformance extends React.Component {
                         </div>
                     </div>
                 </div>
-                <div className="chart-container">
+                <div className="chart-container" role="complementary" aria-label="Chart">
                     <div className="chart-row">
                         <div className="chart-component">
                             <ErrorBoundary>
@@ -211,7 +211,7 @@ class PagePerformance extends React.Component {
                         </div>
                     </div>
                 </div>
-                <div className="testhistory-container">
+                <div className="testhistory-container" role="complementary" aria-label="Chart History">
                     <div className="testhistory-row">
                         <div className="testhistory-component">
                             <ErrorBoundary>

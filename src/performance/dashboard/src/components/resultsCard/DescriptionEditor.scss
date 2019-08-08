@@ -22,10 +22,13 @@
   cursor: pointer;
 } 
 
-
 .DescriptionEditor .description-text .notext {
-  color: $ui-04;
+  color: $text-02;
   font-style: italic;
+}
+
+.DescriptionEditor .description-text .notext:hover {
+  color: $text-01;
 }
 
 .DescriptionEditor .bx--text-area {
