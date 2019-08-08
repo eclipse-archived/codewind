@@ -205,19 +205,19 @@ describe('Templates.js', function() {
         afterEach(() => {
             fs.removeSync(testWorkspaceDir);
         });
-        describe('when `operation.path` is an existing url', function() {
+        describe('when `operation.url` is an existing url', function() {
             const tests = {
                 'enable an existing repo': {
                     input: {
                         op: 'enable',
-                        path: '1',
+                        url: '1',
                         value: 'true',
                     },
                     output: {
                         status: 200,
                         requestedOperation: {
                             op: 'enable',
-                            path: '1',
+                            url: '1',
                             value: 'true',
                         },
                     },
@@ -230,14 +230,14 @@ describe('Templates.js', function() {
                 'disable an existing repo': {
                     input: {
                         op: 'enable',
-                        path: '1',
+                        url: '1',
                         value: 'false',
                     },
                     output: {
                         status: 200,
                         requestedOperation: {
                             op: 'enable',
-                            path: '1',
+                            url: '1',
                             value: 'false',
                         },
                     },
@@ -260,12 +260,12 @@ describe('Templates.js', function() {
                 });
             }
         });
-        describe('when `operation.path` is an unknown url', function() {
+        describe('when `operation.url` is an unknown url', function() {
             const tests = {
                 'enable an unknown repo': {
                     input: {
                         op: 'enable',
-                        path: 'unknownRepoUrl',
+                        url: 'unknownRepoUrl',
                         value: 'true',
                     },
                     output: {
@@ -273,7 +273,7 @@ describe('Templates.js', function() {
                         error: 'Unknown repository URL',
                         requestedOperation: {
                             op: 'enable',
-                            path: 'unknownRepoUrl',
+                            url: 'unknownRepoUrl',
                             value: 'true',
                         },
                     },
@@ -281,7 +281,7 @@ describe('Templates.js', function() {
                 'disable an unknown repo': {
                     input: {
                         op: 'enable',
-                        path: 'unknownRepoUrl',
+                        url: 'unknownRepoUrl',
                         value: 'false',
                     },
                     output: {
@@ -289,7 +289,7 @@ describe('Templates.js', function() {
                         error: 'Unknown repository URL',
                         requestedOperation: {
                             op: 'enable',
-                            path: 'unknownRepoUrl',
+                            url: 'unknownRepoUrl',
                             value: 'false',
                         },
                     },

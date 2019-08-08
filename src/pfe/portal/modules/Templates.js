@@ -189,22 +189,21 @@ module.exports = class Templates {
   }
 
   async performOperation(operation) {
-    const { op, path, value } = operation;
+    const { op, url, value } = operation;
     let operationResult = {};
     if (op === 'enable') {
-      operationResult = await this.performEnableOrDisableOperation({ path, value });
+      operationResult = await this.performEnableOrDisableOperation({ url, value });
     }
     operationResult.requestedOperation = operation;
     return operationResult;
   }
 
   /**
-   *
+   * @param {JSON} { url (URL of template repo to enable or disable), value (true|false)}
    * @returns {JSON} { status, error (optional) }
    */
-  async performEnableOrDisableOperation({ path, value }) {
-    const repoUrl = path;
-    if (!this.doesRepositoryExist(repoUrl)) {
+  async performEnableOrDisableOperation({ url, value }) {
+    if (!this.doesRepositoryExist(url)) {
       return {
         status: 404,
         error: 'Unknown repository URL',
@@ -212,9 +211,9 @@ module.exports = class Templates {
     }
     try {
       if (value === 'true') {
-        await this.enableRepository(repoUrl);
+        await this.enableRepository(url);
       } else {
-        await this.disableRepository(repoUrl);
+        await this.disableRepository(url);
       }
       return {
         status: 200

@@ -112,9 +112,9 @@ async function deleteTemplateRepo(repoUrl) {
     return res;
 }
 
-async function patchTemplateRepos(operations) {
+async function batchPatchTemplateRepos(operations) {
     const res = await reqService.chai
-        .patch('/api/v1/templates/repositories/')
+        .patch('/api/v1/batch/templates/repositories')
         .set('Cookie', ADMIN_COOKIE)
         .send(operations);
     return res;
@@ -123,20 +123,20 @@ async function patchTemplateRepos(operations) {
 async function enableTemplateRepo(repoUrl) {
     const operation = {
         op: 'enable',
-        path: repoUrl,
+        url: repoUrl,
         value: 'true',
     };
-    const res = await patchTemplateRepos([operation]);
+    const res = await batchPatchTemplateRepos([operation]);
     return res;
 }
 
 async function disableTemplateRepo(repoUrl) {
     const operation = {
         op: 'enable',
-        path: repoUrl,
+        url: repoUrl,
         value: 'false',
     };
-    const res = await patchTemplateRepos([operation]);
+    const res = await batchPatchTemplateRepos([operation]);
     return res;
 }
 
@@ -170,7 +170,7 @@ module.exports = {
     getTemplateRepos,
     addTemplateRepo,
     deleteTemplateRepo,
-    patchTemplateRepos,
+    batchPatchTemplateRepos,
     enableTemplateRepo,
     disableTemplateRepo,
     getTemplates,

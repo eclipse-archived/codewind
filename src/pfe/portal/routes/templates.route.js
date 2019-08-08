@@ -82,7 +82,7 @@ function sendRepositories(req, res, _next) {
   res.status(200).json(repositoryList);
 }
 
-router.patch('/api/v1/templates/repositories', validateReq, async (req, res) => {
+router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, res) => {
   const user = req.cw_user;
   const templateController = user.templates;
   const requestedOperations = req.body;

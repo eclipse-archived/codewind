@@ -20,7 +20,7 @@ const {
 
 chai.should();
 
-describe('Enabling a template repository', function() {
+describe('Enabling template repositories in batches', function() {
     let originalTemplateRepos;
     let repoToTest;
     before(async() => {
@@ -31,12 +31,12 @@ describe('Enabling a template repository', function() {
     after(async() => {
         await resetTemplateRepos(originalTemplateRepos);
     });
-    it(`enabling a template repo returns 207 and sub-status 200`, async function() {
+    it(`batch enabling a single template repo returns 207 and sub-status 200`, async function() {
         const res = await enableTemplateRepo(repoToTest.url);
         res.should.have.status(207);
         res.body[0].status.should.equal(200);
     });
-    it(`repo appears as enabled in list of template repos`, async function() {
+    it(`that repo appears as enabled in list of template repos`, async function() {
         const res = await getTemplateRepos();
         res.should.have.status(200);
         res.body.should.deep.include({
@@ -44,12 +44,12 @@ describe('Enabling a template repository', function() {
             enabled: true,
         });
     });
-    it(`disabling that template repo returns 207 and sub-status 200`, async function() {
+    it(`batch disabling that template repo returns 207 and sub-status 200`, async function() {
         const res = await disableTemplateRepo(repoToTest.url);
         res.should.have.status(207);
         res.body[0].status.should.equal(200);
     });
-    it(`repo appears as disabled in list of template repos`, async function() {
+    it(`that repo appears as disabled in list of template repos`, async function() {
         const res = await getTemplateRepos();
         res.should.have.status(200);
         res.body.should.deep.include({

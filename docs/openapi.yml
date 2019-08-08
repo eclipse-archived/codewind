@@ -920,8 +920,33 @@ paths:
                       type: string
         400:
           description: Bad request
+    delete:
+      summary: Remove a template repository from the list Codewind is aware of
+      requestBody:
+        description: repository details
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                    type: string
+      responses:
+        200:
+          description: Returns all the templates repositories that Codewind will use to find templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TemplateRepo'
+        400:
+          description: Bad request
+  /api/v1/batch/templates/repositories:
     patch:
-      summary: Change settings for a template repository of which Codewind is aware
+      summary: Batch change settings for a template repository of which Codewind is aware
       requestBody:
         description: repository settings
         content:
@@ -949,31 +974,6 @@ paths:
                       $ref: '#/components/schemas/TemplateRepoSetting'
                     error:
                       type: string
-
-    delete:
-      summary: Remove a template repository from the list Codewind is aware of
-      requestBody:
-        description: repository details
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - url
-              properties:
-                url:
-                    type: string
-      responses:
-        200:
-          description: Returns all the templates repositories that Codewind will use to find templates
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TemplateRepo'
-        400:
-          description: Bad request
   /api/v1/templates/styles:
     get:
       summary: List all project styles for which Codewind has templates
@@ -1363,15 +1363,15 @@ components:
       type: object
       required:
         - op
-        - path
+        - url
         - value
       properties:
         op:
           description: repository setting to change
           type: string
           enum: [enable]
-        path:
-          description: path of the modified resource (i.e., the URL of the target template repository)
+        url:
+          description: url of the modified template repository
           type: string
           example: https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json
         value:

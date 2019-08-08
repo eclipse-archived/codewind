@@ -13,7 +13,7 @@ const chai = require('chai');
 
 const {
     defaultTemplates,
-    patchTemplateRepos,
+    batchPatchTemplateRepos,
     getTemplateRepos,
     getTemplates,
     addTemplateRepo,
@@ -26,14 +26,6 @@ chai.should();
 const expectedLanguages = ['java', 'swift', 'nodejs', 'go', 'python'];
 
 describe('Template API tests', function() {
-    let originalTemplateRepos;
-    before(async() => {
-        const res = await getTemplateRepos();
-        originalTemplateRepos = res.body;
-    });
-    after(async() => {
-        await resetTemplateRepos(originalTemplateRepos);
-    });
     describe('GET /api/v1/templates', function() {
         describe('?projectStyle=', function() {
             describe('empty', function() {
@@ -89,6 +81,14 @@ describe('Template API tests', function() {
     describe('GET|POST|DELETE /api/v1/templates/repositories', function() {
         const expectedUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
         const testUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
+        let originalTemplateRepos;
+        before(async() => {
+            const res = await getTemplateRepos();
+            originalTemplateRepos = res.body;
+        });
+        after(async() => {
+            await resetTemplateRepos(originalTemplateRepos);
+        });
         it('GET should return a list of available templates repositories', async function() {
             const res = await getTemplateRepos();
             res.should.have.status(200);
@@ -171,20 +171,20 @@ describe('Template API tests', function() {
             res.body.should.have.length(firstLength);
         });
     });
-    describe('PATCH /api/v1/templates/repositories', function() {
+    describe('PATCH /api/v1/batch/templates/repositories', function() {
         const existingRepoUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
         const tests = {
             'enable an existing repo': {
                 input: [{
                     op: 'enable',
-                    path: existingRepoUrl,
+                    url: existingRepoUrl,
                     value: 'true',
                 }],
                 output: [{
                     status: 200,
                     requestedOperation: {
                         op: 'enable',
-                        path: existingRepoUrl,
+                        url: existingRepoUrl,
                         value: 'true',
                     },
                 }],
@@ -192,14 +192,14 @@ describe('Template API tests', function() {
             'disable an existing repo': {
                 input: [{
                     op: 'enable',
-                    path: existingRepoUrl,
+                    url: existingRepoUrl,
                     value: 'false',
                 }],
                 output: [{
                     status: 200,
                     requestedOperation: {
                         op: 'enable',
-                        path: existingRepoUrl,
+                        url: existingRepoUrl,
                         value: 'false',
                     },
                 }],
@@ -207,7 +207,7 @@ describe('Template API tests', function() {
             'enable an unknown repo': {
                 input: [{
                     op: 'enable',
-                    path: 'unknownRepoUrl',
+                    url: 'unknownRepoUrl',
                     value: 'true',
                 }],
                 output: [{
@@ -215,7 +215,7 @@ describe('Template API tests', function() {
                     error: 'Unknown repository URL',
                     requestedOperation: {
                         op: 'enable',
-                        path: 'unknownRepoUrl',
+                        url: 'unknownRepoUrl',
                         value: 'true',
                     },
                 }],
@@ -223,7 +223,7 @@ describe('Template API tests', function() {
             'disable an unknown repo': {
                 input: [{
                     op: 'enable',
-                    path: 'unknownRepoUrl',
+                    url: 'unknownRepoUrl',
                     value: 'false',
                 }],
                 output: [{
@@ -231,16 +231,24 @@ describe('Template API tests', function() {
                     error: 'Unknown repository URL',
                     requestedOperation: {
                         op: 'enable',
-                        path: 'unknownRepoUrl',
+                        url: 'unknownRepoUrl',
                         value: 'false',
                     },
                 }],
             },
         };
+        let originalTemplateRepos;
+        beforeEach(async() => {
+            const res = await getTemplateRepos();
+            originalTemplateRepos = res.body;
+        });
+        afterEach(async() => {
+            await resetTemplateRepos(originalTemplateRepos);
+        });
         for (const [testName, test] of Object.entries(tests)) {
             describe(`to ${testName}`, function() {
                 it(`should return 207 and the expected operations info`, async function() {
-                    const res = await patchTemplateRepos(test.input);
+                    const res = await batchPatchTemplateRepos(test.input);
                     res.should.have.status(207);
                     res.body.should.deep.equal(test.output);
                 });
