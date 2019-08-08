@@ -77,6 +77,7 @@ const styledTemplates = {
         language: 'go',
         url: 'https://github.com/microclimate-dev2ops/microclimateGoTemplate',
         projectType: 'docker',
+        // defaults to projectStyle 'Codewind'
     },
     appsody: {
         label: 'Appsody template',
@@ -87,13 +88,6 @@ const styledTemplates = {
         projectStyle: 'Appsody',
     },
 };
-
-const defaultTemplateRepo = {
-    url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-    description: 'Default codewind templates.',
-    enabled: true,
-};
-const defaultTemplateRepos = [defaultTemplateRepo];
 
 async function getTemplateRepos() {
     const res = await reqService.chai
@@ -173,8 +167,6 @@ async function getTemplateStyles() {
 module.exports = {
     defaultTemplates,
     styledTemplates,
-    defaultTemplateRepo,
-    defaultTemplateRepos,
     getTemplateRepos,
     addTemplateRepo,
     deleteTemplateRepo,

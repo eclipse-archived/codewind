@@ -52,8 +52,6 @@ describe('Enabling a template repository', function() {
     it(`repo appears as disabled in list of template repos`, async function() {
         const res = await getTemplateRepos();
         res.should.have.status(200);
-        console.log('repo appears as disabled in list of template repos: res.body');
-        console.log(res.body);
         res.body.should.deep.include({
             ...repoToTest,
             enabled: false,

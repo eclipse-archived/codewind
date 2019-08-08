@@ -42,7 +42,12 @@ module.exports = class ExtensionList {
           await extension.initialise();
           this.add(extension);
           if (extension.templates)
-            await templates.addRepository(extension.templates, extension.description);
+            try {
+              await templates.addRepository(extension.templates, extension.description);
+            } catch (error) {
+              log.warn(error);
+              // ignore so that we can try to add other repos in the list
+            }
           else if (extension.templatesProvider) {
             templates.addProvider(extension.name, extension.templatesProvider);
             delete extension.templatesProvider;

@@ -60,8 +60,11 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
   try {
     await user.templates.addRepository(repositoryUrl, repositoryDescription);
   } catch (error) {
-    res.status(400).send("Repository url already available.");
-    return;
+    if (error.message === 'Repository URL must be unique') {
+      res.status(400).send(error.message);
+      return;
+    }
+    throw error;
   }
   sendRepositories(req, res, _next);
 });

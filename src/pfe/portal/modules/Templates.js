@@ -135,12 +135,8 @@ module.exports = class Templates {
 
   // Save the default list to disk so the user can potentially edit it (WHEN CODEWIND IS NOT RUNNING)
   async writeRepositoryList() {
-    try {
-      await fs.writeJson(this.repositoryFile, this.repositoryList, { spaces: '  ' });
-      log.info(`Repository list updated.`);
-    } catch (err) {
-      log.error(`Error writing repository list to ${this.repositoryFile}: ${err}`)
-    }
+    await fs.writeJson(this.repositoryFile, this.repositoryList, { spaces: '  ' });
+    log.info(`Repository list updated.`);
   }
 
   getRepositories() {
@@ -184,7 +180,6 @@ module.exports = class Templates {
     const repo = this.getRepository(url);
     repo.enabled = true;
     await this.writeRepositoryList();
-
   }
 
   async disableRepository(url) {
