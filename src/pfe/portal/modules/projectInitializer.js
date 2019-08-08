@@ -204,8 +204,8 @@ const createEnvForContainerCreation = (user, projectName, gitInfo) => {
     if (gitInfo.branch) {
       env.push(`GIT_BRANCH=${gitInfo.branch}`);
     }
+    return env;
   }
-  return env;
 }
 
 module.exports = {
