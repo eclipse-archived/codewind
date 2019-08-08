@@ -98,7 +98,7 @@ const validate = async function(args: IProjectActionParams): Promise<{ operation
  *
  * @returns Promise<{ status: string }>
  */
-const enableautobuild = async function (args: IProjectActionParams): Promise<{ status: string }> {
+export const enableautobuild = async function (args: IProjectActionParams): Promise<{ status: string }> {
     if (!args.projectID) {
         const error = new Error("The project id was not provided");
         error.name = "BAD_REQUEST";
@@ -181,7 +181,7 @@ async function enableAndBuild(projectInfo: ProjectInfo): Promise<void> {
  *
  * @returns Promise<{ status: string }>
  */
-const disableautobuild = async function (args: IProjectActionParams): Promise<{ status: string }> {
+export const disableautobuild = async function (args: IProjectActionParams): Promise<{ status: string }> {
     if (!args.projectID) {
         const error = new Error("The project id was not provided");
         error.name = "BAD_REQUEST";
@@ -210,7 +210,7 @@ const disableautobuild = async function (args: IProjectActionParams): Promise<{ 
  *
  * @returns Promise<{ operationId: string }>
  */
-const build = async function (args: IProjectActionParams): Promise<{ operationId: string }> {
+export const build = async function (args: IProjectActionParams): Promise<{ operationId: string }> {
     if (!args.projectID) {
         const error = new Error("The project id was not provided");
         error.name = "BAD_REQUEST";
@@ -261,7 +261,7 @@ const build = async function (args: IProjectActionParams): Promise<{ operationId
  *
  * @returns Promise<{ operationId: string }>
  */
-const restart = async function(args: IProjectActionParams): Promise<{ operationId: string }> {
+export const restart = async function(args: IProjectActionParams): Promise<{ operationId: string }> {
     if (!args.projectID) {
         const error = new Error("The project id was not provided");
         error.name = "BAD_REQUEST";
