@@ -12,6 +12,7 @@ assignees: ''
 **Codewind version:**
 **OS:**
 
+
 **Che version:**
 **IDE extension version:**
 **IDE version:**
@@ -19,5 +20,8 @@ assignees: ''
 
 **Description of the enhancement:**
 <!-- How would you like to see Codewind improved?-->
+
+
 **Proposed solution:** 
 <!-- Do you have ideas about how your idea could be implemented?-->
+

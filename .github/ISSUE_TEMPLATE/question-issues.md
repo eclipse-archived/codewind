@@ -12,10 +12,13 @@ assignees: ''
 **Codewind version:**
 **OS:**
 
+
 **Che version:**
 **IDE extension version:**
 **IDE version:**
 **Kubernetes cluster:**
 
+
 **Question synopsis:**
 <!-- What question can we help you with?-->
+

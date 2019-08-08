@@ -12,14 +12,18 @@ assignees: ''
 **Codewind version:**
 **OS:**
 
+
 **Che version:**
 **IDE extension version:**
 **IDE version:**
 **Kubernetes cluster:**
 
+
 **Description:**
 
+
 **Steps to reproduce:**
+
 
 **Workaround:** 
 <!-- Did you find a way to work around the bug? If so, please describe how you worked around it.-->
