@@ -37,7 +37,7 @@
   font-size: 0.9rem;
   margin-bottom: 10px;
   padding: 5px;
-  margin-top: 6px;
+  margin-top: 0;
 }
 
 .DescriptionEditor .bx--form-item {
@@ -106,6 +106,8 @@
   display: inline-block;
 }
 
-.DescriptionEditor .bx--btn--ghost.bx--btn-sm {
+.DescriptionEditor .editButton {
   padding: 0;
+  margin-top: -8px;
 }
+

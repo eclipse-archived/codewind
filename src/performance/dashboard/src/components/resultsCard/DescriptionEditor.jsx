@@ -14,7 +14,7 @@ import PropTypes from 'prop-types'
 import IconEdit from '@carbon/icons-react/es/edit/16'
 import * as AppConstants from '../../AppConstants'
 import { connect } from 'react-redux';
-import { TextArea, Loading } from 'carbon-components-react'
+import { TextArea, Loading, Button } from 'carbon-components-react'
 import { formatDateToString } from '../../utils/dateTime';
 import { reloadMetricsData } from '../../store/actions/projectMetricsActions';
 
@@ -163,7 +163,15 @@ class DescriptionEditor extends React.Component {
                     <div className="iconEdit">
                         {
                             this.props.alwaysShowEditIcon || this.state.isMouseHover ?
-                                <IconEdit onClick={() => this.handleSwitchToEdit()} />
+                                <Button 
+                                    className="editButton"
+                                    small={true} 
+                                    kind="ghost"
+                                    tabindex="0" 
+                                    renderIcon={IconEdit} 
+                                    iconDescription="Edit test description" 
+                                    onClick={() => this.handleSwitchToEdit()}>
+                                </Button>
                                 :
                                 <div style={{ width: "25px" }}></div>
                         }
