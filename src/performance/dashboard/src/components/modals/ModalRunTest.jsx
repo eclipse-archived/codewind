@@ -62,7 +62,8 @@ class ModalRunTest extends React.Component {
           danger={false}
           shouldsubmitonenter="false"
           modalLabel=""
-          modalHeading="Load test configuration"
+          modalAriaLabel="Run load test with an optional description"
+          modalHeading="Run a new load test"
           primaryButtonText="Run"
           secondaryButtonText="Cancel"
           iconDescription="Cancel"
@@ -74,7 +75,7 @@ class ModalRunTest extends React.Component {
             style={{ resize: "none" }}
             className="descriptionTextArea"
             hideLabel={false}
-            labelText=""
+            labelText="Add an optional description"
             value={this.state.runTestDescription}
             invalidText=""
             helperText=""

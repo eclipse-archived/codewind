@@ -9,11 +9,13 @@
 *     IBM Corporation - initial API and implementation
 *******************************************************************************/
 
+@import "../../themes/dark-theme.scss";
+
 .charCounter.warning {
-  font-weight: bold;
+  color: $support-03;
 }
 
 .charCounter.danger.full {
-  color: red;
+  color: $support-03;
   font-weight: bold;
 }

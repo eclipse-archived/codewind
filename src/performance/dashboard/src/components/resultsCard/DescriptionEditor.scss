@@ -37,7 +37,7 @@
   font-size: 0.9rem;
   margin-bottom: 10px;
   padding: 5px;
-  margin-top: 6px;
+  margin-top: 0;
 }
 
 .DescriptionEditor .bx--form-item {
@@ -47,6 +47,7 @@
 
 .DescriptionEditor .charCounter {
   float: right;
+  vertical-align: middle;
 }
 
 .DescriptionEditor .actions {
@@ -66,6 +67,7 @@
 
 .DescriptionEditor .footer {
   margin-bottom: 30px;
+  max-width: 370px;
 }
 
 .DescriptionEditor .warning {
@@ -74,7 +76,7 @@
 
 .DescriptionEditor .danger {
   font-weight: bold;
-  color: $support-01;
+  color: $support-03;
 }
 
 .DescriptionEditor .iconEdit {
@@ -96,16 +98,17 @@
   vertical-align: top;
 }
 
-.DescriptionEditor .actions .link {
-  color: $color-link;
-  margin-right: 10px;
+.DescriptionEditor .actions .bx--btn--ghost.bx--btn--sm  {
   float: right;
+  margin-top:-5px;
 }
 
 .DescriptionEditor .inline {
   display: inline-block;
 }
 
-.DescriptionEditor .bx--btn--ghost.bx--btn-sm {
+.DescriptionEditor .editButton {
   padding: 0;
+  margin-top: -8px;
 }
+
