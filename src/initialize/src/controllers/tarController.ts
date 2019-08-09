@@ -36,7 +36,15 @@ export function importProjectFromTar(tarFile: string, name: string, dest: string
             resolve();
           });
     })
-    .on('error', reject);
+    .on('error', (err) => {
+        try {
+            fs.removeSync(fileName);
+        }
+        catch (err) {
+            console.log(err);
+        }
+        reject(err);
+    });
     });
 
 }
