@@ -142,8 +142,8 @@ class DescriptionEditor extends React.Component {
                         <label className={testCounterColor} aria-label="Character counter">{editableValue.length} / {AppConstants.MAX_DESC_LENGTH}</label>
                     </div>
                     <div className="actions">
-                        <Button small={true} icon="none" className="link" kind="ghost" aria-label="Cancel" href="#" onClick={(e) => this.handleDescCancel(e)}  disabled={false} >Cancel</Button>
-                        <Button small={true} icon="none" className="link" kind="ghost" aria-label="Save" href="#" onClick={(e) => this.handleDescSave(e)}  disabled={false} >Save</Button>
+                        <Button small={true} icon="none" className="link" kind="ghost" aria-label="Cancel" onClick={(e) => this.handleDescCancel(e)}  disabled={false} >Cancel</Button>
+                        <Button small={true} icon="none" className="link" kind="ghost" aria-label="Save" onClick={(e) => this.handleDescSave(e)}  disabled={false} >Save</Button>
                     </div>
                 </div>
             </Fragment>
