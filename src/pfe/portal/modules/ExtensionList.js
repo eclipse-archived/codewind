@@ -34,24 +34,24 @@ module.exports = class ExtensionList {
     try {
       // Read the extensions directory, create and add extensions to the list
       let entries = await fs.readdir(extensionsPath);
-      for (let i=0; i < entries.length; i++) {
-        let fstats = await fs.lstat(path.join(extensionsPath, entries[i]));
-        // Extensions are in sub-directories of the top-level extensions directory
-        if (fstats.isDirectory()) {
-          const extension = new Extension({path: path.join(extensionsPath, entries[i]), name: entries[i]});
-          await extension.initialise();
-          this.add(extension);
-          if (extension.templates)
-            try {
+      for (const entry of entries) {
+        try {
+          let fstats = await fs.lstat(path.join(extensionsPath, entry));
+          // Extensions are in sub-directories of the top-level extensions directory
+          if (fstats.isDirectory()) {
+            const extension = new Extension({path: path.join(extensionsPath, entry), name: entry});
+            await extension.initialise();
+            this.add(extension);
+            if (extension.templates) {
               await templates.addRepository(extension.templates, extension.description);
-            } catch (error) {
-              log.warn(error);
-              // ignore so that we can try to add other repos in the list
+            } else if (extension.templatesProvider) {
+              templates.addProvider(extension.name, extension.templatesProvider);
+              delete extension.templatesProvider;
             }
-          else if (extension.templatesProvider) {
-            templates.addProvider(extension.name, extension.templatesProvider);
-            delete extension.templatesProvider;
           }
+        } catch (error) {
+          log.warn(error);
+          // ignore so that we can try to add other repos in the list
         }
       }
     } catch(err) {
