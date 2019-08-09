@@ -7,7 +7,7 @@ pipeline {
     triggers {	
       issueCommentTrigger('trigger_build')	
     }
-    
+
     options {
         timestamps()
         skipStagesAfterUnstable()
@@ -52,7 +52,7 @@ pipeline {
 
                         # Publish docker images with a filter for branch name
                         # Acceptable branch names: master, start with '<number>.<number>'
-                        if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+.[0-9]+) ]]; then
+                        if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+\.[0-9]+) ]]; then
 
                             declare -a DOCKER_IMAGE_ARRAY=("codewind-initialize-amd64" 
                                                         "codewind-performance-amd64" 
