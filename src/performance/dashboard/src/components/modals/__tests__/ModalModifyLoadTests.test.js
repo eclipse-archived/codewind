@@ -72,7 +72,7 @@ describe('<ModalModifyLoadTests />', () => {
             expect(document.querySelectorAll('#method  .bx--list-box__menu-item__option').length).toBe(2);
         });
 
-        test('selecting GET and POST update state', () => {
+        test('selecting GET and POST updates the state', () => {
             const { container } = render(wrapper);
             const selectedItem = document.querySelector('#method .bx--list-box__field span');
             const dropDown = container.querySelector('#method .bx--list-box__field');
