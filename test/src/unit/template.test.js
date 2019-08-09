@@ -47,7 +47,6 @@ const sampleRepos = {
 const sampleRepoList = Object.values(sampleRepos);
 
 describe('Templates.js', function() {
-    // class functions
     describe('getTemplateStyles() when Codewind is aware of:', function() {
         describe('Codewind and Appsody templates', function() {
             const sampleTemplateList = [
@@ -382,7 +381,7 @@ describe('Templates.js', function() {
             };
             for (const [testName, test] of Object.entries(tests)) {
                 describe(testName, function() { // eslint-disable-line
-                    it(`returns the expectedNumTemplates operation info`, async function() {
+                    it(`returns the expected operation info`, async function() {
                         const output = await templateController.performOperation(test.input);
                         output.should.deep.equal(test.output);
 
@@ -429,7 +428,7 @@ describe('Templates.js', function() {
             };
             for (const [testName, test] of Object.entries(tests)) {
                 describe(testName, function() { // eslint-disable-line
-                    it(`returns the expectedNumTemplates operation info`, async function() {
+                    it(`returns the expected operation info`, async function() {
                         const output = await templateController.performOperation(test.input);
                         output.should.deep.equal(test.output);
                     });
@@ -451,7 +450,7 @@ describe('Templates.js', function() {
             });
         });
     });
-    // Non-class functions
+
     describe('filterTemplatesByStyle(templates, projectStyle)', function() {
         const templates = [sampleCodewindTemplate, sampleAppsodyTemplate];
         describe(`projectStyle='Codewind'`, function() {
