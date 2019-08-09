@@ -18,7 +18,7 @@ import * as projectUtil from "../../../src/projects/projectUtil";
 import * as app_configs from "../../functional-test/configs/app.config";
 import { ProjectInfo, UpdateProjectInfoPair, ProjectCapabilities } from "../../../src/projects/Project";
 import { workspaceConstants } from "../../../src/projects/constants";
-import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync } from "../../functional-test/lib/utils";
+import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync, writeAsync } from "../../functional-test/lib/utils";
 
 export function projectExtensionsTestModule(): void {
 
@@ -49,8 +49,6 @@ export function projectExtensionsTestModule(): void {
     const extensionsPath = workspaceConstants.workspaceExtensionDir;
     const appsodyExtensionPath = path.join(extensionsPath, "appsodyExtension");
 
-    const appsodyExtensionOriginalArtifactPath1 = path.join(app_configs.projectDataDir, ".sh-extension");
-    const appsodyExtensionOriginalArtifactPath2 = path.join(app_configs.projectDataDir, "entrypoint.sh");
     const appsodyExtensionTestArtifactPath1 = path.join(appsodyExtensionPath, ".sh-extension");
     const appsodyExtensionTestArtifactPath2 = path.join(appsodyExtensionPath, "entrypoint.sh");
 
@@ -261,8 +259,8 @@ export function projectExtensionsTestModule(): void {
                 await mkdirAsync(extensionsPath);
                 if (!await existsAsync(appsodyExtensionPath)) {
                     await mkdirAsync(appsodyExtensionPath);
-                    await copyAsync(appsodyExtensionOriginalArtifactPath1, appsodyExtensionTestArtifactPath1);
-                    await copyAsync(appsodyExtensionOriginalArtifactPath2, appsodyExtensionTestArtifactPath2);
+                    await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
+                    await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
                 }
             }
         });
@@ -395,8 +393,8 @@ export function projectExtensionsTestModule(): void {
                 await mkdirAsync(extensionsPath);
                 if (!await existsAsync(appsodyExtensionPath)) {
                     await mkdirAsync(appsodyExtensionPath);
-                    await copyAsync(appsodyExtensionOriginalArtifactPath1, appsodyExtensionTestArtifactPath1);
-                    await copyAsync(appsodyExtensionOriginalArtifactPath2, appsodyExtensionTestArtifactPath2);
+                    await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
+                    await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
                 }
             }
         });
