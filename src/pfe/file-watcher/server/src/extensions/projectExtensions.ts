@@ -113,14 +113,23 @@ export async function determineProjectType(location: string): Promise<Array<stri
     }
 
     const types = [];
+    let isValidLoc;
 
     if (await utils.asyncIsDirectory(location)) {
 
         for (let i = 0; i < projectHandlers.length; i++) {
-            const isValidLoc = await projectHandlers[i].typeMatches(location);
+            isValidLoc = await projectHandlers[i].typeMatches(location);
             if (isValidLoc) {
                 types.push(projectHandlers[i].supportedType);
             }
+        }
+    }
+
+    // Check for Docker projects if types array is empty
+    if (types.length == 0) {
+        isValidLoc = new DockerProject(DOCKER_TYPE).typeMatches(location);
+        if (isValidLoc) {
+            types.push(DOCKER_TYPE);
         }
     }
 
