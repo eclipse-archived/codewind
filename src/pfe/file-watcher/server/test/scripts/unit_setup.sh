@@ -6,7 +6,7 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
-declare -a PROJECT_URLS
+PROJECT_URLS=()
 PROJECT_URLS[0]="https://github.com/microclimate-dev2ops/SVTPythonTemplate"
 PROJECT_URLS[1]="https://github.com/microclimate-dev2ops/springJavaTemplate"
 PROJECT_URLS[2]="https://github.com/microclimate-dev2ops/javaMicroProfileTemplate"
