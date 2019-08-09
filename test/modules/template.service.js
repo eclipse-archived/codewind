@@ -89,6 +89,13 @@ const styledTemplates = {
     },
 };
 
+const defaultRepo = {
+    url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
+    description: 'Standard Codewind templates.',
+    enabled: true,
+};
+const defaultRepoList = [defaultRepo];
+
 async function getTemplateRepos() {
     const res = await reqService.chai
         .get('/api/v1/templates/repositories')
@@ -167,6 +174,7 @@ async function getTemplateStyles() {
 module.exports = {
     defaultTemplates,
     styledTemplates,
+    defaultRepoList,
     getTemplateRepos,
     addTemplateRepo,
     deleteTemplateRepo,

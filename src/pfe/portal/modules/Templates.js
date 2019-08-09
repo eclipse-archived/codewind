@@ -59,18 +59,17 @@ module.exports = class Templates {
   }
 
   getEnabledTemplates() {
-    return this.getTemplateList(this.getEnabledRepositories());
+    return this.getTemplatesFromRepos(this.getEnabledRepositories());
   }
 
   getAllTemplates() {
-    return this.getTemplateList(this.repositoryList);
-  }
-
-  async getTemplateList(repositoryList) {
     if (!this.needsRefresh) {
       return this.projectTemplates;
     }
+    return this.getTemplatesFromRepos(this.repositoryList);
+  }
 
+  async getTemplatesFromRepos(repositoryList) {
     let newProjectTemplates = [];
 
     // apply reduce function to create a copy of the repository list index by url
@@ -91,7 +90,13 @@ module.exports = class Templates {
 
     await Promise.all(Object.values(repos).map(async function getTemplatesFromRepo(repository) {
 
-      let repositoryUrl = new URL(repository.url);
+      let repositoryUrl;
+      try {
+        repositoryUrl = new URL(repository.url);
+      } catch (error) {
+        log.warn(error.message);
+        return; // ignore so that others can continue
+      }
 
       let options = {
         host: repositoryUrl.host,
