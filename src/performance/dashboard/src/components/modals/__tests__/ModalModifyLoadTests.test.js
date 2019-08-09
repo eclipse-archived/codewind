@@ -54,8 +54,41 @@ describe('<ModalModifyLoadTests />', () => {
     });
 
     test('modal has a valid heading', () => {
-        render(wrapper)
+        render(wrapper);
         expect(document.querySelector('.ModalModifyLoadTest .bx--modal-header__heading').innerHTML).toBe('Load test configuration');
+    });
+
+    describe('Tests inputs on method dropdown field', () => {
+        test('the modal dialog has a method dropdown field', () => {
+            const { container } = render(wrapper);
+            const selectedItem = container.querySelectorAll('#method .bx--list-box__field span');
+            expect(selectedItem.length).toBe(1);
+        });
+
+        test('the dropdown has exactly 2 selectable menu choices', () => {
+            const { container } = render(wrapper);
+            const dropDown = container.querySelector('#method .bx--list-box__field');
+            fireEvent.click(dropDown);
+            expect(document.querySelectorAll('#method  .bx--list-box__menu-item__option').length).toBe(2);
+        });
+
+        test('selecting GET and POST update state', () => {
+            const { container } = render(wrapper);
+            const selectedItem = document.querySelector('#method .bx--list-box__field span');
+            const dropDown = container.querySelector('#method .bx--list-box__field');
+            fireEvent.click(dropDown);
+
+            const OPTION_GET = document.querySelectorAll('#method  .bx--list-box__menu-item__option')[0];
+            expect(OPTION_GET.textContent).toBe("GET");
+            fireEvent.click(OPTION_GET);
+            expect(selectedItem.textContent).toBe("GET");
+
+            fireEvent.click(dropDown);
+            const OPTION_POST = document.querySelectorAll('#method  .bx--list-box__menu-item__option')[1];
+            expect(OPTION_POST.textContent).toBe("POST");
+            fireEvent.click(OPTION_POST);
+            expect(selectedItem.textContent).toBe("POST");
+        });
     });
 
     describe('Tests inputs on path field', () => {
@@ -76,7 +109,7 @@ describe('<ModalModifyLoadTests />', () => {
             fireEvent.input(textField, { target: { value: sampleFieldValue } });
             expect(textField.value).toEqual(sampleFieldValue);
             expect(textField.getAttribute("aria-invalid")).toBe("true");
-            expect(document.querySelector('#path-error-msg').innerHTML).toBe('Must contain a valid path eg: /')
+            expect(document.querySelector('#path-error-msg').innerHTML).toBe('Must contain a valid path eg: /');
         });
     });
 
@@ -120,7 +153,7 @@ describe('<ModalModifyLoadTests />', () => {
             fireEvent.input(textField, { target: { value: sampleFieldValue } });
             expect(textField.value).toEqual(sampleFieldValue);
             expect(textField.getAttribute("aria-invalid")).toBe("true");
-            expect(document.querySelector('#concurrency-error-msg').innerHTML).toBe('Must be an integer between 1 and 100')
+            expect(document.querySelector('#concurrency-error-msg').innerHTML).toBe('Must be an integer between 1 and 100');
         })
     });
 
@@ -142,10 +175,10 @@ describe('<ModalModifyLoadTests />', () => {
             fireEvent.input(textField, { target: { value: sampleFieldValue } });
             expect(textField.value).toEqual(sampleFieldValue);
             expect(textField.getAttribute("aria-invalid")).toBe("true");
-            expect(document.querySelector('#maxSeconds-error-msg').innerHTML).toBe('Must be an integer between 10 and 500')
-        })
-    })
-        
+            expect(document.querySelector('#maxSeconds-error-msg').innerHTML).toBe('Must be an integer between 10 and 500');
+        });
+    });
+
     describe('Tests inputs on body field', () => {
         test('the dialog has a body field that accepts a valid json', () => {
             const sampleFieldValue = '{"field1":"test1", "field2":"test2"}';
@@ -155,26 +188,26 @@ describe('<ModalModifyLoadTests />', () => {
             expect(textField.value).toEqual(sampleFieldValue);
             expect(textField.getAttribute("aria-invalid")).toBeNull();
             expect(document.querySelector('#body-error-msg')).toBeNull();
-        })
+        });
 
         test('the body field rejects invalid json', () => {
-            const invalidJSONPayload = '{"field1"::::::::"test1",,,,,,"field2":"test2"}'; 
+            const invalidJSONPayload = '{"field1"::::::::"test1",,,,,,"field2":"test2"}';
             const { getByPlaceholderText } = render(wrapper);
             const textField = getByPlaceholderText(/{"id": 1, "message":"hello"}/i);
             fireEvent.input(textField, { target: { value: invalidJSONPayload } });
             expect(textField.value).toEqual(invalidJSONPayload);
             expect(textField.getAttribute("aria-invalid")).toBe("true");
             expect(document.querySelector('#body-error-msg').innerHTML).toBe('SyntaxError: Unexpected token : in JSON at position 10');
-        })
+        });
     });
- 
+
     describe('Test dialog button status', () => {
         test('there is an active cancel button', () => {
             const { getByText } = render(wrapper);
             const cancelButton = getByText('Cancel');
             expect(cancelButton.disabled).toEqual(false);
         });
-    
+
         test('there is a disabled submit button on initial load', () => {
             const { getByText } = render(wrapper);
             const submitButton = getByText('Save');
@@ -203,6 +236,4 @@ describe('<ModalModifyLoadTests />', () => {
             expect(onClickFunction).toHaveBeenCalled();
         });
     });
-
 });
-
