@@ -4,6 +4,10 @@ pipeline {
         label "docker-build"
     }
     
+    triggers {	
+      issueCommentTrigger('trigger_build')	
+    }
+    
     options {
         timestamps()
         skipStagesAfterUnstable()
