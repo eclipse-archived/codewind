@@ -47,6 +47,7 @@
 
 .DescriptionEditor .charCounter {
   float: right;
+  vertical-align: middle;
 }
 
 .DescriptionEditor .actions {
@@ -66,6 +67,7 @@
 
 .DescriptionEditor .footer {
   margin-bottom: 30px;
+  max-width: 370px;
 }
 
 .DescriptionEditor .warning {
@@ -96,10 +98,9 @@
   vertical-align: top;
 }
 
-.DescriptionEditor .actions .link {
-  color: $color-link;
-  margin-right: 10px;
+.DescriptionEditor .actions .bx--btn--ghost.bx--btn--sm  {
   float: right;
+  margin-top:-5px;
 }
 
 .DescriptionEditor .inline {
