@@ -179,6 +179,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         logger.logProjectInfo("Creating project " + projectLocation, projectID, projectName);
 
         projInfo = {
+            projectID: projectID,
             projectType: projectType,
             location: projectLocation,
             language: req.language
