@@ -41,6 +41,11 @@ export async function importProjectFromGitRepo(repo: string, name: string, dest:
     // The actual files are under a top level dir in the zip of the format:
     // <ownerName>-<repoName>-<commitId>
     await moveFiles(`${tmpName}/${ownerName}-${repoName}-*/*`, dest);
+    try {
+      await moveFiles(`${tmpName}/${ownerName}-${repoName}-*/.[!.]*`, dest);
+    } catch (err) {
+      // Will fail if there are no files begining with . to copy.
+    }
 
   } catch (error) {
     throw new Error('Git clone failed - ensure the repository URL is correct');
