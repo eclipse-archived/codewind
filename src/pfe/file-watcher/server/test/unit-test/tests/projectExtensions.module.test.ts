@@ -29,6 +29,19 @@ export function projectExtensionsTestModule(): void {
     const originalLibertyPOM = path.join(app_configs.projectDataDir, "dummymicroprofilepom.xml");
     const testLibertyPOM = path.join(libertyDummyProjectPath, "pom.xml");
 
+    const springDummyProjectPath = path.join(app_configs.projectDataDir, "springDummyProject");
+    const originalSpringPOM = path.join(app_configs.projectDataDir, "dummyspringpom.xml");
+    const testSpringPOM = path.join(springDummyProjectPath, "pom.xml");
+
+    const nodeDummyProjectPath = path.join(app_configs.projectDataDir, "nodeDummyProject");
+    const testNodePackageJSON = path.join(nodeDummyProjectPath, "package.json");
+
+    const swiftDummyProjectPath = path.join(app_configs.projectDataDir, "swiftDummyProject");
+    const testSwiftPackage = path.join(swiftDummyProjectPath, "Package.swift");
+
+    const dockerDummyProjectPath = path.join(app_configs.projectDataDir, "dockerDummyProject");
+    const testdockerProjectDockerfile = path.join(dockerDummyProjectPath, "Dockerfile");
+
     const appsodyNodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyappsodyproject");
     const appsodyNodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyappsodyproject.json");
     const appsodyNodeTestProjectMetadata = path.join(appsodyNodeProjectMetadataPath, "dummyappsodyproject.json");
@@ -103,12 +116,52 @@ export function projectExtensionsTestModule(): void {
                 await mkdirAsync(libertyDummyProjectPath);
                 await copyAsync(originalLibertyPOM, testLibertyPOM);
             }
+
+            if (!(await existsAsync(springDummyProjectPath))) {
+                await mkdirAsync(springDummyProjectPath);
+                await copyAsync(originalSpringPOM, testSpringPOM);
+            }
+
+            if (!(await existsAsync(nodeDummyProjectPath))) {
+                await mkdirAsync(nodeDummyProjectPath);
+                await copyAsync(originalSpringPOM, testNodePackageJSON);
+            }
+
+            if (!(await existsAsync(swiftDummyProjectPath))) {
+                await mkdirAsync(swiftDummyProjectPath);
+                await copyAsync(originalSpringPOM, testSwiftPackage);
+            }
+
+            if (!(await existsAsync(dockerDummyProjectPath))) {
+                await mkdirAsync(dockerDummyProjectPath);
+                await copyAsync(originalSpringPOM, testdockerProjectDockerfile);
+            }
         });
 
         after("remove test directories", async () => {
             if ((await existsAsync(libertyDummyProjectPath))) {
                 await unlinkAsync(testLibertyPOM);
                 await rmdirAsync(libertyDummyProjectPath);
+            }
+
+            if ((await existsAsync(springDummyProjectPath))) {
+                await unlinkAsync(testSpringPOM);
+                await rmdirAsync(springDummyProjectPath);
+            }
+
+            if ((await existsAsync(nodeDummyProjectPath))) {
+                await unlinkAsync(testNodePackageJSON);
+                await rmdirAsync(nodeDummyProjectPath);
+            }
+
+            if ((await existsAsync(swiftDummyProjectPath))) {
+                await unlinkAsync(testSwiftPackage);
+                await rmdirAsync(swiftDummyProjectPath);
+            }
+
+            if ((await existsAsync(dockerDummyProjectPath))) {
+                await unlinkAsync(testdockerProjectDockerfile);
+                await rmdirAsync(dockerDummyProjectPath);
             }
         });
 
@@ -120,6 +173,22 @@ export function projectExtensionsTestModule(): void {
             "combo2": {
                 "location": libertyDummyProjectPath,
                 "result": ["liberty"]
+            },
+            "combo3": {
+                "location": springDummyProjectPath,
+                "result": ["spring"]
+            },
+            "combo4": {
+                "location": nodeDummyProjectPath,
+                "result": ["nodejs"]
+            },
+            "combo5": {
+                "location": swiftDummyProjectPath,
+                "result": ["swift"]
+            },
+            "combo6": {
+                "location": dockerDummyProjectPath,
+                "result": ["docker"]
             }
         };
 
@@ -152,6 +221,10 @@ export function projectExtensionsTestModule(): void {
         const swiftOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyswiftproject.json");
         const swiftTestProjectMetadata = path.join(swiftProjectMetadataPath, "dummyswiftproject.json");
 
+        const microprofileProjectMetadataPath = path.join(app_configs.projectDataDir, "dummymicroprofileproject");
+        const microprofileOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummymicroprofileproject.json");
+        const microprofileTestProjectMetadata = path.join(microprofileProjectMetadataPath, "dummymicroprofileproject.json");
+
         const keyValuePair: UpdateProjectInfoPair = {
             key: "projectType",
             value: "",
@@ -172,6 +245,11 @@ export function projectExtensionsTestModule(): void {
             if (!(await existsAsync(swiftProjectMetadataPath))) {
                 await mkdirAsync(swiftProjectMetadataPath);
                 await copyAsync(swiftOriginalProjectMetadata, swiftTestProjectMetadata);
+            }
+
+            if (!(await existsAsync(microprofileProjectMetadataPath))) {
+                await mkdirAsync(microprofileProjectMetadataPath);
+                await copyAsync(microprofileOriginalProjectMetadata, microprofileTestProjectMetadata);
             }
 
             if (!(await existsAsync(appsodyNodeProjectMetadataPath))) {
@@ -205,6 +283,11 @@ export function projectExtensionsTestModule(): void {
                 await rmdirAsync(swiftProjectMetadataPath);
             }
 
+            if ((await existsAsync(microprofileProjectMetadataPath))) {
+                await unlinkAsync(microprofileTestProjectMetadata);
+                await rmdirAsync(microprofileProjectMetadataPath);
+            }
+
             if ((await existsAsync(appsodyNodeProjectMetadataPath))) {
                 await unlinkAsync(appsodyNodeTestProjectMetadata);
                 await rmdirAsync(appsodyNodeProjectMetadataPath);
@@ -231,13 +314,21 @@ export function projectExtensionsTestModule(): void {
             },
             "combo2": {
                 "projectID": "dummyspringproject",
+                "resultProjectHandler": "spring",
+                "resultProjectCapabilities": {
+                    startModes: ["run", "debug", "debugNoInit"],
+                    controlCommands: ["restart"]
+                }
+            },
+            "combo3": {
+                "projectID": "dummyspringproject",
                 "resultProjectHandler": undefined,
                 "resultProjectCapabilities": {
                     startModes: ["run"],
                     controlCommands: []
                 }
             },
-            "combo3": {
+            "combo4": {
                 "projectID": "dummyswiftproject",
                 "resultProjectHandler": "swift",
                 "resultProjectCapabilities": {
@@ -245,7 +336,15 @@ export function projectExtensionsTestModule(): void {
                     controlCommands: []
                 }
             },
-            "combo4": {
+            "combo5": {
+                "projectID": "dummymicroprofileproject",
+                "resultProjectHandler": "liberty",
+                "resultProjectCapabilities": {
+                    startModes: ["run", "debug"],
+                    controlCommands: ["restart"]
+                }
+            },
+            "combo6": {
                 "projectID": "dummyappsodyproject",
                 "resultProjectHandler": "appsodyExtension",
                 "resultProjectCapabilities": {
@@ -262,7 +361,7 @@ export function projectExtensionsTestModule(): void {
 
             it(combo + " => getProjectHandler & getProjectCapabilities: projectID " + projectID, async () => {
                 let projectInfo: ProjectInfo;
-                if (combo == "combo2") {
+                if (combo == "combo3") {
                     projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
                 } else {
                     projectInfo = await projectUtil.getProjectInfo(projectID);
