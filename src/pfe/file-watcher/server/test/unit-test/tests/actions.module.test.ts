@@ -72,14 +72,13 @@ export function actionsTestModule(): void {
                     await actions.restart(args);
                     process.env.IN_K8 = "false";
                 } catch (err) {
-                    console.log("err is: " + err.toString());
                     expect(err.toString()).to.equal(expectedResult);
                 }
             });
         }
     });
 
-    describe("combinational testing of enableautobuild function", () => {
+    describe("combinational testing of enableautobuild & disableautobuildfunction", () => {
 
         const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
         const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
