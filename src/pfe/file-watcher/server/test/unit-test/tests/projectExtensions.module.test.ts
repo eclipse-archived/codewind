@@ -26,11 +26,11 @@ export function projectExtensionsTestModule(): void {
     const defaultCodewindProjectTypes: string[] = ["liberty", "spring", "swift", "nodejs", "docker"];
 
     const libertyDummyProjectPath = path.join(app_configs.projectDataDir, "libertyDummyProject");
-    const originalLibertyPOM = path.join(app_configs.projectDataDir, "dummymicroprofilepom.xml");
+    const originalLibertyPOM = path.join(app_configs.projectDataDir, "javaMicroProfileTemplate" , "pom.xml");
     const testLibertyPOM = path.join(libertyDummyProjectPath, "pom.xml");
 
     const springDummyProjectPath = path.join(app_configs.projectDataDir, "springDummyProject");
-    const originalSpringPOM = path.join(app_configs.projectDataDir, "dummyspringpom.xml");
+    const originalSpringPOM = path.join(app_configs.projectDataDir, "springJavaTemplate", "pom.xml");
     const testSpringPOM = path.join(springDummyProjectPath, "pom.xml");
 
     const nodeDummyProjectPath = path.join(app_configs.projectDataDir, "nodeDummyProject");
