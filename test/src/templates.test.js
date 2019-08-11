@@ -18,7 +18,7 @@ const {
     getTemplates,
     addTemplateRepo,
     deleteTemplateRepo,
-    resetTemplateRepos,
+    resetTemplateReposTo,
     getTemplateStyles,
 } = require('../modules/template.service');
 
@@ -46,7 +46,6 @@ describe('Template API tests', function() {
                         res.body.should.be.an('array');
                         res.body.forEach((template) => {
                             template.should.be.an('object').with.all.keys('label', 'description', 'url', 'language', 'projectType');
-                            if (template.projectStyle) template.projectStyle.should.equal(projectStyle);
                         });
                         // check that we have a template for each supported language
                         res.body.map((template) => template.language).should.include.members(expectedLanguages);
@@ -87,7 +86,7 @@ describe('Template API tests', function() {
             originalTemplateRepos = res.body;
         });
         after(async() => {
-            await resetTemplateRepos(originalTemplateRepos);
+            await resetTemplateReposTo(originalTemplateRepos);
         });
         it('GET should return a list of available templates repositories', async function() {
             const res = await getTemplateRepos();
@@ -243,7 +242,7 @@ describe('Template API tests', function() {
             originalTemplateRepos = res.body;
         });
         afterEach(async() => {
-            await resetTemplateRepos(originalTemplateRepos);
+            await resetTemplateReposTo(originalTemplateRepos);
         });
         for (const [testName, test] of Object.entries(tests)) {
             describe(`to ${testName}`, function() {

@@ -181,23 +181,27 @@ module.exports = class Templates {
     return repo;
   }
 
-  async enableRepository(url) {
+  enableRepository(url) {
     const repo = this.getRepository(url);
     repo.enabled = true;
-    await this.writeRepositoryList();
   }
 
-  async disableRepository(url) {
+  disableRepository(url) {
     const repo = this.getRepository(url);
     repo.enabled = false;
-    await this.writeRepositoryList();
   }
 
-  async performOperation(operation) {
+  async batchUpdate(requestedOperations) {
+    const operationResults = requestedOperations.map(operation => this.performOperation(operation));
+    await this.writeRepositoryList();
+    return operationResults;
+  }
+
+  performOperation(operation) {
     const { op, url, value } = operation;
     let operationResult = {};
     if (op === 'enable') {
-      operationResult = await this.performEnableOrDisableOperation({ url, value });
+      operationResult = this.performEnableOrDisableOperation({ url, value });
     }
     operationResult.requestedOperation = operation;
     return operationResult;
@@ -207,7 +211,7 @@ module.exports = class Templates {
    * @param {JSON} { url (URL of template repo to enable or disable), value (true|false)}
    * @returns {JSON} { status, error (optional) }
    */
-  async performEnableOrDisableOperation({ url, value }) {
+  performEnableOrDisableOperation({ url, value }) {
     if (!this.doesRepositoryExist(url)) {
       return {
         status: 404,
@@ -216,9 +220,9 @@ module.exports = class Templates {
     }
     try {
       if (value === 'true') {
-        await this.enableRepository(url);
+        this.enableRepository(url);
       } else {
-        await this.disableRepository(url);
+        this.disableRepository(url);
       }
       return {
         status: 200

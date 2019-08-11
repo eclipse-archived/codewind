@@ -89,12 +89,18 @@ const styledTemplates = {
     },
 };
 
-const defaultRepo = {
-    url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-    description: 'Standard Codewind templates.',
-    enabled: true,
+const sampleRepos = {
+    default: {
+        url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
+        description: 'Standard Codewind templates.',
+        enabled: true,
+    },
+    appsody: {
+        url: 'https://raw.githubusercontent.com/kabanero-io/codewind-appsody-templates/master/devfiles/index.json',
+        description: 'Appsody extension for Codewind',
+    },
 };
-const defaultRepoList = [defaultRepo];
+const defaultRepoList = [sampleRepos.default];
 
 async function getTemplateRepos() {
     const res = await reqService.chai
@@ -127,23 +133,27 @@ async function batchPatchTemplateRepos(operations) {
     return res;
 }
 
-async function enableTemplateRepo(repoUrl) {
-    const operation = {
-        op: 'enable',
-        url: repoUrl,
-        value: 'true',
-    };
-    const res = await batchPatchTemplateRepos([operation]);
+async function enableTemplateRepos(repoUrls) {
+    const operations = repoUrls.map(url => {
+        return {
+            url,
+            op: 'enable',
+            value: 'true',
+        };
+    });
+    const res = await batchPatchTemplateRepos(operations);
     return res;
 }
 
-async function disableTemplateRepo(repoUrl) {
-    const operation = {
-        op: 'enable',
-        url: repoUrl,
-        value: 'false',
-    };
-    const res = await batchPatchTemplateRepos([operation]);
+async function disableTemplateRepos(repoUrls) {
+    const operations = repoUrls.map(url => {
+        return {
+            url,
+            op: 'enable',
+            value: 'false',
+        };
+    });
+    const res = await batchPatchTemplateRepos(operations);
     return res;
 }
 
@@ -155,8 +165,9 @@ async function getTemplates(queryParams) {
     return res;
 }
 
-async function resetTemplateRepos(repoList) {
-    await Promise.all(repoList.map(repo =>
+async function resetTemplateReposTo(repoList) {
+    const reposToDelete = (await getTemplateRepos()).body;
+    await Promise.all(reposToDelete.map(repo =>
         deleteTemplateRepo(repo.url)
     ));
     await Promise.all(repoList.map(repo =>
@@ -174,14 +185,15 @@ async function getTemplateStyles() {
 module.exports = {
     defaultTemplates,
     styledTemplates,
+    sampleRepos,
     defaultRepoList,
     getTemplateRepos,
     addTemplateRepo,
     deleteTemplateRepo,
     batchPatchTemplateRepos,
-    enableTemplateRepo,
-    disableTemplateRepo,
+    enableTemplateRepos,
+    disableTemplateRepos,
     getTemplates,
-    resetTemplateRepos,
+    resetTemplateReposTo,
     getTemplateStyles,
 };

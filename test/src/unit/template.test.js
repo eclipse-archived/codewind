@@ -263,78 +263,296 @@ describe('Templates.js', function() {
     describe('enableRepository(url)', function() {
         let templateController;
         beforeEach(() => {
-            fs.ensureDirSync(testWorkspaceConfigDir);
-            templateController = new Templates(testWorkspaceDir);
+            templateController = new Templates('');
             templateController.repositoryList = sampleRepoList;
-            templateController.needsRefresh = false;
-        });
-        afterEach(() => {
-            fs.removeSync(testWorkspaceDir);
         });
         describe('(existing url)', function() {
-            it('enables the correct repo', async function() {
+            it('enables the correct repo', function() {
+                templateController.enableRepository('2');
                 const expectedRepoDetails = {
                     url: '2',
                     description: '2',
                     enabled: true,
                 };
-                await templateController.enableRepository('2');
                 templateController.getRepositories().should.deep.include(expectedRepoDetails);
-
-                const repoFile = fs.readJsonSync(templateController.repositoryFile);
-                repoFile.should.deep.include(expectedRepoDetails);
             });
         });
         describe('(non-existent url)', function() {
             it('throws a useful error', function() {
                 const func = () => templateController.enableRepository('non-existent');
-                func().should.eventually.be.rejectedWith(`no repository found with URL 'non-existent'`);
+                func.should.throw(`no repository found with URL 'non-existent'`);
             });
         });
     });
     describe('disableRepository(url)', function() {
         let templateController;
         beforeEach(() => {
-            fs.ensureDirSync(testWorkspaceConfigDir);
-            templateController = new Templates(testWorkspaceDir);
+            templateController = new Templates('');
             templateController.repositoryList = sampleRepoList;
-            templateController.needsRefresh = false;
-        });
-        afterEach(() => {
-            fs.removeSync(testWorkspaceDir);
         });
         describe('(existing url)', function() {
-            it('disables the correct repo', async function() {
-                await templateController.disableRepository('1');
-
+            it('disables the correct repo', function() {
+                templateController.disableRepository('1');
                 const expectedRepoDetails = {
                     url: '1',
                     description: '1',
                     enabled: false,
                 };
                 templateController.getRepositories().should.deep.include(expectedRepoDetails);
-
-                const repoFile = fs.readJsonSync(templateController.repositoryFile);
-                repoFile.should.deep.include(expectedRepoDetails);
             });
         });
         describe('(non-existent url)', function() {
             it('throws a useful error', function() {
                 const func = () => templateController.disableRepository('non-existent');
-                func().should.eventually.be.rejectedWith(`no repository found with URL 'non-existent'`);
+                func.should.throw(`no repository found with URL 'non-existent'`);
             });
         });
     });
-    describe('performOperation(operation)', function() {
+    describe('batchUpdate(requestedOperations)', function() {
         let templateController;
         beforeEach(() => {
             fs.ensureDirSync(testWorkspaceConfigDir);
             templateController = new Templates(testWorkspaceDir);
             templateController.repositoryList = sampleRepoList;
-            templateController.needsRefresh = false;
         });
         afterEach(() => {
             fs.removeSync(testWorkspaceDir);
+        });
+        describe('when the requested operations are all valid', function() {
+            const tests = {
+                'enable 2 existing repos': {
+                    input: [
+                        {
+                            op: 'enable',
+                            url: '1',
+                            value: 'true',
+                        },
+                        {
+                            op: 'enable',
+                            url: '2',
+                            value: 'true',
+                        },
+                    ],
+                    output: [
+                        {
+                            status: 200,
+                            requestedOperation: {
+                                op: 'enable',
+                                url: '1',
+                                value: 'true',
+                            },
+                        },
+                        {
+                            status: 200,
+                            requestedOperation: {
+                                op: 'enable',
+                                url: '2',
+                                value: 'true',
+                            },
+                        },
+                    ],
+                    expectedRepoDetails: [
+                        {
+                            url: '1',
+                            description: '1',
+                            enabled: true,
+                        },
+                        {
+                            url: '2',
+                            description: '2',
+                            enabled: true,
+                        },
+                    ],
+                },
+                'disable 2 existing repos': {
+                    input: [
+                        {
+                            op: 'enable',
+                            url: '1',
+                            value: 'false',
+                        },
+                        {
+                            op: 'enable',
+                            url: '2',
+                            value: 'false',
+                        },
+                    ],
+                    output: [
+                        {
+                            status: 200,
+                            requestedOperation: {
+                                op: 'enable',
+                                url: '1',
+                                value: 'false',
+                            },
+                        },
+                        {
+                            status: 200,
+                            requestedOperation: {
+                                op: 'enable',
+                                url: '2',
+                                value: 'false',
+                            },
+                        },
+                    ],
+                    expectedRepoDetails: [
+                        {
+                            url: '1',
+                            description: '1',
+                            enabled: false,
+                        },
+                        {
+                            url: '2',
+                            description: '2',
+                            enabled: false,
+                        },
+                    ],
+                },
+                'enable an unknown repo': {
+                    input: [
+                        {
+                            op: 'enable',
+                            url: '1',
+                            value: 'false',
+                        },
+                        {
+                            op: 'enable',
+                            url: '2',
+                            value: 'false',
+                        },
+                    ],
+                    output: [
+                        {
+                            status: 200,
+                            requestedOperation: {
+                                op: 'enable',
+                                url: '1',
+                                value: 'false',
+                            },
+                        },
+                        {
+                            status: 200,
+                            requestedOperation: {
+                                op: 'enable',
+                                url: '2',
+                                value: 'false',
+                            },
+                        },
+                    ],
+                    expectedRepoDetails: [
+                        {
+                            url: '1',
+                            description: '1',
+                            enabled: false,
+                        },
+                        {
+                            url: '2',
+                            description: '2',
+                            enabled: false,
+                        },
+                    ],
+                },
+                'enable an unknown repo': {
+                    input: [
+                        {
+                            op: 'enable',
+                            url: 'unknownRepoUrl',
+                            value: 'true',
+                        },
+                    ],
+                    output: [
+                        {
+                            status: 404,
+                            error: 'Unknown repository URL',
+                            requestedOperation: {
+                                op: 'enable',
+                                url: 'unknownRepoUrl',
+                                value: 'true',
+                            },
+                        },
+                    ],
+                },
+                'disable an unknown repo': {
+                    input: [
+                        {
+                            op: 'enable',
+                            url: 'unknownRepoUrl',
+                            value: 'false',
+                        },
+                    ],
+                    output: [
+                        {
+                            status: 404,
+                            error: 'Unknown repository URL',
+                            requestedOperation: {
+                                op: 'enable',
+                                url: 'unknownRepoUrl',
+                                value: 'false',
+                            },
+                        },
+                    ],
+                },
+                'disable an existing repo and an unknown repo': {
+                    input: [
+                        {
+                            op: 'enable',
+                            url: '1',
+                            value: 'false',
+                        },
+                        {
+                            op: 'enable',
+                            url: 'unknownRepoUrl',
+                            value: 'false',
+                        },
+                    ],
+                    output: [
+                        {
+                            status: 200,
+                            requestedOperation: {
+                                op: 'enable',
+                                url: '1',
+                                value: 'false',
+                            },
+                        },
+                        {
+                            status: 404,
+                            error: 'Unknown repository URL',
+                            requestedOperation: {
+                                op: 'enable',
+                                url: 'unknownRepoUrl',
+                                value: 'false',
+                            },
+                        },
+                    ],
+                    expectedRepoDetails: [
+                        {
+                            url: '1',
+                            description: '1',
+                            enabled: false,
+                        },
+                    ],
+                },
+            };
+            for (const [testName, test] of Object.entries(tests)) {
+                describe.only(testName, function() { // eslint-disable-line
+                    it(`returns the expected operation info and correctly updates the repository file`, async function() {
+                        const output = await templateController.batchUpdate(test.input);
+                        output.should.deep.equal(test.output);
+
+                        if (test.expectedRepoDetails) {
+                            const repoFile = fs.readJsonSync(templateController.repositoryFile);
+                            repoFile.should.include.deep.members(test.expectedRepoDetails);
+                        }
+                    });
+                });
+            }
+        });
+    });
+    describe('performOperation(operation)', function() {
+        let templateController;
+        beforeEach(() => {
+            templateController = new Templates('');
+            templateController.repositoryList = sampleRepoList;
         });
         describe('when `operation.url` is an existing url', function() {
             const tests = {
@@ -381,12 +599,9 @@ describe('Templates.js', function() {
             };
             for (const [testName, test] of Object.entries(tests)) {
                 describe(testName, function() { // eslint-disable-line
-                    it(`returns the expected operation info`, async function() {
-                        const output = await templateController.performOperation(test.input);
+                    it(`returns the expected operation info and correctly updates the repository file`, function() {
+                        const output = templateController.performOperation(test.input);
                         output.should.deep.equal(test.output);
-
-                        const repoFile = fs.readJsonSync(templateController.repositoryFile);
-                        repoFile.should.deep.include(test.expectedRepoDetails);
                     });
                 });
             }
@@ -428,8 +643,8 @@ describe('Templates.js', function() {
             };
             for (const [testName, test] of Object.entries(tests)) {
                 describe(testName, function() { // eslint-disable-line
-                    it(`returns the expected operation info`, async function() {
-                        const output = await templateController.performOperation(test.input);
+                    it(`returns the expected operation info`, function() {
+                        const output = templateController.performOperation(test.input);
                         output.should.deep.equal(test.output);
                     });
                 });

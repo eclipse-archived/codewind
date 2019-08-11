@@ -86,10 +86,7 @@ router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, re
   const user = req.cw_user;
   const templateController = user.templates;
   const requestedOperations = req.body;
-  const operationPromises = requestedOperations.map(operation =>
-    templateController.performOperation(operation)
-  );
-  const operationResults = await Promise.all(operationPromises);
+  const operationResults = await templateController.batchUpdate(requestedOperations);
   res.status(207).json(operationResults);
 });
 

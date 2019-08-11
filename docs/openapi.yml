@@ -1345,8 +1345,6 @@ components:
           example: "https://github.com/microclimate-dev2ops/SVTPythonTemplate"
         projectType:
           example: "docker"
-        projectStyle:
-          example: "Codewind"
     TemplateRepo:
       type: object
       required:
