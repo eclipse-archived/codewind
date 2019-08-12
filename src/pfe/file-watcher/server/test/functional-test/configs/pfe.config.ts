@@ -9,11 +9,13 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-export const pfe = {
+const pfe = {
     "PROTOCOL": process.env.PFE_PROTOCOL || process.env.IN_K8 ? "https" : "http",
     "HOST": process.env.PFE_HOST || "localhost",
     "PORT": process.env.PFE_PORT || process.env.IN_K8 ? "9191" : "9090",
 };
+
+export const baseURL = pfe.PROTOCOL + "://" + pfe.HOST + ":" + pfe.PORT;
 
 const apis = ["/api/v1/"];
 
