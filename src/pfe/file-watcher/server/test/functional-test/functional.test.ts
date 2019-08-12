@@ -35,14 +35,6 @@ const genericSuite = new GenericTestSuite(socket);
 const projectSuite = new ProjectTestSuite(socket);
 
 describe("PFE - functional test", () => {
-  beforeEach("check for pfe to be up", (done) => {
-    utils.pingPFE((err: any, res: any) => {
-      if (err) done(err);
-      expect(res.statusCode).to.equal(200);
-      done();
-    });
-  });
-
   before("registering socket listener", () => {
     socket.registerListener("PFE Functional Test Listener");
   });
