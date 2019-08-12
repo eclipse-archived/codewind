@@ -15,7 +15,7 @@ import request from 'request';
 
 export function importProjectFromTar(tarFile: string, name: string, dest: string): Promise<void> {
 
-    const fileName = `/app/${name}.tar.gz`;
+    const fileName = `/tmp/${name}.tar.gz`;
     const file = fs.createWriteStream(fileName);
 
     return new Promise((resolve, reject) => {
