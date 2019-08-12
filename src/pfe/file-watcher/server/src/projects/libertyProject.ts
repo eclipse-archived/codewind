@@ -137,7 +137,7 @@ export async function validate(operation: Operation): Promise<void> {
         logger.logProjectError("server.xml not found at: " + fullServerXmlPath, operation.projectInfo.projectID);
 
         const missingServerXmlMsg = await getTranslation("buildApplicationTask.missingServerXml", { path: fullServerXmlPath });
-        logBuildEvent(operation.projectInfo, missingServerXmlMsg, true);
+        await logBuildEvent(operation.projectInfo, missingServerXmlMsg, true);
     }
 
     const filepath = operation.projectInfo.location + "/pom.xml";
@@ -218,7 +218,7 @@ export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isErr
 
     logger.logProjectInfo(`Writing to build log at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
 
-    fs.appendFile(buildLogPath, fullMsg, (err) => {
+    await fs.appendFile(buildLogPath, fullMsg, (err) => {
         if (err) {
             logger.logProjectError("File system error writing to build log: " + err, projectInfo.projectID);
         }
