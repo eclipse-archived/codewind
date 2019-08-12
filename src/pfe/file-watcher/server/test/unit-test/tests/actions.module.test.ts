@@ -336,7 +336,6 @@ export function actionsTestModule(): void {
                 await rmdirAsync(appsodyProjectPath);
             }
         });
-
         const combinations: any = {
             "combo1": {
                 "description": "request missing project type and location",
