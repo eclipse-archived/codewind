@@ -33,6 +33,7 @@ class DescriptionEditor extends React.Component {
         }
         this.handleDescFieldChange = this.handleDescFieldChange.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.handleKeyDownLabel = this.handleKeyDownLabel.bind(this);
         this.onMouseEnterHandler = this.onMouseEnterHandler.bind(this);
         this.onMouseLeaveHandler = this.onMouseLeaveHandler.bind(this);
     }
@@ -65,6 +66,14 @@ class DescriptionEditor extends React.Component {
         this.setState({ isMouseHover: false })
     }
 
+    handleKeyDownLabel(key) {
+        switch (key.keyCode) {
+            case 13: {
+               this.handleSwitchToEdit()
+            }
+            default: { } 
+        }      
+    }
 
     handleKeyDown(key) {
         switch (key.keyCode) {
@@ -138,12 +147,12 @@ class DescriptionEditor extends React.Component {
             <Fragment>
                 <TextArea onKeyDown={(e) => this.handleKeyDown(e)} aria-label="Optional Description" placeholder='Description of test' labelText='' onChange={(e) => this.handleDescFieldChange(e)} value={editableValue}>EDIT</TextArea>
                 <div className="footer">
-                    <div className="charCounter">
-                        <label className={testCounterColor} aria-label="Character counter">{editableValue.length} / {AppConstants.MAX_DESC_LENGTH}</label>
-                    </div>
                     <div className="actions">
                         <Button small={true} className="link" kind="ghost" aria-label="Cancel" onClick={(e) => this.handleDescCancel(e)}  disabled={false} >Cancel</Button>
                         <Button small={true} className="link" kind="ghost" aria-label="Save" onClick={(e) => this.handleDescSave(e)}  disabled={false} >Save</Button>
+                    </div>
+                    <div className="charCounter">
+                        <label className={testCounterColor} aria-label="Character counter">{editableValue.length} / {AppConstants.MAX_DESC_LENGTH}</label>
                     </div>
                 </div>
             </Fragment>
@@ -156,7 +165,7 @@ class DescriptionEditor extends React.Component {
         const description = text ? text : "Description of test";
         return (
             <div className='description-text' onMouseEnter={this.onMouseEnterHandler} onMouseLeave={this.onMouseLeaveHandler}>
-                <span onClick={() => this.handleSwitchToEdit()} className={color}>{(description)}</span>
+                <span tabIndex={0} onKeyDown={(e) => this.handleKeyDownLabel(e)} onClick={() => this.handleSwitchToEdit()} className={color}>{(description)}</span>
                 {this.state.isBeingSaved ?
                     <Loading style={{ 'height': '25px', 'width': '25px', 'paddingTop': '0px', 'marginLeft': '24px' }} className="inline" withOverlay={false} small />
                     :
@@ -174,7 +183,7 @@ class DescriptionEditor extends React.Component {
                                     onClick={() => this.handleSwitchToEdit()}>
                                 </Button>
                                 :
-                                <div style={{ width: "25px" }}></div>
+                                <div style={{ width: "63px" }}></div>
                         }
                     </div>
                 }
