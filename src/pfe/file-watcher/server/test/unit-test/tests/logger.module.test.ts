@@ -31,11 +31,6 @@ export function loggerTestModule(): void {
                 await copyAsync(originalProjectMetadata, testProjectMetadata);
             }
 
-            // if (await existsAsync(turbineLogPath)) {
-            //     await unlinkAsync(turbineLogPath);
-            //     await writeAsync(turbineLogPath, "");
-            // }
-
             process.env.NODE_ENV = "production";
         });
 
@@ -111,41 +106,6 @@ export function loggerTestModule(): void {
             }).timeout(10000);
         }
     });
-
-    // describe("testing of logInfo function", () => {
-
-    //     const msg = "Random Info Msg: " + Math.floor(Math.random() * Math.floor(1000));
-    //     const logContentsPrefix = "Turbine";
-
-    //     const regex = new RegExp(logContentsPrefix + ".*INFO.*" + msg, "g");
-
-    //     before("create test directories", async () => {
-    //         process.env.NODE_ENV = "production";
-    //     });
-
-    //     it("testing of logInfo function msg: " + msg, async () => {
-    //         logger.logInfo(msg);
-    //         let intervalCtr = 0;
-    //         const retval = await new Promise((resolve) => {
-    //             const intervaltimer = setInterval(async () => {
-    //                 // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-    //                 console.log(" read attempt " + intervalCtr);
-    //                 const turbineLogContents = await readFileAsync(turbineLogPath);
-    //                 intervalCtr++;
-    //                 const isContentPresent = regex.test(turbineLogContents.toString());
-    //                 if (isContentPresent) {
-    //                     clearInterval(intervaltimer);
-    //                     return resolve(isContentPresent);
-    //                 }
-    //                 if (intervalCtr == 5) {
-    //                     clearInterval(intervaltimer);
-    //                     return resolve(false);
-    //                 }
-    //             }, 1000);
-    //         });
-    //         expect(retval).to.equal(true);
-    //     }).timeout(10000);
-    // });
 
     describe("combinational testing of logProjectError function", () => {
 
@@ -231,41 +191,6 @@ export function loggerTestModule(): void {
         }
     });
 
-    // describe("testing of logError function", () => {
-
-    //     const msg = "Random Error Msg: " + Math.floor(Math.random() * Math.floor(1000));
-    //     const logContentsPrefix = "Turbine";
-
-    //     const regex = new RegExp(logContentsPrefix + ".*ERROR.*" + msg, "g");
-
-    //     before("create test directories", async () => {
-    //         process.env.NODE_ENV = "production";
-    //     });
-
-    //     it("testing of logError function msg: " + msg, async () => {
-    //         logger.logError(msg);
-    //         let intervalCtr = 0;
-    //         const retval = await new Promise((resolve) => {
-    //             const intervaltimer = setInterval(async () => {
-    //                 // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-    //                 console.log(" read attempt " + intervalCtr);
-    //                 const turbineLogContents = await readFileAsync(turbineLogPath);
-    //                 intervalCtr++;
-    //                 const isContentPresent = regex.test(turbineLogContents.toString());
-    //                 if (isContentPresent) {
-    //                     clearInterval(intervaltimer);
-    //                     return resolve(isContentPresent);
-    //                 }
-    //                 if (intervalCtr == 5) {
-    //                     clearInterval(intervaltimer);
-    //                     return resolve(false);
-    //                 }
-    //             }, 1000);
-    //         });
-    //         expect(retval).to.equal(true);
-    //     }).timeout(10000);
-    // });
-
     describe("combinational testing of logProjectDebug function", () => {
 
         before("create test directories", async () => {
@@ -339,42 +264,6 @@ export function loggerTestModule(): void {
             }).timeout(10000);
         }
     });
-
-    // describe("testing of logDebug function", () => {
-
-    //     const msg = "Random Debug Msg: " + Math.floor(Math.random() * Math.floor(1000));
-    //     const logContentsPrefix = "Turbine";
-
-    //     const regex = new RegExp(logContentsPrefix + ".*DEBUG.*" + msg, "g");
-
-    //     before("create test directories", async () => {
-    //         process.env.NODE_ENV = "production";
-    //         logger.setLoggingLevel("debug");
-    //     });
-
-    //     it("testing of logDebug function msg: " + msg, async () => {
-    //         logger.logDebug(msg);
-    //         let intervalCtr = 0;
-    //         const retval = await new Promise((resolve) => {
-    //             const intervaltimer = setInterval(async () => {
-    //                 // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-    //                 console.log(" read attempt " + intervalCtr);
-    //                 const turbineLogContents = await readFileAsync(turbineLogPath);
-    //                 intervalCtr++;
-    //                 const isContentPresent = regex.test(turbineLogContents.toString());
-    //                 if (isContentPresent) {
-    //                     clearInterval(intervaltimer);
-    //                     return resolve(isContentPresent);
-    //                 }
-    //                 if (intervalCtr == 5) {
-    //                     clearInterval(intervaltimer);
-    //                     return resolve(false);
-    //                 }
-    //             }, 1000);
-    //         });
-    //         expect(retval).to.equal(true);
-    //     }).timeout(10000);
-    // });
 
     describe("combinational testing of logProjectTrace function", () => {
 
@@ -452,12 +341,7 @@ export function loggerTestModule(): void {
 
     describe("testing of Turbine Log functions", () => {
 
-        // const msg = "Random Trace Msg: " + Math.floor(Math.random() * Math.floor(1000));
-        // const logContentsPrefix = "Turbine";
-
-        // const regex = new RegExp(logContentsPrefix + ".*TRACE.*" + msg, "g");
-
-        before("create test directories", async () => {
+        before("set env variable", async () => {
             process.env.NODE_ENV = "production";
         });
 
@@ -465,28 +349,24 @@ export function loggerTestModule(): void {
             "combo1": {
                 "msg": "Random INFO Msg: " + Math.floor(Math.random() * Math.floor(1000)),
                 "level": "info",
-                "logContentsPrefix1": "Turbine",
                 "logContentsPrefix2": "INFO",
                 "result": true
             },
             "combo2": {
                 "msg": "Random ERROR Msg: " + Math.floor(Math.random() * Math.floor(1000)),
                 "level": "error",
-                "logContentsPrefix1": "Turbine",
                 "logContentsPrefix2": "ERROR",
                 "result": true
             },
             "combo3": {
                 "msg": "Random DEBUG Msg: " + Math.floor(Math.random() * Math.floor(1000)),
                 "level": "debug",
-                "logContentsPrefix1": "Turbine",
                 "logContentsPrefix2": "DEBUG",
                 "result": true
             },
             "combo4": {
                 "msg": "Random TRACE Msg: " + Math.floor(Math.random() * Math.floor(1000)),
                 "level": "trace",
-                "logContentsPrefix1": "Turbine",
                 "logContentsPrefix2": "TRACE",
                 "result": true
             }
@@ -496,7 +376,7 @@ export function loggerTestModule(): void {
 
             const msg = combinations[combo]["msg"];
             const level = combinations[combo]["level"];
-            const logContentsPrefix1 = combinations[combo]["logContentsPrefix1"];
+            const logContentsPrefix1 = "Turbine";
             const logContentsPrefix2 = combinations[combo]["logContentsPrefix2"];
             const expectedResult = combinations[combo]["result"];
 
@@ -543,29 +423,6 @@ export function loggerTestModule(): void {
                 expect(retval).to.equal(expectedResult);
             }).timeout(10000);
         }
-
-        // it("testing of logTrace function msg: " + msg, async () => {
-        //     logger.logTrace(msg);
-        //     let intervalCtr = 0;
-        //     const retval = await new Promise((resolve) => {
-        //         const intervaltimer = setInterval(async () => {
-        //             // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-        //             console.log(" read attempt " + intervalCtr);
-        //             const turbineLogContents = await readFileAsync(turbineLogPath);
-        //             intervalCtr++;
-        //             const isContentPresent = regex.test(turbineLogContents.toString());
-        //             if (isContentPresent) {
-        //                 clearInterval(intervaltimer);
-        //                 return resolve(isContentPresent);
-        //             }
-        //             if (intervalCtr == 5) {
-        //                 clearInterval(intervaltimer);
-        //                 return resolve(false);
-        //             }
-        //         }, 1000);
-        //     });
-        //     expect(retval).to.equal(true);
-        // }).timeout(10000);
     });
 
     describe("combinational testing of assert function", () => {
@@ -646,7 +503,6 @@ export function loggerTestModule(): void {
             "combo1": {
                 "msg": "The current log level is",
                 "level": "info",
-                "logContentsPrefix1": "Turbine",
                 "logContentsPrefix2": "INFO",
                 "result": true
             },
@@ -654,7 +510,6 @@ export function loggerTestModule(): void {
                 "msg": "is not a valid value, the following log levels are available",
                 "level": "wronglevel",
                 "projectID": undefined,
-                "logContentsPrefix1": "Turbine",
                 "logContentsPrefix2": "ERROR",
                 "result": true
             }
@@ -664,7 +519,7 @@ export function loggerTestModule(): void {
 
             const msg = combinations[combo]["msg"];
             const level = combinations[combo]["level"];
-            const logContentsPrefix1 = combinations[combo]["logContentsPrefix1"];
+            const logContentsPrefix1 = "Turbine";
             const logContentsPrefix2 = combinations[combo]["logContentsPrefix2"];
             const expectedResult = combinations[combo]["result"];
 
