@@ -13,8 +13,11 @@ PROJECT_URLS[2]="https://github.com/microclimate-dev2ops/javaMicroProfileTemplat
 PROJECT_URLS[3]="https://github.com/microclimate-dev2ops/nodeExpressTemplate"
 PROJECT_URLS[4]="https://github.com/microclimate-dev2ops/swiftTemplate"
 
+cd ./test/resources/
 
 for PROJECT_URL in ${PROJECT_URLS[@]}; do
     echo -e "${BLUE}Cloning $PROJECT_URL. ${RESET}\n"
     git clone $PROJECT_URL
 done
+
+cd -

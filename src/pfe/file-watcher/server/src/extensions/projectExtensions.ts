@@ -10,7 +10,7 @@
  *******************************************************************************/
 "use strict";
 
-import fs from "fs-extra";
+import * as path from "path";
 
 import * as logger from "../utils/logger";
 import * as utils from "../utils/utils";
@@ -23,6 +23,7 @@ import * as nodeProject from "../projects/nodejsProject";
 import { DockerProject } from "../projects/DockerProject";
 import { ShellExtensionProject } from "../projects/ShellExtensionProject";
 import { ProjectInfo, ProjectCapabilities, defaultProjectCapabilities } from "../projects/Project";
+import { workspaceConstants } from "../projects/constants";
 
 export const DOCKER_TYPE = "docker";
 
@@ -106,20 +107,29 @@ export async function determineProjectType(location: string): Promise<Array<stri
     if (! await utils.asyncFileExists(location)) {
         const msg = "The location does not exist: " + location;
         logger.logError(msg);
-        const error = new Error("The location does not exist: " + location);
+        const error = new Error(msg);
         error.name = "FILE_NOT_EXIST";
         throw error;
     }
 
     const types = [];
+    let isValidLoc;
 
     if (await utils.asyncIsDirectory(location)) {
 
         for (let i = 0; i < projectHandlers.length; i++) {
-            const isValidLoc = await projectHandlers[i].typeMatches(location);
+            isValidLoc = await projectHandlers[i].typeMatches(location);
             if (isValidLoc) {
                 types.push(projectHandlers[i].supportedType);
             }
+        }
+    }
+
+    // Check for Docker projects if types array is empty
+    if (types.length == 0) {
+        isValidLoc = new DockerProject(DOCKER_TYPE).typeMatches(location);
+        if (isValidLoc) {
+            types.push(DOCKER_TYPE);
         }
     }
 
@@ -163,7 +173,7 @@ async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any
         // try to load extension handler if ID was provided
         if (extensionID) {
             try {
-                const files = await utils.asyncReadDir(`/codewind-workspace/.extensions/${extensionID}`);
+                const files = await utils.asyncReadDir(path.join(workspaceConstants.workspaceExtensionDir, extensionID));
                 if (files) {
                     if (files.includes(".sh-extension")) {
                         handler = new ShellExtensionProject(projectInfo.projectType);
@@ -174,6 +184,7 @@ async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any
             }
             catch (err) {
                 logger.logError(`Failed to get extension project handler ${extensionID} for ${projectInfo.location}`);
+                logger.logError(err);
                 return undefined;
             }
         }

@@ -865,6 +865,13 @@ paths:
             type: string
           required: false
           description: Specify this to filter templates returned by project style
+        - name: showEnabledOnly
+          in: query
+          schema:
+            type: string
+            enum: ['true', 'false']
+          required: false
+          description: Set this to 'true' to return only templates from enabled repositories
       responses:
         200:
           description: Returns all the templates that Codewind can generate a project from
@@ -888,12 +895,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    url:
-                      type: string
-                    description:
-                      type: string
+                  $ref: '#/components/schemas/TemplateRepo'
     post:
       summary: Make Codewind aware of a template repository
       requestBody:
@@ -901,15 +903,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - url
-                - description
-              properties:
-                url:
-                    type: string
-                description:
-                    type: string
+              $ref: '#/components/schemas/TemplateRepo'
       responses:
         200:
           description: Returns all the templates repositories that Codewind will use to find templates
@@ -947,14 +941,39 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    url:
-                      type: string
-                    description:
-                      type: string
+                  $ref: '#/components/schemas/TemplateRepo'
         400:
           description: Bad request
+  /api/v1/batch/templates/repositories:
+    patch:
+      summary: Batch change settings for a template repository of which Codewind is aware
+      requestBody:
+        description: repository settings
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TemplateRepoSetting'
+      responses:
+        207:
+          description: Returns success/failure statuses of settings operations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - status
+                    - requestedOperation
+                  properties:
+                    status:
+                      type: integer
+                    requestedOperation:
+                      $ref: '#/components/schemas/TemplateRepoSetting'
+                    error:
+                      type: string
   /api/v1/templates/styles:
     get:
       summary: List all project styles for which Codewind has templates
@@ -1309,6 +1328,12 @@ components:
       example: 20190326154749
     Template:
       type: object
+      required:
+        - label
+        - description
+        - language
+        - url
+        - projectType
       properties:
         label:
           example: "python hello world"
@@ -1320,6 +1345,36 @@ components:
           example: "https://github.com/microclimate-dev2ops/SVTPythonTemplate"
         projectType:
           example: "docker"
+    TemplateRepo:
+      type: object
+      required:
+        - url
+        - description
+      properties:
+        url:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+    TemplateRepoSetting:
+      type: object
+      required:
+        - op
+        - url
+        - value
+      properties:
+        op:
+          description: repository setting to change
+          type: string
+          enum: [enable]
+        url:
+          description: url of the modified template repository
+          type: string
+          example: https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json
+        value:
+          type: string
+          example: true
     BasicMetric:
       properties:
         time:
