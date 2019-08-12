@@ -23,6 +23,7 @@ class ModalNoProjectID extends React.Component {
     return (
       <div>
         <Modal id="RegressionTestNoID"
+          modalAriaLabel="Missing project ID"
           open={true}
           danger={true}
           passiveModal={true}

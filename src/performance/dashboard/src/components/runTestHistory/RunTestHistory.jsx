@@ -178,7 +178,7 @@ class RunTestHistory extends Component {
 
     render() {
         const filteredRows = this.state.filteredRows;
-       
+
         return (
             <div className='RunTestHistory'>
 
@@ -191,12 +191,12 @@ class RunTestHistory extends Component {
                         <TableContainer title='Test history'>
                             <TableToolbar>
                                 <TableBatchActions {...getBatchActionProps()}>
-                                    <TableBatchAction renderIcon={IconDelete} iconDescription='Delete' onClick={() => this.handleBatchDeleteBtn(selectedRows)}>
+                                    <TableBatchAction renderIcon={IconDelete} aria-label='Delete' iconDescription='Delete' onClick={() => this.handleBatchDeleteBtn(selectedRows)}>
                                         Delete
                                     </TableBatchAction>
                                 </TableBatchActions>
                                 <TableToolbarContent>
-                                    <TableToolbarSearch small={true} kind='' onChange={this.filterRows} />
+                                    <TableToolbarSearch small={true} kind='' aria-label='Search and filter' onChange={this.filterRows} />
                                 </TableToolbarContent>
                             </TableToolbar>
                             <Table>

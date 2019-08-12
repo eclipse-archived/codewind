@@ -136,7 +136,7 @@ class DescriptionEditor extends React.Component {
         if (editableValue.length === AppConstants.MAX_DESC_LENGTH) { testCounterColor = 'danger'; }
         return (
             <Fragment>
-                <TextArea onKeyDown={(e) => this.handleKeyDown(e)} placeholder='Description of test' labelText='' onChange={(e) => this.handleDescFieldChange(e)} value={editableValue}>EDIT</TextArea>
+                <TextArea onKeyDown={(e) => this.handleKeyDown(e)} aria-label="Optional Description" placeholder='Description of test' labelText='' onChange={(e) => this.handleDescFieldChange(e)} value={editableValue}>EDIT</TextArea>
                 <div className="footer">
                     <div className="charCounter">
                         <label className={testCounterColor} aria-label="Character counter">{editableValue.length} / {AppConstants.MAX_DESC_LENGTH}</label>
