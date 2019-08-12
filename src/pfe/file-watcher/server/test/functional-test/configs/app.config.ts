@@ -8,6 +8,9 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+/**
+ * This file for codewind application configuration such as workspace and etc.
+ */
 import * as path from "path";
 
 
