@@ -17,11 +17,11 @@ const pfe = {
 
 export const baseURL = pfe.PROTOCOL + "://" + pfe.HOST + ":" + pfe.PORT;
 
-const apis = ["/api/v1/"];
-
 export const deploymentRegistry = process.env.IN_K8_REGISTRY || "sakibh"; // need to change the default registry to the fallback of the che registry installed for test
 
+const apiv1 = "/api/v1/";
+
 export const pfeAPIs = {
-    "projects": apis + "projects",
-    "registry": apis + "registry"
+    "projects": apiv1 + "projects",
+    "registry": apiv1 + "registry"
 };
