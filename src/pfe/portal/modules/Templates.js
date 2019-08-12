@@ -12,9 +12,11 @@
 const fs = require('fs-extra');
 const path = require('path');
 
+const cwUtils = require('../modules/utils/sharedFunctions');
 const Logger = require('./utils/Logger');
+const TemplateError = require('./utils/errors/TemplateError');
+
 const log = new Logger('Templates.js');
-const cwUtils = require('../modules/utils/sharedFunctions.js');
 
 const DEFAULT_REPOSITORY_LIST = [
   {
@@ -243,7 +245,7 @@ module.exports = class Templates {
    */
   async addRepository(repositoryUrl, repositoryDescription) {
     if (this.getRepositories().find(repo => repo.url == repositoryUrl)) {
-      throw new Error('Repository URL must be unique');
+      throw new TemplateError('DUPLICATE_URL', repositoryUrl);
     }
     const newRepo = {
       url: repositoryUrl,

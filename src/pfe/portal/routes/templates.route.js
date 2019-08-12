@@ -10,11 +10,12 @@
  *******************************************************************************/
 const express = require('express');
 
+const { validateReq } = require('../middleware/reqValidator');
 const Logger = require('../modules/utils/Logger');
+const TemplateError = require('../modules/utils/errors/TemplateError');
 
 const router = express.Router();
 const log = new Logger(__filename);
-const { validateReq } = require('../middleware/reqValidator');
 
 /**
  * API Function to return a list of available templates
@@ -60,7 +61,8 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
   try {
     await user.templates.addRepository(repositoryUrl, repositoryDescription);
   } catch (error) {
-    if (error.message === 'Repository URL must be unique') {
+    log.error(error);
+    if (error instanceof TemplateError && error.code === 'DUPLICATE_URL') {
       res.status(400).send(error.message);
       return;
     }

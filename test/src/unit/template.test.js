@@ -534,7 +534,7 @@ describe('Templates.js', function() {
                 },
             };
             for (const [testName, test] of Object.entries(tests)) {
-                describe.only(testName, function() { // eslint-disable-line
+                describe(testName, function() { // eslint-disable-line
                     it(`returns the expected operation info and correctly updates the repository file`, async function() {
                         const output = await templateController.batchUpdate(test.input);
                         output.should.deep.equal(test.output);

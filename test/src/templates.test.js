@@ -103,6 +103,13 @@ describe('Template API tests', function() {
             });
             res.should.have.status(400);
         });
+        it('POST should fail to add template repository with a duplicate url', async function() {
+            const res = await addTemplateRepo({
+                url: originalTemplateRepos[0].url,
+                description: 'Duplicate template URL',
+            });
+            res.should.have.status(400);
+        });
         it('DELETE should remove a template repository', async function() {
             const res = await deleteTemplateRepo(expectedUrl);
             res.should.have.status(200);
