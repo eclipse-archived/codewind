@@ -268,21 +268,21 @@ export async function getAppLog(logDirectory: string, projectID: string, project
     const ffdclogPath = path.join(logDirs[0], `ffdc`);
     const inWorkspaceLogFiles = await logHelper.getLogFilesWithTimestamp(logDirs[1], [logHelper.appLogs.app]);
 
-    let allAppLogFiles = [];
+    let allAppLogFiles: logHelper.LogFiles[] = [];
 
     if (process.env.HOST_OS === "windows") {
         logDirs[0] = "/tmp/liberty/liberty/wlp/usr/servers/defaultServer/logs/";
 
         const containerName = projectUtil.getDefaultContainerName(projectID, projectLocation);
         const inContainerLogFiles = await logHelper.getLogFilesFromContainer(projectID, containerName, logDirs[0], logSuffixes);
-        allAppLogFiles = inContainerLogFiles.concat(inWorkspaceLogFiles);
+        allAppLogFiles = inContainerLogFiles ? inContainerLogFiles.concat(inWorkspaceLogFiles) : allAppLogFiles;
 
         if ((await dockerutil.fileExistInContainer(projectID, containerName, ffdclogPath, projectName))) {
             appLog.dir = ffdclogPath;
         }
     } else {
         const inAppLogFiles = await logHelper.getLogFilesWithTimestamp(logDirs[0], logSuffixes);
-        allAppLogFiles = inAppLogFiles.concat(inWorkspaceLogFiles);
+        allAppLogFiles = inAppLogFiles ? inAppLogFiles.concat(inWorkspaceLogFiles) : allAppLogFiles;
 
         if (await utils.asyncFileExists(ffdclogPath)) {
             appLog.dir = ffdclogPath;
