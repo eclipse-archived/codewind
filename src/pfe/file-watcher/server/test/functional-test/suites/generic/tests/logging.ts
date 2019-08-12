@@ -24,7 +24,7 @@ export default class LoggingTest {
 
     run(runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
-            const logLevels = ["info", "warn", "error", "trace", "debug", "invalid"];
+            const logLevels: Array<string> = ["info", "warn", "error", "trace", "debug", "invalid"];
             const invalidLevel = _.cloneDeep(logLevels).pop();
             for (const level of logLevels) {
                 it(`set logging level to ${level}`, async () => {

@@ -38,21 +38,30 @@ export default class WorkspaceTest {
                 deploymentRegistry: "someregistry",
                 watcherChunkTimeout: 50000
             };
-            this.afterEachHook(settingsPath, backupSettingsPath);
+            let backupSettingsContent = {};
+
+            before("create a backup for original settings file and remove the original file", async () => {
+                if (await fs.existsSync(settingsPath)) {
+                    backupSettingsContent = JSON.parse(await fs.readFileSync(settingsPath, {encoding: "utf-8"}));
+                }
+            });
+            afterEach("delete backup settings file, revert back original file and load the current workspace settings", async () => {
+                if (await fs.existsSync(backupSettingsPath)) {
+                    await fs.renameSync(backupSettingsPath, settingsPath);
+                    await fs.chownSync(settingsPath, 1001, 2004);
+                    const info: any = await genericLib.readWorkspaceSettings();
+                    expect(info);
+                    expect(info.statusCode);
+                    expect(info.statusCode).to.equal(200);
+                    expect(info.workspaceSettings);
+                    expect(info.workspaceSettings).to.deep.equal(backupSettingsContent);
+                }
+            });
+
             this.runReadWorkspaceSettings(socket, settingsPath, settingsContent, backupSettingsPath);
             this.runDeploymentRegistryStatus(socket);
             if (process.env.IN_K8) {
                 this.runTestDeploymentRegistry(settingsContent);
-            }
-        });
-    }
-
-    private afterEachHook(settingsPath: string, backupSettingsPath: string): void {
-        afterEach("delete backup settings file, revert back original file and load the current workspace settings", async () => {
-            if (await fs.existsSync(backupSettingsPath)) {
-                await fs.renameSync(backupSettingsPath, settingsPath);
-                await fs.chownSync(settingsPath, 1001, 2004);
-                await genericLib.readWorkspaceSettings();
             }
         });
     }
@@ -122,7 +131,6 @@ export default class WorkspaceTest {
                     const info: any = await genericLib.readWorkspaceSettings();
                     const failureMsg = "Codewind detected an error with the Deployment Registry x^72@!$&. Please ensure it is a valid Deployment Registry.";
                     const targetEvent = eventConfigs.events.deploymentRegistryStatus;
-                    console.log("Info: %j", info);
                     expect(info);
                     expect(info.statusCode);
                     expect(info.statusCode).to.equal(500);
