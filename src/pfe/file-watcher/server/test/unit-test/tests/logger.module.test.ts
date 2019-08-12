@@ -17,7 +17,7 @@ import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync, readFileAs
 
 export function loggerTestModule(): void {
 
-    const turbineLogPath = path.join(app_configs.microclimateWorkspaceLogsDir, "Turbine.log");
+    const turbineLogPath = path.join(app_configs.codewindWorkspaceLogsDir, "Turbine.log");
 
     const projectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
     const originalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
@@ -88,7 +88,6 @@ export function loggerTestModule(): void {
                 const retval = await new Promise((resolve) => {
                     const intervaltimer = setInterval(async () => {
                         // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-                        console.log(combo + " read attempt " + intervalCtr);
                         const turbineLogContents = await readFileAsync(turbineLogPath);
                         intervalCtr++;
                         const isContentPresent = regex.test(turbineLogContents.toString());
@@ -172,7 +171,6 @@ export function loggerTestModule(): void {
                 const retval = await new Promise((resolve) => {
                     const intervaltimer = setInterval(async () => {
                         // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-                        console.log(combo + " read attempt " + intervalCtr);
                         const turbineLogContents = await readFileAsync(turbineLogPath);
                         intervalCtr++;
                         const isContentPresent = regex.test(turbineLogContents.toString());
@@ -246,7 +244,6 @@ export function loggerTestModule(): void {
                 const retval = await new Promise((resolve) => {
                     const intervaltimer = setInterval(async () => {
                         // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-                        console.log(combo + " read attempt " + intervalCtr);
                         const turbineLogContents = await readFileAsync(turbineLogPath);
                         intervalCtr++;
                         const isContentPresent = regex.test(turbineLogContents.toString());
@@ -320,7 +317,6 @@ export function loggerTestModule(): void {
                 const retval = await new Promise((resolve) => {
                     const intervaltimer = setInterval(async () => {
                         // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-                        console.log(combo + " read attempt " + intervalCtr);
                         const turbineLogContents = await readFileAsync(turbineLogPath);
                         intervalCtr++;
                         const isContentPresent = regex.test(turbineLogContents.toString());
@@ -406,7 +402,6 @@ export function loggerTestModule(): void {
                 const retval = await new Promise((resolve) => {
                     const intervaltimer = setInterval(async () => {
                         // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-                        console.log(combo + " read attempt " + intervalCtr);
                         const turbineLogContents = await readFileAsync(turbineLogPath);
                         intervalCtr++;
                         const isContentPresent = regex.test(turbineLogContents.toString());
@@ -478,7 +473,6 @@ export function loggerTestModule(): void {
                 const retval = await new Promise((resolve) => {
                     const intervaltimer = setInterval(async () => {
                         // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-                        console.log(combo + " read attempt " + intervalCtr);
                         const turbineLogContents = await readFileAsync(turbineLogPath);
                         intervalCtr++;
                         const isContentPresent = regex.test(turbineLogContents.toString());
@@ -531,7 +525,6 @@ export function loggerTestModule(): void {
                 const retval = await new Promise((resolve) => {
                     const intervaltimer = setInterval(async () => {
                         // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-                        console.log(combo + " read attempt " + intervalCtr);
                         const turbineLogContents = await readFileAsync(turbineLogPath);
                         intervalCtr++;
                         const isContentPresent = regex.test(turbineLogContents.toString());
