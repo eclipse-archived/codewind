@@ -217,6 +217,7 @@ class ModalModifyLoadTests extends React.Component {
                                                     autoComplete="off"
                                                     invalid={!isPathValid.valid}
                                                     invalidText={`${isPathValid.message}`}
+                                                    labelText=''
                                                     hideLabel
                                                     aria-label="Path"
                                                     value={formFields['path']}
