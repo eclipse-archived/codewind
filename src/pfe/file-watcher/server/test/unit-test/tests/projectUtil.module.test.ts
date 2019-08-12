@@ -11,7 +11,7 @@
 import { expect } from "chai";
 import * as path from "path";
 import * as fs from "fs";
-
+import * as fse from "fs-extra";
 import * as crypto from "crypto";
 import { TransformOptions } from "stream";
 import * as projectUtil from "../../../../server/src/projects/projectUtil";
@@ -21,9 +21,6 @@ import * as libertyProject from "../../../../server/src/projects/libertyProject"
 import { existsAsync, mkdirAsync, writeAsync, copyAsync } from "../../functional-test/lib/utils";
 import * as projectsController from "../../../../server/src/controllers/projectsController";
 import { projectConstants } from "../../../../server/src/projects/constants";
-import * as app_configs from "../../functional-test/configs/app.config";
-import * as constants from "../../../../server/src/projects/constants";
-import { threadId } from "worker_threads";
 
 export function projectUtilTestModule(): void {
     const extensionIDDir = path.join(process.env.CW_EXTENSION_DIR, "extensionProject");
@@ -53,9 +50,7 @@ export function projectUtilTestModule(): void {
 
     describe("combinational testing of of getContainerName function", async () => {
         before("create the extension directory with some fake files", async () => {
-            if (!(await existsAsync(extensionIDDir))) {
-                await mkdirAsync(extensionIDDir, { recursive: true });
-            }
+            fse.ensureDirSync(extensionIDDir);
             expect(fs.statSync(extensionIDDir)).to.exist;
             const filePath = path.resolve(extensionIDDir, ".sh-extension");
             await writeAsync(filePath, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
@@ -213,15 +208,12 @@ export function projectUtilTestModule(): void {
             expect(fs.statSync(logDirectory)).to.exist;
 
             appLogDirectory = path.resolve(process.env.CW_WORKSPACE + "/" + testProjectName + "/mc-target/liberty/wlp/usr/servers/defaultServer/logs/");
-            if (!(await existsAsync(appLogDirectory))) {
-                await mkdirAsync(appLogDirectory, { recursive: true });
-            }
-            expect(fs.statSync(appLogDirectory)).to.exist;
 
-            if (!(await existsAsync(extensionIDDir))) {
-                await mkdirAsync(extensionIDDir, { recursive: true });
-            }
+            fse.ensureDirSync(appLogDirectory);
+            expect(fs.statSync(appLogDirectory)).to.exist;
+            fse.ensureDirSync(extensionIDDir);
             expect(fs.statSync(extensionIDDir)).to.exist;
+
             const filePath = path.resolve(extensionIDDir, ".sh-extension");
             await writeAsync(filePath, '{"buildLogs": ["buildLog"], "appLogs": ["appLog"]}');
             const entryPoint = path.resolve(extensionIDDir, "entrypoint.sh");
