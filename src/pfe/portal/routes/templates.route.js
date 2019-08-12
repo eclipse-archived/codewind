@@ -10,11 +10,12 @@
  *******************************************************************************/
 const express = require('express');
 
+const { validateReq } = require('../middleware/reqValidator');
 const Logger = require('../modules/utils/Logger');
+const TemplateError = require('../modules/utils/errors/TemplateError');
 
 const router = express.Router();
 const log = new Logger(__filename);
-const { validateReq } = require('../middleware/reqValidator');
 
 /**
  * API Function to return a list of available templates
@@ -22,19 +23,17 @@ const { validateReq } = require('../middleware/reqValidator');
  */
 router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
-  const projectStyle = req.query.projectStyle;
-
+  const { projectStyle, showEnabledOnly } = req.query;
+  const templateController = user.templates;
   try {
-    const projectTemplates = (projectStyle)
-      ? await user.templates.getTemplatesOfStyle(projectStyle)
-      : await user.templates.getTemplateList();
+    const templates = await templateController.getTemplates({ projectStyle, showEnabledOnly });
 
-    if (projectTemplates.length == 0) {
+    if (templates.length == 0) {
       log.warn('No templates found');
       res.sendStatus(204);
-    } else {
-      res.status(200).json(projectTemplates);
+      return;
     }
+    res.status(200).json(templates);
   } catch (error) {
     log.error(error);
     res.status(500).json(error);
@@ -47,7 +46,7 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
  */
 router.get('/api/v1/templates/repositories', sendRepositories);
 
-router.post('/api/v1/templates/repositories', validateReq, (req, res, _next) => {
+router.post('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
   const repositoryDescription = req.sanitizeBody('description');
@@ -59,17 +58,23 @@ router.post('/api/v1/templates/repositories', validateReq, (req, res, _next) => 
     res.status(400).send("Invalid repository URL");
     return;
   }
-  if (!user.templates.addRepository(repositoryUrl, repositoryDescription)) {
-    res.status(400).send("Repository url already available.");
-    return;
+  try {
+    await user.templates.addRepository(repositoryUrl, repositoryDescription);
+  } catch (error) {
+    log.error(error);
+    if (error instanceof TemplateError && error.code === 'DUPLICATE_URL') {
+      res.status(400).send(error.message);
+      return;
+    }
+    throw error;
   }
   sendRepositories(req, res, _next);
 });
 
-router.delete('/api/v1/templates/repositories', validateReq, (req, res, _next) => {
+router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
-  user.templates.deleteRepository(repositoryUrl);
+  await user.templates.deleteRepository(repositoryUrl);
   sendRepositories(req, res, _next);
 });
 
@@ -79,12 +84,21 @@ function sendRepositories(req, res, _next) {
   res.status(200).json(repositoryList);
 }
 
+router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, res) => {
+  const user = req.cw_user;
+  const templateController = user.templates;
+  const requestedOperations = req.body;
+  const operationResults = await templateController.batchUpdate(requestedOperations);
+  res.status(207).json(operationResults);
+});
+
 /**
  * @return {[String]} the list of template styles
  */
 router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
-  const styles = await user.templates.getTemplateStyles();
+  const templateController = user.templates;
+  const styles = await templateController.getTemplateStyles();
   res.status(200).json(styles);
 });
 

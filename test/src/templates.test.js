@@ -11,45 +11,68 @@
 
 const chai = require('chai');
 
-const reqService = require('../modules/request.service');
-const { ADMIN_COOKIE } = require('../config');
+const {
+    defaultTemplates,
+    batchPatchTemplateRepos,
+    getTemplateRepos,
+    getTemplates,
+    addTemplateRepo,
+    deleteTemplateRepo,
+    resetTemplateReposTo,
+    getTemplateStyles,
+} = require('../modules/template.service');
 
 chai.should();
 const expectedLanguages = ['java', 'swift', 'nodejs', 'go', 'python'];
 
 describe('Template API tests', function() {
-    describe('GET /api/v1/templates?projectStyle=', function() {
-        describe('empty', function() {
-            it('should return a list of all available templates', async function() {
-                const res = await getTemplates();
-                res.should.have.status(200);
-                res.body.should.be.an('array');
-                res.body.forEach((template) => {
-                    template.should.be.an('object').with.all.keys('label', 'description', 'url', 'language', 'projectType');
-                });
-                // check that we have a template for each supported language
-                res.body.map((template) => template.language).should.include.members(expectedLanguages);
-            });
-        });
-        for (const projectStyle of ['Codewind']) {  // TODO: add 'Appsody' when we ship Appsody templates by default
-            describe(projectStyle, function() {
-                it(`should return only ${projectStyle} templates`, async function() {
-                    const res = await getTemplates(projectStyle);
+    describe('GET /api/v1/templates', function() {
+        describe('?projectStyle=', function() {
+            describe('empty', function() {
+                it('should return a list of all available templates', async function() {
+                    const res = await getTemplates();
                     res.should.have.status(200);
                     res.body.should.be.an('array');
-                    res.body.forEach((template) => {
-                        template.should.be.an('object').with.all.keys('label', 'description', 'url', 'language', 'projectType');
-                        if (template.projectStyle) template.projectStyle.should.equal(projectStyle);
-                    });
+                    res.body.should.deep.equal(defaultTemplates);
                     // check that we have a template for each supported language
                     res.body.map((template) => template.language).should.include.members(expectedLanguages);
                 });
             });
-        }
-        describe('unknownStyle', function() {
-            it('should return 204', async function() {
-                const res = await getTemplates('unknownStyle');
-                res.should.have.status(204);
+            for (const projectStyle of ['Codewind']) {  // TODO: add 'Appsody' when we ship Appsody templates by default
+                describe(projectStyle, function() {
+                    it(`should return only ${projectStyle} templates`, async function() {
+                        const res = await getTemplates({ projectStyle });
+                        res.should.have.status(200);
+                        res.body.should.be.an('array');
+                        res.body.forEach((template) => {
+                            template.should.be.an('object').with.all.keys('label', 'description', 'url', 'language', 'projectType');
+                        });
+                        // check that we have a template for each supported language
+                        res.body.map((template) => template.language).should.include.members(expectedLanguages);
+                    });
+                });
+            }
+            describe('unknownStyle', function() {
+                it('should return 204', async function() {
+                    const res = await getTemplates({ projectStyle: 'unknownStyle' });
+                    res.should.have.status(204);
+                });
+            });
+        });
+        describe('?showEnabledOnly=', function() {
+            describe('false', function() {
+                it('should return all templates (from enabled and disabled repos)', async function() {
+                    const res = await getTemplates({ showEnabledOnly: false });
+                    res.should.have.status(200);
+                    res.body.should.deep.equal(defaultTemplates);
+                });
+            });
+            describe('true', function() {
+                it('should return only templates from enabled repos', async function() {
+                    const res = await getTemplates({ showEnabledOnly: true });
+                    res.should.have.status(200);
+                    res.body.should.deep.equal(defaultTemplates);
+                });
             });
         });
     });
@@ -57,23 +80,38 @@ describe('Template API tests', function() {
     describe('GET|POST|DELETE /api/v1/templates/repositories', function() {
         const expectedUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
         const testUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
+        let originalTemplateRepos;
+        before(async() => {
+            const res = await getTemplateRepos();
+            originalTemplateRepos = res.body;
+        });
+        after(async() => {
+            await resetTemplateReposTo(originalTemplateRepos);
+        });
         it('GET should return a list of available templates repositories', async function() {
-            const res = await getTemplateRepositories();
+            const res = await getTemplateRepos();
             res.should.have.status(200);
             res.body.should.be.an('array').with.length(1);
             res.body.forEach((repository) => {
-                repository.should.be.an('object').with.all.keys('description', 'url');
+                repository.should.be.an('object').with.keys('description', 'url');
             });
         });
         it('POST should fail to add template repository with a bad url', async function() {
-            const res = await addTemplateRepository({
+            const res = await addTemplateRepo({
                 url: '/home/user/directory',
                 description: 'Bad template url.',
             });
             res.should.have.status(400);
         });
+        it('POST should fail to add template repository with a duplicate url', async function() {
+            const res = await addTemplateRepo({
+                url: originalTemplateRepos[0].url,
+                description: 'Duplicate template URL',
+            });
+            res.should.have.status(400);
+        });
         it('DELETE should remove a template repository', async function() {
-            const res = await deleteTemplateRepository(expectedUrl);
+            const res = await deleteTemplateRepo(expectedUrl);
             res.should.have.status(200);
             res.body.should.be.an('array');
             res.body.should.have.length(0);
@@ -83,7 +121,7 @@ describe('Template API tests', function() {
             res.should.have.status(204);
         });
         it('POST should add a template repository', async function() {
-            const res = await addTemplateRepository({
+            const res = await addTemplateRepo({
                 url: expectedUrl,
                 description: 'Default codewind templates.',
             });
@@ -102,11 +140,9 @@ describe('Template API tests', function() {
                 repository.should.be.an('object').with.all.keys('label', 'description', 'url', 'language', 'projectType');
             });
             firstLength = res.body.length;
-            // check that we have a template for each supported language
-            res.body.map((template) => template.language).should.include.members(expectedLanguages);
         });
         it('POST should add a second template repository', async function() {
-            const res = await addTemplateRepository({
+            const res = await addTemplateRepo({
                 url: testUrl,
                 description: 'Copy of default codewind templates.',
             });
@@ -125,11 +161,9 @@ describe('Template API tests', function() {
             });
             // There are 6 templates listed in the revision referenced by testUrl
             res.body.should.have.length(firstLength + 7);
-            // check that we have a template for each supported language
-            res.body.map((template) => template.language).should.include.members(expectedLanguages);
         });
         it('DELETE should remove second repository', async function() {
-            const res = await deleteTemplateRepository(testUrl);
+            const res = await deleteTemplateRepo(testUrl);
             res.should.have.status(200);
             res.body.should.be.an('array').with.length(1);
         });
@@ -141,9 +175,91 @@ describe('Template API tests', function() {
                 repository.should.be.an('object').with.all.keys('label', 'description', 'url', 'language', 'projectType');
             });
             res.body.should.have.length(firstLength);
-            // check that we have a template for each supported language
-            res.body.map((template) => template.language).should.include.members(expectedLanguages);
         });
+    });
+    describe('PATCH /api/v1/batch/templates/repositories', function() {
+        const existingRepoUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
+        const tests = {
+            'enable an existing repo': {
+                input: [{
+                    op: 'enable',
+                    url: existingRepoUrl,
+                    value: 'true',
+                }],
+                output: [{
+                    status: 200,
+                    requestedOperation: {
+                        op: 'enable',
+                        url: existingRepoUrl,
+                        value: 'true',
+                    },
+                }],
+            },
+            'disable an existing repo': {
+                input: [{
+                    op: 'enable',
+                    url: existingRepoUrl,
+                    value: 'false',
+                }],
+                output: [{
+                    status: 200,
+                    requestedOperation: {
+                        op: 'enable',
+                        url: existingRepoUrl,
+                        value: 'false',
+                    },
+                }],
+            },
+            'enable an unknown repo': {
+                input: [{
+                    op: 'enable',
+                    url: 'unknownRepoUrl',
+                    value: 'true',
+                }],
+                output: [{
+                    status: 404,
+                    error: 'Unknown repository URL',
+                    requestedOperation: {
+                        op: 'enable',
+                        url: 'unknownRepoUrl',
+                        value: 'true',
+                    },
+                }],
+            },
+            'disable an unknown repo': {
+                input: [{
+                    op: 'enable',
+                    url: 'unknownRepoUrl',
+                    value: 'false',
+                }],
+                output: [{
+                    status: 404,
+                    error: 'Unknown repository URL',
+                    requestedOperation: {
+                        op: 'enable',
+                        url: 'unknownRepoUrl',
+                        value: 'false',
+                    },
+                }],
+            },
+        };
+        let originalTemplateRepos;
+        beforeEach(async() => {
+            const res = await getTemplateRepos();
+            originalTemplateRepos = res.body;
+        });
+        afterEach(async() => {
+            await resetTemplateReposTo(originalTemplateRepos);
+        });
+        for (const [testName, test] of Object.entries(tests)) {
+            describe(`to ${testName}`, function() {
+                it(`should return 207 and the expected operations info`, async function() {
+                    const res = await batchPatchTemplateRepos(test.input);
+                    res.should.have.status(207);
+                    res.body.should.deep.equal(test.output);
+                });
+            });
+        }
     });
     describe('GET /api/v1/templates/styles', function() {
         it('should return a list of available template styles', async function() {
@@ -153,41 +269,3 @@ describe('Template API tests', function() {
         });
     });
 });
-
-async function getTemplates(projectStyle) {
-    const res = await reqService.chai
-        .get('/api/v1/templates')
-        .query({ projectStyle })
-        .set('Cookie', ADMIN_COOKIE);
-    return res;
-}
-
-async function getTemplateRepositories() {
-    const res = await reqService.chai
-        .get('/api/v1/templates/repositories')
-        .set('Cookie', ADMIN_COOKIE);
-    return res;
-}
-
-async function addTemplateRepository({ url, description }) {
-    const res = await reqService.chai
-        .post('/api/v1/templates/repositories')
-        .set('Cookie', ADMIN_COOKIE)
-        .send({ url, description });
-    return res;
-}
-
-async function deleteTemplateRepository(repoUrl) {
-    const res = await reqService.chai
-        .delete('/api/v1/templates/repositories')
-        .set('Cookie', ADMIN_COOKIE)
-        .send({ url: repoUrl });
-    return res;
-}
-
-async function getTemplateStyles() {
-    const res = await reqService.chai
-        .get('/api/v1/templates/styles')
-        .set('Cookie', ADMIN_COOKIE);
-    return res;
-}

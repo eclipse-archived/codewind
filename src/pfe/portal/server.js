@@ -25,6 +25,7 @@ async function main() {
     require('appmetrics-dash').monitor({ title: "Application Metrics Dashboard - Monitoring codewind Portal" });
   }
   const express = require('express');
+  require('express-async-errors');
   const request = require('request');
   const { promisify } = require('util');
   const Logger = require('./modules/utils/Logger');
