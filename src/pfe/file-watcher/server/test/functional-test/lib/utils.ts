@@ -24,7 +24,7 @@ import * as eventConfigs from "../configs/event.config";
 import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
 
-const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + pfe_configs.pfe.PORT;
+const pfeURL = pfe_configs.baseURL;
 
 const mcWorkspace = app_configs.codewindWorkspaceDir;
 
