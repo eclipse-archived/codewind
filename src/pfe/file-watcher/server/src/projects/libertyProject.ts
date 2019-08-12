@@ -27,6 +27,7 @@ import * as logger from "../utils/logger";
 import * as logHelper from "./logHelper";
 import * as projectEventsController from "../controllers/projectEventsController";
 
+
 const readFileAsync = promisify(fs.readFile);
 
 const serverXmlPath = "/src/main/liberty/config/server.xml";
@@ -198,6 +199,7 @@ export async function validate(operation: Operation): Promise<void> {
  * @returns Promise<any>
  */
 export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isError: boolean): Promise<any> {
+    if (process.env.NODE_ENV === "test") return;
     // have the message match the Maven format
     const msgLabel = isError ? "ERROR" : "INFO";
     const fullMsg = `\n[${msgLabel}] ${msg}`;

@@ -1,12 +1,28 @@
 import { expect } from "chai";
 import * as path from "path";
+import * as fs from "fs";
 import * as app_configs from "../../functional-test/configs/app.config";
-import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync, writeAsync } from "../../functional-test/lib/utils";
+import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync, writeAsync, openAsync } from "../../functional-test/lib/utils";
 import * as actions from "../../../src/projects/actions";
-import { workspaceConstants } from "../../../src/projects/constants";
+import { workspaceConstants, projectConstants } from "../../../src/projects/constants";
+import * as socket from "../../../src/utils/socket";
+import * as locale from "../../../src/utils/locale";
+
 
 export function actionsTestModule(): void {
-    describe("combinational testing of build function", () => {
+    let socketData: any;
+
+    socket.registerListener({
+        name: "codewindunittest",
+        handleEvent: (event, data) => {
+            console.log("socket event: " + event);
+            console.log("socket data: " + JSON.stringify(data));
+            if (event === "projectValidated") {
+                socketData = data;
+            }
+        }
+    });
+    describe.skip("combinational testing of build function", () => {
         // only test the failure case, since success case requires the app container up and running
         const combinations: any = {
             "combo1": {
@@ -33,7 +49,7 @@ export function actionsTestModule(): void {
         }
     });
 
-    describe("combinational testing of restart function", () => {
+    describe.skip("combinational testing of restart function", () => {
         // only test the failure case, since success case requires the app container up and running
         const combinations: any = {
             "combo1": {
@@ -79,7 +95,7 @@ export function actionsTestModule(): void {
         }
     });
 
-    describe("combinational testing of enableautobuild & disableautobuildfunction", () => {
+    describe.skip("combinational testing of enableautobuild & disableautobuild function", () => {
 
         const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
         const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
@@ -244,6 +260,168 @@ export function actionsTestModule(): void {
                     expect(actualResult.status).to.equal(expectedResult);
                 } catch (err) {
                     expect(err.name).to.equal(expectedResult);
+                }
+            });
+        }
+    });
+
+    describe("combinational testing of validate function", () => {
+        const libertyProjectPath = path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate");
+        const testLibertyServerXMLPath = path.join(libertyProjectPath, "/src/main/liberty/config/");
+        const testLibertyServerXML = path.join(testLibertyServerXMLPath, "server.xml");
+        const serverXMLbackup = path.join(testLibertyServerXMLPath, "server_backup.xml");
+        const testLibertyPOM = path.join(libertyProjectPath, "pom.xml");
+        const libertyPOMbackup = path.join(libertyProjectPath, "pom_backup.xml");
+        const testLibertyDockerfile = path.join(libertyProjectPath, "Dockerfile");
+        const Dockerfilebackup = path.join(libertyProjectPath, "Dockerfile_backup");
+        const testLibertyDockerfileBuild = path.join(libertyProjectPath, "Dockerfile-build");
+
+        // const testLibertyDockerfileGarbage = path.join(libertyDummyProjectPath, "DockerfileGarbage");
+        // const testLibertyServerXMLGarbage = path.join(testLibertyServerXMLPath, "serverGarbage.xml");
+
+        const originalLibertyPOMGarbage1 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage1.xml");
+        const originalLibertyPOMGarbage2 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage2.xml");
+        // const originalLibertyPOMGarbage3 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage3.xml");
+        // const originalLibertyPOMGarbage4 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage4.xml");
+        const combinations: any = {
+            "combo1": {
+                "description": "request missing project type and location",
+                "args": {},
+                "result": "BAD_REQUEST: Validation requires a project type and location."
+            },
+            "combo2": {
+                "description": "request with invalidProjectType",
+                "args": {
+                    projectType: "invalidProjectType",
+                    location: "test/projectName"
+                },
+                "result": "BAD_REQUEST: The project type invalidProjectType is not supported"
+            },
+            "combo3": {
+                "description": "request with non-exist project location",
+                "args": {
+                    projectType: "liberty",
+                    location: "test/projectName"
+                },
+                "result": "FILE_NOT_EXIST: The provided location does not exist: test/projectName"
+            },
+            "combo4": {
+                "description": "good microprofile project",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "success"
+            },
+            "combo5": {
+                "description": "microprofile project with missing Dockerfile",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo6": {
+                "description": "microprofile project with missing server.xml",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file"
+            },
+            "combo7": {
+                "description": "microprofile project with bad inner most pom.xml elements",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                // "error": ["Missing Liberty parent POM groupId", "Missing Liberty parent POM artifactId", "Missing profile activation", "liberty-maven-plugin extensions not enabled", "liberty-maven-plugin looseApplication is not enabled"],
+                "error": ["Missing Liberty parent POM groupId", "Missing Liberty parent POM artifactId", "Missing profile activation"],
+            },
+            "combo8": {
+                "description": "microprofile project with bad pom.xml due to missing liberty maven plugin",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "Missing liberty-maven-plugin configuration"
+            },
+            // "combo5": {
+            //     "args": { projectID: "dummymicroprofileproject" },
+            //     "result": "success"
+            // },
+            // "combo6": {
+            //     "args": { projectID: "dummygoproject" },
+            //     "result": "success"
+            // },
+            // "combo7": {
+            //     "args": { projectID: "dummyappsodyproject" },
+            //     "result": "success"
+            // },
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const args = combinations[combo]["args"];
+            const expectedResult = combinations[combo]["result"];
+            const errorMsg: any = combinations[combo]["error"];
+            const description = combinations[combo]["description"];
+
+            it(combo + " => validate: " + description , async() => {
+                socketData = "";
+                await locale.setLocale(["en"]);
+                try {
+                    switch (combo) {
+                        case "combo5": {
+                            fs.renameSync(testLibertyDockerfile, Dockerfilebackup);
+                            break;
+                        }
+                        case "combo6": {
+                            fs.renameSync(testLibertyServerXML, serverXMLbackup);
+                            break;
+                        }
+                        case "combo7": {
+                            await copyAsync(originalLibertyPOMGarbage1, testLibertyPOM);
+                            break;
+                        }
+                        case "combo8": {
+                            await copyAsync(originalLibertyPOMGarbage2, testLibertyPOM);
+                            break;
+                        }
+                    }
+                    const actualResult = await actions.validate(args);
+                    switch (combo) {
+                        case "combo5": {
+                            fs.renameSync(Dockerfilebackup, testLibertyDockerfile);
+                            break;
+                        }
+                        case "combo6": {
+                            fs.renameSync(serverXMLbackup, testLibertyServerXML);
+                            break;
+                        }
+                    }
+                    expect(JSON.stringify(actualResult)).to.contain("operationId");
+                    expect(socketData).to.exist;
+                    expect(socketData.status).to.equal(expectedResult);
+                    if (socketData.status == "failed") {
+                        if (combo == "combo7") {
+                            expect(socketData.results[0].label).to.equal(errorMsg[0]);
+                            expect(socketData.results[1].label).to.equal(errorMsg[1]);
+                            expect(socketData.results[2].label).to.equal(errorMsg[2]);
+                        } else {
+                            expect(socketData.results[0].label).to.equal(errorMsg);
+                        }
+                    }
+                } catch (err) {
+                    expect(err.toString()).to.equal(expectedResult);
                 }
             });
         }
