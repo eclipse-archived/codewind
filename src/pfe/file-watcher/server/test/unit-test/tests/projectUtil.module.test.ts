@@ -28,7 +28,7 @@ import { threadId } from "worker_threads";
 export function projectUtilTestModule(): void {
     const extensionIDDir = path.join(process.env.CW_EXTENSION_DIR, "extensionProject");
     it("test of getLogName function", async () => {
-        const projectID = "testProjectID";
+        const projectID = "testID";
         const projectLocation = "directory/testproject";
         const hash = crypto.createHash("sha1", <TransformOptions>"utf8").update(projectLocation);
 
@@ -136,26 +136,33 @@ export function projectUtilTestModule(): void {
             "combo3": {
                 "data": {
                     projectID: projectID,
-                    mavenProfiles: [""],
-                    mavenProperties: [""]
+                    mavenProperties: ""
                 },
                 "result": ""
             },
             "combo4": {
                 "data": {
                     projectID: projectID,
+                    mavenProfiles: [""],
+                    mavenProperties: [""]
+                },
+                "result": ""
+            },
+            "combo5": {
+                "data": {
+                    projectID: projectID,
                     mavenProfiles: ["profile1&"]
                 },
                 "result": "Error: The user maven settings have invalid characters for the project"
             },
-            "combo5": {
+            "combo6": {
                 "data": {
                     projectID: projectID,
                     mavenProperties: ["key=value;"]
                 },
                 "result": "Error: The user maven settings have invalid characters for the project"
             },
-            "combo6": {
+            "combo7": {
                 "data": {
                     projectID: projectID,
                     mavenProfiles: ["profile1"],
@@ -163,7 +170,7 @@ export function projectUtilTestModule(): void {
                 },
                 "result": "-P profile1 -D key=value "
             },
-            "combo7": {
+            "combo8": {
                 "data": {
                     projectID: projectID,
                     mavenProfiles: ["profile1", "profile2"],
