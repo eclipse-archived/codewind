@@ -10,4 +10,4 @@ echo -e "${BLUE}Removing test projects... ${RESET}\n"
 rm -rf ./test/resources/SVTPythonTemplate ./test/resources/nodeExpressTemplate ./test/resources/springJavaTemplate ./test/resources/swiftTemplate ./test/resources/javaMicroProfileTemplate
 
 echo -e "${BLUE}Removing test log directory... ${RESET}\n"
-rm -rf .logs/
+rm -rf  ./test/resources/.logs/

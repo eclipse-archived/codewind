@@ -1,8 +1,9 @@
 import { expect } from "chai";
 import * as path from "path";
 import * as app_configs from "../../functional-test/configs/app.config";
-import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync } from "../../functional-test/lib/utils";
+import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync, writeAsync } from "../../functional-test/lib/utils";
 import * as actions from "../../../src/projects/actions";
+import { workspaceConstants } from "../../../src/projects/constants";
 
 export function actionsTestModule(): void {
     describe("combinational testing of build function", () => {
@@ -100,6 +101,16 @@ export function actionsTestModule(): void {
         const goOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummygoproject.json");
         const goTestProjectMetadata = path.join(goProjectMetadataPath, "dummygoproject.json");
 
+        const appsodyNodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyappsodyproject");
+        const appsodyNodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyappsodyproject.json");
+        const appsodyNodeTestProjectMetadata = path.join(appsodyNodeProjectMetadataPath, "dummyappsodyproject.json");
+
+        const extensionsPath = workspaceConstants.workspaceExtensionDir;
+        const appsodyExtensionPath = path.join(extensionsPath, "appsodyExtension");
+
+        const appsodyExtensionTestArtifactPath1 = path.join(appsodyExtensionPath, ".sh-extension");
+        const appsodyExtensionTestArtifactPath2 = path.join(appsodyExtensionPath, "entrypoint.sh");
+
 
         before("create test directories", async () => {
             if (!(await existsAsync(nodeProjectMetadataPath))) {
@@ -125,6 +136,20 @@ export function actionsTestModule(): void {
             if (!(await existsAsync(goProjectMetadataPath))) {
                 await mkdirAsync(goProjectMetadataPath);
                 await copyAsync(goOriginalProjectMetadata, goTestProjectMetadata);
+            }
+
+            if (!(await existsAsync(appsodyNodeProjectMetadataPath))) {
+                await mkdirAsync(appsodyNodeProjectMetadataPath);
+                await copyAsync(appsodyNodeOriginalProjectMetadata, appsodyNodeTestProjectMetadata);
+            }
+
+            if (!(await existsAsync(extensionsPath))) {
+                await mkdirAsync(extensionsPath);
+                if (!await existsAsync(appsodyExtensionPath)) {
+                    await mkdirAsync(appsodyExtensionPath);
+                    await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
+                    await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
+                }
             }
         });
 
@@ -153,6 +178,20 @@ export function actionsTestModule(): void {
                 await unlinkAsync(goTestProjectMetadata);
                 await rmdirAsync(goProjectMetadataPath);
             }
+
+            if ((await existsAsync(appsodyNodeProjectMetadataPath))) {
+                await unlinkAsync(appsodyNodeTestProjectMetadata);
+                await rmdirAsync(appsodyNodeProjectMetadataPath);
+            }
+
+            if ((await existsAsync(extensionsPath))) {
+                if (await existsAsync(appsodyExtensionPath)) {
+                    await unlinkAsync(appsodyExtensionTestArtifactPath1);
+                    await unlinkAsync(appsodyExtensionTestArtifactPath2);
+                    await rmdirAsync(appsodyExtensionPath);
+                }
+                await rmdirAsync(extensionsPath);
+            }
         });
 
         const combinations: any = {
@@ -178,6 +217,10 @@ export function actionsTestModule(): void {
             },
             "combo6": {
                 "args": { projectID: "dummygoproject" },
+                "result": "success"
+            },
+            "combo7": {
+                "args": { projectID: "dummyappsodyproject" },
                 "result": "success"
             },
         };
