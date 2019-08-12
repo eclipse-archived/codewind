@@ -136,7 +136,6 @@ class ActionRunLoad extends React.Component {
                     headers: { "Content-Type": "application/json" }
                 });
             const reply = await response;
-            console.log(reply);
             this.setState({ inlineTextLabel: "Cancelled" });
         } catch (err) {
             this.setState({ inlineTextLabel: "Cancel failed" });
