@@ -11,6 +11,8 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
+# NOTE: change of this file should be in sync with 'Jenkinsfile(stage: Build Docker images)'
+
 DIR=`pwd`;
 SRC_DIR=$DIR/src;
 PFE=pfe

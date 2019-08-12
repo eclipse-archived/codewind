@@ -17,6 +17,8 @@ pipeline {
         stage('Build Docker images') {
             steps {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
+                    
+                    // NOTE: change of this sh call should be in sync with './script/build.sh'. 
                     sh '''#!/usr/bin/env bash
                         echo "Starting build for Eclipse Codewind ..."
                         
