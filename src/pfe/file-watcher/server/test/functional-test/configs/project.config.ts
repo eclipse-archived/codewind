@@ -8,6 +8,9 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+/**
+ * This file for different project specific (i.e liberty, spring, docker) capabaility configurations.
+ */
 export const projectCapabilities: any = {
     "docker": {
         "startModes": ["run"],
