@@ -30,6 +30,8 @@ export const rmdirAsync = promisify(fs.rmdir);
 export const unlinkAsync = promisify(fs.unlink);
 export const writeAsync = promisify(fs.writeFile);
 export const readFileAsync = promisify(fs.readFile);
+export const openAsync = promisify(fs.open);
+export const readAsync = promisify(fs.readFile);
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
     return request.get(pfeURL, callback);

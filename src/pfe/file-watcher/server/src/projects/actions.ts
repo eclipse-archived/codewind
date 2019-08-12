@@ -36,11 +36,10 @@ const lock = new AsyncLock();
  *
  * @returns Promise<{ operationId: string }>
  */
-const validate = async function(args: IProjectActionParams): Promise<{ operationId: string }> {
+export const validate = async function(args: IProjectActionParams): Promise<{ operationId: string }> {
     const projectID = args.projectID;
     const projectType = args.projectType;
     const location = args.location;
-    const projectName = location.split("/").pop();
     if (!projectType || !location) {
         const error = new Error("Validation requires a project type and location.");
         error.name = "BAD_REQUEST";
@@ -51,6 +50,7 @@ const validate = async function(args: IProjectActionParams): Promise<{ operation
         "projectType": projectType,
         "location": location
     } as ProjectInfo;
+    const projectName = location.split("/").pop();
 
     // Check whether the projectType exists
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
@@ -80,7 +80,7 @@ const validate = async function(args: IProjectActionParams): Promise<{ operation
     logger.logTrace(JSON.stringify(projectInfo));
 
     if (projectHandler.validate) {
-        projectHandler.validate(operation);
+        await projectHandler.validate(operation);
     } else {
         // if the project type doesn't support validation then just report success becauase validation is optional for project types
         const validator = new Validator(operation);
