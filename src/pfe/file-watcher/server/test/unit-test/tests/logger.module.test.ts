@@ -509,6 +509,8 @@ export function loggerTestModule(): void {
             }
         };
 
+        process.env.NODE_ENV = "production";
+
         for (const combo of Object.keys(combinations)) {
 
             const msg = combinations[combo]["msg"];
