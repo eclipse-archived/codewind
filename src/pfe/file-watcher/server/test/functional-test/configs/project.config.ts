@@ -38,6 +38,12 @@ export const defaultContextRoot: any = {
     "lagom": "/api/hello/you"
 };
 
+export const defaultInternalPorts: any = {
+    "go": "8000",
+    "python": "5000",
+    "lagom": "9000"
+};
+
 export const filesToUpdate: any = {
     "go": ["Dockerfile", "main.go"],
     "python": ["Dockerfile", "app.py"],

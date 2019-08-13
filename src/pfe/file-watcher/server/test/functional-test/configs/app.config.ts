@@ -13,7 +13,6 @@
  */
 import * as path from "path";
 
-
 const CW_WORKSPACE = "codewind-workspace";
 export const codewindWorkspaceDir =  process.env.CW_WORKSPACE || path.resolve(__dirname, "..", "..", "..", "..", "..", "..", "..", CW_WORKSPACE);
 export const codewindWorkspaceLogsDir =  process.env.CW_LOGS_DIR || path.join(codewindWorkspaceDir, ".logs");
@@ -30,6 +29,6 @@ export const projectConfigs = {
 };
 
 export const projectTypes = ["docker"];
-export const supportedDockerProjects = ["go"];
+export const supportedDockerProjects = ["go", "python", "lagom"];
 
 export const DEFAULT_LOG_LEVEL = "debug";
