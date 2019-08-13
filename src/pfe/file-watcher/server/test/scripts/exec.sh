@@ -25,24 +25,41 @@ EOF
 }
 
 function clone () {
-    curl -H "Content-type: application/json" -d '{"projectName": "'$1'", "parentPath": "'$2'", "url": "'$3'"}' "http://localhost:9090/api/v1/projects"
+    if [ $TEST_TYPE == "local" ]; then
+        curl -H "Content-type: application/json" -d '{"projectName": "'$1'", "parentPath": "'$2'", "url": "'$3'"}' "http://localhost:9090/api/v1/projects"
+    elif [ $TEST_TYPE == "kube" ]; then
+        kubectl exec -it $CODEWIND_POD_ID -- curl -H "Content-type: application/json" -d '{ "projectName": "'$1'" , "parentPath": "'$2'", "url": "'$3'" }' "https://localhost:9191/api/v1/projects" --insecure
+    fi
+
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}Codewind was unable to clone the projects. ${RESET}\n"
+        exit 1
+    fi
 }
 
 function setup {
     DATE_NOW=$(date +"%d-%m-%Y")
     TIME_NOW=$(date +"%H.%M.%S")
-    BUCKET_NAME=turbine-$TEST_SUITE
-    TEST_DIR=$CW_DIR/src/pfe/file-watcher/server
+    BUCKET_NAME=turbine-$TEST_TYPE-$TEST_SUITE
+    TEST_DIR=$CW_DIR/src/pfe/file-watcher/server/test
     TEST_DIR_CONTAINER=/file-watcher/server
-    TEST_OUTPUT_DIR=~/test_results/$TEST_SUITE/$DATE_NOW/$TIME_NOW
+    TEST_OUTPUT_DIR=~/test_results/$TEST_TYPE/$TEST_SUITE/$DATE_NOW/$TIME_NOW
     TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_SUITE-test.log
     CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
     PROJECTS_CLONE_DATA_FILE="./resources/projects-clone-data"
 
-    mkdir -p $TEST_OUTPUT_DIR \
-    && docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; npm install --only=dev" \
-    && docker cp $TEST_DIR/test $CODEWIND_CONTAINER_ID:$TEST_DIR_CONTAINER
+    mkdir -p $TEST_OUTPUT_DIR
+
+    if [ $TEST_TYPE == "local" ]; then
+        CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
+        docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; npm install --only=dev" \
+        && docker cp $TEST_DIR $CODEWIND_CONTAINER_ID:$TEST_DIR_CONTAINER
+    elif [ $TEST_TYPE == "kube" ]; then
+        CODEWIND_POD_ID=$(kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 | cut -d " " -f 1)
+        kubectl exec -it $CODEWIND_POD_ID -- bash -c "cd /file-watcher/server; npm install --only=dev" \
+        && kubectl cp $TEST_DIR $CODEWIND_POD_ID:$TEST_DIR_CONTAINER
+    fi
 
     if [[ ($? -ne 0) ]]; then
         echo -e "${RED}Test setup failed. ${RESET}\n"
@@ -72,8 +89,13 @@ function setup {
 }
 
 function run {
-    docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml npm run $TEST_SUITE:test:xml" | tee $TEST_LOG
-    docker cp $CODEWIND_CONTAINER_ID:/test_output.xml $TEST_OUTPUT
+    if [ $TEST_TYPE == "local" ]; then
+        docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml npm run $TEST_SUITE:test:xml" | tee $TEST_LOG
+        docker cp $CODEWIND_CONTAINER_ID:/test_output.xml $TEST_OUTPUT
+    elif [ $TEST_TYPE == "kube" ]; then
+        kubectl exec -it $CODEWIND_POD_ID -- bash -c "cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml npm run $TEST_SUITE:test:xml" | tee $TEST_LOG
+        kubectl cp $CODEWIND_POD_ID:/test_output.xml $TEST_OUTPUT
+    fi
     echo -e "${BLUE}Test logs available at: $TEST_LOG ${RESET}"
 
     # Cronjob machines need to set up CRONJOB_RUN=y to push test restuls to dashboard
