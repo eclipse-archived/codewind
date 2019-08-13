@@ -236,10 +236,6 @@ async function getTemplatesFromRepo(repository) {
   }
   const repoUrl = new URL(repository.url);
 
-  if (!repoUrl.host.includes('github')) {
-    throw new Error(`URL '${repository.url}' must be a GitHub repo`);
-  }
-
   const options = {
     host: repoUrl.host,
     path: repoUrl.pathname,
@@ -250,7 +246,12 @@ async function getTemplatesFromRepo(repository) {
     throw new Error(`Unexpected HTTP status for ${repository}: ${res.statusCode}`);
   }
 
-  const templateSummaries = JSON.parse(res.body);
+  let templateSummaries;
+  try {
+    templateSummaries = JSON.parse(res.body);
+  } catch (error) {
+    throw new Error(`URL '${repoUrl}' should return JSON`);
+  }
   const templates = templateSummaries.map(summary => {
     return {
       label: summary.displayName,

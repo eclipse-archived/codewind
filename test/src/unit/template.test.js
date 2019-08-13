@@ -199,10 +199,10 @@ describe('Templates.js', function() {
                     return func().should.be.rejectedWith('Invalid URL');
                 });
             });
-            describe('valid URL pointing to not a GitHub repo', function() {
+            describe(`valid URL that doesn't provide JSON`, function() {
                 it('throws a useful error', function() {
                     const func = () => Templates.getTemplatesFromRepo({ url: 'https://www.google.com/' });
-                    return func().should.be.rejectedWith(`URL 'https://www.google.com/' must be a GitHub repo`);
+                    return func().should.be.rejectedWith(`URL 'https://www.google.com/' should return JSON`);
                 });
             });
         });
@@ -308,15 +308,15 @@ describe('Templates.js', function() {
                         output.should.deep.equal(defaultTemplates);
                     });
                 });
-                describe('valid URL but not a GitHub repo', function() {
+                describe(`valid URL that doesn't provide JSON`, function() {
                     let templateController;
                     before(() => {
                         templateController = new Templates('');
-                        templateController.addProvider('not a GitHub repo', {
+                        templateController.addProvider(`doesn't provide JSON`, {
                             getRepositories() {
                                 return [{
                                     url: 'https://www.google.com/',
-                                    description: 'not a GitHub repo',
+                                    description: `doesn't provide JSON`,
                                 }];
                             },
                         });
