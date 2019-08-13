@@ -53,7 +53,7 @@ export function actionsTestModule(): void {
         }
     });
 
-    describe.skip("combinational testing of restart function", () => {
+    describe("combinational testing of restart function", () => {
         // only test the failure case, since success case requires the app container up and running
         const combinations: any = {
             "combo1": {
