@@ -51,7 +51,9 @@ export const validate = async function(args: IProjectActionParams): Promise<{ op
         "location": location
     } as ProjectInfo;
     const projectName = location.split("/").pop();
-
+    if (args.extensionID) {
+        projectInfo.extensionID = args.extensionID;
+    }
     // Check whether the projectType exists
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     if (!projectHandler || projectHandler.supportedType !== projectType) {

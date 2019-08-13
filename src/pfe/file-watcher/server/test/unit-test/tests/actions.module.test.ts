@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import * as path from "path";
 import * as fs from "fs";
+import * as fse from "fs-extra";
 import * as app_configs from "../../functional-test/configs/app.config";
 import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync, writeAsync, openAsync } from "../../functional-test/lib/utils";
 import * as actions from "../../../src/projects/actions";
@@ -11,18 +12,21 @@ import * as locale from "../../../src/utils/locale";
 
 export function actionsTestModule(): void {
     let socketData: any;
+    const extensionsPath = workspaceConstants.workspaceExtensionDir;
+    const appsodyExtensionPath = path.join(extensionsPath, "appsodyExtension");
+
+    const appsodyExtensionTestArtifactPath1 = path.join(appsodyExtensionPath, ".sh-extension");
+    const appsodyExtensionTestArtifactPath2 = path.join(appsodyExtensionPath, "entrypoint.sh");
 
     socket.registerListener({
         name: "codewindunittest",
         handleEvent: (event, data) => {
-            console.log("socket event: " + event);
-            console.log("socket data: " + JSON.stringify(data));
             if (event === "projectValidated") {
                 socketData = data;
             }
         }
     });
-    describe.skip("combinational testing of build function", () => {
+    describe("combinational testing of build function", () => {
         // only test the failure case, since success case requires the app container up and running
         const combinations: any = {
             "combo1": {
@@ -49,7 +53,7 @@ export function actionsTestModule(): void {
         }
     });
 
-    describe.skip("combinational testing of restart function", () => {
+    describe("combinational testing of restart function", () => {
         // only test the failure case, since success case requires the app container up and running
         const combinations: any = {
             "combo1": {
@@ -95,7 +99,7 @@ export function actionsTestModule(): void {
         }
     });
 
-    describe.skip("combinational testing of enableautobuild & disableautobuild function", () => {
+    describe("combinational testing of enableautobuild & disableautobuild function", () => {
 
         const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
         const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
@@ -120,13 +124,6 @@ export function actionsTestModule(): void {
         const appsodyNodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummyappsodyproject");
         const appsodyNodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummyappsodyproject.json");
         const appsodyNodeTestProjectMetadata = path.join(appsodyNodeProjectMetadataPath, "dummyappsodyproject.json");
-
-        const extensionsPath = workspaceConstants.workspaceExtensionDir;
-        const appsodyExtensionPath = path.join(extensionsPath, "appsodyExtension");
-
-        const appsodyExtensionTestArtifactPath1 = path.join(appsodyExtensionPath, ".sh-extension");
-        const appsodyExtensionTestArtifactPath2 = path.join(appsodyExtensionPath, "entrypoint.sh");
-
 
         before("create test directories", async () => {
             if (!(await existsAsync(nodeProjectMetadataPath))) {
@@ -159,13 +156,10 @@ export function actionsTestModule(): void {
                 await copyAsync(appsodyNodeOriginalProjectMetadata, appsodyNodeTestProjectMetadata);
             }
 
-            if (!(await existsAsync(extensionsPath))) {
-                await mkdirAsync(extensionsPath);
-                if (!await existsAsync(appsodyExtensionPath)) {
-                    await mkdirAsync(appsodyExtensionPath);
-                    await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
-                    await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
-                }
+            if (!(await existsAsync(appsodyExtensionPath))) {
+                fse.ensureDirSync(appsodyExtensionPath);
+                await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
+                await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
             }
         });
 
@@ -271,18 +265,77 @@ export function actionsTestModule(): void {
         const testLibertyServerXML = path.join(testLibertyServerXMLPath, "server.xml");
         const serverXMLbackup = path.join(testLibertyServerXMLPath, "server_backup.xml");
         const testLibertyPOM = path.join(libertyProjectPath, "pom.xml");
-        const libertyPOMbackup = path.join(libertyProjectPath, "pom_backup.xml");
         const testLibertyDockerfile = path.join(libertyProjectPath, "Dockerfile");
-        const Dockerfilebackup = path.join(libertyProjectPath, "Dockerfile_backup");
+        const libertyDockerfilebackup = path.join(libertyProjectPath, "Dockerfile_backup");
         const testLibertyDockerfileBuild = path.join(libertyProjectPath, "Dockerfile-build");
-
-        // const testLibertyDockerfileGarbage = path.join(libertyDummyProjectPath, "DockerfileGarbage");
-        // const testLibertyServerXMLGarbage = path.join(testLibertyServerXMLPath, "serverGarbage.xml");
+        const LibertyDockerfileBuildbackup = path.join(libertyProjectPath, "Dockerfile-build_backup");
 
         const originalLibertyPOMGarbage1 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage1.xml");
         const originalLibertyPOMGarbage2 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage2.xml");
-        // const originalLibertyPOMGarbage3 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage3.xml");
-        // const originalLibertyPOMGarbage4 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage4.xml");
+        const originalLibertyPOMGarbage3 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage3.xml");
+        const originalLibertyPOMGarbage4 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage4.xml");
+        const LibertyDockerfileBuildGarbage = path.join(app_configs.projectDataDir, "dummymicroprofiledockerfilebuildgarbage");
+
+        const springProjectPath = path.join(process.env.CW_WORKSPACE, "springJavaTemplate");
+        const testspringPOM = path.join(springProjectPath, "pom.xml");
+        const testspringDockerfile = path.join(springProjectPath, "Dockerfile");
+        const springDockerfilebackup = path.join(springProjectPath, "Dockerfile_backup");
+        const originalspringPOMGarbage1 = path.join(app_configs.projectDataDir, "dummyspringpomgarbage1.xml");
+
+        const nodeProjectPath = path.join(process.env.CW_WORKSPACE, "nodeExpressTemplate");
+        const testnodeDockerfile = path.join(nodeProjectPath, "Dockerfile");
+        const nodeDockerfilebackup = path.join(nodeProjectPath, "Dockerfile_backup");
+        const testnodePackagejson = path.join(nodeProjectPath, "package.json");
+        const nodePackagejsonbackup = path.join(nodeProjectPath, "package.json_backup");
+
+        const swiftProjectPath = path.join(process.env.CW_WORKSPACE, "swiftTemplate");
+        const testswiftDockerfiletools = path.join(swiftProjectPath, "Dockerfile-tools");
+        const swiftDockerfiletoolsbackup = path.join(swiftProjectPath, "Dockerfile-tools_backup");
+        const testswiftPackageswift = path.join(swiftProjectPath, "Package.swift");
+        const swiftPackageswiftbackup = path.join(swiftProjectPath, "Package.swift_backup");
+
+        const pythonProjectPath = path.join(process.env.CW_WORKSPACE, "SVTPythonTemplate");
+        const testpythonDockerfile = path.join(pythonProjectPath, "Dockerfile");
+        const pythonDockerfilebackup = path.join(pythonProjectPath, "Dockerfile_backup");
+
+        const appsodyProjectPath = path.join(process.env.CW_WORKSPACE, "appsodyProject");
+        const testappsodyrequiredFiles = path.join(appsodyProjectPath, "testRequiredFiles");
+
+        before("create the required extension folder for shellExtension project testing", async () => {
+            if (!(await existsAsync(appsodyExtensionPath))) {
+                fse.ensureDirSync(appsodyExtensionPath);
+                await writeAsync(appsodyExtensionTestArtifactPath1, '{"requiredFiles": ["/testRequiredFiles"]}');
+                await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
+            }
+
+            expect(fs.statSync(extensionsPath)).to.exist;
+            expect(fs.statSync(appsodyExtensionPath)).to.exist;
+
+            if (!(await existsAsync(appsodyProjectPath))) {
+                await mkdirAsync(appsodyProjectPath);
+            }
+            expect(fs.statSync(appsodyProjectPath)).to.exist;
+            await writeAsync(testappsodyrequiredFiles, "some data");
+        });
+
+        after("cleanup the test directories", async() => {
+            if ((await existsAsync(extensionsPath))) {
+                if (await existsAsync(appsodyExtensionPath)) {
+                    await unlinkAsync(appsodyExtensionTestArtifactPath1);
+                    await unlinkAsync(appsodyExtensionTestArtifactPath2);
+                    await rmdirAsync(appsodyExtensionPath);
+                }
+                await rmdirAsync(extensionsPath);
+            }
+
+            if ((await existsAsync(appsodyProjectPath))) {
+                if ((await existsAsync(testappsodyrequiredFiles))) {
+                    await unlinkAsync(testappsodyrequiredFiles);
+                }
+                await rmdirAsync(appsodyProjectPath);
+            }
+        });
+
         const combinations: any = {
             "combo1": {
                 "description": "request missing project type and location",
@@ -335,6 +388,16 @@ export function actionsTestModule(): void {
                 "error": "Missing required file"
             },
             "combo7": {
+                "description": "microprofile project with root user dockerfile-build",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "Migration may required to run project container as a non-root user"
+            },
+            "combo8": {
                 "description": "microprofile project with bad inner most pom.xml elements",
                 "args": {
                     projectType: "liberty",
@@ -342,10 +405,9 @@ export function actionsTestModule(): void {
                     location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
                 },
                 "result": "failed",
-                // "error": ["Missing Liberty parent POM groupId", "Missing Liberty parent POM artifactId", "Missing profile activation", "liberty-maven-plugin extensions not enabled", "liberty-maven-plugin looseApplication is not enabled"],
-                "error": ["Missing Liberty parent POM groupId", "Missing Liberty parent POM artifactId", "Missing profile activation"],
+                "error": ["Missing Liberty parent POM groupId", "Missing Liberty parent POM artifactId", "Missing profile activation", "liberty-maven-plugin extensions not enabled", "liberty-maven-plugin looseApplication is not enabled"],
             },
-            "combo8": {
+            "combo9": {
                 "description": "microprofile project with bad pom.xml due to missing liberty maven plugin",
                 "args": {
                     projectType: "liberty",
@@ -355,18 +417,153 @@ export function actionsTestModule(): void {
                 "result": "failed",
                 "error": "Missing liberty-maven-plugin configuration"
             },
-            // "combo5": {
-            //     "args": { projectID: "dummymicroprofileproject" },
-            //     "result": "success"
-            // },
-            // "combo6": {
-            //     "args": { projectID: "dummygoproject" },
-            //     "result": "success"
-            // },
-            // "combo7": {
-            //     "args": { projectID: "dummyappsodyproject" },
-            //     "result": "success"
-            // },
+            "combo10": {
+                "description": "microprofile project with bad pom.xml due to bad profile",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "A maven profile named 'microclimate' was not found."
+            },
+            "combo11": {
+                "description": "microprofile project with bad pom.xml syntax",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "POM parsing error"
+            },
+            "combo12": {
+                "description": "good spring project",
+                "args": {
+                    projectType: "spring",
+                    projectID: "springJavaTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "springJavaTemplate")
+                },
+                "result": "success"
+            },
+            "combo13": {
+                "description": "spring project with missing Dockerfile",
+                "args": {
+                    projectType: "spring",
+                    projectID: "springJavaTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "springJavaTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo14": {
+                "description": "spring project with bad inner most pom.xml elements",
+                "args": {
+                    projectType: "spring",
+                    projectID: "springJavaTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "springJavaTemplate")
+                },
+                "result": "failed",
+                "error": ["Invalid packaging for Spring project", "Spring Boot dependency not found"],
+            },
+            "combo15": {
+                "description": "good nodejs project",
+                "args": {
+                    projectType: "nodejs",
+                    projectID: "nodeExpressTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "nodeExpressTemplate")
+                },
+                "result": "success"
+            },
+            "combo16": {
+                "description": "nodejs project with missing Dockerfile",
+                "args": {
+                    projectType: "nodejs",
+                    projectID: "nodeExpressTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "nodeExpressTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo17": {
+                "description": "nodejs project with missing package.json",
+                "args": {
+                    projectType: "nodejs",
+                    projectID: "nodeExpressTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "nodeExpressTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo18": {
+                "description": "good swift project",
+                "args": {
+                    projectType: "swift",
+                    projectID: "swiftTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "swiftTemplate")
+                },
+                "result": "success"
+            },
+            "combo19": {
+                "description": "swift project with missing Dockerfile-tools",
+                "args": {
+                    projectType: "swift",
+                    projectID: "swiftTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "swiftTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo20": {
+                "description": "swift project with missing Package.swift",
+                "args": {
+                    projectType: "swift",
+                    projectID: "swiftTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "swiftTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo21": {
+                "description": "good python project",
+                "args": {
+                    projectType: "docker",
+                    projectID: "SVTPythonTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "SVTPythonTemplate")
+                },
+                "result": "success"
+            },
+            "combo22": {
+                "description": "python project with missing Dockerfile",
+                "args": {
+                    projectType: "docker",
+                    projectID: "SVTPythonTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "SVTPythonTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo23": {
+                "description": "good appsody project",
+                "args": {
+                    projectType: "appsodyExtension",
+                    extensionID: "appsodyExtension",
+                    projectID: "appsodyProject",
+                    location: path.join(process.env.CW_WORKSPACE, "appsodyProject")
+                },
+                "result": "success"
+            },
+            "combo24": {
+                "description": "appsody project with missing requiredFiles",
+                "args": {
+                    projectType: "appsodyExtension",
+                    extensionID: "appsodyExtension",
+                    projectID: "appsodyProject",
+                    location: path.join(process.env.CW_WORKSPACE, "appsodyProject")
+                },
+                "result": "failed",
+                "error": "Missing required file"
+            },
         };
 
         for (const combo of Object.keys(combinations)) {
@@ -381,7 +578,7 @@ export function actionsTestModule(): void {
                 try {
                     switch (combo) {
                         case "combo5": {
-                            fs.renameSync(testLibertyDockerfile, Dockerfilebackup);
+                            fs.renameSync(testLibertyDockerfile, libertyDockerfilebackup);
                             break;
                         }
                         case "combo6": {
@@ -389,22 +586,83 @@ export function actionsTestModule(): void {
                             break;
                         }
                         case "combo7": {
-                            await copyAsync(originalLibertyPOMGarbage1, testLibertyPOM);
+                            fs.renameSync(testLibertyDockerfileBuild, LibertyDockerfileBuildbackup);
+                            await copyAsync(LibertyDockerfileBuildGarbage, testLibertyDockerfileBuild);
                             break;
                         }
                         case "combo8": {
+                            await copyAsync(originalLibertyPOMGarbage1, testLibertyPOM);
+                            break;
+                        }
+                        case "combo9": {
                             await copyAsync(originalLibertyPOMGarbage2, testLibertyPOM);
+                            break;
+                        }
+                        case "combo10": {
+                            await copyAsync(originalLibertyPOMGarbage3, testLibertyPOM);
+                            break;
+                        }
+                        case "combo11": {
+                            await copyAsync(originalLibertyPOMGarbage4, testLibertyPOM);
+                            break;
+                        }
+                        case "combo13": {
+                            fs.renameSync(testspringDockerfile, springDockerfilebackup);
+                            break;
+                        }
+                        case "combo14": {
+                            await copyAsync(originalspringPOMGarbage1, testspringPOM);
+                            break;
+                        }
+                        case "combo16": {
+                            fs.renameSync(testnodeDockerfile, nodeDockerfilebackup);
+                            break;
+                        }
+                        case "combo17": {
+                            fs.renameSync(testnodePackagejson, nodePackagejsonbackup);
+                            break;
+                        }
+                        case "combo19": {
+                            fs.renameSync(testswiftDockerfiletools, swiftDockerfiletoolsbackup);
+                            break;
+                        }
+                        case "combo20": {
+                            fs.renameSync(testswiftPackageswift, swiftPackageswiftbackup);
+                            break;
+                        }
+                        case "combo22": {
+                            fs.renameSync(testpythonDockerfile, pythonDockerfilebackup);
+                            break;
+                        }
+                        case "combo24": {
+                            await unlinkAsync(testappsodyrequiredFiles);
                             break;
                         }
                     }
                     const actualResult = await actions.validate(args);
                     switch (combo) {
                         case "combo5": {
-                            fs.renameSync(Dockerfilebackup, testLibertyDockerfile);
+                            fs.renameSync(libertyDockerfilebackup, testLibertyDockerfile);
                             break;
                         }
                         case "combo6": {
                             fs.renameSync(serverXMLbackup, testLibertyServerXML);
+                            break;
+                        }
+                        case "combo7": {
+                            await copyAsync(LibertyDockerfileBuildbackup, testLibertyDockerfileBuild);
+                            break;
+                        }
+                        case "combo13": {
+                            fs.renameSync(springDockerfilebackup, testspringDockerfile);
+                            break;
+                        }
+                        case "combo16": {
+                            fs.renameSync(nodeDockerfilebackup, testnodeDockerfile);
+                            break;
+                        }
+                        case "combo19": {
+                            fs.renameSync(swiftDockerfiletoolsbackup, testswiftDockerfiletools);
                             break;
                         }
                     }
@@ -412,10 +670,15 @@ export function actionsTestModule(): void {
                     expect(socketData).to.exist;
                     expect(socketData.status).to.equal(expectedResult);
                     if (socketData.status == "failed") {
-                        if (combo == "combo7") {
+                        if (combo == "combo8") {
                             expect(socketData.results[0].label).to.equal(errorMsg[0]);
                             expect(socketData.results[1].label).to.equal(errorMsg[1]);
                             expect(socketData.results[2].label).to.equal(errorMsg[2]);
+                            expect(socketData.results[3].label).to.equal(errorMsg[3]);
+                            expect(socketData.results[4].label).to.equal(errorMsg[4]);
+                        } else if (combo == "combo14") {
+                            expect(socketData.results[0].label).to.equal(errorMsg[0]);
+                            expect(socketData.results[1].label).to.equal(errorMsg[1]);
                         } else {
                             expect(socketData.results[0].label).to.equal(errorMsg);
                         }

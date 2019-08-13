@@ -1184,6 +1184,7 @@ export interface IProjectActionParams {
     location?: string;
     projectID?: string;
     startMode?: string;
+    extensionID?: string;
 }
 
 export interface IProjectSpecificationParams {
