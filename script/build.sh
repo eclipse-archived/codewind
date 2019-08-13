@@ -11,7 +11,12 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
+# README FIRST !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# 
 # NOTE: change of this file should be in sync with 'Jenkinsfile(stage: Build Docker images)'
+# Ping kjoseph@ca.ibm.com for details
+#
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 DIR=`pwd`;
 SRC_DIR=$DIR/src;
