@@ -80,11 +80,13 @@ module.exports = class User {
 
       // Create the list of codewind extensions
       this.extensionList = new ExtensionList();
-      try {
-        await this.extensionList.initialise(this.directories.extensions, this.templates);
-      } catch (error) {
-        log.error('Codewind extensions failed to load');
-        log.error(error);
+      for (let extensionsPath of [this.directories.extensions, '/extensions/']) {
+        try {
+          await this.extensionList.initialise(extensionsPath, this.templates);
+        } catch (error) {
+          log.error(`Codewind extensions failed to load from ${extensionsPath}`);
+          log.error(error);
+        }
       }
 
       // Create the FileWatcher and LoadRunner classes for this user
