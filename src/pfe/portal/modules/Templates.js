@@ -281,6 +281,9 @@ async function getReposFromProviders(providers) {
   await Promise.all(providers.map(async(provider) => {
     try {
       const providedRepos = await provider.getRepositories();
+      if (!Array.isArray(providedRepos)) {
+        throw new Error (`provider ${util.inspect(provider)} should provide an array of repos, but instead provided '${providedRepos}'`);
+      }
       providedRepos.forEach(repo => {
         if (isRepo(repo)) {
           repos.push(repo);

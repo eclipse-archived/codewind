@@ -155,7 +155,15 @@ describe('Templates.js', function() {
                 input: [{}],
                 output: [],
             },
-            'valid provider provides URL': {
+            'provider provides non-array': {
+                input: [{
+                    getRepositories() {
+                        return 'should be array';
+                    },
+                }],
+                output: [],
+            },
+            'provider provides a repo with URL': {
                 input: [{
                     getRepositories() {
                         return [{
