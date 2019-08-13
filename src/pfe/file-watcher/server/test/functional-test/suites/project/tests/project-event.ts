@@ -64,7 +64,7 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
             if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectLang];
             for (const file of filesList) {
                 it(`${type.toLowerCase()} file: ${file}`, async () => {
-                    const fileToChange = "Dockerfile";
+                    const fileToChange = file;
                     const pathFileToChange = path.join(projData.location, fileToChange);
 
                     const testData = _.cloneDeep(data);
