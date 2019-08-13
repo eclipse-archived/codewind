@@ -364,12 +364,6 @@ export function projectExtensionsTestModule(): void {
             const expectedResultProjectCapabilities = combinations[combo]["resultProjectCapabilities"];
 
             it(combo + " => getProjectHandler & getProjectCapabilities: projectID " + projectID, async () => {
-                if (combo == "combo6") {
-                    expect(fs.statSync(extensionsPath)).to.exist;
-                    expect(fs.statSync(appsodyExtensionPath)).to.exist;
-                    expect(fs.statSync(appsodyExtensionTestArtifactPath1)).to.exist;
-                    expect(fs.statSync(appsodyExtensionTestArtifactPath2)).to.exist;
-                }
                 let projectInfo: ProjectInfo;
                 if (combo == "combo3") {
                     projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);

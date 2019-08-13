@@ -39,6 +39,7 @@ export function loggerTestModule(): void {
                 await unlinkAsync(testProjectMetadata);
                 await rmdirAsync(projectMetadataPath);
             }
+            process.env.NODE_ENV = "test";
         });
 
         const combinations: any = {
@@ -122,6 +123,7 @@ export function loggerTestModule(): void {
                 await unlinkAsync(testProjectMetadata);
                 await rmdirAsync(projectMetadataPath);
             }
+            process.env.NODE_ENV = "test";
         });
 
         const combinations: any = {
@@ -206,6 +208,7 @@ export function loggerTestModule(): void {
                 await unlinkAsync(testProjectMetadata);
                 await rmdirAsync(projectMetadataPath);
             }
+            process.env.NODE_ENV = "test";
         });
 
         const combinations: any = {
@@ -279,6 +282,7 @@ export function loggerTestModule(): void {
                 await unlinkAsync(testProjectMetadata);
                 await rmdirAsync(projectMetadataPath);
             }
+            process.env.NODE_ENV = "test";
         });
 
         const combinations: any = {
@@ -339,6 +343,10 @@ export function loggerTestModule(): void {
 
         before("set env variable", async () => {
             process.env.NODE_ENV = "production";
+        });
+
+        after("reset env variable", async () => {
+            process.env.NODE_ENV = "test";
         });
 
         const combinations: any = {
@@ -437,6 +445,7 @@ export function loggerTestModule(): void {
                 await unlinkAsync(testProjectMetadata);
                 await rmdirAsync(projectMetadataPath);
             }
+            process.env.NODE_ENV = "test";
         });
 
         const combinations: any = {
@@ -493,6 +502,14 @@ export function loggerTestModule(): void {
 
     describe("combinational testing of setLoggingLevel function", () => {
 
+        before("set env variable", async () => {
+            process.env.NODE_ENV = "production";
+        });
+
+        after("reset env variable", async () => {
+            process.env.NODE_ENV = "test";
+        });
+
         const combinations: any = {
             "combo1": {
                 "msg": "The current log level is",
@@ -508,8 +525,6 @@ export function loggerTestModule(): void {
                 "result": true
             }
         };
-
-        process.env.NODE_ENV = "production";
 
         for (const combo of Object.keys(combinations)) {
 
