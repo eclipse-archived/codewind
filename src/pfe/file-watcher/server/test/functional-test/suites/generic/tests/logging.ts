@@ -45,8 +45,8 @@ export default class LoggingTest {
     }
 
     private afterAllHook(): void {
-        after("reset log level to info", async () => {
-            await genericLib.setLoggingLevel("info");
+        after(`reset log level to ${process.env.DEFAULT_LOG_LEVEL}`, async () => {
+            await genericLib.setLoggingLevel(process.env.DEFAULT_LOG_LEVEL);
         });
     }
 }

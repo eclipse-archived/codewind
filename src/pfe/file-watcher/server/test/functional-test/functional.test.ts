@@ -23,6 +23,7 @@ import * as timoutConfigs from "./configs/timeout.config";
 import GenericTestSuite from "./suites/generic/index";
 import ProjectTestSuite from "./suites/project/index";
 
+import * as genericLib from "./lib/generic";
 import { ProjectCreation } from "./lib/project";
 import { SocketIO } from "./lib/socket-io";
 
@@ -35,6 +36,11 @@ const genericSuite = new GenericTestSuite(socket);
 const projectSuite = new ProjectTestSuite(socket);
 
 describe("PFE - functional test", () => {
+
+  before(`set logging level to ${process.env.DEFAULT_LOG_LEVEL}`, async () => {
+    await genericLib.setLoggingLevel(process.env.DEFAULT_LOG_LEVEL);
+  });
+
   before("registering socket listener", () => {
     socket.registerListener("PFE Functional Test Listener");
   });
