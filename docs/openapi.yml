@@ -1374,7 +1374,7 @@ components:
           example: https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json
         value:
           type: string
-          example: true
+          example: 'true'
     BasicMetric:
       properties:
         time:
