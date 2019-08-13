@@ -28,6 +28,9 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+# Set before mvn is run to prevent the reset of the MAVEN_OPTS that can happen if its in the start.sh script
+export HOST_MAVEN_OPTS=$MAVEN_OPTS
+
 mvn -v > /dev/null 2>&1
 MVN_RET_CODE=$?
 
