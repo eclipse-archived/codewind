@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+ version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>projects</groupId>
@@ -8,8 +8,8 @@
 
     <!-- contains default pluginManagement configuration for liberty-maven-plugin -->
     <parent>
-        <groupId>net.wasdev.wlp.maven.parent.garbage</groupId>
-        <artifactId>liberty-maven-app-parent.garbage</artifactId>
+        <groupId>net.wasdev.wlp.maven.parent</groupId>
+        <artifactId>liberty-maven-app-parent</artifactId>
         <version>2.1.2</version>
     </parent>
 
@@ -439,7 +439,7 @@
             <activation>
                 <property>
                     <name>libertyEnv</name>
-                    <value>microclimategarbage</value>
+                    <value>microclimate</value>
                 </property>
             </activation>
             <build>
@@ -450,9 +450,9 @@
                         <groupId>net.wasdev.wlp.maven.plugins</groupId>
                         <artifactId>liberty-maven-plugin</artifactId>
                         <version>${liberty.plugin.version}</version>
-                        <extensions>truegarbage</extensions>
+                        <extensions>true</extensions>
                         <configuration>
-                            <looseApplication>truegarbage</looseApplication>
+                            <looseApplication>true</looseApplication>
                             <appsDirectory>apps</appsDirectory>
                             <installDirectory>/opt/ibm/wlp</installDirectory>
                             <userDirectory>${project.build.directory}/liberty/wlp/usr</userDirectory>
@@ -473,4 +473,4 @@
             </build>
         </profile>
     </profiles>
-</project>
+</project> 
