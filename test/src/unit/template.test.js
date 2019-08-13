@@ -18,6 +18,7 @@ const {
     styledTemplates,
     defaultTemplates,
     defaultRepoList,
+    sampleRepos,
 } = require('../../modules/template.service');
 
 chai.use(chaiAsPromised);
@@ -28,7 +29,7 @@ const testWorkspaceConfigDir = path.join(testWorkspaceDir, '.config/');
 const sampleCodewindTemplate = styledTemplates.codewind;
 const sampleAppsodyTemplate = styledTemplates.appsody;
 
-const sampleRepos = {
+const mockRepos = {
     enabled: {
         url: '1',
         description: '1',
@@ -44,7 +45,7 @@ const sampleRepos = {
         description: '3',
     },
 };
-const sampleRepoList = Object.values(sampleRepos);
+const mockRepoList = Object.values(mockRepos);
 
 describe('Templates.js', function() {
     describe('getTemplateStyles() when Codewind is aware of:', function() {
@@ -106,10 +107,111 @@ describe('Templates.js', function() {
             });
         });
         describe(`when we do refresh`, function() {
-            it('returns the default templates', async function() {
-                const templateController = new Templates('');
-                const output = await templateController.getAllTemplates();
-                output.should.deep.equal(defaultTemplates);
+            describe('', function() {
+                it('returns the default templates', async function() {
+                    const templateController = new Templates('');
+                    const output = await templateController.getAllTemplates();
+                    output.should.deep.equal(defaultTemplates);
+                });
+            });
+            describe('and add an extra template repo', function() {
+                let templateController;
+                before(() => {
+                    templateController = new Templates('');
+                    templateController.repositoryList = [
+                        sampleRepos.default,
+                        sampleRepos.appsody,
+                    ];
+                });
+                it('returns more templates', async function() {
+                    const output = await templateController.getAllTemplates();
+                    output.should.include.deep.members(defaultTemplates);
+                    (output.length).should.be.above(defaultTemplates.length);
+                });
+            });
+            describe('and add an extra bad template repo', function() {
+                let templateController;
+                before(() => {
+                    templateController = new Templates('');
+                    templateController.repositoryList = [
+                        sampleRepos.default,
+                        { url: 'https://www.google.com/' },
+                    ];
+                });
+                it('returns only the default templates', async function() {
+                    const output = await templateController.getAllTemplates();
+                    output.should.deep.equal(defaultTemplates);
+                });
+            });
+        });
+    });
+    describe('getReposFromProviders(providers)', function() {
+        const tests = {
+            'invalid provider: string': {
+                input: ['string'],
+                output: [],
+            },
+            'invalid provider: empty obj': {
+                input: [{}],
+                output: [],
+            },
+            'provider provides non-array': {
+                input: [{
+                    getRepositories() {
+                        return 'should be array';
+                    },
+                }],
+                output: [],
+            },
+            'provider provides a repo with URL': {
+                input: [{
+                    getRepositories() {
+                        return [{
+                            url: 'https://www.google.com/',
+                            description: 'not a GitHub repo',
+                        }];
+                    },
+                }],
+                output: [{
+                    url: 'https://www.google.com/',
+                    description: 'not a GitHub repo',
+                }],
+            },
+        };
+        for (const [testName, test] of Object.entries(tests)) {
+            describe(testName, function() { // eslint-disable-line
+                it(`returns the expected repos`, async function() {
+                    const output = await Templates.getReposFromProviders(test.input);
+                    output.should.deep.equal(test.output);
+                });
+            });
+        }
+    });
+    describe('getTemplatesFromRepo(repository)', function() {
+        describe('(<validRepository>)', function() {
+            it('returns the correct templates', async function() {
+                const output = await Templates.getTemplatesFromRepo(defaultRepoList[0]);
+                output.should.have.deep.members(defaultTemplates);
+            });
+        });
+        describe('(<invalidRepository>)', function() {
+            describe('string', function() {
+                it('throws a useful error', function() {
+                    const func = () => Templates.getTemplatesFromRepo('string');
+                    return func().should.be.rejectedWith(`repo 'string' must have a URL`);
+                });
+            });
+            describe('invalid URL', function() {
+                it('throws a useful error', function() {
+                    const func = () => Templates.getTemplatesFromRepo({ url: 'invalidURL' });
+                    return func().should.be.rejectedWith('Invalid URL');
+                });
+            });
+            describe(`valid URL that doesn't provide JSON`, function() {
+                it('throws a useful error', function() {
+                    const func = () => Templates.getTemplatesFromRepo({ url: 'https://www.google.com/' });
+                    return func().should.be.rejectedWith(`URL 'https://www.google.com/' should return JSON`);
+                });
             });
         });
     });
@@ -118,7 +220,7 @@ describe('Templates.js', function() {
             it('throws an error', function() {
                 const templateController = new Templates('');
                 const func = () => templateController.getTemplatesFromRepos();
-                func().should.eventually.be.rejected;
+                return func().should.be.rejected;
             });
         });
         describe('([])', function() {
@@ -214,6 +316,24 @@ describe('Templates.js', function() {
                         output.should.deep.equal(defaultTemplates);
                     });
                 });
+                describe(`valid URL that doesn't provide JSON`, function() {
+                    let templateController;
+                    before(() => {
+                        templateController = new Templates('');
+                        templateController.addProvider(`doesn't provide JSON`, {
+                            getRepositories() {
+                                return [{
+                                    url: 'https://www.google.com/',
+                                    description: `doesn't provide JSON`,
+                                }];
+                            },
+                        });
+                    });
+                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                        const output = await templateController.getTemplatesFromRepos(defaultRepoList);
+                        output.should.deep.equal(defaultTemplates);
+                    });
+                });
             });
             describe('when providers list valid repos', function() {
                 let templateController;
@@ -236,35 +356,57 @@ describe('Templates.js', function() {
             });
         });
     });
+    describe('addRepository(repoUrl, repoDescription)', function() {
+        let templateController;
+        beforeEach(() => {
+            fs.ensureDirSync(testWorkspaceConfigDir);
+            templateController = new Templates(testWorkspaceDir);
+            templateController.repositoryList = [...mockRepoList];
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspaceDir);
+        });
+        describe('(<existingUrl>, <validDesc>)', function() {
+            it('throws an error', function() {
+                const { url, description } = mockRepoList[0];
+                const func = () => templateController.addRepository(url, description);
+                return func().should.be.rejectedWith(`${1} is not a unique URL. Repository URLs must be unique`);
+            });
+        });
+        describe('(<uniqueString>, <validDesc>)', function() {
+            it('succeeds', function() {
+                const func = () => templateController.addRepository('unique string', 'description');
+                return func().should.not.be.rejected;
+            });
+        });
+    });
     describe('getRepositories()', function() {
         let templateController;
         before(() => {
             templateController = new Templates('');
-            templateController.repositoryList = sampleRepoList;
-            templateController.needsRefresh = false;
+            templateController.repositoryList = [...mockRepoList];
         });
         it('returns all repos', function() {
             const output = templateController.getRepositories();
-            output.should.deep.equal(sampleRepoList);
+            output.should.deep.equal(mockRepoList);
         });
     });
     describe('getEnabledRepositories()', function() {
         let templateController;
         before(() => {
             templateController = new Templates('');
-            templateController.repositoryList = sampleRepoList;
-            templateController.needsRefresh = false;
+            templateController.repositoryList = [...mockRepoList];
         });
         it('returns only enabled repos', function() {
             const output = templateController.getEnabledRepositories();
-            output.should.deep.equal([sampleRepos.enabled, sampleRepos.noEnabledStatus]);
+            output.should.deep.equal([mockRepos.enabled, mockRepos.noEnabledStatus]);
         });
     });
     describe('enableRepository(url)', function() {
         let templateController;
         beforeEach(() => {
             templateController = new Templates('');
-            templateController.repositoryList = sampleRepoList;
+            templateController.repositoryList = [...mockRepoList];
         });
         describe('(existing url)', function() {
             it('enables the correct repo', function() {
@@ -288,14 +430,14 @@ describe('Templates.js', function() {
         let templateController;
         beforeEach(() => {
             templateController = new Templates('');
-            templateController.repositoryList = sampleRepoList;
+            templateController.repositoryList = [...mockRepoList];
         });
         describe('(existing url)', function() {
             it('disables the correct repo', function() {
-                templateController.disableRepository('1');
+                const repo = { ...templateController.repositoryList[0] };
+                templateController.disableRepository(repo.url);
                 const expectedRepoDetails = {
-                    url: '1',
-                    description: '1',
+                    ...repo,
                     enabled: false,
                 };
                 templateController.getRepositories().should.deep.include(expectedRepoDetails);
@@ -313,7 +455,7 @@ describe('Templates.js', function() {
         beforeEach(() => {
             fs.ensureDirSync(testWorkspaceConfigDir);
             templateController = new Templates(testWorkspaceDir);
-            templateController.repositoryList = sampleRepoList;
+            templateController.repositoryList = [...mockRepoList];
         });
         afterEach(() => {
             fs.removeSync(testWorkspaceDir);
@@ -552,7 +694,7 @@ describe('Templates.js', function() {
         let templateController;
         beforeEach(() => {
             templateController = new Templates('');
-            templateController.repositoryList = sampleRepoList;
+            templateController.repositoryList = [...mockRepoList];
         });
         describe('when `operation.url` is an existing url', function() {
             const tests = {
@@ -653,14 +795,16 @@ describe('Templates.js', function() {
     });
     describe('addProvider(name, provider)', function() {
         describe('invalid args', function() {
-            describe('(<name>, {})', function() {
-                it('getTemplateList should ignore invalid template providers', function() {
-                    const templateController = new Templates('');
-                    const originalProviders = { ...templateController.providers };
+            describe('invalid provider type', function() {
+                describe('empty object', function() {
+                    it('ignores the invalid provider', function() {
+                        const templateController = new Templates('');
+                        const originalProviders = { ...templateController.providers };
 
-                    templateController.addProvider('empty obj', {});
+                        templateController.addProvider('empty obj', {});
 
-                    templateController.providers.should.deep.equal(originalProviders);
+                        templateController.providers.should.deep.equal(originalProviders);
+                    });
                 });
             });
         });
