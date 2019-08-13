@@ -48,7 +48,6 @@ export default class ShutdownTest {
                         const events = socket.getAllEvents();
                         if (events && events.length >= 1) {
                             event =  events.filter((value) => {
-                                // && _.isEqual(Object.keys(value.eventData), data)
                                 if (value.eventName === targetEvent) {
                                     return value;
                                 }

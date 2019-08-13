@@ -26,7 +26,7 @@ import * as projectUtil from "../../../../../src/projects/projectUtil";
 import * as utils from "../../../lib/utils";
 
 export function projectSpecificationTest(socket: SocketIO, projData: ProjectCreation, projectLang: string): void {
-    describe("projectSpecification function", () => {
+    describe.only("projectSpecification function", () => {
         const data: any = {
             "projectID": projData.projectID
         };
@@ -40,228 +40,230 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 "socketEvent": eventConfigs.events.settingsChanged,
                 "eventKeys": ["operationId", "projectID", "status", "ports"]
             },
-            "combo2": {
-                "setting": "internalDebugPort",
-                "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "status", "ports"]
-            },
-            "combo3": {
-                "setting": "contextRoot",
-                "value":  testContextRoot,
-                "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "contextRoot", "status"]
-            },
-            "combo4": {
-                "setting": "healthCheck",
-                "value":  testHealthCheck,
-                "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "name", "healthCheck", "status"]
-            },
-            "combo5": {
-                "setting": "mavenProfiles",
-                "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "mavenProfiles", "status"]
-            },
-            "combo6": {
-                "setting": "mavenProperties",
-                "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "mavenProperties", "status"]
-            },
-            "combo7": {
-                "setting": "ignoredPaths",
-                "value": [
-                    "*/node_modules*",
-                    "*/.git/*",
-                    "*/.DS_Store",
-                    "*/.dockerignore",
-                    "*/.gitignore",
-                ],
-                "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "ignoredPaths", "status"]
-            }
+            // "combo2": {
+            //     "setting": "internalDebugPort",
+            //     "socketEvent": eventConfigs.events.settingsChanged,
+            //     "eventKeys": ["operationId", "projectID", "status", "ports"]
+            // },
+            // "combo3": {
+            //     "setting": "contextRoot",
+            //     "value":  testContextRoot,
+            //     "socketEvent": eventConfigs.events.settingsChanged,
+            //     "eventKeys": ["operationId", "projectID", "contextRoot", "status"]
+            // },
+            // "combo4": {
+            //     "setting": "healthCheck",
+            //     "value":  testHealthCheck,
+            //     "socketEvent": eventConfigs.events.settingsChanged,
+            //     "eventKeys": ["operationId", "projectID", "name", "healthCheck", "status"]
+            // },
+            // "combo5": {
+            //     "setting": "mavenProfiles",
+            //     "socketEvent": eventConfigs.events.settingsChanged,
+            //     "eventKeys": ["operationId", "projectID", "mavenProfiles", "status"]
+            // },
+            // "combo6": {
+            //     "setting": "mavenProperties",
+            //     "socketEvent": eventConfigs.events.settingsChanged,
+            //     "eventKeys": ["operationId", "projectID", "mavenProperties", "status"]
+            // },
+            // "combo7": {
+            //     "setting": "ignoredPaths",
+            //     "value": [
+            //         "*/node_modules*",
+            //         "*/.git/*",
+            //         "*/.DS_Store",
+            //         "*/.dockerignore",
+            //         "*/.gitignore",
+            //     ],
+            //     "socketEvent": eventConfigs.events.settingsChanged,
+            //     "eventKeys": ["operationId", "projectID", "ignoredPaths", "status"]
+            // }
         };
 
         afterEach("clear socket events", () => {
             socket.clearEvents();
         });
 
-        after("reset context root", async function (): Promise<void> {
-            this.timeout(timeoutConfigs.defaultTimeout);
+        // after("reset context root", async function (): Promise<void> {
+        //     this.timeout(timeoutConfigs.defaultTimeout);
 
-            const testData = _.cloneDeep(data);
-            testData["settings"] = {
-                [combinations["combo4"]["setting"]]: project_configs.defaultContextRoot[projectLang] || "/"
-            };
+        //     const testData = _.cloneDeep(data);
+        //     testData["settings"] = {
+        //         [combinations["combo4"]["setting"]]: project_configs.defaultContextRoot[projectLang] || "/"
+        //     };
 
-            const info: any = await projectSpecification(testData);
-            expect(info);
-            expect(info.statusCode);
-            expect(info.statusCode).to.equal(202);
-            expect(info.operationId);
+        //     const info: any = await projectSpecification(testData);
+        //     expect(info);
+        //     expect(info.statusCode);
+        //     expect(info.statusCode).to.equal(202);
+        //     expect(info.operationId);
 
-            if (testData["socketEvent"] && testData["eventKeys"]) {
-                const targetEvent = testData["socketEvent"];
-                let eventFound = false;
-                let event: any;
-                await new Promise((resolve) => {
-                    const timer = setInterval(() => {
-                        const events = socket.getAllEvents();
-                        if (events && events.length >= 1) {
-                            event =  events.filter((value) => {
-                                if (value.eventName === targetEvent && _.isEqual(_.sortBy(Object.keys(value.eventData)), _.sortBy(testData["eventKeys"]))) return value;
-                            })[0];
-                            if (event) {
-                                eventFound = true;
-                                clearInterval(timer);
-                                return resolve();
-                            }
-                        }
-                    }, timeoutConfigs.defaultInterval);
-                });
+        //     if (testData["socketEvent"] && testData["eventKeys"]) {
+        //         const targetEvent = testData["socketEvent"];
+        //         let eventFound = false;
+        //         let event: any;
+        //         await new Promise((resolve) => {
+        //             const timer = setInterval(() => {
+        //                 const events = socket.getAllEvents();
+        //                 if (events && events.length >= 1) {
+        //                     event =  events.filter((value) => {
+        //                         if (value.eventName === targetEvent && _.isEqual(_.sortBy(Object.keys(value.eventData)), _.sortBy(testData["eventKeys"]))) return value;
+        //                     })[0];
+        //                     if (event) {
+        //                         eventFound = true;
+        //                         clearInterval(timer);
+        //                         return resolve();
+        //                     }
+        //                 }
+        //             }, timeoutConfigs.defaultInterval);
+        //         });
 
-                if (eventFound && event) {
-                    expect(event);
-                    expect(event.eventName);
-                    expect(event.eventName).to.equal(targetEvent);
-                    expect(event.eventData);
+        //         if (eventFound && event) {
+        //             expect(event);
+        //             expect(event.eventName);
+        //             expect(event.eventName).to.equal(targetEvent);
+        //             expect(event.eventData);
 
-                    for (const eventKey of testData["eventKeys"]) {
-                        expect(event.eventData).to.haveOwnProperty(eventKey);
+        //             for (const eventKey of testData["eventKeys"]) {
+        //                 expect(event.eventData).to.haveOwnProperty(eventKey);
 
-                        if (eventKey === "projectID") {
-                            expect(event.eventData[eventKey]).to.equal(projData.projectID);
-                        }
-                        if (eventKey === "contextRoot") {
-                            expect(event.eventData[eventKey]).to.equal(testData["settings"][combinations["combo4"]["setting"]]);
-                        }
-                    }
-                } else {
-                    fail(`failed to find ${targetEvent} for setting contextRoot`);
-                }
-            }
-        });
+        //                 if (eventKey === "projectID") {
+        //                     expect(event.eventData[eventKey]).to.equal(projData.projectID);
+        //                 }
+        //                 if (eventKey === "contextRoot") {
+        //                     expect(event.eventData[eventKey]).to.equal(testData["settings"][combinations["combo4"]["setting"]]);
+        //                 }
+        //             }
+        //         } else {
+        //             fail(`failed to find ${targetEvent} for setting contextRoot`);
+        //         }
+        //     }
+        // });
 
-        utils.rebuildProjectAfterHook(socket, projData);
+        // utils.rebuildProjectAfterHook(socket, projData);
 
-        it("set project specification without project id", async () => {
-            const testData = _.cloneDeep(data);
-            delete testData["projectID"];
-            const info: any = await projectSpecification(testData);
-            expect(info);
-            expect(info.statusCode);
-            expect(info.error);
-            expect(info.error).to.haveOwnProperty("msg");
-            expect(info.error["msg"]).to.equal("BAD_REQUEST: The project id was not provided. ");
-        });
+        // it("set project specification without project id", async () => {
+        //     const testData = _.cloneDeep(data);
+        //     delete testData["projectID"];
+        //     const info: any = await projectSpecification(testData);
+        //     expect(info);
+        //     expect(info.statusCode);
+        //     expect(info.error);
+        //     expect(info.error).to.haveOwnProperty("msg");
+        //     expect(info.error["msg"]).to.equal("BAD_REQUEST: The project id was not provided. ");
+        // });
 
-        it("set project specification without project settings", async () => {
-            const testData = _.cloneDeep(data);
-            const info: any = await projectSpecification(testData);
-            expect(info);
-            expect(info.statusCode);
-            expect(info.error);
-            expect(info.error).to.haveOwnProperty("msg");
-            expect(info.error["msg"]).to.equal("BAD_REQUEST: The settings were not provided. ");
-        });
+        // it("set project specification without project settings", async () => {
+        //     const testData = _.cloneDeep(data);
+        //     const info: any = await projectSpecification(testData);
+        //     expect(info);
+        //     expect(info.statusCode);
+        //     expect(info.error);
+        //     expect(info.error).to.haveOwnProperty("msg");
+        //     expect(info.error["msg"]).to.equal("BAD_REQUEST: The settings were not provided. ");
+        // });
 
-        it("set project specification with invalid project setting key", async () => {
-            const testData = _.cloneDeep(data);
-            const invalidKey = "invalidKey";
-            testData["settings"] = {
-                [invalidKey]: "someValue",
-            };
-            const info: any = await projectSpecification(testData);
-            expect(info);
-            expect(info.statusCode);
-            expect(info.statusCode).to.equal(202);
-            expect(info.operationId);
+        // it("set project specification with invalid project setting key", async () => {
+        //     const testData = _.cloneDeep(data);
+        //     const invalidKey = "invalidKey";
+        //     testData["settings"] = {
+        //         [invalidKey]: "someValue",
+        //     };
+        //     const info: any = await projectSpecification(testData);
+        //     expect(info);
+        //     expect(info.statusCode);
+        //     expect(info.statusCode).to.equal(202);
+        //     expect(info.operationId);
 
-            const targetEvent = eventConfigs.events.settingsChanged;
-            let eventFound = false;
-            let event: any;
-            await new Promise((resolve) => {
-                const timer = setInterval(() => {
-                    const events = socket.getAllEvents();
-                    if (events && events.length >= 1) {
-                        event =  events.filter((value) => {
-                            if (value.eventName === targetEvent) return value;
-                        })[0];
-                        if (event) {
-                            eventFound = true;
-                            clearInterval(timer);
-                            return resolve();
-                        }
-                    }
-                }, timeoutConfigs.defaultInterval);
-            });
+        //     const targetEvent = eventConfigs.events.settingsChanged;
+        //     let eventFound = false;
+        //     let event: any;
+        //     await new Promise((resolve) => {
+        //         const timer = setInterval(() => {
+        //             const events = socket.getAllEvents();
+        //             if (events && events.length >= 1) {
+        //                 event =  events.filter((value) => {
+        //                     if (value.eventName === targetEvent) return value;
+        //                 })[0];
+        //                 if (event) {
+        //                     eventFound = true;
+        //                     clearInterval(timer);
+        //                     return resolve();
+        //                 }
+        //             }
+        //         }, timeoutConfigs.defaultInterval);
+        //     });
 
-            if (eventFound && event) {
-                expect(event);
-                expect(event.eventName);
-                expect(event.eventName).to.equal(targetEvent);
-                expect(event.eventData);
-                expect(event.eventData["operationId"]);
-                expect(event.eventData["projectID"]);
-                expect(event.eventData["projectID"]).to.equal(projData.projectID);
-                expect(event.eventData["status"]);
-                expect(event.eventData["status"]).to.equal("failed");
-                expect(event.eventData["error"]);
-                expect(event.eventData["error"]).to.equal(`BAD_REQUEST: ${invalidKey} is not a configurable setting.`);
-            } else {
-                fail(`failed to find ${targetEvent} for project specific setting`);
-            }
-        }).timeout(timeoutConfigs.defaultTimeout);
+        //     if (eventFound && event) {
+        //         expect(event);
+        //         expect(event.eventName);
+        //         expect(event.eventName).to.equal(targetEvent);
+        //         expect(event.eventData);
+        //         expect(event.eventData["operationId"]);
+        //         expect(event.eventData["projectID"]);
+        //         expect(event.eventData["projectID"]).to.equal(projData.projectID);
+        //         expect(event.eventData["status"]);
+        //         expect(event.eventData["status"]).to.equal("failed");
+        //         expect(event.eventData["error"]);
+        //         expect(event.eventData["error"]).to.equal(`BAD_REQUEST: ${invalidKey} is not a configurable setting.`);
+        //     } else {
+        //         fail(`failed to find ${targetEvent} for project specific setting`);
+        //     }
+        // }).timeout(timeoutConfigs.defaultTimeout);
 
-        it("set project specification with undefined project setting key", async () => {
-            const testData = _.cloneDeep(data);
-            testData["settings"] = {
-                "internalPort": undefined
-            };
-            const info: any = await projectSpecification(testData);
-            expect(info);
-            expect(info.statusCode);
-            expect(info.statusCode).to.equal(202);
-            expect(info.operationId);
+        // it("set project specification with undefined project setting key", async () => {
+        //     const testData = _.cloneDeep(data);
+        //     testData["settings"] = {
+        //         "internalPort": undefined
+        //     };
+        //     const info: any = await projectSpecification(testData);
+        //     expect(info);
+        //     expect(info.statusCode);
+        //     expect(info.statusCode).to.equal(202);
+        //     expect(info.operationId);
 
-            const targetEvent = eventConfigs.events.settingsChanged;
-            let eventFound = false;
-            let event: any;
-            await new Promise((resolve) => {
-                const timer = setInterval(() => {
-                    const events = socket.getAllEvents();
-                    if (events && events.length >= 1) {
-                        event =  events.filter((value) => {
-                            if (value.eventName === targetEvent) return value;
-                        })[0];
-                        if (event) {
-                            eventFound = true;
-                            clearInterval(timer);
-                            return resolve();
-                        }
-                    }
-                }, timeoutConfigs.defaultInterval);
-            });
+        //     const targetEvent = eventConfigs.events.settingsChanged;
+        //     let eventFound = false;
+        //     let event: any;
+        //     await new Promise((resolve) => {
+        //         const timer = setInterval(() => {
+        //             const events = socket.getAllEvents();
+        //             if (events && events.length >= 1) {
+        //                 event =  events.filter((value) => {
+        //                     if (value.eventName === targetEvent) return value;
+        //                 })[0];
+        //                 if (event) {
+        //                     eventFound = true;
+        //                     clearInterval(timer);
+        //                     return resolve();
+        //                 }
+        //             }
+        //         }, timeoutConfigs.defaultInterval);
+        //     });
 
-            if (eventFound && event) {
-                expect(event);
-                expect(event.eventName);
-                expect(event.eventName).to.equal(targetEvent);
-                expect(event.eventData);
-                expect(event.eventData["operationId"]);
-                expect(event.eventData["projectID"]);
-                expect(event.eventData["projectID"]).to.equal(projData.projectID);
-                expect(event.eventData["status"]);
-                expect(event.eventData["status"]).to.equal("failed");
-                expect(event.eventData["error"]);
-                expect(event.eventData["error"]).to.equal(`BAD_REQUEST: Each setting must have a name and a value.`);
-            } else {
-                fail(`failed to find ${targetEvent} for project specific setting`);
-            }
-        }).timeout(timeoutConfigs.defaultTimeout);
+        //     if (eventFound && event) {
+        //         expect(event);
+        //         expect(event.eventName);
+        //         expect(event.eventName).to.equal(targetEvent);
+        //         expect(event.eventData);
+        //         expect(event.eventData["operationId"]);
+        //         expect(event.eventData["projectID"]);
+        //         expect(event.eventData["projectID"]).to.equal(projData.projectID);
+        //         expect(event.eventData["status"]);
+        //         expect(event.eventData["status"]).to.equal("failed");
+        //         expect(event.eventData["error"]);
+        //         expect(event.eventData["error"]).to.equal(`BAD_REQUEST: Each setting must have a name and a value.`);
+        //     } else {
+        //         fail(`failed to find ${targetEvent} for project specific setting`);
+        //     }
+        // }).timeout(timeoutConfigs.defaultTimeout);
 
         _.forEach(combinations, async (combo) => {
             const setting = combo["setting"];
             let value = combo["value"];
+
+            console.log("Setting: %s", setting);
 
             if (setting === "internalPort") {
                 const projectInfo = _.cloneDeep(projData) as ProjectInfo;
@@ -273,6 +275,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 } else {
                     const internalPorts = await getApplicationContainerInfo(projectInfo, await projectUtil.getContainerName(projectInfo));
                     value = internalPorts.containerPorts[Math.floor(Math.random() * internalPorts.containerPorts.length)];
+                    console.log("Internal ports: %j", internalPorts);
+                    console.log("Value: %s", value);
                 }
             }
             if (setting === "internalDebugPort") {

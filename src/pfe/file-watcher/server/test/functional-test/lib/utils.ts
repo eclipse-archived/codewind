@@ -99,6 +99,7 @@ export function setTestEnvVariables(): void {
     process.env.CW_WORKSPACESETTINGS_DIR = app_configs.workspaceSettingsDir;
     process.env.CW_EXTENSION_DIR = app_configs.extensionDir;
     process.env.IN_K8_REGISTRY = "sakibh";
+    process.env.DEFAULT_LOG_LEVEL = app_configs.DEFAULT_LOG_LEVEL;
 }
 
 export function writeToFile(path: string, content: string, callback: (err: Error, msg: string) => void): void {
