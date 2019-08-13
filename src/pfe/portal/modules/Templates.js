@@ -11,6 +11,7 @@
 
 const fs = require('fs-extra');
 const path = require('path');
+const util = require('util');
 
 const cwUtils = require('../modules/utils/sharedFunctions');
 const Logger = require('./utils/Logger');
@@ -72,67 +73,24 @@ module.exports = class Templates {
   }
 
   async getTemplatesFromRepos(repositoryList) {
+    const providers = Object.values(this.providers);
+    const providedRepos = await getReposFromProviders(providers);
+    // Avoid processing duplicate repos
+    const extraRepos = providedRepos.filter(repo =>
+      !repositoryList.find(repo2 => repo2.url === repo.url)
+    );
+    const repos = repositoryList.concat(extraRepos);
+
     let newProjectTemplates = [];
-
-    // apply reduce function to create a copy of the repository list index by url
-    const repos = repositoryList.reduce(reducer, {});
-
-    // query providers for more repositories
-    for (let provider of Object.values(this.providers)) {
+    await Promise.all(repos.map(async(repo) => {
       try {
-        const extraRepos = await provider.getRepositories();
-        if (Array.isArray(extraRepos))
-          // apply reduce function here again, urls that we already have are ignored
-          extraRepos.reduce(reducer, repos);
-      }
-      catch (err) {
-        log.error(err.message);
-      }
-    }
-
-    await Promise.all(Object.values(repos).map(async function getTemplatesFromRepo(repository) {
-
-      let repositoryUrl;
-      try {
-        repositoryUrl = new URL(repository.url);
-      } catch (error) {
-        log.warn(error.message);
-        return; // ignore so that others can continue
-      }
-
-      let options = {
-        host: repositoryUrl.host,
-        path: repositoryUrl.pathname,
-        method: 'GET',
-      }
-
-      try {
-        let response = await cwUtils.asyncHttpRequest(options, undefined, repositoryUrl.protocol == 'https:');
-        if (response.statusCode == 200) {
-
-          const newTypes = JSON.parse(response.body);
-
-          for (let i = 0; i < newTypes.length; i++) {
-
-            newProjectTemplates.push({
-              label: newTypes[i].displayName,
-              description: newTypes[i].description,
-              language: newTypes[i].language,
-              url: newTypes[i].location,
-              projectType: newTypes[i].projectType
-            });
-          }
-        } else {
-          // Treat this as an error and pass to our logging code below.
-          throw new Error(`Unexpected http status for ${repository}: ${response.statusCode}`);
-        }
+        const extraTemplates = await getTemplatesFromRepo(repo);
+        newProjectTemplates = newProjectTemplates.concat(extraTemplates);
       } catch (err) {
-        // Log this but take no action as other repositories may work.
-        log.warn(`Error accessing template repository: ${repository}`);
-        log.warn(err);
+        log.warn(`Error accessing template repository '${repo.url}'. Error: ${util.inspect(err)}`);
+        // Ignore to keep trying other repositories
       }
     }));
-
     newProjectTemplates.sort((a, b) => {
       return a.label.localeCompare(b.label);
     });
@@ -239,25 +197,22 @@ module.exports = class Templates {
 
   /**
    * Add a repository to the list of template repositories.
-   *
-   * @param {*} url - url of the template repository
-   * @param {*} description - description of the template repository
    */
-  async addRepository(repositoryUrl, repositoryDescription) {
-    if (this.getRepositories().find(repo => repo.url == repositoryUrl)) {
-      throw new TemplateError('DUPLICATE_URL', repositoryUrl);
+  async addRepository(repoUrl, repoDescription) {
+    if (this.getRepositories().find(repo => repo.url == repoUrl)) {
+      throw new TemplateError('DUPLICATE_URL', repoUrl);
     }
     const newRepo = {
-      url: repositoryUrl,
-      description: repositoryDescription,
+      url: repoUrl,
+      description: repoDescription,
     }
     this.repositoryList.push(newRepo);
     this.needsRefresh = true;
     await this.writeRepositoryList();
   }
 
-  async deleteRepository(repositoryUrl) {
-    this.repositoryList = this.repositoryList.filter((repo) => repo.url != repositoryUrl);
+  async deleteRepository(repoUrl) {
+    this.repositoryList = this.repositoryList.filter((repo) => repo.url != repoUrl);
     this.needsRefresh = true;
     await this.writeRepositoryList();
   }
@@ -275,6 +230,39 @@ module.exports = class Templates {
   }
 }
 
+async function getTemplatesFromRepo(repository) {
+  if (!repository.url) {
+    throw new Error(`repo '${repository}' must have a URL`);
+  }
+  const repoUrl = new URL(repository.url);
+
+  if (!repoUrl.host.includes('github')) {
+    throw new Error(`URL '${repository.url}' must be a GitHub repo`);
+  }
+
+  const options = {
+    host: repoUrl.host,
+    path: repoUrl.pathname,
+    method: 'GET',
+  }
+  const res = await cwUtils.asyncHttpRequest(options, undefined, repoUrl.protocol === 'https:');
+  if (res.statusCode !== 200) {
+    throw new Error(`Unexpected HTTP status for ${repository}: ${res.statusCode}`);
+  }
+
+  const templateSummaries = JSON.parse(res.body);
+  const templates = templateSummaries.map(summary => {
+    return {
+      label: summary.displayName,
+      description: summary.description,
+      language: summary.language,
+      url: summary.location,
+      projectType: summary.projectType
+    };
+  });
+  return templates;
+}
+
 function filterTemplatesByStyle(templates, projectStyle) {
   const relevantTemplates = templates.filter(template =>
     getTemplateStyle(template) === projectStyle
@@ -287,11 +275,28 @@ function getTemplateStyle(template) {
   return template.projectStyle || 'Codewind';
 }
 
-// reduce function, want to take repository list and index
-// them by url, and use that to avoid processing duplicate entries
-function reducer(repos, repo) {
-  if (repo.url && !repos[repo.url])
-    repos[repo.url] = repo;
+async function getReposFromProviders(providers) {
+  const repos = [];
+  await Promise.all(providers.map(async(provider) => {
+    try {
+      const providedRepos = await provider.getRepositories();
+      providedRepos.forEach(repo => {
+        if (isRepo(repo)) {
+          repos.push(repo);
+        }
+      })
+    }
+    catch (err) {
+      log.error(err.message);
+    }
+  }));
   return repos;
 }
-module.exports.filterTemplatesByStyle =  filterTemplatesByStyle;
+
+function isRepo(obj) {
+  return obj.hasOwnProperty('url');
+}
+
+module.exports.getTemplatesFromRepo = getTemplatesFromRepo;
+module.exports.filterTemplatesByStyle = filterTemplatesByStyle;
+module.exports.getReposFromProviders = getReposFromProviders;
