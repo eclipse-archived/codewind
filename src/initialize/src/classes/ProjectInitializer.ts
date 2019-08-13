@@ -18,6 +18,7 @@ import { detectType } from '../controllers/typeDetectionController';
 import { writeCwSettings } from '../controllers/cwSettingsController';
 import { importProjectFromGitRepo } from '../controllers/gitController';
 import { InitializeResult } from 'initializeTypes';
+import { importProjectFromTar } from '../controllers/tarController';
 
 export default class ProjectInitializer {
   projectName: string;
@@ -44,6 +45,16 @@ export default class ProjectInitializer {
       this.projectMountDirectory,
       gitBranch
     );
+    return this.initializeExistingProject();
+  }
+
+  async initializeProjectFromTar(
+    tarFile: string
+    ): Promise<InitializeResult> {
+      await importProjectFromTar(tarFile,
+        this.projectName,
+        this.projectMountDirectory
+        );
     return this.initializeExistingProject();
   }
 
