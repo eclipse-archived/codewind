@@ -168,12 +168,12 @@ async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any
     // is there an extension handler for the project?
     if (!handler) {
 
-        const extensionID = projectInfo.extensionID;
+        const path = projectInfo.extensionID;
 
         // try to load extension handler if ID was provided
-        if (extensionID) {
+        if (path) {
             try {
-                const files = await utils.asyncReadDir(path.join(workspaceConstants.workspaceExtensionDir, extensionID));
+                const files = await utils.asyncReadDir(path);
                 if (files) {
                     if (files.includes(".sh-extension")) {
                         handler = new ShellExtensionProject(projectInfo.projectType);
@@ -183,7 +183,7 @@ async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any
                 }
             }
             catch (err) {
-                logger.logError(`Failed to get extension project handler ${extensionID} for ${projectInfo.location}`);
+                logger.logError(`Failed to get extension project handler ${path} for ${projectInfo.location}`);
                 logger.logError(err);
                 return undefined;
             }
