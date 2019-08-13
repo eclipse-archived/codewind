@@ -60,7 +60,7 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
         }
 
         function updateProject(type: string): void {
-            let filesList = ["file1", "file2", "file3"];
+            let filesList = ["file1"];
             if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectLang];
             for (const file of filesList) {
                 it(`${type.toLowerCase()} file: ${file}`, async () => {
