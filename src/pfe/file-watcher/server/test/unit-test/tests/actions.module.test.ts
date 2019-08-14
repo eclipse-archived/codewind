@@ -274,6 +274,7 @@ export function actionsTestModule(): void {
         const originalLibertyPOMGarbage2 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage2.xml");
         const originalLibertyPOMGarbage3 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage3.xml");
         const originalLibertyPOMGarbage4 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage4.xml");
+        const originalLibertyPOMGarbage5 = path.join(app_configs.projectDataDir, "dummymicroprofilepomgarbage5.xml");
         const LibertyDockerfileBuildGarbage = path.join(app_configs.projectDataDir, "dummymicroprofiledockerfilebuildgarbage");
 
         const springProjectPath = path.join(process.env.CW_WORKSPACE, "springJavaTemplate");
@@ -438,6 +439,16 @@ export function actionsTestModule(): void {
                 "error": "POM parsing error"
             },
             "combo12": {
+                "description": "microprofile project with missing parent in pom",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "Missing Liberty parent POM"
+            },
+            "combo13": {
                 "description": "good spring project",
                 "args": {
                     projectType: "spring",
@@ -446,7 +457,7 @@ export function actionsTestModule(): void {
                 },
                 "result": "success"
             },
-            "combo13": {
+            "combo14": {
                 "description": "spring project with missing Dockerfile",
                 "args": {
                     projectType: "spring",
@@ -456,7 +467,7 @@ export function actionsTestModule(): void {
                 "result": "failed",
                 "error": "Missing required file",
             },
-            "combo14": {
+            "combo15": {
                 "description": "spring project with bad inner most pom.xml elements",
                 "args": {
                     projectType: "spring",
@@ -466,7 +477,7 @@ export function actionsTestModule(): void {
                 "result": "failed",
                 "error": ["Invalid packaging for Spring project", "Spring Boot dependency not found"],
             },
-            "combo15": {
+            "combo16": {
                 "description": "good nodejs project",
                 "args": {
                     projectType: "nodejs",
@@ -475,7 +486,7 @@ export function actionsTestModule(): void {
                 },
                 "result": "success"
             },
-            "combo16": {
+            "combo17": {
                 "description": "nodejs project with missing Dockerfile",
                 "args": {
                     projectType: "nodejs",
@@ -485,7 +496,7 @@ export function actionsTestModule(): void {
                 "result": "failed",
                 "error": "Missing required file",
             },
-            "combo17": {
+            "combo18": {
                 "description": "nodejs project with missing package.json",
                 "args": {
                     projectType: "nodejs",
@@ -495,7 +506,7 @@ export function actionsTestModule(): void {
                 "result": "failed",
                 "error": "Missing required file",
             },
-            "combo18": {
+            "combo19": {
                 "description": "good swift project",
                 "args": {
                     projectType: "swift",
@@ -504,7 +515,7 @@ export function actionsTestModule(): void {
                 },
                 "result": "success"
             },
-            "combo19": {
+            "combo20": {
                 "description": "swift project with missing Dockerfile-tools",
                 "args": {
                     projectType: "swift",
@@ -514,7 +525,7 @@ export function actionsTestModule(): void {
                 "result": "failed",
                 "error": "Missing required file",
             },
-            "combo20": {
+            "combo21": {
                 "description": "swift project with missing Package.swift",
                 "args": {
                     projectType: "swift",
@@ -524,7 +535,7 @@ export function actionsTestModule(): void {
                 "result": "failed",
                 "error": "Missing required file",
             },
-            "combo21": {
+            "combo22": {
                 "description": "good python project",
                 "args": {
                     projectType: "docker",
@@ -533,7 +544,7 @@ export function actionsTestModule(): void {
                 },
                 "result": "success"
             },
-            "combo22": {
+            "combo23": {
                 "description": "python project with missing Dockerfile",
                 "args": {
                     projectType: "docker",
@@ -543,7 +554,7 @@ export function actionsTestModule(): void {
                 "result": "failed",
                 "error": "Missing required file",
             },
-            "combo23": {
+            "combo24": {
                 "description": "good appsody project",
                 "args": {
                     projectType: "appsodyExtension",
@@ -553,7 +564,7 @@ export function actionsTestModule(): void {
                 },
                 "result": "success"
             },
-            "combo24": {
+            "combo25": {
                 "description": "appsody project with missing requiredFiles",
                 "args": {
                     projectType: "appsodyExtension",
@@ -606,35 +617,39 @@ export function actionsTestModule(): void {
                             await copyAsync(originalLibertyPOMGarbage4, testLibertyPOM);
                             break;
                         }
-                        case "combo13": {
-                            fs.renameSync(testspringDockerfile, springDockerfilebackup);
+                        case "combo12": {
+                            await copyAsync(originalLibertyPOMGarbage5, testLibertyPOM);
                             break;
                         }
                         case "combo14": {
+                            fs.renameSync(testspringDockerfile, springDockerfilebackup);
+                            break;
+                        }
+                        case "combo15": {
                             await copyAsync(originalspringPOMGarbage1, testspringPOM);
                             break;
                         }
-                        case "combo16": {
+                        case "combo17": {
                             fs.renameSync(testnodeDockerfile, nodeDockerfilebackup);
                             break;
                         }
-                        case "combo17": {
+                        case "combo18": {
                             fs.renameSync(testnodePackagejson, nodePackagejsonbackup);
                             break;
                         }
-                        case "combo19": {
+                        case "combo20": {
                             fs.renameSync(testswiftDockerfiletools, swiftDockerfiletoolsbackup);
                             break;
                         }
-                        case "combo20": {
+                        case "combo21": {
                             fs.renameSync(testswiftPackageswift, swiftPackageswiftbackup);
                             break;
                         }
-                        case "combo22": {
+                        case "combo23": {
                             fs.renameSync(testpythonDockerfile, pythonDockerfilebackup);
                             break;
                         }
-                        case "combo24": {
+                        case "combo25": {
                             await unlinkAsync(testappsodyrequiredFiles);
                             break;
                         }
@@ -653,15 +668,15 @@ export function actionsTestModule(): void {
                             await copyAsync(LibertyDockerfileBuildbackup, testLibertyDockerfileBuild);
                             break;
                         }
-                        case "combo13": {
+                        case "combo14": {
                             fs.renameSync(springDockerfilebackup, testspringDockerfile);
                             break;
                         }
-                        case "combo16": {
+                        case "combo17": {
                             fs.renameSync(nodeDockerfilebackup, testnodeDockerfile);
                             break;
                         }
-                        case "combo19": {
+                        case "combo20": {
                             fs.renameSync(swiftDockerfiletoolsbackup, testswiftDockerfiletools);
                             break;
                         }
@@ -676,7 +691,7 @@ export function actionsTestModule(): void {
                             expect(socketData.results[2].label).to.equal(errorMsg[2]);
                             expect(socketData.results[3].label).to.equal(errorMsg[3]);
                             expect(socketData.results[4].label).to.equal(errorMsg[4]);
-                        } else if (combo == "combo14") {
+                        } else if (combo == "combo15") {
                             expect(socketData.results[0].label).to.equal(errorMsg[0]);
                             expect(socketData.results[1].label).to.equal(errorMsg[1]);
                         } else {
