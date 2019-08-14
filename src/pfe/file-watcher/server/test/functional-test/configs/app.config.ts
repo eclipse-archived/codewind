@@ -31,4 +31,4 @@ export const projectConfigs = {
 export const projectTypes = ["docker"];
 export const supportedDockerProjects = ["go", "python", "lagom"];
 
-export const DEFAULT_LOG_LEVEL = "debug";
+export const DEFAULT_LOG_LEVEL = "trace";

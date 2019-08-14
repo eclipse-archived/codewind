@@ -38,6 +38,16 @@ export const defaultContextRoot: any = {
     "lagom": "/api/hello/you"
 };
 
+export const defaultHealthCheckEndPoint: any = {
+    "go": "/",
+    "python": "/"
+};
+
+export const oneExposedPortOnly: any = {
+    "go": true,
+    "python": true
+};
+
 export const defaultInternalPorts: any = {
     "go": "8000",
     "python": "5000",
