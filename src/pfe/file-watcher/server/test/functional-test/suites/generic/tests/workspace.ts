@@ -38,11 +38,12 @@ export default class WorkspaceTest {
                 deploymentRegistry: "someregistry",
                 watcherChunkTimeout: 50000
             };
-            let backupSettingsContent = {};
+            let backupSettingsContent: any = {};
 
-            before("create a backup for original settings file and remove the original file", async () => {
+            before("read the settings file content and save it", async () => {
                 if (await fs.existsSync(settingsPath)) {
                     backupSettingsContent = JSON.parse(await fs.readFileSync(settingsPath, {encoding: "utf-8"}));
+                    backupSettingsContent["watcherChunkTimeout"] = backupSettingsContent["watcherChunkTimeout"] || "";
                 }
             });
             afterEach("delete backup settings file, revert back original file and load the current workspace settings", async () => {
