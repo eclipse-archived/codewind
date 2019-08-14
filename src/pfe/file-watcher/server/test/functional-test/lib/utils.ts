@@ -112,54 +112,57 @@ export function writeToFile(path: string, content: string, callback: (err: Error
 export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreation): void {
     after(`rebuild project ${projData.projectType}`, async function (): Promise<void> {
         this.timeout(timeoutConfigs.createTestTimeout);
-
-        const testData: any = {
-            action: "build",
-            projectType: projData.projectType,
-            location: projData.location,
-            projectID: projData.projectID,
-        };
-
-        const info: any = await projectAction(testData);
-        expect(info);
-
-        const targetEvent = eventConfigs.events.statusChanged;
-        const data = {
-            "projectID": projData.projectID,
-            "appStatus": "started"
-        };
-
-        let eventFound = false;
-        let event: any;
-        await new Promise((resolve) => {
-            const timer = setInterval(() => {
-                const events = socket.getAllEvents();
-                if (events && events.length >= 1) {
-                    event =  events.filter((value) => {
-                        if (value.eventName === targetEvent && _.isMatch(value.eventData, data)) {
-                            return value;
-                        }
-                    })[0];
-                    if (event) {
-                        eventFound = true;
-                        clearInterval(timer);
-                        return resolve();
-                    }
-                }
-            }, timeoutConfigs.defaultInterval);
-        });
-
-        if (eventFound && event) {
-            expect(event);
-            expect(event.eventName);
-            expect(event.eventName).to.equal(targetEvent);
-            expect(event.eventData);
-            expect(event.eventData).to.haveOwnProperty("projectID");
-            expect(event.eventData).to.haveOwnProperty("appStatus");
-            expect(event.eventData["projectID"]).to.equal(projData.projectID);
-            expect(event.eventData["appStatus"]).to.equal("started");
-        } else {
-            fail(`failed to find ${targetEvent} for rebuild project ${projData.projectType}`);
-        }
+        await rebuildProject(socket, projData);
     });
+}
+
+export async function rebuildProject(socket: SocketIO, projData: ProjectCreation): Promise<void> {
+    const testData: any = {
+        action: "build",
+        projectType: projData.projectType,
+        location: projData.location,
+        projectID: projData.projectID,
+    };
+
+    const info: any = await projectAction(testData);
+    expect(info);
+
+    const targetEvent = eventConfigs.events.statusChanged;
+    const data = {
+        "projectID": projData.projectID,
+        "appStatus": "started"
+    };
+
+    let eventFound = false;
+    let event: any;
+    await new Promise((resolve) => {
+        const timer = setInterval(() => {
+            const events = socket.getAllEvents();
+            if (events && events.length >= 1) {
+                event =  events.filter((value) => {
+                    if (value.eventName === targetEvent && _.isMatch(value.eventData, data)) {
+                        return value;
+                    }
+                })[0];
+                if (event) {
+                    eventFound = true;
+                    clearInterval(timer);
+                    return resolve();
+                }
+            }
+        }, timeoutConfigs.defaultInterval);
+    });
+
+    if (eventFound && event) {
+        expect(event);
+        expect(event.eventName);
+        expect(event.eventName).to.equal(targetEvent);
+        expect(event.eventData);
+        expect(event.eventData).to.haveOwnProperty("projectID");
+        expect(event.eventData).to.haveOwnProperty("appStatus");
+        expect(event.eventData["projectID"]).to.equal(projData.projectID);
+        expect(event.eventData["appStatus"]).to.equal("started");
+    } else {
+        fail(`failed to find ${targetEvent} for rebuild project ${projData.projectType}`);
+    }
 }
