@@ -265,7 +265,9 @@ elif [ "$COMMAND" == "update" ]; then
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.unexpectedError"
 		elif [[ $exitCode -eq 7 ]]; then
         	$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
-    	fi
+    	elif [[ $exitCode -eq 8 ]]; then
+        	$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFailMissingFile"
+		fi
 		exit 3
 	fi
 

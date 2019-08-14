@@ -79,7 +79,7 @@ public class DockerfileMapping {
 		if (missingDockerfileCounter > 0) {
 			// send the exit code of the build
 			Logger.info("Exiting out of docker file composition with exit code 1");
-            System.exit(1);
+            System.exit(8);
 		}
 		
 		return dockerfileComposition;
