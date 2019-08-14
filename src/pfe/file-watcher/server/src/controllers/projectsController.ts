@@ -186,7 +186,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         } as ProjectInfo;
 
         if (req.extension)
-            projInfo.extensionID = req.extension.name;
+            projInfo.extensionID = req.extension.path;
     }
 
     if (! await utils.asyncFileExists(projectLocation)) {
