@@ -261,10 +261,12 @@ elif [ "$COMMAND" == "update" ]; then
 	# get the status code of the build, if the build failed, update the status
 	if [[ $exitCode -ne 0 ]]; then
 		echo "idc build failed for $ROOT with exit code $exitCode $(date)"
-		if [[ $exitCode -eq 7 ]]; then
+		if [[ $exitCode -eq 1 ]]; then
+			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.unexpectedError"
+		elif [[ $exitCode -eq 7 ]]; then
         	$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
-			exit 3
     	fi
+		exit 3
 	fi
 
 # Stop the server
