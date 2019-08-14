@@ -45,9 +45,9 @@ function setup {
     TEST_DIR_CONTAINER=/file-watcher/server
     TEST_OUTPUT_DIR=~/test_results/$TEST_TYPE/$TEST_SUITE/$DATE_NOW/$TIME_NOW
     TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
-    TEST_LOG=$TEST_OUTPUT_DIR/$TEST_SUITE-test.log
     CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
     PROJECTS_CLONE_DATA_FILE="./resources/projects-clone-data"
+    TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
 
     mkdir -p $TEST_OUTPUT_DIR
 
