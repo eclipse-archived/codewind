@@ -98,7 +98,7 @@ export function setTestEnvVariables(): void {
     process.env.CW_PROJECTDATA_DIR = app_configs.projectDataDir;
     process.env.CW_WORKSPACESETTINGS_DIR = app_configs.workspaceSettingsDir;
     process.env.CW_EXTENSION_DIR = app_configs.extensionDir;
-    process.env.IN_K8_REGISTRY = "sakibh";
+    process.env.IN_K8_REGISTRY = "codewindtest";
     process.env.DEFAULT_LOG_LEVEL = app_configs.DEFAULT_LOG_LEVEL;
     process.env.TEST_TYPE = process.env.IN_K8 ? "kube" : "local";
 }
