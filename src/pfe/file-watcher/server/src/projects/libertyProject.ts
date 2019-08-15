@@ -220,7 +220,7 @@ export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isErr
 
     logger.logProjectInfo(`Writing to build log at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
 
-    await fs.appendFile(buildLogPath, fullMsg, (err) => {
+    fs.appendFile(buildLogPath, fullMsg, (err) => {
         if (err) {
             logger.logProjectError("File system error writing to build log: " + err, projectInfo.projectID);
         }
