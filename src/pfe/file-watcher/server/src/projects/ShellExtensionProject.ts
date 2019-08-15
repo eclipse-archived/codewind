@@ -22,7 +22,6 @@ import * as projectEventsController from "../controllers/projectEventsController
 import { IExtensionProject } from "../extensions/IExtensionProject";
 import * as processManager from "../utils/processManager";
 import * as logger from "../utils/logger";
-import { workspaceConstants } from "../projects/constants";
 
 /**
  * @interface
@@ -60,7 +59,7 @@ export class ShellExtensionProject implements IExtensionProject {
 
     supportedType: string;
 
-    private id: string;
+    private fullPath: string;
     private config: ShellExtensionProjectConfig;
     private language: string;
 
@@ -92,7 +91,7 @@ export class ShellExtensionProject implements IExtensionProject {
         try {
             const result = await processManager.spawnDetachedAsync(
                 projectInfo.projectID,
-                path.join(workspaceConstants.workspaceExtensionDir, this.id, "entrypoint.sh"),
+                path.join(this.fullPath, "entrypoint.sh"),
                 args,
                 {});
 
@@ -117,8 +116,8 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param projectInfo <Required | ProjectInfo> - The metadata information for the project.
      */
     init = async (projectInfo: ProjectInfo): Promise<void> => {
-        this.id = projectInfo.extensionID;
-        this.config = await fs.readJson(path.join(workspaceConstants.workspaceExtensionDir, this.id, ".sh-extension"));
+        this.fullPath = projectInfo.extensionID;
+        this.config = await fs.readJson(path.join(this.fullPath, ".sh-extension"));
         await this.setLanguage(projectInfo);
     }
 
@@ -129,7 +128,7 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param operation <Required | Operation> - The create operation.
      */
     create = (operation: Operation): void => {
-        projectUtil.containerCreate(operation, path.join(workspaceConstants.workspaceExtensionDir, this.id, "entrypoint.sh"), "create");
+        projectUtil.containerCreate(operation, path.join(this.fullPath, "entrypoint.sh"), "create");
     }
 
     /**
@@ -140,7 +139,7 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param changedFiles <Optional | projectEventsController.IFileChangeEvent[]> - The file changed event array.
      */
     update = (operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): void => {
-        projectUtil.containerUpdate(operation, path.join(workspaceConstants.workspaceExtensionDir, this.id, "entrypoint.sh"), "update");
+        projectUtil.containerUpdate(operation, path.join(this.fullPath, "entrypoint.sh"), "update");
     }
 
     /**
@@ -150,7 +149,7 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param projectInfo <Required | ProjectInfo> - The metadata information for the project.
      */
     start = async (projectInfo: ProjectInfo): Promise<void> => {
-        await projectUtil.runScript(projectInfo, path.join(workspaceConstants.workspaceExtensionDir, this.id, "entrypoint.sh"), "start");
+        await projectUtil.runScript(projectInfo, path.join(this.fullPath, "entrypoint.sh"), "start");
     }
 
     /**
@@ -160,7 +159,7 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param projectInfo <Required | ProjectInfo> - The metadata information for the project.
      */
     stop = async (projectInfo: ProjectInfo): Promise<void> => {
-        await projectUtil.runScript(projectInfo, path.join(workspaceConstants.workspaceExtensionDir, this.id, "entrypoint.sh"), "stop");
+        await projectUtil.runScript(projectInfo, path.join(this.fullPath, "entrypoint.sh"), "stop");
     }
 
     /**
@@ -170,7 +169,7 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param projectInfo <Required | ProjectInfo> - The metadata information for the project.
      */
     rebuild = async (projectInfo: ProjectInfo): Promise<void> => {
-        await projectUtil.runScript(projectInfo, path.join(workspaceConstants.workspaceExtensionDir, this.id, "entrypoint.sh"), "rebuild");
+        await projectUtil.runScript(projectInfo, path.join(this.fullPath, "entrypoint.sh"), "rebuild");
     }
 
     /**
@@ -180,7 +179,7 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param projectInfo <Required | ProjectInfo> - The metadata information for the project.
      */
     deleteContainer = async (projectInfo: ProjectInfo): Promise<void> => {
-        await projectUtil.containerDelete(projectInfo, path.join(workspaceConstants.workspaceExtensionDir, this.id, "entrypoint.sh"));
+        await projectUtil.containerDelete(projectInfo, path.join(this.fullPath, "entrypoint.sh"));
     }
 
     /**
