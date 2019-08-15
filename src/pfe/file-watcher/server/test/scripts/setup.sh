@@ -73,25 +73,25 @@ function uninstall {
         if [[ $CW_POD =~ codewindWorkspace=.*, ]]; then
             RE_RESULT=${BASH_REMATCH}
             WORKSPACE_ID=$(echo $RE_RESULT | cut -d "=" -f 2 | cut -d "," -f 1)
+
+            echo -e "${BLUE}Codewind Workspace ID: $WORKSPACE_ID ${RESET}\n"
+
+            # Stop the Codewind Workspace
+            echo -e "${BLUE}Stopping the Codewind Workspace ${RESET}\n"
+            curl --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID/runtime
+
+            # We must wait for the workspace to stop before removing it, otherwise the workspace removal fails
+            echo -e "${BLUE}Sleeping for 10s to allow the workspace to stop before removing it ${RESET}\n"
+            sleep 10
+
+            # Remove the Codewind Workspace
+            echo -e "${BLUE}Removing the Codewind Workspace ${RESET}\n"
+            curl --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID
+
+            echo -e "${GREEN}Codewind should be removed momentarily... ${RESET}\n"
         else
-            echo -e "${RED}Unable to parse kubectl output. Cannot uninstall Codewind. Please uninstall manually... ${RESET}\n"
-            exit 1
+            echo -e "${BLUE}No Codewind Pod found ${BLUE}\n"
         fi
-        echo -e "${BLUE}Codewind Workspace ID: $WORKSPACE_ID ${RESET}\n"
-
-        # Stop the Codewind Workspace
-        echo -e "${BLUE}Stopping the Codewind Workspace ${RESET}\n"
-        curl --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID/runtime
-
-        # We must wait for the workspace to stop before removing it, otherwise the workspace removal fails
-        echo -e "${BLUE}Sleeping for 10s to allow the workspace to stop before removing it ${RESET}\n"
-        sleep 10
-
-        # Remove the Codewind Workspace
-        echo -e "${BLUE}Removing the Codewind Workspace ${RESET}\n"
-        curl --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID
-
-        echo -e "${GREEN}Codewind should be removed momentarily... ${RESET}\n"
     fi
 }
 
