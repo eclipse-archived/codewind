@@ -74,7 +74,7 @@ export function projectUtilTestModule(): void {
                 "data": {
                     projectID: "testProjectID",
                     location: "directory/testproject",
-                    extensionID: "extensionProject",
+                    extensionID: extensionIDDir,
                     projectType: "extensionProject"
                 },
                 "result": "testprefix-testproject-testsuffix"
@@ -390,7 +390,7 @@ export function projectUtilTestModule(): void {
                     projectID: testProjectId,
                     location: projectFolder,
                     logSuffixes: ["buildLog", "appLog"],
-                    extensionID: "extensionProject",
+                    extensionID: extensionIDDir,
                     projectType: "extensionProject"
                 },
                 "appLogTest": true,
