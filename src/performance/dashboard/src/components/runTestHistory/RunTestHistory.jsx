@@ -59,15 +59,22 @@ class RunTestHistory extends Component {
         }
         this.filterRows = this.filterRows.bind(this);
         this.handleDeleteRow = this.handleDeleteRow.bind(this);
+        this.handleOverflowKeyDown = this.handleOverflowKeyDown.bind(this);
         this.handleBatchDeleteBtn = this.handleBatchDeleteBtn.bind(this);
     }
     // Build overflow menu
     getOverflowMenu(rowId) {
         return (
             <OverflowMenu floatingMenu flipped>
-                <OverflowMenuItem onClick={() => this.handleDeleteRow(rowId)} itemText='Delete' />
+                <OverflowMenuItem primaryFocus onKeyDown={ () => this.handleOverflowKeyDown(key, rowId) } onClick={() => this.handleDeleteRow(rowId)} itemText='Delete' />
             </OverflowMenu>
         );
+    }
+
+    handleOverflowKeyDown(key, row) {
+        if (key.keycode === 13) {
+            this.handleDeleteRow(row) 
+        }
     }
 
     /**
