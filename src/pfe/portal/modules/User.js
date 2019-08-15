@@ -52,7 +52,7 @@ module.exports = class User {
     }
     this.secure = true;
   }
-
+  
   /**
    * Function to initialise a user
    * Runs functions to create the user directories, start existing projects
@@ -80,6 +80,15 @@ module.exports = class User {
 
       // Create the list of codewind extensions
       this.extensionList = new ExtensionList();
+
+      // Attempt to install built-in extension packages
+      try {
+        await this.extensionList.installBuiltInExtensions(this.directories.extensions);
+      } catch (error) {
+        log.error('Fail to install built-in Codewind extensions');
+        log.error(error);
+      }
+
       try {
         await this.extensionList.initialise(this.directories.extensions, this.templates);
       } catch (error) {
