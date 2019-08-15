@@ -428,6 +428,13 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         projectInfo.status = "failed";
                         const errorMsg = `The container failed to start for application ` + projectLocation;
                         logger.logProjectError("Error code: " + result.exitCode + " - " + errorMsg, projectID, projectName);
+
+                        // Explicitly handle exit code of 1 and set the build status to failed with a failure message for any unexpected script exec errors
+                        // Otherwise handle all build/app statuses in the project script and exit with 3
+                        if (result.exitCode == 1) {
+                            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.buildFail");
+                        }
+
                         projectInfo.error = errorMsg;
                         await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.buildFail");
                         io.emitOnListener(event, projectInfo);

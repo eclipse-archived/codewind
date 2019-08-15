@@ -15,6 +15,8 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eclipse.codewind.iterdev.Constants.ErrorCode;
+
 public class DockerfileMapping {
 	List<String> sourceFiles = new LinkedList<String>();
 
@@ -78,8 +80,8 @@ public class DockerfileMapping {
 
 		if (missingDockerfileCounter > 0) {
 			// send the exit code of the build
-			Logger.info("Exiting out of docker file composition with exit code 1");
-            System.exit(8);
+			Logger.info("Exiting out of docker file composition with exit code 8");
+            System.exit(ErrorCode.missingDockerfile.ordinal());
 		}
 		
 		return dockerfileComposition;
