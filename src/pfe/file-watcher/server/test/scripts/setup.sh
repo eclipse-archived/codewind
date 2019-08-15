@@ -35,8 +35,11 @@ function install {
     elif [ $TEST_TYPE == "kube" ]; then
         # Create Codewind workspace with Che API
         echo -e "${BLUE}Creating Che Codewind Workspace ${RESET}\n"
-        curl  --header "Content-Type: application/json" --request POST --data @../resources/workspace.json http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true
-
+        HTTPSTATUS=$(curl  --header "Content-Type: application/json" --request POST --data @./resources/workspace.json http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true 2>/dev/null | head -n 1| cut -d$' ' -f2) 
+        if [[ $HTTPSTATUS -ne 201 ]]; then
+            echo -e "${RED}Codewind workspace setup has failed. ${RESET}\n"
+            exit 1
+        fi
         # Wait until the Codewind pod is up and running
         POD_RUNNING=0
         while [ $POD_RUNNING -eq 0 ]; do
@@ -90,7 +93,7 @@ function uninstall {
 
             echo -e "${GREEN}Codewind should be removed momentarily... ${RESET}\n"
         else
-            echo -e "${BLUE}No Codewind Pod found ${BLUE}\n"
+            echo -e "${BLUE}No Codewind pod found ${BLUE}\n"
         fi
     fi
 }
