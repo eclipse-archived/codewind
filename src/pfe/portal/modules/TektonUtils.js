@@ -46,7 +46,6 @@ async function getTektonAPIService() {
       return null;
     }
   } catch (err) {
-    log.debug(err);
     log.error(`Unexpected error determining Tekton API Service: ${JSON.stringify(err)}`);
   }
   return null;
