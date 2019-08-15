@@ -46,6 +46,12 @@ export const validate = async function(args: IProjectActionParams): Promise<{ op
         throw error;
     }
 
+    if (! await utils.asyncFileExists(location)) {
+        const error = new Error("The provided location does not exist: " + location);
+        error.name = "FILE_NOT_EXIST";
+        throw error;
+    }
+
     const projectInfo = {
         "projectType": projectType,
         "location": location
@@ -57,6 +63,10 @@ export const validate = async function(args: IProjectActionParams): Promise<{ op
     if (args.language) {
         projectInfo.language = args.language;
     }
+    // projectID is an optional parameter for validation. it may refer to a case where the project has not been created yet, e.g import case
+    if (args.projectID) {
+        projectInfo.projectID = args.projectID;
+    }
     // Check whether the projectType exists
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     if (!projectHandler || projectHandler.supportedType !== projectType) {
@@ -64,17 +74,6 @@ export const validate = async function(args: IProjectActionParams): Promise<{ op
         logger.logProjectError(msg, projectID, projectName);
         const error = new Error(msg);
         error.name = "BAD_REQUEST";
-        throw error;
-    }
-
-    // projectID is an optional parameter for validation. it may refer to a case where the project has not been created yet, e.g import case
-    if (args.projectID) {
-        projectInfo.projectID = args.projectID;
-    }
-
-    if (! await utils.asyncFileExists(location)) {
-        const error = new Error("The provided location does not exist: " + location);
-        error.name = "FILE_NOT_EXIST";
         throw error;
     }
 

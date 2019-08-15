@@ -346,7 +346,8 @@ export function actionsTestModule(): void {
                 "description": "request with invalidProjectType",
                 "args": {
                     projectType: "invalidProjectType",
-                    location: "test/projectName"
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
                 },
                 "result": "BAD_REQUEST: The project type invalidProjectType is not supported"
             },
