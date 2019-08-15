@@ -557,8 +557,9 @@ export function actionsTestModule(): void {
                 "description": "good appsody project",
                 "args": {
                     projectType: "appsodyExtension",
-                    extensionID: "appsodyExtension",
+                    extensionID: appsodyExtensionPath,
                     projectID: "appsodyProject",
+                    language: "nodejs-express",
                     location: path.join(process.env.CW_WORKSPACE, "appsodyProject")
                 },
                 "result": "success"
@@ -567,8 +568,9 @@ export function actionsTestModule(): void {
                 "description": "appsody project with missing requiredFiles",
                 "args": {
                     projectType: "appsodyExtension",
-                    extensionID: "appsodyExtension",
+                    extensionID: appsodyExtensionPath,
                     projectID: "appsodyProject",
+                    language: "nodejs-express",
                     location: path.join(process.env.CW_WORKSPACE, "appsodyProject")
                 },
                 "result": "failed",

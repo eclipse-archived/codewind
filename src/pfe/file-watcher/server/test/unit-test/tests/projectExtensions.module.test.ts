@@ -370,6 +370,9 @@ export function projectExtensionsTestModule(): void {
                 } else {
                     projectInfo = await projectUtil.getProjectInfo(projectID);
                 }
+                if (projectInfo.extensionID) {
+                    projectInfo.extensionID = appsodyExtensionPath;
+                }
                 const projectHandler: any = await projectExtensions.getProjectHandler(projectInfo);
                 if (projectInfo.projectType) {
                     expect(projectHandler).to.exist;
