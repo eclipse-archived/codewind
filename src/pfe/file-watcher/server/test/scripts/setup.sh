@@ -35,7 +35,7 @@ function install {
     elif [ $TEST_TYPE == "kube" ]; then
         # Create Codewind workspace with Che API
         echo -e "${BLUE}Creating Che Codewind Workspace ${RESET}\n"
-        HTTPSTATUS=$(curl -I --header "Content-Type: application/json" --request POST --data @./resources/workspace.json http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true 2>/dev/null | head -n 1| cut -d$' ' -f2) 
+        HTTPSTATUS=$(curl -s --header "Content-Type: application/json" --request POST --data @./resources/workspace.json -D- -o/dev/null http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true 2>/dev/null | sed -n 3p | cut -d ' ' -f2) 
         if [[ $HTTPSTATUS -ne 201 ]]; then
             echo -e "${RED}Codewind workspace setup has failed. ${RESET}\n"
             exit 1
