@@ -35,7 +35,7 @@ function install {
     elif [ $TEST_TYPE == "kube" ]; then
         # Create Codewind workspace with Che API
         echo -e "${BLUE}Creating Che Codewind Workspace ${RESET}\n"
-        HTTPSTATUS=$(curl  --header "Content-Type: application/json" --request POST --data @./resources/workspace.json http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true 2>/dev/null | head -n 1| cut -d$' ' -f2) 
+        HTTPSTATUS=$(curl -I --header "Content-Type: application/json" --request POST --data @./resources/workspace.json http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true 2>/dev/null | head -n 1| cut -d$' ' -f2) 
         if [[ $HTTPSTATUS -ne 201 ]]; then
             echo -e "${RED}Codewind workspace setup has failed. ${RESET}\n"
             exit 1
@@ -81,15 +81,21 @@ function uninstall {
 
             # Stop the Codewind Workspace
             echo -e "${BLUE}Stopping the Codewind Workspace ${RESET}\n"
-            curl --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID/runtime
-
+            HTTPSTATUS=$(curl -I --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID/runtime 2>/dev/null | head -n 1| cut -d$' ' -f2)
+            if [[ $HTTPSTATUS -ne 204 ]]; then
+                echo -e "${RED}Codewind workspace has failed to stop. Will attempt to remove the workspace... ${RESET}\n"
+            fi
             # We must wait for the workspace to stop before removing it, otherwise the workspace removal fails
             echo -e "${BLUE}Sleeping for 10s to allow the workspace to stop before removing it ${RESET}\n"
             sleep 10
 
             # Remove the Codewind Workspace
             echo -e "${BLUE}Removing the Codewind Workspace ${RESET}\n"
-            curl --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID
+            HTTPSTATUS=$(curl -I --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID 2>/dev/null | head -n 1| cut -d$' ' -f2)
+            if [[ $HTTPSTATUS -ne 204 ]]; then
+                echo -e "${RED}Codewind workspace has failed to be removed... ${RESET}\n"
+                exit 1
+            fi
 
             echo -e "${GREEN}Codewind should be removed momentarily... ${RESET}\n"
         else
