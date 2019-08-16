@@ -437,6 +437,42 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
     io.emitOnListener("projectSettingsChanged", data);
 };
 
+/**
+ * @function
+ * @description Reconfig the ignored files for a project.
+ *
+ * @param args <Required | Any> - Required arguments for reconfiguration of ignroed files.
+ *
+ * @returns Promise<any>
+ */
+const reconfigWWWProtocol = async function (isSecure: boolean, operation: Operation): Promise<any> {
+    const projectInfo: ProjectInfo = operation.projectInfo;
+    const projectID = projectInfo.projectID;
+
+    const isSecurePreviously: boolean = await projectUtil.getProjectWWWProtocolMap(projectID);
+
+    if (isSecure == isSecurePreviously) {
+        logger.logProjectInfo("The project WWW protocol is already set to: " + isSecure ? "https" : "http", projectID);
+        return;
+    }
+
+    await projectUtil.setProjectWWWProtocolMap(projectID, isSecure);
+
+    if (isSecure) {
+        const data: ProjectSettingsEvent = {
+            operationId: operation.operationId,
+            projectID: projectID,
+            status: "success",
+            isSecure: isSecure
+        };
+
+        // Only emit a socket msg when it is true since the project default is always false
+        io.emitOnListener("projectSettingsChanged", data);
+    }
+
+    logger.logProjectInfo("The WWW protocol for the project has been changed to: " + isSecure ? "https" : "http", projectID);
+    return;
+};
 
  /**
   * @function
@@ -796,3 +832,4 @@ specificationSettingMap.set("healthCheck", changeHealthCheck);
 specificationSettingMap.set("mavenProfiles", changeMavenProfiles);
 specificationSettingMap.set("mavenProperties", changeMavenProperties);
 specificationSettingMap.set("ignoredPaths", reconfigIgnoredFilesForDaemon);
+specificationSettingMap.set("isSecure", reconfigWWWProtocol);
