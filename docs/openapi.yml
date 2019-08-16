@@ -29,22 +29,26 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - running_in_k8s
+                  - user_string
+                  - socket_namespace
+                  - codewind_version
+                  - os_platform
+                  - tekton_dashboard_url
                 properties:
                   running_in_k8s:
                     type: boolean
                     example: false
                   user_string:
                     type: string
-                    example: null
+                    nullable: true
                   socket_namespace:
                     type: string
                     example: '/default'
                   codewind_version:
                     type: string
                     example: '/latest'
-                  workspace_location:
-                    type: string
-                    example: '/home/user/codewind-workspace'
                   os_platform:
                     type: string
                     example: 'Linux'
@@ -52,6 +56,9 @@ paths:
                     type: string
                     example: '9.20.195.90.nip.io'
                     description: "Ingress URL of Tekton dashboard if it's available. On local Codewind, it is the empty string. May also be 'error' or 'not-installed'."
+                  workspace_location:
+                    type: string
+                    example: '/home/user/codewind-workspace'
         500:
           description: Internal error occurred
   /api/v1/projects:
