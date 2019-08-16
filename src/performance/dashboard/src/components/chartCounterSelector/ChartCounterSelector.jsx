@@ -176,7 +176,7 @@ class ChartCounterSelector extends Component {
                             <div className="categoryLabels">
                                 <Checkbox id="cpu" checked={this.isCounterEnabled('CPU_PROCESS_MEAN')} onClick={(e) => this.handleExpandClick(e, 'CPU_PROCESS_MEAN')} labelText='CPU (%)' />
                                 <Tooltip
-                                    showIcon="true"
+                                    showIcon={true}
                                     direction="left"
                                     iconDescription="Helpful Information"
                                     tabIndex={0}
