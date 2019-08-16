@@ -31,4 +31,10 @@ export const projectConfigs = {
 export const projectTypes = ["docker"];
 export const supportedDockerProjects = ["go", "python", "lagom"];
 
+export const templateNames: any = {
+    "go": "microclimategotemplate",
+    "python": "svtpythontemplate",
+    "lagom": "lagomjavatemplate"
+};
+
 export const DEFAULT_LOG_LEVEL = "trace";

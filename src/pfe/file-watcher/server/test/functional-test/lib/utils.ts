@@ -100,6 +100,7 @@ export function setTestEnvVariables(): void {
     process.env.CW_EXTENSION_DIR = app_configs.extensionDir;
     process.env.IN_K8_REGISTRY = "sakibh";
     process.env.DEFAULT_LOG_LEVEL = app_configs.DEFAULT_LOG_LEVEL;
+    process.env.TEST_TYPE = process.env.IN_K8 ? "kube" : "local";
 }
 
 export function writeToFile(path: string, content: string, callback: (err: Error, msg: string) => void): void {
@@ -116,7 +117,7 @@ export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreat
     });
 }
 
-export async function rebuildProject(socket: SocketIO, projData: ProjectCreation): Promise<void> {
+export async function rebuildProject(socket: SocketIO, projData: ProjectCreation, checkEvent?: string, checkEventData?: any): Promise<void> {
     const testData: any = {
         action: "build",
         projectType: projData.projectType,
@@ -127,8 +128,8 @@ export async function rebuildProject(socket: SocketIO, projData: ProjectCreation
     const info: any = await projectAction(testData);
     expect(info);
 
-    const targetEvent = eventConfigs.events.statusChanged;
-    const data = {
+    const targetEvent = checkEvent || eventConfigs.events.statusChanged;
+    const data = checkEventData || {
         "projectID": projData.projectID,
         "appStatus": "started"
     };
@@ -158,10 +159,7 @@ export async function rebuildProject(socket: SocketIO, projData: ProjectCreation
         expect(event.eventName);
         expect(event.eventName).to.equal(targetEvent);
         expect(event.eventData);
-        expect(event.eventData).to.haveOwnProperty("projectID");
-        expect(event.eventData).to.haveOwnProperty("appStatus");
-        expect(event.eventData["projectID"]).to.equal(projData.projectID);
-        expect(event.eventData["appStatus"]).to.equal("started");
+        expect(_.isMatch(event.eventData, data));
     } else {
         fail(`failed to find ${targetEvent} for rebuild project ${projData.projectType}`);
     }

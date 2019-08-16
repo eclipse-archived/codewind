@@ -44,8 +44,18 @@ export const defaultHealthCheckEndPoint: any = {
 };
 
 export const oneExposedPortOnly: any = {
-    "go": true,
-    "python": true
+    "go": {
+        "local": true,
+        "kube": true
+    },
+    "python": {
+        "local": true,
+        "kube": true
+    },
+    "lagom": {
+        "local": false,
+        "kube": true
+    }
 };
 
 export const defaultInternalPorts: any = {

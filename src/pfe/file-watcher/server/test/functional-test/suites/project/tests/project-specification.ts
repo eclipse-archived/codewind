@@ -16,6 +16,7 @@ import fs from "fs";
 
 import { ProjectCreation, projectSpecification, getApplicationContainerInfoInK8, getApplicationContainerInfo } from "../../../lib/project";
 
+import * as app_configs from "../../../configs/app.config";
 import * as project_configs from "../../../configs/project.config";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
@@ -40,7 +41,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             "combo1": {
                 "setting": "internalPort",
                 "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "status", "ports"]
+                "eventKeys": ["operationId", "projectID", "status", "ports"],
+                "beforeHook": [beforeHookInternalPortTest],
+                "afterHook": [afterHookInternalPortTestSinglePort, afterHookInternalPortTestResetPort]
             },
             "combo2": {
                 "setting": "internalDebugPort",
@@ -51,13 +54,15 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 "setting": "contextRoot",
                 "value":  testContextRoot,
                 "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "contextRoot", "status"]
+                "eventKeys": ["operationId", "projectID", "contextRoot", "status"],
+                "afterHook": [afterHookContextRootTest]
             },
             "combo4": {
                 "setting": "healthCheck",
                 "value":  testHealthCheck,
                 "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "name", "healthCheck", "status"]
+                "eventKeys": ["operationId", "projectID", "name", "healthCheck", "status"],
+                "afterHook": [afterHookHealthCheckTest]
             },
             "combo5": {
                 "setting": "mavenProfiles",
@@ -82,42 +87,10 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 "eventKeys": ["operationId", "projectID", "ignoredPaths", "status"]
             }
         };
+        let defaultInternalPort: any;
 
         afterEach("clear socket events", () => {
             socket.clearEvents();
-        });
-
-        before("add expose port to project type with only one exposed port", async function(): Promise<void> {
-            if (! project_configs.oneExposedPortOnly[projectLang]) return;
-            this.timeout(timeoutConfigs.defaultTimeout);
-            const dockerfile = path.join(projData.location, "Dockerfile");
-            await fs.appendFileSync(dockerfile, `\nEXPOSE ${testExposedPort}`);
-            await utils.rebuildProject(socket, projData);
-        });
-
-        after("remove added exposed port to project type", async function(): Promise<void> {
-            if (! project_configs.oneExposedPortOnly[projectLang]) return;
-            this.timeout(timeoutConfigs.defaultTimeout);
-            const dockerfile = path.join(projData.location, "Dockerfile");
-            const fileOutput = await fs.readFileSync(dockerfile, {encoding: "utf-8"});
-            await fs.writeFileSync(dockerfile, fileOutput.replace(new RegExp(`EXPOSE ${testExposedPort}`, "g"), ""), {encoding: "utf-8"}) ;
-            await utils.rebuildProject(socket, projData);
-        });
-
-        after("reset internal port", async function(): Promise<void> {
-            this.timeout(timeoutConfigs.defaultTimeout);
-            await runProjectSpecificationSettingTest(combinations["combo1"], project_configs.defaultInternalPorts[projectLang]);
-        });
-
-        after("reset context root", async function (): Promise<void> {
-            this.timeout(timeoutConfigs.defaultTimeout);
-            await runProjectSpecificationSettingTest(combinations["combo3"], project_configs.defaultContextRoot[projectLang] || "/");
-        });
-
-        after("reset health check", async function (): Promise<void> {
-            this.timeout(timeoutConfigs.defaultTimeout);
-            if (!project_configs.defaultHealthCheckEndPoint[projectLang]) return;
-            await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultHealthCheckEndPoint[projectLang]);
         });
 
         utils.rebuildProjectAfterHook(socket, projData);
@@ -238,11 +211,27 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             }
         }).timeout(timeoutConfigs.defaultTimeout);
 
-        _.forEach(combinations, (combo) => {
-            it(`config project specification settings ${combo["setting"]}`, async () => {
-                if (combo["setting"] === "healthCheck" && !project_configs.defaultHealthCheckEndPoint[projectLang]) return;
-                await runProjectSpecificationSettingTest(combo);
-            }).timeout(timeoutConfigs.defaultTimeout);
+        describe("configure project specifications", () => {
+            _.forEach(combinations, (combo) => {
+                describe(`configure ${combo["setting"]} settings`, () => {
+                    _.forEach(combo["beforeHook"], (beforeHook) => {
+                        before(`before hook: ${combo["setting"]} settings test`, async function (): Promise<void> {
+                            await beforeHook(this);
+                        });
+                    });
+
+                    _.forEach(combo["afterHook"], (afterHook) => {
+                        after(`after hook: ${combo["setting"]} settings test`, async function (): Promise<void> {
+                            await afterHook(this);
+                        });
+                    });
+
+                    it(`config project specification settings ${combo["setting"]}`, async () => {
+                        if (combo["setting"] === "healthCheck" && !project_configs.defaultHealthCheckEndPoint[projectLang]) return;
+                        await runProjectSpecificationSettingTest(combo);
+                    }).timeout(timeoutConfigs.defaultTimeout);
+                });
+            });
         });
 
         async function runProjectSpecificationSettingTest(combo: any, valueCheck?: string): Promise<void> {
@@ -251,22 +240,17 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
             if (setting === "internalPort") {
                 const projectInfo = await projectUtil.getProjectInfo(projData.projectID);
-                if (process.env.IN_K8) {
-                    const containerInfo = await getApplicationContainerInfoInK8(projectInfo, new Operation("general", projectInfo));
-                    const currentInternalPort = containerInfo.internalPort;
-                    const podPorts = containerInfo.podPorts.filter((val) => {
-                        return val != currentInternalPort;
-                    });
-                    value = value || podPorts[Math.floor(Math.random() * podPorts.length)];
-                } else {
-                    const containerName = await projectUtil.getContainerName(projectInfo);
-                    const containerInfo = await getApplicationContainerInfo(projectInfo, containerName);
-                    const currentInternalPort = containerInfo.internalPort;
-                    const containerPorts = containerInfo.containerPorts.filter((val) => {
-                        return val != currentInternalPort;
-                    });
-                    value = value || containerPorts[Math.floor(Math.random() * containerPorts.length)];
-                }
+                await projectUtil.getContainerInfo(projectInfo, true);
+                const containerName = await projectUtil.getContainerName(projectInfo);
+                const operation = new Operation("", projectInfo);
+                operation.containerName = containerName;
+                const containerInfo: any = process.env.IN_K8 ? await getApplicationContainerInfoInK8(projectInfo, operation) : await getApplicationContainerInfo(projectInfo, containerName);
+                const currentInternalPort = containerInfo.internalPort;
+                const portKey = process.env.IN_K8 ? "podPorts" : "containerPorts";
+                const ports = project_configs.oneExposedPortOnly[projectLang][process.env.TEST_TYPE] ? containerInfo[portKey] : containerInfo[portKey].filter((val: any) => {
+                    return val != currentInternalPort;
+                });
+                value = value || ports[Math.floor(Math.random() * ports.length)];
             }
             if (setting === "internalDebugPort") {
                 if (process.env.IN_K8) return; // internal debug port setting is not supported in kube
@@ -355,6 +339,70 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     fail(`failed to find ${targetEvent} for setting ${setting}`);
                 }
             }
+        }
+
+        async function beforeHookInternalPortTest(hook: any): Promise<void> {
+            hook.timeout(timeoutConfigs.defaultTimeout);
+            if (! project_configs.oneExposedPortOnly[projectLang][process.env.TEST_TYPE]) return;
+
+            const projectInfo = await projectUtil.getProjectInfo(projData.projectID);
+            const containerName = await projectUtil.getContainerName(projectInfo);
+            const operation = new Operation("", projectInfo);
+            operation.containerName = containerName;
+            const containerInfo: any = process.env.IN_K8 ? await getApplicationContainerInfoInK8(projectInfo, operation) : await getApplicationContainerInfo(projectInfo, containerName);
+            defaultInternalPort = containerInfo.internalPort;
+
+            const dockerfile = path.join(projData.location, "Dockerfile");
+            const fileOutput = await fs.readFileSync(dockerfile, {encoding: "utf-8"});
+            await fs.writeFileSync(dockerfile, fileOutput.replace(new RegExp(`EXPOSE ${defaultInternalPort}`, "g"), `EXPOSE ${testExposedPort}`), {encoding: "utf-8"});
+
+            if (process.env.IN_K8 && app_configs.templateNames[projectLang]) {
+                const projectTemplateDir = path.join(projData.location, "chart", app_configs.templateNames[projectLang]);
+                const files = ["values.yaml"];
+                for (const file of files) {
+                    const fileOutput = await fs.readFileSync(path.join(projectTemplateDir, file), {encoding: "utf-8"});
+                    await fs.writeFileSync(path.join(projectTemplateDir, file), fileOutput.replace(new RegExp(`servicePort: ${defaultInternalPort}`, "g"), `servicePort: ${testExposedPort}`), {encoding: "utf-8"});
+                }
+            }
+
+            await utils.rebuildProject(socket, projData, process.env.IN_K8 ? eventConfigs.events.creation : undefined,
+                process.env.IN_K8 ? {"projectID": projData.projectID, "ports": {"internalPort": testExposedPort}} : undefined);
+        }
+
+        async function afterHookInternalPortTestSinglePort(hook: any): Promise<void> {
+            hook.timeout(timeoutConfigs.defaultTimeout);
+            if (! project_configs.oneExposedPortOnly[projectLang][process.env.TEST_TYPE]) return;
+
+            const dockerfile = path.join(projData.location, "Dockerfile");
+            const fileOutput = await fs.readFileSync(dockerfile, {encoding: "utf-8"});
+            await fs.writeFileSync(dockerfile, fileOutput.replace(new RegExp(`EXPOSE ${testExposedPort}`, "g"), `EXPOSE ${defaultInternalPort}`), {encoding: "utf-8"});
+
+            if (process.env.IN_K8 && app_configs.templateNames[projectLang]) {
+                const projectTemplateDir = path.join(projData.location, "chart", app_configs.templateNames[projectLang]);
+                const files = ["values.yaml"];
+                for (const file of files) {
+                    const fileOutput = await fs.readFileSync(path.join(projectTemplateDir, file), {encoding: "utf-8"});
+                    await fs.writeFileSync(path.join(projectTemplateDir, file), fileOutput.replace(new RegExp(`servicePort: ${testExposedPort}`, "g"), `servicePort: ${defaultInternalPort}`), {encoding: "utf-8"});
+                }
+            }
+            await utils.rebuildProject(socket, projData);
+        }
+
+        async function afterHookInternalPortTestResetPort(hook: any): Promise<void> {
+            hook.timeout(timeoutConfigs.defaultTimeout);
+            if (project_configs.oneExposedPortOnly[projectLang][process.env.TEST_TYPE]) return;
+            await runProjectSpecificationSettingTest(combinations["combo1"], project_configs.defaultInternalPorts[projectLang]);
+        }
+
+        async function afterHookContextRootTest(hook: any): Promise<void> {
+            hook.timeout(timeoutConfigs.defaultTimeout);
+            await runProjectSpecificationSettingTest(combinations["combo3"], project_configs.defaultContextRoot[projectLang] || "/");
+        }
+
+        async function afterHookHealthCheckTest(hook: any): Promise<void> {
+            hook.timeout(timeoutConfigs.defaultTimeout);
+            if (!project_configs.defaultHealthCheckEndPoint[projectLang]) return;
+            await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultHealthCheckEndPoint[projectLang]);
         }
     });
 }
