@@ -84,6 +84,7 @@ export interface ProjectSettingsEvent {
     ignoredPaths?: string[];
     mavenProfiles?: string[];
     mavenProperties?: string[];
+    isSecure?: boolean;
 }
 
 /**

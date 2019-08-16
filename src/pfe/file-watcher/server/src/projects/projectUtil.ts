@@ -12,6 +12,7 @@
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as http from "http";
+import * as https from "https";
 import moment from "moment-timezone";
 import * as path from "path";
 import { TransformOptions } from "stream";
@@ -59,6 +60,7 @@ export const LOCAL_WORKSPACE = process.env.NODE_ENV === "test" ? process.env.HOS
 const projectList: Array<string> = [];
 
 const isApplicationPodUpIntervalMap = new Map();
+const projectWWWProtocolMap = new Map();
 
 export interface ProjectEvent {
     operationId: string;
@@ -903,6 +905,44 @@ export async function isContainerActive(projectID: string, handler: any): Promis
 
 /**
  * @function
+ * @description Function to set the project's WWW protocol in the Map. This function is only invoked by the project settings API
+ *
+ * @param projectID <Required | String> - The projectID.
+ * @param buildOutput <Optional | Boolean> - The WWW Protocol. The default value is false.
+ *
+ * @returns Promise<void>
+ */
+export async function setProjectWWWProtocolMap(projectID: string, isSecure: boolean = false): Promise<void> {
+    if (!projectID) {
+        logger.logError("Cannot set the WWW protocol for an invalid projectID: " + projectID);
+        return;
+    }
+    projectWWWProtocolMap.set(projectID, isSecure);
+}
+
+/**
+ * @function
+ * @description Function to get the project's WWW protocol from the Map.
+ *
+ * @param projectID <Required | String> - The projectID.
+ *
+ * @returns Promise<void>
+ */
+export async function getProjectWWWProtocolMap(projectID: string): Promise<boolean> {
+    if (!projectID) {
+        logger.logError("Cannot get the WWW protocol for an invalid projectID: " + projectID);
+        return;
+    }
+
+    if (projectWWWProtocolMap.get(projectID)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+ * @function
  * @description Ping an application to determine its current state.
  *
  * @param projectID <Required | String> - An alphanumeric identifier for a project.
@@ -966,14 +1006,23 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             updateDetailedAppStatus(projectID, containerInfo.ip, port, path);
         }
 
+        const isSecure: boolean = await getProjectWWWProtocolMap(projectID);
+
+        const protocol = isSecure ? https : http;
+
         // Try to ping the application
-        const options = {
+        const options: any = {
             hostname: containerInfo.ip,
             port: port,
             path: path,
             method: "GET",
             timeout: 1000
         };
+
+        if (isSecure) {
+            options.rejectUnauthorized = false;
+            options.secure = true;
+        }
 
         if (process.env.IN_K8) {
             options.hostname = containerInfo.serviceName;
@@ -984,7 +1033,7 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
         let statusCode: number = undefined;
         let isGoodStatusCode: Boolean = undefined;
 
-        http.request(options, (res) => {
+        protocol.request(options, (res) => {
             statusCode = res.statusCode;
 
             // We consider the app to be running if we get any non-error status code.
@@ -995,7 +1044,7 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             } else if (!isGoodStatusCode && path === "/health") {
                 options.path = "/";
 
-                http.request(options, (res) => {
+                protocol.request(options, (res) => {
                     statusCode = res.statusCode;
 
                     // We consider the app to be running if we get any non-error status code.
