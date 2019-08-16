@@ -278,7 +278,6 @@ paths:
           content:
             application/json:
               schema:
-                type: object
                 $ref: '#/components/schemas/Project'
         404:
           description: The project was not found
@@ -1336,14 +1335,19 @@ components:
         - projectType
       properties:
         label:
+          type: string
           example: "python hello world"
         description:
+          type: string
           example: "python microservice"
         language:
+          type: string
           example: "python"
         url:
+          type: string
           example: "https://github.com/microclimate-dev2ops/SVTPythonTemplate"
         projectType:
+          type: string
           example: "docker"
     TemplateRepo:
       type: object
@@ -1560,8 +1564,8 @@ components:
           type: string
           example: "Codewind extension for knapp support"
         commands:
-          type: array
-          $ref: '#/components/schemas/ExtensionCommand'
+          items:
+            $ref: '#/components/schemas/ExtensionCommand'
         detection:
           type: string
           example: "knap_config.yaml"
