@@ -10,6 +10,13 @@ RESET='\033[0m'
 TEST_TYPE="local"
 TEST_SUITE="functional"
 POST_CLEANUP="n"
+CLEAN_RUN="n"
+CLEAN_WORKSPACE="n"
+
+# Set up variables
+cd ../../../../../
+CW_DIR=$(pwd)
+cd -
 
 function usage {
     me=$(basename $0)
@@ -17,26 +24,33 @@ function usage {
 Usage: $me: [-<option letter> <option value> | -h]
 Options:
     -t # Test type, currently supports 'local' or 'kube' - Optional
-    -s # Test suite - Optional
-    -p # Post cleanup, post test cleanup for cronjob, 'y' or 'n' - Optional
-    -c # Test configuration - currently supports 'setup' which will install and uninstall the Codewind container - Optional
+    -s # Test suite, currently supports 'functional' - Optional
+    -p # Post cleanup, post test cleanup for cronjob, currently supports 'y' or 'n' - Optional
+    -c # Clean run - currently supports y' or 'n' - Optional
+    -d # Clean workspace - currently supports y' or 'n' - Optional
     -h # Display the man page
 EOF
 }
 
-function runWithoutSetup {
+function run {
+    # Need to ensure Codewind container is up and running before running test cases
+    # Need to run 'run.sh' in Codewind home directory because 'run.sh' uses relative path to run other building scripts
+    cd $CW_DIR
+    ./run.sh
+    cd -
+
     # Run test cases
-    ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE
+    ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE -d $CLEAN_WORKSPACE
     if [[ $? -eq 0 ]]; then
-        echo -e "${GREEN}Finished running tests. ${RESET}\n"
+        echo -e "${GREEN}\nFinished running tests. ${RESET}\n"
     else
-        echo -e "${RED}The test run has failed. ${RESET}\n"
+        echo -e "${RED}\nThe test run has failed. ${RESET}\n"
         exit 1
     fi
 }
 
-function runWithSetup {
-    # Pre test cleanup
+function cleanRun {
+    # Pre-test cleanup
     ./scripts/setup.sh -t $TEST_TYPE -f uninstall
     if [[ $? -eq 0 ]]; then
         echo -e "${GREEN}Pre-test cleanup was successful. ${RESET}\n"
@@ -46,7 +60,7 @@ function runWithSetup {
     fi
 
     # Set up test automation
-    ./scripts/setup.sh -t $TEST_TYPE -b $TEST_BRANCH -f install
+    ./scripts/setup.sh -t $TEST_TYPE -f install
     if [[ $? -eq 0 ]]; then
         echo -e "${GREEN}Test automation setup was successful. ${RESET}\n"
     else
@@ -55,16 +69,16 @@ function runWithSetup {
     fi
 
     # Run test cases
-    ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE
+    ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE -d $CLEAN_WORKSPACE
     if [[ $? -eq 0 ]]; then
-        echo -e "${GREEN}Finished running tests. ${RESET}\n"
+        echo -e "${GREEN}\nFinished running tests. ${RESET}\n"
     else
-        echo -e "${RED}The test run has failed. ${RESET}\n"
+        echo -e "${RED}\nThe test run has failed. ${RESET}\n"
         exit 1
     fi
 
-    # Post test cleanup
-    # Cronjob machines need to set up POST_CLEANUP=y to do post test automation cleanup
+    # Post-test cleanup
+    # Cronjob machines need to set up POST_CLEANUP=y to do post-test automation cleanup
     if [[ $POST_CLEANUP == "y" ]]; then
         ./scripts/setup.sh -t $TEST_TYPE -f uninstall
         if [[ $? -eq 0 ]]; then
@@ -76,7 +90,7 @@ function runWithSetup {
     fi
 }
 
-while getopts "t:s:p:c:h" OPTION; do
+while getopts "t:s:p:c:d:h" OPTION; do
     case "$OPTION" in
         t) 
             TEST_TYPE=$OPTARG
@@ -89,6 +103,12 @@ while getopts "t:s:p:c:h" OPTION; do
             ;;
         s) 
             TEST_SUITE=$OPTARG
+            # Check if test suite argument is corrent
+            if [[ ($TEST_SUITE != "functional") ]]; then
+                echo -e "${RED}Test suite argument is not correct. ${RESET}\n"
+                usage
+                exit 1
+            fi
             ;;
         p)
             POST_CLEANUP=$OPTARG
@@ -100,10 +120,19 @@ while getopts "t:s:p:c:h" OPTION; do
             fi
             ;;
         c) 
-            TEST_CONFIGURATION=$OPTARG
-            # Check if test configuration argument is correct
-            if [[ ($TEST_CONFIGURATION != "setup") ]]; then
-                echo -e "${RED}Test configuration argument is not correct. ${RESET}\n"
+            CLEAN_RUN=$OPTARG
+            # Check if clean run argument is correct
+            if [[ ($CLEAN_RUN != "y") && ($CLEAN_RUN != "n") ]]; then
+                echo -e "${RED}Clean run argument is not correct. ${RESET}\n"
+                usage
+                exit 1
+            fi
+            ;;
+        d)
+            CLEAN_WORKSPACE=$OPTARG
+            # Check if clean workspace argument is correct
+            if [[ ($CLEAN_WORKSPACE != "y") && ($CLEAN_WORKSPACE != "n") ]]; then
+                echo -e "${RED}Clean workspace argument is not correct. ${RESET}\n"
                 usage
                 exit 1
             fi
@@ -115,8 +144,8 @@ while getopts "t:s:p:c:h" OPTION; do
     esac
 done
 
-if [[ (-z $TEST_CONFIGURATION) ]]; then
-    runWithoutSetup
+if [[ ($CLEAN_RUN == "y") ]]; then
+    cleanRun
 else
-    runWithSetup
+    run
 fi

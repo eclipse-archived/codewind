@@ -11,16 +11,13 @@ cd ../../../../../
 CW_DIR=$(pwd)
 cd -
 
-# Set up default options value for test
-TEST_BRANCH="master"
-
 function usage {
     me=$(basename $0)
     cat <<EOF
 Usage: [-<option letter> <option value> | -h]
 Options:
-    -t # Test type, currently support 'local' and 'kube' - Mandatory
-    -f # Setup function, currently support 'install' and 'uninstall' - Mandatory
+    -t # Test type, currently supports 'local' or 'kube' - Mandatory
+    -f # Setup function, currently supports 'install' or 'uninstall' - Mandatory
     -h # Display the man page
 EOF
 }
@@ -49,7 +46,7 @@ function uninstall {
     fi
 }
 
-while getopts "t:b:h" OPTION; do
+while getopts "t:f:h" OPTION; do
     case "$OPTION" in
         t) 
             TEST_TYPE=$OPTARG
@@ -62,9 +59,9 @@ while getopts "t:b:h" OPTION; do
             ;;
         f)
             SETUP_FUNCTION=$OPTARG
-            # Check if function argument is correct
+            # Check if setup function argument is correct
             if [[ ($SETUP_FUNCTION != "install") && ($SETUP_FUNCTION != "uninstall") ]]; then
-                echo -e "${RED}Function argument is not correct. ${RESET}\n"
+                echo -e "${RED}Setup function argument is not correct. ${RESET}\n"
                 usage
                 exit 1
             fi
@@ -83,8 +80,8 @@ if [[ (-z $TEST_TYPE) || (-z $SETUP_FUNCTION) ]]; then
     exit 1
 fi
 
-if [[ $SETUP_FUNCTION == "install" ]];then
+if [[ ($SETUP_FUNCTION == "install") ]];then
     install
-elif [[ $SETUP_FUNCTION == "uninstall" ]];then
+elif [[ ($SETUP_FUNCTION == "uninstall") ]];then
     uninstall
 fi

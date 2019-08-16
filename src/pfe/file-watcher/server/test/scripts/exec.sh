@@ -17,8 +17,9 @@ function usage {
     cat <<EOF
 Usage: $me: [-<option letter> <option value> | -h]
 Options:
-    -t # Test type, currently support 'local' and 'kube' - Mandatory
-    -s # Test suite, currently support 'functional' - Mandatory
+    -t # Test type, currently supports 'local' or 'kube' - Mandatory
+    -s # Test suite, currently supports 'functional' - Mandatory
+    -d # Clean workspcae, currently supports 'y' or 'n' - Mandatory
     -h # Display the man page
 EOF
 }
@@ -37,31 +38,37 @@ function setup {
     TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_SUITE-test.log
     CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
+    PROJECTS_CLONE_DATA_FILE="./resources/projects-clone-data"
 
     mkdir -p $TEST_OUTPUT_DIR \
     && docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; npm install --only=dev" \
     && docker cp $TEST_DIR/test $CODEWIND_CONTAINER_ID:$TEST_DIR_CONTAINER
 
-    if [[ $? -ne 0 ]]; then
+    if [[ ($? -ne 0) ]]; then
         echo -e "${RED}Test setup failed. ${RESET}\n"
         exit 1
     fi
-    
+
+    # Clean up workspace if needed
+    if [[ ($CLEAN_WORKSPACE == "y") ]]; then
+        echo -e "${BLUE}Cleaning up workspace. ${RESET}\n"
+        rm -rf $CW_DIR/codewind-workspace/*
+    fi
+
     # Clone projects to workspace
-    declare -a PROJECT_URLS
-    PROJECT_URLS["codewindtestpython"]="https://github.com/microclimate-dev2ops/SVTPythonTemplate"
-    PROJECT_URLS["codewindtestgo"]="https://github.com/microclimate-dev2ops/microclimateGoTemplate"
-    PROJECT_URLS["codewindtestlagom"]="https://github.com/microclimate-dev2ops/lagomJavaTemplate"
-    PROJECT_URLS["codewindtestspring"]="https://github.com/microclimate-dev2ops/springJavaTemplate"
-    PROJECT_URLS["codewindtestmicroprofile"]="https://github.com/microclimate-dev2ops/javaMicroProfileTemplate"
-    PROJECT_URLS["codewindtestnodejs"]="https://github.com/microclimate-dev2ops/nodeExpressTemplate.git"
-    PROJECT_URLS["codewindtestswift"]="https://github.com/microclimate-dev2ops/swiftTemplate"
-    
-    echo -e "${BLUE}Cloning projects to $CW_DIR/codewind-workspace ${RESET}\n"
-    for PROJECT_NAME in ${!PROJECT_URLS[@]}; do
-        echo -e "${BLUE}Cloning ${PROJECT_URLS[$PROJECT_NAME]}. ${RESET}\n"
-        clone $PROJECT_NAME $CW_DIR/codewind-workspace ${PROJECT_URLS[$PROJECT_NAME]}
-    done
+    echo -e "${BLUE}Cloning projects to $CW_DIR/codewind-workspace. ${RESET}"
+    while IFS= read -r LINE; do
+        PROJECT_NAME=$(echo $LINE | cut -d "=" -f 1)
+        PROJECT_URL=$(echo $LINE | cut -d "=" -f 2)
+        echo -e "\n\nProject name is: $PROJECT_NAME, project URL is $PROJECT_URL"
+        echo -e "${BLUE}Cloning $PROJECT_URL. ${RESET}"
+        clone $PROJECT_NAME $CW_DIR/codewind-workspace $PROJECT_URL
+
+        if [[ ($? -ne 0) ]]; then
+            echo -e "${RED}Test setup failed. ${RESET}\n"
+            exit 1
+        fi
+    done < "$PROJECTS_CLONE_DATA_FILE"
 }
 
 function run {
@@ -81,7 +88,7 @@ function run {
     fi
 }
 
-while getopts "t:s:h" OPTION; do
+while getopts "t:s:d:h" OPTION; do
     case "$OPTION" in
         t) 
             TEST_TYPE=$OPTARG
@@ -94,9 +101,18 @@ while getopts "t:s:h" OPTION; do
             ;;
         s)
             TEST_SUITE=$OPTARG
-            # Check if test bucket argument is corrent
+            # Check if test suite argument is corrent
             if [[ ($TEST_SUITE != "functional") ]]; then
-                echo -e "${RED}Test bucket argument is not correct. ${RESET}\n"
+                echo -e "${RED}Test suite argument is not correct. ${RESET}\n"
+                usage
+                exit 1
+            fi
+            ;;
+        d)
+            CLEAN_WORKSPACE=$OPTARG
+            # Check if clean workspace argument is corrent
+            if [[ ($CLEAN_WORKSPACE != "y") && ($CLEAN_WORKSPACE != "n") ]]; then
+                echo -e "${RED}Clean workspace argument is not correct. ${RESET}\n"
                 usage
                 exit 1
             fi
@@ -109,7 +125,7 @@ while getopts "t:s:h" OPTION; do
 done
 
 # Check mandatory arguments have been set up
-if [[ (-z $TEST_TYPE) ]]; then
+if [[ (-z $TEST_TYPE) || (-z $TEST_SUITE) || (-z $CLEAN_WORKSPACE) ]]; then
     echo -e "${RED}Mandatory arguments are not set up. ${RESET}\n"
     usage
     exit 1
@@ -120,5 +136,5 @@ echo -e "${BLUE}Starting pre-test setup. ${RESET}\n"
 setup
 
 # Run test cases
-echo -e "${BLUE}\nRunning $TEST_SUITE tests. ${RESET}\n"
-run
+# echo -e "${BLUE}\nRunning $TEST_SUITE tests. ${RESET}\n"
+# run
