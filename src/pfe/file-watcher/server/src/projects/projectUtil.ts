@@ -912,12 +912,12 @@ export async function isContainerActive(projectID: string, handler: any): Promis
  *
  * @returns Promise<void>
  */
-export async function setProjectWWWProtocolMap(projectID: string, isSecure: boolean = false): Promise<void> {
+export async function setProjectWWWProtocolMap(projectID: string, isHttps: boolean = false): Promise<void> {
     if (!projectID) {
         logger.logError("Cannot set the WWW protocol for an invalid projectID: " + projectID);
         return;
     }
-    projectWWWProtocolMap.set(projectID, isSecure);
+    projectWWWProtocolMap.set(projectID, isHttps);
 }
 
 /**
@@ -1006,9 +1006,9 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             updateDetailedAppStatus(projectID, containerInfo.ip, port, path);
         }
 
-        const isSecure: boolean = await getProjectWWWProtocolMap(projectID);
+        const isHttps: boolean = await getProjectWWWProtocolMap(projectID);
 
-        const protocol = isSecure ? https : http;
+        const protocol = isHttps ? https : http;
 
         // Try to ping the application
         const options: any = {
@@ -1019,7 +1019,7 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             timeout: 1000
         };
 
-        if (isSecure) {
+        if (isHttps) {
             options.rejectUnauthorized = false;
             options.secure = true;
         }

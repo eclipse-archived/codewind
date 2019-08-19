@@ -313,6 +313,17 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                 } else {
                     projectInfo.ignoredPaths = settings.ignoredPaths;
                 }
+            } else if (key == "isHttps") {
+                if (typeof settings.isHttps == "boolean") {
+                    logger.logInfo("MJF projectsController create setting isHttps from settings");
+                    await projectUtil.setProjectWWWProtocolMap(projectID, settings.isHttps);
+                    projectInfo.isHttps = settings.isHttps;
+                } else {
+                    // Default to http if we cannot get the isHttps settings
+                    logger.logInfo("MJF projectsController create defaulting to isHttps false");
+                    await projectUtil.setProjectWWWProtocolMap(projectID, false);
+                    projectInfo.isHttps = false;
+                }
             }
         }
     }
@@ -1175,6 +1186,7 @@ export interface IProjectSettings {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     ignoredPaths?: string[];
+    isHttps?: boolean;
 }
 
 export interface IProjectActionParams {

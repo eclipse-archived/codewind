@@ -445,32 +445,46 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
  *
  * @returns Promise<any>
  */
-const reconfigWWWProtocol = async function (isSecure: boolean, operation: Operation): Promise<any> {
-    const projectInfo: ProjectInfo = operation.projectInfo;
+const reconfigWWWProtocol = async function (isHttps: boolean, operation: Operation): Promise<any> {
+    let projectInfo: ProjectInfo = operation.projectInfo;
     const projectID = projectInfo.projectID;
 
-    const isSecurePreviously: boolean = await projectUtil.getProjectWWWProtocolMap(projectID);
-
-    if (isSecure == isSecurePreviously) {
-        logger.logProjectInfo("The project WWW protocol is already set to: " + isSecure ? "https" : "http", projectID);
+    if (typeof isHttps != "boolean") {
+        logger.logProjectError("Failed to update isHttps setting. The isHttps setting is not a boolean", projectID);
         return;
     }
 
-    await projectUtil.setProjectWWWProtocolMap(projectID, isSecure);
+    const isHttpsPreviously: boolean = await projectUtil.getProjectWWWProtocolMap(projectID);
 
-    if (isSecure) {
-        const data: ProjectSettingsEvent = {
-            operationId: operation.operationId,
-            projectID: projectID,
-            status: "success",
-            isSecure: isSecure
-        };
-
-        // Only emit a socket msg when it is true since the project default is always false
-        io.emitOnListener("projectSettingsChanged", data);
+    if (isHttps == isHttpsPreviously) {
+        logger.logProjectInfo("The project WWW protocol is already set to: " + isHttps ? "https" : "http", projectID);
+        return;
     }
 
-    logger.logProjectInfo("The WWW protocol for the project has been changed to: " + isSecure ? "https" : "http", projectID);
+    await projectUtil.setProjectWWWProtocolMap(projectID, isHttps);
+
+    const keyValuePair: UpdateProjectInfoPair = {
+        key: "isHttps",
+        value: isHttps,
+        saveIntoJsonFile: true
+    };
+    projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
+
+    logger.logProjectInfo("The project has been updated", projectInfo.projectID);
+    logger.logProjectInfo("MJF updated ProjectInfo: " + JSON.stringify(projectInfo), projectInfo.projectID);
+    logger.logProjectTrace(JSON.stringify(projectInfo), projectInfo.projectID);
+
+    const data: ProjectSettingsEvent = {
+        operationId: operation.operationId,
+        projectID: projectID,
+        status: "success",
+        isHttps: isHttps
+    };
+
+    // Only emit a socket msg when it is true since the project default is always false
+    io.emitOnListener("projectSettingsChanged", data);
+
+    logger.logProjectInfo("The WWW protocol for the project has been changed to: " + isHttps ? "https" : "http", projectID);
     return;
 };
 
@@ -832,4 +846,4 @@ specificationSettingMap.set("healthCheck", changeHealthCheck);
 specificationSettingMap.set("mavenProfiles", changeMavenProfiles);
 specificationSettingMap.set("mavenProperties", changeMavenProperties);
 specificationSettingMap.set("ignoredPaths", reconfigIgnoredFilesForDaemon);
-specificationSettingMap.set("isSecure", reconfigWWWProtocol);
+specificationSettingMap.set("isHttps", reconfigWWWProtocol);
