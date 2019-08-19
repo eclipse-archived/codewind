@@ -15,16 +15,16 @@ LABEL org.label-schema.name="Codewind PFE" org.label-schema.description="Codewin
       org.label-schema.url="https://codewind.dev/" \
       org.label-schema.vcs-url="https://github.com/eclipse/codewind" org.label-schema.vendor="IBM"
 
-ARG BUILDAH_RPM=http://download-ib01.fedoraproject.org/pub/fedora/linux/updates/30/Everything/x86_64/Packages/b/buildah-1.9.0-1.git00eb895.fc30.x86_64.rpm
+ARG BUILDAH_RPM=https://download-ib01.fedoraproject.org/pub/fedora/linux/updates/30/Everything/x86_64/Packages/b/buildah-1.9.2-2.fc30.x86_64.rpm
 
 # Download the buildah RPM
-RUN curl -o buildah.rpm $BUILDAH_RPM
+RUN curl -f -o buildah.rpm $BUILDAH_RPM
 
 # Download and set up Node 10.x RPM
 RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 
 RUN yum install -y epel-release \
-    && yum -y --enablerepo=epel install zip unzip git sudo wget ca-certificates openssl nodejs buildah.rpm \
+    && yum -y --enablerepo=epel install zip unzip sudo ca-certificates openssl nodejs buildah.rpm \
     && yum clean all \
     && rm -rf /var/cache/yum
 
@@ -39,7 +39,7 @@ RUN cd /tmp \
 
 # Download OpenJ9 JRE, fixed to jre8u212-b04_openj9-0.14.2 version
 RUN cd /tmp \
-    && wget -q https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u212-b04_openj9-0.14.2/OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz \
+    && curl -sL -O https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u212-b04_openj9-0.14.2/OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz \
     && echo 'b0c0aac53694b2ada3a9fdcbb3e9461257a54b50b4573d786d7b0778d6356805  OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz' | sha256sum -c - \
     && tar -xvf OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz \
     && OPENJ9_JRE=$(find *jre | head -n 1) \
@@ -55,7 +55,7 @@ ENV JAVA_HOME=/opt/java/jre \
 # Install the latest version of yq
 RUN LATEST_RELEASE=$(curl -L -s -H 'Accept: application/json' https://github.com/mikefarah/yq/releases/latest) \
     && LATEST_VERSION=$(echo $LATEST_RELEASE | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/') \
-    && wget -q https://github.com/mikefarah/yq/releases/download/$LATEST_VERSION/yq_linux_amd64 \
+    && curl -sL -O https://github.com/mikefarah/yq/releases/download/$LATEST_VERSION/yq_linux_amd64 \
     && mv ./yq_linux_amd64 /usr/local/bin/yq \
     && chmod +x /usr/local/bin/yq
 

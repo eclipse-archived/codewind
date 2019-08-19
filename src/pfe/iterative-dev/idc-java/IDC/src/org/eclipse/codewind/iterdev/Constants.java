@@ -149,7 +149,8 @@ public class Constants {
 		containerRemoveFailed("The container was not successfully removed"),
 		containerCleanupFailed("The container cleanup was not successful"),
 		applicationBuildFailed("Application build failed."),
-		invalidDeploymentRegistry("Failed to push image to invalid Deployment Registry");
+		invalidDeploymentRegistry("Failed to push image to invalid Deployment Registry"),
+		missingDockerfile("Missing required Dockerfile");
 
 		private String msg;
 	

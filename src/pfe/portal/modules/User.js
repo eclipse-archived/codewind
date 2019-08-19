@@ -23,6 +23,7 @@ const Logger = require('./utils/Logger');
 const LoadRunError = require('./utils/errors/LoadRunError.js');
 const FilewatcherError = require('./utils/errors/FilewatcherError');
 const log = new Logger('User.js');
+const util = require('util');
 
 /**
  * The User class
@@ -52,7 +53,7 @@ module.exports = class User {
     }
     this.secure = true;
   }
-
+  
   /**
    * Function to initialise a user
    * Runs functions to create the user directories, start existing projects
@@ -80,11 +81,18 @@ module.exports = class User {
 
       // Create the list of codewind extensions
       this.extensionList = new ExtensionList();
+
+      // Attempt to install built-in extension packages
+      try {
+        await this.extensionList.installBuiltInExtensions(this.directories.extensions);
+      } catch (error) {
+        log.error(`Failed to install built-in Codewind extensions. Error ${util.inspect(error)}`);
+      }
+
       try {
         await this.extensionList.initialise(this.directories.extensions, this.templates);
       } catch (error) {
-        log.error('Codewind extensions failed to load');
-        log.error(error);
+        log.error(`Codewind extensions failed to load. Error ${util.inspect(error)}`);
       }
 
       // Create the FileWatcher and LoadRunner classes for this user

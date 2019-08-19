@@ -29,25 +29,36 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - running_in_k8s
+                  - user_string
+                  - socket_namespace
+                  - codewind_version
+                  - os_platform
+                  - tekton_dashboard_url
                 properties:
-                  running_on_icp:
+                  running_in_k8s:
                     type: boolean
                     example: false
                   user_string:
                     type: string
-                    example: null
+                    nullable: true
                   socket_namespace:
                     type: string
                     example: '/default'
                   codewind_version:
                     type: string
                     example: '/latest'
-                  workspace_location:
-                    type: string
-                    example: '/home/user/codewind-workspace'
                   os_platform:
                     type: string
                     example: 'Linux'
+                  tekton_dashboard_url:
+                    type: string
+                    example: '9.20.195.90.nip.io'
+                    description: "Ingress URL of Tekton dashboard if it's available. On local Codewind, it is the empty string. May also be 'error' or 'not-installed'."
+                  workspace_location:
+                    type: string
+                    example: '/home/user/codewind-workspace'
         500:
           description: Internal error occurred
   /api/v1/projects:
@@ -274,7 +285,6 @@ paths:
           content:
             application/json:
               schema:
-                type: object
                 $ref: '#/components/schemas/Project'
         404:
           description: The project was not found
@@ -854,6 +864,20 @@ paths:
   /api/v1/templates:
     get:
       summary: List all templates Codewind is aware of
+      parameters:
+        - name: projectStyle
+          in: query
+          schema:
+            type: string
+          required: false
+          description: Specify this to filter templates returned by project style
+        - name: showEnabledOnly
+          in: query
+          schema:
+            type: string
+            enum: ['true', 'false']
+          required: false
+          description: Set this to 'true' to return only templates from enabled repositories
       responses:
         200:
           description: Returns all the templates that Codewind can generate a project from
@@ -877,28 +901,15 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    url:
-                      type: string
-                    description:
-                      type: string
+                  $ref: '#/components/schemas/TemplateRepo'
     post:
-      summary: Add a template repositories to the list Codewind is aware of
+      summary: Make Codewind aware of a template repository
       requestBody:
         description: repository details
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - url
-                - description
-              properties:
-                url:
-                    type: string
-                description:
-                    type: string
+              $ref: '#/components/schemas/TemplateRepo'
       responses:
         200:
           description: Returns all the templates repositories that Codewind will use to find templates
@@ -936,15 +947,53 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    url:
-                      type: string
-                    description:
-                      type: string
+                  $ref: '#/components/schemas/TemplateRepo'
         400:
           description: Bad request
-
+  /api/v1/batch/templates/repositories:
+    patch:
+      summary: Batch change settings for a template repository of which Codewind is aware
+      requestBody:
+        description: repository settings
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TemplateRepoSetting'
+      responses:
+        207:
+          description: Returns success/failure statuses of settings operations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - status
+                    - requestedOperation
+                  properties:
+                    status:
+                      type: integer
+                    requestedOperation:
+                      $ref: '#/components/schemas/TemplateRepoSetting'
+                    error:
+                      type: string
+  /api/v1/templates/styles:
+    get:
+      summary: List all project styles for which Codewind has templates
+      responses:
+        200:
+          description: Returns all project styles for which Codewind has templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  description: project style
+                  type: string
+                  enum: ['Codewind', 'Appsody']
   /api/v1/project-types:
     get:
       summary: List all project types Codewind is aware of
@@ -1003,7 +1052,7 @@ paths:
                     items:
                       type: string
                       example: ['trace', 'debug', 'info', 'warn', 'error']
-        500: 
+        500:
           description: Internal Error
 
   /api/v1/projects/watchlist:
@@ -1056,7 +1105,7 @@ paths:
                 success:
                   type: boolean
                   example: true
-      
+
       responses:
         200:
           description: if successfully received the request
@@ -1136,7 +1185,7 @@ paths:
                   deploymentRegistry:
                     type: boolean
                     description: true if deployment registry was set
-                    example: true  
+                    example: true
         500:
           description: Internal Server Error
           content:
@@ -1153,7 +1202,7 @@ paths:
                     description: false if deployment registry was not set
                     example: false
     post:
-      summary: Test the specified Deployment Registry 
+      summary: Test the specified Deployment Registry
       description: The API also emits a socket event `deploymentRegistryStatus` with data `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
       requestBody:
         content:
@@ -1184,7 +1233,7 @@ paths:
                   msg:
                     type: string
                     description: Message related to the request
-                    example: Success message 
+                    example: Success message
         400:
           description: Bad Request
           content:
@@ -1285,17 +1334,58 @@ components:
       example: 20190326154749
     Template:
       type: object
+      required:
+        - label
+        - description
+        - language
+        - url
+        - projectType
       properties:
         label:
+          type: string
           example: "python hello world"
         description:
+          type: string
           example: "python microservice"
         language:
+          type: string
           example: "python"
         url:
+          type: string
           example: "https://github.com/microclimate-dev2ops/SVTPythonTemplate"
         projectType:
+          type: string
           example: "docker"
+    TemplateRepo:
+      type: object
+      required:
+        - url
+        - description
+      properties:
+        url:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+    TemplateRepoSetting:
+      type: object
+      required:
+        - op
+        - url
+        - value
+      properties:
+        op:
+          description: repository setting to change
+          type: string
+          enum: [enable]
+        url:
+          description: url of the modified template repository
+          type: string
+          example: https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json
+        value:
+          type: string
+          example: 'true'
     BasicMetric:
       properties:
         time:
@@ -1362,7 +1452,7 @@ components:
                     - unknown
                 buildType:
                   type: string
-    LoadrunnerConfig: 
+    LoadrunnerConfig:
       type: object
       required:
         - path
@@ -1420,7 +1510,7 @@ components:
           type: string
           example: 'docker.build.log'
         workspaceLogPath:
-          type: path
+          type: string
     WatchList:
       type: object
       required:
@@ -1444,9 +1534,9 @@ components:
           type: string
           format: uuid
           example: "e3f3ba629b5a9e75ebb0818934575a66"
-    FileChangeList: 
+    FileChangeList:
         type: object
-        required: 
+        required:
           - path
           - timestamp
           - type
@@ -1481,8 +1571,8 @@ components:
           type: string
           example: "Codewind extension for knapp support"
         commands:
-          type: array
-          $ref: '#/components/schemas/ExtensionCommand'
+          items:
+            $ref: '#/components/schemas/ExtensionCommand'
         detection:
           type: string
           example: "knap_config.yaml"

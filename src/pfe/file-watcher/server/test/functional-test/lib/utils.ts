@@ -9,17 +9,29 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 import * as path from "path";
-import * as fs from "fs-extra";
+import * as fse from "fs-extra";
 import * as request from "request";
+import * as fs from "fs";
+import { promisify } from "util";
 
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
 
 const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + pfe_configs.pfe.PORT + pfe_configs.pfeAPIs.projects;
 
-const mcWorkspace = app_configs.microclimateWorkspaceDir;
+const mcWorkspace = app_configs.codewindWorkspaceDir;
 
 const fixtures = app_configs.fixturesDir;
+
+export const existsAsync = promisify(fs.exists);
+export const mkdirAsync = promisify(fs.mkdir);
+export const copyAsync = promisify(fs.copyFile);
+export const rmdirAsync = promisify(fs.rmdir);
+export const unlinkAsync = promisify(fs.unlink);
+export const writeAsync = promisify(fs.writeFile);
+export const readFileAsync = promisify(fs.readFile);
+export const openAsync = promisify(fs.open);
+export const readAsync = promisify(fs.readFile);
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
     return request.get(pfeURL, callback);
@@ -30,15 +42,15 @@ export function cloneProject(projectName: string, parentPath: string, url: strin
 }
 
 export function deleteFixtures(callback: any): any {
-    fs.remove(fixtures, callback);
+    fse.remove(fixtures, callback);
 }
 
 export function copyFixtures(callback: any): any {
-    fs.copy(fixtures, mcWorkspace, callback);
+    fse.copy(fixtures, mcWorkspace, callback);
 }
 
 export function cleanWorkspace(): any {
-    fs.readdir(mcWorkspace, (err, folders) => {
+    fse.readdir(mcWorkspace, (err, folders) => {
         if (err) {
             console.error(err);
         }
@@ -46,40 +58,41 @@ export function cleanWorkspace(): any {
             const match = folder.match(/microclimatetest*/);
             if (match) {
                 const toDelete = path.join(mcWorkspace, folder);
-                fs.removeSync(toDelete);
+                fse.removeSync(toDelete);
             }
         }
     });
 }
 
 export function createFWDataDir(): any {
-    if (!fs.existsSync(app_configs.fwDataDir)) {
-        fs.mkdirSync(app_configs.fwDataDir);
-        fs.mkdirSync(app_configs.projectDataDir);
+    if (!fse.existsSync(app_configs.fwDataDir)) {
+        fse.mkdirSync(app_configs.fwDataDir);
+        fse.mkdirSync(app_configs.projectDataDir);
     }
 }
 
  export function removeFWDataDir(): any {
-    if (fs.existsSync(app_configs.fwDataDir)) {
-        fs.removeSync(app_configs.fwDataDir);
+    if (fse.existsSync(app_configs.fwDataDir)) {
+        fse.removeSync(app_configs.fwDataDir);
     }
 }
 
 export function cleanUpLogsDir(): any {
     const regex = new RegExp(/microclimatetest*/g);
-    fs.readdirSync(app_configs.microclimateWorkspaceLogsDir)
+    fse.readdirSync(app_configs.codewindWorkspaceLogsDir)
         .filter(folder => regex.test(folder))
         .map((folder) => {
-            const folderPath = path.join(app_configs.microclimateWorkspaceLogsDir, folder);
-            fs.rmdirSync(folderPath);
+            const folderPath = path.join(app_configs.codewindWorkspaceLogsDir, folder);
+            fse.rmdirSync(folderPath);
         });
 }
 
 export function setTestEnvVariables(): void {
     process.env.CW_LOCALES_DIR = app_configs.localesDir;
-    process.env.CW_WORKSPACE = app_configs.microclimateWorkspaceDir;
-    process.env.CW_LOGS_DIR = app_configs.microclimateWorkspaceLogsDir;
+    process.env.CW_WORKSPACE = app_configs.codewindWorkspaceDir;
+    process.env.CW_LOGS_DIR = app_configs.codewindWorkspaceLogsDir;
     process.env.CW_FWDATA_DIR = app_configs.fwDataDir;
     process.env.CW_PROJECTDATA_DIR = app_configs.projectDataDir;
     process.env.CW_WORKSPACESETTINGS_DIR = app_configs.workspaceSettingsDir;
+    process.env.CW_EXTENSION_DIR = app_configs.extensionDir;
 }

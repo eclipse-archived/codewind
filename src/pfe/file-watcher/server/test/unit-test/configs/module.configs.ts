@@ -15,6 +15,11 @@ import { localeTestModule } from "../tests/locale.module.test";
 import { workspaceSettingsTestModule } from "../tests/workspaceSettings.module.test";
 import { projectSettingsTestModule } from "../tests/projectSettings.module.test";
 import { projectStatusControllerTestModule } from "../tests/projectStatusController.test";
+import { projectsControllerTestModule } from "../tests/projectsController.module.test";
+import { actionsTestModule } from "../tests/actions.module.test";
+import { projectExtensionsTestModule } from "../tests/projectExtensions.module.test";
+import { projectUtilTestModule } from "../tests/projectUtil.module.test";
+import { loggerTestModule } from "../tests/logger.module.test";
 import * as mocha from "mocha";
 
 interface ModuleExtension {
@@ -52,9 +57,39 @@ const projectStatusControllerModule: ModuleExtension = {
     moduleFunc: projectStatusControllerTestModule
 };
 
+const projectControllerModule: ModuleExtension = {
+    moduleName: "projectsController",
+    moduleFunc: projectsControllerTestModule
+};
+
+const actionsModule: ModuleExtension = {
+    moduleName: "actions",
+    moduleFunc: actionsTestModule
+};
+
+const projectExtensionsModule: ModuleExtension = {
+    moduleName: "projectExtensions",
+    moduleFunc: projectExtensionsTestModule
+};
+
+const projectUtilModule: ModuleExtension = {
+    moduleName: "projectUtil",
+    moduleFunc: projectUtilTestModule
+};
+
+const loggerModule: ModuleExtension = {
+    moduleName: "logger",
+    moduleFunc: loggerTestModule
+};
+
 export const moduleLists: Array<ModuleExtension> = [logHelperModule,
                                                     utilsModule,
                                                     localeModule,
                                                     workspaceSettingsModule,
                                                     projectSettingsModule,
-                                                    projectStatusControllerModule];
+                                                    projectStatusControllerModule,
+                                                    projectControllerModule,
+                                                    actionsModule,
+                                                    projectExtensionsModule,
+                                                    projectUtilModule,
+                                                    loggerModule];

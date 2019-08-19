@@ -40,10 +40,6 @@ export interface CWSettings {
   internalDebugPort?: string;
   healthCheck: string;
   ignoredPaths?: string[];
-  watchedFiles: {
-    includeFiles: string[];
-    excludeFiles: string[];
-  };
   mavenProfiles?: string[];
   mavenProperties?: string[];
 }

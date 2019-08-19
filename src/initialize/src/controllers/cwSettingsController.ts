@@ -39,10 +39,6 @@ export function createEmptyCwSettingsObject(projectType: string): CWSettings {
     internalPort: '',
     healthCheck: '',
     ignoredPaths: [''],
-    watchedFiles: {
-      includeFiles: [''],
-      excludeFiles: [''],
-    },
   };
 
   if (projectTypesWithInternalDebugPort.includes(projectType)) {

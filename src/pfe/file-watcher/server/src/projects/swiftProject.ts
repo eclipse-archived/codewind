@@ -39,7 +39,7 @@ export const supportedType = "swift";
  */
 export const defaultIgnoredPath: string[] = ["/.project", "/LICENSE", "/Package.resolved", "README.rtf", "/debian", "/manifest.yml", "/load-test*",
                                              "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.bluemix", "/iterative-dev.sh", "/terraform",
-                                            ".swift-version", "/.build-ubuntu ", "/.cfignore", "/.swiftservergenerator-project", "/.yo-rc.json",
+                                            ".swift-version", "/.build-ubuntu", "/.cfignore", "/.swiftservergenerator-project", "/.yo-rc.json",
                                             "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913", "*/.dockerignore",
                                             "*/.gitignore", "*/*~", "/.settings"];
 if (!process.env.IN_K8) {

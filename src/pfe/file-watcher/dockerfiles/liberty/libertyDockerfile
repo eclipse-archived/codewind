@@ -10,7 +10,6 @@ USER root
 RUN chmod g+w /config/apps
 RUN configure.sh
 USER 1001
-
 ENV JAVA_VERSION_PREFIX 1.8.0
 ENV HOME /home/default
 

@@ -19,6 +19,7 @@ Use the following instructions to install Codewind with your choice of editor:
 We welcome submitting issues and contributions.
 1. [Submitting bugs](https://github.com/eclipse/codewind/issues)
 2. [Contributing](CONTRIBUTING.md)
+3. [View the API documentation](https://eclipse.github.io/codewind/)
 
 ## License
 [EPL 2.0](https://www.eclipse.org/legal/epl-2.0/)

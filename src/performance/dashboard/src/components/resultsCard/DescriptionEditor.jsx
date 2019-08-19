@@ -11,13 +11,13 @@
 
 import React, { Fragment } from 'react'
 import PropTypes from 'prop-types'
-import IconEdit from '@carbon/icons-react/es/edit/16'
-import * as AppConstants from '../../AppConstants'
 import { connect } from 'react-redux';
-import { TextArea, Loading } from 'carbon-components-react'
+import { TextArea, Loading, Button} from 'carbon-components-react'
+import IconEdit from '@carbon/icons-react/es/edit/16'
+
+import * as AppConstants from '../../AppConstants'
 import { formatDateToString } from '../../utils/dateTime';
 import { reloadMetricsData } from '../../store/actions/projectMetricsActions';
-
 import './DescriptionEditor.scss';
 
 class DescriptionEditor extends React.Component {
@@ -139,11 +139,11 @@ class DescriptionEditor extends React.Component {
                 <TextArea onKeyDown={(e) => this.handleKeyDown(e)} placeholder='Description of test' labelText='' onChange={(e) => this.handleDescFieldChange(e)} value={editableValue}>EDIT</TextArea>
                 <div className="footer">
                     <div className="charCounter">
-                        <span className={testCounterColor}>{editableValue.length} / {AppConstants.MAX_DESC_LENGTH}</span>
+                        <label className={testCounterColor} aria-label="Character counter">{editableValue.length} / {AppConstants.MAX_DESC_LENGTH}</label>
                     </div>
                     <div className="actions">
-                        <div className="link" onClick={(e) => this.handleDescCancel(e)} >Cancel</div>
-                        <div className="link" onClick={(e) => this.handleDescSave(e)} >Save</div>
+                        <Button small={true} className="link" kind="ghost" aria-label="Cancel" onClick={(e) => this.handleDescCancel(e)}  disabled={false} >Cancel</Button>
+                        <Button small={true} className="link" kind="ghost" aria-label="Save" onClick={(e) => this.handleDescSave(e)}  disabled={false} >Save</Button>
                     </div>
                 </div>
             </Fragment>
@@ -163,7 +163,16 @@ class DescriptionEditor extends React.Component {
                     <div className="iconEdit">
                         {
                             this.props.alwaysShowEditIcon || this.state.isMouseHover ?
-                                <IconEdit onClick={() => this.handleSwitchToEdit()} />
+                                <Button 
+                                    className="editButton"
+                                    small={true} 
+                                    kind="ghost"
+                                    aria-label="Edit Text"
+                                    tabIndex={0} 
+                                    renderIcon={IconEdit} 
+                                    iconDescription="Edit test description" 
+                                    onClick={() => this.handleSwitchToEdit()}>
+                                </Button>
                                 :
                                 <div style={{ width: "25px" }}></div>
                         }

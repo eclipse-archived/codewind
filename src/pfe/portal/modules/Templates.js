@@ -11,16 +11,20 @@
 
 const fs = require('fs-extra');
 const path = require('path');
+const util = require('util');
 
+const cwUtils = require('../modules/utils/sharedFunctions');
 const Logger = require('./utils/Logger');
+const TemplateError = require('./utils/errors/TemplateError');
+
 const log = new Logger('Templates.js');
-const cwUtils = require('../modules/utils/sharedFunctions.js');
 
 const DEFAULT_REPOSITORY_LIST = [
   {
     url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-    description: 'Standard Codewind templates.'
-  }
+    description: 'Standard Codewind templates.',
+    enabled: true,
+  },
 ];
 module.exports = class Templates {
 
@@ -40,68 +44,53 @@ module.exports = class Templates {
         this.repositoryList = list;
         this.needsRefresh = true;
       } else {
-        // Save the default list to disk so the user can potentially edit it.
-        this.writeRepositoryList();
+        await this.writeRepositoryList();
       }
     } catch (err) {
       log.error(`Error reading repository list from ${this.repositoryFile}: ${err}`)
     }
   }
+  async getTemplates({ projectStyle, showEnabledOnly }) {
+    let templates = (showEnabledOnly === 'true')
+      ? await this.getEnabledTemplates()
+      : await this.getAllTemplates();
 
-  async getTemplateList() {
+    if (projectStyle) {
+      templates = filterTemplatesByStyle(templates, projectStyle);
+    }
+    return templates;
+  }
+
+  getEnabledTemplates() {
+    return this.getTemplatesFromRepos(this.getEnabledRepositories());
+  }
+
+  getAllTemplates() {
     if (!this.needsRefresh) {
       return this.projectTemplates;
     }
+    return this.getTemplatesFromRepos(this.repositoryList);
+  }
+
+  async getTemplatesFromRepos(repositoryList) {
+    const providers = Object.values(this.providers);
+    const providedRepos = await getReposFromProviders(providers);
+    // Avoid processing duplicate repos
+    const extraRepos = providedRepos.filter(repo =>
+      !repositoryList.find(repo2 => repo2.url === repo.url)
+    );
+    const repos = repositoryList.concat(extraRepos);
 
     let newProjectTemplates = [];
-    await Promise.all(this.repositoryList.map(async function getTemplates(repository) {
-
-      let repositoryUrl = new URL(repository.url);
-
-      let options = {
-        host: repositoryUrl.host,
-        path: repositoryUrl.pathname,
-        method: 'GET',
-      }
-
+    await Promise.all(repos.map(async(repo) => {
       try {
-        let response = await cwUtils.asyncHttpRequest(options, undefined, repositoryUrl.protocol == 'https:');
-        if (response.statusCode == 200) {
-
-          const newTypes = JSON.parse(response.body);
-
-          for (let i = 0; i < newTypes.length; i++) {
-
-            newProjectTemplates.push({
-              label: newTypes[i].displayName,
-              description: newTypes[i].description,
-              language: newTypes[i].language,
-              url: newTypes[i].location,
-              projectType: newTypes[i].projectType
-            });
-          }
-        } else {
-          // Treat this as an error and pass to our logging code below.
-          throw new Error(`Unexpected http status for ${repository}: ${response.statusCode}`);
-        }
+        const extraTemplates = await getTemplatesFromRepo(repo);
+        newProjectTemplates = newProjectTemplates.concat(extraTemplates);
       } catch (err) {
-        // Log this but take no action as other repositories may work.
-        log.warn(`Error accessing template repository: ${repository}`);
-        log.warn(err);
+        log.warn(`Error accessing template repository '${repo.url}'. Error: ${util.inspect(err)}`);
+        // Ignore to keep trying other repositories
       }
     }));
-
-    // query providers
-    for (let provider of Object.values(this.providers)) {
-      try {
-        const templates = await provider.getTemplates();
-        newProjectTemplates.push(...templates);
-      }
-      catch (err) {
-        log.error(err.message);
-      }
-    }
-
     newProjectTemplates.sort((a, b) => {
       return a.label.localeCompare(b.label);
     });
@@ -109,47 +98,209 @@ module.exports = class Templates {
     return this.projectTemplates;
   }
 
-  writeRepositoryList() {
-    // Use a callback here so we don't block the response to the request.
-    fs.writeJson(this.repositoryFile, this.repositoryList, { spaces: '  ' }, err => {
-      if (err) {
-        log.error(`Error writing repository list to ${this.repositoryFile}: ${err}`)
-      }
-      log.info(`Repository list updated.`);
-    });
+  // Save the default list to disk so the user can potentially edit it (WHEN CODEWIND IS NOT RUNNING)
+  async writeRepositoryList() {
+    await fs.writeJson(this.repositoryFile, this.repositoryList, { spaces: '  ' });
+    log.info(`Repository list updated.`);
   }
 
   getRepositories() {
     return this.repositoryList;
   }
 
-  /**
-   * Add a repository to the list of template repositories.
-   *
-   * @param {*} url - url of the template repository
-   * @param {*} description - description of the template repository
-   */
-  addRepository(repositoryUrl, repositoryDescription) {
-    if (this.getRepositories().filter(repo => repo.url == repositoryUrl).length != 0) {
+  getEnabledRepositories() {
+    return this.getRepositories().filter(repo =>
+      // if the repo doesn't specify whether it's enabled, consider it enabled
+      (repo.enabled || !repo.hasOwnProperty('enabled'))
+    );
+  }
+
+  doesRepositoryExist(repoUrl) {
+    try {
+      this.getRepository(repoUrl);
+      return true;
+    } catch (error) {
       return false;
     }
+  }
+
+  getRepositoryIndex(url) {
+    const repos = this.getRepositories();
+    const index = repos.findIndex(repo => repo.url === url);
+    return index;
+  }
+
+  /**
+   * @param {String} url
+   * @return {JSON} reference to the repo object in this.repositoryList
+   */
+  getRepository(url) {
+    const index = this.getRepositoryIndex(url);
+    if (index < 0) throw new Error(`no repository found with URL '${url}'`);
+    const repo = this.getRepositories()[index];
+    return repo;
+  }
+
+  enableRepository(url) {
+    const repo = this.getRepository(url);
+    repo.enabled = true;
+  }
+
+  disableRepository(url) {
+    const repo = this.getRepository(url);
+    repo.enabled = false;
+  }
+
+  async batchUpdate(requestedOperations) {
+    const operationResults = requestedOperations.map(operation => this.performOperation(operation));
+    await this.writeRepositoryList();
+    return operationResults;
+  }
+
+  performOperation(operation) {
+    const { op, url, value } = operation;
+    let operationResult = {};
+    if (op === 'enable') {
+      operationResult = this.performEnableOrDisableOperation({ url, value });
+    }
+    operationResult.requestedOperation = operation;
+    return operationResult;
+  }
+
+  /**
+   * @param {JSON} { url (URL of template repo to enable or disable), value (true|false)}
+   * @returns {JSON} { status, error (optional) }
+   */
+  performEnableOrDisableOperation({ url, value }) {
+    if (!this.doesRepositoryExist(url)) {
+      return {
+        status: 404,
+        error: 'Unknown repository URL',
+      };
+    }
+    try {
+      if (value === 'true') {
+        this.enableRepository(url);
+      } else {
+        this.disableRepository(url);
+      }
+      return {
+        status: 200
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Add a repository to the list of template repositories.
+   */
+  async addRepository(repoUrl, repoDescription) {
+    if (this.getRepositories().find(repo => repo.url == repoUrl)) {
+      throw new TemplateError('DUPLICATE_URL', repoUrl);
+    }
     const newRepo = {
-      url: repositoryUrl,
-      description: repositoryDescription,
+      url: repoUrl,
+      description: repoDescription,
     }
     this.repositoryList.push(newRepo);
     this.needsRefresh = true;
-    this.writeRepositoryList();
-    return true;
+    await this.writeRepositoryList();
   }
 
-  deleteRepository(repositoryUrl) {
-    this.repositoryList = this.repositoryList.filter((repo) => repo.url != repositoryUrl);
+  async deleteRepository(repoUrl) {
+    this.repositoryList = this.repositoryList.filter((repo) => repo.url != repoUrl);
     this.needsRefresh = true;
-    this.writeRepositoryList();
+    await this.writeRepositoryList();
   }
 
   addProvider(name, provider) {
-    this.providers[name] = provider;
+    if (provider && typeof provider.getRepositories == 'function')
+      this.providers[name] = provider;
+  }
+
+  async getTemplateStyles() {
+    const templates = await this.getAllTemplates();
+    const styles = templates.map(template => getTemplateStyle(template));
+    const uniqueStyles = [...new Set(styles)];
+    return uniqueStyles;
   }
 }
+
+async function getTemplatesFromRepo(repository) {
+  if (!repository.url) {
+    throw new Error(`repo '${repository}' must have a URL`);
+  }
+  const repoUrl = new URL(repository.url);
+
+  const options = {
+    host: repoUrl.host,
+    path: repoUrl.pathname,
+    method: 'GET',
+  }
+  const res = await cwUtils.asyncHttpRequest(options, undefined, repoUrl.protocol === 'https:');
+  if (res.statusCode !== 200) {
+    throw new Error(`Unexpected HTTP status for ${repository}: ${res.statusCode}`);
+  }
+
+  let templateSummaries;
+  try {
+    templateSummaries = JSON.parse(res.body);
+  } catch (error) {
+    throw new Error(`URL '${repoUrl}' should return JSON`);
+  }
+  const templates = templateSummaries.map(summary => {
+    return {
+      label: summary.displayName,
+      description: summary.description,
+      language: summary.language,
+      url: summary.location,
+      projectType: summary.projectType
+    };
+  });
+  return templates;
+}
+
+function filterTemplatesByStyle(templates, projectStyle) {
+  const relevantTemplates = templates.filter(template =>
+    getTemplateStyle(template) === projectStyle
+  );
+  return relevantTemplates;
+}
+
+function getTemplateStyle(template) {
+  // if a project's style isn't specified, it defaults to 'Codewind'
+  return template.projectStyle || 'Codewind';
+}
+
+async function getReposFromProviders(providers) {
+  const repos = [];
+  await Promise.all(providers.map(async(provider) => {
+    try {
+      const providedRepos = await provider.getRepositories();
+      if (!Array.isArray(providedRepos)) {
+        throw new Error (`provider ${util.inspect(provider)} should provide an array of repos, but instead provided '${providedRepos}'`);
+      }
+      providedRepos.forEach(repo => {
+        if (isRepo(repo)) {
+          repos.push(repo);
+        }
+      })
+    }
+    catch (err) {
+      log.error(err.message);
+    }
+  }));
+  return repos;
+}
+
+function isRepo(obj) {
+  return obj.hasOwnProperty('url');
+}
+
+module.exports.getTemplatesFromRepo = getTemplatesFromRepo;
+module.exports.filterTemplatesByStyle = filterTemplatesByStyle;
+module.exports.getReposFromProviders = getReposFromProviders;

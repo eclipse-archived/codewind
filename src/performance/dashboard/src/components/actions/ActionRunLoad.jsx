@@ -136,7 +136,6 @@ class ActionRunLoad extends React.Component {
                     headers: { "Content-Type": "application/json" }
                 });
             const reply = await response;
-            console.log(reply);
             this.setState({ inlineTextLabel: "Cancelled" });
         } catch (err) {
             this.setState({ inlineTextLabel: "Cancel failed" });
@@ -201,8 +200,7 @@ class ActionRunLoad extends React.Component {
                             </Fragment>
                         ) : (
                                 <Fragment>
-                                    <Button className="actionButton" small={this.props.small} kind={this.props.kind} renderIcon={IconRun} onClick={() => this.showRunTestModal()}>Run Load Test</Button>
-
+                                    <Button className="actionButton" small={this.props.small} kind={this.props.kind} renderIcon={IconRun} iconDescription="Run Load Test" onClick={() => this.showRunTestModal()}>Run Load Test</Button>
                                 </Fragment>
                             )
                     }

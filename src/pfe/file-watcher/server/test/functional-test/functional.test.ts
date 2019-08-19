@@ -90,7 +90,7 @@ describe("Functional Test Suite", () => {
     before(`clone ${projectType} project to workspace`, function (done: any): void {
       this.timeout(10000);
       console.log(`Cloning project type: ${projectType}`);
-      utils.cloneProject(app_configs.projectPrefix + projectType, app_configs.microclimateWorkspaceDir, git_configs.repoTemplates[projectType], done);
+      utils.cloneProject(app_configs.projectPrefix + projectType, app_configs.codewindWorkspaceDir, git_configs.repoTemplates[projectType], done);
     });
   }
 });

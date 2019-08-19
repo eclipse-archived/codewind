@@ -38,7 +38,7 @@ const METRIC_TYPES = ['cpu', 'gc', 'memory', 'http']
 
 const CW_SETTINGS_PROPERTIES = [
   "contextRoot", "internalPort", "internalDebugPort",
-  "healthCheck", "watchedFiles", "mavenProfiles", "mavenProperties"
+  "healthCheck", "ignoredPaths", "mavenProfiles", "mavenProperties"
 ];
 
 /**
@@ -703,11 +703,8 @@ function setDefaultSettingValue(property) {
     return [""];
   case "mavenProperties":
     return [""];
-  case "watchedFiles":
-    return {
-      "includeFiles" : [""],
-      "excludeFiles" : [""]
-    };
+  case "ignoredPaths":
+    return [""];
   default:
     return "";
   }
