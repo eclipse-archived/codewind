@@ -37,58 +37,64 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "disableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 200,
-        },
-        "combo2": {
-            "action": "enableautobuild",
-            "returnKeys": ["statusCode", "status"],
-            "statusCode": 202,
-        },
-        "combo3": {
-            "action": "validate",
-            "returnKeys": ["operationId", "status"],
-            "statusCode": 202,
-            "socketEvent": eventConfigs.events.projectValidated,
-            "eventKeys": ["operationId", "projectType", "location", "projectID", "status", "results"],
-            "result": {
-                "projectType": projData.projectType,
-                "location": projData.location,
-                "projectID": projData.projectID,
-                "status": "success"
-            }
-        },
-        "combo4": {
-            "action": "build",
-            "returnKeys": ["operationId", "status"],
-            "statusCode": 202,
-            "socketEvent": eventConfigs.events.statusChanged,
-            "eventKeys": ["projectID", "appStatus", "detailedAppStatus"],
-            "result": {
-                "projectID": projData.projectID,
-                "appStatus": "started",
-            }
-        },
-        "combo5": {
-            "action": "restart",
-            "returnKeys": ["operationId", "status"],
-            "statusCode": 202,
-            "socketEvent": eventConfigs.events.restartResult,
-            "eventKeys": ["operationId", "projectID", "status", "startMode", "ports"],
+            "socketEvent": eventConfigs.events.projectChanged,
+            "eventKeys": ["operationId", "projectID", "ignoredPaths", "status"],
             "result": {
                 "projectID": projData.projectID,
                 "status": "success"
             }
         },
-        "combo6": {
-            "action": "restart",
-            "returnKeys": ["operationId", "status"],
-            "statusCode": 202,
-            "socketEvent": eventConfigs.events.statusChanged,
-            "eventKeys": ["projectID", "appStatus", "detailedAppStatus"],
-            "result": {
-                "projectID": projData.projectID,
-                "appStatus": "started",
-            }
-        }
+        // "combo2": {
+        //     "action": "enableautobuild",
+        //     "returnKeys": ["statusCode", "status"],
+        //     "statusCode": 202,
+        // },
+        // "combo3": {
+        //     "action": "validate",
+        //     "returnKeys": ["operationId", "status"],
+        //     "statusCode": 202,
+        //     "socketEvent": eventConfigs.events.projectValidated,
+        //     "eventKeys": ["operationId", "projectType", "location", "projectID", "status", "results"],
+        //     "result": {
+        //         "projectType": projData.projectType,
+        //         "location": projData.location,
+        //         "projectID": projData.projectID,
+        //         "status": "success"
+        //     }
+        // },
+        // "combo4": {
+        //     "action": "build",
+        //     "returnKeys": ["operationId", "status"],
+        //     "statusCode": 202,
+        //     "socketEvent": eventConfigs.events.statusChanged,
+        //     "eventKeys": ["projectID", "appStatus", "detailedAppStatus"],
+        //     "result": {
+        //         "projectID": projData.projectID,
+        //         "appStatus": "started",
+        //     }
+        // },
+        // "combo5": {
+        //     "action": "restart",
+        //     "returnKeys": ["operationId", "status"],
+        //     "statusCode": 202,
+        //     "socketEvent": eventConfigs.events.restartResult,
+        //     "eventKeys": ["operationId", "projectID", "status", "startMode", "ports"],
+        //     "result": {
+        //         "projectID": projData.projectID,
+        //         "status": "success"
+        //     }
+        // },
+        // "combo6": {
+        //     "action": "restart",
+        //     "returnKeys": ["operationId", "status"],
+        //     "statusCode": 202,
+        //     "socketEvent": eventConfigs.events.statusChanged,
+        //     "eventKeys": ["projectID", "appStatus", "detailedAppStatus"],
+        //     "result": {
+        //         "projectID": projData.projectID,
+        //         "appStatus": "started",
+        //     }
+        // }
     };
 
     describe("projectAction function", () => {

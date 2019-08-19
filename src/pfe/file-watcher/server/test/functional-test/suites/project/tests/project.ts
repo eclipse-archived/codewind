@@ -33,11 +33,11 @@ export default class ProjectTest {
     run(socket: SocketIO, projData: ProjectCreation, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
             this.runProjectActionTest(socket, projData);
-            this.runProjectCapabilityTest(projData.projectType, projData.projectID);
-            this.runProjectEventTest(socket, projData, projectLang);
-            this.runProjectLogsTest(socket, projData);
-            this.runProjectSpecificationTest(socket, projData, projectLang);
-            this.runUpdateStatusTest(socket, projData);
+            // this.runProjectCapabilityTest(projData.projectType, projData.projectID);
+            // this.runProjectEventTest(socket, projData, projectLang);
+            // this.runProjectLogsTest(socket, projData);
+            // this.runProjectSpecificationTest(socket, projData, projectLang);
+            // this.runUpdateStatusTest(socket, projData);
         });
     }
 
