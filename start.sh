@@ -17,7 +17,7 @@ BLUE='\033[0;36m'
 RESET='\033[0m'
 DEVMODE=false
 REMOTE_MODE=false
-
+echo Current path start.sh is $PWD
 printf "\n\n${BLUE}Running 'start.sh' to start codewind. $RESET\n";
 
 while [ "$#" -gt 0 ]; do

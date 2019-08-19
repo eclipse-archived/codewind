@@ -42,7 +42,7 @@ chmod +x ~/docker-compose
 ~/docker-compose --version
 echo AFTER docker-compose
 
-echo Current path is $PWD
+echo Current path test.sh is $PWD
 cd src/pfe/portal
 npm install
 npm run eslint
@@ -52,6 +52,7 @@ fi
 cd ../../..
 
 # Start microclimate.
+echo Current path test.sh is $PWD
 ./run.sh;
 
 # Build the tests and run them against the portal.

@@ -73,4 +73,5 @@ echo "*** Using existing images, not performing image rebuild ***"
 # cd $DIR/
 
 # Start codewind
+echo Current path run.sh is $PWD
 ./start.sh $DEVMODE --tag latest
