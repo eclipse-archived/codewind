@@ -85,7 +85,7 @@ pipeline {
         stage('Run Codewind test suite') {
             
                 steps {
-                    withEnv(["PATH=$PATH:~/.local/bin"]){
+                    withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                         sh '''#!/usr/bin/env bash
                         echo "Starting tests for Eclipse Codewind ..."
