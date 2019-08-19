@@ -139,7 +139,7 @@ class ChartCounterSelector extends Component {
                             <div className="categoryLabels">
                                 <Checkbox id="response" checked={this.isCounterEnabled('HTTP_RESPONSE')} onClick={(e) => this.handleExpandClick(e, "HTTP_RESPONSE")} labelText='Response (ms)' />
                             </div>
-                            <div className={this.isCounterEnabled('HTTP_RESPONSE') ? `options expanded` : `options`}>
+                            <div className="options expanded">
                                 <div className='option'>
                                     <IconLine className='bx--btn__icon' style={{ 'fill': this.getColor('HTTP_RESPONSE') }} />
                                     <TooltipDefinition tooltipText="HTTP Response time (ms) of this path" align="end" >
@@ -157,7 +157,7 @@ class ChartCounterSelector extends Component {
                             <div className="categoryLabels">
                                 <Checkbox id="hits" checked={this.isCounterEnabled('HTTP_HITS')} onClick={(e) => this.handleExpandClick(e, 'HTTP_HITS')} labelText='Hits' />
                             </div>
-                            <div className={this.isCounterEnabled('HTTP_HITS') ? `options expanded` : `options`}>
+                            <div className="options expanded">
                                 <div className='option'>
                                     <IconLine className='bx--btn__icon' style={{ 'fill': this.getColor('HTTP_HITS') }} />
                                     <span className='label'>
@@ -198,7 +198,7 @@ class ChartCounterSelector extends Component {
                                     </div>
                                 </Tooltip>
                             </div>
-                            <div className={this.isCounterEnabled('CPU_PROCESS_MEAN') ? `options expanded` : `options`}>
+                            <div className="options expanded">
                                 <div className='option'>
                                     <IconLine className='bx--btn__icon' style={{ 'fill': this.getColor('CPU_PROCESS') }} />
                                     <TooltipDefinition tooltipText="CPU used by application" align="end" >
@@ -216,7 +216,7 @@ class ChartCounterSelector extends Component {
                             <div className="categoryLabels">
                                 <Checkbox id="memory" checked={this.isCounterEnabled('MEM_PROCESS_PEAK')} onClick={(e) => this.handleExpandClick(e, 'MEM_PROCESS_PEAK')} labelText='Memory (MB)' />
                             </div>
-                            <div className={this.isCounterEnabled('MEM_PROCESS_PEAK') ? `options expanded` : `options`}>
+                            <div className="options expanded">
                                 <div className='option'>
                                     <IconLine className='bx--btn__icon' style={{ 'fill': this.getColor('MEM_PROCESS_PEAK') }} />
                                     <TooltipDefinition tooltipText="Process memory (Peak)" align="end" >
@@ -228,10 +228,6 @@ class ChartCounterSelector extends Component {
                         :
                         <Fragment />
                     }
-
-
-
-
                 </div>
             </div>
         )
