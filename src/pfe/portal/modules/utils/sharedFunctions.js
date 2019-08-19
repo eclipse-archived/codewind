@@ -9,8 +9,8 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 // Functions that can be used anywhere in the codebase
-const http = require('http');
-const https = require('https');
+const http = require('follow-redirects').http;
+const https = require('follow-redirects').https;
 const fs = require('fs-extra');
 const request = require('request');
 
