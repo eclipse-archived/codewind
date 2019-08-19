@@ -30,10 +30,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 cd ~
-mkdir .local/bin
 
-curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-compose-$(uname -s)-$(uname -m)" -o .local/bin/docker-compose
-chmod +x .local/bin/docker-compose
 
 # If no tag argument then set to latest
 if [ -z "$TAG" ]; then
@@ -157,7 +154,7 @@ if [[ $HOST_OS == *"MINGW"* ]]; then
   export HOST_OS=windows
 fi
 
-docker-compose -f $DOCKER_COMPOSE_FILE up -d;
+~/docker-compose -f $DOCKER_COMPOSE_FILE up -d;
 if [ $? -eq 0 ]; then
     # Reset so we don't get conflicts
     unset REPOSITORY;
