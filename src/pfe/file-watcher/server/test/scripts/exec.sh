@@ -19,7 +19,7 @@ Usage: $me: [-<option letter> <option value> | -h]
 Options:
     -t # Test type, currently supports 'local' or 'kube' - Mandatory
     -s # Test suite, currently supports 'functional' - Mandatory
-    -d # Clean workspcae, currently supports 'y' or 'n' - Mandatory
+    -d # Clean workspace, currently supports 'y' or 'n' - Mandatory
     -h # Display the man page
 EOF
 }
@@ -65,7 +65,7 @@ function setup {
         clone $PROJECT_NAME $CW_DIR/codewind-workspace $PROJECT_URL
 
         if [[ ($? -ne 0) ]]; then
-            echo -e "${RED}Test setup failed. ${RESET}\n"
+            echo -e "${RED}Cloning project $PROJECT_NAME failed. ${RESET}\n"
             exit 1
         fi
     done < "$PROJECTS_CLONE_DATA_FILE"
