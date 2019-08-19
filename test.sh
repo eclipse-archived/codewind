@@ -42,6 +42,7 @@ chmod +x ~/docker-compose
 ~/docker-compose --version
 echo AFTER docker-compose
 
+echo Current path is $PATH
 cd src/pfe/portal
 npm install
 npm run eslint
