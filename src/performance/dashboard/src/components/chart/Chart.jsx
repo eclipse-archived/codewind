@@ -81,9 +81,9 @@ class Chart extends Component {
         if (!this.state.lastCounterSelected || this.state.lastCounterSelected === '') {
             return '';
         }
-           
+
         const lineString = getLineData(this.props.chartData, this.state.lastCounterSelected, this.props.projectLanguage, this.props.absolutePath);
-        if (lineString.length > 1) {
+        if (lineString && lineString.length > 1) {
             const values = lineString.slice(1);
             const lineNumbers = values.map(element => { return parseFloat(element) })
             const largestValue = Math.max(...lineNumbers);
@@ -110,13 +110,13 @@ class Chart extends Component {
 
     componentDidUpdate() {
         if (!this.chart) {
-           
+
             // Re-render the entire chart using this base format
             this.chart = c3.generate({
                 data: {
                     columns: [],
                     classes: [],
-                    colors: ChartUtils.getColorPattern(["CPU_PROCESS_MEAN", "MEM_PROCESS_PEAK", "HTTP_RESPONSE", "HTTP_HITS"]) ,
+                    colors: ChartUtils.getColorPattern(["CPU_PROCESS_MEAN", "MEM_PROCESS_PEAK", "HTTP_RESPONSE", "HTTP_HITS"]),
                     selection: {
                         enabled: true,
                         grouped: false,
@@ -194,7 +194,7 @@ class Chart extends Component {
         if (!this.chart) return;
 
         const data = buildChartData(this.props.chartData, this.props.projectLanguage, this.props.absolutePath);
-        
+
         // Change chart properties
         if (this.chart) {
             this.chart.axis.labels({ y: this.state.lastCounterSelected });
@@ -202,9 +202,9 @@ class Chart extends Component {
                 columns: data.columns,
                 classes: data.classes
             })
-            
+
             const enabledCounters = (this.props.chartCounters && this.props.chartCounters.enabledCounters) ? this.props.chartCounters.enabledCounters : []
-           
+
             // focus on selected ids:
             const checkedCounters = enabledCounters.filter(counter => counter.checked);
             let enabledCounterNames = checkedCounters.map(counter => {
@@ -233,7 +233,7 @@ class Chart extends Component {
      * @param {*} d 
      * @param {*} defaultTitleFormat 
      * @param {*} defaultValueFormat 
-     * @param {*} color 
+     * @param {*} color
      */
     chartTooltipContainer(d, defaultTitleFormat, defaultValueFormat, color) {
         const data = this.config.data_classes;

@@ -18,7 +18,7 @@ import { fetchProjectMetrics, reloadMetricsData } from '../store/actions/project
 import { fetchProjectLoadConfig } from '../store/actions/loadRunnerConfigActions';
 import { fetchProjectConfig } from '../store/actions/projectInfoActions';
 import { SocketEvents } from '../utils/sockets/SocketEvents';
-import { CHART_TYPE_CPU, CHART_TYPE_MEMORY, CHART_TYPE_HITS } from '../AppConstants';
+import { CHART_TYPE_CPU, CHART_TYPE_MEMORY } from '../AppConstants';
 import ActionRunLoad from '../components/actions/ActionRunLoad';
 import ActionModifyLoadTests from '../components/actions/ActionModifyLoadTests';
 import Chart from '../components/chart/Chart';
@@ -63,10 +63,10 @@ class PagePerformance extends React.Component {
         if (!this.props.projectID) { return; }
         this.bindSocketHandlers();
 
-        // read the project configuration        
+        // read the project configuration
         await this.props.dispatch(fetchProjectConfig(this.props.projectID));
 
-        // read the load runner configuration        
+        // read the load runner configuration
         await this.props.dispatch(fetchProjectLoadConfig(this.props.projectID));
 
         // Determine which metrics are available for this project
@@ -106,25 +106,25 @@ class PagePerformance extends React.Component {
             const snapshot_3 = listModel[listModel.length - 3];
 
             // parse the memory metrics for the chart API
-            let memoryData = MetricsUtils.buildChartData(projectMetrics, CHART_TYPE_MEMORY, (1 / 1024 / 1024), 'area-spline');
+            let memoryData = MetricsUtils.buildChartData(projectMetrics, listModel, CHART_TYPE_MEMORY, (1 / 1024 / 1024));
 
             // parse the cpu metrics for the chart API
-            let cpuData = MetricsUtils.buildChartData(projectMetrics, CHART_TYPE_CPU, 100, 'area-spline');
+            let cpuData = MetricsUtils.buildChartData(projectMetrics, listModel, CHART_TYPE_CPU, 100);
 
             // parse the http metrics (ResponseTime) for the chart API
             let params = {
                 projectMetrics: projectMetrics,
+                filteredData: listModel,
                 scaleFactor: 1,
-                counterName: 'averageResponseTime',
-                chartType: 'bar',
+                decimals: 2,
                 urlFilter: absolutePath
             }
+
+            params.counterName = "averageResponseTime";
             let httpResponseData = MetricsUtils.buildChartDataHTTP(params);
 
-            // parse the http metrics (Hits) for the chart API
-            params.chartName = CHART_TYPE_HITS;
-            params.chartType = 'line';
             params.counterName = "hits";
+            params.decimals = 0;
             let httpHitsData = MetricsUtils.buildChartDataHTTP(params);
 
             // Update State
@@ -177,7 +177,7 @@ class PagePerformance extends React.Component {
                                     snapshot_2 ?
                                         <ResultsCard title='Previous test' snapshot={snapshot_2} snapshotPrevious={snapshot_3} projectID={this.props.projectID} absolutePath={absolutePath} projectLanguage={projectLanguage} />
                                         :
-                                        <ResultsCard_Blank title='Previous test'/>
+                                        <ResultsCard_Blank title='Previous test' />
                                 }
                             </ErrorBoundary>
                         </div>
@@ -187,7 +187,7 @@ class PagePerformance extends React.Component {
                                     snapshot_1 ?
                                         <ResultsCard title='Latest test' snapshot={snapshot_1} snapshotPrevious={snapshot_2} projectID={this.props.projectID} absolutePath={absolutePath} projectLanguage={projectLanguage} />
                                         :
-                                        <ResultsCard_Blank title='Latest test'/>
+                                        <ResultsCard_Blank title='Latest test' />
                                 }
                             </ErrorBoundary>
                         </div>
