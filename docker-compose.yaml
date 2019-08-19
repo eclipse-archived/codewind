@@ -12,6 +12,8 @@ services:
       - CODEWIND_VERSION=${TAG}
       - PERFORMANCE_CONTAINER=codewind-performance${PLATFORM}:${TAG}
       - REMOTE_MODE=${REMOTE_MODE}
+      - HOST_HOME=${HOST_HOME}
+      - HOST_MAVEN_OPTS=${HOST_MAVEN_OPTS}
     depends_on:
       - codewind-performance
     ports:

@@ -13,15 +13,20 @@ import * as fse from "fs-extra";
 import * as request from "request";
 import * as fs from "fs";
 import { promisify } from "util";
+import * as _ from "lodash";
 
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
+import { SocketIO } from "./socket-io";
+import { ProjectCreation, projectAction } from "./project";
+import { expect } from "chai";
+import * as eventConfigs from "../configs/event.config";
+import * as timeoutConfigs from "../configs/timeout.config";
+import { fail } from "assert";
 
-const pfeURL = pfe_configs.pfe.PROTOCOL + "://" + pfe_configs.pfe.HOST + ":" + pfe_configs.pfe.PORT + pfe_configs.pfeAPIs.projects;
+const pfeURL = pfe_configs.baseURL;
 
 const mcWorkspace = app_configs.codewindWorkspaceDir;
-
-const fixtures = app_configs.fixturesDir;
 
 export const existsAsync = promisify(fs.exists);
 export const mkdirAsync = promisify(fs.mkdir);
@@ -34,19 +39,17 @@ export const openAsync = promisify(fs.open);
 export const readAsync = promisify(fs.readFile);
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
-    return request.get(pfeURL, callback);
+    const pingUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.projects;
+    return request.get(pingUrl, {rejectUnauthorized: false}, callback);
+}
+
+export function getRegistry(callback: request.RequestCallback): request.Request {
+    const registryUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.registry;
+    return request.get(registryUrl, {rejectUnauthorized: false}, callback);
 }
 
 export function cloneProject(projectName: string, parentPath: string, url: string, callback: request.RequestCallback): request.Request {
     return request.post({"url": pfeURL, "form": {"projectName": projectName, "parentPath": parentPath, "url": url}}, callback);
-}
-
-export function deleteFixtures(callback: any): any {
-    fse.remove(fixtures, callback);
-}
-
-export function copyFixtures(callback: any): any {
-    fse.copy(fixtures, mcWorkspace, callback);
 }
 
 export function cleanWorkspace(): any {
@@ -95,4 +98,69 @@ export function setTestEnvVariables(): void {
     process.env.CW_PROJECTDATA_DIR = app_configs.projectDataDir;
     process.env.CW_WORKSPACESETTINGS_DIR = app_configs.workspaceSettingsDir;
     process.env.CW_EXTENSION_DIR = app_configs.extensionDir;
+    process.env.IN_K8_REGISTRY = "sakibh";
+    process.env.DEFAULT_LOG_LEVEL = app_configs.DEFAULT_LOG_LEVEL;
+    process.env.TEST_TYPE = process.env.IN_K8 ? "kube" : "local";
+}
+
+export function writeToFile(path: string, content: string, callback: (err: Error, msg: string) => void): void {
+    fs.writeFile(path, content, (err) => {
+        if (err) callback(err, undefined);
+        callback(undefined, `Successfully written content to ${path}`);
+    });
+}
+
+export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreation): void {
+    after(`rebuild project ${projData.projectType}`, async function (): Promise<void> {
+        this.timeout(timeoutConfigs.createTestTimeout);
+        await rebuildProject(socket, projData);
+    });
+}
+
+export async function rebuildProject(socket: SocketIO, projData: ProjectCreation, checkEvent?: string, checkEventData?: any): Promise<void> {
+    const testData: any = {
+        action: "build",
+        projectType: projData.projectType,
+        location: projData.location,
+        projectID: projData.projectID,
+    };
+
+    const info: any = await projectAction(testData);
+    expect(info);
+
+    const targetEvent = checkEvent || eventConfigs.events.statusChanged;
+    const data = checkEventData || {
+        "projectID": projData.projectID,
+        "appStatus": "started"
+    };
+
+    let eventFound = false;
+    let event: any;
+    await new Promise((resolve) => {
+        const timer = setInterval(() => {
+            const events = socket.getAllEvents();
+            if (events && events.length >= 1) {
+                event =  events.filter((value) => {
+                    if (value.eventName === targetEvent && _.isMatch(value.eventData, data)) {
+                        return value;
+                    }
+                })[0];
+                if (event) {
+                    eventFound = true;
+                    clearInterval(timer);
+                    return resolve();
+                }
+            }
+        }, timeoutConfigs.defaultInterval);
+    });
+
+    if (eventFound && event) {
+        expect(event);
+        expect(event.eventName);
+        expect(event.eventName).to.equal(targetEvent);
+        expect(event.eventData);
+        expect(_.isMatch(event.eventData, data));
+    } else {
+        fail(`failed to find ${targetEvent} for rebuild project ${projData.projectType}`);
+    }
 }

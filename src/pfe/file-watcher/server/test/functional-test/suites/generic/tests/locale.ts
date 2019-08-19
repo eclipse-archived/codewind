@@ -8,12 +8,21 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+import mocha from "mocha";
 import { expect } from "chai";
 
-import * as genericLib from "../lib/generic";
+import * as genericLib from "../../../lib/generic";
 
- export function localeTestSuite(): void {
-    const combinations: any = {
+export default class LocaleTest {
+  testName: string;
+
+  constructor(testName: string) {
+      this.testName = testName;
+  }
+
+  run(runOnly?: boolean): void {
+    (runOnly ? describe.only : describe)(this.testName, () => {
+      const combinations: any = {
         "combo1": {
           "locale": undefined,
           "result": {"statusCode": 400, "error": {"msg": "Bad request. Locale key not found in request body!"}}
@@ -26,12 +35,14 @@ import * as genericLib from "../lib/generic";
           "locale": ["en"],
           "result": { statusCode: 200, locale: "en" }
         },
-    };
+      };
 
-    for (const combo of Object.keys(combinations)) {
-        it (combo + " => " + "locale: " + combinations[combo]["locale"], async () => {
+      for (const combo of Object.keys(combinations)) {
+        it(combo + " => " + "locale: " + combinations[combo]["locale"], async () => {
           const info = await genericLib.setLocaleAPI(combinations[combo]["locale"]);
           expect(info).to.deep.equal(combinations[combo]["result"]);
         });
-    }
+      }
+    });
+  }
 }

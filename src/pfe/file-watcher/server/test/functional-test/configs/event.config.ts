@@ -8,16 +8,16 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-import Filewatcher from "../../../src/index";
 
- const filewatcher = new Filewatcher();
-
- export interface ProjectCreation {
-  projectID: string;
-  projectType: string;
-  location: string;
-}
-
- export async function createProject(projectInfo: ProjectCreation): Promise<any> {
-  return await filewatcher.createProject(projectInfo);
-}
+export const events = {
+    "creation": "projectCreation",
+    "deletion": "projectDeletion",
+    "deploymentRegistryStatus": "deploymentRegistryStatus",
+    "projectValidated": "projectValidated",
+    "statusChanged": "projectStatusChanged",
+    "restartResult": "projectRestartResult",
+    "settingsChanged": "projectSettingsChanged",
+    "filewatcherShutdown": "filewatcherShutdown",
+    "logsListChanged": "projectLogsListChanged",
+    "projectChanged": "projectChanged"
+};

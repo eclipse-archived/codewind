@@ -140,6 +140,7 @@ export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
 # Export HOST_OS for fix to Maven failing on Windows only as host
 export HOST_OS=$(uname);
 export REMOTE_MODE;
+export HOST_HOME=$HOME
 
 export ARCH=$(uname -m);
 # Select the right images for this architecture.
