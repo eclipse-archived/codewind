@@ -129,6 +129,8 @@ else
   printf "\n${GREEN}No existing applications found $RESET\n";
 fi
 
+echo Current path start.sh is $PWD
+
 # RUN DOCKER COMPOSE
 # Docker-compose will use the built images and turn them into containers
 printf "\n\n${BLUE}RUNNING DOCKER-COMPOSE IN: $PWD $RESET\n";

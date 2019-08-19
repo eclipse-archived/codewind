@@ -47,7 +47,7 @@ rm $GIT_CONFIG
 git config -f $GIT_CONFIG --add user.name "`git config --get user.name || echo 'codewind user'`"
 git config -f $GIT_CONFIG --add user.email "`git config --get user.email || echo 'codewind.user@localhost'`"
 
-DIR=`pwd`
+# DIR=`pwd`
 
 # Setting the NOBUILD env var to true uses the current images.
 # Used in travis when we build and push the images with script/build.sh
@@ -70,7 +70,7 @@ echo "*** Using existing images, not performing image rebuild ***"
 # fi
 
 # Return to starting directory
-cd $DIR/
+# cd $DIR/
 
 # Start codewind
 ./start.sh $DEVMODE --tag latest
