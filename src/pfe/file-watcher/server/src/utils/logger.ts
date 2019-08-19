@@ -147,8 +147,6 @@ export function assert(condition: boolean, message: string): void {
  * @returns Promise<any>
  */
 export async function logProjectInfo(msg: string, projectID: string, projectName?: string): Promise<any> {
-    if (process.env.NODE_ENV === "test") return;
-
     if (!msg) {
         console.log(chalk.red("Log error: A message must be provided"));
         return;
@@ -191,8 +189,6 @@ export async function logProjectInfo(msg: string, projectID: string, projectName
  * @returns Promise<any>
  */
 export async function logProjectError(msg: string, projectID: string, projectName?: string): Promise<any> {
-    if (process.env.NODE_ENV === "test") return;
-
     if (!msg) {
         console.log(chalk.red("Log error: A message must be provided"));
         return;
@@ -236,8 +232,6 @@ export async function logProjectError(msg: string, projectID: string, projectNam
  * @returns void
  */
 export async function logProjectDebug(msg: string, projectID: string): Promise<void> {
-    if (process.env.NODE_ENV === "test") return;
-
     if (!msg) {
         console.log(chalk.red("Log error: A message must be provided"));
         return;
@@ -273,8 +267,6 @@ export async function logProjectDebug(msg: string, projectID: string): Promise<v
  * @returns void
  */
 export async function logProjectTrace(msg: string, projectID: string): Promise<void> {
-    if (process.env.NODE_ENV === "test") return;
-
     if (!msg) {
         console.log(chalk.red("Log error: A message must be provided"));
         return;
@@ -309,8 +301,6 @@ export async function logProjectTrace(msg: string, projectID: string): Promise<v
  * @returns void
  */
 export function logInfo(msg: string): void {
-    if (process.env.NODE_ENV === "test") return;
-
     if (!msg) {
         console.log(chalk.red("Log error: A message must be provided"));
     }
@@ -334,8 +324,6 @@ export function logInfo(msg: string): void {
  * @returns void
  */
 export function logError(msg: string): void {
-    if (process.env.NODE_ENV === "test") return;
-
     if (!msg) {
         console.log(chalk.red("Log error: A message must be provided"));
     }
@@ -361,8 +349,6 @@ export function logError(msg: string): void {
  * @returns void
  */
 export function logDebug(msg: string): void {
-    if (process.env.NODE_ENV === "test") return;
-
     if (!msg) {
         console.log(chalk.red("Log error: A message must be provided"));
     }
@@ -381,8 +367,6 @@ export function logDebug(msg: string): void {
  * @returns void
  */
 export function logTrace(msg: string): void {
-    if (process.env.NODE_ENV === "test") return;
-
     if (!msg) {
         console.log(chalk.red("Log error: A message must be provided"));
     }
