@@ -32,6 +32,7 @@ export interface ProjectInfo {
     ignoredPaths?: string[];
     extensionID?: string;
     language?: string;
+    isHttps?: boolean;
 }
 
 export interface ProjectMetadata {
@@ -84,7 +85,7 @@ export interface ProjectSettingsEvent {
     ignoredPaths?: string[];
     mavenProfiles?: string[];
     mavenProperties?: string[];
-    isSecure?: boolean;
+    isHttps?: boolean;
 }
 
 /**
