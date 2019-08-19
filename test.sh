@@ -37,10 +37,9 @@ export NVM_DIR="$HOME/.nvm"
 nvm i 10
 
 echo BEFORE docker-compose
-mkdir ~/.local/bin
 curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o ~/docker-compose
 chmod +x ~/docker-compose
-docker-compose --version
+~/docker-compose --version
 echo AFTER docker-compose
 
 cd src/pfe/portal
