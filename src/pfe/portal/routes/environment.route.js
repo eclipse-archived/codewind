@@ -9,44 +9,11 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const express = require('express');
-
+const TektonUtils = require('../modules/TektonUtils');
 const Logger = require('../modules/utils/Logger');
 
 const router = express.Router();
 const log = new Logger(__filename);
-
-const Client = require('kubernetes-client').Client
-const config = require('kubernetes-client').config;
-
-const tktErrRes = "error";
-const tktNotInstalledRes = "not-installed";
-
-/**
- * This function determines the ingress endpoint of the tekton dashboard if
- * its deployed and running
- */
-async function getTektonDashboardUrl() {
-  log.debug("Determining Tekton dashboard URL");
-  if (!global.codewind.RUNNING_IN_K8S) {
-    // no tekton in local case
-    return "";
-  }
-
-  try {
-    const client = new Client({ config: config.getInCluster(), version: '1.9'});
-    const tktNamespaceName = process.env.TEKTON_PIPELINE;
-    log.info(`Looking for ingresses in Tekton namespace ${tktNamespaceName}`);
-    const ingresses = await client.apis.extensions.v1beta1.namespaces(tktNamespaceName).ingress().get();
-    if (ingresses && ingresses.body && ingresses.body.items[0]) {
-      return (ingresses.body.items[0].spec.rules[0].host || tktErrRes);
-    }
-    log.info(`No ingress was found in Tekton namespace ${tktNamespaceName}. Is Tekton installed?`);
-    return tktNotInstalledRes;
-  } catch (err) {
-    log.error(`Unexpected error getting Tekton URL: ${JSON.stringify(err)}`);
-  }
-  return tktErrRes;
-}
 
 let tektonDashboardUrl;
 let tektonDashboardUrlPromise;
@@ -56,16 +23,18 @@ let tektonDashboardUrlPromise;
  */
 router.get('/api/v1/environment', async (req, res) => {
 
-  if (!tektonDashboardUrl) {
-    // just await on this promise if it exists so we only call getTektonDashboardUrl once
-    if (!tektonDashboardUrlPromise) {
-      tektonDashboardUrlPromise = getTektonDashboardUrl()
-        .then((tektonUrl) => {
-          log.info(`Initialized Tekton dashboard url as "${tektonUrl}"`)
+  if (global.codewind.RUNNING_IN_K8S) {
+    if (!tektonDashboardUrl) {
+      // just await on this promise if it exists so we only call getTektonDashboardUrl once
+      if (!tektonDashboardUrlPromise) {
+        tektonDashboardUrlPromise = TektonUtils.getTektonDashboardUrl().then((tektonUrl) => {
           return tektonUrl;
         });
+      }
+      tektonDashboardUrl = await tektonDashboardUrlPromise;
     }
-    tektonDashboardUrl = await tektonDashboardUrlPromise;
+  } else {
+    tektonDashboardUrl = TektonUtils.ERR_TEKTON_SERVICE_NOT_INSTALLED;
   }
 
   try {
@@ -76,7 +45,7 @@ router.get('/api/v1/environment', async (req, res) => {
       codewind_version: process.env.CODEWIND_VERSION,
       workspace_location: process.env.HOST_WORKSPACE_DIRECTORY,
       os_platform: process.env.HOST_OS || 'Linux',
-      tekton_dashboard_url: tektonDashboardUrl,
+      tekton_dashboard_url: tektonDashboardUrl
     }
     res.status(200).send(envData);
   } catch (err) {
