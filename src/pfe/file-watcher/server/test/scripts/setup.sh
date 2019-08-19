@@ -27,7 +27,9 @@ EOF
 # 2 Run Codewind containers
 function install {
     if [ $TEST_TYPE == "local" ]; then
+        cd $CW_DIR
         $CW_DIR/run.sh
+        cd -
         if [[ $? -ne 0 ]]; then
             echo -e "${RED}Codewind setup has failed. ${RESET}\n"
             exit 1

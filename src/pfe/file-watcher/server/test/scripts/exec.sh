@@ -72,6 +72,12 @@ function setup {
         rm -rf $CW_DIR/codewind-workspace/*
     fi
 
+    if [ $TEST_TYPE == "local" ]; then
+        PROJECT_PATH=$CW_DIR/codewind-workspace
+    elif [ $TEST_TYPE == "kube" ]; then
+        PROJECT_PATH=/projects
+    fi
+
     # Clone projects to workspace
     echo -e "${BLUE}Cloning projects to $CW_DIR/codewind-workspace. ${RESET}"
     while IFS= read -r LINE; do
@@ -79,7 +85,7 @@ function setup {
         PROJECT_URL=$(echo $LINE | cut -d "=" -f 2)
         echo -e "\n\nProject name is: $PROJECT_NAME, project URL is $PROJECT_URL"
         echo -e "${BLUE}Cloning $PROJECT_URL. ${RESET}"
-        clone $PROJECT_NAME $CW_DIR/codewind-workspace $PROJECT_URL
+        clone $PROJECT_NAME $PROJECT_PATH $PROJECT_URL
 
         if [[ ($? -ne 0) ]]; then
             echo -e "${RED}Cloning project $PROJECT_NAME failed. ${RESET}\n"
@@ -158,5 +164,5 @@ echo -e "${BLUE}Starting pre-test setup. ${RESET}\n"
 setup
 
 # Run test cases
-# echo -e "${BLUE}\nRunning $TEST_SUITE tests. ${RESET}\n"
-# run
+echo -e "${BLUE}\nRunning $TEST_SUITE tests. ${RESET}\n"
+run
