@@ -110,13 +110,13 @@ class Chart extends Component {
 
     componentDidUpdate() {
         if (!this.chart) {
-            const colorPattern = { pattern: ChartUtils.getColorPattern(["CPU_PROCESS_MEAN", "MEM_PROCESS_PEAK", "HTTP_RESPONSE", "HTTP_HITS"]) };
-
+           
             // Re-render the entire chart using this base format
             this.chart = c3.generate({
                 data: {
                     columns: [],
                     classes: [],
+                    colors: ChartUtils.getColorPattern(["CPU_PROCESS_MEAN", "MEM_PROCESS_PEAK", "HTTP_RESPONSE", "HTTP_HITS"]) ,
                     selection: {
                         enabled: true,
                         grouped: false,
@@ -163,7 +163,6 @@ class Chart extends Component {
                         }
                     }
                 },
-                color: colorPattern,
                 point: { r: 5, select: { r: 12 }, focus: { expand: { r: 7 } } },
                 zoom: {
                     enabled: true,
