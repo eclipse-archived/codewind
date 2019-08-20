@@ -219,7 +219,11 @@ let buildChartDataHTTP = function (params) {
 
     filteredData.map(snapshot => {
         const urlList = snapshot.http.value.value.data;
-        const urlRow = urlList.find(row => { return row.url === urlFilter });
+        const urlRow = urlList.find(row => {
+            let uri = getPathFromURL(row.url);
+            uri = getEndpoint(uri);
+            return uri === urlFilter
+        });
         let value = urlRow[counterName]
         value = (value * scaleFactor).toFixed(decimals);
         columnData.push(value);
@@ -249,12 +253,15 @@ let getHTTPHitTimestamps = function (metrics, filteredUrl) {
     http.metrics.forEach(snapshot => {
         const urlList = snapshot.value.data;
         const foundUrlSamples = urlList.find(urlRow => {
-            return urlRow.url === filteredUrl;
+            if (urlRow && urlRow.url) {
+                let uri = getPathFromURL(urlRow.url);
+                return getEndpoint(uri) === filteredUrl;
+            } return false;
         });
         if (foundUrlSamples) {
             timestamps.push(snapshot.time);
         }
-    })
+    });
     return timestamps;
 }
 
@@ -304,7 +311,10 @@ let getURLAverageResponseTime = function (urlArray, urlPath) {
         return result;
     }
 
-    let urlEntry = urlArray.find(entry => { return getPathFromURL(entry.url) === urlPath })
+    let urlEntry = urlArray.find(entry => {
+        let uri = getPathFromURL(entry.url);
+        return getEndpoint(uri) === urlPath;
+    });
 
     if (urlEntry) {
         result = urlEntry.averageResponseTime;

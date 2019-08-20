@@ -72,7 +72,7 @@ class ChartCounterSelector extends Component {
     }
 
     isCounterAvailable(chartData, counterName) {
-        return (chartData && chartData[counterName] && chartData[counterName].columns && chartData[counterName].columns.length > 0);
+        return (chartData && chartData[counterName] && chartData[counterName].columns && chartData[counterName].columns.length > 1);
     }
 
     isCounterEnabled(counterName) {
@@ -88,7 +88,7 @@ class ChartCounterSelector extends Component {
     render() {
         const { chartData, showTip } = this.props;
 
-        // 1. Only display the counter categories if they exist 
+        // 1. Only display the counter categories if they exist
         // 2. The counters must match the AbsolutePath load runner filter
         const hasHits = this.isCounterAvailable(chartData, "HTTPHits");
         const hasResponse = hasHits && this.isCounterAvailable(chartData, "HTTP");

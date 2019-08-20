@@ -124,7 +124,8 @@ class RunTestHistory extends Component {
         })
         const http = snapshot.http.value.value.data;
         const urlMetrics = http.find(list => {
-            return list.url === searchURL
+            let uri = MetricsUtils.getPathFromURL(list.url);
+            return MetricsUtils.getEndpoint(uri) === searchURL;
         })
 
         switch (cell.info.header) {
@@ -178,7 +179,7 @@ class RunTestHistory extends Component {
 
     render() {
         const filteredRows = this.state.filteredRows;
-       
+
         return (
             <div className='RunTestHistory'>
 
