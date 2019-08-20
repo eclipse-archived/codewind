@@ -159,6 +159,9 @@ RUN chmod -R +rx /file-watcher/idc
 
 WORKDIR /codewind-workspace
 
+WORKDIR /extensions
+COPY /extensions /extensions
+
 EXPOSE 9090
 
 # Moved the FORCE_COLOR env var for colored logs from root-watcher.sh to the Dockerfile
