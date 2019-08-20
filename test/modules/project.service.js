@@ -252,7 +252,10 @@ function closeProject(
 async function deleteProjectDir(projectName){
     const workspace_location = await findWorkspaceLocation();
     const projectPath = path.join(workspace_location, projectName);
-    await fs.remove(projectPath);
+    // after is failing in jenkins with permission issues.  This is not
+    // actually part of the test, its us trying to be good and clean up   
+
+    //await fs.remove(projectPath);
 }
 
 /**
