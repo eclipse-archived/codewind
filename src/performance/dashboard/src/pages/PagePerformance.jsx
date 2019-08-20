@@ -151,6 +151,7 @@ class PagePerformance extends React.Component {
 
         const { snapshot_1, snapshot_2, snapshot_3 } = this.state;
         const absolutePath = MetricsUtils.getEndpoint(this.props.loadRunnerConfig.config.path) ? MetricsUtils.getEndpoint(this.props.loadRunnerConfig.config.path) : '';
+        const httpMethod = this.props.loadRunnerConfig.config.method;
         const projectLanguage = (this.props.projectInfo.config.language) ? this.props.projectInfo.config.language : '';
         const showTip = !(this.state.chartData && this.state.chartData.CPU && this.state.chartData.CPU.columns && this.state.chartData.CPU.columns.length > 0);
         return (
@@ -198,7 +199,7 @@ class PagePerformance extends React.Component {
                         <div className="chart-component">
                             <ErrorBoundary>
                                 {projectLanguage && absolutePath ?
-                                    <Chart chartData={this.state.chartData} projectLanguage={projectLanguage} absolutePath={absolutePath} />
+                                    <Chart chartData={this.state.chartData} httpMethod={httpMethod} projectLanguage={projectLanguage} absolutePath={absolutePath} />
                                     :
                                     <Fragment />
                                 }

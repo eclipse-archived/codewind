@@ -223,9 +223,24 @@ class Chart extends Component {
                 }
             } catch (err) {
                 // unable to show zoom extent
-                console.err("Unable to render zoom extent", err);
+                console.error("Unable to render zoom extent", err);
             }
         }
+    }
+
+    /**
+     * Determine if there is data available to plot on the chart
+     */
+    isDataAvailable(dataBundle) {
+        try {
+            if (dataBundle && dataBundle.columns && dataBundle.columns.length > 0 && dataBundle.columns[0].length > 1) {
+                return true;
+            }
+        } catch (err) {
+            console.error(`Unable to check for available data. ${err}`)
+            return false;
+        }
+        return false;
     }
 
     /**
@@ -254,20 +269,27 @@ class Chart extends Component {
 
     render() {
         const data = buildChartData(this.props.chartData, this.props.projectLanguage, this.props.absolutePath);
+        const testPath = `Path: ${this.props.absolutePath}`;
+        const hasData = this.isDataAvailable(data);
 
         return (
             <div className="Chart">
                 <div className="Chart_actionbar">
                     <div style={{ width: "300px", height: "35px" }}>
+                        {
+                            (hasData) ?
+                                <span className="testPath">{testPath}</span>
+                                : <Fragment />
+                        }
                     </div>
                 </div>
                 <div className="Chart_C3" style={{ padding: "20px" }} >
                     {
-                        data.columns.length === 0 ?
+                        (!hasData) ?
                             <div className="nodata">
                                 <div className="nodata_message">
                                     <div className="nodata_message_title">No metrics available</div>
-                                    <div className="nodata_message_help">Tip: Run a new load test</div>
+                                    <div className="nodata_message_help">Tip: Run a few load tests</div>
                                 </div>
                             </div>
                             : <Fragment />
@@ -292,6 +314,7 @@ const mapStateToProps = stores => {
 Chart.propTypes = {
     chartData: PropTypes.object.isRequired,
     absolutePath: PropTypes.string.isRequired,
+    httpMethod: PropTypes.string.isRequired,
     projectLanguage: PropTypes.string.isRequired,
 }
 
