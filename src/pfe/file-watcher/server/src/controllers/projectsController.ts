@@ -764,8 +764,9 @@ export async function projectDeletion(projectID: string): Promise<number> {
         // Call delete on the associated project handler
         if (projectInfo.projectType) {
             // first we find and remove the project handler (note: built-in handers are not actually removed)
-            const selectedProjectHandler = await projectExtensions.removeProjectHandler(projectInfo);
+            const selectedProjectHandler = await projectExtensions.getProjectHandler(projectInfo);
             const returnVal = await selectedProjectHandler.deleteContainer(projectInfo);
+            await projectExtensions.removeProjectHandler(projectInfo);
             if (returnVal instanceof Error) {
                 returnCode = 500;
             } else {
