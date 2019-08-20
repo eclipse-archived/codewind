@@ -36,13 +36,11 @@ export NVM_DIR="$HOME/.nvm"
 
 nvm i 10
 
-echo BEFORE docker-compose
+
 curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o ~/docker-compose
 chmod +x ~/docker-compose
-~/docker-compose --version
-echo AFTER docker-compose
 
-echo Current path test.sh is $PWD
+
 cd src/pfe/portal
 npm install
 npm run eslint
@@ -52,7 +50,6 @@ fi
 cd ../../..
 
 # Start microclimate.
-echo Current path test.sh is $PWD
 ./run.sh;
 
 # Build the tests and run them against the portal.

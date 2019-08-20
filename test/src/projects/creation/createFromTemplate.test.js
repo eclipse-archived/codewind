@@ -49,10 +49,13 @@ describe('Project Creation Tests (POST /projects)', function() {
                 expectedResult = generateSuccessMessage('liberty', projectPath);
             });
 
-            after(async function() {
-                this.timeout(2 * testTimeout.med);
-                await fs.remove(projectPath);
-            });
+           // after.all is failing in jenkins with permission issues.  This is not
+           // actually part of the test, its us trying to be good and clean up   
+
+            // after(async function() {
+            //     this.timeout(2 * testTimeout.med);
+            //     await fs.remove(projectPath);
+            // });
 
             it('succeeds (with status 200) in creating a project', async function() {
                 this.timeout(testTimeout.med);

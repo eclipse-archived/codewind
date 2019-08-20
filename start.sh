@@ -17,7 +17,7 @@ BLUE='\033[0;36m'
 RESET='\033[0m'
 DEVMODE=false
 REMOTE_MODE=false
-echo Current path start.sh is $PWD
+
 printf "\n\n${BLUE}Running 'start.sh' to start codewind. $RESET\n";
 
 while [ "$#" -gt 0 ]; do
@@ -127,8 +127,6 @@ else
   printf "\n${GREEN}No existing applications found $RESET\n";
 fi
 
-echo Current path start.sh is $PWD
-
 # RUN DOCKER COMPOSE
 # Docker-compose will use the built images and turn them into containers
 printf "\n\n${BLUE}RUNNING DOCKER-COMPOSE IN: $PWD $RESET\n";
@@ -155,7 +153,7 @@ if [[ $HOST_OS == *"MINGW"* ]]; then
   export HOST_OS=windows
 fi
 
-~/docker-compose -f $DOCKER_COMPOSE_FILE up -d;
+docker-compose -f $DOCKER_COMPOSE_FILE up -d;
 if [ $? -eq 0 ]; then
     # Reset so we don't get conflicts
     unset REPOSITORY;

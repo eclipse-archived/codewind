@@ -50,31 +50,30 @@ rm $GIT_CONFIG
 git config -f $GIT_CONFIG --add user.name "`git config --get user.name || echo 'codewind user'`"
 git config -f $GIT_CONFIG --add user.email "`git config --get user.email || echo 'codewind.user@localhost'`"
 
-# DIR=`pwd`
+DIR=`pwd`
 
 # Setting the NOBUILD env var to true uses the current images.
 # Used in travis when we build and push the images with script/build.sh
 # before running the tests via ./test.sh
-# if [ "$NOBUILD" = "true" ]; then
+if [ "$NOBUILD" = "true" ]; then
   
-echo "*** Using existing images, not performing image rebuild ***"
-# else
-#   # Build the docker images
-#   printf "\n\n${BLUE}BUILDING DOCKER IMAGES${RESET}\n\n";
+  echo "*** Using existing images, not performing image rebuild ***"
+else
+  # Build the docker images
+  printf "\n\n${BLUE}BUILDING DOCKER IMAGES${RESET}\n\n";
 
-#   ./script/build.sh;
+  ./script/build.sh;
 
-#   if [ $? -ne 0 ]; then
-#     printf "\n${RED}FAILED TO BUILD\nExiting. $RESET";
-#     exit $?
-#   else
-#     printf "\n${GREEN}ALL DOCKER IMAGES SUCCESSFULLY BUILT $RESET\n";
-#   fi
-# fi
+  if [ $? -ne 0 ]; then
+    printf "\n${RED}FAILED TO BUILD\nExiting. $RESET";
+    exit $?
+  else
+    printf "\n${GREEN}ALL DOCKER IMAGES SUCCESSFULLY BUILT $RESET\n";
+  fi
+fi
 
 # Return to starting directory
-# cd $DIR/
+cd $DIR/
 
 # Start codewind
-echo Current path run.sh is $PWD
 ./start.sh $DEVMODE --tag latest

@@ -71,7 +71,10 @@ describe('projectInitializer.js', () => {
 
             afterEach(async function() {
                 this.timeout(2 * testTimeout.med);
-                await fs.remove(projectPath);
+                // after is failing in jenkins with permission issues.  This is not
+                // actually part of the test, its us trying to be good and clean up   
+
+                //await fs.remove(projectPath);
             });
 
             describe('empty project', () => {
