@@ -34,10 +34,8 @@ yq w -i $deploymentFile -- metadata.name $concatenatedReleaseName
 yq w -i $serviceFile -- metadata.name $concatenatedReleaseName
 
 # Add the missing labels to the deployment
-yq w -i $deploymentFile -- metadata.labels.microclimate-release $MICROCLIMATE_RELEASE_NAME
 yq w -i $deploymentFile -- metadata.labels.release $releaseName
 yq w -i $deploymentFile -- spec.template.metadata.labels.release $releaseName
-yq w -i $deploymentFile -- spec.template.metadata.labels.microclimate-release $MICROCLIMATE_RELEASE_NAME
 
 # Add owner reference for deletion when workspace is deleted
 addOwnerReference $deploymentFile
@@ -46,7 +44,6 @@ addOwnerReference $deploymentFile
 yq w -i $deploymentFile -- spec.template.spec.serviceAccountName $SERVICE_ACCOUNT_NAME
 
 # Add the labels to the service
-yq w -i $serviceFile -- metadata.labels.microclimate-release $MICROCLIMATE_RELEASE_NAME
 yq w -i $serviceFile -- metadata.labels.release $releaseName
 
 # Add owner reference for deletion when workspace is deleted
