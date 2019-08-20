@@ -14,7 +14,7 @@ import c3 from 'c3';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 
-import MetricsUtils from '../../modules/MetricsUtils';
+import { buildChartData, getLineData } from './ChartBuilder';
 import ChartUtils from './ChartUtils';
 import 'c3/c3.css';
 import './Chart.scss';
@@ -28,9 +28,7 @@ class Chart extends Component {
             enabledCounters: '',
             lastCounterSelected: ''
         }
-        this.buildChartData = this.buildChartData.bind(this);
         this.chartAxisTicksY = this.chartAxisTicksY.bind(this);
-        this.getLineData = this.getLineData.bind(this);
         this.chart = null;
     }
 
@@ -67,48 +65,6 @@ class Chart extends Component {
         }
     }
 
-    getLineData(counterName) {
-        const { chartData } = this.props;
-        const counterKeys = MetricsUtils.getLanguageCounters(this.props.projectLanguage);
-
-        switch (counterName) {
-            case 'CPU_PROCESS_MEAN':
-                if (chartData.CPU.columns && chartData.CPU.columns.length > 0) {
-                    const metricsRow = chartData.CPU.columns.find(metric => {
-                        return metric[0] === counterKeys[counterName];
-                    });
-                    return metricsRow;
-                }
-                return [];
-            case 'MEM_PROCESS_PEAK':
-                if (chartData.MEMORY.columns && chartData.MEMORY.columns.length > 0) {
-                    const metricsRow = chartData.MEMORY.columns.find(metric => {
-                        return metric[0] === counterKeys["MEM_PROCESS_PEAK"];
-                    });
-                    return metricsRow;
-                }
-                return [];
-            case 'HTTP_RESPONSE':
-                if (chartData.HTTP.columns && chartData.HTTP.columns.length > 0) {
-                    const metricsRow = chartData.HTTP.columns.find(metric => {
-                        return MetricsUtils.getPathFromURL(metric[0]) === this.props.absolutePath;
-                    });
-                    return metricsRow;
-                }
-                return [];
-            case 'HTTP_HITS':
-                if (chartData.HTTPHits.columns && chartData.HTTPHits.columns.length > 0) {
-                    const metricsRow = chartData.HTTPHits.columns.find(metric => {
-                        return MetricsUtils.getPathFromURL(metric[0]) === this.props.absolutePath;
-                    });
-                    return metricsRow;
-                }
-                return [];
-            default:
-                return [];
-        }
-    }
-
     /** 
      * Calculate and return the labels for the Y axis
      * param d : line value (0,25,50,75,100)
@@ -125,7 +81,8 @@ class Chart extends Component {
         if (!this.state.lastCounterSelected || this.state.lastCounterSelected === '') {
             return '';
         }
-        const lineString = this.getLineData(this.state.lastCounterSelected);
+           
+        const lineString = getLineData(this.props.chartData, this.state.lastCounterSelected, this.props.projectLanguage, this.props.absolutePath);
         if (lineString.length > 1) {
             const values = lineString.slice(1);
             const lineNumbers = values.map(element => { return parseFloat(element) })
@@ -237,31 +194,26 @@ class Chart extends Component {
     updateChart() {
         if (!this.chart) return;
 
-        const data = this.buildChartData();
-        let lineNames = [];
-        let colorPattern = [];
-
-        // Add lines and colors
-        if (data && data.columns.length > 0) {
-            data.columns.forEach(line => {
-                lineNames.push(line[0]);
-            });
-            const enabledCounters = (this.props.chartCounters && this.props.chartCounters.enabledCounters) ? this.props.chartCounters.enabledCounters : []
-            colorPattern = { pattern: ChartUtils.getColorPatternFiltered(lineNames, enabledCounters) };
-        }
-
+        const data = buildChartData(this.props.chartData, this.props.projectLanguage, this.props.absolutePath);
+        
         // Change chart properties
         if (this.chart) {
+            this.chart.axis.labels({ y: this.state.lastCounterSelected });
             this.chart.load({
                 columns: data.columns,
                 classes: data.classes
             })
-            // Update labels
-            this.chart.axis.labels({ y: this.state.lastCounterSelected });
+            
             const enabledCounters = (this.props.chartCounters && this.props.chartCounters.enabledCounters) ? this.props.chartCounters.enabledCounters : []
-            colorPattern = ChartUtils.getColorPatternLines(lineNames, enabledCounters);
-            // Update colors
-            this.chart.data.colors(colorPattern);
+           
+            // focus on selected ids:
+            const checkedCounters = enabledCounters.filter(counter => counter.checked);
+            let enabledCounterNames = checkedCounters.map(counter => {
+                return counter.name
+            });
+
+            this.chart.focus(enabledCounterNames);
+
             // Update zoom extent
             try {
                 const currentZoom = this.chart.zoom();
@@ -301,89 +253,8 @@ class Chart extends Component {
         return toolTipHTML;
     }
 
-    buildChartRow(metricsRow, counterName) {
-        if (metricsRow) {
-            try {
-                const numbers = metricsRow.slice(1).map(value => { return parseInt(value) })
-                const max = Math.max(...numbers);
-                const percents = numbers.map(value => { return `${parseInt((value * 100) / max)}` });
-                const categoryRow = [counterName].concat(percents);
-                return categoryRow;
-            } catch (err) {
-                return [];
-            }
-        }
-        return [];
-    }
-
-
-    buildChartData() {
-        const { chartData } = this.props;
-        const data = {
-            columns: [],
-            classes: [],
-            selection: {
-                enabled: true,
-                grouped: true,
-                multiple: true
-            },
-            types: ChartUtils.chartTypes,
-        };
-
-        const counterKeys = MetricsUtils.getLanguageCounters(this.props.projectLanguage);
-
-        if (chartData.CPU.columns && chartData.CPU.columns.length > 0) {
-            const metricsRow = chartData.CPU.columns.find(metric => {
-                return metric[0] === counterKeys["CPU_PROCESS_MEAN"];
-            });
-            if (metricsRow) {
-                const metricsRowClone = metricsRow.slice();
-                data.columns.push(this.buildChartRow(metricsRowClone, "CPU_PROCESS_MEAN"));
-                metricsRowClone[0] = "CPU_PROCESS_MEAN";
-                data.classes.push(metricsRowClone);
-            }
-        }
-
-        if (chartData.MEMORY.columns && chartData.MEMORY.columns.length > 0) {
-            const metricsRow = chartData.MEMORY.columns.find(metric => {
-                return metric[0] === counterKeys["MEM_PROCESS_PEAK"];
-            });
-            if (metricsRow) {
-                const metricsRowClone = metricsRow.slice();
-                data.columns.push(this.buildChartRow(metricsRowClone, "MEM_PROCESS_PEAK"));
-                metricsRowClone[0] = "MEM_PROCESS_PEAK";
-                data.classes.push(metricsRowClone);
-            }
-        }
-
-        if (chartData.HTTP.columns && chartData.HTTP.columns.length > 0) {
-            const metricsRow = chartData.HTTP.columns.find(metric => {
-                return MetricsUtils.getPathFromURL(metric[0]) === this.props.absolutePath;
-            });
-            if (metricsRow) {
-                const metricsRowClone = metricsRow.slice();
-                data.columns.push(this.buildChartRow(metricsRowClone, "HTTP_RESPONSE"));
-                metricsRowClone[0] = "HTTP_RESPONSE";
-                data.classes.push(metricsRowClone);
-            }
-        }
-
-        if (chartData.HTTPHits.columns && chartData.HTTPHits.columns.length > 0) {
-            const metricsRow = chartData.HTTPHits.columns.find(metric => {
-                return MetricsUtils.getPathFromURL(metric[0]) === this.props.absolutePath;
-            });
-            if (metricsRow) {
-                const metricsRowClone = metricsRow.slice();
-                data.columns.push(this.buildChartRow(metricsRowClone, "HTTP_HITS"));
-                metricsRowClone[0] = "HTTP_HITS"
-                data.classes.push(metricsRowClone);
-            }
-        }
-        return data;
-    }
-
     render() {
-        const data = this.buildChartData();
+        const data = buildChartData(this.props.chartData, this.props.projectLanguage, this.props.absolutePath);
 
         return (
             <div className="Chart">
