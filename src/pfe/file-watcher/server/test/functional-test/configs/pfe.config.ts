@@ -9,14 +9,19 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-export const pfe = {
-    "PROTOCOL": process.env.PFE_PROTOCOL || "http",
+const pfe = {
+    "PROTOCOL": process.env.PFE_PROTOCOL || process.env.IN_K8 ? "https" : "http",
     "HOST": process.env.PFE_HOST || "localhost",
-    "PORT": process.env.PFE_PORT || "9090",
+    "PORT": process.env.PFE_PORT || process.env.IN_K8 ? "9191" : "9090",
 };
 
-const apis = ["/api/v1/"];
+export const baseURL = pfe.PROTOCOL + "://" + pfe.HOST + ":" + pfe.PORT;
+
+export const deploymentRegistry = process.env.IN_K8_REGISTRY || "sakibh"; // need to change the default registry to the fallback of the che registry installed for test
+
+const apiv1 = "/api/v1/";
 
 export const pfeAPIs = {
-    "projects": apis + "projects"
+    "projects": apiv1 + "projects",
+    "registry": apiv1 + "registry"
 };

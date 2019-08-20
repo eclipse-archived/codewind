@@ -9,55 +9,45 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const express = require('express');
-
+const TektonUtils = require('../modules/TektonUtils');
 const Logger = require('../modules/utils/Logger');
 
 const router = express.Router();
 const log = new Logger(__filename);
 
-const Client = require('kubernetes-client').Client
-const config = require('kubernetes-client').config;
-
-/**
- * This function determines the ingress endpoint of the tekton dashboard if
- * its deployed and running 
- */
-async function getTektonDashboard() {
-  let tekton_dashboard_url = '';
-
-  try {
-    const client = new Client({ config: config.getInCluster(), version: '1.9'});
-
-    if (global.codewind.RUNNING_IN_K8S){
-      let ingress = await client.apis.extensions.v1beta1.namespaces(process.env.TEKTON_PIPELINE).ingress().get();
-      if (ingress) {
-        tekton_dashboard_url = (ingress.body.items[0].spec.rules[0].host) || '';
-      } 
-    }
-  } catch (err) {
-    log.error(err);
-  }
-
-  return tekton_dashboard_url;
-}
+let tektonDashboardUrl;
+let tektonDashboardUrlPromise;
 
 /**
  * API Function to provide codewind runtime information to the UI
  */
 router.get('/api/v1/environment', async (req, res) => {
 
+  if (global.codewind.RUNNING_IN_K8S) {
+    if (!tektonDashboardUrl) {
+      // just await on this promise if it exists so we only call getTektonDashboardUrl once
+      if (!tektonDashboardUrlPromise) {
+        tektonDashboardUrlPromise = TektonUtils.getTektonDashboardUrl().then((tektonUrl) => {
+          return tektonUrl;
+        });
+      }
+      tektonDashboardUrl = await tektonDashboardUrlPromise;
+    }
+  } else {
+    tektonDashboardUrl = TektonUtils.ERR_TEKTON_SERVICE_NOT_INSTALLED;
+  }
+
   try {
-    let body = {};
-    body = {
-      running_on_icp: global.codewind.RUNNING_IN_K8S,
+    const envData = {
+      running_in_k8s: global.codewind.RUNNING_IN_K8S,
       user_string: req.cw_user.userString,
       socket_namespace: req.cw_user.uiSocketNamespace,
       codewind_version: process.env.CODEWIND_VERSION,
       workspace_location: process.env.HOST_WORKSPACE_DIRECTORY,
       os_platform: process.env.HOST_OS || 'Linux',
-      tekton_dashboard_url: await getTektonDashboard()
+      tekton_dashboard_url: tektonDashboardUrl
     }
-    res.status(200).send(body);
+    res.status(200).send(envData);
   } catch (err) {
     log.error(err);
     res.status(500).send(err);

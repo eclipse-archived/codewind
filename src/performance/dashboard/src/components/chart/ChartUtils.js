@@ -70,34 +70,10 @@ let getColorPatternLines = function (counters, counterStatus) {
     return chartColors;
 }
 
-/**
- * 
- * Given an array of counters,  return a list of chart colors
- */
-let getColorPatternFiltered = function (counters, counterStatus) {
-    var chartColors = [];
-    counters.forEach(counterkey => {
-        let colorValue = "#555";
-        // check if the counter is enabled, if its not,  set the color to grey
-
-        const counterElement = counterStatus.find(counter => {
-            return counter.name === counterkey;
-        });
-
-        if (counterElement && counterElement.checked) {
-            colorValue = colorSwatches[counterkey];
-        }
-
-
-        chartColors.push(colorValue);
-    });
-    return chartColors;
-}
 
 exports.counterLabels = counterLabels;
 exports.counterUnits = counterUnits;
 exports.colorSwatches = colorSwatches;
 exports.getColorPattern = getColorPattern;
-exports.getColorPatternFiltered = getColorPatternFiltered;
 exports.getColorPatternLines = getColorPatternLines;
 exports.chartTypes = chartTypes;

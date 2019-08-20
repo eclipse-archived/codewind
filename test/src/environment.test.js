@@ -9,28 +9,24 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const chai = require('chai');
+const chaiResValidator = require('chai-openapi-response-validator');
 
 const reqService = require('../modules/request.service');
-const { ADMIN_COOKIE, USING_K8S, DEFAULT_USER_NAME } = require('../config');
+const { ADMIN_COOKIE, USING_K8S, DEFAULT_USER_NAME, pathToApiSpec } = require('../config');
 
 const SOCKET_NAMESPACE = USING_K8S ? '/admin' : `/${DEFAULT_USER_NAME}`;
-
+chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
 describe('Environment API tests', function() {
-
     it('should return expected environment properties', async function() {
         const res = await reqService.chai
             .get('/api/v1/environment')
             .set('Cookie', ADMIN_COOKIE);
 
-        res.should.have.status(200);
-        res.should.have.ownProperty('body');
-        res.body.should.have.ownProperty('running_on_icp', USING_K8S);
-        res.body.should.have.ownProperty('user_string');
-        res.body.should.have.ownProperty('socket_namespace', SOCKET_NAMESPACE);
-        res.body.should.have.ownProperty('codewind_version');
-        res.body.should.have.ownProperty('os_platform');
+        res.should.have.status(200).and.satisfyApiSpec;
+        res.body.running_in_k8s.should.equal(USING_K8S);
+        res.body.socket_namespace.should.equal(SOCKET_NAMESPACE);
         if (!USING_K8S) res.body.should.have.ownProperty('workspace_location');
     });
 });

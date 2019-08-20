@@ -8,6 +8,7 @@
     ],
     "ignore" : [
         "node_modules/!(file-watcher)/**/*",
+        "node_modules/file-watcher/test/**/*",
         "node_modules/file-watcher/node_modules/**/*"
     ]
 }

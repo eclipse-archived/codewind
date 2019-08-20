@@ -59,15 +59,22 @@ class RunTestHistory extends Component {
         }
         this.filterRows = this.filterRows.bind(this);
         this.handleDeleteRow = this.handleDeleteRow.bind(this);
+        this.handleOverflowKeyDown = this.handleOverflowKeyDown.bind(this);
         this.handleBatchDeleteBtn = this.handleBatchDeleteBtn.bind(this);
     }
     // Build overflow menu
     getOverflowMenu(rowId) {
         return (
             <OverflowMenu floatingMenu flipped>
-                <OverflowMenuItem onClick={() => this.handleDeleteRow(rowId)} itemText='Delete' />
+                <OverflowMenuItem primaryFocus onKeyDown={ () => this.handleOverflowKeyDown(key, rowId) } onClick={() => this.handleDeleteRow(rowId)} itemText='Delete' />
             </OverflowMenu>
         );
+    }
+
+    handleOverflowKeyDown(key, row) {
+        if (key.keycode === 13) {
+            this.handleDeleteRow(row) 
+        }
     }
 
     /**
@@ -178,7 +185,7 @@ class RunTestHistory extends Component {
 
     render() {
         const filteredRows = this.state.filteredRows;
-       
+
         return (
             <div className='RunTestHistory'>
 
@@ -191,12 +198,12 @@ class RunTestHistory extends Component {
                         <TableContainer title='Test history'>
                             <TableToolbar>
                                 <TableBatchActions {...getBatchActionProps()}>
-                                    <TableBatchAction renderIcon={IconDelete} iconDescription='Delete' onClick={() => this.handleBatchDeleteBtn(selectedRows)}>
+                                    <TableBatchAction renderIcon={IconDelete} aria-label='Delete' iconDescription='Delete' onClick={() => this.handleBatchDeleteBtn(selectedRows)}>
                                         Delete
                                     </TableBatchAction>
                                 </TableBatchActions>
                                 <TableToolbarContent>
-                                    <TableToolbarSearch small={true} kind='' onChange={this.filterRows} />
+                                    <TableToolbarSearch small={true} kind='' aria-label='Search and filter' onChange={this.filterRows} />
                                 </TableToolbarContent>
                             </TableToolbar>
                             <Table>

@@ -143,10 +143,9 @@ export class LibertyValidator extends Validator {
                                 let libertyPluginFound = false;
                                 try {
                                     if (mcprofile.build[0].plugins[0].plugin) {
-                                        mcprofile.build[0].plugins[0].plugin.forEach(async (_plugin: any) => {
+                                         for ( const _plugin of  mcprofile.build[0].plugins[0].plugin ) {
                                             if (_plugin.groupId[0] === "net.wasdev.wlp.maven.plugins" && _plugin.artifactId[0] === "liberty-maven-plugin") {
                                                 libertyPluginFound = true;
-
                                                 // Validate liberty plugin
                                                 const libertyPlugin = _plugin;
                                                 if (libertyPlugin.extensions[0] !== "true") {
@@ -184,7 +183,7 @@ export class LibertyValidator extends Validator {
                                                 }
 
                                             }
-                                        });
+                                        }
                                     }
                                 } catch (ex) {
                                     logger.logInfo("No liberty-maven-plugin was found.");

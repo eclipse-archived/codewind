@@ -179,13 +179,14 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         logger.logProjectInfo("Creating project " + projectLocation, projectID, projectName);
 
         projInfo = {
+            projectID: projectID,
             projectType: projectType,
             location: projectLocation,
             language: req.language
         } as ProjectInfo;
 
         if (req.extension)
-            projInfo.extensionID = req.extension.name;
+            projInfo.extensionID = req.extension.path;
     }
 
     if (! await utils.asyncFileExists(projectLocation)) {
@@ -329,8 +330,12 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         }
     }
 
-    // Save project metadata
-    await saveProjectInfo(projectID, projectInfo);
+    try {
+        // Save project metadata
+        await saveProjectInfo(projectID, projectInfo);
+    } catch (err) {
+        logger.logProjectError(JSON.stringify(err), projectID);
+    }
 
     // Add the project to the status controller
     statusController.addProject(projectID);
@@ -839,22 +844,6 @@ export async function getProjectInfoFromFile(infoFile: string, ignoreLog?: boole
 
 /**
  * @function
- * @description Get the project id by providing the project name.
- *
- * @param projectName <Required | String> - The name of the project.
- *
- * @returns Promise<any>
- */
-export async function getProjecIDByProjectName(projectName: string): Promise<any> {
-    const projectInfoFile = constants.projectConstants.projectsInfoDir + projectName + ".inf";
-    const data = await readFileAsync(projectInfoFile, "utf8");
-    const projectInfo = JSON.parse(data);
-    const projectID = projectInfo.projectID;
-    return projectID;
-}
-
-/**
- * @function
  * @description Helper function to delete a file from a given folder.
  *
  * @param dir <Required | String> - The location of the directory.
@@ -862,7 +851,7 @@ export async function getProjecIDByProjectName(projectName: string): Promise<any
  *
  * @returns Promise<void>
  */
-function deleteFile(dir: string, file: string): Promise<void> {
+export function deleteFile(dir: string, file: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const currentPath = path.join(dir, file);
 
@@ -1040,7 +1029,14 @@ export async function updateProjectInfo(projectID: string, keyValuePair: UpdateP
         keyValuePair.saveIntoJsonFile = true;
     }
 
-    await saveProjectInfo(projectID, projectInfo, keyValuePair.saveIntoJsonFile);
+    try {
+        await saveProjectInfo(projectID, projectInfo, keyValuePair.saveIntoJsonFile);
+    } catch (err) {
+        // If there was an issue saving projectInfo, we have to catch and throw an error
+        // We cannot return the incorrect projectInfo to the function caller
+        logger.logProjectError(JSON.stringify(err), projectID);
+        throw new Error(err.message);
+    }
 
     return projectInfo;
 }
@@ -1055,8 +1051,8 @@ export async function updateProjectInfo(projectID: string, keyValuePair: UpdateP
  *
  * @returns void
  */
-export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, saveIntoJsonFile: boolean = true): Promise<void> {
-    return new Promise((resolve) => {
+export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, saveIntoJsonFile: boolean = true): Promise<any> {
+    return new Promise((resolve, reject) => {
         const projectJSON = JSON.stringify(projectInfo);
         const infoFile = getProjectMetadataById(projectID).infoFile;
         projectInfoCache[infoFile] = projectJSON;
@@ -1067,8 +1063,10 @@ export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, sav
                 if (err) {
                     logger.logProjectError("Error writing project info to file " + infoFile, projectID, projectName);
                     logger.logProjectError(err.message, projectID, projectName);
+                    reject(err);
+                } else {
+                    logger.logProjectTrace("Finished writing file " + infoFile, projectID);
                 }
-                logger.logProjectTrace("Finished writing file " + infoFile, projectID);
                 resolve();
             });
         } else {
@@ -1186,6 +1184,8 @@ export interface IProjectActionParams {
     location?: string;
     projectID?: string;
     startMode?: string;
+    extensionID?: string;
+    language?: string;
 }
 
 export interface IProjectSpecificationParams {

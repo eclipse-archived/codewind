@@ -62,6 +62,10 @@ module.exports = class Extension {
       let definitionFile = await fs.readFile(path.join(this.path, 'codewind.yaml'));
       let definition = yaml.safeLoad(definitionFile);
 
+      if (definition.hasOwnProperty('name')) {
+        // TODO: validate extension name
+        this.name = definition.name;
+      }
       if (definition.hasOwnProperty('version')) {
         // TODO: validate extension version
         this.version = definition.version;

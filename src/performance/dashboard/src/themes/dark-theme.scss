@@ -30,3 +30,12 @@ $color-datagrid-foreground: $interactive-03;
 .bx--toast-notification__close-button .bx--toast-notification__close-icon {
   fill: $carbon--gray-100;
 }
+
+.bx--btn--ghost {
+  font-size: 16px;
+  color: $link-01;
+}
+
+.bx--btn--ghost:hover {
+  color: $text-04;
+}

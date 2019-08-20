@@ -36,7 +36,10 @@ cache_liberty() {
 		if [ -f /file-watcher/dockerfiles/liberty/libertyDockerfile ]; then
 			# Create the empty folders needed for the caching
 			mkdir -p /file-watcher/dockerfiles/liberty/target/liberty/wlp/usr/servers/defaultServer
+			chmod 775 /file-watcher/dockerfiles/liberty/target/liberty/wlp/usr/servers/defaultServer
 			mkdir -p /file-watcher/dockerfiles/liberty/target/liberty/wlp/usr/shared/resources
+			chmod 775 /file-watcher/dockerfiles/liberty/target/liberty/wlp/usr/shared/resources
+			chmod 664 /file-watcher/dockerfiles/liberty/src/main/liberty/config/jvmbx.options
 
 			echo "Pre-building the Liberty app image"
 			$LIBERTY_BUILD_CMD

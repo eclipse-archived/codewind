@@ -1,7 +1,7 @@
 # Codewind
 ![platforms](https://img.shields.io/badge/runtime-Java%20%7C%20Swift%20%7C%20Node-yellow.svg)
 [![License](https://img.shields.io/badge/License-EPL%202.0-red.svg?label=license&logo=eclipse)](https://www.eclipse.org/legal/epl-2.0/)
-[![Jenkins](https://img.shields.io/static/v1.svg?label=builds&message=Jenkins&color=d24939&logo=jenkins&logoColor=ffffff)](https://ci.eclipse.org/codewind/job/Codewind/job/codewind/)
+[![Build Status](https://ci.eclipse.org/codewind/buildStatus/icon?job=Codewind%2Fcodewind%2Fmaster)](https://ci.eclipse.org/codewind/job/Codewind/job/codewind/job/master/)
 [![Chat](https://img.shields.io/static/v1.svg?label=chat&message=mattermost&color=145dbf)](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind)
 
 Build high-quality cloud-native applications for Kubernetes, regardless of your IDE or language.
@@ -19,6 +19,7 @@ Use the following instructions to install Codewind with your choice of editor:
 We welcome submitting issues and contributions.
 1. [Submitting bugs](https://github.com/eclipse/codewind/issues)
 2. [Contributing](CONTRIBUTING.md)
+3. [View the API documentation](https://eclipse.github.io/codewind/)
 
 ## License
 [EPL 2.0](https://www.eclipse.org/legal/epl-2.0/)

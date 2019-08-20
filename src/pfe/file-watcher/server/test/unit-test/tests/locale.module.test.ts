@@ -3,6 +3,11 @@ import * as locale from "../../../../server/src/utils/locale";
 
 export function localeTestModule(): void {
 
+    it("test getTranslation without NLS initialized", async () => {
+        const actualResult = await locale.getTranslation("filewatcherUtil.fwNLSInitSuccess");
+        expect(actualResult).to.equal("Turbine NLS has been initialized successfully");
+    });
+
     describe("combinational testing of setLocale function", () => {
 
         const combinations: any = {
@@ -67,6 +72,11 @@ export function localeTestModule(): void {
                 } catch (err) {
                     expect(err.code).to.equal(expectedResult);
                 }
+            });
+
+            it("test getTranslation with NLS initialized", async () => {
+                const actualResult = await locale.getTranslation("filewatcherUtil.fwNLSInitSuccess");
+                expect(actualResult).to.equal("Turbine NLS has been initialized successfully");
             });
         }
     });

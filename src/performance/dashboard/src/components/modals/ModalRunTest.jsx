@@ -35,13 +35,6 @@ class ModalRunTest extends React.Component {
     this.checkInputLength = this.checkInputLength.bind(this);
   }
 
-
-
-  showRunTestModal() {
-    this.setState({ runTestDescription: '', showModalRunTest: true })
-  }
-
-
   checkInputLength(e) {
     let value = e.target.value;
     if (value.length <= MAX_DESC_LENGTH) {
@@ -64,11 +57,13 @@ class ModalRunTest extends React.Component {
     return (
       <div>
         <Modal
+          id="ModalRunTest"
           open
           danger={false}
           shouldsubmitonenter="false"
           modalLabel=""
-          modalHeading="Load test configuration"
+          modalAriaLabel="Run load test with an optional description"
+          modalHeading="Run a new load test"
           primaryButtonText="Run"
           secondaryButtonText="Cancel"
           iconDescription="Cancel"
@@ -80,7 +75,8 @@ class ModalRunTest extends React.Component {
             style={{ resize: "none" }}
             className="descriptionTextArea"
             hideLabel={false}
-            labelText=""
+            aria-label="Optional description"
+            labelText="Add an optional description"
             value={this.state.runTestDescription}
             invalidText=""
             helperText=""

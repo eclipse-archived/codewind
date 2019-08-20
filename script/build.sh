@@ -11,6 +11,13 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
+# README FIRST !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# 
+# NOTE: change of this file should be in sync with 'Jenkinsfile(stage: Build Docker images)'
+# Ping kjoseph@ca.ibm.com for details
+#
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 DIR=`pwd`;
 SRC_DIR=$DIR/src;
 PFE=pfe
@@ -59,7 +66,10 @@ do
 
   if [ $? -eq 0 ]; then
     echo "+++   SUCCESSFULLY BUILT $IMAGE_NAME   +++";
-    fi
- done;
+  else
+    echo "+++   FAILED TO BUILD $IMAGE_NAME - exiting.   +++";
+    exit 12;
+  fi
+done;
 echo -e "\n+++   ALL DOCKER IMAGES SUCCESSFULLY BUILT   +++\n";
 docker images | grep codewind;

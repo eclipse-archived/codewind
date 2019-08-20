@@ -36,14 +36,19 @@ const lock = new AsyncLock();
  *
  * @returns Promise<{ operationId: string }>
  */
-const validate = async function(args: IProjectActionParams): Promise<{ operationId: string }> {
+export const validate = async function(args: IProjectActionParams): Promise<{ operationId: string }> {
     const projectID = args.projectID;
     const projectType = args.projectType;
     const location = args.location;
-    const projectName = location.split("/").pop();
     if (!projectType || !location) {
         const error = new Error("Validation requires a project type and location.");
         error.name = "BAD_REQUEST";
+        throw error;
+    }
+
+    if (! await utils.asyncFileExists(location)) {
+        const error = new Error("The provided location does not exist: " + location);
+        error.name = "FILE_NOT_EXIST";
         throw error;
     }
 
@@ -51,7 +56,17 @@ const validate = async function(args: IProjectActionParams): Promise<{ operation
         "projectType": projectType,
         "location": location
     } as ProjectInfo;
-
+    const projectName = location.split("/").pop();
+    if (args.extensionID) {
+        projectInfo.extensionID = args.extensionID;
+    }
+    if (args.language) {
+        projectInfo.language = args.language;
+    }
+    // projectID is an optional parameter for validation. it may refer to a case where the project has not been created yet, e.g import case
+    if (args.projectID) {
+        projectInfo.projectID = args.projectID;
+    }
     // Check whether the projectType exists
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     if (!projectHandler || projectHandler.supportedType !== projectType) {
@@ -62,17 +77,6 @@ const validate = async function(args: IProjectActionParams): Promise<{ operation
         throw error;
     }
 
-    // projectID is an optional parameter for validation. it may refer to a case where the project has not been created yet, e.g import case
-    if (args.projectID) {
-        projectInfo.projectID = args.projectID;
-    }
-
-    if (! await utils.asyncFileExists(location)) {
-        const error = new Error("The provided location does not exist: " + location);
-        error.name = "FILE_NOT_EXIST";
-        throw error;
-    }
-
     // Create operation
     const operation = new Operation("validate", projectInfo);
 
@@ -80,7 +84,7 @@ const validate = async function(args: IProjectActionParams): Promise<{ operation
     logger.logTrace(JSON.stringify(projectInfo));
 
     if (projectHandler.validate) {
-        projectHandler.validate(operation);
+        await projectHandler.validate(operation);
     } else {
         // if the project type doesn't support validation then just report success becauase validation is optional for project types
         const validator = new Validator(operation);
@@ -98,7 +102,7 @@ const validate = async function(args: IProjectActionParams): Promise<{ operation
  *
  * @returns Promise<{ status: string }>
  */
-const enableautobuild = async function (args: IProjectActionParams): Promise<{ status: string }> {
+export const enableautobuild = async function (args: IProjectActionParams): Promise<{ status: string }> {
     if (!args.projectID) {
         const error = new Error("The project id was not provided");
         error.name = "BAD_REQUEST";
@@ -181,7 +185,7 @@ async function enableAndBuild(projectInfo: ProjectInfo): Promise<void> {
  *
  * @returns Promise<{ status: string }>
  */
-const disableautobuild = async function (args: IProjectActionParams): Promise<{ status: string }> {
+export const disableautobuild = async function (args: IProjectActionParams): Promise<{ status: string }> {
     if (!args.projectID) {
         const error = new Error("The project id was not provided");
         error.name = "BAD_REQUEST";
@@ -210,7 +214,7 @@ const disableautobuild = async function (args: IProjectActionParams): Promise<{ 
  *
  * @returns Promise<{ operationId: string }>
  */
-const build = async function (args: IProjectActionParams): Promise<{ operationId: string }> {
+export const build = async function (args: IProjectActionParams): Promise<{ operationId: string }> {
     if (!args.projectID) {
         const error = new Error("The project id was not provided");
         error.name = "BAD_REQUEST";
@@ -261,7 +265,7 @@ const build = async function (args: IProjectActionParams): Promise<{ operationId
  *
  * @returns Promise<{ operationId: string }>
  */
-const restart = async function(args: IProjectActionParams): Promise<{ operationId: string }> {
+export const restart = async function(args: IProjectActionParams): Promise<{ operationId: string }> {
     if (!args.projectID) {
         const error = new Error("The project id was not provided");
         error.name = "BAD_REQUEST";

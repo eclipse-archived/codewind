@@ -428,6 +428,13 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         projectInfo.status = "failed";
                         const errorMsg = `The container failed to start for application ` + projectLocation;
                         logger.logProjectError("Error code: " + result.exitCode + " - " + errorMsg, projectID, projectName);
+
+                        // Explicitly handle exit code of 1 and set the build status to failed with a failure message for any unexpected script exec errors
+                        // Otherwise handle all build/app statuses in the project script and exit with 3
+                        if (result.exitCode == 1) {
+                            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.buildFail");
+                        }
+
                         projectInfo.error = errorMsg;
                         await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.buildFail");
                         io.emitOnListener(event, projectInfo);
@@ -501,34 +508,26 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
  *
  * @returns string
  */
-async function getProjectMavenSettings(projectInfo: ProjectInfo): Promise<string> {
+export async function getProjectMavenSettings(projectInfo: ProjectInfo): Promise<string> {
 
     logger.logProjectInfo("mavenProfiles: " + projectInfo.mavenProfiles, projectInfo.projectID);
     logger.logProjectInfo("mavenProperties: " + projectInfo.mavenProperties, projectInfo.projectID);
 
-    const profiles = projectInfo.mavenProfiles;
+    const profilesArr = projectInfo.mavenProfiles;
 
     const propertiesArr = projectInfo.mavenProperties;
-    let properties;
-    if (propertiesArr) {
-        properties = propertiesArr.toString();
-    }
 
     let userMavenSettings = "";
 
-    if (profiles && profiles.length > 0) {
-        if (profiles.length == 1 && profiles[0] == "") {
-            userMavenSettings = "";
-        } else {
-            userMavenSettings = userMavenSettings.concat(MavenFlags.profile.concat(profiles.toString()));
+    if (profilesArr && profilesArr.length > 0) {
+        if (! (profilesArr.length == 1 && profilesArr[0] == "") ) {
+            userMavenSettings = userMavenSettings.concat(MavenFlags.profile.concat(profilesArr.toString()));
         }
     }
 
-    if (properties && properties.length > 0) {
-        if (properties.length == 1 && properties[0] == "") {
-            userMavenSettings = userMavenSettings.concat("");
-        } else {
-            properties = "";
+    if (propertiesArr && propertiesArr.length > 0) {
+        if (!(propertiesArr.length == 1 && propertiesArr[0] == "")) {
+            let properties = "";
             for (const value of propertiesArr) {
                 properties = properties.concat(MavenFlags.properties).concat(value);
                 properties = properties.concat(" ");
@@ -729,12 +728,13 @@ export function getDefaultContainerName(projectID: string, projectLocation: stri
  *
  * @returns string
  */
-async function getContainerName(projectInfo: ProjectInfo): Promise<string> {
+export async function getContainerName(projectInfo: ProjectInfo): Promise<string> {
 
     const projectID: string = projectInfo.projectID;
     const projectLocation: string = projectInfo.location;
 
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+    logger.logInfo("typeof projectHandler.getContainerName is " + typeof projectHandler.getContainerName);
     if (projectHandler && projectHandler.hasOwnProperty("getContainerName") && typeof projectHandler.getContainerName === "function") {
         return projectHandler.getContainerName(projectID, projectLocation);
     }

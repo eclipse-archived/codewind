@@ -137,6 +137,7 @@ export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
 # Export HOST_OS for fix to Maven failing on Windows only as host
 export HOST_OS=$(uname);
 export REMOTE_MODE;
+export HOST_HOME=$HOME
 
 export ARCH=$(uname -m);
 # Select the right images for this architecture.
@@ -144,6 +145,11 @@ if [ "$ARCH" = "x86_64" ]; then
   export PLATFORM="-amd64"
 else
   export PLATFORM="-$ARCH"
+fi
+
+# If using Mingw64/Msys2 (a faux-Linux build environment on Windows), replace mingw with windows
+if [[ $HOST_OS == *"MINGW"* ]]; then
+  export HOST_OS=windows
 fi
 
 docker-compose -f $DOCKER_COMPOSE_FILE up -d;
