@@ -145,7 +145,7 @@ pipeline {
                         fi
 
 
-                        docker-compose -f docker-compose.yaml -f docker-compose-local.yaml up -d;
+                        ~/docker-compose -f docker-compose.yaml -f docker-compose-local.yaml up -d;
 
                         if [ $? -eq 0 ]; then
                             # Reset so we don't get conflicts
