@@ -56,7 +56,7 @@ cp -r $DIR/docs ${SRC_DIR}/pfe/portal/
 # Copy the appsody extension into portal. The zip file must have a version number e.g. codewind-appsody-extension-0.3.0.zip
 # in order for it to be accepted as a valid extension
 mkdir -p ${SRC_DIR}/pfe/extensions
-rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.3.0.zip
+rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
 curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.3.0.zip https://github.com/eclipse/codewind-appsody-extension/archive/0.3.0.zip
 
 # BUILD IMAGES

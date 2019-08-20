@@ -81,6 +81,8 @@ RUN chmod 644 /etc/sudoers \
     && ln -s /codewind-workspace /projects \
     && adduser mcuser
 
+COPY /extensions /extensions
+
 ######### File watcher setup.
 RUN mkdir /file-watcher
 WORKDIR /file-watcher
@@ -158,9 +160,6 @@ COPY /file-watcher/idc /file-watcher/idc
 RUN chmod -R +rx /file-watcher/idc
 
 WORKDIR /codewind-workspace
-
-WORKDIR /extensions
-COPY /extensions /extensions
 
 EXPOSE 9090
 
