@@ -302,7 +302,9 @@ pipeline {
               '''
         }
         failure {
-            printf "The PR failed"
+          sh '''#!/usr/bin/env bash
+            printf "The PR failed";
+          '''
         }
     }
 }
