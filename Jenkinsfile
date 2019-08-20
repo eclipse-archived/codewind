@@ -90,7 +90,308 @@ pipeline {
                         sh '''#!/usr/bin/env bash
                         echo "Starting tests for Eclipse Codewind ..."
                         export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
-                        ./test.sh
+
+
+                        MAGENTA='\033[0;35m'
+                        BLUE='\033[0;34m'
+                        RED='\033[0;31m'
+                        RESET='\033[0m'
+
+
+
+                        ARCH=`uname -m`;
+
+                        printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
+                        # Run filewatcher tests if the scope is set accordingly, otherwise default to portal
+
+
+                        # Run eslint
+                        echo $PATH
+
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+
+                        export NVM_DIR="$HOME/.nvm"
+                        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  
+                        [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  
+
+                        nvm i 10
+
+
+                        curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o ~/docker-compose
+                        chmod +x ~/docker-compose
+
+
+                        cd src/pfe/portal
+                        npm install
+                        npm run eslint
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+                        cd ../../..
+
+                        # Start microclimate.
+
+                        # CREATE CODEWIND-WORKSPACE IF NOT EXISTS
+                        printf "\n\n${BLUE}CREATING CODEWIND-WORKSPACE IF IT DOESN'T EXIST${RESET}\n"
+                        mkdir -m 777 -p codewind-workspace
+
+                        export REPOSITORY='';
+                        export TAG
+                        export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
+                        # Export HOST_OS for fix to Maven failing on Windows only as host
+                        export HOST_OS=$(uname);
+                        export REMOTE_MODE;
+                        export HOST_HOME=$HOME
+                        export ARCH=$(uname -m);
+                        # Select the right images for this architecture.
+                        if [ "$ARCH" = "x86_64" ]; then
+                          export PLATFORM="-amd64"
+                        else
+                          export PLATFORM="-$ARCH"
+                        fi
+
+
+                        docker-compose -f docker-compose.yaml -f docker-compose-local.yaml up -d;
+
+                        if [ $? -eq 0 ]; then
+                            # Reset so we don't get conflicts
+                            unset REPOSITORY;
+                            unset WORKSPACE_DIRECTORY;
+                            unset REMOTE_MODE;
+                            printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
+                            printf "\nCurrent running codewind containers\n";
+                            docker ps --filter name=codewind
+                        else
+                            printf "\n\n${RED}FAILED TO START CONTAINERS $RESET\n";
+                            exit;
+                        fi
+
+                        printf "\n\n${BLUE}PAUSING TO ALLOW CONTAINERS TIME TO START $RESET\n";
+                        sleep 20;
+
+                        # Check to see if any containers exited straight away
+                        printf "\n\n${BLUE}CHECKING FOR codewind CONTAINERS THAT EXITED STRAIGHT AFTER BEING RUN $RESET\n";
+                        EXITED_PROCESSES=$(docker ps -q --filter "name=codewind" --filter "status=exited"  | wc -l)
+                        if [ $EXITED_PROCESSES -gt 0 ]; then
+                          printf "\n${RED}Exited containers found $RESET\n";
+                          # docker ps --filter "name=codewind" --filter "status=exited";
+                          NUM_CODE_ZERO=$(docker ps -q --filter "name=codewind" --filter "status=exited" --filter "exited=0" | wc -l);
+                          NUM_CODE_ONE=$(docker ps -q --filter "name=codewind" --filter "status=exited" --filter "exited=1" | wc -l);
+                          if [ $NUM_CODE_ZERO -gt 0 ]; then
+                            printf "\n${RED}$NUM_CODE_ZERO found with an exit code '0' $RESET\n";
+                            docker ps --filter "name=codewind" --filter "status=exited" --filter "exited=0";
+                            printf "\nUse 'docker logs [container name]' to find why the exit happened";
+                          fi
+                          if [ $NUM_CODE_ONE -gt 0 ]; then
+                            printf "\n${RED}$NUM_CODE_ONE found with an exit code '1' $RESET\n";
+                            docker ps --filter "name=codewind" --filter "status=exited" --filter "exited=1";
+                            printf "\nUse 'docker logs [container name]' to debug exit";
+                          fi
+                        else
+                          printf "\nNo containers exited $RESET\n";
+                        fi
+
+                        printf "\n\ncodewind CONTAINERS NOW AVAILABLE\n";
+
+
+
+
+                        # Build the tests and run them against the portal.
+                        cd test/
+                        npm install
+                        npm run eslint
+                        if [[ ! -z $TRAVIS_BUILD_NUMBER && $? -ne 0 ]]; then
+                          exit 1
+                        fi
+
+                        npm run test
+                        rc=$?;
+                        cd ..
+
+                        # Output portal logs
+                        printf "\n********** codewind-pfe logs **********\n\n"
+                        docker logs codewind-pfe
+                        printf "${RESET}"
+
+                        # Shutdown and cleanup.
+                        GREEN='\033[0;32m'
+                        RED='\033[0;31m'
+                        BLUE='\033[0;36m'
+                        RESET='\033[0m'
+
+                        REMOVE_IMAGES=false;
+                        REMOVE_ALL=false;
+                        REMOVE_UNTAGGED=false;
+                        REMOVE_APP_IMAGES=false;
+
+                        # flags
+                        while test $# -gt 0; do
+                          case "$1" in
+                            -h|--help)
+                              printf "\n./stop.sh [options]\n\n";
+                              echo "options:";
+                              echo "   -h, --help";
+                              echo "   -a, --all";
+                              echo "       Stop and remove ALL Docker containers instead of just Codewind ones.";
+                              echo "   -p, --appimages";
+                              echo "       Remove application images as well as containers.";
+                              echo "   -i, --images";
+                              echo "       Remove images as well as containers.";
+                              echo "       Hint: Use with --all to remove clear your Docker repository (remove containers and images).";
+                              echo "   -u, --untagged";
+                              echo "       Remove images untagged images (tag will look like: <none>).";
+                              echo "       Hint: This helps to recover space in your Docker repository.";
+                              exit;
+                              ;;
+                            -a|--all)
+                              REMOVE_ALL=true;
+                              shift
+                              ;;
+                            -i|--images)
+                              echo "The Docker images will also be removed";
+                              REMOVE_IMAGES=true;
+                              shift
+                              ;;
+                            -p|--appimages)
+                              echo "The Application Docker images will also be removed";
+                              REMOVE_APP_IMAGES=true;
+                              shift
+                              ;;
+                            -u|--untagged)
+                              echo "The Docker images will also be removed";
+                              REMOVE_UNTAGGED=true;
+                              shift
+                              ;;
+                            *)
+                              break;
+                              ;;
+                          esac
+                        done
+
+                        # If REMOVE_ALL then remove all containers instead of just Codewind ones
+                        if [ ${REMOVE_ALL} = true ]; then
+                          printf "\nStopping and removing ALL Docker containers instead of just Codewind ones.\n";
+                          DOCKER_PS="docker ps -a -q";
+                          DOCKER_IMAGES="docker images -q";
+                        else
+                          printf "\nStopping and removing Codewind Docker containers.\n"
+                          DOCKER_PS="docker ps -a -q  --filter name=codewind";
+                          DOCKER_IMAGES="docker images -q --filter reference=codewind*";
+                        fi
+
+                        DOCKER_PS_APPS="docker ps -a -q  --filter name=cw";
+                        DOCKER_IMAGES_APPS="docker images -q --filter reference=cw*";
+
+                        # Check to make sure that there are actually proceses to remove
+                        NUMBER_OF_PROCESSES=$($DOCKER_PS | wc -l)
+                        if [ $NUMBER_OF_PROCESSES -gt 0 ]; then
+                          # Removing containers
+                          printf "\n${BLUE}Running 'stop.sh' to stop and remove Docker containers. ${RESET}\n";
+                          printf "Docker ps script is '${DOCKER_PS}'\n";
+
+                          printf "\nStopping all running containers\n";
+
+                          docker rm -f $($DOCKER_PS)
+                          if [ $? -eq 0 ]; then
+                              printf "\n${GREEN}Successfully removed containers $RESET\n";
+                          else
+                              printf "\n${RED}Error removing containers $RESET\n";
+                              exit;
+                          fi
+                          printf "\n${GREEN}SUCCESSFULLY REMOVED CONTAINERS $RESET\n";
+                        else
+                          printf "\n${RED}ERROR: THERE ARE NO CONTAINERS TO REMOVE $RESET\n";
+                        fi
+
+                        # Check to make sure that there are actually proceses to remove
+                        NUMBER_OF_PROCESSES=$($DOCKER_PS_APPS | wc -l)
+                        if [ $NUMBER_OF_PROCESSES -gt 0 ]; then
+                          # Removing containers
+                          docker rm -f $($DOCKER_PS_APPS)
+                          if [ $? -eq 0 ]; then
+                              printf "\n${GREEN}Successfully removed containers $RESET\n";
+                          else
+                              printf "\n${RED}Error removing containers $RESET\n";
+                              exit;
+                          fi
+                          printf "\n${GREEN}SUCCESSFULLY REMOVED CONTAINERS $RESET\n";
+                        else
+                          printf "\n${RED}ERROR: THERE ARE NO CONTAINERS TO REMOVE $RESET\n";
+                        fi
+
+                        # Remove the codewind network
+                        printf "\nRemoving docker network\n";
+                        docker network rm codewind_network
+                        if [ $? -eq 0 ]; then
+                            printf "\n${GREEN}Successfully removed docker network $RESET\n";
+                        else
+                            printf "\n${RED}Error removing docker network $RESET\n";
+                        fi
+
+                        # Remove the default network
+                        printf "\nRemoving docker network\n";
+                        docker network rm codewind_default
+                        if [ $? -eq 0 ]; then
+                            printf "\n${GREEN}Successfully removed docker network $RESET\n";
+                        else
+                            printf "\n${RED}Error removing docker network $RESET\n";
+                        fi
+
+                        # Remove images if --image or -i tag is given
+                        if [ ${REMOVE_IMAGES} = true ]; then
+                          # Check to make sure that there are images to remove
+                          NUMBER_OF_IMAGES=$($DOCKER_IMAGES | wc -l)
+                          if [ $NUMBER_OF_IMAGES -gt 0 ]; then
+                            # Sleep as removing Docker images can be inconvenient if done by accident
+                            printf "\n${BLUE}NOW REMOVING IMAGES.\nTHIS IS IRREVERSIBLE SO PAUSING FOR 5 SECONDS.${RESET}\n";
+                            sleep 5;
+                            printf "\nRemoving Images\n";
+                            docker rmi -f $($DOCKER_IMAGES)
+                            if [ $? -eq 0 ]; then
+                                printf "\n${GREEN}Successfully removed images $RESET\n";
+                            else
+                                printf "\n${RED}Error removing images $RESET\n";
+                                exit;
+                            fi
+                          else
+                            printf "\n${RED}ERROR: THERE ARE NO IMAGES TO REMOVE $RESET\n";
+                          fi
+                        fi
+
+                        # Remove app images if --appimages or -p flag is given
+                        if [ ${REMOVE_APP_IMAGES} = true ]; then
+                          echo "Removing app images"
+                          # Check to make sure that there are images to remove
+                          NUMBER_OF_IMAGES=$($DOCKER_IMAGES_APPS | wc -l)
+                          if [ $NUMBER_OF_IMAGES -gt 0 ]; then
+                            # Sleep as removing Docker images can be inconvenient if done by accident
+                            printf "\n${BLUE}NOW REMOVING IMAGES.\nTHIS IS IRREVERSIBLE SO PAUSING FOR 5 SECONDS.${RESET}\n";
+                            sleep 5;
+                            printf "\nRemoving Images\n";
+                            docker rmi -f $($DOCKER_IMAGES_APPS)
+                            if [ $? -eq 0 ]; then
+                                printf "\n${GREEN}Successfully removed images $RESET\n";
+                            else
+                                printf "\n${RED}Error removing images $RESET\n";
+                                exit;
+                            fi
+                          else
+                            printf "\n${RED}ERROR: THERE ARE NO APP IMAGES TO REMOVE $RESET\n";
+                          fi
+                        fi
+
+                        # Remove untagged images is -u or --untagged tag is given
+                        if [ ${REMOVE_UNTAGGED} = true ]; then
+                          printf "\n${BLUE}REMOVING UNTAGGED IMAGES.\nTHIS MAY HAVE ERRORS AS SOME IMAGES ARE REFERENCED IN OTHER REPOSITORIES.${RESET}\n";
+                          docker rmi $(docker images | grep "^<none>" | awk "{print \$3}");
+                          if [ $? -eq 0 ]; then
+                              printf "\n${GREEN}Successfully removed untagged images $RESET\n";
+                          else
+                              printf "\n${RED}Error removing untagged images $RESET\n";
+                              exit;
+                          fi
+                        fi
+
                         '''
                     }
                 }
