@@ -56,7 +56,6 @@ DIR=`pwd`
 # Used in travis when we build and push the images with script/build.sh
 # before running the tests via ./test.sh
 if [ "$NOBUILD" = "true" ]; then
-  
   echo "*** Using existing images, not performing image rebuild ***"
 else
   # Build the docker images

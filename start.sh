@@ -29,7 +29,6 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-
 # If no tag argument then set to latest
 if [ -z "$TAG" ]; then
   TAG='latest';
