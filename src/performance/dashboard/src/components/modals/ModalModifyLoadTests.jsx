@@ -169,6 +169,7 @@ class ModalModifyLoadTests extends React.Component {
                 shouldsubmitonenter="false"
                 danger={modalErrorText ? true : false}
                 modalLabel=""
+                modalAriaLabel="Load test configuration"
                 modalHeading="Load test configuration"
                 primaryButtonText="Save"
                 secondaryButtonText="Cancel"
@@ -184,7 +185,7 @@ class ModalModifyLoadTests extends React.Component {
                             <table className="formTable">
                                 <tbody>
                                     <tr>
-                                        <td className='fieldLabel'><label for="method">Method</label></td>
+                                        <td className='fieldLabel'><label>Method</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -205,7 +206,7 @@ class ModalModifyLoadTests extends React.Component {
                                     </tr>
 
                                     <tr>
-                                        <td className='fieldLabel'><label for="path">Path</label></td>
+                                        <td className='fieldLabel'><label>Path</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -216,6 +217,7 @@ class ModalModifyLoadTests extends React.Component {
                                                     autoComplete="off"
                                                     invalid={!isPathValid.valid}
                                                     invalidText={`${isPathValid.message}`}
+                                                    labelText=''
                                                     hideLabel
                                                     aria-label="Path"
                                                     value={formFields['path']}
@@ -225,7 +227,7 @@ class ModalModifyLoadTests extends React.Component {
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td className='fieldLabel'><label for="requestsPerSecond">Requests/second</label></td>
+                                        <td className='fieldLabel'><label>Requests/second</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -246,7 +248,7 @@ class ModalModifyLoadTests extends React.Component {
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td className='fieldLabel'><label for="concurrency">Concurrent</label></td>
+                                        <td className='fieldLabel'><label>Concurrent</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -267,7 +269,7 @@ class ModalModifyLoadTests extends React.Component {
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td className='fieldLabel'><label for="maxSeconds">Duration</label></td>
+                                        <td className='fieldLabel'><label>Duration</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :
@@ -288,7 +290,7 @@ class ModalModifyLoadTests extends React.Component {
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td className='fieldLabel'><label for="body">JSON Body</label></td>
+                                        <td className='fieldLabel'><label>JSON Body</label></td>
                                         <td>
                                             {this.state.loadingData ?
                                                 <TextInputSkeleton hideLabel /> :

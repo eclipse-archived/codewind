@@ -113,11 +113,11 @@ export default class ResultsCard extends Component {
                                     <div className='metrics-type'>
                                         <div className='metrics-label'>Response</div>
                                         <div className='metrics-delta'>
-
+                                            
                                             <TooltipIcon tooltipText={responseTooltipText} align="end" >
-                                                {responseDelta > 0 ? <IconUp className='bx--btn__icon' /> : <Fragment />}
-                                                {responseDelta === 0 ? <IconEven className='bx--btn__icon' /> : <Fragment />}
-                                                {responseDelta < 0 ? <IconDown className='bx--btn__icon' /> : <Fragment />}
+                                                {responseDelta > 0 ? <IconUp aria-label='Icon up' className='bx--btn__icon' /> : <Fragment />}
+                                                {responseDelta === 0 ? <IconEven aria-label='Icon even' className='bx--btn__icon' /> : <Fragment />}
+                                                {responseDelta < 0 ? <IconDown aria-label='Icon down' className='bx--btn__icon' /> : <Fragment />}
                                             </TooltipIcon>
                                         </div>
                                     </div>
@@ -130,9 +130,9 @@ export default class ResultsCard extends Component {
                                 <div className='metrics-label'>CPU</div>
                                 <div className='metrics-delta'>
                                     <TooltipIcon tooltipText={cpuTooltipText} align="start" >
-                                        {cpuDelta > 0 ? <IconUp className='bx--btn__icon' /> : <Fragment />}
-                                        {cpuDelta === 0 ? <IconEven className='bx--btn__icon' /> : <Fragment />}
-                                        {cpuDelta < 0 ? <IconDown className='bx--btn__icon' /> : <Fragment />}
+                                        {cpuDelta > 0 ? <IconUp aria-label="Icon up" className='bx--btn__icon' /> : <Fragment />}
+                                        {cpuDelta === 0 ? <IconEven aria-label="Icon even" className='bx--btn__icon' /> : <Fragment />}
+                                        {cpuDelta < 0 ? <IconDown aria-label="Icon down" className='bx--btn__icon' /> : <Fragment />}
                                     </TooltipIcon>
                                 </div>
                             </div>
@@ -143,9 +143,9 @@ export default class ResultsCard extends Component {
                                 <div className='metrics-label'>Memory</div>
                                 <div className='metrics-delta'>
                                     <TooltipIcon tooltipText={memoryTooltipText} align="center" direction="bottom">
-                                        {memoryDelta > 0 ? <IconUp className='bx--btn__icon' /> : <Fragment />}
-                                        {memoryDelta === 0 ? <IconEven className='bx--btn__icon' /> : <Fragment />}
-                                        {memoryDelta < 0 ? <IconDown className='bx--btn__icon' /> : <Fragment />}
+                                        {memoryDelta > 0 ? <IconUp aria-label="Icon up" className='bx--btn__icon' /> : <Fragment />}
+                                        {memoryDelta === 0 ? <IconEven aria-label="Icon even" className='bx--btn__icon' /> : <Fragment />}
+                                        {memoryDelta < 0 ? <IconDown aria-label="Icon down" className='bx--btn__icon' /> : <Fragment />}
                                     </TooltipIcon>
                                 </div>
                             </div>

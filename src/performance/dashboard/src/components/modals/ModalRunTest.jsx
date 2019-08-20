@@ -75,6 +75,7 @@ class ModalRunTest extends React.Component {
             style={{ resize: "none" }}
             className="descriptionTextArea"
             hideLabel={false}
+            aria-label="Optional description"
             labelText="Add an optional description"
             value={this.state.runTestDescription}
             invalidText=""

@@ -156,10 +156,10 @@ class PagePerformance extends React.Component {
         return (
             <Fragment>
 
-                <div className='pageTitle' role="main">
+                <div className='pageTitle' role="main" aria-label='main page'>
                     <div className='pageTitle-content'>
                         <div className='main-title'>
-                            <div className='main-text'>Performance</div>
+                            <div className='main-text' title='main page'>Performance</div>
                             <div className='actions-main'>
                                 <ActionRunLoad small={true} kind="ghost" projectID={this.props.projectID} />
                             </div>
