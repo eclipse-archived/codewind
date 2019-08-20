@@ -80,7 +80,7 @@ describe('projectInitializer.js', () => {
             describe('empty project', () => {
                 it('should return success status, language: "unknown", projectType: "docker", when validating generic project', function() {
                     this.timeout(testTimeout.med);
-                    projectPath =  '/tmp/dockerbindcontrollertest';
+                    projectPath =  '/tmp/dockerbindcontrollertest${Date.now()}';
                     const expectedResponse = {
                         status: 'success',
                         projectPath,
@@ -96,7 +96,7 @@ describe('projectInitializer.js', () => {
             describe('nodejs', () => {
                 it('should return success status, language: "nodejs", projectType: "nodejs", when validating nodejs project', async function() {
                     this.timeout(testTimeout.med);
-                    projectPath = '/tmp/nodejscontrollertest';
+                    projectPath = '/tmp/nodejscontrollertest${Date.now()}';
                     await git().clone('https://github.com/microclimate-dev2ops/nodeExpressTemplate', projectPath);
                     const expectedResponse = {
                         status: 'success',
@@ -113,7 +113,7 @@ describe('projectInitializer.js', () => {
             describe('swift', () => {
                 it('should return success status, language: "swift", projectType: "swift", when validating swift project', async function() {
                     this.timeout(testTimeout.med);
-                    projectPath = '/tmp/swiftbindcontrollertest';
+                    projectPath = '/tmp/swiftbindcontrollertest${Date.now()}';
                     await git().clone('https://github.com/microclimate-dev2ops/swiftTemplate.git', projectPath);
                     const expectedResponse = {
                         status: 'success',
@@ -131,7 +131,7 @@ describe('projectInitializer.js', () => {
             describe('liberty', () => {
                 it('should return success status, language: "java", projectType: "liberty", when validating liberty project', async function() {
                     this.timeout(testTimeout.med);
-                    projectPath = '/tmp/libertybindcontrollertest';
+                    projectPath = '/tmp/libertybindcontrollertest${Date.now()}';
                     await git().clone('https://github.com/microclimate-dev2ops/javaMicroProfileTemplate.git', projectPath);
                     const expectedResponse = {
                         status: 'success',
@@ -148,7 +148,7 @@ describe('projectInitializer.js', () => {
             describe('spring', () => {
                 it('should return success status, language: "java", projectType: "spring", when validating spring project', async function() {
                     this.timeout(testTimeout.med);
-                    projectPath = '/tmp/springbindcontrollertest';
+                    projectPath = '/tmp/springbindcontrollertest${Date.now()}';
                     await git().clone('https://github.com/microclimate-dev2ops/springJavaTemplate.git', projectPath);
                     const expectedResponse = {
                         status: 'success',

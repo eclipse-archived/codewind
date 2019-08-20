@@ -101,7 +101,7 @@ describe('Project Creation Tests (POST /projects)', function() {
 
             after(async function() {
                 this.timeout(2 * testTimeout.med);
-                await fs.remove(projectPath);
+                //await fs.remove(projectPath);
             });
 
             it('succeeds (with status 200) in creating a project ', async function() {
@@ -141,7 +141,7 @@ describe('Project Creation Tests (POST /projects)', function() {
 
             after(async function() {
                 this.timeout(2 * testTimeout.med);
-                await fs.remove(projectPath);
+                //await fs.remove(projectPath);
             });
 
             it('succeeds (with status 200) in creating a project', async function() {
@@ -181,7 +181,7 @@ describe('Project Creation Tests (POST /projects)', function() {
 
             after(async function() {
                 this.timeout(2 * testTimeout.med);
-                await fs.remove(projectPath);
+                //await fs.remove(projectPath);
             });
 
             it('succeeds (with status 200) in creating a project', async function() {
@@ -221,7 +221,7 @@ describe('Project Creation Tests (POST /projects)', function() {
 
             after(async function() {
                 this.timeout(2 * testTimeout.med);
-                await fs.remove(projectPath);
+                //await fs.remove(projectPath);
             });
 
             it('succeeds (with status 200) in creating a project', async function() {

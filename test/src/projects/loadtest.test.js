@@ -172,7 +172,7 @@ describe('Load Runner Tests', function() {
             const workspace_location = await projectService.findWorkspaceLocation();
             const projectPath = path.join(workspace_location, projectName);
             await projectService.unbindProject(projectID);
-            await fs.remove(projectPath);
+            //await fs.remove(projectPath);
         });
 
         it('should fail (with status 404) to run load against a project with an invalid id', async function() {
