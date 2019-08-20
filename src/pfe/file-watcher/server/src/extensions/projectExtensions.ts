@@ -237,7 +237,7 @@ export async function removeProjectHandler(projectInfo: ProjectInfo): Promise<an
     // delete to prevent initializing a new handler
     delete projectInfo.extensionID;
 
-    const handler = getProjectHandler(projectInfo);
+    const handler = await getProjectHandler(projectInfo);
 
     const key = projectInfo.projectID;
     if (extensionProjectHandlers[key]) {
