@@ -14,6 +14,7 @@ import * as _ from "lodash";
 
 import { ProjectCreation, createProject } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
+import * as utils from "../../../lib/utils";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
@@ -30,13 +31,17 @@ export default class CreateTest {
             this.runCreateWithoutProjectID(projData);
             this.runCreateWithoutProjectType(projData);
             this.runCreateWithValidData(socket, projData);
-            this.afterAllHook(socket);
+            this.afterAllHook(socket, projData);
         });
     }
 
-    private afterAllHook(socket: SocketIO): void {
+    private afterAllHook(socket: SocketIO, projData: ProjectCreation): void {
         after("clear socket events for create test", () => {
             socket.clearEvents();
+        });
+
+        after("remove build from running queue", async () => {
+            await utils.removeProjectFromRunningBuild(projData.projectID);
         });
     }
 

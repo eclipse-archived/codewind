@@ -36,7 +36,7 @@ interface ProjectInfoCache {
     [file: string]: string;
 }
 
-interface BuildQueueType {
+export interface BuildQueueType {
     operation: Operation;
     handler: any;
 }
@@ -59,6 +59,16 @@ const BUILD_KEY = "projectStatusController.buildRank";
 setInterval(checkBuildQueue, 5000);
 
 const availabilityTimeout = 5000;
+
+export async function removeProjectFromBuildQueue(projectID: string): Promise<Array<BuildQueueType>> {
+    if (process.env.NODE_ENV === "test") {
+        logger.logProjectInfo("This function should be only run for Turbine tests", projectID);
+        runningBuilds = runningBuilds.filter((project: BuildQueueType) => {
+            return projectID != project.operation.projectInfo.projectID;
+        });
+        return runningBuilds;
+    }
+}
 
 /**
  * @see [[Filewatcher.getProjectTypes]]

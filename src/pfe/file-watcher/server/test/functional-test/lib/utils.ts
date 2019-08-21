@@ -18,7 +18,7 @@ import * as _ from "lodash";
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
 import { SocketIO } from "./socket-io";
-import { ProjectCreation, projectAction } from "./project";
+import { ProjectCreation, projectAction, removeProjectFromBuildQueue } from "./project";
 import { expect } from "chai";
 import * as eventConfigs from "../configs/event.config";
 import * as timeoutConfigs from "../configs/timeout.config";
@@ -163,4 +163,10 @@ export async function rebuildProject(socket: SocketIO, projData: ProjectCreation
     } else {
         fail(`failed to find ${targetEvent} for rebuild project ${projData.projectType}`);
     }
+}
+
+export async function removeProjectFromRunningBuild(projectID: string): Promise<void> {
+    const runningBuildQueue = await removeProjectFromBuildQueue(projectID);
+    expect(runningBuildQueue);
+    expect(runningBuildQueue).to.not.include(projectID);
 }
