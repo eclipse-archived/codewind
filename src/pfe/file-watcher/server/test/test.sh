@@ -35,9 +35,23 @@ EOF
 function run {
     # Need to ensure Codewind container is up and running before running test cases
     # Need to run 'run.sh' in Codewind home directory because 'run.sh' uses relative path to run other building scripts
-    cd $CW_DIR
-    ./run.sh
-    cd -
+    if [ $TEST_TYPE == "local" ]; then
+        cd $CW_DIR
+        ./run.sh
+        cd -
+    elif [ $TEST_TYPE == "kube" ]; then
+        HTTPSTATUS=$(curl -si http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/ | head -n 1 | cut -d ' ' -f2)
+        HTTPRESPONSE=$(curl -si http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/ | tail -n 1)
+
+        if [ $HTTPSTATUS -ne 200 ]; then
+            echo -e "${RED}Failed to get the Codewind workspaces... ${RESET}\n"
+            exit 1
+        elif [[ $HTTPSTATUS -eq 200 && $HTTPRESPONSE ]]; then
+            if [[ ! $HTTPRESPONSE =~ codewind-turbine-test.*, ]]; then
+		        ./scripts/setup.sh -t $TEST_TYPE -f install
+	        fi
+        fi
+    fi
 
     # Run test cases
     ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE -d $CLEAN_WORKSPACE
@@ -143,6 +157,24 @@ while getopts "t:s:p:c:d:h" OPTION; do
             ;;
     esac
 done
+
+# Log in to the OKD cluster with default credentials
+if [[ $TEST_TYPE == "kube" ]]; then
+    # Check if the mandatory arguments have been set up
+    if [[ (-z $NAMESPACE) || (-z $CLUSTER_IP) ]]; then
+        echo -e "${RED}Mandatory arguments NAMESPACE & CLUSTER_IP are not set up. ${RESET}\n"
+        echo -e "${RED}Please export variables NAMESPACE & CLUSTER_IP to run the Kube tests. ${RESET}\n"
+        exit 1
+    fi
+
+    oc login $CLUSTER_IP:8443 -u ocadmin -p ocadmin
+    if [[ $? -eq 0 ]]; then
+        echo -e "${GREEN}Successfully logged into the OKD cluster ${RESET}\n"
+    else
+        echo -e "${RED}Failed to log into the OKD cluster ${RESET}\n"
+        exit 1
+    fi
+fi
 
 if [[ ($CLEAN_RUN == "y") ]]; then
     cleanRun

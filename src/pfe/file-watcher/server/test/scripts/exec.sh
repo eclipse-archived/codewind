@@ -10,7 +10,7 @@ RESET='\033[0m'
 cd ../../../../../
 CW_DIR=$(pwd)
 cd -
-WEBSERVER_FILE="$CW_DIR/src/pfe/iterative-dev/test/microclimate-test/scripts/webserver.sh"
+WEBSERVER_FILE="$CW_DIR/src/pfe/file-watcher/server/test/scripts/webserver.sh"
 
 function usage {
     me=$(basename $0)
@@ -28,12 +28,7 @@ function clone () {
     if [ $TEST_TYPE == "local" ]; then
         curl -H "Content-type: application/json" -d '{"projectName": "'$1'", "parentPath": "'$2'", "url": "'$3'"}' "http://localhost:9090/api/v1/projects"
     elif [ $TEST_TYPE == "kube" ]; then
-        kubectl exec -it $CODEWIND_POD_ID -- curl -H "Content-type: application/json" -d '{ "projectName": "'$1'" , "parentPath": "'$2'", "url": "'$3'" }' "https://localhost:9191/api/v1/projects" --insecure
-    fi
-
-    if [[ $? -ne 0 ]]; then
-        echo -e "${RED}Codewind was unable to clone the projects. ${RESET}\n"
-        exit 1
+        kubectl exec -i $CODEWIND_POD_ID -- curl -H "Content-type: application/json" -d '{"projectName": "'$1'", "parentPath": "'$2'", "url": "'$3'"}' "https://localhost:9191/api/v1/projects" --insecure
     fi
 }
 
@@ -41,11 +36,11 @@ function setup {
     DATE_NOW=$(date +"%d-%m-%Y")
     TIME_NOW=$(date +"%H.%M.%S")
     BUCKET_NAME=turbine-$TEST_TYPE-$TEST_SUITE
-    TEST_DIR=$CW_DIR/src/pfe/file-watcher/server/test
-    TEST_DIR_CONTAINER=/file-watcher/server
+    TURBINE_SERVER_DIR=$CW_DIR/src/pfe/file-watcher/server
+    TEST_DIR=$TURBINE_SERVER_DIR/test
+    TURBINE_DIR_CONTAINER=/file-watcher
     TEST_OUTPUT_DIR=~/test_results/$TEST_TYPE/$TEST_SUITE/$DATE_NOW/$TIME_NOW
     TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
-    CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
     PROJECTS_CLONE_DATA_FILE="./resources/projects-clone-data"
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
 
@@ -53,12 +48,12 @@ function setup {
 
     if [ $TEST_TYPE == "local" ]; then
         CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
-        docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; npm install --only=dev" \
-        && docker cp $TEST_DIR $CODEWIND_CONTAINER_ID:$TEST_DIR_CONTAINER
+        docker cp $TURBINE_SERVER_DIR $CODEWIND_CONTAINER_ID:$TURBINE_DIR_CONTAINER \
+        && docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; npm install --only=dev"
     elif [ $TEST_TYPE == "kube" ]; then
         CODEWIND_POD_ID=$(kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 | cut -d " " -f 1)
-        kubectl exec -it $CODEWIND_POD_ID -- bash -c "cd /file-watcher/server; npm install --only=dev" \
-        && kubectl cp $TEST_DIR $CODEWIND_POD_ID:$TEST_DIR_CONTAINER
+        kubectl cp $TURBINE_SERVER_DIR $CODEWIND_POD_ID:$TURBINE_DIR_CONTAINER \
+        && kubectl exec -it $CODEWIND_POD_ID -- bash -c "cd /file-watcher/server; npm install --only=dev"
     fi
 
     if [[ ($? -ne 0) ]]; then
@@ -68,8 +63,10 @@ function setup {
 
     # Clean up workspace if needed
     if [[ ($CLEAN_WORKSPACE == "y") ]]; then
-        echo -e "${BLUE}Cleaning up workspace. ${RESET}\n"
-        rm -rf $CW_DIR/codewind-workspace/*
+        if [ $TEST_TYPE == "local" ]; then
+            echo -e "${BLUE}Cleaning up workspace. ${RESET}\n"
+            rm -rf $CW_DIR/codewind-workspace/*
+        fi
     fi
 
     if [ $TEST_TYPE == "local" ]; then
@@ -78,11 +75,18 @@ function setup {
         PROJECT_PATH=/projects
     fi
 
-    # Clone projects to workspace
+    CTR=0
+    # Read project git config
     echo -e "${BLUE}Cloning projects to $CW_DIR/codewind-workspace. ${RESET}"
-    while IFS= read -r LINE; do
-        PROJECT_NAME=$(echo $LINE | cut -d "=" -f 1)
-        PROJECT_URL=$(echo $LINE | cut -d "=" -f 2)
+    while IFS='\n' read -r LINE; do
+        PROJECT_CLONE[$CTR]=$LINE
+        let CTR++
+    done < "$PROJECTS_CLONE_DATA_FILE"
+    
+    # Clone projects to workspace
+    for i in "${PROJECT_CLONE[@]}"; do
+	    PROJECT_NAME=$(echo $i | cut -d "=" -f 1)
+        PROJECT_URL=$(echo $i | cut -d "=" -f 2)
         echo -e "\n\nProject name is: $PROJECT_NAME, project URL is $PROJECT_URL"
         echo -e "${BLUE}Cloning $PROJECT_URL. ${RESET}"
         clone $PROJECT_NAME $PROJECT_PATH $PROJECT_URL
@@ -91,7 +95,7 @@ function setup {
             echo -e "${RED}Cloning project $PROJECT_NAME failed. ${RESET}\n"
             exit 1
         fi
-    done < "$PROJECTS_CLONE_DATA_FILE"
+    done
 }
 
 function run {
