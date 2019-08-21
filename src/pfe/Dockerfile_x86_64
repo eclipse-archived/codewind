@@ -81,6 +81,10 @@ RUN chmod 644 /etc/sudoers \
     && ln -s /codewind-workspace /projects \
     && adduser mcuser
 
+######### Extensions setup.
+RUN mkdir /extensions
+COPY /extensions /extensions
+
 ######### File watcher setup.
 RUN mkdir /file-watcher
 WORKDIR /file-watcher
@@ -101,11 +105,6 @@ RUN npm ci \
 
 # Copy translation files to the distribution directory
 RUN cp -r src/utils/locales dist/utils/locales
-
-######### Extensions setup.
-RUN mkdir /extensions
-WORKDIR /extensions
-COPY /extensions /extensions
 
 ######### Portal setup
 # This is copied in a later build stage.
