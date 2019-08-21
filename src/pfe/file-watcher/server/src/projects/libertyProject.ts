@@ -58,11 +58,6 @@ if (!process.env.IN_K8) {
     defaultIgnoredPath.push("/chart");
 }
 
-export const libertyAppLogs = {
-    "messages": "messages", // for liberty project messages log
-    "console": "console" // for liberty project console log
-};
-
 /**
  * @function
  * @description Create operation for a liberty project.
@@ -266,7 +261,7 @@ export async function getAppLog(logDirectory: string, projectID: string, project
         logDirectory, // for app.log
     ];
 
-    const logSuffixes = [libertyAppLogs.console, libertyAppLogs.messages];
+    const logSuffixes = [logHelper.libertyAppLogs.console, logHelper.libertyAppLogs.messages];
     const ffdclogPath = path.join(logDirs[0], `ffdc`);
     const inWorkspaceLogFiles = await logHelper.getLogFilesWithTimestamp(logDirs[1], [logHelper.appLogs.app]);
 

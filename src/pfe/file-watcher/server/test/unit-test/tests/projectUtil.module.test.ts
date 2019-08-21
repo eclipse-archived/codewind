@@ -418,9 +418,9 @@ export function projectUtilTestModule(): void {
                         await writeAsync(filePath, "some data");
                     }
                     if (appLogTest && data.projectType === "liberty") {
-                        const consoleLogPath = path.resolve(appLogDirectory, libertyProject.libertyAppLogs.console + ".log" );
+                        const consoleLogPath = path.resolve(appLogDirectory, logHelper.libertyAppLogs.console + ".log" );
                         await writeAsync(consoleLogPath, "some data");
-                        const messagesLogPath = path.resolve(appLogDirectory, libertyProject.libertyAppLogs.messages + ".log");
+                        const messagesLogPath = path.resolve(appLogDirectory, logHelper.libertyAppLogs.messages + ".log");
                         await writeAsync(messagesLogPath, "some data");
                         const ffdcDir = path.resolve(appLogDirectory, "ffdc" );
                         await mkdirAsync(ffdcDir);

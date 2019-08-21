@@ -19,7 +19,6 @@ import * as logger from "../utils/logger";
 import * as projectsController from "../controllers/projectsController";
 import * as dockerutil from "../utils/dockerutil";
 import { BuildLog, AppLog } from "./Project";
-import { libertyAppLogs } from "./libertyProject";
 
 const statAsync = promisify(fs.stat);
 const existsSync = promisify(fs.exists);
@@ -34,6 +33,11 @@ export const buildLogs = {
 
 const defaultAppLogs = {
     "app": "app" // app container log file available for all projects
+};
+
+export const libertyAppLogs = {
+    "messages": "messages", // for liberty project messages log
+    "console": "console" // for liberty project console log
 };
 
 export const appLogs = Object.assign(defaultAppLogs, libertyAppLogs);
