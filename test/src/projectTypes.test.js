@@ -31,6 +31,7 @@ describe('Project Types API tests', function() {
             'spring',
             'swift',
             'docker',
+            'appsodyExtension',
         ]);
     });
 });

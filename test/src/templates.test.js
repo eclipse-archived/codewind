@@ -29,7 +29,7 @@ chai.use(chaiResValidator(pathToApiSpec));
 const expectedLanguages = ['java', 'swift', 'nodejs', 'go', 'python'];
 
 describe('Template API tests', function() {
-    describe('GET /api/v1/templates', function() {
+    describe.skip('GET /api/v1/templates', function() {
         describe('?projectStyle=', function() {
             describe('empty', function() {
                 it('should return a list of all available templates', async function() {
@@ -75,7 +75,7 @@ describe('Template API tests', function() {
         });
     });
 
-    describe('GET|POST|DELETE /api/v1/templates/repositories', function() {
+    describe.skip('GET|POST|DELETE /api/v1/templates/repositories', function() {
         const expectedUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
         const testUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
         let originalTemplateRepos;
