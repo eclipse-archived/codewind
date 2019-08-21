@@ -234,7 +234,10 @@ export async function getProjectHandler(projectInfo: ProjectInfo): Promise<any> 
  */
 export async function removeProjectHandler(projectInfo: ProjectInfo): Promise<any> {
 
-    const handler = getProjectHandler(projectInfo);
+    // delete to prevent initializing a new handler
+    delete projectInfo.extensionID;
+
+    const handler = await getProjectHandler(projectInfo);
 
     const key = projectInfo.projectID;
     if (extensionProjectHandlers[key]) {

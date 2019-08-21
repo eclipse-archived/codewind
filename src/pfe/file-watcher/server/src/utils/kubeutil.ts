@@ -294,8 +294,7 @@ export async function printHelmStatus(projectID: string, releaseName: string): P
  * @returns Promise<ProcessResult>
  */
 export async function installChart(projectID: string, deploymentName: string, chartLocation: string, deploymentRegistry: string): Promise<ProcessResult> {
-    const microclimateReleaseName: string = process.env.MICROCLIMATE_RELEASE_NAME;
-    const installDeployment: string[] = ["upgrade", "--install", deploymentName, "--recreate-pods", "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + deploymentName, "--set", "microclimate.release.name=" + microclimateReleaseName, chartLocation];
+    const installDeployment: string[] = ["upgrade", "--install", deploymentName, "--recreate-pods", "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + deploymentName, chartLocation];
     let response: ProcessResult;
 
     // Install deployment
