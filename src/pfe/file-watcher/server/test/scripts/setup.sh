@@ -140,24 +140,6 @@ if [[ (-z $TEST_TYPE) || (-z $SETUP_FUNCTION) ]]; then
     exit 1
 fi
 
-# Log in to the OKD cluster with default credentials
-if [[ $TEST_TYPE == "kube" ]]; then
-    # Check if the mandatory arguments have been set up
-    if [[ (-z $NAMESPACE) || (-z $CLUSTER_IP) ]]; then
-        echo -e "${RED}Mandatory arguments NAMESPACE & CLUSTER_IP are not set up. ${RESET}\n"
-        echo -e "${RED}Please export variables NAMESPACE & CLUSTER_IP to run the Kube tests. ${RESET}\n"
-        exit 1
-    fi
-
-    oc login $CLUSTER_IP:8443 -u ocadmin -p ocadmin
-    if [[ $? -eq 0 ]]; then
-        echo -e "${GREEN}Successfully logged into the OKD cluster ${RESET}\n"
-    else
-        echo -e "${RED}Failed to log into the OKD cluster ${RESET}\n"
-        exit 1
-    fi
-fi
-
 if [[ $SETUP_FUNCTION == "install" ]];then
     install
 elif [[ ($SETUP_FUNCTION == "uninstall") ]];then
