@@ -1397,7 +1397,6 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         // Modify the temp copy of the chart to add the needed labels and serviceAccount
         try {
             // Render the chart template
-            const microclimateReleaseName: string = process.env.MICROCLIMATE_RELEASE_NAME;
             await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["template", defaultChartLocation, "--name", buildInfo.containerName, "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + buildInfo.containerName, "--output-dir=" + chartParentFolder], {});
 
             // Find the locations of the deployment and service file
