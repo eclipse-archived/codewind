@@ -337,7 +337,11 @@ describe('Project Lifecycle Tests', function() {
             if (projectID) {
                 const res = await projectService.unbindProject(projectID);
                 res.should.have.status(202);
-                await execAsync(`rm -rf ${workspace_location}/${projectName}`);
+                // after is failing in jenkins with permission issues.  This is not
+                // actually part of the test, its us trying to be good and clean up   
+
+
+                //await execAsync(`rm -rf ${workspace_location}/${projectName}`);
             }
         });
     }
