@@ -13,8 +13,10 @@ const chai = require('chai');
 
 const projectService = require('../../../modules/project.service');
 const reqService = require('../../../modules/request.service');
-const { testTimeout, ADMIN_COOKIE } = require('../../../config');
+const { testTimeout, ADMIN_COOKIE, pathToApiSpec } = require('../../../config');
+const chaiResValidator = require('chai-openapi-response-validator');
 
+chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
 describe('Load Runner Tests', function() {
@@ -42,7 +44,7 @@ describe('Load Runner Tests', function() {
 
             // workspace_location = await projectService.findWorkspaceLocation();
             // const projectPath = path.join(workspace_location, projectName);
-            //await fs.remove(projectPath);
+            // await fs.remove(projectPath);
         });
 
         describe('POST loadtest/config', function() {
@@ -51,14 +53,14 @@ describe('Load Runner Tests', function() {
                     it('returns status 200 to POST/loadtest/config to the load-test/config.json', async function() {
                         this.timeout(testTimeout.short);
                         const res = await writeToLoadTestConfig(projectID, configOptions);
-                        res.should.have.status(200);
+                        res.should.have.status(200).and.satisfyApiSpec;
                     });
 
                     it('returns status 200 to POST/loadtest/config when query parameters are included', async function() {
                         this.timeout(testTimeout.short);
                         configOptions.query = { a: '1', b: '2' };
                         const res = await writeToLoadTestConfig(projectID, configOptions);
-                        res.should.have.status(200);
+                        res.should.have.status(200).and.satisfyApiSpec;
                     });
 
                     it('returns status 200 to GET/loadtest/config with the correct decoded options', async function() {
@@ -67,7 +69,7 @@ describe('Load Runner Tests', function() {
                         delete configOptions.query;
                         expectedSavedConfig = modifyOptions(configOptions, { path: '/?a=1&b=2' });
                         const res = await readLoadTestConfig(projectID);
-                        res.should.have.status(200);
+                        res.should.have.status(200).and.satisfyApiSpec;
                         res.body.should.deep.equal(expectedSavedConfig);
                     });
                 });
@@ -77,13 +79,13 @@ describe('Load Runner Tests', function() {
                         configOptions.query = { a: '1', b: '2' };
                         configOptions.config = 'Not a valid option';
                         const res = await writeToLoadTestConfig(projectID, configOptions);
-                        res.should.have.status(200);
+                        res.should.have.status(200).and.satisfyApiSpec;
                     });
 
                     it('returns status 200 to GET/loadtest/config and not return these non-config fields in loadtest/config.json', async function() {
                         this.timeout(testTimeout.short);
                         const res = await readLoadTestConfig(projectID);
-                        res.should.have.status(200);
+                        res.should.have.status(200).and.satisfyApiSpec;
                         res.body.should.deep.equal(expectedSavedConfig);
                     });
                 });
@@ -92,14 +94,14 @@ describe('Load Runner Tests', function() {
                         this.timeout(testTimeout.short);
                         configOptions.query = {};
                         const res = await writeToLoadTestConfig(projectID, configOptions);
-                        res.should.have.status(200);
+                        res.should.have.status(200).and.satisfyApiSpec;
                     });
 
                     it('returns status 200 to GET/loadtest/config and not return these non-config fields in loadtest/config.json', async function() {
                         this.timeout(testTimeout.short);
                         expectedSavedConfig.path = '/';
                         const res = await readLoadTestConfig(projectID);
-                        res.should.have.status(200);
+                        res.should.have.status(200).and.satisfyApiSpec;
                         res.body.should.deep.equal(expectedSavedConfig);
                     });
                 });
@@ -142,7 +144,7 @@ describe('Load Runner Tests', function() {
                 it('returns status 200 to GET/loadtest/config from the load-test/config.json', async function() {
                     this.timeout(testTimeout.short);
                     const res = await readLoadTestConfig(projectID);
-                    res.should.have.status(200);
+                    res.should.have.status(200).and.satisfyApiSpec;
                     res.body.should.deep.equal(expectedSavedConfig);
                 });
             });
