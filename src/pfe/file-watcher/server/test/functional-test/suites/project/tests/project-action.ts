@@ -37,42 +37,52 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "disableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 200,
-            "socketEvent": eventConfigs.events.projectChanged,
-            "eventKeys": ["operationId", "projectID", "ignoredPaths", "status"],
-            "result": {
+            "socketEvent": [eventConfigs.events.projectChanged],
+            "eventKeys": [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
+            "result": [{
                 "projectID": projData.projectID,
                 "status": "success"
-            }
+            }]
         },
-        // "combo2": {
-        //     "action": "enableautobuild",
-        //     "returnKeys": ["statusCode", "status"],
-        //     "statusCode": 202,
-        // },
-        // "combo3": {
-        //     "action": "validate",
-        //     "returnKeys": ["operationId", "status"],
-        //     "statusCode": 202,
-        //     "socketEvent": eventConfigs.events.projectValidated,
-        //     "eventKeys": ["operationId", "projectType", "location", "projectID", "status", "results"],
-        //     "result": {
-        //         "projectType": projData.projectType,
-        //         "location": projData.location,
-        //         "projectID": projData.projectID,
-        //         "status": "success"
-        //     }
-        // },
-        // "combo4": {
-        //     "action": "build",
-        //     "returnKeys": ["operationId", "status"],
-        //     "statusCode": 202,
-        //     "socketEvent": eventConfigs.events.statusChanged,
-        //     "eventKeys": ["projectID", "appStatus", "detailedAppStatus"],
-        //     "result": {
-        //         "projectID": projData.projectID,
-        //         "appStatus": "started",
-        //     }
-        // },
+        "combo2": {
+            "action": "enableautobuild",
+            "returnKeys": ["statusCode", "status"],
+            "statusCode": 202,
+            "socketEvent": [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
+            "eventKeys": [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
+            "result": [{
+                "projectID": projData.projectID,
+                "status": "success"
+            }, {
+                "projectID": projData.projectID,
+                "appStatus": "started",
+            }],
+            "afterHook": [afterHookEnableAutoBuildTest]
+        },
+        "combo3": {
+            "action": "validate",
+            "returnKeys": ["operationId", "status"],
+            "statusCode": 202,
+            "socketEvent": [eventConfigs.events.projectValidated],
+            "eventKeys": [["operationId", "projectType", "location", "projectID", "status", "results"]],
+            "result": [{
+                "projectType": projData.projectType,
+                "location": projData.location,
+                "projectID": projData.projectID,
+                "status": "success"
+            }]
+        },
+        "combo4": {
+            "action": "build",
+            "returnKeys": ["operationId", "status"],
+            "statusCode": 202,
+            "socketEvent": [eventConfigs.events.statusChanged],
+            "eventKeys": [["projectID", "appStatus", "detailedAppStatus"]],
+            "result": [{
+                "projectID": projData.projectID,
+                "appStatus": "started",
+            }]
+        },
         // "combo5": {
         //     "action": "restart",
         //     "returnKeys": ["operationId", "status"],
@@ -108,7 +118,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             }
         });
 
-        utils.rebuildProjectAfterHook(socket, projData);
+        // utils.rebuildProjectAfterHook(socket, projData);
 
         it("set project action with undefined action type", async () => {
             const testData = _.cloneDeep(data);
@@ -123,14 +133,22 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         });
 
         _.forEach(combinations, (combo) => {
-            if (combo.action.toLowerCase() === "restart") {
-                if (!project_configs.restartCapabilities[projData.projectType]) return;
-                for (const mode of startModes) {
-                    setProjectActionTest(combo, mode);
+            describe(`configure project action ${combo.action}`, () => {
+                _.forEach(combo["afterHook"], (afterHook) => {
+                    after(`after hook: ${combo["setting"]} settings test`, async function (): Promise<void> {
+                        await afterHook(this);
+                    });
+                });
+
+                if (combo.action.toLowerCase() === "restart") {
+                    if (!project_configs.restartCapabilities[projData.projectType]) return;
+                    for (const mode of startModes) {
+                        setProjectActionTest(combo, mode);
+                    }
+                } else {
+                    setProjectActionTest(combo);
                 }
-            } else {
-                setProjectActionTest(combo);
-            }
+            });
         });
 
         function setProjectActionTest(combo: any, mode?: string): void {
@@ -158,58 +176,76 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
                     expect(info.status).to.equal(combo.status);
                 }
 
-                if (combo["socketEvent"] && combo["eventKeys"]) {
-                    const targetEvent = combo["socketEvent"];
-                    let eventFound = false;
-                    let event: any;
-                    await new Promise((resolve) => {
-                        const timer = setInterval(() => {
-                            const events = socket.getAllEvents();
-                            if (events && events.length >= 1) {
-                                event =  events.filter((value) => {
-                                    if (value.eventName === targetEvent && _.isEqual(Object.keys(value.eventData), combo["eventKeys"]) && _.isMatch(value.eventData, combo["result"])) {
-                                        return value;
+                const socketEvents = combo["socketEvent"];
+                const eventKeys = combo["eventKeys"];
+                const results = combo["result"];
+
+                if (socketEvents && eventKeys && results) {
+                    expect(socketEvents.length).to.equal(eventKeys.length);
+                    expect(eventKeys.length).to.equal(results.length);
+
+                    for (const socketEvent of socketEvents) {
+                        const index = socketEvents.indexOf(socketEvent);
+                        const eventKey = eventKeys[index];
+                        const result = results[index];
+
+                        const targetEvent = socketEvent;
+                        let eventFound = false;
+                        let event: any;
+                        await new Promise((resolve) => {
+                            const timer = setInterval(() => {
+                                const events = socket.getAllEvents();
+                                if (events && events.length >= 1) {
+                                    event =  events.filter((value) => {
+                                        if (value.eventName === targetEvent && _.isEqual(Object.keys(value.eventData), eventKey) && _.isMatch(value.eventData, result)) {
+                                            return value;
+                                        }
+                                    })[0];
+                                    if (event) {
+                                        eventFound = true;
+                                        clearInterval(timer);
+                                        return resolve();
                                     }
-                                })[0];
-                                if (event) {
-                                    eventFound = true;
-                                    clearInterval(timer);
-                                    return resolve();
+                                }
+                            }, timeoutConfigs.defaultInterval);
+                        });
+
+                        if (eventFound && event) {
+                            expect(event);
+                            expect(event.eventName);
+                            expect(event.eventName).to.equal(targetEvent);
+                            expect(event.eventData);
+
+                            for (const key of eventKey) {
+                                expect(event.eventData).to.haveOwnProperty(key);
+                                if (key === "projectID") {
+                                    expect(event.eventData[key]).to.equal(projData.projectID);
+                                }
+                                if (key === "projectType") {
+                                    expect(event.eventData[key]).to.equal(projData.projectType);
+                                }
+                                if (key === "location") {
+                                    expect(event.eventData[key]).to.equal(projData.location);
+                                }
+                                if (key === "appStatus") {
+                                    expect(event.eventData[key]).to.equal("started");
+                                }
+                                if (key === "startMode") {
+                                    const expectedMode = mode === "debug" ? "debugNoInit" : mode;
+                                    expect(event.eventData[key]).to.equal(expectedMode);
                                 }
                             }
-                        }, timeoutConfigs.defaultInterval);
-                    });
-
-                    if (eventFound && event) {
-                        expect(event);
-                        expect(event.eventName);
-                        expect(event.eventName).to.equal(targetEvent);
-                        expect(event.eventData);
-
-                        for (const eventKey of combo["eventKeys"]) {
-                            expect(event.eventData).to.haveOwnProperty(eventKey);
-                            if (eventKey === "projectID") {
-                                expect(event.eventData[eventKey]).to.equal(projData.projectID);
-                            }
-                            if (eventKey === "projectType") {
-                                expect(event.eventData[eventKey]).to.equal(projData.projectType);
-                            }
-                            if (eventKey === "location") {
-                                expect(event.eventData[eventKey]).to.equal(projData.location);
-                            }
-                            if (eventKey === "appStatus") {
-                                expect(event.eventData[eventKey]).to.equal("started");
-                            }
-                            if (eventKey === "startMode") {
-                                const expectedMode = mode === "debug" ? "debugNoInit" : mode;
-                                expect(event.eventData[eventKey]).to.equal(expectedMode);
-                            }
+                        } else {
+                            fail(`failed to find ${targetEvent} for action ${combo.action}`);
                         }
-                    } else {
-                        fail(`failed to find ${targetEvent} for action ${combo.action}`);
                     }
                 }
             }).timeout(timeoutConfigs.defaultTimeout);
         }
     });
+
+    async function afterHookEnableAutoBuildTest(hook: any): Promise<void> {
+        hook.timeout(timeoutConfigs.defaultTimeout);
+        await utils.removeProjectFromRunningBuild(projData.projectID);
+    }
 }
