@@ -22,7 +22,7 @@ const {
 
 chai.should();
 
-describe('Batch enabling template repositories', function() {
+describe.skip('Batch enabling template repositories', function() {
     describe('when enabling a single repo', function() {
         let originalTemplateRepos;
         let repoToTest;

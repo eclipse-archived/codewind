@@ -47,7 +47,7 @@ async function putWatchStatus(projectID, projectWatchStateId) {
     await reqService.makeReqAndAwaitSocketMsg(req, 200, expectedSocketMsg);
 }
 
-describe('Deployment Registry route tests', function() {
+describe.skip('Deployment Registry route tests', function() {
     let workspace_location;
     let workspace_settings_file;
     let workspace_settings_file_bk;

@@ -40,7 +40,10 @@ describe('Load Runner Tests', function() {
             workspace_location = await projectService.findWorkspaceLocation();
             const projectPath = path.join(workspace_location, projectName);
             await projectService.unbindProject(projectID);
-            await fs.remove(projectPath);
+            // after is failing in jenkins with permission issues.  This is not
+            // actually part of the test, its us trying to be good and clean up   
+
+            //await fs.remove(projectPath);
         });
 
         describe('POST loadtest/config', function() {
@@ -169,7 +172,7 @@ describe('Load Runner Tests', function() {
             const workspace_location = await projectService.findWorkspaceLocation();
             const projectPath = path.join(workspace_location, projectName);
             await projectService.unbindProject(projectID);
-            await fs.remove(projectPath);
+            //await fs.remove(projectPath);
         });
 
         it('should fail (with status 404) to run load against a project with an invalid id', async function() {
