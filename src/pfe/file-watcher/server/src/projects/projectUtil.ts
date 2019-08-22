@@ -76,6 +76,7 @@ export interface ProjectEvent {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     contextRoot?: string;
+    isHttps?: boolean;
 }
 
 export interface ProjectLog {
@@ -324,6 +325,9 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
     }
     if (operation.projectInfo.contextRoot) {
         projectInfo.contextRoot = operation.projectInfo.contextRoot;
+    }
+    if (typeof operation.projectInfo.isHttps == "boolean") {
+        projectInfo.isHttps = operation.projectInfo.isHttps;
     }
 
     const projectMetadata = projectsController.getProjectMetadataById(projectID);
@@ -1248,11 +1252,16 @@ export async function buildAndRun(operation: Operation, command: string): Promis
         status: "failed"
     };
 
+    logger.logInfo("MJF operation is " + JSON.stringify(operation));
+
     if (operation.projectInfo.ignoredPaths) {
         projectEvent.ignoredPaths = operation.projectInfo.ignoredPaths;
     }
     if (operation.projectInfo.contextRoot) {
         projectEvent.contextRoot = operation.projectInfo.contextRoot;
+    }
+    if (typeof operation.projectInfo.isHttps == "boolean") {
+        projectEvent.isHttps = operation.projectInfo.isHttps;
     }
     const buildInfo: BuildRequest = {
         projectLocation: projectLocation,
@@ -1368,6 +1377,7 @@ export async function buildAndRun(operation: Operation, command: string): Promis
  * @returns Promise<void>
  */
 async function containerBuildAndRun(event: string, buildInfo: BuildRequest, operation: Operation): Promise<void> {
+    logger.logInfo("MJF opertaion containerBuildAndRun " + JSON.stringify(operation));
     const normalizedProjectLocation = path.resolve(buildInfo.projectLocation);
     const projectName = normalizedProjectLocation.split("/").reverse()[0];
     const logDir = await logHelper.getLogDir(buildInfo.projectID, projectName);
@@ -1831,11 +1841,16 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
         value: false
     };
 
-    if (operation.projectInfo.ignoredPaths) {
-        projectInfo.ignoredPaths = operation.projectInfo.ignoredPaths;
+    logger.logInfo("MJF operation getPODInfoAndSendToPortal " + JSON.stringify(operation));
+
+    if (projectInfo.ignoredPaths) {
+        projectEvent.ignoredPaths = projectInfo.ignoredPaths;
     }
-    if (operation.projectInfo.contextRoot) {
-        projectInfo.contextRoot = operation.projectInfo.contextRoot;
+    if (projectInfo.contextRoot) {
+        projectEvent.contextRoot = projectInfo.contextRoot;
+    }
+    if (typeof projectInfo.isHttps == "boolean") {
+        projectEvent.isHttps = projectInfo.isHttps;
     }
 
     const logDir = await logHelper.getLogDir(projectID, projectName);
@@ -1844,13 +1859,13 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
     try {
         logger.logProjectInfo(`The container was started successfully for application ` + projectLocation, projectID, projectName);
 
-        logger.logProjectInfo("The project location for " + operation.projectInfo.projectID + " is " + projectLocation, projectID, projectName);
+        logger.logProjectInfo("The project location for " + projectID + " is " + projectLocation, projectID, projectName);
 
-        const containerInfo = await kubeutil.getApplicationContainerInfo(operation.projectInfo, operation);
+        const containerInfo = await kubeutil.getApplicationContainerInfo(projectInfo, operation);
         projectEvent.status = "success";
         if (containerInfo) {
-            containerInfoMap.set(operation.projectInfo.projectID, containerInfo);
-            containerInfoForceRefreshMap.set(operation.projectInfo.projectID, false);
+            containerInfoMap.set(projectID, containerInfo);
+            containerInfoForceRefreshMap.set(projectID, false);
             if (containerInfo.ip) {
                 projectEvent.host = containerInfo.ip;
             }
@@ -1866,17 +1881,17 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
             }
             logger.logProjectInfo("Found container information: " + JSON.stringify(containerInfo), projectID, projectName);
         } else {
-            containerInfoMap.delete(operation.projectInfo.projectID);
-            containerInfoForceRefreshMap.delete(operation.projectInfo.projectID);
+            containerInfoMap.delete(projectID);
+            containerInfoForceRefreshMap.delete(projectID);
             logger.logProjectInfo("No containerInfo", projectID, projectName);
         }
 
         // stream the app container logs - Kubernetes
-        logger.logProjectInfo("Streaming application logs on Kubernetes for " + projectInfo.projectID, projectInfo.projectID);
+        logger.logProjectInfo("Streaming application logs on Kubernetes for " + projectID, projectID);
         await processManager.spawnDetachedAsync(projectID, "/file-watcher/scripts/dockerScripts/docker-app-log.sh", [appLog, operation.containerName,
             process.env.IN_K8, projectID], {});
 
-        const logs = await getProjectLogs(operation.projectInfo);
+        const logs = await getProjectLogs(projectInfo);
         projectEvent.logs = logs;
     } catch (err) {
         logger.logProjectError(err, projectID, projectName);

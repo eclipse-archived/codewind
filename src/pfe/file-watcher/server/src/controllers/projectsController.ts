@@ -253,6 +253,10 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         projectInfo.ignoredPaths = selectedProjectHandler.defaultIgnoredPath;
     }
 
+    // Set isHttps to false by default, override if settings key is found
+    await projectUtil.setProjectWWWProtocolMap(projectID, false);
+    projectInfo.isHttps = false;
+
     // Persist the Project Settings last since it will have the higher priority over default projectInfo values
     if (settings) {
         for (const key in settings) {
