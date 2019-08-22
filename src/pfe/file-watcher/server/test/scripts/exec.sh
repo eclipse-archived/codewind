@@ -24,11 +24,24 @@ Options:
 EOF
 }
 
+function getCurl() {
+    protocol="http"
+    port="9090"
+    if [ $TEST_TYPE == "kube" ]; then
+        protocol="https"
+        port="9191"
+        flags="--insecure"
+    fi
+    PROJECT_CLONE_CMD="curl -H \"Content-type: application/json\" -d '{\"projectName\": \"$1\", \"parentPath\": \"$2\", \"url\": \"$3\"}' \"$protocol://localhost:$port/api/v1/projects\" $flags"
+}
+
 function clone () {
+    getCurl $1 $2 $3
+
     if [ $TEST_TYPE == "local" ]; then
-        curl -H "Content-type: application/json" -d '{"projectName": "'$1'", "parentPath": "'$2'", "url": "'$3'"}' "http://localhost:9090/api/v1/projects"
+        docker exec -it $CODEWIND_CONTAINER_ID bash -c "$PROJECT_CLONE_CMD"
     elif [ $TEST_TYPE == "kube" ]; then
-        kubectl exec -i $CODEWIND_POD_ID -- curl -H "Content-type: application/json" -d '{"projectName": "'$1'", "parentPath": "'$2'", "url": "'$3'"}' "https://localhost:9191/api/v1/projects" --insecure
+        kubectl exec -i $CODEWIND_POD_ID -- bash -c "$PROJECT_CLONE_CMD"
     fi
 }
 
@@ -43,17 +56,19 @@ function setup {
     TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
     PROJECTS_CLONE_DATA_FILE="./resources/projects-clone-data"
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
+    TURBINE_NPM_INSTALL_CMD="cd /file-watcher/server; npm install --only=dev"
+    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml npm run $TEST_SUITE:test:xml"
 
     mkdir -p $TEST_OUTPUT_DIR
 
     if [ $TEST_TYPE == "local" ]; then
         CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
         docker cp $TURBINE_SERVER_DIR $CODEWIND_CONTAINER_ID:$TURBINE_DIR_CONTAINER \
-        && docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; npm install --only=dev"
+        && docker exec -it $CODEWIND_CONTAINER_ID bash -c "$TURBINE_NPM_INSTALL_CMD"
     elif [ $TEST_TYPE == "kube" ]; then
         CODEWIND_POD_ID=$(kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 | cut -d " " -f 1)
         kubectl cp $TURBINE_SERVER_DIR $CODEWIND_POD_ID:$TURBINE_DIR_CONTAINER \
-        && kubectl exec -it $CODEWIND_POD_ID -- bash -c "cd /file-watcher/server; npm install --only=dev"
+        && kubectl exec -it $CODEWIND_POD_ID -- bash -c "$TURBINE_NPM_INSTALL_CMD"
     fi
 
     if [[ ($? -ne 0) ]]; then
@@ -69,15 +84,11 @@ function setup {
         fi
     fi
 
-    if [ $TEST_TYPE == "local" ]; then
-        PROJECT_PATH=$CW_DIR/codewind-workspace
-    elif [ $TEST_TYPE == "kube" ]; then
-        PROJECT_PATH=/projects
-    fi
+    PROJECT_PATH=/codewind-workspace
 
     CTR=0
     # Read project git config
-    echo -e "${BLUE}Cloning projects to $CW_DIR/codewind-workspace. ${RESET}"
+    echo -e "${BLUE}Cloning projects to $PROJECT_PATH. ${RESET}"
     while IFS='\n' read -r LINE; do
         PROJECT_CLONE[$CTR]=$LINE
         let CTR++
@@ -85,7 +96,7 @@ function setup {
     
     # Clone projects to workspace
     for i in "${PROJECT_CLONE[@]}"; do
-	    PROJECT_NAME=$(echo $i | cut -d "=" -f 1)
+        PROJECT_NAME=$(echo $i | cut -d "=" -f 1)
         PROJECT_URL=$(echo $i | cut -d "=" -f 2)
         echo -e "\n\nProject name is: $PROJECT_NAME, project URL is $PROJECT_URL"
         echo -e "${BLUE}Cloning $PROJECT_URL. ${RESET}"
@@ -100,10 +111,10 @@ function setup {
 
 function run {
     if [ $TEST_TYPE == "local" ]; then
-        docker exec -it $CODEWIND_CONTAINER_ID bash -c "cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml npm run $TEST_SUITE:test:xml" | tee $TEST_LOG
+        docker exec -it $CODEWIND_CONTAINER_ID bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
         docker cp $CODEWIND_CONTAINER_ID:/test_output.xml $TEST_OUTPUT
     elif [ $TEST_TYPE == "kube" ]; then
-        kubectl exec -it $CODEWIND_POD_ID -- bash -c "cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml npm run $TEST_SUITE:test:xml" | tee $TEST_LOG
+        kubectl exec -it $CODEWIND_POD_ID -- bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
         kubectl cp $CODEWIND_POD_ID:/test_output.xml $TEST_OUTPUT
     fi
     echo -e "${BLUE}Test logs available at: $TEST_LOG ${RESET}"
