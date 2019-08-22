@@ -73,6 +73,10 @@ function cleanRun {
         exit 1
     fi
 
+    # Sleep for a few secs for Pods and PVs to free up
+    echo -e "${BLUE}Sleeping for 20s to allow the workspace removal to take down Pods and PVs ${RESET}\n"
+    sleep 20
+
     # Set up test automation
     ./scripts/setup.sh -t $TEST_TYPE -f install
     if [[ $? -eq 0 ]]; then
@@ -161,13 +165,31 @@ done
 # Log in to the OKD cluster with default credentials
 if [[ $TEST_TYPE == "kube" ]]; then
     # Check if the mandatory arguments have been set up
-    if [[ (-z $NAMESPACE) || (-z $CLUSTER_IP) ]]; then
-        echo -e "${RED}Mandatory arguments NAMESPACE & CLUSTER_IP are not set up. ${RESET}\n"
-        echo -e "${RED}Please export variables NAMESPACE & CLUSTER_IP to run the Kube tests. ${RESET}\n"
+    if [[ (-z $NAMESPACE) ]]; then
+        echo -e "${RED}Mandatory argument NAMESPACE is not set up. ${RESET}\n"
+        echo -e "${RED}Please export variable NAMESPACE to run the Kube tests. ${RESET}\n"
         exit 1
     fi
 
-    oc login $CLUSTER_IP:8443 -u ocadmin -p ocadmin
+    if [[ (-z $CLUSTER_IP) ]]; then
+        echo -e "${RED}Mandatory argument CLUSTER_IP is not set up. ${RESET}\n"
+        echo -e "${RED}Please export variable CLUSTER_IP to run the Kube tests. ${RESET}\n"
+        exit 1
+    fi
+
+    if [[ (-z $CLUSTER_USER) ]]; then
+        echo -e "${RED}Mandatory argument CLUSTER_USER is not set up. ${RESET}\n"
+        echo -e "${RED}Please export variable CLUSTER_USER to run the Kube tests. ${RESET}\n"
+        exit 1
+    fi
+
+    if [[ (-z $CLUSTER_PASSWORD) ]]; then
+        echo -e "${RED}Mandatory argument CLUSTER_PASSWORD is not set up. ${RESET}\n"
+        echo -e "${RED}Please export variable CLUSTER_PASSWORD to run the Kube tests. ${RESET}\n"
+        exit 1
+    fi
+
+    oc login $CLUSTER_IP:8443 -u $CLUSTER_USER -p $CLUSTER_PASSWORD
     if [[ $? -eq 0 ]]; then
         echo -e "${GREEN}Successfully logged into the OKD cluster ${RESET}\n"
     else
