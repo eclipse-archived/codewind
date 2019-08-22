@@ -11,7 +11,7 @@
 const { ADMIN_COOKIE } = require('../config');
 const reqService = require('./request.service');
 
-const defaultTemplates = [
+const defaultCodewindTemplates = [
     {
         label: 'Go template',
         description: 'Sample microservice for simple go app',
@@ -70,6 +70,78 @@ const defaultTemplates = [
     },
 ];
 
+const defaultAppsodyTemplates = [
+    {
+        label: 'Appsody Eclipse MicroProfile® template',
+        description: 'Eclipse MicroProfile on Open Liberty & OpenJ9 using Maven',
+        language: 'java',
+        url: 'https://github.com/appsody/stacks/releases/download/java-microprofile-v0.2.7/incubator.java-microprofile.templates.default.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody LoopBack 4 template',
+        description: 'LoopBack 4 API Framework for Node.js',
+        language: 'nodejs',
+        url: 'https://github.com/appsody/stacks/releases/download/nodejs-loopback-v0.1.1/incubator.nodejs-loopback.templates.scaffold.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Node.js Express simple template',
+        description: 'Express web framework for Node.js',
+        language: 'nodejs',
+        url: 'https://github.com/appsody/stacks/releases/download/nodejs-express-v0.2.3/incubator.nodejs-express.templates.simple.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Node.js Express skaffold template',
+        description: 'Express web framework for Node.js',
+        language: 'nodejs',
+        url: 'https://github.com/appsody/stacks/releases/download/nodejs-express-v0.2.3/incubator.nodejs-express.templates.skaffold.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Node.js template',
+        description: 'Runtime for Node.js applications',
+        language: 'nodejs',
+        url: 'https://github.com/appsody/stacks/releases/download/nodejs-v0.2.3/incubator.nodejs.templates.simple.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Spring Boot® default template',
+        description: 'Spring Boot using OpenJ9 and Maven',
+        language: 'java',
+        url: 'https://github.com/appsody/stacks/releases/download/java-spring-boot2-v0.3.4/incubator.java-spring-boot2.templates.default.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Spring Boot® kotlin template',
+        description: 'Spring Boot using OpenJ9 and Maven',
+        language: 'java',
+        url: 'https://github.com/appsody/stacks/releases/download/java-spring-boot2-v0.3.4/incubator.java-spring-boot2.templates.kotlin.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Swift template',
+        description: 'Runtime for Swift applications',
+        language: 'swift',
+        url: 'https://github.com/appsody/stacks/releases/download/swift-v0.1.2/incubator.swift.templates.simple.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+];
+
+const defaultTemplates = [
+    ...defaultCodewindTemplates,
+    ...defaultAppsodyTemplates,
+];
+
 const styledTemplates = {
     codewind: {
         label: 'Codewind template',
@@ -90,17 +162,20 @@ const styledTemplates = {
 };
 
 const sampleRepos = {
-    default: {
+    codewind: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-        description: 'Standard Codewind templates.',
-        enabled: true,
+        description: 'Default codewind templates.',
+    },
+    anotherCodewind: {
+        url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
+        description: 'Additional Codewind templates.',
     },
     appsody: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-appsody-templates/master/devfiles/index.json',
         description: 'Appsody extension for Codewind',
     },
 };
-const defaultRepoList = [sampleRepos.default];
+const defaultRepoList = [sampleRepos.codewind];
 
 async function getTemplateRepos() {
     const res = await reqService.chai
@@ -165,6 +240,10 @@ async function getTemplates(queryParams) {
     return res;
 }
 
+/**
+ * Removes all templates repos known to PFE, and adds the supplied repos
+ * @param {[JSON]} repoList
+ */
 async function resetTemplateReposTo(repoList) {
     const reposToDelete = (await getTemplateRepos()).body;
     await Promise.all(reposToDelete.map(repo =>
@@ -184,6 +263,7 @@ async function getTemplateStyles() {
 
 module.exports = {
     defaultTemplates,
+    defaultCodewindTemplates,
     styledTemplates,
     sampleRepos,
     defaultRepoList,

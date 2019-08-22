@@ -10,8 +10,6 @@
  *******************************************************************************/
 
 const chai = require('chai');
-//const fs = require('fs-extra');
-const path = require('path');
 
 const projectService = require('../../../modules/project.service');
 const reqService = require('../../../modules/request.service');
@@ -21,7 +19,7 @@ chai.should();
 
 describe('Load Runner Tests', function() {
     describe('loadtest/config Tests', function() {
-        let projectID, workspace_location, expectedSavedConfig;
+        let projectID, expectedSavedConfig;
         const projectName = `loadrunnerconfigtest${Date.now()}`;
         const configOptions = {
             path: '/',
@@ -34,15 +32,16 @@ describe('Load Runner Tests', function() {
             this.timeout(testTimeout.med);
             projectID = await projectService.cloneAndBindProject(projectName, 'nodejs');
         });
-        
+
         after(async function() {
             this.timeout(2 * testTimeout.med);
-            workspace_location = await projectService.findWorkspaceLocation();
-            const projectPath = path.join(workspace_location, projectName);
             await projectService.unbindProject(projectID);
-            // after is failing in jenkins with permission issues.  This is not
-            // actually part of the test, its us trying to be good and clean up   
 
+            // after is failing in jenkins with permission issues.  This is not
+            // actually part of the test, its us trying to be good and clean up
+
+            // workspace_location = await projectService.findWorkspaceLocation();
+            // const projectPath = path.join(workspace_location, projectName);
             //await fs.remove(projectPath);
         });
 
@@ -102,7 +101,7 @@ describe('Load Runner Tests', function() {
                         const res = await readLoadTestConfig(projectID);
                         res.should.have.status(200);
                         res.body.should.deep.equal(expectedSavedConfig);
-                    });   
+                    });
                 });
             });
 
@@ -137,7 +136,7 @@ describe('Load Runner Tests', function() {
                 });
             });
         });
-        
+
         describe('GET loadtest/config', () => {
             describe('Valid Input', () => {
                 it('returns status 200 to GET/loadtest/config from the load-test/config.json', async function() {
@@ -160,18 +159,19 @@ describe('Load Runner Tests', function() {
     describe('runLoad Tests', function() {
         const projectName = `loadrunnertest${Date.now()}`;
         let projectID;
- 
+
         before(async function() {
             this.timeout(3 * testTimeout.med);
             projectID = await projectService.cloneAndBindAndBuildProject(projectName, 'nodejs');
             await projectService.awaitProjectStarted(projectID);
         });
-        
+
         after(async function() {
             this.timeout(2 * testTimeout.med);
-            const workspace_location = await projectService.findWorkspaceLocation();
-            const projectPath = path.join(workspace_location, projectName);
             await projectService.unbindProject(projectID);
+
+            // const workspace_location = await projectService.findWorkspaceLocation();
+            // const projectPath = path.join(workspace_location, projectName);
             //await fs.remove(projectPath);
         });
 

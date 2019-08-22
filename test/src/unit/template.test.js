@@ -16,7 +16,7 @@ const path = require('path');
 const Templates = require('../../../src/pfe/portal/modules/Templates');
 const {
     styledTemplates,
-    defaultTemplates,
+    defaultCodewindTemplates,
     defaultRepoList,
     sampleRepos,
 } = require('../../modules/template.service');
@@ -108,10 +108,10 @@ describe('Templates.js', function() {
         });
         describe(`when we do refresh`, function() {
             describe('', function() {
-                it('returns the default templates', async function() {
+                it('returns the default Codewind templates', async function() {
                     const templateController = new Templates('');
                     const output = await templateController.getAllTemplates();
-                    output.should.deep.equal(defaultTemplates);
+                    output.should.deep.equal(defaultCodewindTemplates);
                 });
             });
             describe('and add an extra template repo', function() {
@@ -119,14 +119,14 @@ describe('Templates.js', function() {
                 before(() => {
                     templateController = new Templates('');
                     templateController.repositoryList = [
-                        sampleRepos.default,
+                        sampleRepos.codewind,
                         sampleRepos.appsody,
                     ];
                 });
                 it('returns more templates', async function() {
                     const output = await templateController.getAllTemplates();
-                    output.should.include.deep.members(defaultTemplates);
-                    (output.length).should.be.above(defaultTemplates.length);
+                    output.should.include.deep.members(defaultCodewindTemplates);
+                    (output.length).should.be.above(defaultCodewindTemplates.length);
                 });
             });
             describe('and add an extra bad template repo', function() {
@@ -134,13 +134,13 @@ describe('Templates.js', function() {
                 before(() => {
                     templateController = new Templates('');
                     templateController.repositoryList = [
-                        sampleRepos.default,
+                        sampleRepos.codewind,
                         { url: 'https://www.google.com/' },
                     ];
                 });
                 it('returns only the default templates', async function() {
                     const output = await templateController.getAllTemplates();
-                    output.should.deep.equal(defaultTemplates);
+                    output.should.deep.equal(defaultCodewindTemplates);
                 });
             });
         });
@@ -190,8 +190,8 @@ describe('Templates.js', function() {
     describe('getTemplatesFromRepo(repository)', function() {
         describe('(<validRepository>)', function() {
             it('returns the correct templates', async function() {
-                const output = await Templates.getTemplatesFromRepo(defaultRepoList[0]);
-                output.should.have.deep.members(defaultTemplates);
+                const output = await Templates.getTemplatesFromRepo(sampleRepos.codewind);
+                output.should.have.deep.members(defaultCodewindTemplates);
             });
         });
         describe('(<invalidRepository>)', function() {
@@ -232,10 +232,10 @@ describe('Templates.js', function() {
         });
         describe('(<defaultRepoList>)', function() {
             describe('when we have no providers', function() {
-                it('returns the default templates', async function() {
+                it('returns the default Codewind templates', async function() {
                     const templateController = new Templates('');
                     const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                    output.should.deep.equal(defaultTemplates);
+                    output.should.deep.equal(defaultCodewindTemplates);
                 });
             });
             describe(`when providers don't provide repo lists`, function() {
@@ -246,9 +246,9 @@ describe('Templates.js', function() {
                         getRepositories() { return 'should be array'; },
                     });
                 });
-                it('still returns the default templates (ignoring the invalid providers)', async function() {
+                it('still returns the default Codewind templates (ignoring the invalid providers)', async function() {
                     const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                    output.should.deep.equal(defaultTemplates);
+                    output.should.deep.equal(defaultCodewindTemplates);
                 });
             });
             describe('when providers list invalid repos', function() {
@@ -260,9 +260,9 @@ describe('Templates.js', function() {
                             getRepositories() { return ['should be object']; },
                         });
                     });
-                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
                         const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultTemplates);
+                        output.should.deep.equal(defaultCodewindTemplates);
                     });
                 });
                 describe('missing URL', function() {
@@ -275,9 +275,9 @@ describe('Templates.js', function() {
                             },
                         });
                     });
-                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
                         const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultTemplates);
+                        output.should.deep.equal(defaultCodewindTemplates);
                     });
                 });
                 describe('invalid URL', function() {
@@ -293,9 +293,9 @@ describe('Templates.js', function() {
                             },
                         });
                     });
-                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
                         const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultTemplates);
+                        output.should.deep.equal(defaultCodewindTemplates);
                     });
                 });
                 describe('duplicate URL', function() {
@@ -311,9 +311,9 @@ describe('Templates.js', function() {
                             },
                         });
                     });
-                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
                         const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultTemplates);
+                        output.should.deep.equal(defaultCodewindTemplates);
                     });
                 });
                 describe(`valid URL that doesn't provide JSON`, function() {
@@ -329,9 +329,9 @@ describe('Templates.js', function() {
                             },
                         });
                     });
-                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
                         const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultTemplates);
+                        output.should.deep.equal(defaultCodewindTemplates);
                     });
                 });
             });
@@ -348,10 +348,10 @@ describe('Templates.js', function() {
                         },
                     });
                 });
-                it(`returns the default templates and the provider's templates`, async function() {
+                it(`returns the default Codewind templates and the provider's templates`, async function() {
                     const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                    output.should.include.deep.members(defaultTemplates);
-                    (output.length).should.be.above(defaultTemplates.length);
+                    output.should.include.deep.members(defaultCodewindTemplates);
+                    (output.length).should.be.above(defaultCodewindTemplates.length);
                 });
             });
         });

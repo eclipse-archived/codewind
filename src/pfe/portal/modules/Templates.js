@@ -253,13 +253,17 @@ async function getTemplatesFromRepo(repository) {
     throw new Error(`URL '${repoUrl}' should return JSON`);
   }
   const templates = templateSummaries.map(summary => {
-    return {
+    const template = {
       label: summary.displayName,
       description: summary.description,
       language: summary.language,
       url: summary.location,
-      projectType: summary.projectType
+      projectType: summary.projectType,
     };
+    if (summary.projectStyle) {
+      template.projectStyle = summary.projectStyle;
+    }
+    return template;
   });
   return templates;
 }
