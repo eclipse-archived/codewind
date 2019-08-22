@@ -38,6 +38,7 @@ export function createEmptyCwSettingsObject(projectType: string): CWSettings {
     contextRoot: '',
     internalPort: '',
     healthCheck: '',
+    isHttps: false,
     ignoredPaths: [''],
   };
 

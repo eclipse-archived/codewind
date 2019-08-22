@@ -39,6 +39,7 @@ export interface CWSettings {
   internalPort: string;
   internalDebugPort?: string;
   healthCheck: string;
+  isHttps: boolean;
   ignoredPaths?: string[];
   mavenProfiles?: string[];
   mavenProperties?: string[];

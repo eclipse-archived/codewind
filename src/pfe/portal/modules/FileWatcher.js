@@ -434,7 +434,7 @@ module.exports = class FileWatcher {
         let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
         await this.handleFWProjectEvent(event, projectUpdate);
         WebSocket.watchListChanged(data);
-      } else if (fwProject.contextRoot || fwProject.ports || fwProject.mavenProfiles || fwProject.mavenProperties || fwProject.isHttps) {
+      } else if (fwProject.contextRoot || fwProject.ports || fwProject.mavenProfiles || fwProject.mavenProperties || typeof fwProject.isHttps == "boolean") {
         // Update the project.inf on project settings change
         log.info("MJF handleNewOrUpdatedProject: " + JSON.stringify(fwProject));
         await this.handleFWProjectEvent(event, fwProject);
