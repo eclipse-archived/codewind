@@ -164,15 +164,18 @@ const styledTemplates = {
 const sampleRepos = {
     codewind: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-        description: 'Default codewind templates.',
+        description: 'Standard Codewind templates.',
+        enabled: true,
     },
     anotherCodewind: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
         description: 'Additional Codewind templates.',
+        enabled: true,
     },
     appsody: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-appsody-templates/master/devfiles/index.json',
         description: 'Appsody extension for Codewind',
+        enabled: true,
     },
 };
 const defaultRepoList = [sampleRepos.codewind];

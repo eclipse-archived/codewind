@@ -109,10 +109,7 @@ module.exports = class Templates {
   }
 
   getEnabledRepositories() {
-    return this.getRepositories().filter(repo =>
-      // if the repo doesn't specify whether it's enabled, consider it enabled
-      (repo.enabled || !repo.hasOwnProperty('enabled'))
-    );
+    return this.getRepositories().filter(repo => repo.enabled);
   }
 
   doesRepositoryExist(repoUrl) {
@@ -205,6 +202,7 @@ module.exports = class Templates {
     const newRepo = {
       url: repoUrl,
       description: repoDescription,
+      enabled: true,
     }
     this.repositoryList.push(newRepo);
     this.needsRefresh = true;

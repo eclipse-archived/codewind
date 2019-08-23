@@ -374,9 +374,14 @@ describe('Templates.js', function() {
             });
         });
         describe('(<uniqueString>, <validDesc>)', function() {
-            it('succeeds', function() {
+            it('succeeds', async function() {
                 const func = () => templateController.addRepository('unique string', 'description');
-                return func().should.not.be.rejected;
+                await (func().should.not.be.rejected);
+                templateController.repositoryList.should.deep.include({
+                    url: 'unique string',
+                    description: 'description',
+                    enabled: true,
+                });
             });
         });
     });
@@ -395,11 +400,11 @@ describe('Templates.js', function() {
         let templateController;
         before(() => {
             templateController = new Templates('');
-            templateController.repositoryList = [...mockRepoList];
+            templateController.repositoryList = [mockRepos.enabled, mockRepos.disabled];
         });
         it('returns only enabled repos', function() {
             const output = templateController.getEnabledRepositories();
-            output.should.deep.equal([mockRepos.enabled, mockRepos.noEnabledStatus]);
+            output.should.deep.equal([mockRepos.enabled]);
         });
     });
     describe('enableRepository(url)', function() {
@@ -410,10 +415,9 @@ describe('Templates.js', function() {
         });
         describe('(existing url)', function() {
             it('enables the correct repo', function() {
-                templateController.enableRepository('2');
+                templateController.enableRepository(mockRepos.disabled.url);
                 const expectedRepoDetails = {
-                    url: '2',
-                    description: '2',
+                    ...mockRepos.disabled,
                     enabled: true,
                 };
                 templateController.getRepositories().should.deep.include(expectedRepoDetails);
