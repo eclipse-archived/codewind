@@ -30,16 +30,16 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         projectID: projData.projectID,
     };
 
-    const startModes = ["run", "debug"];
+    const startModes = project_configs.startModes;
 
     const combinations: any = {
         "combo1": {
             "action": "disableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 200,
-            "socketEvent": [eventConfigs.events.projectChanged],
-            "eventKeys": [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
-            "result": [{
+            "socketEvent": projData.projectType.toLowerCase() === "docker" ? [] : [eventConfigs.events.projectChanged],
+            "eventKeys": projData.projectType.toLowerCase() === "docker" ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
+            "result": projData.projectType.toLowerCase() === "docker" ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }]
@@ -48,16 +48,16 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "enableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 202,
-            "socketEvent": [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
-            "eventKeys": [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
-            "result": [{
+            "socketEvent": projData.projectType.toLowerCase() === "docker" ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
+            "eventKeys": projData.projectType.toLowerCase() === "docker" ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
+            "result": projData.projectType.toLowerCase() === "docker" ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }, {
                 "projectID": projData.projectID,
                 "appStatus": "started",
             }],
-            "afterHook": [afterHookEnableAutoBuildTest]
+            "afterHook": [afterHookRemoveProjectFromRunningBuild]
         },
         "combo3": {
             "action": "validate",
@@ -77,34 +77,27 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "returnKeys": ["operationId", "status"],
             "statusCode": 202,
             "socketEvent": [eventConfigs.events.statusChanged],
-            "eventKeys": [["projectID", "appStatus", "detailedAppStatus"]],
+            "eventKeys": [["projectID", "appStatus"]],
             "result": [{
                 "projectID": projData.projectID,
                 "appStatus": "started",
-            }]
+            }],
+            "afterHook": [afterHookRemoveProjectFromRunningBuild]
         },
-        // "combo5": {
-        //     "action": "restart",
-        //     "returnKeys": ["operationId", "status"],
-        //     "statusCode": 202,
-        //     "socketEvent": eventConfigs.events.restartResult,
-        //     "eventKeys": ["operationId", "projectID", "status", "startMode", "ports"],
-        //     "result": {
-        //         "projectID": projData.projectID,
-        //         "status": "success"
-        //     }
-        // },
-        // "combo6": {
-        //     "action": "restart",
-        //     "returnKeys": ["operationId", "status"],
-        //     "statusCode": 202,
-        //     "socketEvent": eventConfigs.events.statusChanged,
-        //     "eventKeys": ["projectID", "appStatus", "detailedAppStatus"],
-        //     "result": {
-        //         "projectID": projData.projectID,
-        //         "appStatus": "started",
-        //     }
-        // }
+        "combo5": {
+            "action": "restart",
+            "returnKeys": ["operationId", "status"],
+            "statusCode": 202,
+            "socketEvent": [eventConfigs.events.restartResult, eventConfigs.events.statusChanged],
+            "eventKeys": [["operationId", "projectID", "status", "startMode", "ports"], ["projectID", "appStatus"]],
+            "result" : [{
+                "projectID": projData.projectID,
+                "status": "success"
+            }, {
+                "projectID": projData.projectID,
+                "appStatus": "started",
+            }]
+        }
     };
 
     describe("projectAction function", () => {
@@ -113,12 +106,17 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         });
 
         after("restart in run mode to reset the app", async () => {
-            if (project_configs.restartCapabilities[projData.projectType]) {
+            if (project_configs.restartCapabilities[projData.projectType]["run"]) {
                 setProjectActionTest(combinations["combo5"], "run");
             }
         });
 
-        // utils.rebuildProjectAfterHook(socket, projData);
+        utils.rebuildProjectAfterHook(socket, projData);
+
+        after("remove build from running queue", async () => {
+            await utils.removeProjectFromRunningBuild(projData);
+            await utils.setBuildStatus(projData);
+        });
 
         it("set project action with undefined action type", async () => {
             const testData = _.cloneDeep(data);
@@ -141,10 +139,10 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
                 });
 
                 if (combo.action.toLowerCase() === "restart") {
-                    if (!project_configs.restartCapabilities[projData.projectType]) return;
-                    for (const mode of startModes) {
+                    _.forEach(startModes, (mode) => {
+                        if (!project_configs.restartCapabilities[projData.projectType][mode]) return;
                         setProjectActionTest(combo, mode);
-                    }
+                    });
                 } else {
                     setProjectActionTest(combo);
                 }
@@ -180,7 +178,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
                 const eventKeys = combo["eventKeys"];
                 const results = combo["result"];
 
-                if (socketEvents && eventKeys && results) {
+                if (socketEvents.length > 0 && eventKeys.length > 0 && results.length > 0) {
                     expect(socketEvents.length).to.equal(eventKeys.length);
                     expect(eventKeys.length).to.equal(results.length);
 
@@ -197,7 +195,8 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
                                 const events = socket.getAllEvents();
                                 if (events && events.length >= 1) {
                                     event =  events.filter((value) => {
-                                        if (value.eventName === targetEvent && _.isEqual(Object.keys(value.eventData), eventKey) && _.isMatch(value.eventData, result)) {
+                                        if (value.eventName === targetEvent && _.difference(eventKey, Object.keys(value.eventData)).length === 0
+                                        && _.isMatch(value.eventData, result)) {
                                             return value;
                                         }
                                     })[0];
@@ -244,8 +243,9 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         }
     });
 
-    async function afterHookEnableAutoBuildTest(hook: any): Promise<void> {
+    async function afterHookRemoveProjectFromRunningBuild(hook: any): Promise<void> {
         hook.timeout(timeoutConfigs.defaultTimeout);
-        await utils.removeProjectFromRunningBuild(projData.projectID);
+        await utils.removeProjectFromRunningBuild(projData);
+        await utils.setBuildStatus(projData);
     }
 }

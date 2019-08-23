@@ -11,6 +11,18 @@
 /**
  * This file for different project specific (i.e liberty, spring, docker) capabaility configurations.
  */
+
+export const needManualReset: any = {
+    "docker": {
+        "runningBuildQueue": false,
+        "buildStatus": false
+    },
+    "nodejs": {
+        "runningBuildQueue": true,
+        "buildStatus": true
+    },
+};
+
 export const projectCapabilities: any = {
     "docker": {
         "startModes": ["run"],
@@ -18,8 +30,19 @@ export const projectCapabilities: any = {
     }
 };
 
+export const startModes: Array<string> = ["run", "debug", "debugNoInit"];
+
 export const restartCapabilities: any = {
-    "docker": false
+    "docker": {
+        [startModes[0]]: false,
+        [startModes[1]]: false,
+        [startModes[2]]: false,
+    },
+    "nodejs": {
+        [startModes[0]]: true,
+        [startModes[1]]: false,
+        [startModes[2]]: true,
+    },
 };
 
 export const debugCapabilities: any = {
