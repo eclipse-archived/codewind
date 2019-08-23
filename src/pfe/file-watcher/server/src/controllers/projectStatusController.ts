@@ -461,7 +461,6 @@ function pingInTransitApplications(): void {
                                 if (pingCount >= 10) {
                                     newState = AppState.stopped;
                                     newMsg = "Failed to ping application due to timeout.";
-                                    pingCount = 0;
                                 }
 
                                 if (newState === AppState.started) {
