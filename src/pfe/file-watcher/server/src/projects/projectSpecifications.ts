@@ -439,9 +439,11 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
 
 /**
  * @function
- * @description Reconfig the ignored files for a project.
+ * @description Reconfig the WWW protocol for a project.
  *
- * @param args <Required | Any> - Required arguments for reconfiguration of ignroed files.
+ * @param isHttps <Required | Boolean> - isHttps tells if a project is https enabled.
+ *
+ * @param operation <Required | Any> - Operation for a project.
  *
  * @returns Promise<any>
  */
