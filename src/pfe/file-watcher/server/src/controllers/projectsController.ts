@@ -58,9 +58,7 @@ const BUILD_KEY = "projectStatusController.buildRank";
 // timeout to ping build projects
 setInterval(checkBuildQueue, 5000);
 
-const availabilityTimeout = 5000;
-
-export async function removeProjectFromBuildQueue(projectID: string): Promise<Array<BuildQueueType>> {
+export async function removeProjectFromRunningBuildQueue(projectID: string): Promise<Array<BuildQueueType>> {
     if (process.env.NODE_ENV === "test") {
         logger.logProjectInfo("This function should be only run for Turbine tests", projectID);
         runningBuilds = runningBuilds.filter((project: BuildQueueType) => {

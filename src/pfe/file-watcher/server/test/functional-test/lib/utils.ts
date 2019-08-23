@@ -18,8 +18,9 @@ import * as _ from "lodash";
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
 import { SocketIO } from "./socket-io";
-import { ProjectCreation, projectAction, removeProjectFromBuildQueue } from "./project";
+import { ProjectCreation, projectAction, removeProjectFromRunningBuildQueue, updateStatus } from "./project";
 import { expect } from "chai";
+import * as project_configs from "../configs/project.config";
 import * as eventConfigs from "../configs/event.config";
 import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
@@ -165,8 +166,22 @@ export async function rebuildProject(socket: SocketIO, projData: ProjectCreation
     }
 }
 
-export async function removeProjectFromRunningBuild(projectID: string): Promise<void> {
-    const runningBuildQueue = await removeProjectFromBuildQueue(projectID);
-    expect(runningBuildQueue);
-    expect(runningBuildQueue).to.not.include(projectID);
+export async function removeProjectFromRunningBuild(projData: ProjectCreation): Promise<void> {
+    if (project_configs.needManualReset[projData.projectType]["runningBuildQueue"]) {
+        const runningBuildQueue = await removeProjectFromRunningBuildQueue(projData.projectID);
+        expect(runningBuildQueue);
+        expect(runningBuildQueue).to.not.include(projData.projectID);
+    }
+}
+
+export async function setBuildStatus(projData: ProjectCreation, status?: string): Promise<void> {
+    if (project_configs.needManualReset[projData.projectType]["buildStatus"]) {
+        const info = await updateStatus({
+            "projectID": projData.projectID,
+            "type": "buildState",
+            "buildStatus": status || "success"
+        });
+        expect(info);
+        expect(info.statusCode).to.equal(200);
+    }
 }
