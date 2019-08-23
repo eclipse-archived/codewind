@@ -182,7 +182,7 @@ describe('Templates.js', function() {
             },
         };
         for (const [testName, test] of Object.entries(tests)) {
-            describe(testName, function() { // eslint-disable-line
+            describe(testName, function() {
                 it(`returns the expected repos`, async function() {
                     const output = await Templates.getReposFromProviders(test.input);
                     output.should.deep.equal(test.output);
@@ -683,7 +683,7 @@ describe('Templates.js', function() {
                 },
             };
             for (const [testName, test] of Object.entries(tests)) {
-                describe(testName, function() { // eslint-disable-line
+                describe(testName, function() { // eslint-disable-line no-loop-func
                     it(`returns the expected operation info and correctly updates the repository file`, async function() {
                         const output = await templateController.batchUpdate(test.input);
                         output.should.deep.equal(test.output);
@@ -747,7 +747,7 @@ describe('Templates.js', function() {
                 },
             };
             for (const [testName, test] of Object.entries(tests)) {
-                describe(testName, function() { // eslint-disable-line
+                describe(testName, function() { // eslint-disable-line no-loop-func
                     it(`returns the expected operation info and correctly updates the repository file`, function() {
                         const output = templateController.performOperation(test.input);
                         output.should.deep.equal(test.output);
@@ -791,7 +791,7 @@ describe('Templates.js', function() {
                 },
             };
             for (const [testName, test] of Object.entries(tests)) {
-                describe(testName, function() { // eslint-disable-line
+                describe(testName, function() { // eslint-disable-line no-loop-func
                     it(`returns the expected operation info`, function() {
                         const output = templateController.performOperation(test.input);
                         output.should.deep.equal(test.output);

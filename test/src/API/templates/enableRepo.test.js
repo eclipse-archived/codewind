@@ -35,7 +35,7 @@ describe('Batch enabling repositories', function() {
     };
 
     for (const [testName, test] of Object.entries(tests)) {
-        describe(testName, function() { // eslint-disable-line
+        describe(testName, function() {
             let originalTemplateRepos;
             const { testRepos } = test;
             let templatesFromTestRepos;
@@ -51,7 +51,7 @@ describe('Batch enabling repositories', function() {
             after(async() => {
                 await resetTemplateReposTo(originalTemplateRepos);
             });
-            it(`batch DISabling ${testRepos.length} repos returns 207 and sub-status 200 for each subrequest`, async function() {
+            it(`returns 207 and sub-status 200 for each subrequest when batch disabling ${testRepos.length} repos`, async function() {
                 const repoUrls = testRepos.map(repo => repo.url);
                 const res = await disableTemplateRepos(repoUrls);
 
@@ -60,7 +60,7 @@ describe('Batch enabling repositories', function() {
                     subResponse.status.should.equal(200)
                 );
             });
-            it(`those repos are listed as DISabled`, async function() {
+            it(`lists those repos as disabled`, async function() {
                 const disabledRepos = testRepos.map(repo => {
                     return {
                         ...repo,
@@ -73,13 +73,13 @@ describe('Batch enabling repositories', function() {
                 res.should.have.status(200);
                 res.body.should.have.deep.members(disabledRepos);
             });
-            it(`those repos' templates DON'T appear in list of ENabled templates`, async function() {
+            it(`checks templates from the disabled repos do not appear in the list of enabled templates`, async function() {
                 const res = await getTemplates({ showEnabledOnly: true });
                 res.should.have.status(200);
                 res.body.should.not.have.deep.members(templatesFromTestRepos);
             });
 
-            it(`batch ENabling repos ${testRepos.length} returns 207 and sub-status 200 for each subrequest`, async function() {
+            it(`returns 207 and sub-status 200 for each subrequest when batch enabling ${testRepos.length} repos`, async function() {
                 const repoUrls = testRepos.map(repo => repo.url);
                 const res = await enableTemplateRepos(repoUrls);
 
@@ -88,7 +88,7 @@ describe('Batch enabling repositories', function() {
                     subResponse.status.should.equal(200)
                 );
             });
-            it(`those repos are listed as ENabled`, async function() {
+            it(`lists those repos as enabled`, async function() {
                 const enabledRepos = testRepos.map(repo => {
                     return {
                         ...repo,
@@ -101,7 +101,7 @@ describe('Batch enabling repositories', function() {
                 res.should.have.status(200);
                 res.body.should.have.deep.members(enabledRepos);
             });
-            it(`those repos' templates DO appear in list of ENabled templates`, async function() {
+            it(`checks templates from the enabled repos do not appear in the list of enabled templates`, async function() {
                 const res = await getTemplates({ showEnabledOnly: true });
                 res.should.have.status(200);
                 res.body.should.have.deep.members(templatesFromTestRepos);
