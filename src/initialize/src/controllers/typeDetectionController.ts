@@ -43,7 +43,7 @@ export async function detectType(projectMountDirectory: string): Promise<Initial
   if (pomXml.includes('<groupId>org.springframework.boot</groupId>')) {
     return ProjectType.SPRING;
   }
-  else if (pomXml.includes('<groupId>org.eclipse.microprofile</groupId>')) {
+  else if (pomXml.includes('<groupId>org.eclipse.microprofile</groupId>') && pomXml.includes('<groupId>com.ibm.websphere.appserver.api</groupId>')) {
     return ProjectType.LIBERTY;
   }
   // eg lagom
