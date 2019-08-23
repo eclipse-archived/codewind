@@ -324,7 +324,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                     projectInfo.isHttps = settings.isHttps;
                 } else {
                     // Default to http if we cannot get the isHttps settings
-                    logger.logProjectInfo("Defaulting isHttps to false as the project settings is not boolean", projectID, projectName);
+                    logger.logProjectInfo("Defaulting isHttps to false as the project setting isHttps is not a boolean", projectID, projectName);
                     await projectUtil.setProjectWWWProtocolMap(projectID, false);
                     projectInfo.isHttps = false;
                 }
