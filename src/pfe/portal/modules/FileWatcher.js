@@ -54,7 +54,6 @@ module.exports = class FileWatcher {
           logEvent("projectSettingsChanged", fwProject);
           // Handle the projectSettingsChanged event only when we get a success
           if(fwProject.status === 'success') {
-            log.info("MJF registerFWListener success ");
             await this.handleNewOrUpdatedProject("projectSettingsChanged", fwProject);
           }
           this.user.uiSocket.emit("projectSettingsChanged", fwProject);
@@ -436,7 +435,6 @@ module.exports = class FileWatcher {
         WebSocket.watchListChanged(data);
       } else if (fwProject.contextRoot || fwProject.ports || fwProject.mavenProfiles || fwProject.mavenProperties || typeof fwProject.isHttps == "boolean") {
         // Update the project.inf on project settings change
-        log.info("MJF handleNewOrUpdatedProject: " + JSON.stringify(fwProject));
         await this.handleFWProjectEvent(event, fwProject);
       }
     } catch (err) {
@@ -464,7 +462,6 @@ module.exports = class FileWatcher {
       if(error) {
         results.error = error;
       }
-      log.info("MJF handleFWProjectEvent: " + JSON.stringify(projectUpdate));
       let updatedProject = await this.user.projectList.updateProject(projectUpdate);
       this.user.uiSocket.emit(event, {...results , ...updatedProject});
       if (fwProject.buildStatus === 'inProgress') {
