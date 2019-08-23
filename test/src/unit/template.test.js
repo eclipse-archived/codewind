@@ -12,14 +12,16 @@ const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const fs = require('fs-extra');
 const path = require('path');
+const rewire = require('rewire');
 
-const Templates = require('../../../src/pfe/portal/modules/Templates');
+const Templates = rewire('../../../src/pfe/portal/modules/Templates');
 const {
     styledTemplates,
     defaultCodewindTemplates,
     defaultRepoList,
     sampleRepos,
 } = require('../../modules/template.service');
+const { suppressLogOutput } = require('../../modules/log.service');
 
 chai.use(chaiAsPromised);
 chai.should();
@@ -48,6 +50,7 @@ const mockRepos = {
 const mockRepoList = Object.values(mockRepos);
 
 describe('Templates.js', function() {
+    suppressLogOutput(Templates);
     describe('getTemplateStyles() when Codewind is aware of:', function() {
         describe('Codewind and Appsody templates', function() {
             const sampleTemplateList = [
