@@ -471,7 +471,6 @@ const reconfigWWWProtocol = async function (isHttps: boolean, operation: Operati
     projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
 
     logger.logProjectInfo("The project has been updated", projectInfo.projectID);
-    logger.logProjectInfo("MJF updated ProjectInfo: " + JSON.stringify(projectInfo), projectInfo.projectID);
     logger.logProjectTrace(JSON.stringify(projectInfo), projectInfo.projectID);
 
     const data: ProjectSettingsEvent = {
@@ -481,7 +480,6 @@ const reconfigWWWProtocol = async function (isHttps: boolean, operation: Operati
         isHttps: isHttps
     };
 
-    // Only emit a socket msg when it is true since the project default is always false
     io.emitOnListener("projectSettingsChanged", data);
 
     logger.logProjectInfo("The WWW protocol for the project has been changed to: " + isHttps ? "https" : "http", projectID);

@@ -253,7 +253,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         projectInfo.ignoredPaths = selectedProjectHandler.defaultIgnoredPath;
     }
 
-    // Set isHttps to false by default, override if settings key is found
+    // Set isHttps to false by default, override if the isHttps settings key is found
     await projectUtil.setProjectWWWProtocolMap(projectID, false);
     projectInfo.isHttps = false;
 
@@ -319,12 +319,12 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                 }
             } else if (key == "isHttps") {
                 if (typeof settings.isHttps == "boolean") {
-                    logger.logInfo("MJF projectsController create setting isHttps from settings");
+                    logger.logProjectInfo("Setting isHttps from the project settings", projectID, projectName);
                     await projectUtil.setProjectWWWProtocolMap(projectID, settings.isHttps);
                     projectInfo.isHttps = settings.isHttps;
                 } else {
                     // Default to http if we cannot get the isHttps settings
-                    logger.logInfo("MJF projectsController create defaulting to isHttps false");
+                    logger.logProjectInfo("Defaulting isHttps to false as the project settings is not boolean", projectID, projectName);
                     await projectUtil.setProjectWWWProtocolMap(projectID, false);
                     projectInfo.isHttps = false;
                 }

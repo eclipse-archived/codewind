@@ -632,6 +632,7 @@ export async function containerDelete(projectInfo: ProjectInfo, script: string):
 
     containerInfoMap.delete(projectInfo.projectID);
     containerInfoForceRefreshMap.delete(projectInfo.projectID);
+    projectWWWProtocolMap.delete(projectInfo.projectID);
     if (process.env.IN_K8 === "true") {
         logger.logProjectInfo(`Removing dangling images for ${projectInfo.projectID}`, projectInfo.projectID);
         dockerutil.removeDanglingImages();
@@ -909,10 +910,10 @@ export async function isContainerActive(projectID: string, handler: any): Promis
 
 /**
  * @function
- * @description Function to set the project's WWW protocol in the Map. This function is only invoked by the project settings API
+ * @description Function to set the project's WWW protocol in the Map.
  *
  * @param projectID <Required | String> - The projectID.
- * @param buildOutput <Optional | Boolean> - The WWW Protocol. The default value is false.
+ * @param isHttps <Optional | Boolean> - The WWW Protocol. The default value is false.
  *
  * @returns Promise<void>
  */
@@ -1252,8 +1253,6 @@ export async function buildAndRun(operation: Operation, command: string): Promis
         status: "failed"
     };
 
-    logger.logInfo("MJF operation is " + JSON.stringify(operation));
-
     if (operation.projectInfo.ignoredPaths) {
         projectEvent.ignoredPaths = operation.projectInfo.ignoredPaths;
     }
@@ -1377,7 +1376,6 @@ export async function buildAndRun(operation: Operation, command: string): Promis
  * @returns Promise<void>
  */
 async function containerBuildAndRun(event: string, buildInfo: BuildRequest, operation: Operation): Promise<void> {
-    logger.logInfo("MJF opertaion containerBuildAndRun " + JSON.stringify(operation));
     const normalizedProjectLocation = path.resolve(buildInfo.projectLocation);
     const projectName = normalizedProjectLocation.split("/").reverse()[0];
     const logDir = await logHelper.getLogDir(buildInfo.projectID, projectName);
@@ -1784,6 +1782,7 @@ export async function removeProject(projectInfo: ProjectInfo): Promise<void> {
 
     containerInfoMap.delete(projectInfo.projectID);
     containerInfoForceRefreshMap.delete(projectInfo.projectID);
+    projectWWWProtocolMap.delete(projectInfo.projectID);
     if (process.env.IN_K8 === "true") {
         dockerutil.removeDanglingImages();
     }
@@ -1840,8 +1839,6 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
         key: "buildRequest",
         value: false
     };
-
-    logger.logInfo("MJF operation getPODInfoAndSendToPortal " + JSON.stringify(operation));
 
     if (projectInfo.ignoredPaths) {
         projectEvent.ignoredPaths = projectInfo.ignoredPaths;
