@@ -27,6 +27,10 @@ export const projectCapabilities: any = {
     "docker": {
         "startModes": ["run"],
         "controlCommands": []
+    },
+    "nodejs": {
+        "startModes": ["run", "debugNoInit"],
+        "controlCommands": ["restart"]
     }
 };
 
