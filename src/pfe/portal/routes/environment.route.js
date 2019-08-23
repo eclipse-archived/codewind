@@ -34,7 +34,7 @@ router.get('/api/v1/environment', async (req, res) => {
       tektonDashboardUrl = await tektonDashboardUrlPromise;
     }
   } else {
-    tektonDashboardUrl = TektonUtils.ERR_TEKTON_SERVICE_NOT_INSTALLED;
+    tektonDashboardUrl = '';
   }
 
   try {
