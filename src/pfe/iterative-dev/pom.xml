@@ -57,7 +57,6 @@
 						<configuration>
 							<tasks>
 								<copy file="target/IDC.jar" todir="../file-watcher/idc/artifacts" overwrite="true"/>
-								<copy file="target/IDC.jar" todir="test/artifacts" overwrite="true"/>
 							</tasks>
 						</configuration>
 					</execution>
