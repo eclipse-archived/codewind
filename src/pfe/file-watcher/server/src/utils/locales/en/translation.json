@@ -59,7 +59,8 @@
     "buildStateMap": "No current build information available for the project",
     "buildRank": "Rank {{- rank}}",
     "buildStarted": "Build started",
-    "appErrorWhenStopping": "An error occurred while the application was stopping. Check the application logs for details."
+    "appErrorWhenStopping": "An error occurred while the application was stopping. Check the application logs for details.",
+    "pingTimeout": "Failed to ping application due to timeout."
   },
   "quickfix": {
     "generateMissingFilesName": "Generate missing files",
