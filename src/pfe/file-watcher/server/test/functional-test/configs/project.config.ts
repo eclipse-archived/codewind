@@ -50,16 +50,16 @@ export const restartCapabilities: any = {
 };
 
 export const debugCapabilities: any = {
-    "docker": false
+    "docker": false,
+    "nodejs": true
 };
 
 export const mavenProfileCapabilities: any = {
     "docker":  false,
+    "nodejs": false
 };
 
-export const exposedDebugPorts: any = {
-    "docker": ["1000"]
-};
+export const exposedDebugPorts = ["1000"];
 
 export const defaultContextRoot: any = {
     "lagom": "/api/hello/you"
@@ -67,7 +67,9 @@ export const defaultContextRoot: any = {
 
 export const defaultHealthCheckEndPoint: any = {
     "go": "/",
-    "python": "/"
+    "lagom": "/",
+    "python": "/",
+    "nodejs": "/"
 };
 
 export const oneExposedPortOnly: any = {
@@ -75,27 +77,33 @@ export const oneExposedPortOnly: any = {
         "local": true,
         "kube": true
     },
+    "lagom": {
+        "local": false,
+        "kube": true
+    },
     "python": {
         "local": true,
         "kube": true
     },
-    "lagom": {
-        "local": false,
+    "nodejs": {
+        "local": true,
         "kube": true
     }
 };
 
 export const defaultInternalPorts: any = {
     "go": "8000",
+    "lagom": "9000",
     "python": "5000",
-    "lagom": "9000"
+    "nodejs": "3000"
 };
 
 export const filesToUpdate: any = {
     "go": ["Dockerfile", "main.go"],
-    "python": ["Dockerfile", "app.py"],
     "lagom": ["Dockerfile",
         "hello-api/src/main/java/com/example/rp/test/lagomendpoints/api/HelloService.java",
         "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloModule.java",
-        "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloServiceImpl.java"]
+        "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloServiceImpl.java"],
+    "python": ["Dockerfile", "app.py"],
+    "nodejs": ["Dockerfile", "server/server.js"]
 };

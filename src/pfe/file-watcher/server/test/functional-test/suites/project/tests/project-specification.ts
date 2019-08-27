@@ -13,6 +13,7 @@ import { expect } from "chai";
 import * as _ from "lodash";
 import path from "path";
 import fs from "fs";
+import ms from "ms";
 
 import { ProjectCreation, projectSpecification, getApplicationContainerInfoInK8, getApplicationContainerInfo } from "../../../lib/project";
 
@@ -91,6 +92,11 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
         afterEach("clear socket events", () => {
             socket.clearEvents();
+        });
+
+        afterEach("remove build from running queue", async () => {
+            await utils.removeProjectFromRunningBuild(projData);
+            await utils.setBuildStatus(projData);
         });
 
         utils.rebuildProjectAfterHook(socket, projData);
@@ -227,7 +233,6 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     });
 
                     it(`config project specification settings ${combo["setting"]}`, async () => {
-                        if (combo["setting"] === "healthCheck" && !project_configs.defaultHealthCheckEndPoint[projectLang]) return;
                         await runProjectSpecificationSettingTest(combo);
                     }).timeout(timeoutConfigs.defaultTimeout);
                 });
@@ -254,7 +259,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             }
             if (setting === "internalDebugPort") {
                 if (process.env.IN_K8) return; // internal debug port setting is not supported in kube
-                const exposedDebugPorts = project_configs.exposedDebugPorts[projData.projectType];
+                const exposedDebugPorts = project_configs.exposedDebugPorts;
                 value = value || exposedDebugPorts[Math.floor(Math.random() * exposedDebugPorts.length)];
             }
             if (setting === "mavenProfiles" || setting === "mavenProperties") {
@@ -364,9 +369,12 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     await fs.writeFileSync(path.join(projectTemplateDir, file), fileOutput.replace(new RegExp(`servicePort: ${defaultInternalPort}`, "g"), `servicePort: ${testExposedPort}`), {encoding: "utf-8"});
                 }
             }
-
-            await utils.rebuildProject(socket, projData, process.env.IN_K8 ? eventConfigs.events.creation : undefined,
-                process.env.IN_K8 ? {"projectID": projData.projectID, "ports": {"internalPort": testExposedPort}} : undefined);
+            // we need to do two builds for docker projects. issue: https://github.com/eclipse/codewind/issues/297
+            if (projData.projectType === "docker") {
+                await utils.rebuildProject(socket, projData);
+            }
+            await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
+                {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
         }
 
         async function afterHookInternalPortTestSinglePort(hook: any): Promise<void> {
@@ -385,6 +393,11 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     await fs.writeFileSync(path.join(projectTemplateDir, file), fileOutput.replace(new RegExp(`servicePort: ${testExposedPort}`, "g"), `servicePort: ${defaultInternalPort}`), {encoding: "utf-8"});
                 }
             }
+            // we need to do two builds for docker projects. issue: https://github.com/eclipse/codewind/issues/297
+            if (projData.projectType === "docker") {
+                await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
+                    {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
+            }
             await utils.rebuildProject(socket, projData);
         }
 
@@ -396,13 +409,12 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
         async function afterHookContextRootTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
-            await runProjectSpecificationSettingTest(combinations["combo3"], project_configs.defaultContextRoot[projectLang] || "/");
+            await runProjectSpecificationSettingTest(combinations["combo3"], project_configs.defaultContextRoot[projectLang] || project_configs.defaultHealthCheckEndPoint[projectLang]);
         }
 
         async function afterHookHealthCheckTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
-            if (!project_configs.defaultHealthCheckEndPoint[projectLang]) return;
-            await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultHealthCheckEndPoint[projectLang]);
+            await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultContextRoot[projectLang] || project_configs.defaultHealthCheckEndPoint[projectLang]);
         }
     });
 }

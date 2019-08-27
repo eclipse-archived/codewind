@@ -185,3 +185,7 @@ export async function setBuildStatus(projData: ProjectCreation, status?: string)
         expect(info.statusCode).to.equal(200);
     }
 }
+
+export async function delay(ms: number): Promise<void> {
+    return new Promise( resolve => setTimeout(resolve, ms) );
+}
