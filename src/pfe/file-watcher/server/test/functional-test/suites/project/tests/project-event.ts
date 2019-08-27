@@ -81,10 +81,10 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
                     expect(info.statusCode);
                     expect(info.statusCode).to.equal(202);
 
-                    const targetEvent = eventConfigs.events.statusChanged;
+                    const targetEvent = eventConfigs.events.projectChanged;
                     const targetData = {
                         "projectID": projData.projectID,
-                        "appStatus": "started"
+                        "status": "success"
                     };
                     let eventFound = false;
                     let event: any;
@@ -113,8 +113,8 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
                         expect(event.eventData);
                         expect(event.eventData).to.haveOwnProperty("projectID");
                         expect(event.eventData.projectID).to.equal(targetData.projectID);
-                        expect(event.eventData).to.haveOwnProperty("appStatus");
-                        expect(event.eventData.appStatus).to.equal(targetData.appStatus);
+                        expect(event.eventData).to.haveOwnProperty("status");
+                        expect(event.eventData.status).to.equal(targetData.status);
                     } else {
                         fail(`failed to find ${targetEvent} for updating docker file`);
                     }
