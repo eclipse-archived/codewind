@@ -28,6 +28,11 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
             "projectID": projectID,
         };
 
+        afterEach("remove build from running queue", async () => {
+            await utils.removeProjectFromRunningBuild(projData);
+            await utils.setBuildStatus(projData);
+        });
+
         it("update project status with missing type", async () => {
             const testData = _.cloneDeep(data);
             const info: any = await updateStatus(testData);
