@@ -293,7 +293,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                         const events = socket.getAllEvents();
                         if (events && events.length >= 1) {
                             event =  events.filter((value) => {
-                                if (value.eventName === targetEvent && _.isEqual(_.sortBy(Object.keys(value.eventData)), _.sortBy(combo["eventKeys"]))) return value;
+                                if (value.eventName === targetEvent && _.difference(combo["eventKeys"], Object.keys(value.eventData)).length === 0) return value;
                             })[0];
                             if (event) {
                                 eventFound = true;
