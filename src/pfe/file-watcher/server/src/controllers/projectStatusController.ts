@@ -460,7 +460,7 @@ function pingInTransitApplications(): void {
                                 }
                                 if (pingCount >= 10) {
                                     newState = AppState.stopped;
-                                    newMsg = "Failed to ping application due to timeout.";
+                                    newMsg = "projectStatusController.pingTimeout";
                                 }
 
                                 if (newState === AppState.started) {
@@ -485,6 +485,9 @@ function pingInTransitApplications(): void {
 
                                     if (newState === AppState.started) {
                                         data.detailedAppStatus = " ";
+                                    }
+                                    if (newMsg) {
+                                        data.appErrorStatus = (newMsg == " ") ? newMsg : await locale.getTranslation(newMsg);
                                     }
 
                                     io.emitOnListener("projectStatusChanged", data);
