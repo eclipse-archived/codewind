@@ -34,7 +34,7 @@ router.get('/api/v1/environment', async (req, res) => {
       tektonDashboardUrl = await tektonDashboardUrlPromise;
     }
   } else {
-    tektonDashboardUrl = '';
+    tektonDashboardUrl = {status:false, message: TektonUtils.ERR_TEKTON_SERVICE_NOT_INSTALLED, url: ''};
   }
 
   try {
@@ -45,7 +45,7 @@ router.get('/api/v1/environment', async (req, res) => {
       codewind_version: process.env.CODEWIND_VERSION,
       workspace_location: process.env.HOST_WORKSPACE_DIRECTORY,
       os_platform: process.env.HOST_OS || 'Linux',
-      tekton_dashboard_url: tektonDashboardUrl
+      tekton_dashboard: tektonDashboardUrl
     }
     res.status(200).send(envData);
   } catch (err) {

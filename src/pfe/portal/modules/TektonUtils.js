@@ -16,9 +16,9 @@ const cwUtils = require('./utils/sharedFunctions');
 const Logger = require('./utils/Logger');
 
 const ERR_TEKTON_SERVICE_NOT_INSTALLED = "not-installed";
-const ERR_TEKTON_NO_DASHBOARD_LIST = "unable to obtain a list of dashboards";
-const ERR_TEKTON_NO_DASHBOARD = "unable to find a dashboard";
-const ERR_TEKTON_NO_DASHBOARD_URL = "unable to read dashboard URL"
+const ERR_TEKTON_NO_DASHBOARD_LIST = "no-dashboard-list";
+const ERR_TEKTON_NO_DASHBOARD = "no-dashboard";
+const ERR_TEKTON_NO_DASHBOARD_URL = "no-dashboard-url"
 
 const log = new Logger(__filename);
 
@@ -105,28 +105,28 @@ async function getTektonDashboardUrl() {
   try {
     const tektonAPIService = await getTektonAPIService();
     if (!tektonAPIService) {
-      return ERR_TEKTON_SERVICE_NOT_INSTALLED;
+      return {status: false, message: ERR_TEKTON_SERVICE_NOT_INSTALLED, url: ''};
     }
 
     tektonDashList = await getTektonDashboardList(tektonAPIService);
     if (!tektonDashList) {
-      return ERR_TEKTON_NO_DASHBOARD_LIST;
+      return {status: false, message: ERR_TEKTON_NO_DASHBOARD_LIST, url: ''};
     }
 
   } catch (err) {
     log.error(`Error getting Dashboard list: ${err}`);
-    return ERR_TEKTON_NO_DASHBOARD;
+    return {status: false, message: ERR_TEKTON_NO_DASHBOARD, url: ''};
   }
 
   if (tektonDashList && tektonDashList.length > 0 && tektonDashList[0].url) {
     tektonDashboardURL = tektonDashList[0].url;
   } else {
-    log.error(`Unable to find a URL`);
-    return ERR_TEKTON_NO_DASHBOARD_URL;
+    log.error(`Unable to find a Tekton dashboard URL`);
+    return {status:false, message: ERR_TEKTON_NO_DASHBOARD_URL, url: ''};
   }
 
   log.info(`Tekton DashboardURL = ${tektonDashboardURL}`);
-  return tektonDashboardURL;
+  return {status: true, message:'', url: tektonDashboardURL};
 }
 
 module.exports.getTektonDashboardUrl = getTektonDashboardUrl;

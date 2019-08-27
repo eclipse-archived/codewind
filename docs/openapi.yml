@@ -35,7 +35,7 @@ paths:
                   - socket_namespace
                   - codewind_version
                   - os_platform
-                  - tekton_dashboard_url
+                  - tekton_dashboard
                 properties:
                   running_in_k8s:
                     type: boolean
@@ -53,9 +53,19 @@ paths:
                     type: string
                     example: 'Linux'
                   tekton_dashboard_url:
-                    type: string
-                    example: '9.20.195.90.nip.io'
-                    description: "Ingress URL of Tekton dashboard if it's available. On local Codewind, it is the empty string. May also be 'not-installed' or an error message."
+                    type: object
+                    properties:
+                      status:
+                        type: boolean
+                      message:
+                        type: string
+                      url:
+                        type: string
+                    example:
+                      status: true
+                      message: ''
+                      url: '9.20.195.90.nip.io'
+                    description: "An object containing the Ingress URL of Tekton dashboard. If the dashboard is configured and available status=true, if not available then status=false along with a message providing more information."
                   workspace_location:
                     type: string
                     example: '/home/user/codewind-workspace'
