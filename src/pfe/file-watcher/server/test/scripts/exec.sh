@@ -84,7 +84,11 @@ function setup {
         fi
     fi
 
-    PROJECT_PATH=/codewind-workspace
+    if [ $TEST_TYPE == "local" ]; then
+        PROJECT_PATH="$CW_DIR/codewind-workspace"
+    elif [ $TEST_TYPE == "kube" ]; then
+        PROJECT_PATH=/projects
+    fi
 
     CTR=0
     # Read project git config
