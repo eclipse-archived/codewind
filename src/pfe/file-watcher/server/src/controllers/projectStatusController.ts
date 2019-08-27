@@ -487,7 +487,7 @@ function pingInTransitApplications(): void {
                                         data.detailedAppStatus = " ";
                                     }
                                     if (newMsg) {
-                                        data.appErrorStatus = (newMsg == " ") ? newMsg : await locale.getTranslation(newMsg);
+                                        data.appErrorStatus = (newMsg.trim().length === 0) ? newMsg : await locale.getTranslation(newMsg);
                                     }
 
                                     io.emitOnListener("projectStatusChanged", data);
