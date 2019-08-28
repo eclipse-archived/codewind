@@ -300,13 +300,17 @@ pipeline {
               fi
 
               # Remove the default network
-              #printf "\nRemoving docker network\n";
-              #docker network rm codewind_default
-              #if [ $? -eq 0 ]; then
-              #    printf "\n${GREEN}Successfully removed docker network $RESET\n";
-              #else
-              #    printf "\n${RED}Error removing docker network $RESET\n";
-              #fi
+
+
+              # Docker system prune
+              echo "Docker system prune ..."
+              df -lh
+              docker system df
+              docker system prune -a -f
+              docker builder prune -a -f
+              docker system df
+              df -lh
+              
               '''
         }
         failure {
