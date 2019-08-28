@@ -39,11 +39,13 @@ export async function detectType(projectMountDirectory: string): Promise<Initial
  async function determineProjectFramework(projectMountDirectory: string): Promise<ProjectType> {
   const pathToPomXml = path.join(projectMountDirectory, 'pom.xml');
   const pomXml = await fs.readFile(pathToPomXml, 'utf8');
+  const pathToDockerfile = path.join(projectMountDirectory, 'Dockerfile');
+  const dockerfile = await fs.readFile(pathToDockerfile, 'utf8');
 
   if (pomXml.includes('<groupId>org.springframework.boot</groupId>')) {
     return ProjectType.SPRING;
   }
-  else if (pomXml.includes('<groupId>org.eclipse.microprofile</groupId>') && pomXml.includes('<groupId>com.ibm.websphere.appserver.api</groupId>')) {
+  else if (dockerfile.includes('FROM websphere-liberty')) {
     return ProjectType.LIBERTY;
   }
   // eg lagom
