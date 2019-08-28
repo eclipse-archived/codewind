@@ -43,8 +43,17 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 "setting": "internalPort",
                 "socketEvent": eventConfigs.events.settingsChanged,
                 "eventKeys": ["operationId", "projectID", "status", "ports"],
-                "beforeHook": [beforeHookInternalPortTest],
-                "afterHook": [afterHookInternalPortTestSinglePort, afterHookInternalPortTestResetPort]
+                "beforeHook": [{
+                    "title": "Internal Port Test Before Hook",
+                    "function": beforeHookInternalPortTest
+                }],
+                "afterHook": [{
+                    "title": "Internal Port Test After Hook: Projects with single exposed port",
+                    "function": afterHookInternalPortTestSinglePort
+                }, {
+                    "title": "Internal Port Test After Hook: Projects with multi exposed ports",
+                    "function": afterHookInternalPortTestResetPort
+                }]
             },
             "combo2": {
                 "setting": "internalDebugPort",
@@ -56,14 +65,20 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 "value":  testContextRoot,
                 "socketEvent": eventConfigs.events.settingsChanged,
                 "eventKeys": ["operationId", "projectID", "contextRoot", "status"],
-                "afterHook": [afterHookContextRootTest]
+                "afterHook": [{
+                    "title": "Context Root After Hook: Reset project context root endpoint",
+                    "function": afterHookContextRootTest
+                }]
             },
             "combo4": {
                 "setting": "healthCheck",
                 "value":  testHealthCheck,
                 "socketEvent": eventConfigs.events.settingsChanged,
                 "eventKeys": ["operationId", "projectID", "name", "healthCheck", "status"],
-                "afterHook": [afterHookHealthCheckTest]
+                "afterHook": [{
+                    "title": "Health Check After Hook: Reset project health check endpoint",
+                    "function": afterHookHealthCheckTest
+                }]
             },
             "combo5": {
                 "setting": "mavenProfiles",
@@ -221,14 +236,18 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             _.forEach(combinations, (combo) => {
                 describe(`configure ${combo["setting"]} settings`, () => {
                     _.forEach(combo["beforeHook"], (beforeHook) => {
-                        before(`before hook: ${combo["setting"]} settings test`, async function (): Promise<void> {
-                            await beforeHook(this);
+                        const title = beforeHook.title;
+                        const func = beforeHook.function;
+                        before(`before hook: ${combo["setting"]} settings test | ${title}`, async function (): Promise<void> {
+                            await func(this);
                         });
                     });
 
                     _.forEach(combo["afterHook"], (afterHook) => {
-                        after(`after hook: ${combo["setting"]} settings test`, async function (): Promise<void> {
-                            await afterHook(this);
+                        const title = afterHook.title;
+                        const func = afterHook.function;
+                        after(`after hook: ${combo["setting"]} settings test | ${title}`, async function (): Promise<void> {
+                            await func(this);
                         });
                     });
 
