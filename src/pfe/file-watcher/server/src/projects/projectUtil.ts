@@ -1898,6 +1898,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                         internalPort: containerInfo.internalPort
                     }
                 };
+                if (containerInfo.containerId) {
+                    data.containerId = containerInfo.containerId;
+                }
                 if (containerInfo.exposedDebugPort) {
                     data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
                 }
@@ -1962,6 +1965,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                         internalPort: containerInfo.internalPort
                     }
                 };
+                if (containerInfo.containerId) {
+                    data.containerId = containerInfo.containerId;
+                }
                 if (containerInfo.exposedDebugPort) {
                     data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
                 }
