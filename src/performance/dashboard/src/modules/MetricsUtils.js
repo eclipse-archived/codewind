@@ -208,11 +208,7 @@ let getPathFromURL = function (url) {
  */
 let buildChartDataHTTP = function (params) {
 
-    const scaleFactor = params.scaleFactor;
-    const counterName = params.counterName;
-    const urlFilter = params.urlFilter;
-    const decimals = params.decimals;
-    const filteredData = params.filteredData;
+    const {scaleFactor, counterName, urlFilter, decimals, filteredData} = params;
 
     let columnData = [];
     columnData.push(counterName);
@@ -256,7 +252,8 @@ let getHTTPHitTimestamps = function (metrics, filteredUrl) {
             if (urlRow && urlRow.url) {
                 let uri = getPathFromURL(urlRow.url);
                 return getEndpoint(uri) === filteredUrl;
-            } return false;
+            } 
+            return false;
         });
         if (foundUrlSamples) {
             timestamps.push(snapshot.time);
