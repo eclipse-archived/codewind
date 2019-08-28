@@ -47,6 +47,7 @@ describe('typeDetectionController', () => {
 
     describe('when a java project is on disk', () => {
       const pathToPomXml = path.join(projectDir, 'pom.xml');
+      const pathToDockerfile = path.join(projectDir, 'Dockerfile');
 
       describe('(spring)', () => {
         before(() => {
@@ -67,7 +68,8 @@ describe('typeDetectionController', () => {
       describe('(liberty)', () => {
         before(() => {
           fsStub.pathExists.withArgs(pathToPomXml).returns(true);
-          fsStub.readFile.returns('<groupId>org.eclipse.microprofile</groupId>');
+          fsStub.pathExists.withArgs(pathToDockerfile).returns(true);
+          fsStub.readFile.returns('FROM websphere-liberty');
         });
 
         it('returns the correct language and project type', () => {
