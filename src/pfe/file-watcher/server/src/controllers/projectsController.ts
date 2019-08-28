@@ -125,6 +125,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     const projectID = req.projectID;
     const projectType = req.projectType;
     const projectLocation = req.location;
+    const build = req.build;
     let settings: IProjectSettings = undefined;
     const settingsFilePath = path.join(projectLocation, ".cw-settings");
     if (await utils.asyncFileExists(settingsFilePath)) {
@@ -207,11 +208,18 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     logger.logProjectInfo("The generated image ID is: " + imageId, projectID, projectName);
     logger.logProjectInfo("Project data directory: " + constants.projectConstants.projectsDataDir, projectID, projectName);
 
+    console.log(`############ autobuild passed in as ${build}`);
+    let autobuild = true;
+    if (build != undefined) {
+        autobuild = build;
+        console.log(`############ autobuild has been set to ${autobuild}`);
+    }
+
     const projectInfo: ProjectInfo = {
         projectID: projectID,
         projectType: projectType,
         location: projectLocation,
-        autoBuildEnabled: true,
+        autoBuildEnabled: autobuild,
         startMode: "run",
         appPorts: [],
         extensionID: projInfo.extensionID,
@@ -232,16 +240,16 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         logger.logProjectInfo("Initial start mode for project " + projectID + " is: " + startMode, projectID, projectName);
     }
 
-        // check if application port has been provided by Portal, if not, use the default app port of the project handler
-        if (settings && settings.internalPort) {
-            projectInfo.appPorts.push(settings.internalPort);
-        } else if (selectedProjectHandler.getDefaultAppPort) {
-            const port = selectedProjectHandler.getDefaultAppPort();
-            if (Array.isArray(port))
-                projectInfo.appPorts.push(...port);
-            else if (port)
-                projectInfo.appPorts.push(port);
-        }
+    // check if application port has been provided by Portal, if not, use the default app port of the project handler
+    if (settings && settings.internalPort) {
+        projectInfo.appPorts.push(settings.internalPort);
+    } else if (selectedProjectHandler.getDefaultAppPort) {
+        const port = selectedProjectHandler.getDefaultAppPort();
+        if (Array.isArray(port))
+            projectInfo.appPorts.push(...port);
+        else if (port)
+            projectInfo.appPorts.push(port);
+    }
 
     if (projInfo && projInfo.debugPort) {
         projectInfo.debugPort = projInfo.debugPort;
@@ -337,6 +345,8 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         logger.logProjectError(JSON.stringify(err), projectID);
     }
 
+    if (projectInfo.autoBuildEnabled) {
+        console.log(`#############        Autobuild is enabled #################`);
     // Add the project to the status controller
     statusController.addProject(projectID);
 
@@ -386,6 +396,14 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
             "operationId": operation.operationId,
             "logs": { "build": { "file": logFilePath } }
         };
+    } else {
+        console.log(`#############        Autobuild is NOT  enabled #################`);
+        return {
+            "statusCode": 202,
+            "operationId": "0",
+            "logs": { "build": { "file": "" } }
+        };
+    }
 }
 
 /**
@@ -1162,6 +1180,7 @@ export interface ICreateProjectParams {
     startMode?: string;
     extension?: IProjectExtension;
     language?: string;
+    build?: boolean;
 }
 
 export interface IProjectExtension {

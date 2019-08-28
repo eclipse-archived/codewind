@@ -317,6 +317,7 @@ export default class Filewatcher {
      *  @property startMode <Optional | String>: An optional start mode for the application.
      *  @property contextroot <Optional | String>: An optional context root path for the application.
      *  @property ignoredPaths <Optional | String[]>: An optional string array of relative file paths or regex for files want to be ignored for changes.
+     *  @property build <Optional | Boolean>: An optional boolean to indicate if the project should be built
      *
      * @example await filewatcher.createProject(req)
      * ```json
