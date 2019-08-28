@@ -88,9 +88,6 @@ pipeline {
         }  
 
         stage('Run Codewind test suite') {
-                options {
-                    timeout(time: 2, unit: 'HOURS') 
-                }
             
                 steps {
                     withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
@@ -300,13 +297,13 @@ pipeline {
               fi
 
               # Remove the default network
-              # printf "\nRemoving docker network\n";
-              # docker network rm codewind_default
-              # if [ $? -eq 0 ]; then
-              #    printf "\n${GREEN}Successfully removed docker network $RESET\n";
-              # else
-              #   printf "\n${RED}Error removing docker network $RESET\n";
-              #fi
+              printf "\nRemoving docker network\n";
+              docker network rm codewind_default
+              if [ $? -eq 0 ]; then
+                  printf "\n${GREEN}Successfully removed docker network $RESET\n";
+              else
+                  printf "\n${RED}Error removing docker network $RESET\n";
+              fi
               '''
         }
         failure {
