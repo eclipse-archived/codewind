@@ -86,7 +86,7 @@ export const oneExposedPortOnly: any = {
         "kube": true
     },
     "nodejs": {
-        "local": true,
+        "local": false,
         "kube": true
     }
 };
