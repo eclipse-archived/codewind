@@ -208,11 +208,9 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     logger.logProjectInfo("The generated image ID is: " + imageId, projectID, projectName);
     logger.logProjectInfo("Project data directory: " + constants.projectConstants.projectsDataDir, projectID, projectName);
 
-    console.log(`############ autobuild passed in as ${build}`);
     let autobuild = true;
     if (build != undefined) {
         autobuild = build;
-        console.log(`############ autobuild has been set to ${autobuild}`);
     }
 
     const projectInfo: ProjectInfo = {
@@ -346,58 +344,56 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     }
 
     if (projectInfo.autoBuildEnabled) {
-        console.log(`#############        Autobuild is enabled #################`);
-    // Add the project to the status controller
-    statusController.addProject(projectID);
+        // Add the project to the status controller
+        statusController.addProject(projectID);
 
-    let operation: Operation;
+        let operation: Operation;
 
-    // Create operation
-    operation = new Operation("create", projectInfo);
+        // Create operation
+        operation = new Operation("create", projectInfo);
 
-    logger.logProjectInfo("operationId: " + operation.operationId, projectID, projectName);
+        logger.logProjectInfo("operationId: " + operation.operationId, projectID, projectName);
 
-    // set default docker build log for initial project creation
-    const projectLogDir = await logHelper.getLogDir(projectID, projectName);
-    const logDirectory = path.resolve(projectLocation + "/../.logs/" + projectLogDir);
-    const logFilePath = path.join(logDirectory, logHelper.buildLogs.dockerBuild + logHelper.logExtension);
+        // set default docker build log for initial project creation
+        const projectLogDir = await logHelper.getLogDir(projectID, projectName);
+        const logDirectory = path.resolve(projectLocation + "/../.logs/" + projectLogDir);
+        const logFilePath = path.join(logDirectory, logHelper.buildLogs.dockerBuild + logHelper.logExtension);
 
 
-    // note: state here is our own status tracker to track that the build has been started once only
-    const project: BuildQueueType = {
-        operation: operation,
-        handler: selectedProjectHandler
-    };
-    let target: BuildQueueType = undefined;
+        // note: state here is our own status tracker to track that the build has been started once only
+        const project: BuildQueueType = {
+          operation: operation,
+          handler: selectedProjectHandler
+        };
+        let target: BuildQueueType = undefined;
 
-    await lock.acquire("buildQueueLock", done => {
-        // Check if project is already in the build queue, if it is then no need to add it
-        target = buildQueue.find((item) => {
-            return item.operation.projectInfo.projectID === project.operation.projectInfo.projectID;
-        });
-        if (target) {
-            logger.logProjectInfo("The project is already in the build queue so it won't be added again", projectID, projectName);
-        } else {
-            logger.logProjectInfo("Pushing project to build queue", projectID, projectName);
-            buildQueue.push(project);
-        }
-        done();
-    }, async () => {
-        // buildQueueLock release
-        // emit updated queued project ranks
-        if (target) {
-            await emitProjectRanks();
-        }
-        await checkBuildQueue();
-    }, {});
+        await lock.acquire("buildQueueLock", done => {
+            // Check if project is already in the build queue, if it is then no need to add it
+            target = buildQueue.find((item) => {
+                return item.operation.projectInfo.projectID === project.operation.projectInfo.projectID;
+            });
+            if (target) {
+                logger.logProjectInfo("The project is already in the build queue so it won't be added again", projectID, projectName);
+            } else {
+                logger.logProjectInfo("Pushing project to build queue", projectID, projectName);
+                buildQueue.push(project);
+            }
+            done();
+        }, async () => {
+            // buildQueueLock release
+            // emit updated queued project ranks
+            if (target) {
+                await emitProjectRanks();
+            }
+            await checkBuildQueue();
+        }, {});
 
-    return {
+        return {
             "statusCode": 202,
             "operationId": operation.operationId,
             "logs": { "build": { "file": logFilePath } }
         };
     } else {
-        console.log(`#############        Autobuild is NOT  enabled #################`);
         return {
             "statusCode": 202,
             "operationId": "0",
