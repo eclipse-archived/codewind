@@ -20,6 +20,15 @@ pipeline {
                     
                     // NOTE: change of this sh call should be in sync with './script/build.sh'. 
                     sh '''#!/usr/bin/env bash
+
+                        # Docker system prune
+                        echo "Docker system prune ..."
+                        docker system df
+                        docker system prune -a -f
+                        docker builder prune -a -f
+                        docker system df
+                        df -lh
+
                         echo "Starting build for Eclipse Codewind ..."
                         
                         DIR=`pwd`;
@@ -86,7 +95,7 @@ pipeline {
                 }
             }
         }  
-
+        /*
         stage('Run Codewind test suite') {
             
                 steps {
@@ -188,7 +197,8 @@ pipeline {
                     }
                 }
             }
-        }  
+        } 
+        */ 
         
         stage('Publish Docker images') {
 
@@ -304,7 +314,15 @@ pipeline {
               else
                   printf "\n${RED}Error removing docker network $RESET\n";
               fi
-              '''
+
+              # Docker system prune
+              echo "Docker system prune ..."
+              docker system df
+              docker system prune -a -f
+              docker builder prune -a -f
+              docker system df
+              df -lh
+            '''
         }
         failure {
           sh '''#!/usr/bin/env bash
