@@ -575,7 +575,7 @@ co - 4.6.0
 code-point-at - 1.1.0
  * License: MIT
 
-codewind - 0.2.0
+codewind - 0.3.0
  * License: EPL-2.0
 
 codewind - 19.5.0
@@ -584,7 +584,7 @@ codewind - 19.5.0
 codewind-java-profiler - 19.6.0
  * License: EPL-2.0
 
-codewind-java-profiler-client - 0.2.0
+codewind-java-profiler-client - 0.3.0
  * License: EPL-2.0
 
 codewind-ls-node-prof - 19.3.0
@@ -593,7 +593,7 @@ codewind-ls-node-prof - 19.3.0
 codewind-ls-node-prof-vscode-client - 0.1.0
  * License: EPL-2.0
 
-codewind-openapi-tools - 0.2.0
+codewind-openapi-tools - 0.3.0
  * License: EPL-2.0
 
 codewind-portal - 1.0.0
