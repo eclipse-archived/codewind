@@ -382,10 +382,9 @@ const containerExec = function (options: any, container: any, projectID: string)
  */
 export async function buildImage(projectID: string, imageName: string, buildOptions: string[], pathOrURL: string, liveStream?: boolean, logFile?: string): Promise<ProcessResult> {
   // Construct the build command
-  const args: string[] = [];
+  let args: string[] = [];
   if (process.env.IN_K8) {
-    args[0] = "bud";
-    args[1] = "--layers";
+    args = ["bud", "--format", "docker", "--layers"];
   }
   else {
     args[0] = "build";
