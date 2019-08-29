@@ -20,6 +20,14 @@ pipeline {
                     
                     // NOTE: change of this sh call should be in sync with './script/build.sh'. 
                     sh '''#!/usr/bin/env bash
+                        # Docker system prune
+                        echo "Docker system prune ..."
+                        docker system df
+                        docker system prune -a -f
+                        docker builder prune -a -f
+                        docker system df
+                        df -lh
+                        
                         echo "Starting build for Eclipse Codewind ..."
                         
                         DIR=`pwd`;
