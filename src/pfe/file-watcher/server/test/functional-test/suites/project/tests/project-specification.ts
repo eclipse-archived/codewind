@@ -43,6 +43,11 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 "setting": "internalPort",
                 "socketEvent": eventConfigs.events.settingsChanged,
                 "eventKeys": ["operationId", "projectID", "status", "ports"],
+                "result": {
+                    "projectID": projData.projectID,
+                    "status": "success",
+                    "ports": {}
+                },
                 "beforeHook": [{
                     "title": "Internal Port Test Before Hook",
                     "function": beforeHookInternalPortTest
@@ -50,7 +55,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 "afterHook": [{
                     "title": "Internal Port Test After Hook: Projects with single exposed port",
                     "function": afterHookInternalPortTestSinglePort
-                }, {
+                },
+                {
                     "title": "Internal Port Test After Hook: Projects with multi exposed ports",
                     "function": afterHookInternalPortTestResetPort
                 }]
@@ -58,13 +64,25 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             "combo2": {
                 "setting": "internalDebugPort",
                 "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "status", "ports"]
+                "eventKeys": ["operationId", "projectID", "status", "ports"],
+                "result": {
+                    "projectID": projData.projectID,
+                    "status": "success",
+                    "ports": {
+                        "internalDebugPort": project_configs.exposedDebugPorts[0]
+                    }
+                },
             },
             "combo3": {
                 "setting": "contextRoot",
                 "value":  testContextRoot,
                 "socketEvent": eventConfigs.events.settingsChanged,
                 "eventKeys": ["operationId", "projectID", "contextRoot", "status"],
+                "result": {
+                    "projectID": projData.projectID,
+                    "status": "success",
+                    "contextRoot": testContextRoot
+                },
                 "afterHook": [{
                     "title": "Context Root After Hook: Reset project context root endpoint",
                     "function": afterHookContextRootTest
@@ -75,6 +93,11 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 "value":  testHealthCheck,
                 "socketEvent": eventConfigs.events.settingsChanged,
                 "eventKeys": ["operationId", "projectID", "name", "healthCheck", "status"],
+                "result": {
+                    "projectID": projData.projectID,
+                    "status": "success",
+                    "healthCheck": testHealthCheck
+                },
                 "afterHook": [{
                     "title": "Health Check After Hook: Reset project health check endpoint",
                     "function": afterHookHealthCheckTest
@@ -83,12 +106,18 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             "combo5": {
                 "setting": "mavenProfiles",
                 "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "mavenProfiles", "status"]
+                "eventKeys": ["operationId", "projectID", "mavenProfiles", "status"],
+                "result": {
+                    "projectID": projData.projectID,
+                },
             },
             "combo6": {
                 "setting": "mavenProperties",
                 "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "mavenProperties", "status"]
+                "eventKeys": ["operationId", "projectID", "mavenProperties", "status"],
+                "result": {
+                    "projectID": projData.projectID,
+                },
             },
             "combo7": {
                 "setting": "ignoredPaths",
@@ -100,7 +129,18 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     "*/.gitignore",
                 ],
                 "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "ignoredPaths", "status"]
+                "eventKeys": ["operationId", "projectID", "ignoredPaths", "status"],
+                "result": {
+                    "projectID": projData.projectID,
+                    "status": "success",
+                    "ignoredPaths": [
+                        "*/node_modules*",
+                        "*/.git/*",
+                        "*/.DS_Store",
+                        "*/.dockerignore",
+                        "*/.gitignore",
+                    ]
+                },
             }
         };
         let defaultInternalPort: any;
@@ -259,8 +299,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         });
 
         async function runProjectSpecificationSettingTest(combo: any, valueCheck?: string): Promise<void> {
-            const setting = combo["setting"];
-            let value = valueCheck || combo["value"];
+            const comboInUse = _.cloneDeep(combo);
+            const setting = comboInUse["setting"];
+            let value = valueCheck || comboInUse["value"];
 
             if (setting === "internalPort") {
                 const projectInfo = await projectUtil.getProjectInfo(projData.projectID);
@@ -284,7 +325,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             if (setting === "mavenProfiles" || setting === "mavenProperties") {
                 if (!project_configs.mavenProfileCapabilities[projData.projectType]) {
                     value = [];
-                    combo["eventKeys"].push("error");
+                    comboInUse["result"]["status"] = "failed";
+                    comboInUse["eventKeys"].push("error");
                 }
                 // for spring and liberty project types support maven profiles we need to set the value here
             }
@@ -293,18 +335,26 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             testData["settings"] = {
                 [setting]: value
             };
+
+            if (setting === "internalPort" || setting === "internalDebugPort") {
+                comboInUse["result"]["ports"][setting] = value;
+            } else {
+                comboInUse["result"][setting] = value;
+            }
+
             const info: any = await projectSpecification(testData);
             expect(info);
             expect(info.statusCode);
             expect(info.statusCode).to.equal(202);
             expect(info.operationId);
 
-            if (combo["socketEvent"] && combo["eventKeys"]) {
+            if (comboInUse["socketEvent"] && comboInUse["eventKeys"] && comboInUse["result"]) {
                 if (setting === "internalDebugPort" && !project_configs.debugCapabilities[projData.projectType]) {
-                    combo["eventKeys"].push("error");
+                    comboInUse["result"]["status"] = "failed";
+                    comboInUse["eventKeys"].push("error");
                 }
 
-                const targetEvent = combo["socketEvent"];
+                const targetEvent = comboInUse["socketEvent"];
                 let eventFound = false;
                 let event: any;
                 await new Promise((resolve) => {
@@ -312,7 +362,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                         const events = socket.getAllEvents();
                         if (events && events.length >= 1) {
                             event =  events.filter((value) => {
-                                if (value.eventName === targetEvent && _.difference(combo["eventKeys"], Object.keys(value.eventData)).length === 0) return value;
+                                if (value.eventName === targetEvent && _.difference(comboInUse["eventKeys"], Object.keys(value.eventData)).length === 0 &&
+                                _.isMatch(value.eventData, comboInUse["result"])) return value;
                             })[0];
                             if (event) {
                                 eventFound = true;
@@ -329,7 +380,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     expect(event.eventName).to.equal(targetEvent);
                     expect(event.eventData);
 
-                    for (const eventKey of combo["eventKeys"]) {
+                    for (const eventKey of comboInUse["eventKeys"]) {
                         expect(event.eventData).to.haveOwnProperty(eventKey);
 
                         if (eventKey === "projectID") {
