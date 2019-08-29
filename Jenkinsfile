@@ -87,7 +87,11 @@ pipeline {
             }
         }  
 
+        /*
         stage('Run Codewind test suite') {
+                options {
+                    timeout(time: 2, unit: 'HOURS') 
+                }
             
                 steps {
                     withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
@@ -189,7 +193,7 @@ pipeline {
                 }
             }
         }  
-        
+        */
         stage('Publish Docker images') {
 
             // This when clause disables PR build uploads; you may comment this out if you want your build uploaded.
@@ -304,6 +308,16 @@ pipeline {
               else
                   printf "\n${RED}Error removing docker network $RESET\n";
               fi
+
+              # Docker system prune
+              echo "Docker system prune ..."
+              df -lh
+              docker system df
+              docker system prune -a -f
+              docker builder prune -a -f
+              docker system df
+              df -lh
+              
               '''
         }
         failure {
