@@ -87,6 +87,7 @@ pipeline {
             }
         }  
 
+        /*
         stage('Run Codewind test suite') {
                 options {
                     timeout(time: 2, unit: 'HOURS') 
@@ -192,7 +193,7 @@ pipeline {
                 }
             }
         }  
-        
+        */
         stage('Publish Docker images') {
 
             // This when clause disables PR build uploads; you may comment this out if you want your build uploaded.
@@ -300,7 +301,13 @@ pipeline {
               fi
 
               # Remove the default network
-
+              printf "\nRemoving docker network\n";
+              docker network rm codewind_default
+              if [ $? -eq 0 ]; then
+                  printf "\n${GREEN}Successfully removed docker network $RESET\n";
+              else
+                  printf "\n${RED}Error removing docker network $RESET\n";
+              fi
 
               # Docker system prune
               echo "Docker system prune ..."
