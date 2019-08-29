@@ -88,9 +88,6 @@ pipeline {
         }  
 
         stage('Run Codewind test suite') {
-                options {
-                    timeout(time: 2, unit: 'HOURS') 
-                }
             
                 steps {
                     withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
