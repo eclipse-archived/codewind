@@ -119,7 +119,7 @@ paths:
                   example: "https://github.com/microclimate-dev2ops/nodeExpressTemplate"
       responses:
         200:
-          description: Project creation successful
+          description: Project creation request sent successfully
           content:
             application/json:
               schema:
