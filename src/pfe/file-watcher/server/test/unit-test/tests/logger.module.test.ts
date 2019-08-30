@@ -31,7 +31,7 @@ export function loggerTestModule(): void {
                 await copyAsync(originalProjectMetadata, testProjectMetadata);
             }
 
-            process.env.NODE_ENV = "production";
+            process.env.HIDE_PFE_LOG = "n";
         });
 
         after("remove test directories", async () => {
@@ -39,7 +39,7 @@ export function loggerTestModule(): void {
                 await unlinkAsync(testProjectMetadata);
                 await rmdirAsync(projectMetadataPath);
             }
-            process.env.NODE_ENV = "test";
+            process.env.HIDE_PFE_LOG = "y";
         });
 
         const combinations: any = {
@@ -115,7 +115,7 @@ export function loggerTestModule(): void {
                 await copyAsync(originalProjectMetadata, testProjectMetadata);
             }
 
-            process.env.NODE_ENV = "production";
+            process.env.HIDE_PFE_LOG = "n";
         });
 
         after("remove test directories", async () => {
@@ -123,7 +123,7 @@ export function loggerTestModule(): void {
                 await unlinkAsync(testProjectMetadata);
                 await rmdirAsync(projectMetadataPath);
             }
-            process.env.NODE_ENV = "test";
+            process.env.HIDE_PFE_LOG = "y";
         });
 
         const combinations: any = {
@@ -199,7 +199,7 @@ export function loggerTestModule(): void {
                 await copyAsync(originalProjectMetadata, testProjectMetadata);
             }
 
-            process.env.NODE_ENV = "production";
+            process.env.HIDE_PFE_LOG = "n";
             logger.setLoggingLevel("debug");
         });
 
@@ -208,7 +208,7 @@ export function loggerTestModule(): void {
                 await unlinkAsync(testProjectMetadata);
                 await rmdirAsync(projectMetadataPath);
             }
-            process.env.NODE_ENV = "test";
+            process.env.HIDE_PFE_LOG = "y";
         });
 
         const combinations: any = {
@@ -273,7 +273,7 @@ export function loggerTestModule(): void {
                 await copyAsync(originalProjectMetadata, testProjectMetadata);
             }
 
-            process.env.NODE_ENV = "production";
+            process.env.HIDE_PFE_LOG = "n";
             logger.setLoggingLevel("trace");
         });
 
@@ -282,7 +282,7 @@ export function loggerTestModule(): void {
                 await unlinkAsync(testProjectMetadata);
                 await rmdirAsync(projectMetadataPath);
             }
-            process.env.NODE_ENV = "test";
+            process.env.HIDE_PFE_LOG = "y";
         });
 
         const combinations: any = {
@@ -342,11 +342,11 @@ export function loggerTestModule(): void {
     describe("testing of Turbine Log functions", () => {
 
         before("set env variable", async () => {
-            process.env.NODE_ENV = "production";
+            process.env.HIDE_PFE_LOG = "n";
         });
 
         after("reset env variable", async () => {
-            process.env.NODE_ENV = "test";
+            process.env.HIDE_PFE_LOG = "y";
         });
 
         const combinations: any = {
@@ -436,7 +436,7 @@ export function loggerTestModule(): void {
                 await copyAsync(originalProjectMetadata, testProjectMetadata);
             }
 
-            process.env.NODE_ENV = "production";
+            process.env.HIDE_PFE_LOG = "n";
             logger.setLoggingLevel("info");
         });
 
@@ -445,7 +445,7 @@ export function loggerTestModule(): void {
                 await unlinkAsync(testProjectMetadata);
                 await rmdirAsync(projectMetadataPath);
             }
-            process.env.NODE_ENV = "test";
+            process.env.HIDE_PFE_LOG = "y";
         });
 
         const combinations: any = {
@@ -503,11 +503,11 @@ export function loggerTestModule(): void {
     describe("combinational testing of setLoggingLevel function", () => {
 
         before("set env variable", async () => {
-            process.env.NODE_ENV = "production";
+            process.env.HIDE_PFE_LOG = "n";
         });
 
         after("reset env variable", async () => {
-            process.env.NODE_ENV = "test";
+            process.env.HIDE_PFE_LOG = "y";
         });
 
         const combinations: any = {

@@ -194,7 +194,7 @@ export async function validate(operation: Operation): Promise<void> {
  * @returns Promise<any>
  */
 export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isError: boolean): Promise<any> {
-    if (process.env.NODE_ENV === "test") return;
+    if (process.env.HIDE_PFE_LOG === "y") return;
     // have the message match the Maven format
     const msgLabel = isError ? "ERROR" : "INFO";
     const fullMsg = `\n[${msgLabel}] ${msg}`;
