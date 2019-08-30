@@ -17,7 +17,7 @@ const pfe = {
 
 export const baseURL = pfe.PROTOCOL + "://" + pfe.HOST + ":" + pfe.PORT;
 
-export const deploymentRegistry = process.env.IN_K8_REGISTRY || "codewindtest"; // need to change the default registry to the fallback of the che registry installed for test
+export const deploymentRegistry = "docker-registry.default.svc:5000/eclipse-che";
 
 const apiv1 = "/api/v1/";
 
