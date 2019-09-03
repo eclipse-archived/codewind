@@ -149,13 +149,16 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             socket.clearEvents();
         });
 
+        if (projData.projectType === "docker") {
+            utils.rebuildProjectAfterHook(socket, projData);
+        } else {
+            utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
+        }
+
         afterEach("remove build from running queue", async () => {
             await utils.removeProjectFromRunningBuild(projData);
             await utils.setBuildStatus(projData);
         });
-
-        utils.rebuildProjectAfterHook(socket, projData);
-
         it("set project specification without project id", async () => {
             const testData = _.cloneDeep(data);
             delete testData["projectID"];
@@ -439,12 +442,20 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     await fs.writeFileSync(path.join(projectTemplateDir, file), fileOutput.replace(new RegExp(`servicePort: ${defaultInternalPort}`, "g"), `servicePort: ${testExposedPort}`), {encoding: "utf-8"});
                 }
             }
-            // we need to do two builds for docker projects. issue: https://github.com/eclipse/codewind/issues/297
+            // we need to do two builds for docker projects on local. issue: https://github.com/eclipse/codewind/issues/297
             if (projData.projectType === "docker") {
-                await utils.rebuildProject(socket, projData);
+                if (process.env.IN_K8) {
+                    await utils.rebuildProject(socket, projData, eventConfigs.events.creation,
+                        {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
+                } else {
+                    await utils.rebuildProject(socket, projData);
+                    await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
+                        {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
+                }
+            } else {
+                await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
+                    {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
             }
-            await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
         }
 
         async function afterHookInternalPortTestSinglePort(hook: any): Promise<void> {
@@ -463,10 +474,12 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     await fs.writeFileSync(path.join(projectTemplateDir, file), fileOutput.replace(new RegExp(`servicePort: ${testExposedPort}`, "g"), `servicePort: ${defaultInternalPort}`), {encoding: "utf-8"});
                 }
             }
-            // we need to do two builds for docker projects. issue: https://github.com/eclipse/codewind/issues/297
+            // we need to do two builds for docker projects on local. issue: https://github.com/eclipse/codewind/issues/297
             if (projData.projectType === "docker") {
-                await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                    {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
+                if (!process.env.IN_K8) {
+                    await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
+                        {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
+                }
             }
             await utils.rebuildProject(socket, projData);
         }

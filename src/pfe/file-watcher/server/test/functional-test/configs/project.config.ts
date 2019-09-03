@@ -11,6 +11,7 @@
 /**
  * This file for different project specific (i.e liberty, spring, docker) capabaility configurations.
  */
+import * as project from "../../../src/projects/Project";
 
 export const needManualReset: any = {
     "docker": {
@@ -25,12 +26,15 @@ export const needManualReset: any = {
 
 export const projectCapabilities: any = {
     "docker": {
-        "startModes": ["run"],
-        "controlCommands": []
+        "local": project.defaultProjectCapabilities,
+        "kube": project.defaultProjectCapabilities
     },
     "nodejs": {
-        "startModes": ["run", "debugNoInit"],
-        "controlCommands": ["restart"]
+        "local": {
+            "startModes": ["run", "debugNoInit"],
+            "controlCommands": ["restart"]
+        },
+        "kube": project.defaultProjectCapabilities
     }
 };
 

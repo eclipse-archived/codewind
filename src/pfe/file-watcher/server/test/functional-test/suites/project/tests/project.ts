@@ -59,7 +59,7 @@ export default class ProjectTest {
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(200);
                 expect(info.capabilities);
-                expect(info.capabilities).to.deep.equal(project_configs.projectCapabilities[projectType]);
+                expect(info.capabilities).to.deep.equal(project_configs.projectCapabilities[projectType][process.env.TEST_TYPE]);
             });
         });
     }
