@@ -38,17 +38,13 @@ function install {
         # Create Codewind workspace with Che API
         echo -e "${BLUE}Creating Che Codewind Workspace ${RESET}\n"
         DEFAULT_DEVFILE="https://raw.githubusercontent.com/eclipse/codewind-che-plugin/master/devfiles/latest/devfile.yaml"
-        DEVFILE="./resources/devfile.yaml"
 
         if [[ ! -z $USER_DEVFILE ]]; then
-            echo -e "${BLUE}Downloading user specified devfile from $USER_DEVFILE ${RESET}\n"
-            curl -o $DEVFILE $USER_DEVFILE
-        else
-            echo -e "${BLUE}Downloading default codewind devfile from $DEFAULT_DEVFILE ${RESET}\n"
-            curl -o $DEVFILE $DEFAULT_DEVFILE
+            DEFAULT_DEVFILE="$USER_DEVFILE"
         fi
-
-        HTTPSTATUS=$(curl -s --header "Content-Type: text/yaml" --request POST --data-binary @$DEVFILE -D- -o/dev/null http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true 2>/dev/null | sed -n 3p | cut -d ' ' -f2) 
+        echo -e "${BLUE}Downloading devfile from:${GREEN} $DEFAULT_DEVFILE ${RESET}\n"
+        
+        HTTPSTATUS=$(curl $DEFAULT_DEVFILE | curl -s --header "Content-Type: text/yaml" --request POST --data-binary @- -D- -o/dev/null http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true 2>/dev/null | sed -n 3p | cut -d ' ' -f2) 
         if [[ $HTTPSTATUS -ne 201 ]]; then
             echo -e "${RED}Codewind workspace setup has failed. ${RESET}\n"
             exit 1
