@@ -12,7 +12,10 @@
  * This file for different project specific (i.e liberty, spring, docker) capabaility configurations.
  */
 import * as project from "../../../src/projects/Project";
+import * as nodeProject from "../../../src/projects/nodejsProject";
 
+// This config is to manual reset the running build queue and build status options for all project types.
+// We currently need to do that because project that relies on script and IDC code does not follow the typescript code and need to be manually reset.
 export const needManualReset: any = {
     "docker": {
         "runningBuildQueue": false,
@@ -99,7 +102,7 @@ export const defaultInternalPorts: any = {
     "go": "8000",
     "lagom": "9000",
     "python": "5000",
-    "nodejs": "3000"
+    "nodejs": nodeProject.getDefaultAppPort()
 };
 
 export const filesToUpdate: any = {
