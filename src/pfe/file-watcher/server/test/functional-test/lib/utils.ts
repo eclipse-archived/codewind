@@ -110,10 +110,10 @@ export function writeToFile(path: string, content: string, callback: (err: Error
     });
 }
 
-export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreation): void {
+export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreation, checkEvent?: string, checkEventData?: any): void {
     after(`rebuild project ${projData.projectType}`, async function (): Promise<void> {
         this.timeout(timeoutConfigs.createTestTimeout);
-        await rebuildProject(socket, projData);
+        await rebuildProject(socket, projData, checkEvent, checkEventData);
     });
 }
 

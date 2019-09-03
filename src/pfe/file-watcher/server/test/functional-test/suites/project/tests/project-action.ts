@@ -37,9 +37,9 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "disableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 200,
-            "socketEvent": projData.projectType.toLowerCase() === "docker" ? [] : [eventConfigs.events.projectChanged],
-            "eventKeys": projData.projectType.toLowerCase() === "docker" ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
-            "result": projData.projectType.toLowerCase() === "docker" ? [] : [{
+            "socketEvent": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [eventConfigs.events.projectChanged],
+            "eventKeys": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
+            "result": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }]
@@ -48,9 +48,9 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "enableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 202,
-            "socketEvent": projData.projectType.toLowerCase() === "docker" ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
-            "eventKeys": projData.projectType.toLowerCase() === "docker" ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
-            "result": projData.projectType.toLowerCase() === "docker" ? [] : [{
+            "socketEvent": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
+            "eventKeys": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
+            "result": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }, {
@@ -111,7 +111,11 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             }
         });
 
-        utils.rebuildProjectAfterHook(socket, projData);
+        if (projData.projectType === "docker") {
+            utils.rebuildProjectAfterHook(socket, projData);
+        } else {
+            utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
+        }
 
         after("remove build from running queue", async () => {
             await utils.removeProjectFromRunningBuild(projData);
@@ -154,8 +158,18 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             testMessage = mode ? testMessage + ` with mode ${mode}` : testMessage;
 
             it(testMessage, async () => {
+                const comboInUse = _.cloneDeep(combo);
+
+                if (comboInUse.action.toLowerCase() === "restart" && process.env.IN_K8) {
+                    comboInUse.statusCode = 400;
+                    delete comboInUse.returnKeys;
+                    delete comboInUse.socketEvent;
+                    delete comboInUse.eventKeys;
+                    delete comboInUse.result;
+                }
+
                 const testData = _.cloneDeep(data);
-                testData["action"] = combo.action;
+                testData["action"] = comboInUse.action;
 
                 if (mode) {
                     testData["startMode"] = mode;
@@ -163,22 +177,26 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
 
                 const info: any = await projectAction(testData);
                 expect(info);
-                for (const returnKey of combo["returnKeys"]) {
-                    expect(info[returnKey]);
+
+                if (comboInUse["returnKeys"]) {
+                    for (const returnKey of comboInUse["returnKeys"]) {
+                        expect(info[returnKey]);
+                    }
                 }
+
                 expect(info.statusCode);
-                expect(info.statusCode).to.equal(combo.statusCode);
+                expect(info.statusCode).to.equal(comboInUse.statusCode);
 
-                if (combo["status"]) {
+                if (comboInUse["status"]) {
                     expect(info.status);
-                    expect(info.status).to.equal(combo.status);
+                    expect(info.status).to.equal(comboInUse.status);
                 }
 
-                const socketEvents = combo["socketEvent"];
-                const eventKeys = combo["eventKeys"];
-                const results = combo["result"];
+                const socketEvents = comboInUse["socketEvent"];
+                const eventKeys = comboInUse["eventKeys"];
+                const results = comboInUse["result"];
 
-                if (socketEvents.length > 0 && eventKeys.length > 0 && results.length > 0) {
+                if (socketEvents && socketEvents.length > 0 && eventKeys && eventKeys.length > 0 && results && results.length > 0) {
                     expect(socketEvents.length).to.equal(eventKeys.length);
                     expect(eventKeys.length).to.equal(results.length);
 
