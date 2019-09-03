@@ -39,7 +39,7 @@ function clone () {
     getCurl $1 $2 $3
 
     if [ $TEST_TYPE == "local" ]; then
-        docker exec -it $CODEWIND_CONTAINER_ID bash -c "$PROJECT_CLONE_CMD"
+        docker exec -i $CODEWIND_CONTAINER_ID bash -c "$PROJECT_CLONE_CMD"
     elif [ $TEST_TYPE == "kube" ]; then
         kubectl exec -i $CODEWIND_POD_ID -- bash -c "$PROJECT_CLONE_CMD"
     fi
@@ -64,11 +64,11 @@ function setup {
     if [ $TEST_TYPE == "local" ]; then
         CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
         docker cp $TURBINE_SERVER_DIR $CODEWIND_CONTAINER_ID:$TURBINE_DIR_CONTAINER \
-        && docker exec -it $CODEWIND_CONTAINER_ID bash -c "$TURBINE_NPM_INSTALL_CMD"
+        && docker exec -i $CODEWIND_CONTAINER_ID bash -c "$TURBINE_NPM_INSTALL_CMD"
     elif [ $TEST_TYPE == "kube" ]; then
         CODEWIND_POD_ID=$(kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 | cut -d " " -f 1)
         kubectl cp $TURBINE_SERVER_DIR $CODEWIND_POD_ID:$TURBINE_DIR_CONTAINER \
-        && kubectl exec -it $CODEWIND_POD_ID -- bash -c "$TURBINE_NPM_INSTALL_CMD"
+        && kubectl exec -i $CODEWIND_POD_ID -- bash -c "$TURBINE_NPM_INSTALL_CMD"
     fi
 
     if [[ ($? -ne 0) ]]; then
@@ -115,10 +115,10 @@ function setup {
 
 function run {
     if [ $TEST_TYPE == "local" ]; then
-        docker exec -it $CODEWIND_CONTAINER_ID bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
+        docker exec -i $CODEWIND_CONTAINER_ID bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
         docker cp $CODEWIND_CONTAINER_ID:/test_output.xml $TEST_OUTPUT
     elif [ $TEST_TYPE == "kube" ]; then
-        kubectl exec -it $CODEWIND_POD_ID -- bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
+        kubectl exec -i $CODEWIND_POD_ID -- bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
         kubectl cp $CODEWIND_POD_ID:/test_output.xml $TEST_OUTPUT
     fi
     echo -e "${BLUE}Test logs available at: $TEST_LOG ${RESET}"
