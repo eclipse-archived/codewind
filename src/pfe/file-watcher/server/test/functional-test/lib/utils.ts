@@ -165,6 +165,14 @@ export async function rebuildProject(socket: SocketIO, projData: ProjectCreation
     }
 }
 
+/**
+ * @function
+ * @description Util function to remove a project from the running build. We need to do it for project that relies on script or IDC code and brute remove the project from running builds.
+ *
+ * @param projData <Required | ProjectCreation> - The project creation data.
+ *
+ * @returns Promise<void>
+ */
 export async function removeProjectFromRunningBuild(projData: ProjectCreation): Promise<void> {
     if (project_configs.needManualReset[projData.projectType]["runningBuildQueue"]) {
         const runningBuildQueue = await removeProjectFromRunningBuildQueue(projData.projectID);
@@ -173,6 +181,15 @@ export async function removeProjectFromRunningBuild(projData: ProjectCreation): 
     }
 }
 
+/**
+ * @function
+ * @description Util function to set the build status of a project. We need to do it for project that relies on script or IDC code and brute set the build status of a project.
+ *
+ * @param projData <Required | ProjectCreation> - The project creation data.
+ * @param status <Optional | String> - The status to update to.
+ *
+ * @returns Promise<void>
+ */
 export async function setBuildStatus(projData: ProjectCreation, status?: string): Promise<void> {
     if (project_configs.needManualReset[projData.projectType]["buildStatus"]) {
         const info = await updateStatus({

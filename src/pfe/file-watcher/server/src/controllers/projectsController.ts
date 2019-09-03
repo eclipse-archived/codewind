@@ -58,9 +58,17 @@ const BUILD_KEY = "projectStatusController.buildRank";
 // timeout to ping build projects
 setInterval(checkBuildQueue, 5000);
 
+/**
+ * @function
+ * @description This is a helper function required for Turbine functional tests. The function removes a project from the running build queue.
+ *
+ * @param projectID <Required | String> - The alphanumeric id for the project
+ *
+ * @returns Promise<Array<BuildQueueType>>
+ */
 export async function removeProjectFromRunningBuildQueue(projectID: string): Promise<Array<BuildQueueType>> {
     if (process.env.NODE_ENV === "test") {
-        logger.logProjectInfo("This function should be only run for Turbine tests", projectID);
+        logger.logProjectInfo("Removing project from the running build queue. This function should be only used for Turbine tests.", projectID);
         runningBuilds = runningBuilds.filter((project: BuildQueueType) => {
             return projectID != project.operation.projectInfo.projectID;
         });
