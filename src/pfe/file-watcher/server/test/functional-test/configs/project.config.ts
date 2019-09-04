@@ -147,5 +147,6 @@ export const filesToUpdate: any = {
         "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloModule.java",
         "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloServiceImpl.java"],
     "python": ["Dockerfile", "app.py"],
-    "nodejs": ["Dockerfile", "server/server.js"]
+    "nodejs": ["Dockerfile", "server/server.js"],
+    "spring": ["Dockerfile", "src/main/java/application/rest/v1/Example.java"]
 };
