@@ -19,6 +19,13 @@ info:
   # - name: admin
   #   description: Operations available only to authenticated admins
 paths:
+  /ready:
+    get:
+      summary: Return true when codewind is ready to accept requests
+      responses:
+        200:
+          description: Status of codewind as a boolean
+
   /api/v1/environment:
     get:
       summary: Get information on the current environment
