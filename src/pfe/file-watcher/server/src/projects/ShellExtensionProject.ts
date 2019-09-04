@@ -277,7 +277,7 @@ export class ShellExtensionProject implements IExtensionProject {
      */
     getCapabilities = (): ProjectCapabilities => {
 
-        if (this.config.capabilities) {
+        if (this.config.capabilities && this.getDefaultDebugPort()) {
             return new ProjectCapabilities(
                 this.config.capabilities.startModes, this.config.capabilities.controlCommands);
         }
