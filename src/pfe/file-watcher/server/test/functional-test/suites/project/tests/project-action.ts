@@ -37,9 +37,9 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "disableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 200,
-            "socketEvent": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [eventConfigs.events.projectChanged],
-            "eventKeys": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
-            "result": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [{
+            "socketEvent": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [eventConfigs.events.projectChanged],
+            "eventKeys": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
+            "result": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }]
@@ -48,9 +48,9 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "enableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 202,
-            "socketEvent": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
-            "eventKeys": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
-            "result": projData.projectType.toLowerCase() === "docker" || process.env.IN_K8 ? [] : [{
+            "socketEvent": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
+            "eventKeys": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
+            "result": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }, {

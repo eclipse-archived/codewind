@@ -32,6 +32,7 @@ export const needManualReset: any = {
     },
 };
 
+// project specific capabaility settings: start modes and control commands
 export const projectCapabilities: any = {
     "docker": {
         "local": project.defaultProjectCapabilities,
@@ -43,11 +44,27 @@ export const projectCapabilities: any = {
             "controlCommands": ["restart"]
         },
         "kube": project.defaultProjectCapabilities
+    },
+    "spring": {
+        "local": {
+            "startModes": ["run", "debug", "debugNoInit"],
+            "controlCommands": ["restart"]
+        },
+        "kube": project.defaultProjectCapabilities
     }
 };
 
+// auto build enable/disable event capabilities: some projects emit the project changed event and some don't do anything
+export const autoBuildEventCapabailities: any = {
+    "docker": false,
+    "nodejs": true,
+    "spring": false,
+};
+
+// list of start modes available in Turbine
 export const startModes: Array<string> = ["run", "debug", "debugNoInit"];
 
+// project specific restart capabilities depending on the above start modes
 export const restartCapabilities: any = {
     "docker": {
         [startModes[0]]: false,
@@ -59,24 +76,34 @@ export const restartCapabilities: any = {
         [startModes[1]]: false,
         [startModes[2]]: true,
     },
+    "spring": {
+        [startModes[0]]: true,
+        [startModes[1]]: true,
+        [startModes[2]]: true,
+    },
 };
 
+// project specific debug capabilities
 export const debugCapabilities: any = {
     "docker": false,
     "nodejs": true
 };
 
+// project specific maven profile capabilities
 export const mavenProfileCapabilities: any = {
     "docker":  false,
     "nodejs": false
 };
 
+// list of mocked exposed debug ports
 export const exposedDebugPorts = ["1000"];
 
+// default context roots for projects
 export const defaultContextRoot: any = {
     "lagom": "/api/hello/you"
 };
 
+// default health check endpoints for projects
 export const defaultHealthCheckEndPoint: any = {
     "go": "/",
     "lagom": "/",
@@ -84,6 +111,7 @@ export const defaultHealthCheckEndPoint: any = {
     "nodejs": "/"
 };
 
+// project specific setting for projects that only expose one app port
 export const oneExposedPortOnly: any = {
     "go": {
         "local": true,
@@ -103,6 +131,7 @@ export const oneExposedPortOnly: any = {
     }
 };
 
+// project specific setting for default app ports
 export const defaultInternalPorts: any = {
     "go": "8000",
     "lagom": "9000",
@@ -110,6 +139,7 @@ export const defaultInternalPorts: any = {
     "nodejs": nodeProject.getDefaultAppPort()
 };
 
+// project specific settings to mark the main files
 export const filesToUpdate: any = {
     "go": ["Dockerfile", "main.go"],
     "lagom": ["Dockerfile",
