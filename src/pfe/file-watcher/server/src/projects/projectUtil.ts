@@ -1436,7 +1436,9 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.inProgress, "buildscripts.buildImage");
         try {
             logger.logProjectInfo("Build container image", buildInfo.projectID);
-            await dockerutil.buildImage(buildInfo.projectID, buildInfo.containerName, [], buildInfo.projectLocation, true, dockerBuildLog);
+            const projectInfo = await getProjectInfo(buildInfo.projectID);
+            const language = projectInfo.language;
+            await dockerutil.buildImage(buildInfo.projectID, language, buildInfo.containerName, [], buildInfo.projectLocation, true, dockerBuildLog);
             const imageLastBuild = Date.now();
             logger.logProjectInfo("Container image build stage complete.", buildInfo.projectID);
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.inProgress, "buildscripts.containerBuildSuccess", imageLastBuild.toString());
@@ -1499,7 +1501,9 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.inProgress, "buildscripts.buildImage");
         try {
             logger.logProjectInfo("Build container image", buildInfo.projectID);
-            await dockerutil.buildImage(buildInfo.projectID, buildInfo.containerName, [], buildInfo.projectLocation, true, dockerBuildLog);
+            const projectInfo = await getProjectInfo(buildInfo.projectID);
+            const language = projectInfo.language;
+            await dockerutil.buildImage(buildInfo.projectID, language, buildInfo.containerName, [], buildInfo.projectLocation, true, dockerBuildLog);
             logger.logProjectInfo("Container image build stage complete.", buildInfo.projectID);
             const imageLastBuild = Date.now();
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.success, " ", imageLastBuild.toString());
