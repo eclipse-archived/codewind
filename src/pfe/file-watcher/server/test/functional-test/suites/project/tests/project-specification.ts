@@ -156,7 +156,6 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         }
 
         afterEach("remove build from running queue", async () => {
-            await utils.removeProjectFromRunningBuild(projData);
             await utils.setBuildStatus(projData);
         });
         it("set project specification without project id", async () => {

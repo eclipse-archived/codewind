@@ -118,7 +118,6 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         }
 
         after("remove build from running queue", async () => {
-            await utils.removeProjectFromRunningBuild(projData);
             await utils.setBuildStatus(projData);
         });
 
@@ -263,7 +262,6 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
 
     async function afterHookRemoveProjectFromRunningBuild(hook: any): Promise<void> {
         hook.timeout(timeoutConfigs.defaultTimeout);
-        await utils.removeProjectFromRunningBuild(projData);
         await utils.setBuildStatus(projData);
     }
 }

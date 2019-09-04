@@ -18,7 +18,7 @@ import * as _ from "lodash";
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
 import { SocketIO } from "./socket-io";
-import { ProjectCreation, projectAction, removeProjectFromRunningBuildQueue, updateStatus } from "./project";
+import { ProjectCreation, projectAction, updateStatus } from "./project";
 import { expect } from "chai";
 import * as project_configs from "../configs/project.config";
 import * as eventConfigs from "../configs/event.config";
@@ -162,22 +162,6 @@ export async function rebuildProject(socket: SocketIO, projData: ProjectCreation
         expect(_.isMatch(event.eventData, data));
     } else {
         fail(`failed to find ${targetEvent} for rebuild project ${projData.projectType}`);
-    }
-}
-
-/**
- * @function
- * @description Util function to remove a project from the running build. We need to do it for project that relies on script or IDC code and brute remove the project from running builds.
- *
- * @param projData <Required | ProjectCreation> - The project creation data.
- *
- * @returns Promise<void>
- */
-export async function removeProjectFromRunningBuild(projData: ProjectCreation): Promise<void> {
-    if (project_configs.needManualReset[projData.projectType]["runningBuildQueue"]) {
-        const runningBuildQueue = await removeProjectFromRunningBuildQueue(projData.projectID);
-        expect(runningBuildQueue);
-        expect(runningBuildQueue).to.not.include(projData.projectID);
     }
 }
 
