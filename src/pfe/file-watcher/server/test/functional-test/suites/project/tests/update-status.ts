@@ -29,7 +29,6 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
         };
 
         afterEach("remove build from running queue", async () => {
-            await utils.removeProjectFromRunningBuild(projData);
             await utils.setBuildStatus(projData);
         });
 
@@ -98,7 +97,6 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
                 }
 
                 after("remove build from running queue", async () => {
-                    await utils.removeProjectFromRunningBuild(projData);
                     await utils.setBuildStatus(projData);
                 });
 

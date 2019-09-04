@@ -41,7 +41,6 @@ export default class CreateTest {
         });
 
         after("remove build from running queue", async () => {
-            await utils.removeProjectFromRunningBuild(projData);
             await utils.setBuildStatus(projData);
         });
     }

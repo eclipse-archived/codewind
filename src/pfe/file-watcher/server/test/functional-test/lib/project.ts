@@ -74,7 +74,3 @@ export async function checkNewLogFile(projectID: string, type: string): Promise<
 export async function updateProjectForNewChange(projectID: string, timestamp: number,  chunkNum: number, chunk_total: number, eventArray: projectEventsController.IFileChangeEvent[]): Promise<projectEventsController.IUpdateProjectSuccess | projectEventsController.IUpdateProjectFailure> {
   return await filewatcher.updateProjectForNewChange(projectID, timestamp, chunkNum, chunk_total, eventArray);
 }
-
-export async function removeProjectFromRunningBuildQueue(projectID: string): Promise<Array<projectsController.BuildQueueType>> {
-  return await projectsController.removeProjectFromRunningBuildQueue(projectID);
-}

@@ -18,11 +18,9 @@ import * as nodeProject from "../../../src/projects/nodejsProject";
 // We currently need to do that because project that relies on script and IDC code does not follow the typescript code and need to be manually reset.
 export const needManualReset: any = {
     "docker": {
-        "runningBuildQueue": false,
         "buildStatus": false
     },
     "nodejs": {
-        "runningBuildQueue": true,
         "buildStatus": true
     },
 };
