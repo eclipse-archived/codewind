@@ -75,7 +75,7 @@ const defaultAppsodyTemplates = [
         label: 'Appsody Eclipse MicroProfile® template',
         description: 'Eclipse MicroProfile on Open Liberty & OpenJ9 using Maven',
         language: 'java',
-        url: 'https://github.com/appsody/stacks/releases/download/java-microprofile-v0.2.7/incubator.java-microprofile.templates.default.tar.gz',
+        url: 'https://github.com/appsody/stacks/releases/download/java-microprofile-v0.2.11/incubator.java-microprofile.v0.2.11.templates.default.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
     },
@@ -83,7 +83,7 @@ const defaultAppsodyTemplates = [
         label: 'Appsody LoopBack 4 template',
         description: 'LoopBack 4 API Framework for Node.js',
         language: 'nodejs',
-        url: 'https://github.com/appsody/stacks/releases/download/nodejs-loopback-v0.1.1/incubator.nodejs-loopback.templates.scaffold.tar.gz',
+        url: 'https://github.com/appsody/stacks/releases/download/nodejs-loopback-v0.1.4/incubator.nodejs-loopback.templates.scaffold.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
     },
@@ -91,7 +91,7 @@ const defaultAppsodyTemplates = [
         label: 'Appsody Node.js Express simple template',
         description: 'Express web framework for Node.js',
         language: 'nodejs',
-        url: 'https://github.com/appsody/stacks/releases/download/nodejs-express-v0.2.3/incubator.nodejs-express.templates.simple.tar.gz',
+        url: 'https://github.com/appsody/stacks/releases/download/nodejs-express-v0.2.5/incubator.nodejs-express.templates.simple.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
     },
@@ -99,7 +99,7 @@ const defaultAppsodyTemplates = [
         label: 'Appsody Node.js Express skaffold template',
         description: 'Express web framework for Node.js',
         language: 'nodejs',
-        url: 'https://github.com/appsody/stacks/releases/download/nodejs-express-v0.2.3/incubator.nodejs-express.templates.skaffold.tar.gz',
+        url: 'https://github.com/appsody/stacks/releases/download/nodejs-express-v0.2.5/incubator.nodejs-express.templates.skaffold.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
     },
@@ -107,7 +107,15 @@ const defaultAppsodyTemplates = [
         label: 'Appsody Node.js template',
         description: 'Runtime for Node.js applications',
         language: 'nodejs',
-        url: 'https://github.com/appsody/stacks/releases/download/nodejs-v0.2.3/incubator.nodejs.templates.simple.tar.gz',
+        url: 'https://github.com/appsody/stacks/releases/download/nodejs-v0.2.5/incubator.nodejs.templates.simple.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Python Flask template',
+        description: 'Flask web Framework for Python',
+        language: 'python',
+        url: 'https://github.com/appsody/stacks/releases/download/python-flask-v0.1.3/incubator.python-flask.v0.1.3.templates.simple.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
     },
@@ -115,7 +123,7 @@ const defaultAppsodyTemplates = [
         label: 'Appsody Spring Boot® default template',
         description: 'Spring Boot using OpenJ9 and Maven',
         language: 'java',
-        url: 'https://github.com/appsody/stacks/releases/download/java-spring-boot2-v0.3.4/incubator.java-spring-boot2.templates.default.tar.gz',
+        url: 'https://github.com/appsody/stacks/releases/download/java-spring-boot2-v0.3.9/incubator.java-spring-boot2.v0.3.9.templates.default.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
     },
@@ -123,7 +131,7 @@ const defaultAppsodyTemplates = [
         label: 'Appsody Spring Boot® kotlin template',
         description: 'Spring Boot using OpenJ9 and Maven',
         language: 'java',
-        url: 'https://github.com/appsody/stacks/releases/download/java-spring-boot2-v0.3.4/incubator.java-spring-boot2.templates.kotlin.tar.gz',
+        url: 'https://github.com/appsody/stacks/releases/download/java-spring-boot2-v0.3.9/incubator.java-spring-boot2.v0.3.9.templates.kotlin.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
     },
@@ -131,7 +139,7 @@ const defaultAppsodyTemplates = [
         label: 'Appsody Swift template',
         description: 'Runtime for Swift applications',
         language: 'swift',
-        url: 'https://github.com/appsody/stacks/releases/download/swift-v0.1.2/incubator.swift.templates.simple.tar.gz',
+        url: 'https://github.com/appsody/stacks/releases/download/swift-v0.1.4/incubator.swift.templates.simple.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
     },
@@ -247,7 +255,7 @@ async function getTemplates(queryParams) {
  * Removes all templates repos known to PFE, and adds the supplied repos
  * @param {[JSON]} repoList
  */
-async function resetTemplateReposTo(repoList) {
+async function setTemplateReposTo(repoList) {
     const reposToDelete = (await getTemplateRepos()).body;
     await Promise.all(reposToDelete.map(repo =>
         deleteTemplateRepo(repo.url)
@@ -264,6 +272,28 @@ async function getTemplateStyles() {
     return res;
 }
 
+function saveReposBeforeTestAndRestoreAfter() {
+    let originalTemplateRepos;
+    before(async() => {
+        const res = await getTemplateRepos();
+        originalTemplateRepos = res.body;
+    });
+    after(async() => {
+        await setTemplateReposTo(originalTemplateRepos);
+    });
+}
+
+function saveReposBeforeEachTestAndRestoreAfterEach() {
+    let originalTemplateRepos;
+    beforeEach(async() => {
+        const res = await getTemplateRepos();
+        originalTemplateRepos = res.body;
+    });
+    afterEach(async() => {
+        await setTemplateReposTo(originalTemplateRepos);
+    });
+}
+
 module.exports = {
     defaultTemplates,
     defaultCodewindTemplates,
@@ -277,6 +307,8 @@ module.exports = {
     enableTemplateRepos,
     disableTemplateRepos,
     getTemplates,
-    resetTemplateReposTo,
+    setTemplateReposTo,
     getTemplateStyles,
+    saveReposBeforeTestAndRestoreAfter,
+    saveReposBeforeEachTestAndRestoreAfterEach,
 };

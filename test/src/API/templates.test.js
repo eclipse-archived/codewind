@@ -21,15 +21,21 @@ const {
     getTemplates,
     addTemplateRepo,
     deleteTemplateRepo,
-    resetTemplateReposTo,
+    setTemplateReposTo,
     getTemplateStyles,
-} = require('../../modules/template.service');
-const { pathToApiSpec } = require('../../config');
+    saveReposBeforeTestAndRestoreAfter,
+    saveReposBeforeEachTestAndRestoreAfterEach,
+} = require('../modules/template.service');
+const { pathToApiSpec } = require('../config');
 
 chai.should();
 chai.use(chaiResValidator(pathToApiSpec));
 
 describe('Template API tests', function() {
+    saveReposBeforeTestAndRestoreAfter();
+    before(async() => {
+        await setTemplateReposTo([{ ...sampleRepos.codewind }]);
+    });
     describe('GET /api/v1/templates', function() {
         describe('?projectStyle=', function() {
             describe('empty', function() {
@@ -100,7 +106,7 @@ describe('Template API tests', function() {
             originalNumTemplates = res2.body.length;
         });
         after(async() => {
-            await resetTemplateReposTo(originalTemplateRepos);
+            await setTemplateReposTo(originalTemplateRepos);
         });
         it('GET should return a list of available template repositories', async function() {
             const res = await getTemplateRepos();
@@ -223,14 +229,7 @@ describe('Template API tests', function() {
                 }],
             },
         };
-        let originalTemplateRepos;
-        beforeEach(async() => {
-            const res = await getTemplateRepos();
-            originalTemplateRepos = res.body;
-        });
-        afterEach(async() => {
-            await resetTemplateReposTo(originalTemplateRepos);
-        });
+        saveReposBeforeEachTestAndRestoreAfterEach();
         for (const [testName, test] of Object.entries(tests)) {
             describe(`to ${testName}`, function() {
                 it(`should return 207 and the expected operations info`, async function() {

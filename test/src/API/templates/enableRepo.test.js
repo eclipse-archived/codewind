@@ -16,7 +16,8 @@ const {
     getTemplateRepos,
     enableTemplateRepos,
     disableTemplateRepos,
-    resetTemplateReposTo,
+    setTemplateReposTo,
+    saveReposBeforeTestAndRestoreAfter,
 } = require('../../../modules/template.service');
 
 chai.should();
@@ -35,21 +36,15 @@ describe('Batch enabling repositories', function() {
     };
 
     for (const [testName, test] of Object.entries(tests)) {
-        describe(testName, function() {
-            let originalTemplateRepos;
+        describe(testName, function() { // eslint-disable-line no-loop-func
             const { testRepos } = test;
             let templatesFromTestRepos;
+            saveReposBeforeTestAndRestoreAfter();
             before(async() => {
-                const res = await getTemplateRepos();
-                originalTemplateRepos = res.body;
+                await setTemplateReposTo(testRepos);
 
-                await resetTemplateReposTo(testRepos);
-
-                const res2 = await getTemplates();
-                templatesFromTestRepos = res2.body;
-            });
-            after(async() => {
-                await resetTemplateReposTo(originalTemplateRepos);
+                const res = await getTemplates();
+                templatesFromTestRepos = res.body;
             });
             it(`returns 207 and sub-status 200 for each subrequest when batch disabling ${testRepos.length} repos`, async function() {
                 const repoUrls = testRepos.map(repo => repo.url);
