@@ -164,7 +164,10 @@ public class IDCContext {
 	}
 	
 	public String getLocalWorkspaceOrigin() {
-		if(appDb.get(Constants.DB_WORKSPACE_ORIGIN) != null) {
+		if (System.getenv("NODE_ENV").equals("test")) {
+			return System.getenv("HOST_WORKSPACE_DIRECTORY");
+		} 
+		if (appDb.get(Constants.DB_WORKSPACE_ORIGIN) != null) {
 			return appDb.get(Constants.DB_WORKSPACE_ORIGIN);
 		} else {
 			return "";

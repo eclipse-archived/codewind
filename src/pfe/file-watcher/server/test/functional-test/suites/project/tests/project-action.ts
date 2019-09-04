@@ -143,7 +143,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
 
                 if (combo.action.toLowerCase() === "restart") {
                     _.forEach(startModes, (mode) => {
-                        if (!project_configs.restartCapabilities[projData.projectType][mode]) return;
+                        if (!(project_configs.restartCapabilities[projData.projectType] && project_configs.restartCapabilities[projData.projectType][mode][mode]))  return;
                         setProjectActionTest(combo, mode);
                     });
                 } else {
