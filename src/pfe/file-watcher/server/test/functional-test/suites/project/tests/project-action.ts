@@ -151,7 +151,10 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         function setProjectActionTest(combo: any, mode?: string): void {
             let testMessage = `set project action to ${combo.action}`;
             testMessage = mode ? testMessage + ` with mode ${mode}` : testMessage;
-
+            let timeoutTime = timeoutConfigs.defaultTimeout;
+            if (combo.action === "build") {
+                timeoutTime = timeoutConfigs.createTestTimeout;
+            }
             it(testMessage, async () => {
                 const comboInUse = _.cloneDeep(combo);
 
@@ -252,7 +255,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
                         }
                     }
                 }
-            }).timeout(timeoutConfigs.defaultTimeout);
+            }).timeout(timeoutTime);
         }
     });
 

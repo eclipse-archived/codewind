@@ -28,7 +28,7 @@ export const projectConfigs = {
     "appDirectory": path.join(codewindWorkspaceDir, projectPrefix)
 };
 
-export const projectTypes = ["docker", "nodejs", "spring"];
+export const projectTypes = ["docker", "nodejs", "swift", "spring"];
 export const supportedDockerProjects = ["go", "lagom", "python"];
 
 export const templateNames: any = {
@@ -36,6 +36,7 @@ export const templateNames: any = {
     "lagom": "lagomjavatemplate",
     "python": "svtpythontemplate",
     "nodejs": "node",
+    "swift": "swifttemplate",
     "spring": "springjavatemplate"
 };
 

@@ -13,6 +13,7 @@
  */
 import * as project from "../../../src/projects/Project";
 import * as nodeProject from "../../../src/projects/nodejsProject";
+import * as swiftProject from "../../../src/projects/swiftProject";
 import * as springProject from "../../../src/projects/springProject";
 
 // This config is to manual reset the running build queue and build status options for all project types.
@@ -22,6 +23,9 @@ export const needManualReset: any = {
         "buildStatus": false
     },
     "nodejs": {
+        "buildStatus": true
+    },
+    "swift": {
         "buildStatus": true
     },
     "spring": {
@@ -42,6 +46,10 @@ export const projectCapabilities: any = {
         },
         "kube": project.defaultProjectCapabilities
     },
+    "swift": {
+        "local": project.defaultProjectCapabilities,
+        "kube": project.defaultProjectCapabilities
+    },
     "spring": {
         "local": {
             "startModes": ["run", "debug", "debugNoInit"],
@@ -55,6 +63,7 @@ export const projectCapabilities: any = {
 export const autoBuildEventCapabailities: any = {
     "docker": false,
     "nodejs": true,
+    "swift": false,
     "spring": false,
 };
 
@@ -73,6 +82,11 @@ export const restartCapabilities: any = {
         [startModes[1]]: false,
         [startModes[2]]: true,
     },
+    "swift": {
+        [startModes[0]]: false,
+        [startModes[1]]: false,
+        [startModes[2]]: false,
+    },
     "spring": {
         [startModes[0]]: true,
         [startModes[1]]: true,
@@ -84,13 +98,15 @@ export const restartCapabilities: any = {
 export const debugCapabilities: any = {
     "docker": false,
     "nodejs": true,
+    "swift": false,
     "spring": true,
 };
 
 // project specific maven profile capabilities
 export const mavenProfileCapabilities: any = {
-    "docker":  false,
+    "docker": false,
     "nodejs": false,
+    "swift": false,
     "spring": true,
 };
 
@@ -108,6 +124,7 @@ export const defaultHealthCheckEndPoint: any = {
     "lagom": "/",
     "python": "/",
     "nodejs": "/",
+    "swift": "/",
     "spring": "/"
 };
 
@@ -129,6 +146,10 @@ export const oneExposedPortOnly: any = {
         "local": false,
         "kube": true
     },
+    "swift": {
+        "local": true,
+        "kube": true
+    },
     "spring": {
         "local": false,
         "kube": true
@@ -141,6 +162,7 @@ export const defaultInternalPorts: any = {
     "lagom": "9000",
     "python": "5000",
     "nodejs": nodeProject.getDefaultAppPort(),
+    "swift": swiftProject.getDefaultAppPort(),
     "spring": springProject.getDefaultAppPort()
 };
 
@@ -153,5 +175,6 @@ export const filesToUpdate: any = {
         "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloServiceImpl.java"],
     "python": ["Dockerfile", "app.py"],
     "nodejs": ["Dockerfile", "server/server.js"],
+    "swift": ["Dockerfile", "Sources/Application/Routes/HealthRoutes.swift"],
     "spring": ["Dockerfile", "src/main/java/application/rest/v1/Example.java"]
 };
