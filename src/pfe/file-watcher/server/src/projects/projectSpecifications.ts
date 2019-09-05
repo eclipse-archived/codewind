@@ -552,11 +552,12 @@ const changeMavenProfiles = async function (mavenProfiles: any, operation: Opera
 
     let arrayIsNotString = false;
     if (mavenProfiles instanceof Array) {
-        mavenProfiles.forEach(function(item: any): void {
-           if (typeof item !== "string") {
-               arrayIsNotString = true;
-           }
-        });
+        for (const profile of mavenProfiles) {
+            if (typeof profile !== "string") {
+                arrayIsNotString = true;
+                break;
+            }
+        }
     }
 
     if (mavenProfiles && arrayIsNotString) {
@@ -656,11 +657,12 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
 
     let arrayIsNotString = false;
     if (mavenProperties instanceof Array) {
-        mavenProperties.forEach(function(item: any): void {
-           if (typeof item !== "string") {
-               arrayIsNotString = true;
-           }
-        });
+        for (const property of mavenProperties) {
+            if (typeof property !== "string") {
+                arrayIsNotString = true;
+                break;
+            }
+        }
     }
 
     if (mavenProperties && arrayIsNotString) {
