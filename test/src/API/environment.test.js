@@ -11,8 +11,8 @@
 const chai = require('chai');
 const chaiResValidator = require('chai-openapi-response-validator');
 
-const reqService = require('../modules/request.service');
-const { ADMIN_COOKIE, USING_K8S, DEFAULT_USER_NAME, pathToApiSpec } = require('../config');
+const reqService = require('../../modules/request.service');
+const { ADMIN_COOKIE, USING_K8S, DEFAULT_USER_NAME, pathToApiSpec } = require('../../config');
 
 const SOCKET_NAMESPACE = USING_K8S ? '/admin' : `/${DEFAULT_USER_NAME}`;
 chai.use(chaiResValidator(pathToApiSpec));

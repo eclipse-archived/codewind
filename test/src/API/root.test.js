@@ -9,15 +9,15 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const chai = require('chai');
-const reqService = require('../modules/request.service');
+const reqService = require('../../modules/request.service');
 
 chai.should();
 
-describe('Health endpoint test', function() {
+describe('Root endpoint test', function() {
 
     it('should return status 200', async function() {
         const res = await reqService.chai
-            .get('/health');
+            .get('/');
         res.should.have.status(200);
     });
 });

@@ -10,9 +10,9 @@
  *******************************************************************************/
 const chai = require('chai');
 
-const projectService = require('../../modules/project.service');
-const SocketService = require('../../modules/socket.service');
-const { testTimeout } = require('../../config');
+const projectService = require('../../../modules/project.service');
+const SocketService = require('../../../modules/socket.service');
+const { testTimeout } = require('../../../config');
 
 chai.should();
 

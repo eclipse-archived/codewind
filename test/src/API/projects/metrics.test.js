@@ -13,10 +13,10 @@ const path = require('path');
 const fs = require('fs-extra');
 const dateFormat = require('dateformat');
 
-const containerService = require('../../modules/container.service');
-const projectService = require('../../modules/project.service');
-const reqService = require('../../modules/request.service');
-const { ADMIN_COOKIE, USING_K8S, METRIC_TYPES, MOCK_LOADTEST_DIR, testTimeout } = require('../../config');
+const containerService = require('../../../modules/container.service');
+const projectService = require('../../../modules/project.service');
+const reqService = require('../../../modules/request.service');
+const { ADMIN_COOKIE, USING_K8S, METRIC_TYPES, MOCK_LOADTEST_DIR, testTimeout } = require('../../../config');
 
 chai.should();
 

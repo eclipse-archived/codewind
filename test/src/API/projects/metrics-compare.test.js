@@ -12,10 +12,10 @@ const chai = require('chai');
 const path = require('path');
 const fs = require('fs-extra');
 
-const containerService = require('../../modules/container.service');
-const projectService = require('../../modules/project.service');
-const reqService = require('../../modules/request.service');
-const { ADMIN_COOKIE, METRIC_TYPES, MOCK_LOADTEST_DIR, testTimeout } = require('../../config');
+const containerService = require('../../../modules/container.service');
+const projectService = require('../../../modules/project.service');
+const reqService = require('../../../modules/request.service');
+const { ADMIN_COOKIE, METRIC_TYPES, MOCK_LOADTEST_DIR, testTimeout } = require('../../../config');
 
 chai.should();
 const loadTest1 = '20190326154749';

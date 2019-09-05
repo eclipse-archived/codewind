@@ -10,12 +10,12 @@
  *******************************************************************************/
 const chai = require('chai');
 
-const projectService = require('../../modules/project.service');
-const SocketService = require('../../modules/socket.service');
-const reqService = require('../../modules/request.service');
+const projectService = require('../../../modules/project.service');
+const SocketService = require('../../../modules/socket.service');
+const reqService = require('../../../modules/request.service');
 const { promisify } = require('util');
-const execAsync = promisify(require('child_process').exec);
-const { ADMIN_COOKIE, testTimeout } = require('../../config');
+//const execAsync = promisify(require('child_process').exec);
+const { ADMIN_COOKIE, testTimeout } = require('../../../config');
 const zlib = require('zlib');
 const deflateAsync = promisify(zlib.deflate);
 

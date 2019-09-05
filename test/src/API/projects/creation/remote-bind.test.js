@@ -20,10 +20,10 @@ const fs = require('fs-extra');
 const zlib = require('zlib');
 const klawSync = require('klaw-sync');
 
-const projectService = require('../../../modules/project.service');
-const reqService = require('../../../modules/request.service');
-const containerService = require('../../../modules/container.service');
-const { testTimeout, ADMIN_COOKIE } = require('../../../config');
+const projectService = require('../../../../modules/project.service');
+const reqService = require('../../../../modules/request.service');
+const containerService = require('../../../../modules/container.service');
+const { testTimeout, ADMIN_COOKIE } = require('../../../../config');
 
 chai.should();
 

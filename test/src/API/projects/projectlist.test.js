@@ -11,8 +11,8 @@
 
 const chai = require('chai');
 
-const projectService = require('../../modules/project.service');
-const { testTimeout } = require('../../config');
+const projectService = require('../../../modules/project.service');
+const { testTimeout } = require('../../../config');
 
 chai.should();
 

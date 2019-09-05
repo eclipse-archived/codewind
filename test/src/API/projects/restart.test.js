@@ -10,10 +10,10 @@
  *******************************************************************************/
 const chai = require('chai');
 
-const projectService = require('../../modules/project.service');
-const SocketService = require('../../modules/socket.service');
+const projectService = require('../../../modules/project.service');
+const SocketService = require('../../../modules/socket.service');
 
-const { USING_K8S, testTimeout } = require('../../config');
+const { USING_K8S, testTimeout } = require('../../../config');
 
 chai.should();
 

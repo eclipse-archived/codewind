@@ -11,10 +11,10 @@
 const chai = require('chai');
 const fs = require('fs-extra');
 
-const projectService = require('../../modules/project.service');
-const { testTimeout, templateOptions } = require('../../config');
+const projectService = require('../../../modules/project.service');
+const { testTimeout, templateOptions } = require('../../../config');
 
-const { defaultLibertySettings, defaultDockerSettings } = require('../../utils/default-cw-settings.js');
+const { defaultLibertySettings, defaultDockerSettings } = require('../../../utils/default-cw-settings.js');
 
 chai.should();
 
