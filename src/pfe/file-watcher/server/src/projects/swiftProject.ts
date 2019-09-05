@@ -135,3 +135,13 @@ export async function getAppLog(logDirectory: string): Promise<AppLog> {
     const logSuffixes = [logHelper.appLogs.app];
     return await logHelper.getAppLogs(logDirectory, logSuffixes);
 }
+
+/**
+ * @function
+ * @description Get the default app port of a swift project.
+ *
+ * @returns string
+ */
+export function getDefaultAppPort(): string {
+    return "8080";
+}

@@ -15,6 +15,7 @@ import * as project from "../../../src/projects/Project";
 import * as libertyProject from "../../../src/projects/libertyProject";
 import * as nodeProject from "../../../src/projects/nodejsProject";
 import * as springProject from "../../../src/projects/springProject";
+import * as swiftProject from "../../../src/projects/swiftProject";
 
 // This config is to manual reset the running build queue and build status options for all project types.
 // We currently need to do that because project that relies on script and IDC code does not follow the typescript code and need to be manually reset.
@@ -31,6 +32,9 @@ export const needManualReset: any = {
     "spring": {
         "buildStatus": true,
     },
+    "swift": {
+        "buildStatus": true
+    }
 };
 
 // project specific capability settings: start modes and control commands
@@ -60,6 +64,10 @@ export const projectCapabilities: any = {
         },
         "kube": project.defaultProjectCapabilities
     },
+    "swift": {
+        "local": project.defaultProjectCapabilities,
+        "kube": project.defaultProjectCapabilities
+    }
 };
 
 // auto build enable/disable event capabilities: some projects emit the project changed event and some don't do anything
@@ -68,6 +76,7 @@ export const autoBuildEventCapabailities: any = {
     "liberty": false,
     "nodejs": true,
     "spring": false,
+    "swift": false
 };
 
 // list of start modes available in Turbine
@@ -95,6 +104,11 @@ export const restartCapabilities: any = {
         [startModes[1]]: true,
         [startModes[2]]: true,
     },
+    "swift": {
+        [startModes[0]]: false,
+        [startModes[1]]: false,
+        [startModes[2]]: false,
+    }
 };
 
 // project specific debug capabilities
@@ -103,6 +117,7 @@ export const debugCapabilities: any = {
     "liberty": true,
     "nodejs": true,
     "spring": true,
+    "swift": false,
 };
 
 // project specific maven profile capabilities
@@ -111,6 +126,7 @@ export const mavenProfileCapabilities: any = {
     "liberty": true,
     "nodejs": false,
     "spring": true,
+    "swift": false
 };
 
 // list of mocked exposed debug ports
@@ -128,7 +144,8 @@ export const defaultHealthCheckEndPoint: any = {
     "python": "/",
     "liberty": "/",
     "nodejs": "/",
-    "spring": "/"
+    "spring": "/",
+    "swift": "/"
 };
 
 // project specific setting for projects that only expose one app port
@@ -156,6 +173,10 @@ export const oneExposedPortOnly: any = {
     "spring": {
         "local": false,
         "kube": true
+    },
+    "swift": {
+        "local": true,
+        "kube": true
     }
 };
 
@@ -166,7 +187,8 @@ export const defaultInternalPorts: any = {
     "python": "5000",
     "liberty": libertyProject.getDefaultAppPort(),
     "nodejs": nodeProject.getDefaultAppPort(),
-    "spring": springProject.getDefaultAppPort()
+    "spring": springProject.getDefaultAppPort(),
+    "swift": swiftProject.getDefaultAppPort()
 };
 
 // project specific settings to mark the main files
@@ -179,5 +201,6 @@ export const filesToUpdate: any = {
     "python": ["Dockerfile", "app.py"],
     "liberty": ["Dockerfile", "src/main/java/application/rest/v1/Example.java"],
     "nodejs": ["Dockerfile", "server/server.js"],
-    "spring": ["Dockerfile", "src/main/java/application/rest/v1/Example.java"]
+    "spring": ["Dockerfile", "src/main/java/application/rest/v1/Example.java"],
+    "swift": ["Dockerfile", "Sources/Application/Routes/HealthRoutes.swift"],
 };

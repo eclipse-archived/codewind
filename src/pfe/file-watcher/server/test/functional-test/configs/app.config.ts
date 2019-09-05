@@ -28,7 +28,7 @@ export const projectConfigs = {
     "appDirectory": path.join(codewindWorkspaceDir, projectPrefix)
 };
 
-export const projectTypes = ["docker", "liberty", "nodejs", "spring"];
+export const projectTypes = ["docker", "liberty", "nodejs", "spring", "swift"];
 export const supportedDockerProjects = ["go", "lagom", "python"];
 
 export const templateNames: any = {
@@ -37,7 +37,8 @@ export const templateNames: any = {
     "python": "svtpythontemplate",
     "liberty": "javamicroprofiletemplate",
     "nodejs": "node",
-    "spring": "springjavatemplate"
+    "spring": "springjavatemplate",
+    "swift": "swifttemplate",
 };
 
 export const DEFAULT_LOG_LEVEL = "trace";
