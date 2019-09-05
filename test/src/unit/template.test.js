@@ -10,6 +10,7 @@
 *******************************************************************************/
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
+const faker = require('faker');
 const fs = require('fs-extra');
 const path = require('path');
 const rewire = require('rewire');
@@ -20,6 +21,7 @@ const {
     defaultCodewindTemplates,
     defaultRepoList,
     sampleRepos,
+    validUrlNotPointingToIndexJson,
 } = require('../../modules/template.service');
 const { suppressLogOutput } = require('../../modules/log.service');
 
@@ -360,6 +362,7 @@ describe('Templates.js', function() {
         });
     });
     describe('addRepository(repoUrl, repoDescription)', function() {
+        const mockRepoList = [{ url: faker.internet.url() }];
         let templateController;
         beforeEach(() => {
             fs.ensureDirSync(testWorkspaceConfigDir);
@@ -369,19 +372,34 @@ describe('Templates.js', function() {
         afterEach(() => {
             fs.removeSync(testWorkspaceDir);
         });
-        describe('(<existingUrl>, <validDesc>)', function() {
+        describe('(<invalidUrl>, <validDesc>)', function() {
             it('throws an error', function() {
-                const { url, description } = mockRepoList[0];
-                const func = () => templateController.addRepository(url, description);
-                return func().should.be.rejectedWith(`${1} is not a unique URL. Repository URLs must be unique`);
+                const url = 'some string';
+                const func = () => templateController.addRepository(url, 'description');
+                return func().should.be.rejectedWith(`Invalid URL: ${url}`);
             });
         });
-        describe('(<uniqueString>, <validDesc>)', function() {
+        describe('(<existingUrl>, <validDesc>)', function() {
+            it('throws an error', function() {
+                const { url } = mockRepoList[0];
+                const func = () => templateController.addRepository(url, 'description');
+                return func().should.be.rejectedWith(`${url} is already a template repository`);
+            });
+        });
+        describe('(<validUrlNotPointingToIndexJson>, <validDesc>)', function() {
+            it('throws an error', function() {
+                const url = validUrlNotPointingToIndexJson;
+                const func = () => templateController.addRepository(url, 'description');
+                return func().should.be.rejectedWith(`${url} does not point to a JSON file of the correct form`);
+            });
+        });
+        describe('(<validUrlPointingToIndexJson>, <validDesc>)', function() {
             it('succeeds', async function() {
-                const func = () => templateController.addRepository('unique string', 'description');
+                const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
+                const func = () => templateController.addRepository(url, 'description');
                 await (func().should.not.be.rejected);
                 templateController.repositoryList.should.deep.include({
-                    url: 'unique string',
+                    url,
                     description: 'description',
                     enabled: true,
                 });

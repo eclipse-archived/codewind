@@ -15,6 +15,7 @@ const chaiResValidator = require('chai-openapi-response-validator');
 const {
     defaultTemplates,
     defaultRepoList,
+    validUrlNotPointingToIndexJson,
     sampleRepos,
     batchPatchTemplateRepos,
     getTemplateRepos,
@@ -93,6 +94,44 @@ describe('Template API tests', function() {
         });
     });
 
+    describe('POST /api/v1/templates/repositories', function() {
+        describe('when trying to add a repository with', function() {
+            describe('an invalid url', function() {
+                it('should return 400', async function() {
+                    const res = await addTemplateRepo({
+                        url: '/invalid/url',
+                        description: 'Invalid url.',
+                    });
+                    res.should.have.status(400);
+                });
+            });
+            describe('a duplicate url', function() {
+                it('should return 400', async function() {
+                    // Arrange
+                    const res = await getTemplateRepos();
+                    const originalTemplateRepos = res.body;
+                    const duplicateRepoUrl = originalTemplateRepos[0].url;
+                    // Act
+                    const res2 = await addTemplateRepo({
+                        url: duplicateRepoUrl,
+                        description: 'duplicate url',
+                    });
+                    // Assert
+                    res2.should.have.status(400);
+                });
+            });
+            describe('a valid url that does not point to an index.json', function() {
+                it('should return 400', async function() {
+                    const res = await addTemplateRepo({
+                        url: validUrlNotPointingToIndexJson,
+                        description: 'valid url that does not point to an index.json',
+                    });
+                    res.should.have.status(400);
+                });
+            });
+        });
+    });
+
     describe('GET|POST|DELETE /api/v1/templates/repositories', function() {
         const repoToDelete = sampleRepos.codewind;
         const repoToAdd = sampleRepos.anotherCodewind;
@@ -112,20 +151,6 @@ describe('Template API tests', function() {
             const res = await getTemplateRepos();
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.have.deep.members(defaultRepoList);
-        });
-        it('POST should fail to add template repository with a bad url', async function() {
-            const res = await addTemplateRepo({
-                url: '/home/user/directory',
-                description: 'Bad template url.',
-            });
-            res.should.have.status(400);
-        });
-        it('POST should fail to add template repository with a duplicate url', async function() {
-            const res = await addTemplateRepo({
-                url: originalTemplateRepos[0].url,
-                description: 'Duplicate template URL',
-            });
-            res.should.have.status(400);
         });
         // Test deleting repos
         it('DELETE should remove a template repository', async function() {
