@@ -95,7 +95,7 @@ pipeline {
                 }
             }
         }  
-        /*
+        
         stage('Run Codewind test suite') {            
                 steps {
                     withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
@@ -197,7 +197,7 @@ pipeline {
                 }
             }
         } 
-        */ 
+         
         
         stage('Publish Docker images') {
 
