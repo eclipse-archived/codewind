@@ -97,55 +97,173 @@ describe('Templates.js', function() {
         });
     });
     describe('getAllTemplates()', function() {
-        describe(`when we don't refresh`, function() {
-            const sampleTemplateList = [sampleAppsodyTemplate];
+        describe('', function() {
+            it('returns the default Codewind templates', async function() {
+                const templateController = new Templates('');
+                const output = await templateController.getAllTemplates();
+                output.should.deep.equal(defaultCodewindTemplates);
+            });
+        });
+        describe('and add an extra template repo', function() {
             let templateController;
             before(() => {
                 templateController = new Templates('');
-                templateController.projectTemplates = sampleTemplateList;
-                templateController.needsRefresh = false;
+                templateController.repositoryList = [
+                    sampleRepos.codewind,
+                    sampleRepos.appsody,
+                ];
             });
-            it('returns the templates we inserted', async function() {
+            it('returns more templates', async function() {
                 const output = await templateController.getAllTemplates();
-                output.should.deep.equal(sampleTemplateList);
+                output.should.include.deep.members(defaultCodewindTemplates);
+                (output.length).should.be.above(defaultCodewindTemplates.length);
             });
         });
-        describe(`when we do refresh`, function() {
-            describe('', function() {
-                it('returns the default Codewind templates', async function() {
-                    const templateController = new Templates('');
-                    const output = await templateController.getAllTemplates();
-                    output.should.deep.equal(defaultCodewindTemplates);
+        describe('and add an extra bad template repo', function() {
+            let templateController;
+            before(() => {
+                templateController = new Templates('');
+                templateController.repositoryList = [
+                    sampleRepos.codewind,
+                    { url: 'https://www.google.com/' },
+                ];
+            });
+            it('returns only the default templates', async function() {
+                const output = await templateController.getAllTemplates();
+                output.should.deep.equal(defaultCodewindTemplates);
+            });
+        });
+        describe('and add a provider providing a valid template repo', function() {
+            let templateController;
+            before(async() => {
+                fs.ensureDirSync(testWorkspaceConfigDir);
+                templateController = new Templates(testWorkspaceDir);
+                await templateController.writeRepositoryList();
+                templateController.addProvider('valid repo', {
+                    getRepositories() {
+                        return [sampleRepos.appsody];
+                    },
                 });
             });
-            describe('and add an extra template repo', function() {
-                let templateController;
-                before(() => {
-                    templateController = new Templates('');
-                    templateController.repositoryList = [
-                        sampleRepos.codewind,
-                        sampleRepos.appsody,
-                    ];
+            after(() => {
+                fs.removeSync(testWorkspaceDir);
+            });
+            it('returns the default templates and more', async function() {
+                const output = await templateController.getAllTemplates();
+                output.should.include.deep.members(defaultCodewindTemplates);
+                (output.length).should.be.above(defaultCodewindTemplates.length);
+            });
+        });
+    });
+    describe('updateRepoListWithReposFromProviders()', function() {
+        describe('when providers do not provide valid repos', function() {
+            const tests = {
+                'invalid provider: string': {
+                    provider: 'string',
+                },
+                'invalid provider: empty obj': {
+                    provider: {},
+                },
+                'provider provides non-array': {
+                    provider: {
+                        getRepositories() {
+                            return 'should be array';
+                        },
+                    },
+                },
+                'provider provides array of non-repo objects': {
+                    provider: {
+                        getRepositories() {
+                            return ['should be repo object'];
+                        },
+                    },
+                },
+                'provider provides array of objects missing URLs': {
+                    provider: {
+                        getRepositories() {
+                            return [{ description: 'missing URL' }];
+                        },
+                    },
+                },
+                // TODO: reject these:
+                // 'provider provides array of objects with invalid URLs': {
+                //     provider: {
+                //         getRepositories() {
+                //             return [{
+                //                 description: 'invalid URL',
+                //                 url: 'invalid',
+                //             }];
+                //         },
+                //     },
+                // },
+                // 'provider provides a repo with URL that doesn't provide JSON': {
+                //     provider: {
+                //         getRepositories() {
+                //             return [{
+                //                 url: 'https://www.google.com/',
+                //                 description: 'URL that doesn't provide JSON',
+                //             }];
+                //         },
+                //     },
+                // },
+                'provider provides a duplicate repo': {
+                    provider: {
+                        getRepositories() {
+                            return [{
+                                description: 'duplicate URL',
+                                url: mockRepoList[0].url,
+                            }];
+                        },
+                    },
+                },
+            };
+            for (const [testName, test] of Object.entries(tests)) {
+                describe(testName, function() { // eslint-disable-line no-loop-func
+                    let templateController;
+                    before(async() => {
+                        fs.ensureDirSync(testWorkspaceConfigDir);
+                        templateController = new Templates(testWorkspaceDir);
+                        templateController.repositoryList = [...mockRepoList];
+                        await templateController.writeRepositoryList();
+                        templateController.addProvider(testName, test.provider);
+                    });
+                    after(() => {
+                        fs.removeSync(testWorkspaceDir);
+                    });
+                    it(`does not update the repository_list.json`, async function() {
+                        await templateController.updateRepoListWithReposFromProviders();
+                        const repoFile = fs.readJsonSync(templateController.repositoryFile);
+                        repoFile.should.deep.equal(mockRepoList);
+                    });
                 });
-                it('returns more templates', async function() {
-                    const output = await templateController.getAllTemplates();
-                    output.should.include.deep.members(defaultCodewindTemplates);
-                    (output.length).should.be.above(defaultCodewindTemplates.length);
+            }
+        });
+        describe('when providers list valid repos', function() {
+            let templateController;
+            const validRepo = {
+                url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
+                description: 'valid repo',
+            };
+            before(() => {
+                fs.ensureDirSync(testWorkspaceConfigDir);
+                templateController = new Templates(testWorkspaceDir);
+                templateController.repositoryList = [...mockRepoList];
+                templateController.addProvider('valid repo', {
+                    getRepositories() {
+                        return [validRepo];
+                    },
                 });
             });
-            describe('and add an extra bad template repo', function() {
-                let templateController;
-                before(() => {
-                    templateController = new Templates('');
-                    templateController.repositoryList = [
-                        sampleRepos.codewind,
-                        { url: 'https://www.google.com/' },
-                    ];
-                });
-                it('returns only the default templates', async function() {
-                    const output = await templateController.getAllTemplates();
-                    output.should.deep.equal(defaultCodewindTemplates);
-                });
+            after(() => {
+                fs.removeSync(testWorkspaceDir);
+            });
+            it(`updates the repository_list.json correctly`, async function() {
+                await templateController.updateRepoListWithReposFromProviders();
+                const repoFile = fs.readJsonSync(templateController.repositoryFile);
+                repoFile.should.deep.equal([
+                    ...mockRepoList,
+                    validRepo,
+                ]);
             });
         });
     });
@@ -234,129 +352,11 @@ describe('Templates.js', function() {
                 output.should.deep.equal([]);
             });
         });
-        describe('(<defaultRepoList>)', function() {
-            describe('when we have no providers', function() {
-                it('returns the default Codewind templates', async function() {
-                    const templateController = new Templates('');
-                    const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                    output.should.deep.equal(defaultCodewindTemplates);
-                });
-            });
-            describe(`when providers don't provide repo lists`, function() {
-                let templateController;
-                before(() => {
-                    templateController = new Templates('');
-                    templateController.addProvider('should provide array', {
-                        getRepositories() { return 'should be array'; },
-                    });
-                });
-                it('still returns the default Codewind templates (ignoring the invalid providers)', async function() {
-                    const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                    output.should.deep.equal(defaultCodewindTemplates);
-                });
-            });
-            describe('when providers list invalid repos', function() {
-                describe('wrong type', function() {
-                    let templateController;
-                    before(() => {
-                        templateController = new Templates('');
-                        templateController.addProvider('wrong type', {
-                            getRepositories() { return ['should be object']; },
-                        });
-                    });
-                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
-                        const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultCodewindTemplates);
-                    });
-                });
-                describe('missing URL', function() {
-                    let templateController;
-                    before(() => {
-                        templateController = new Templates('');
-                        templateController.addProvider('missing URL', {
-                            getRepositories() {
-                                return [{ description: 'missing URL' }];
-                            },
-                        });
-                    });
-                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
-                        const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultCodewindTemplates);
-                    });
-                });
-                describe('invalid URL', function() {
-                    let templateController;
-                    before(() => {
-                        templateController = new Templates('');
-                        templateController.addProvider('invalid URL', {
-                            getRepositories() {
-                                return [{
-                                    description: 'invalid URL',
-                                    url: 'invalid',
-                                }];
-                            },
-                        });
-                    });
-                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
-                        const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultCodewindTemplates);
-                    });
-                });
-                describe('duplicate URL', function() {
-                    let templateController;
-                    before(() => {
-                        templateController = new Templates('');
-                        templateController.addProvider('duplicate URL', {
-                            getRepositories() {
-                                return [{
-                                    description: 'duplicate URL',
-                                    url: templateController.repositoryList[0].url,
-                                }];
-                            },
-                        });
-                    });
-                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
-                        const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultCodewindTemplates);
-                    });
-                });
-                describe(`valid URL that doesn't provide JSON`, function() {
-                    let templateController;
-                    before(() => {
-                        templateController = new Templates('');
-                        templateController.addProvider(`doesn't provide JSON`, {
-                            getRepositories() {
-                                return [{
-                                    url: 'https://www.google.com/',
-                                    description: `doesn't provide JSON`,
-                                }];
-                            },
-                        });
-                    });
-                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
-                        const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultCodewindTemplates);
-                    });
-                });
-            });
-            describe('when providers list valid repos', function() {
-                let templateController;
-                before(() => {
-                    templateController = new Templates('');
-                    templateController.addProvider('valid repo', {
-                        getRepositories() {
-                            return [{
-                                url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
-                                description: 'valid repo',
-                            }];
-                        },
-                    });
-                });
-                it(`returns the default Codewind templates and the provider's templates`, async function() {
-                    const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                    output.should.include.deep.members(defaultCodewindTemplates);
-                    (output.length).should.be.above(defaultCodewindTemplates.length);
-                });
+        describe('([<defaultCodewindRepo>])', function() {
+            it('returns the default Codewind templates', async function() {
+                const templateController = new Templates('');
+                const output = await templateController.getTemplatesFromRepos([sampleRepos.codewind]);
+                output.should.deep.equal(defaultCodewindTemplates);
             });
         });
     });
@@ -828,10 +828,12 @@ describe('Templates.js', function() {
                         templateController.addProvider('empty obj', {});
 
                         templateController.providers.should.deep.equal(originalProviders);
+                        // TODO: check this doesn't update repository_list.json
                     });
                 });
             });
         });
+        // TODO: check valid providers do update repository_list.json
     });
 
     describe('filterTemplatesByStyle(templates, projectStyle)', function() {

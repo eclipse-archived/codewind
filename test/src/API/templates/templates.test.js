@@ -189,7 +189,7 @@ describe('Template API tests', function() {
         });
     });
     describe('PATCH /api/v1/batch/templates/repositories', function() {
-        const existingRepoUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
+        const existingRepoUrl = sampleRepos.fromAppsodyExtension.url;
         const tests = {
             'enable an existing repo': {
                 input: [{

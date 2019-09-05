@@ -27,12 +27,12 @@ describe('Batch enabling repositories', function() {
         '1 repo': {
             testRepos: [{ ...sampleRepos.codewind }],
         },
-        'multiple repos': {
-            testRepos: [
-                { ...sampleRepos.codewind },
-                { ...sampleRepos.appsody },
-            ],
-        },
+        // 'multiple repos': {
+        //     testRepos: [
+        //         { ...sampleRepos.appsody },
+        //         { ...sampleRepos.fromAppsodyExtension },
+        //     ],
+        // },
     };
 
     for (const [testName, test] of Object.entries(tests)) {
