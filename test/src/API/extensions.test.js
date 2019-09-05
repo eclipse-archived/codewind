@@ -10,28 +10,17 @@
  *******************************************************************************/
 const chai = require('chai');
 
-const reqService = require('../modules/request.service');
-const { ADMIN_COOKIE } = require('../config');
+const reqService = require('../../modules/request.service');
+const { ADMIN_COOKIE } = require('../../config');
 
 chai.should();
 
-describe('Project Types API tests', function() {
+describe('Extensions API test', function() {
 
-    it('should return expected list of project types', async function() {
+    it('should return status 200', async function() {
         const res = await reqService.chai
-            .get('/api/v1/project-types')
+            .get('/api/v1/extensions')
             .set('Cookie', ADMIN_COOKIE);
-
         res.should.have.status(200);
-        res.should.have.ownProperty('body');
-        res.body.should.be.an('array');
-        res.body.should.have.members([
-            'liberty',
-            'nodejs',
-            'spring',
-            'swift',
-            'docker',
-            'appsodyExtension',
-        ]);
     });
 });

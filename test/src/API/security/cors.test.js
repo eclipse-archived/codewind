@@ -12,8 +12,8 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 
-const reqService = require('../../modules/request.service');
-const { ADMIN_COOKIE, USING_K8S } = require('../../config');
+const reqService = require('../../../modules/request.service');
+const { ADMIN_COOKIE, USING_K8S } = require('../../../config');
 
 chai.use(chaiAsPromised);
 chai.should();

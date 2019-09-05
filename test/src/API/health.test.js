@@ -9,18 +9,15 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const chai = require('chai');
-
-const reqService = require('../modules/request.service');
-const { ADMIN_COOKIE } = require('../config');
+const reqService = require('../../modules/request.service');
 
 chai.should();
 
-describe('Extensions API test', function() {
+describe('Health endpoint test', function() {
 
     it('should return status 200', async function() {
         const res = await reqService.chai
-            .get('/api/v1/extensions')
-            .set('Cookie', ADMIN_COOKIE);
+            .get('/health');
         res.should.have.status(200);
     });
 });

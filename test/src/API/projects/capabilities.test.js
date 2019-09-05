@@ -11,9 +11,9 @@
 
 const chai = require('chai');
 
-const projectService = require('../../modules/project.service');
-const reqService = require('../../modules/request.service');
-const config = require('../../config');
+const projectService = require('../../../modules/project.service');
+const reqService = require('../../../modules/request.service');
+const config = require('../../../config');
 const { ADMIN_COOKIE, testTimeout } = config;
 
 chai.should();

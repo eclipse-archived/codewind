@@ -10,12 +10,12 @@
  *******************************************************************************/
 
 const chai = require('chai');
-const fs = require('fs-extra');
+//const fs = require('fs-extra');
 const path = require('path');
 
-const projectService = require('../../modules/project.service');
-const reqService = require('../../modules/request.service');
-const { testTimeout, ADMIN_COOKIE } = require('../../config');
+const projectService = require('../../../modules/project.service');
+const reqService = require('../../../modules/request.service');
+const { testTimeout, ADMIN_COOKIE } = require('../../../config');
 
 chai.should();
 

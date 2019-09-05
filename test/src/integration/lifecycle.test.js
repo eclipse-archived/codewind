@@ -15,10 +15,10 @@ const mlog = require('mocha-logger');
 const {promisify} = require('util');
 const execAsync = promisify(require('child_process').exec);
 
-const containerService = require('../../../modules/container.service');
-const projectService = require('../../../modules/project.service');
-const SocketService = require('../../../modules/socket.service');
-const { CODEWIND_HOST, USING_K8S, testTimeout, templateOptions } = require('../../../config');
+const containerService = require('../../modules/container.service');
+const projectService = require('../../modules/project.service');
+const SocketService = require('../../modules/socket.service');
+const { CODEWIND_HOST, USING_K8S, testTimeout, templateOptions } = require('../../config');
 
 chai.use(chaiHttp);
 chai.should();

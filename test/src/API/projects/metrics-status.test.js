@@ -2,10 +2,10 @@ const fs = require('fs-extra');
 const path = require('path');
 const util = require('util');
 
-const { ADMIN_COOKIE, testTimeout, WORKSPACE_DIR, templateOptions } = require('../../config');
-const projectService = require('../../modules/project.service');
-const containerService = require('../../modules/container.service');
-const reqService = require('../../modules/request.service');
+const { ADMIN_COOKIE, testTimeout, WORKSPACE_DIR, templateOptions } = require('../../../config');
+const projectService = require('../../../modules/project.service');
+const containerService = require('../../../modules/container.service');
+const reqService = require('../../../modules/request.service');
 
 const writeFile = util.promisify(fs.writeFile);
 
@@ -70,7 +70,7 @@ describe('Metrics Status Tests', function() {
     });
 
     function testWhenMetricsAvailable(projectType) {
-        const projectName = `${projectType}metricsstatustruecheck{Date.now()}`;
+        const projectName = `${projectType}metricsstatustruecheck${Date.now()}`;
         let projectPath, projectID;
 
         describe(`Check if metrics are available for a ${projectType} project`, function() {

@@ -12,9 +12,9 @@
 const chai = require('chai');
 const fs = require('fs');
 const path = require('path');
-const reqService = require('../modules/request.service');
-const projectService = require('../modules/project.service');
-const { ADMIN_COOKIE, testTimeout } = require('../config');
+const reqService = require('../../modules/request.service');
+const projectService = require('../../modules/project.service');
+const { ADMIN_COOKIE, testTimeout } = require('../../config');
 
 chai.should();
 

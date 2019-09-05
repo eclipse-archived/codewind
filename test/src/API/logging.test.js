@@ -11,8 +11,8 @@
 
 const chai = require('chai');
 
-const reqService = require('../modules/request.service');
-const { ADMIN_COOKIE } = require('../config');
+const reqService = require('../../modules/request.service');
+const { ADMIN_COOKIE } = require('../../config');
 
 chai.should();
 

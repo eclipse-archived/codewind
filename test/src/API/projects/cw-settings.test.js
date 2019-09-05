@@ -1,12 +1,12 @@
 const chai = require('chai');
 const path = require('path');
 
-const projectService = require('../../modules/project.service');
-const containerService = require('../../modules/container.service');
-const SocketService = require('../../modules/socket.service');
+const projectService = require('../../../modules/project.service');
+const containerService = require('../../../modules/container.service');
+const SocketService = require('../../../modules/socket.service');
 
-const { WORKSPACE_DIR, testTimeout } = require('../../config');
-const { defaultNodeSettings, defaultLibertySettings } = require('../../utils/default-cw-settings');
+const { WORKSPACE_DIR, testTimeout } = require('../../../config');
+const { defaultNodeSettings, defaultLibertySettings } = require('../../../utils/default-cw-settings');
 
 chai.should();
 
