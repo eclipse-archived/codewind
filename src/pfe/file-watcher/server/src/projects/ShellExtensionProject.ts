@@ -22,6 +22,7 @@ import * as projectEventsController from "../controllers/projectEventsController
 import { IExtensionProject } from "../extensions/IExtensionProject";
 import * as processManager from "../utils/processManager";
 import * as logger from "../utils/logger";
+import { StartModes } from "./constants";
 
 /**
  * @interface
@@ -277,9 +278,21 @@ export class ShellExtensionProject implements IExtensionProject {
      */
     getCapabilities = (): ProjectCapabilities => {
 
-        if (this.config.capabilities && this.getDefaultDebugPort()) {
+        if (this.config.capabilities) {
+
+            let startModes;
+
+            if (this.getDefaultDebugPort())
+                startModes = this.config.capabilities.startModes;
+            // no debug port, filter out debug modes
+            else {
+                startModes = this.config.capabilities.startModes.filter((startMode) => {
+                    return startMode != StartModes.debug && startMode != StartModes.debugNoInit;
+                });
+            }
+
             return new ProjectCapabilities(
-                this.config.capabilities.startModes, this.config.capabilities.controlCommands);
+                startModes, this.config.capabilities.controlCommands);
         }
 
         return defaultProjectCapabilities;
