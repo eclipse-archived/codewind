@@ -19,6 +19,8 @@ import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
+import * as projectUtil from "../../../../../src/projects/projectUtil";
+
 export default class CreateTest {
     testName: string;
 
@@ -28,8 +30,8 @@ export default class CreateTest {
 
     run(socket: SocketIO, projData: ProjectCreation, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
-            this.runCreateWithoutProjectID(projData);
-            this.runCreateWithoutProjectType(projData);
+            // this.runCreateWithoutProjectID(projData);
+            // this.runCreateWithoutProjectType(projData);
             this.runCreateWithValidData(socket, projData);
             this.afterAllHook(socket, projData);
         });
@@ -83,17 +85,21 @@ export default class CreateTest {
             expect(info.logs).to.exist;
             expect(info.logs.build).to.exist;
 
-            await waitForCreationEvent();
+            // await waitForCreationEvent();
             await waitForProjectStartedEvent();
 
         }).timeout(timeoutConfigs.createTestTimeout);
 
         async function waitForCreationEvent(): Promise<void> {
+            const projectInfo = await projectUtil.getProjectInfo(projData.projectID);
             const targetEvent = eventConfigs.events.creation;
             let eventFound = false;
             let event: any;
             await new Promise((resolve) => {
-                const timer = setInterval(() => {
+                const timer = setInterval(async () => {
+                    const containerInfo = await projectUtil.getContainerInfo(projectInfo, true);
+                    console.log("Container info: %j\n", containerInfo);
+
                     const events = socket.getAllEvents();
                     if (events && events.length >= 1) {
                         event =  events.filter((value) => {
