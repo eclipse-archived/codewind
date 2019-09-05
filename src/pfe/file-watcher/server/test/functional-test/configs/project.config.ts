@@ -9,7 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 /**
- * This file for different project specific (i.e liberty, spring, docker) capabaility configurations.
+ * This file for different project specific (i.e liberty, spring, docker) capability configurations.
  */
 import * as project from "../../../src/projects/Project";
 import * as nodeProject from "../../../src/projects/nodejsProject";
@@ -29,7 +29,7 @@ export const needManualReset: any = {
     },
 };
 
-// project specific capabaility settings: start modes and control commands
+// project specific capability settings: start modes and control commands
 export const projectCapabilities: any = {
     "docker": {
         "local": project.defaultProjectCapabilities,
