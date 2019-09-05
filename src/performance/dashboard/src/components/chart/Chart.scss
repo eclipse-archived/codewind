@@ -20,6 +20,10 @@
   overflow: hidden;
 }
 
+.Chart_actionbar {
+  line-height: 40px;
+}
+
 .Chart_actionbar .bx--dropdown__wrapper--inline,
 .Chart_actionbar .bx--dropdown--inline {
   width: 100% !important;
@@ -80,7 +84,7 @@
 .c3-axis.c3-axis-y text,
 .c3-axis.c3-axis-x text {
   fill: $carbon--gray-10;
-  font-size:0.9rem;
+  font-size: 0.9rem;
 }
 
 .c3-grid line {

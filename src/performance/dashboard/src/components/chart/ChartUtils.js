@@ -41,9 +41,9 @@ const counterUnits = {
  * Given an array of counters, return the list of chart colors
  */
 let getColorPattern = function (counters) {
-    var chartColors = [];
+    var chartColors = {};
     counters.forEach(counterkey => {
-        chartColors.push(colorSwatches[counterkey]);
+        chartColors[counterkey] = colorSwatches[counterkey];
     });
     return chartColors;
 }

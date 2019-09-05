@@ -55,29 +55,13 @@ export function addMemoryLine(counterKeys, data, chartData) {
     }
 }
 
-export function addHTTPLine(data, chartData, absolutePath) {
-    if (chartData.HTTP.columns && chartData.HTTP.columns.length > 0) {
-        const metricsRow = chartData.HTTP.columns.find(metric => {
-            return MetricsUtils.getPathFromURL(metric[0]) === absolutePath;
-        });
+export function addHTTPLine(lineName, rowName, data, chartData) {
+    if (chartData.HTTP.columns && chartData[lineName].columns.length > 0) {
+        const metricsRow = chartData[lineName].columns;
         if (metricsRow) {
             const metricsRowClone = metricsRow.slice();
-            data.columns.push(buildChartRow(metricsRowClone, "HTTP_RESPONSE"));
-            metricsRowClone[0] = "HTTP_RESPONSE";
-            data.classes.push(metricsRowClone);
-        }
-    }
-}
-
-export function addHTTPHits(data, chartData, absolutePath) {
-    if (chartData.HTTPHits.columns && chartData.HTTPHits.columns.length > 0) {
-        const metricsRow = chartData.HTTPHits.columns.find(metric => {
-            return MetricsUtils.getPathFromURL(metric[0]) === absolutePath;
-        });
-        if (metricsRow) {
-            const metricsRowClone = metricsRow.slice();
-            data.columns.push(buildChartRow(metricsRowClone, "HTTP_HITS"));
-            metricsRowClone[0] = "HTTP_HITS"
+            data.columns.push(buildChartRow(metricsRowClone, rowName));
+            metricsRowClone[0] = rowName;
             data.classes.push(metricsRowClone);
         }
     }
@@ -103,11 +87,10 @@ export function buildChartData(chartData, projectLanguage, absolutePath) {
     };
 
     const counterKeys = MetricsUtils.getLanguageCounters(projectLanguage);
+    addHTTPLine('HTTPHits', "HTTP_HITS", data, chartData);
+    addHTTPLine('HTTP', "HTTP_RESPONSE", data, chartData);
     addCPULine(counterKeys, data, chartData, absolutePath);
     addMemoryLine(counterKeys, data, chartData, absolutePath);
-    addHTTPLine(data, chartData, absolutePath);
-    addHTTPHits(data, chartData, absolutePath);
-
     return data;
 }
 
@@ -121,6 +104,7 @@ export function buildChartData(chartData, projectLanguage, absolutePath) {
  * @returns a plot line for the specified counter
  */
 export function getLineData(chartData, counterName, projectLanguage, absolutePath) {
+
     const counterKeys = MetricsUtils.getLanguageCounters(projectLanguage);
 
     switch (counterName) {
@@ -142,17 +126,13 @@ export function getLineData(chartData, counterName, projectLanguage, absolutePat
             return [];
         case 'HTTP_RESPONSE':
             if (chartData.HTTP.columns && chartData.HTTP.columns.length > 0) {
-                const metricsRow = chartData.HTTP.columns.find(metric => {
-                    return MetricsUtils.getPathFromURL(metric[0]) === absolutePath;
-                });
+                const metricsRow = chartData.HTTP.columns;
                 return metricsRow;
             }
             return [];
         case 'HTTP_HITS':
             if (chartData.HTTPHits.columns && chartData.HTTPHits.columns.length > 0) {
-                const metricsRow = chartData.HTTPHits.columns.find(metric => {
-                    return MetricsUtils.getPathFromURL(metric[0]) === absolutePath;
-                });
+                const metricsRow = chartData.HTTPHits.columns;
                 return metricsRow;
             }
             return [];
