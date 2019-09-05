@@ -76,11 +76,11 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "build",
             "returnKeys": ["operationId", "status"],
             "statusCode": 202,
-            "socketEvent": [eventConfigs.events.statusChanged],
-            "eventKeys": [["projectID", "appStatus"]],
+            "socketEvent": projData.projectType === "docker" && process.env.IN_K8 ? [eventConfigs.events.creation] : [eventConfigs.events.projectChanged],
+            "eventKeys": [["projectID", "status"]],
             "result": [{
                 "projectID": projData.projectID,
-                "appStatus": "started",
+                "status": "success",
             }],
             "afterHook": [afterHookRemoveProjectFromRunningBuild]
         },
