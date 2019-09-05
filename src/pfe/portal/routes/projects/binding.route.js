@@ -109,10 +109,7 @@ router.post('/api/v1/projects/bind', validateReq, async function (req, res) {
     }
 
     newProject = await user.createProject(projectDetails);
-    let msg = `Project ${newProject.name} (${newProject.projectID}) opened.`;
-    if (autoBuild) {
-      msg += ' Will build and run.';
-    }
+    let msg = `Project ${newProject.name} (${newProject.projectID}) opened and build requested`;
     res.status(202).send(newProject);
     log.info(msg);
   } catch (err) {
@@ -126,9 +123,7 @@ router.post('/api/v1/projects/bind', validateReq, async function (req, res) {
   }
 
   try {
-    if (newProject.autoBuild) {
-      await user.buildAndRunProject(newProject);
-    }
+    await user.buildAndRunProject(newProject);
     user.uiSocket.emit('projectBind', { status: 'success', ...newProject });
     log.info(`Successfully created project - name: ${newProject.name}, ID: ${newProject.projectID}`);
   } catch (err) {
