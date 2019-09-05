@@ -96,10 +96,6 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
                     utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
                 }
 
-                after("remove build from running queue", async () => {
-                    await utils.setBuildStatus(projData);
-                });
-
                 const testData = _.cloneDeep(data);
                 testData["type"] = statusTypes[statusType]["name"];
 

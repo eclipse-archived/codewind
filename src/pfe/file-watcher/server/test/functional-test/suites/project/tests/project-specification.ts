@@ -506,7 +506,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
             const dockerfile = path.join(projData.location, "Dockerfile");
             const fileOutput = await fs.readFileSync(dockerfile, {encoding: "utf-8"});
-            await fs.writeFileSync(dockerfile, fileOutput.replace(new RegExp(`EXPOSE ${defaultInternalPort}`, "g"), `EXPOSE ${testExposedPort}`), {encoding: "utf-8"});
+            if (projData.projectType != "spring") {
+                await fs.writeFileSync(dockerfile, fileOutput.replace(new RegExp(`EXPOSE ${defaultInternalPort}`, "g"), `EXPOSE ${testExposedPort}`), {encoding: "utf-8"});
+            }
 
             if (process.env.IN_K8 && app_configs.templateNames[projectLang]) {
                 const projectTemplateDir = path.join(projData.location, "chart", app_configs.templateNames[projectLang]);
@@ -538,7 +540,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
             const dockerfile = path.join(projData.location, "Dockerfile");
             const fileOutput = await fs.readFileSync(dockerfile, {encoding: "utf-8"});
-            await fs.writeFileSync(dockerfile, fileOutput.replace(new RegExp(`EXPOSE ${testExposedPort}`, "g"), `EXPOSE ${defaultInternalPort}`), {encoding: "utf-8"});
+            if (projData.projectType != "spring") {
+                await fs.writeFileSync(dockerfile, fileOutput.replace(new RegExp(`EXPOSE ${testExposedPort}`, "g"), `EXPOSE ${defaultInternalPort}`), {encoding: "utf-8"});
+            }
 
             if (process.env.IN_K8 && app_configs.templateNames[projectLang]) {
                 const projectTemplateDir = path.join(projData.location, "chart", app_configs.templateNames[projectLang]);

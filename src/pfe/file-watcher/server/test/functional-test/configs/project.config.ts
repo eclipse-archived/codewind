@@ -21,10 +21,6 @@ export const needManualReset: any = {
     "docker": {
         "buildStatus": false
     },
-    "liberty": {
-        "runningBuildQueue": true,
-        "buildStatus": true
-    },
     "nodejs": {
         "buildStatus": true
     },
