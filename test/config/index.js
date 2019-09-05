@@ -9,8 +9,17 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const path = require('path');
+const { execSync } = require('child_process');
 
-const CODEWIND_URL = process.env.CODEWIND_URL || 'http://localhost:9090';
+// Obtain the host and port Codewind is running on locally if not specifed
+// via the env var.
+let CONTAINER_HOST_INFO = {};
+if (!process.env.CODEWIND_URL) {
+    const CONTAINER_HOST_STDOUT = execSync(`docker inspect --format='{{json (index (index .NetworkSettings.Ports "9090/tcp") 0)}}' codewind-pfe`);
+    CONTAINER_HOST_INFO = JSON.parse(CONTAINER_HOST_STDOUT);
+}
+
+const CODEWIND_URL = process.env.CODEWIND_URL || `http://${CONTAINER_HOST_INFO.HostIp}:${CONTAINER_HOST_INFO.HostPort}`;
 const CODEWIND_HOST = process.env.INGRESS_DOMAIN || 'localhost';
 const DEFAULT_USER_NAME = 'default';
 const ADMIN_COOKIE = process.env.ADMIN_COOKIE || 'connect.sid=dummy';
