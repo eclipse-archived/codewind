@@ -13,6 +13,7 @@
  */
 import * as project from "../../../src/projects/Project";
 import * as nodeProject from "../../../src/projects/nodejsProject";
+import * as springProject from "../../../src/projects/springProject";
 
 // This config is to manual reset the running build queue and build status options for all project types.
 // We currently need to do that because project that relies on script and IDC code does not follow the typescript code and need to be manually reset.
@@ -86,13 +87,15 @@ export const restartCapabilities: any = {
 // project specific debug capabilities
 export const debugCapabilities: any = {
     "docker": false,
-    "nodejs": true
+    "nodejs": true,
+    "spring": true,
 };
 
 // project specific maven profile capabilities
 export const mavenProfileCapabilities: any = {
     "docker":  false,
-    "nodejs": false
+    "nodejs": false,
+    "spring": true,
 };
 
 // list of mocked exposed debug ports
@@ -108,7 +111,8 @@ export const defaultHealthCheckEndPoint: any = {
     "go": "/",
     "lagom": "/",
     "python": "/",
-    "nodejs": "/"
+    "nodejs": "/",
+    "spring": "/"
 };
 
 // project specific setting for projects that only expose one app port
@@ -128,6 +132,10 @@ export const oneExposedPortOnly: any = {
     "nodejs": {
         "local": false,
         "kube": true
+    },
+    "spring": {
+        "local": false,
+        "kube": true
     }
 };
 
@@ -136,7 +144,8 @@ export const defaultInternalPorts: any = {
     "go": "8000",
     "lagom": "9000",
     "python": "5000",
-    "nodejs": nodeProject.getDefaultAppPort()
+    "nodejs": nodeProject.getDefaultAppPort(),
+    "spring": springProject.getDefaultAppPort()
 };
 
 // project specific settings to mark the main files

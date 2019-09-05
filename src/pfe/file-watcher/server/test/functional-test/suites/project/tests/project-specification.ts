@@ -34,9 +34,13 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             "projectID": projData.projectID
         };
 
+        const mavenSettings = ["mavenProfiles", "mavenProperties"];
+
         const testExposedPort = "8888";
         const testContextRoot = "/hello";
         const testHealthCheck = "/health";
+        const testMavenProfiles: Array<string> = ["profile1", "profile2"];
+        const testMavenProperties: Array<string> = ["key1=value1", "key2=value2"];
 
         const combinations: any = {
             "combo1": {
@@ -104,20 +108,34 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 }]
             },
             "combo5": {
-                "setting": "mavenProfiles",
+                "setting": mavenSettings[0],
+                "value": testMavenProfiles,
                 "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "mavenProfiles", "status"],
+                "eventKeys": ["operationId", "projectID", mavenSettings[0], "status"],
                 "result": {
                     "projectID": projData.projectID,
+                    "status": "success",
+                    [mavenSettings[0]]: testMavenProfiles
                 },
+                "afterHook": [{
+                    "title": "Reset maven profiles",
+                    "function": afterHookMavenProfileTest
+                }]
             },
             "combo6": {
-                "setting": "mavenProperties",
+                "setting": mavenSettings[1],
+                "value": testMavenProperties,
                 "socketEvent": eventConfigs.events.settingsChanged,
-                "eventKeys": ["operationId", "projectID", "mavenProperties", "status"],
+                "eventKeys": ["operationId", "projectID",  mavenSettings[1], "status"],
                 "result": {
                     "projectID": projData.projectID,
+                    "status": "success",
+                    [mavenSettings[1]]: testMavenProperties
                 },
+                "afterHook": [{
+                    "title": "Reset maven properties",
+                    "function": afterHookMavenPropertyTest
+                }]
             },
             "combo7": {
                 "setting": "ignoredPaths",
@@ -274,6 +292,62 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             }
         }).timeout(timeoutConfigs.defaultTimeout);
 
+        for (const mavenSetting of mavenSettings) {
+            it(`set project specification with numeric ${mavenSetting} array`, async () => {
+                const testData = _.cloneDeep(data);
+                testData["settings"] = {
+                    [mavenSetting]: [1, 2, 3, 4]
+                };
+                const checkData: any = {
+                    projectID: projData.projectID,
+                    [mavenSetting]: undefined,
+                    status: "failed",
+                    error: `BAD_REQUEST: ${mavenSetting} must be a string array.`
+                };
+                const info: any = await projectSpecification(testData);
+                expect(info);
+                expect(info.statusCode);
+                expect(info.statusCode).to.equal(202);
+                expect(info.operationId);
+
+                const targetEvent = eventConfigs.events.settingsChanged;
+                let eventFound = false;
+                let event: any;
+                await new Promise((resolve) => {
+                    const timer = setInterval(() => {
+                        const events = socket.getAllEvents();
+                        if (events && events.length >= 1) {
+                            event =  events.filter((value) => {
+                                if (value.eventName === targetEvent && _.isMatch(value.eventData, checkData)) return value;
+                            })[0];
+                            if (event) {
+                                eventFound = true;
+                                clearInterval(timer);
+                                return resolve();
+                            }
+                        }
+                    }, timeoutConfigs.defaultInterval);
+                });
+
+                if (eventFound && event) {
+                    expect(event);
+                    expect(event.eventName);
+                    expect(event.eventName).to.equal(targetEvent);
+                    expect(event.eventData);
+                    expect(event.eventData["operationId"]);
+                    expect(event.eventData["projectID"]);
+                    expect(event.eventData["projectID"]).to.equal(checkData.projectID);
+                    expect(event.eventData[mavenSetting]).to.equal(checkData[mavenSetting]);
+                    expect(event.eventData["status"]);
+                    expect(event.eventData["status"]).to.equal(checkData.status);
+                    expect(event.eventData["error"]);
+                    expect(event.eventData["error"]).to.equal(checkData.error);
+                } else {
+                    fail(`failed to find ${targetEvent} for project specific setting for ${mavenSetting}`);
+                }
+            }).timeout(timeoutConfigs.defaultTimeout);
+        }
+
         describe("configure project specifications", () => {
             _.forEach(combinations, (combo) => {
                 describe(`configure ${combo["setting"]} settings`, () => {
@@ -300,7 +374,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             });
         });
 
-        async function runProjectSpecificationSettingTest(combo: any, valueCheck?: string): Promise<void> {
+        async function runProjectSpecificationSettingTest(combo: any, valueCheck?: any): Promise<void> {
             const comboInUse = _.cloneDeep(combo);
             const setting = comboInUse["setting"];
             let value = valueCheck || comboInUse["value"];
@@ -329,6 +403,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     value = [];
                     comboInUse["result"]["status"] = "failed";
                     comboInUse["eventKeys"].push("error");
+                    delete comboInUse["result"][setting];
                 }
                 // for spring and liberty project types support maven profiles we need to set the value here
             }
@@ -497,6 +572,16 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         async function afterHookHealthCheckTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
             await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultContextRoot[projectLang] || project_configs.defaultHealthCheckEndPoint[projectLang]);
+        }
+
+        async function  afterHookMavenProfileTest(hook: any): Promise<void> {
+            hook.timeout(timeoutConfigs.defaultTimeout);
+            await runProjectSpecificationSettingTest(combinations["combo5"], []);
+        }
+
+        async function  afterHookMavenPropertyTest(hook: any): Promise<void> {
+            hook.timeout(timeoutConfigs.defaultTimeout);
+            await runProjectSpecificationSettingTest(combinations["combo6"], []);
         }
     });
 }

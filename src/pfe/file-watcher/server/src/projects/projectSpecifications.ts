@@ -550,7 +550,16 @@ const changeMavenProfiles = async function (mavenProfiles: any, operation: Opera
         return;
     }
 
-    if (mavenProfiles && !(mavenProfiles instanceof Array)) {
+    let arrayIsNotString = false;
+    if (mavenProfiles instanceof Array) {
+        mavenProfiles.forEach(function(item: any): void {
+           if (typeof item !== "string") {
+               arrayIsNotString = true;
+           }
+        });
+    }
+
+    if (mavenProfiles && arrayIsNotString) {
         const errorMsg = "BAD_REQUEST: mavenProfiles must be a string array.";
         logger.logProjectError("Failed to change the maven profile list: " + errorMsg, projectID);
 
@@ -645,7 +654,16 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
         return;
     }
 
-    if (mavenProperties && !(mavenProperties instanceof Array)) {
+    let arrayIsNotString = false;
+    if (mavenProperties instanceof Array) {
+        mavenProperties.forEach(function(item: any): void {
+           if (typeof item !== "string") {
+               arrayIsNotString = true;
+           }
+        });
+    }
+
+    if (mavenProperties && arrayIsNotString) {
         const errorMsg = "BAD_REQUEST: mavenProperties must be a string array.";
         logger.logProjectError("Failed to change the maven properties: " + errorMsg, projectID);
 
