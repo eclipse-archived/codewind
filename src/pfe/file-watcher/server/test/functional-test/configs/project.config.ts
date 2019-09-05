@@ -24,6 +24,9 @@ export const needManualReset: any = {
     "nodejs": {
         "buildStatus": true
     },
+    "liberty": {
+        "buildStatus": true
+    },
     "spring": {
         "buildStatus": true
     },
