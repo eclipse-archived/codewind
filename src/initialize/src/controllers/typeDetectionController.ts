@@ -46,7 +46,7 @@ export async function detectType(projectMountDirectory: string): Promise<Initial
     return ProjectType.SPRING;
   }
   else if (dockerfile.includes('FROM websphere-liberty')) {
-    return ProjectType.LIBERTY; 
+    return ProjectType.LIBERTY;
   }
   // eg lagom
   return ProjectType.DOCKER;
