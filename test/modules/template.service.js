@@ -174,6 +174,7 @@ const sampleRepos = {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
         description: 'Standard Codewind templates.',
         enabled: true,
+        protected: true,
     },
     anotherCodewind: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
@@ -185,8 +186,18 @@ const sampleRepos = {
         description: 'Appsody extension for Codewind',
         enabled: true,
     },
+    fromAppsodyExtension: {
+        description: '*appsodyhub',
+        url: 'https://github.com/appsody/stacks/releases/latest/download/incubator-index.json',
+        enabled: true,
+        protected: true,
+    },
 };
-const defaultRepoList = [sampleRepos.codewind];
+const defaultRepoList = [
+    sampleRepos.codewind,
+    sampleRepos.fromAppsodyExtension,
+];
+
 const validUrlNotPointingToIndexJson = 'https://support.oneskyapp.com/hc/en-us/article_attachments/202761627/example_1.json';
 
 async function getTemplateRepos() {
@@ -196,11 +207,11 @@ async function getTemplateRepos() {
     return res;
 }
 
-async function addTemplateRepo({ url, description }) {
+async function addTemplateRepo(repo) {
     const res = await reqService.chai
         .post('/api/v1/templates/repositories')
         .set('Cookie', ADMIN_COOKIE)
-        .send({ url, description });
+        .send(repo);
     return res;
 }
 
@@ -275,11 +286,13 @@ async function getTemplateStyles() {
 
 function saveReposBeforeTestAndRestoreAfter() {
     let originalTemplateRepos;
-    before(async() => {
+    before(async function() {
+        this.timeout(5000);
         const res = await getTemplateRepos();
         originalTemplateRepos = res.body;
     });
-    after(async() => {
+    after(async function() {
+        this.timeout(5000);
         await setTemplateReposTo(originalTemplateRepos);
     });
 }

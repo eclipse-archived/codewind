@@ -25,12 +25,12 @@ chai.should();
 describe('Batch enabling repositories', function() {
     const tests = {
         '1 repo': {
-            testRepos: [{ ...sampleRepos.codewind }],
+            testRepos: [{ ...sampleRepos.fromAppsodyExtension }],
         },
         'multiple repos': {
             testRepos: [
                 { ...sampleRepos.codewind },
-                { ...sampleRepos.appsody },
+                { ...sampleRepos.fromAppsodyExtension },
             ],
         },
     };
@@ -40,7 +40,8 @@ describe('Batch enabling repositories', function() {
             const { testRepos } = test;
             let templatesFromTestRepos;
             saveReposBeforeTestAndRestoreAfter();
-            before(async() => {
+            before(async function() {
+                this.timeout(10000);
                 await setTemplateReposTo(testRepos);
 
                 const res = await getTemplates();
@@ -69,9 +70,9 @@ describe('Batch enabling repositories', function() {
                 res.body.should.have.deep.members(disabledRepos);
             });
             it(`checks templates from the disabled repos do not appear in the list of enabled templates`, async function() {
+                this.timeout(10000);
                 const res = await getTemplates({ showEnabledOnly: true });
-                res.should.have.status(200);
-                res.body.should.not.have.deep.members(templatesFromTestRepos);
+                res.should.have.status(204);
             });
 
             it(`returns 207 and sub-status 200 for each subrequest when batch enabling ${testRepos.length} repos`, async function() {
@@ -96,7 +97,8 @@ describe('Batch enabling repositories', function() {
                 res.should.have.status(200);
                 res.body.should.have.deep.members(enabledRepos);
             });
-            it(`checks templates from the enabled repos do not appear in the list of enabled templates`, async function() {
+            it(`checks templates from the enabled repos do appear in the list of enabled templates`, async function() {
+                this.timeout(10000);
                 const res = await getTemplates({ showEnabledOnly: true });
                 res.should.have.status(200);
                 res.body.should.have.deep.members(templatesFromTestRepos);

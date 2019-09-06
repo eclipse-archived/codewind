@@ -41,6 +41,7 @@ describe('Template API tests', function() {
         describe('?projectStyle=', function() {
             describe('empty', function() {
                 it('should return a list of all available templates', async function() {
+                    this.timeout(10000);
                     const res = await getTemplates();
                     res.should.have.status(200).and.satisfyApiSpec;
                     res.body.length.should.equal(defaultTemplates.length);
@@ -48,6 +49,7 @@ describe('Template API tests', function() {
             });
             describe('Codewind', function() {
                 it('should return only Codewind templates', async function() {
+                    this.timeout(10000);
                     const res = await getTemplates({ projectStyle: 'Codewind' });
                     res.should.have.status(200).and.satisfyApiSpec;
                     res.body.forEach(template => {
@@ -60,6 +62,7 @@ describe('Template API tests', function() {
             for (const projectStyle of ['Appsody']) {
                 describe(projectStyle, function() {
                     it(`should return only ${projectStyle} templates`, async function() {
+                        this.timeout(10000);
                         const res = await getTemplates({ projectStyle });
                         res.should.have.status(200).and.satisfyApiSpec;
                         res.body.forEach(template =>
@@ -70,6 +73,7 @@ describe('Template API tests', function() {
             }
             describe('unknownStyle', function() {
                 it('should return 204', async function() {
+                    this.timeout(10000);
                     const res = await getTemplates({ projectStyle: 'unknownStyle' });
                     res.should.have.status(204);
                     res.body.should.be.empty;
@@ -79,6 +83,7 @@ describe('Template API tests', function() {
         describe('?showEnabledOnly=', function() {
             describe('false', function() {
                 it('should return all templates (from enabled and disabled repos)', async function() {
+                    this.timeout(10000);
                     const res = await getTemplates({ showEnabledOnly: false });
                     res.should.have.status(200).and.satisfyApiSpec;
                     res.body.length.should.equal(defaultTemplates.length);
@@ -86,6 +91,7 @@ describe('Template API tests', function() {
             });
             describe('true', function() {
                 it('should return only templates from enabled repos', async function() {
+                    this.timeout(10000);
                     const res = await getTemplates({ showEnabledOnly: true });
                     res.should.have.status(200).and.satisfyApiSpec;
                     res.body.length.should.equal(defaultTemplates.length);
@@ -137,7 +143,8 @@ describe('Template API tests', function() {
         const repoToAdd = sampleRepos.anotherCodewind;
         let originalTemplateRepos;
         let originalNumTemplates;
-        before(async() => {
+        before(async function() {
+            this.timeout(10000);
             const res = await getTemplateRepos();
             originalTemplateRepos = res.body;
 
@@ -148,6 +155,7 @@ describe('Template API tests', function() {
             await setTemplateReposTo(originalTemplateRepos);
         });
         it('GET should return a list of available template repositories', async function() {
+            this.timeout(10000);
             const res = await getTemplateRepos();
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.have.deep.members(defaultRepoList);
@@ -160,6 +168,7 @@ describe('Template API tests', function() {
             res.body.length.should.equal(originalTemplateRepos.length - 1);
         });
         it('GET /api/v1/templates should return fewer templates', async function() {
+            this.timeout(10000);
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.length.should.be.below(originalNumTemplates);
@@ -172,6 +181,7 @@ describe('Template API tests', function() {
             res.body.length.should.equal(originalTemplateRepos.length);
         });
         it('should return the original list of available templates', async function() {
+            this.timeout(10000);
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.length.should.equal(originalNumTemplates);
@@ -182,14 +192,15 @@ describe('Template API tests', function() {
             res.body.should.deep.include(repoToAdd);
             res.body.length.should.equal(originalTemplateRepos.length + 1);
         });
-        it('should return longer list of available templates', async function() {
+        it('should return a longer list of available templates', async function() {
+            this.timeout(10000);
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.length.should.be.above(originalNumTemplates);
         });
     });
     describe('PATCH /api/v1/batch/templates/repositories', function() {
-        const existingRepoUrl = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
+        const existingRepoUrl = sampleRepos.fromAppsodyExtension.url;
         const tests = {
             'enable an existing repo': {
                 input: [{
@@ -267,6 +278,7 @@ describe('Template API tests', function() {
     });
     describe('GET /api/v1/templates/styles', function() {
         it('should return a list of available template styles', async function() {
+            this.timeout(10000);
             const res = await getTemplateStyles();
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.have.members(['Codewind', 'Appsody']);

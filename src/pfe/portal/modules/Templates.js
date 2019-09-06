@@ -24,6 +24,7 @@ const DEFAULT_REPOSITORY_LIST = [
     url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
     description: 'Standard Codewind templates.',
     enabled: true,
+    protected: true,
   },
 ];
 module.exports = class Templates {
@@ -44,6 +45,7 @@ module.exports = class Templates {
         this.repositoryList = list;
         this.needsRefresh = true;
       } else {
+        await this.updateRepoListWithReposFromProviders();
         await this.writeRepositoryList();
       }
     } catch (err) {
@@ -61,26 +63,38 @@ module.exports = class Templates {
     return templates;
   }
 
-  getEnabledTemplates() {
+  async getEnabledTemplates() {
+    await this.updateRepoListWithReposFromProviders();
     return this.getTemplatesFromRepos(this.getEnabledRepositories());
   }
 
-  getAllTemplates() {
+  async getAllTemplates() {
     if (!this.needsRefresh) {
       return this.projectTemplates;
     }
+    await this.updateRepoListWithReposFromProviders();
     return this.getTemplatesFromRepos(this.repositoryList);
   }
 
-  async getTemplatesFromRepos(repositoryList) {
+  async updateRepoListWithReposFromProviders() {
     const providers = Object.values(this.providers);
     const providedRepos = await getReposFromProviders(providers);
-    // Avoid processing duplicate repos
-    const extraRepos = providedRepos.filter(repo =>
-      !repositoryList.find(repo2 => repo2.url === repo.url)
-    );
-    const repos = repositoryList.concat(extraRepos);
 
+    const extraRepos = providedRepos.filter(repo =>
+      !this.repositoryList.find(repo2 => repo2.url === repo.url)
+    );
+
+    if (extraRepos.length > 0) {
+      extraRepos.forEach(repo => {
+        repo.enabled = true;
+        repo.protected = true;
+      });
+      this.repositoryList = this.repositoryList.concat(extraRepos);
+      await this.writeRepositoryList();
+    }
+  }
+
+  async getTemplatesFromRepos(repos) {
     let newProjectTemplates = [];
     await Promise.all(repos.map(async(repo) => {
       try {
@@ -195,7 +209,7 @@ module.exports = class Templates {
   /**
    * Add a repository to the list of template repositories.
    */
-  async addRepository(repoUrl, repoDescription) {
+  async addRepository(repoUrl, repoDescription, isRepoProtected) {
     let url;
     try {
       url = new URL(repoUrl).href;
@@ -219,6 +233,10 @@ module.exports = class Templates {
       description: repoDescription,
       enabled: true,
     }
+    if (isRepoProtected) {
+      newRepo.protected = isRepoProtected;
+    }
+
     this.repositoryList.push(newRepo);
     this.needsRefresh = true;
     await this.writeRepositoryList();

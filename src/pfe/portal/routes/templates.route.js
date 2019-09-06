@@ -50,9 +50,10 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
   const user = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
   const repositoryDescription = req.sanitizeBody('description');
+  const isRepoProtected = req.sanitizeBody('protected');
 
   try {
-    await user.templates.addRepository(repositoryUrl, repositoryDescription);
+    await user.templates.addRepository(repositoryUrl, repositoryDescription, isRepoProtected);
   } catch (error) {
     log.error(error);
     const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON'];
@@ -62,19 +63,21 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
     }
     throw error;
   }
-  sendRepositories(req, res, _next);
+  await sendRepositories(req, res, _next);
 });
 
 router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
   await user.templates.deleteRepository(repositoryUrl);
-  sendRepositories(req, res, _next);
+  await sendRepositories(req, res, _next);
 });
 
-function sendRepositories(req, res, _next) {
+async function sendRepositories(req, res, _next) {
   const user = req.cw_user;
-  const repositoryList = user.templates.getRepositories();
+  const templatesController = user.templates;
+  await templatesController.updateRepoListWithReposFromProviders();
+  const repositoryList = templatesController.getRepositories();
   res.status(200).json(repositoryList);
 }
 
