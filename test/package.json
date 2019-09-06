@@ -28,7 +28,6 @@
     "child-process-promise": "^2.2.1",
     "dateformat": "^3.0.3",
     "dockerode": "^2.5.2",
-    "faker": "^4.1.0",
     "find-in-files": "^0.5.0",
     "fs-extra": "^5.0.0",
     "klaw-sync": "^6.0.0",

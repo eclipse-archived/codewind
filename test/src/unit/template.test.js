@@ -10,7 +10,6 @@
 *******************************************************************************/
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const faker = require('faker');
 const fs = require('fs-extra');
 const path = require('path');
 const rewire = require('rewire');
@@ -362,7 +361,7 @@ describe('Templates.js', function() {
         });
     });
     describe('addRepository(repoUrl, repoDescription)', function() {
-        const mockRepoList = [{ url: faker.internet.url() }];
+        const mockRepoList = [{ url: 'https://made.up/url' }];
         let templateController;
         beforeEach(() => {
             fs.ensureDirSync(testWorkspaceConfigDir);
