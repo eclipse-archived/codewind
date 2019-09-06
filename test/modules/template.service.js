@@ -187,6 +187,7 @@ const sampleRepos = {
     },
 };
 const defaultRepoList = [sampleRepos.codewind];
+const validUrlNotPointingToIndexJson = 'https://support.oneskyapp.com/hc/en-us/article_attachments/202761627/example_1.json';
 
 async function getTemplateRepos() {
     const res = await reqService.chai
@@ -285,11 +286,13 @@ function saveReposBeforeTestAndRestoreAfter() {
 
 function saveReposBeforeEachTestAndRestoreAfterEach() {
     let originalTemplateRepos;
-    beforeEach(async() => {
+    beforeEach(async function() {
+        this.timeout(5000);
         const res = await getTemplateRepos();
         originalTemplateRepos = res.body;
     });
-    afterEach(async() => {
+    afterEach(async function() {
+        this.timeout(5000);
         await setTemplateReposTo(originalTemplateRepos);
     });
 }
@@ -300,6 +303,7 @@ module.exports = {
     styledTemplates,
     sampleRepos,
     defaultRepoList,
+    validUrlNotPointingToIndexJson,
     getTemplateRepos,
     addTemplateRepo,
     deleteTemplateRepo,

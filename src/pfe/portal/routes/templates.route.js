@@ -52,17 +52,11 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
   const repositoryDescription = req.sanitizeBody('description');
 
   try {
-    new URL(repositoryUrl);
-  } catch(err) {
-    log.error(`Invalid repository url: ${err}`);
-    res.status(400).send("Invalid repository URL");
-    return;
-  }
-  try {
     await user.templates.addRepository(repositoryUrl, repositoryDescription);
   } catch (error) {
     log.error(error);
-    if (error instanceof TemplateError && error.code === 'DUPLICATE_URL') {
+    const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON'];
+    if (error instanceof TemplateError && knownErrorCodes.includes(error.code)) {
       res.status(400).send(error.message);
       return;
     }

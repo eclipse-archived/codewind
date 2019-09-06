@@ -196,11 +196,26 @@ module.exports = class Templates {
    * Add a repository to the list of template repositories.
    */
   async addRepository(repoUrl, repoDescription) {
-    if (this.getRepositories().find(repo => repo.url == repoUrl)) {
+    let url;
+    try {
+      url = new URL(repoUrl).href;
+    } catch (error) {
+      if (error.message.includes('Invalid URL')) {
+        throw new TemplateError('INVALID_URL', repoUrl);
+      }
+      throw error;
+    }
+
+    if (this.getRepositories().find(repo => repo.url === repoUrl)) {
       throw new TemplateError('DUPLICATE_URL', repoUrl);
     }
+
+    if (!(await doesUrlPointToIndexJson(url))) {
+      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', url);
+    }
+
     const newRepo = {
-      url: repoUrl,
+      url,
       description: repoDescription,
       enabled: true,
     }
@@ -301,6 +316,36 @@ async function getReposFromProviders(providers) {
 
 function isRepo(obj) {
   return obj.hasOwnProperty('url');
+}
+
+async function doesUrlPointToIndexJson(inputUrl) {
+  const url = new URL(inputUrl); // Throws error if `inputUrl` is not a valid url
+
+  const options = {
+    host: url.host,
+    path: url.pathname,
+    method: 'GET',
+  }
+  const res = await cwUtils.asyncHttpRequest(options, undefined, url.protocol === 'https:');
+  if (res.statusCode < 200 || res.statusCode > 299) {
+    return false;
+  }
+  try {
+    const templateSummaries = JSON.parse(res.body);
+    if (templateSummaries.some(summary => !isTemplateSummary(summary))) {
+      return false;
+    }
+  } catch(error) {
+    log.warn(error);
+    return false
+  }
+
+  return true;
+}
+
+function isTemplateSummary(obj) {
+  const expectedKeys = ['displayName', 'description', 'language', 'projectType', 'location', 'links'];
+  return expectedKeys.every(key => obj.hasOwnProperty(key));
 }
 
 module.exports.getTemplatesFromRepo = getTemplatesFromRepo;
