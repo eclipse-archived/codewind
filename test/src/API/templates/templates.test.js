@@ -25,8 +25,8 @@ const {
     getTemplateStyles,
     saveReposBeforeTestAndRestoreAfter,
     saveReposBeforeEachTestAndRestoreAfterEach,
-} = require('../modules/template.service');
-const { pathToApiSpec } = require('../config');
+} = require('../../../modules/template.service');
+const { pathToApiSpec } = require('../../../config');
 
 chai.should();
 chai.use(chaiResValidator(pathToApiSpec));
