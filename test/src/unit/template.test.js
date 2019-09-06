@@ -12,14 +12,16 @@ const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const fs = require('fs-extra');
 const path = require('path');
+const rewire = require('rewire');
 
-const Templates = require('../../../src/pfe/portal/modules/Templates');
+const Templates = rewire('../../../src/pfe/portal/modules/Templates');
 const {
     styledTemplates,
-    defaultTemplates,
+    defaultCodewindTemplates,
     defaultRepoList,
     sampleRepos,
 } = require('../../modules/template.service');
+const { suppressLogOutput } = require('../../modules/log.service');
 
 chai.use(chaiAsPromised);
 chai.should();
@@ -48,6 +50,7 @@ const mockRepos = {
 const mockRepoList = Object.values(mockRepos);
 
 describe('Templates.js', function() {
+    suppressLogOutput(Templates);
     describe('getTemplateStyles() when Codewind is aware of:', function() {
         describe('Codewind and Appsody templates', function() {
             const sampleTemplateList = [
@@ -108,10 +111,10 @@ describe('Templates.js', function() {
         });
         describe(`when we do refresh`, function() {
             describe('', function() {
-                it('returns the default templates', async function() {
+                it('returns the default Codewind templates', async function() {
                     const templateController = new Templates('');
                     const output = await templateController.getAllTemplates();
-                    output.should.deep.equal(defaultTemplates);
+                    output.should.deep.equal(defaultCodewindTemplates);
                 });
             });
             describe('and add an extra template repo', function() {
@@ -119,14 +122,14 @@ describe('Templates.js', function() {
                 before(() => {
                     templateController = new Templates('');
                     templateController.repositoryList = [
-                        sampleRepos.default,
+                        sampleRepos.codewind,
                         sampleRepos.appsody,
                     ];
                 });
                 it('returns more templates', async function() {
                     const output = await templateController.getAllTemplates();
-                    output.should.include.deep.members(defaultTemplates);
-                    (output.length).should.be.above(defaultTemplates.length);
+                    output.should.include.deep.members(defaultCodewindTemplates);
+                    (output.length).should.be.above(defaultCodewindTemplates.length);
                 });
             });
             describe('and add an extra bad template repo', function() {
@@ -134,13 +137,13 @@ describe('Templates.js', function() {
                 before(() => {
                     templateController = new Templates('');
                     templateController.repositoryList = [
-                        sampleRepos.default,
+                        sampleRepos.codewind,
                         { url: 'https://www.google.com/' },
                     ];
                 });
                 it('returns only the default templates', async function() {
                     const output = await templateController.getAllTemplates();
-                    output.should.deep.equal(defaultTemplates);
+                    output.should.deep.equal(defaultCodewindTemplates);
                 });
             });
         });
@@ -179,7 +182,7 @@ describe('Templates.js', function() {
             },
         };
         for (const [testName, test] of Object.entries(tests)) {
-            describe(testName, function() { // eslint-disable-line
+            describe(testName, function() {
                 it(`returns the expected repos`, async function() {
                     const output = await Templates.getReposFromProviders(test.input);
                     output.should.deep.equal(test.output);
@@ -190,8 +193,8 @@ describe('Templates.js', function() {
     describe('getTemplatesFromRepo(repository)', function() {
         describe('(<validRepository>)', function() {
             it('returns the correct templates', async function() {
-                const output = await Templates.getTemplatesFromRepo(defaultRepoList[0]);
-                output.should.have.deep.members(defaultTemplates);
+                const output = await Templates.getTemplatesFromRepo(sampleRepos.codewind);
+                output.should.have.deep.members(defaultCodewindTemplates);
             });
         });
         describe('(<invalidRepository>)', function() {
@@ -232,10 +235,10 @@ describe('Templates.js', function() {
         });
         describe('(<defaultRepoList>)', function() {
             describe('when we have no providers', function() {
-                it('returns the default templates', async function() {
+                it('returns the default Codewind templates', async function() {
                     const templateController = new Templates('');
                     const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                    output.should.deep.equal(defaultTemplates);
+                    output.should.deep.equal(defaultCodewindTemplates);
                 });
             });
             describe(`when providers don't provide repo lists`, function() {
@@ -246,9 +249,9 @@ describe('Templates.js', function() {
                         getRepositories() { return 'should be array'; },
                     });
                 });
-                it('still returns the default templates (ignoring the invalid providers)', async function() {
+                it('still returns the default Codewind templates (ignoring the invalid providers)', async function() {
                     const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                    output.should.deep.equal(defaultTemplates);
+                    output.should.deep.equal(defaultCodewindTemplates);
                 });
             });
             describe('when providers list invalid repos', function() {
@@ -260,9 +263,9 @@ describe('Templates.js', function() {
                             getRepositories() { return ['should be object']; },
                         });
                     });
-                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
                         const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultTemplates);
+                        output.should.deep.equal(defaultCodewindTemplates);
                     });
                 });
                 describe('missing URL', function() {
@@ -275,9 +278,9 @@ describe('Templates.js', function() {
                             },
                         });
                     });
-                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
                         const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultTemplates);
+                        output.should.deep.equal(defaultCodewindTemplates);
                     });
                 });
                 describe('invalid URL', function() {
@@ -293,9 +296,9 @@ describe('Templates.js', function() {
                             },
                         });
                     });
-                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
                         const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultTemplates);
+                        output.should.deep.equal(defaultCodewindTemplates);
                     });
                 });
                 describe('duplicate URL', function() {
@@ -311,9 +314,9 @@ describe('Templates.js', function() {
                             },
                         });
                     });
-                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
                         const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultTemplates);
+                        output.should.deep.equal(defaultCodewindTemplates);
                     });
                 });
                 describe(`valid URL that doesn't provide JSON`, function() {
@@ -329,9 +332,9 @@ describe('Templates.js', function() {
                             },
                         });
                     });
-                    it('still returns the default templates (ignoring the invalid repos)', async function() {
+                    it('still returns the default Codewind templates (ignoring the invalid repos)', async function() {
                         const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                        output.should.deep.equal(defaultTemplates);
+                        output.should.deep.equal(defaultCodewindTemplates);
                     });
                 });
             });
@@ -348,10 +351,10 @@ describe('Templates.js', function() {
                         },
                     });
                 });
-                it(`returns the default templates and the provider's templates`, async function() {
+                it(`returns the default Codewind templates and the provider's templates`, async function() {
                     const output = await templateController.getTemplatesFromRepos(defaultRepoList);
-                    output.should.include.deep.members(defaultTemplates);
-                    (output.length).should.be.above(defaultTemplates.length);
+                    output.should.include.deep.members(defaultCodewindTemplates);
+                    (output.length).should.be.above(defaultCodewindTemplates.length);
                 });
             });
         });
@@ -374,9 +377,14 @@ describe('Templates.js', function() {
             });
         });
         describe('(<uniqueString>, <validDesc>)', function() {
-            it('succeeds', function() {
+            it('succeeds', async function() {
                 const func = () => templateController.addRepository('unique string', 'description');
-                return func().should.not.be.rejected;
+                await (func().should.not.be.rejected);
+                templateController.repositoryList.should.deep.include({
+                    url: 'unique string',
+                    description: 'description',
+                    enabled: true,
+                });
             });
         });
     });
@@ -395,11 +403,11 @@ describe('Templates.js', function() {
         let templateController;
         before(() => {
             templateController = new Templates('');
-            templateController.repositoryList = [...mockRepoList];
+            templateController.repositoryList = [mockRepos.enabled, mockRepos.disabled];
         });
         it('returns only enabled repos', function() {
             const output = templateController.getEnabledRepositories();
-            output.should.deep.equal([mockRepos.enabled, mockRepos.noEnabledStatus]);
+            output.should.deep.equal([mockRepos.enabled]);
         });
     });
     describe('enableRepository(url)', function() {
@@ -410,10 +418,9 @@ describe('Templates.js', function() {
         });
         describe('(existing url)', function() {
             it('enables the correct repo', function() {
-                templateController.enableRepository('2');
+                templateController.enableRepository(mockRepos.disabled.url);
                 const expectedRepoDetails = {
-                    url: '2',
-                    description: '2',
+                    ...mockRepos.disabled,
                     enabled: true,
                 };
                 templateController.getRepositories().should.deep.include(expectedRepoDetails);
@@ -676,7 +683,7 @@ describe('Templates.js', function() {
                 },
             };
             for (const [testName, test] of Object.entries(tests)) {
-                describe(testName, function() { // eslint-disable-line
+                describe(testName, function() { // eslint-disable-line no-loop-func
                     it(`returns the expected operation info and correctly updates the repository file`, async function() {
                         const output = await templateController.batchUpdate(test.input);
                         output.should.deep.equal(test.output);
@@ -740,7 +747,7 @@ describe('Templates.js', function() {
                 },
             };
             for (const [testName, test] of Object.entries(tests)) {
-                describe(testName, function() { // eslint-disable-line
+                describe(testName, function() { // eslint-disable-line no-loop-func
                     it(`returns the expected operation info and correctly updates the repository file`, function() {
                         const output = templateController.performOperation(test.input);
                         output.should.deep.equal(test.output);
@@ -784,7 +791,7 @@ describe('Templates.js', function() {
                 },
             };
             for (const [testName, test] of Object.entries(tests)) {
-                describe(testName, function() { // eslint-disable-line
+                describe(testName, function() { // eslint-disable-line no-loop-func
                     it(`returns the expected operation info`, function() {
                         const output = templateController.performOperation(test.input);
                         output.should.deep.equal(test.output);

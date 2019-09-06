@@ -109,10 +109,7 @@ module.exports = class Templates {
   }
 
   getEnabledRepositories() {
-    return this.getRepositories().filter(repo =>
-      // if the repo doesn't specify whether it's enabled, consider it enabled
-      (repo.enabled || !repo.hasOwnProperty('enabled'))
-    );
+    return this.getRepositories().filter(repo => repo.enabled);
   }
 
   doesRepositoryExist(repoUrl) {
@@ -205,6 +202,7 @@ module.exports = class Templates {
     const newRepo = {
       url: repoUrl,
       description: repoDescription,
+      enabled: true,
     }
     this.repositoryList.push(newRepo);
     this.needsRefresh = true;
@@ -253,13 +251,17 @@ async function getTemplatesFromRepo(repository) {
     throw new Error(`URL '${repoUrl}' should return JSON`);
   }
   const templates = templateSummaries.map(summary => {
-    return {
+    const template = {
       label: summary.displayName,
       description: summary.description,
       language: summary.language,
       url: summary.location,
-      projectType: summary.projectType
+      projectType: summary.projectType,
     };
+    if (summary.projectStyle) {
+      template.projectStyle = summary.projectStyle;
+    }
+    return template;
   });
   return templates;
 }
