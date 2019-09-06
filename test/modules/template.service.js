@@ -286,11 +286,13 @@ async function getTemplateStyles() {
 
 function saveReposBeforeTestAndRestoreAfter() {
     let originalTemplateRepos;
-    before(async() => {
+    before(async function() {
+        this.timeout(5000);
         const res = await getTemplateRepos();
         originalTemplateRepos = res.body;
     });
-    after(async() => {
+    after(async function() {
+        this.timeout(5000);
         await setTemplateReposTo(originalTemplateRepos);
     });
 }

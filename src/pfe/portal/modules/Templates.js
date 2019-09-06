@@ -232,8 +232,11 @@ module.exports = class Templates {
       url,
       description: repoDescription,
       enabled: true,
-      protected: isRepoProtected,
     }
+    if (isRepoProtected) {
+      newRepo.protected = isRepoProtected;
+    }
+
     this.repositoryList.push(newRepo);
     this.needsRefresh = true;
     await this.writeRepositoryList();
