@@ -18,7 +18,6 @@ const Templates = rewire('../../../src/pfe/portal/modules/Templates');
 const {
     styledTemplates,
     defaultCodewindTemplates,
-    defaultRepoList,
     sampleRepos,
     validUrlNotPointingToIndexJson,
 } = require('../../modules/template.service');

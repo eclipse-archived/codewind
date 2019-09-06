@@ -137,7 +137,8 @@ describe('Template API tests', function() {
         const repoToAdd = sampleRepos.anotherCodewind;
         let originalTemplateRepos;
         let originalNumTemplates;
-        before(async() => {
+        before(async function() {
+            this.timeout(10000);
             const res = await getTemplateRepos();
             originalTemplateRepos = res.body;
 

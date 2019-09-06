@@ -209,7 +209,7 @@ module.exports = class Templates {
   /**
    * Add a repository to the list of template repositories.
    */
-  async addRepository(repoUrl, repoDescription) {
+  async addRepository(repoUrl, repoDescription, isRepoProtected) {
     let url;
     try {
       url = new URL(repoUrl).href;
@@ -232,6 +232,7 @@ module.exports = class Templates {
       url,
       description: repoDescription,
       enabled: true,
+      protected: isRepoProtected,
     }
     this.repositoryList.push(newRepo);
     this.needsRefresh = true;

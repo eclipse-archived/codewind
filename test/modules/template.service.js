@@ -174,8 +174,7 @@ const sampleRepos = {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
         description: 'Standard Codewind templates.',
         enabled: true,
-        // TODO:
-        // protected: true,
+        protected: true,
     },
     anotherCodewind: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
@@ -208,11 +207,11 @@ async function getTemplateRepos() {
     return res;
 }
 
-async function addTemplateRepo({ url, description }) {
+async function addTemplateRepo(repo) {
     const res = await reqService.chai
         .post('/api/v1/templates/repositories')
         .set('Cookie', ADMIN_COOKIE)
-        .send({ url, description });
+        .send(repo);
     return res;
 }
 
