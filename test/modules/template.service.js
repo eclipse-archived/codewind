@@ -286,11 +286,13 @@ function saveReposBeforeTestAndRestoreAfter() {
 
 function saveReposBeforeEachTestAndRestoreAfterEach() {
     let originalTemplateRepos;
-    beforeEach(async() => {
+    beforeEach(async function() {
+        this.timeout(5000);
         const res = await getTemplateRepos();
         originalTemplateRepos = res.body;
     });
-    afterEach(async() => {
+    afterEach(async function() {
+        this.timeout(5000);
         await setTemplateReposTo(originalTemplateRepos);
     });
 }
