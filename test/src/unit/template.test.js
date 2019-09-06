@@ -185,27 +185,6 @@ describe('Templates.js', function() {
                         },
                     },
                 },
-                // TODO: reject these:
-                // 'provider provides array of objects with invalid URLs': {
-                //     provider: {
-                //         getRepositories() {
-                //             return [{
-                //                 description: 'invalid URL',
-                //                 url: 'invalid',
-                //             }];
-                //         },
-                //     },
-                // },
-                // 'provider provides a repo with URL that doesn't provide JSON': {
-                //     provider: {
-                //         getRepositories() {
-                //             return [{
-                //                 url: 'https://www.google.com/',
-                //                 description: 'URL that doesn't provide JSON',
-                //             }];
-                //         },
-                //     },
-                // },
                 'provider provides a duplicate repo': {
                     provider: {
                         getRepositories() {
@@ -828,12 +807,10 @@ describe('Templates.js', function() {
                         templateController.addProvider('empty obj', {});
 
                         templateController.providers.should.deep.equal(originalProviders);
-                        // TODO: check this doesn't update repository_list.json
                     });
                 });
             });
         });
-        // TODO: check valid providers do update repository_list.json
     });
 
     describe('filterTemplatesByStyle(templates, projectStyle)', function() {

@@ -84,7 +84,6 @@ module.exports = class Templates {
       !this.repositoryList.find(repo2 => repo2.url === repo.url)
     );
 
-    // TODO: should we remove repos we previously saved, that are no longer provided by the extension?
     if (extraRepos.length > 0) {
       extraRepos.forEach(repo => {
         repo.enabled = true;
