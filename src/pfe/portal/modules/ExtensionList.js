@@ -235,7 +235,7 @@ async function getVersion(target) {
  * @param {string} existingVersion The existing version
  * @returns True if version is newer than existingVersion
  */
-async function isNewer(version, existingVersion) {
+function isNewer(version, existingVersion) {
 
   const versions = version.split('.', 3);
   const existingVersions = existingVersion.split('.', 3);
@@ -280,7 +280,7 @@ async function prepForUnzip(target, version) {
   
     const existingVersion = await getVersion(target);
 
-    if (await isNewer(version, existingVersion)) {
+    if (isNewer(version, existingVersion)) {
 
       const targetOld = target + suffixOld;
 
