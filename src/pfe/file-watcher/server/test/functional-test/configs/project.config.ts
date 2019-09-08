@@ -25,10 +25,11 @@ export const needManualReset: any = {
         "buildStatus": true
     },
     "liberty": {
+        "appStatus": true,
         "buildStatus": true
     },
     "spring": {
-        "buildStatus": true
+        "buildStatus": true,
     },
 };
 
