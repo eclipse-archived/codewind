@@ -84,7 +84,7 @@ public class IDCContext {
 		this.appDb = new DBMap(appId, idcBase);
 		
 		this.localWorkspaceOrigin = localWorkspaceOrigin;
-		if (appDb.get(Constants.DB_WORKSPACE_ORIGIN) == null && this.localWorkspaceOrigin != null) {
+		if (this.localWorkspaceOrigin != null && appDb.get(Constants.DB_PROJECT_ID) != this.localWorkspaceOrigin) {
 			appDb.put(Constants.DB_WORKSPACE_ORIGIN, this.localWorkspaceOrigin);
 		}
 		
@@ -101,7 +101,7 @@ public class IDCContext {
 		}
 		
 		this.projectID = projectID;
-		if (this.projectID != null && appDb.get(Constants.DB_PROJECT_ID) != null) {
+		if (this.projectID != null && appDb.get(Constants.DB_PROJECT_ID) != this.projectID) {
 			appDb.put(Constants.DB_PROJECT_ID, this.projectID);
 		}
 
