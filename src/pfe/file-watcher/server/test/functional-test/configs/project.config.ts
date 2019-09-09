@@ -65,6 +65,7 @@ export const projectCapabilities: any = {
 // auto build enable/disable event capabilities: some projects emit the project changed event and some don't do anything
 export const autoBuildEventCapabailities: any = {
     "docker": false,
+    "liberty": false,
     "nodejs": true,
     "spring": false,
 };
