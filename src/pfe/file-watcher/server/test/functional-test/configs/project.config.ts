@@ -12,6 +12,7 @@
  * This file for different project specific (i.e liberty, spring, docker) capability configurations.
  */
 import * as project from "../../../src/projects/Project";
+import * as libertyProject from "../../../src/projects/libertyProject";
 import * as nodeProject from "../../../src/projects/nodejsProject";
 import * as springProject from "../../../src/projects/springProject";
 
@@ -25,7 +26,6 @@ export const needManualReset: any = {
         "buildStatus": true
     },
     "liberty": {
-        "appStatus": true,
         "buildStatus": true
     },
     "spring": {
@@ -100,6 +100,7 @@ export const restartCapabilities: any = {
 // project specific debug capabilities
 export const debugCapabilities: any = {
     "docker": false,
+    "liberty": true,
     "nodejs": true,
     "spring": true,
 };
@@ -107,6 +108,7 @@ export const debugCapabilities: any = {
 // project specific maven profile capabilities
 export const mavenProfileCapabilities: any = {
     "docker":  false,
+    "liberty": true,
     "nodejs": false,
     "spring": true,
 };
@@ -124,6 +126,7 @@ export const defaultHealthCheckEndPoint: any = {
     "go": "/",
     "lagom": "/",
     "python": "/",
+    "liberty": "/",
     "nodejs": "/",
     "spring": "/"
 };
@@ -142,6 +145,10 @@ export const oneExposedPortOnly: any = {
         "local": true,
         "kube": true
     },
+    "liberty": {
+        "local": false,
+        "kube": true
+    },
     "nodejs": {
         "local": false,
         "kube": true
@@ -157,6 +164,7 @@ export const defaultInternalPorts: any = {
     "go": "8000",
     "lagom": "9000",
     "python": "5000",
+    "liberty": libertyProject.getDefaultAppPort(),
     "nodejs": nodeProject.getDefaultAppPort(),
     "spring": springProject.getDefaultAppPort()
 };
