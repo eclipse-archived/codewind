@@ -760,7 +760,6 @@ export async function getContainerName(projectInfo: ProjectInfo): Promise<string
         return projectHandler.getContainerName(projectID, projectLocation);
     }
 
-    console.log("Else statement of get container name .... %s", getDefaultContainerName(projectID, projectLocation));
     return getDefaultContainerName(projectID, projectLocation);
 }
 
@@ -783,7 +782,6 @@ export async function getContainerInfo(projectInfo: ProjectInfo, forceRefresh: b
         }
     }
     const containerName = await getContainerName(projectInfo);
-    console.log("Container name: %s", containerName);
     if (process.env.IN_K8 === "true") {
         const operation = new Operation("general", projectInfo);
         operation.containerName = containerName;

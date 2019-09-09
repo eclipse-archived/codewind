@@ -39,6 +39,13 @@ export const projectCapabilities: any = {
         "local": project.defaultProjectCapabilities,
         "kube": project.defaultProjectCapabilities
     },
+    "liberty": {
+        "local": {
+            "startModes": ["run", "debug"],
+            "controlCommands": ["restart"]
+        },
+        "kube": project.defaultProjectCapabilities
+    },
     "nodejs": {
         "local": {
             "startModes": ["run", "debugNoInit"],
@@ -52,7 +59,7 @@ export const projectCapabilities: any = {
             "controlCommands": ["restart"]
         },
         "kube": project.defaultProjectCapabilities
-    }
+    },
 };
 
 // auto build enable/disable event capabilities: some projects emit the project changed event and some don't do anything
@@ -70,6 +77,11 @@ export const restartCapabilities: any = {
     "docker": {
         [startModes[0]]: false,
         [startModes[1]]: false,
+        [startModes[2]]: false,
+    },
+    "liberty": {
+        [startModes[0]]: true,
+        [startModes[1]]: true,
         [startModes[2]]: false,
     },
     "nodejs": {
