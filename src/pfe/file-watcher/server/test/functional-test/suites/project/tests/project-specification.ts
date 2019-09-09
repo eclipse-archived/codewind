@@ -176,6 +176,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         afterEach("remove build from running queue", async () => {
             await utils.setBuildStatus(projData);
         });
+
         it("set project specification without project id", async () => {
             const testData = _.cloneDeep(data);
             delete testData["projectID"];
@@ -559,7 +560,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                         {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
                 }
             }
-            await utils.rebuildProject(socket, projData);
+            // docker project emits `projectCreation` event on kube. issue: https://github.com/eclipse/codewind/issues/400
+            await utils.rebuildProject(socket, projData, projData.projectType === "docker" && process.env.IN_K8 ? eventConfigs.events.creation : eventConfigs.events.projectChanged,
+                {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": defaultInternalPort}});
         }
 
         async function afterHookInternalPortTestResetPort(hook: any): Promise<void> {

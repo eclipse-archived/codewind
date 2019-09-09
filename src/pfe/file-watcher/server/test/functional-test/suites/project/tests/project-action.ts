@@ -76,7 +76,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "build",
             "returnKeys": ["operationId", "status"],
             "statusCode": 202,
-            "socketEvent": projData.projectType === "docker" && process.env.IN_K8 ? [eventConfigs.events.creation] : [eventConfigs.events.projectChanged],
+            "socketEvent": projData.projectType === "docker" && process.env.IN_K8 ? [eventConfigs.events.creation] : [eventConfigs.events.projectChanged],  // docker project emits `projectCreation` event on kube. issue: https://github.com/eclipse/codewind/issues/400
             "eventKeys": [["projectID", "status"]],
             "result": [{
                 "projectID": projData.projectID,
