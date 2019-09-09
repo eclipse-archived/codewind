@@ -90,18 +90,18 @@ public class IDCContext {
 		
 		// Store the container/image name in the appdb for future access
 		this.containerName = containerName;
-		if (appDb.get(Constants.DB_CONTAINER_NAME) == null && this.containerName != null) {
+		if (this.containerName != null && appDb.get(Constants.DB_CONTAINER_NAME) != this.containerName)  {
 			appDb.put(Constants.DB_CONTAINER_NAME, this.containerName);
 		}
 		
 		// Store the app log name in the appdb for future access
 		this.logName = logName;
-		if (appDb.get(Constants.DB_LOG_NAME) == null && this.logName != null) {
+		if (this.logName != null && appDb.get(Constants.DB_LOG_NAME) != this.logName) {
 			appDb.put(Constants.DB_LOG_NAME, this.logName);
 		}
 		
 		this.projectID = projectID;
-		if (appDb.get(Constants.DB_PROJECT_ID) == null && this.projectID != null) {
+		if (this.projectID != null && appDb.get(Constants.DB_PROJECT_ID) != null) {
 			appDb.put(Constants.DB_PROJECT_ID, this.projectID);
 		}
 
