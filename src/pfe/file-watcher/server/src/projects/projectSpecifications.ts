@@ -456,14 +456,15 @@ const reconfigWWWProtocol = async function (isHttps: boolean, operation: Operati
         return;
     }
 
-    const isHttpsPreviously: boolean = await projectUtil.getProjectWWWProtocolMap(projectID);
+    // MAYSUN const isHttpsPreviously: boolean = await projectUtil.getProjectWWWProtocolMap(projectID);
+    const isHttpsPreviously: boolean = projectInfo.isHttps;
 
     if (isHttps == isHttpsPreviously) {
         logger.logProjectInfo("The project WWW protocol is already set to: " + isHttps ? "https" : "http", projectID);
         return;
     }
 
-    await projectUtil.setProjectWWWProtocolMap(projectID, isHttps);
+    // MAYSUN await projectUtil.setProjectWWWProtocolMap(projectID, isHttps);
 
     const keyValuePair: UpdateProjectInfoPair = {
         key: "isHttps",
