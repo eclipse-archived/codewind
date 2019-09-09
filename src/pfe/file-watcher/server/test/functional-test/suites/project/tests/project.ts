@@ -36,7 +36,7 @@ export default class ProjectTest {
             this.runProjectCapabilityTest(projData.projectType, projData.projectID);
             this.runProjectEventTest(socket, projData, projectLang);
             this.runProjectLogsTest(socket, projData);
-            // this.runProjectSpecificationTest(socket, projData, projectLang);
+            this.runProjectSpecificationTest(socket, projData, projectLang);
             this.runUpdateStatusTest(socket, projData);
         });
     }

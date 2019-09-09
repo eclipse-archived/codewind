@@ -186,20 +186,6 @@ export async function setBuildStatus(projData: ProjectCreation, status?: string)
     }
 }
 
-export async function setAppStatus(projData: ProjectCreation, status?: string, error?: string): Promise<void> {
-    if (project_configs.needManualReset[projData.projectType]["appStatus"]) {
-        console.log("Inside if statement ...");
-        const info = await updateStatus({
-            "projectID": projData.projectID,
-            "type": "appState",
-            "status": status || "started",
-            "error": error || ""
-        });
-        expect(info);
-        expect(info.statusCode).to.equal(200);
-    }
-}
-
 export async function delay(ms: number): Promise<void> {
     return new Promise( resolve => setTimeout(resolve, ms) );
 }
