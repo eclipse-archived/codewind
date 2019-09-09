@@ -736,8 +736,7 @@ export function getDefaultContainerName(projectID: string, projectLocation: stri
         }
     }
 
-    return "cw-codewindtestliberty-liberty1567731834905";
-    // return containerName;
+    return containerName;
 }
 
 /**
@@ -756,7 +755,6 @@ export async function getContainerName(projectInfo: ProjectInfo): Promise<string
 
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     logger.logInfo("typeof projectHandler.getContainerName is " + typeof projectHandler.getContainerName);
-    console.log("Before getting into if statement of get container name ....");
     if (projectHandler && projectHandler.hasOwnProperty("getContainerName") && typeof projectHandler.getContainerName === "function") {
         console.log("Inside if statement of get container name ....");
         return projectHandler.getContainerName(projectID, projectLocation);
