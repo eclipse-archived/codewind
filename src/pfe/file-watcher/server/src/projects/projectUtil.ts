@@ -60,7 +60,6 @@ export const LOCAL_WORKSPACE = process.env.NODE_ENV === "test" ? process.env.HOS
 const projectList: Array<string> = [];
 
 const isApplicationPodUpIntervalMap = new Map();
-// MAYSUN const projectWWWProtocolMap = new Map();
 
 export interface ProjectEvent {
     operationId: string;
@@ -632,7 +631,7 @@ export async function containerDelete(projectInfo: ProjectInfo, script: string):
 
     containerInfoMap.delete(projectInfo.projectID);
     containerInfoForceRefreshMap.delete(projectInfo.projectID);
-    // MAYSUN projectWWWProtocolMap.delete(projectInfo.projectID);
+
     if (process.env.IN_K8 === "true") {
         logger.logProjectInfo(`Removing dangling images for ${projectInfo.projectID}`, projectInfo.projectID);
         dockerutil.removeDanglingImages();
@@ -907,44 +906,6 @@ export async function isContainerActive(projectID: string, handler: any): Promis
         logger.logError(msg);
     }
 }
-
-// /**
-//  * @function
-//  * @description Function to set the project's WWW protocol in the Map.
-//  *
-//  * @param projectID <Required | String> - The projectID.
-//  * @param isHttps <Optional | Boolean> - The WWW Protocol. The default value is false.
-//  *
-//  * @returns Promise<void>
-//  */
-// export async function setProjectWWWProtocolMap(projectID: string, isHttps: boolean = false): Promise<void> {
-//     if (!projectID) {
-//         logger.logError("Cannot set the WWW protocol for an invalid projectID: " + projectID);
-//         return;
-//     }
-//     projectWWWProtocolMap.set(projectID, isHttps);
-// }
-
-// /**
-//  * @function
-//  * @description Function to get the project's WWW protocol from the Map.
-//  *
-//  * @param projectID <Required | String> - The projectID.
-//  *
-//  * @returns Promise<void>
-//  */
-// export async function getProjectWWWProtocolMap(projectID: string): Promise<boolean> {
-//     if (!projectID) {
-//         logger.logError("Cannot get the WWW protocol for an invalid projectID: " + projectID);
-//         return;
-//     }
-
-//     if (projectWWWProtocolMap.get(projectID)) {
-//         return true;
-//     } else {
-//         return false;
-//     }
-// }
 
 /**
  * @function
@@ -1786,7 +1747,7 @@ export async function removeProject(projectInfo: ProjectInfo): Promise<void> {
 
     containerInfoMap.delete(projectInfo.projectID);
     containerInfoForceRefreshMap.delete(projectInfo.projectID);
-    // MAYSUN projectWWWProtocolMap.delete(projectInfo.projectID);
+
     if (process.env.IN_K8 === "true") {
         dockerutil.removeDanglingImages();
     }
