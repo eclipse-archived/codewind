@@ -254,7 +254,6 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     }
 
     // Set isHttps to false by default, override if the isHttps settings key is found
-    // MAYSUN await projectUtil.setProjectWWWProtocolMap(projectID, false);
     projectInfo.isHttps = false;
 
     // Persist the Project Settings last since it will have the higher priority over default projectInfo values
@@ -320,12 +319,10 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
             } else if (key == "isHttps") {
                 if (typeof settings.isHttps == "boolean") {
                     logger.logProjectInfo("Setting isHttps from the project settings", projectID, projectName);
-                    // MAYSUN await projectUtil.setProjectWWWProtocolMap(projectID, settings.isHttps);
                     projectInfo.isHttps = settings.isHttps;
                 } else {
                     // Default to http if we cannot get the isHttps settings
                     logger.logProjectInfo("Defaulting isHttps to false as the project setting isHttps is not a boolean", projectID, projectName);
-                    // MAYSUN await projectUtil.setProjectWWWProtocolMap(projectID, false);
                     projectInfo.isHttps = false;
                 }
             }
