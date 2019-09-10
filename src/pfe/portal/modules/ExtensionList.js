@@ -21,7 +21,7 @@ const exec = promisify(require('child_process').exec);
 const log = new Logger(__filename);
 
 const extensionsDir = '/extensions';
-const extensionsPattern = /^(\S+)(-[\d.]+)\.zip$/; // e.g. extension-name-0.0.1.zip
+const extensionsPattern = /^(\S+)-(\d+\.\d+\.\d+)\.zip$/; // e.g. extension-name-0.0.1.zip
 const suffixOld = '__old';
 
 /**
@@ -55,15 +55,16 @@ module.exports = class ExtensionList {
 
           const source = path.join(extensionsDir, entry.name);
           const target = path.join(targetDir, name);
-          const targetWithVersion = target + version;
+          const targetWithVersion = target + '-' + version;
 
           try {
-            await prepForUnzip(target);
-            await exec(`unzip ${source} -d ${targetDir}`);
+            if (await prepForUnzip(target, version)) {
+              await exec(`unzip ${source} -d ${targetDir}`);
 
-            // top-level directory in zip will have the version suffix
-            // rename to remove the version
-            await fs.rename(targetWithVersion, target);
+              // top-level directory in zip will have the version suffix
+              // rename to remove the version
+              await fs.rename(targetWithVersion, target);
+            }
           }
           catch (err) {
             log.warn(`Failed to install ${entry.name}`);
@@ -207,6 +208,51 @@ module.exports = class ExtensionList {
 }
 
 /**
+ * Get the version of the given target extension.
+ * 
+ * @param {string} target extension location
+ * @returns A version string, such as 0.0.1
+ */
+async function getVersion(target) {
+
+  try {
+    const result = await exec(`grep -P "^version: \\d+\\.\\d+\\.\\d+$" ${target}/codewind.yaml`);
+    if (result.stdout)
+      return result.stdout.substring(9).trimRight();
+  }
+  catch (err) {
+    log.warn(err.message);
+  }
+
+  // couldn't figure out, return a default
+  return '0.0.0';
+}
+
+/**
+ * Performs a version check, returns true if version is newer than existingVersion.
+ * 
+ * @param {string} version The version to check
+ * @param {string} existingVersion The existing version
+ * @returns True if version is newer than existingVersion
+ */
+function isNewer(version, existingVersion) {
+
+  const versions = version.split('.', 3);
+  const existingVersions = existingVersion.split('.', 3);
+
+  for (let i = 0; i < 3; i++) {
+
+    const v = parseInt(versions[i]);
+    const e = parseInt(existingVersions[i]);
+
+    if (v != e)
+      return v > e;
+  }
+
+  return false;
+}
+
+/**
  * Force remove a path, regardless of whether it exists, or it's file or directory that may or may not be empty.
  * 
  * @param {string} path, path to remove
@@ -225,15 +271,26 @@ async function forceRemove(path) {
  * exists with the same name, it will be renamed by appending the "__old" suffix to it.
  * 
  * @param {string} target, the target directory to unzip to
+ * @param {string} version, the version we are trying to unzip
+ * @returns True if the install should proceed, false otherwise
  */
-async function prepForUnzip(target) {
+async function prepForUnzip(target, version) {
   
   if (await utils.fileExists(target)) {
   
-    const targetOld = target + suffixOld;
+    const existingVersion = await getVersion(target);
 
-    // try to remove previous backup that may or may not exist before rename
-    await forceRemove(targetOld);
-    await fs.rename(target, targetOld);
+    if (isNewer(version, existingVersion)) {
+
+      const targetOld = target + suffixOld;
+
+      // try to remove previous backup that may or may not exist before rename
+      await forceRemove(targetOld);
+      await fs.rename(target, targetOld);
+
+      return true;
+    }
   }
+
+  return false;
 }
