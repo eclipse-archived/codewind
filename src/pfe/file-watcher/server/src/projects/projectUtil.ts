@@ -1515,7 +1515,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.success, " ");
         await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.starting, " ");
 
-        const intervalID: NodeJS.Timer = setInterval(isApplicationPodUp, 1000, buildInfo, projectName, operation);
+        const intervalID: NodeJS.Timer = setInterval(isApplicationPodUp, 1000, buildInfo, projectName, operation, event);
         isApplicationPodUpIntervalMap.set(buildInfo.projectID, intervalID);
 
     } else {
@@ -1630,7 +1630,7 @@ async function appendToBuildLogFile(buildInfo: BuildRequest, output: string, log
  *
  * @returns Promise<void>
  */
-export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: string, operation: Operation): Promise<void> {
+export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: string, operation: Operation, event: string): Promise<void> {
     let isPodRunning = false;
     let isPodFailed = false;
     const releaseLabel = "release=" + buildInfo.containerName;
@@ -1666,7 +1666,7 @@ export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: s
         logger.logProjectInfo("Clearing the isApplicationPodUp interval", buildInfo.projectID);
         clearInterval(intervalID);
         isApplicationPodUpIntervalMap.delete(buildInfo.projectID);
-        getPODInfoAndSendToPortal(operation);
+        getPODInfoAndSendToPortal(operation, event);
     }
 
     if (isPodFailed) {
@@ -1679,7 +1679,7 @@ export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: s
         logger.logProjectInfo("Clearing the isApplicationPodUp interval", buildInfo.projectID);
         clearInterval(intervalID);
         isApplicationPodUpIntervalMap.delete(buildInfo.projectID);
-        getPODInfoAndSendToPortal(operation);
+        getPODInfoAndSendToPortal(operation, event);
     }
 }
 
@@ -1788,7 +1788,7 @@ export function getUserFriendlyProjectType(internalProjectType: string): string 
  *
  * @returns Promise<any>
  */
-async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
+async function getPODInfoAndSendToPortal(operation: Operation, event: string = "projectCreation"): Promise<any> {
     const projectEvent: ProjectEvent = {
         operationId: operation.operationId,
         projectID: operation.projectInfo.projectID,
@@ -1799,7 +1799,6 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
     const projectLocation = projectInfo.location;
     const projectID = projectInfo.projectID;
     const projectName = projectInfo.projectName;
-    const event = "projectCreation";
     const keyValuePair: UpdateProjectInfoPair = {
         key: "buildRequest",
         value: false
