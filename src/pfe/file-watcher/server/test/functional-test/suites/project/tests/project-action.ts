@@ -76,7 +76,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "build",
             "returnKeys": ["operationId", "status"],
             "statusCode": 202,
-            "socketEvent": projData.projectType === "docker" && process.env.IN_K8 ? [eventConfigs.events.creation] : [eventConfigs.events.projectChanged],  // docker project emits `projectCreation` event on kube. issue: https://github.com/eclipse/codewind/issues/400
+            "socketEvent": [eventConfigs.events.projectChanged],
             "eventKeys": [["projectID", "status"]],
             "result": [{
                 "projectID": projData.projectID,
@@ -111,11 +111,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             }
         });
 
-        if (projData.projectType === "docker") {
-            utils.rebuildProjectAfterHook(socket, projData);
-        } else {
-            utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
-        }
+        utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
 
         after("remove build from running queue", async () => {
             await utils.setBuildStatus(projData);

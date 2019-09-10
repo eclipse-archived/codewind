@@ -61,7 +61,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     "function": afterHookInternalPortTestSinglePort
                 },
                 {
-                    "title": "Internal Port Test After Hook: Projects with multi exposed ports",
+                    "title": "Internal Port Test After Hook: Reset internal port",
                     "function": afterHookInternalPortTestResetPort
                 }]
             },
@@ -167,11 +167,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             socket.clearEvents();
         });
 
-        if (projData.projectType === "docker") {
-            utils.rebuildProjectAfterHook(socket, projData);
-        } else {
-            utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
-        }
+        utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
 
         afterEach("remove build from running queue", async () => {
             await utils.setBuildStatus(projData);
@@ -522,7 +518,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             // we need to do two builds for docker projects on local. issue: https://github.com/eclipse/codewind/issues/297
             if (projData.projectType === "docker") {
                 if (process.env.IN_K8) {
-                    await utils.rebuildProject(socket, projData, eventConfigs.events.creation,
+                    await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
                         {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
                 } else {
                     await utils.rebuildProject(socket, projData);
@@ -560,15 +556,48 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                         {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
                 }
             }
-            // docker project emits `projectCreation` event on kube. issue: https://github.com/eclipse/codewind/issues/400
-            await utils.rebuildProject(socket, projData, projData.projectType === "docker" && process.env.IN_K8 ? eventConfigs.events.creation : eventConfigs.events.projectChanged,
+            await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
                 {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": defaultInternalPort}});
+            await utils.setBuildStatus(projData);
         }
 
         async function afterHookInternalPortTestResetPort(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
-            if (project_configs.oneExposedPortOnly[projectLang][process.env.TEST_TYPE]) return;
             await runProjectSpecificationSettingTest(combinations["combo1"], project_configs.defaultInternalPorts[projectLang]);
+
+            const targetEvent = eventConfigs.events.statusChanged;
+            const targetData = {
+                "projectID": projData.projectID,
+                "appStatus": "started",
+            };
+            let eventFound = false;
+            let event: any;
+            await new Promise((resolve) => {
+                const timer = setInterval(() => {
+                    const events = socket.getAllEvents();
+                    if (events && events.length >= 1) {
+                        event =  events.filter((value) => {
+                            if (value.eventName === targetEvent && _.isMatch(value.eventData, targetData)) return value;
+                        })[0];
+                        if (event) {
+                            eventFound = true;
+                            clearInterval(timer);
+                            return resolve();
+                        }
+                    }
+                }, timeoutConfigs.defaultInterval);
+            });
+
+            if (eventFound && event) {
+                expect(event);
+                expect(event.eventName);
+                expect(event.eventName).to.equal(targetEvent);
+                expect(event.eventData);
+                expect(event.eventData.projectID).to.equal(targetData.projectID);
+                expect(event.eventData.appStatus).to.equal(targetData.appStatus);
+            } else {
+                fail(`failed to find ${targetEvent} for project specific setting`);
+            }
         }
 
         async function afterHookContextRootTest(hook: any): Promise<void> {
