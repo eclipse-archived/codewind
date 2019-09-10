@@ -147,7 +147,7 @@ export const oneExposedPortOnly: any = {
     },
     "liberty": {
         "local": false,
-        "kube": true
+        "kube": false
     },
     "nodejs": {
         "local": false,

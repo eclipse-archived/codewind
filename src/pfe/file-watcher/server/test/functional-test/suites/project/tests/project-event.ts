@@ -126,7 +126,7 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
                     } else {
                         fail(`failed to find ${targetEvent} for updating docker file`);
                     }
-                }).timeout(timeoutConfigs.defaultTimeout);
+                }).timeout(timeoutConfigs.createTestTimeout);
             }
         }
     });
