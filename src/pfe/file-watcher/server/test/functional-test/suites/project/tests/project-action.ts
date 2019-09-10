@@ -252,7 +252,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
                         }
                     }
                 }
-            }).timeout(timeoutConfigs.defaultTimeout);
+            }).timeout(timeoutConfigs.createTestTimeout);
         }
     });
 
