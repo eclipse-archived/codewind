@@ -280,17 +280,15 @@ async function prepForUnzip(target, version) {
   
     const existingVersion = await getVersion(target);
 
-    if (isNewer(version, existingVersion)) {
+    if (!isNewer(version, existingVersion))
+      return false;
 
-      const targetOld = target + suffixOld;
+    const targetOld = target + suffixOld;
 
-      // try to remove previous backup that may or may not exist before rename
-      await forceRemove(targetOld);
-      await fs.rename(target, targetOld);
-
-      return true;
-    }
+    // try to remove previous backup that may or may not exist before rename
+    await forceRemove(targetOld);
+    await fs.rename(target, targetOld);
   }
 
-  return false;
+  return true;
 }
