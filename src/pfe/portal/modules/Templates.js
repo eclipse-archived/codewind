@@ -22,9 +22,14 @@ const log = new Logger('Templates.js');
 const DEFAULT_REPOSITORY_LIST = [
   {
     url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-    description: 'Standard Codewind templates.',
+    description: 'Standard Codewind templates',
     enabled: true,
     protected: true,
+  },
+  {
+    url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
+    description: 'Kabanero Collections',
+    enabled: false,
   },
 ];
 module.exports = class Templates {
