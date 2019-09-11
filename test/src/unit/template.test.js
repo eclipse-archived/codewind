@@ -51,7 +51,7 @@ const mockRepoList = Object.values(mockRepos);
 
 describe('Templates.js', function() {
     suppressLogOutput(Templates);
-    describe('getTemplateStyles() when Codewind is aware of:', function() {
+    describe('getAllTemplateStyles() when Codewind is aware of:', function() {
         describe('Codewind and Appsody templates', function() {
             const sampleTemplateList = [
                 sampleCodewindTemplate,
@@ -64,7 +64,7 @@ describe('Templates.js', function() {
                 templateController.needsRefresh = false;
             });
             it(`returns ['Codewind', 'Appsody']`, async function() {
-                const output = await templateController.getTemplateStyles();
+                const output = await templateController.getAllTemplateStyles();
                 output.should.deep.equal(['Codewind', 'Appsody']);
             });
         });
@@ -77,7 +77,7 @@ describe('Templates.js', function() {
                 templateController.needsRefresh = false;
             });
             it(`returns ['Codewind']`, async function() {
-                const output = await templateController.getTemplateStyles();
+                const output = await templateController.getAllTemplateStyles();
                 output.should.deep.equal(['Codewind']);
             });
         });
@@ -90,7 +90,7 @@ describe('Templates.js', function() {
                 templateController.needsRefresh = false;
             });
             it(`returns ['Appsody']`, async function() {
-                const output = await templateController.getTemplateStyles();
+                const output = await templateController.getAllTemplateStyles();
                 output.should.deep.equal(['Appsody']);
             });
         });
@@ -218,17 +218,17 @@ describe('Templates.js', function() {
         });
         describe('when providers list valid repos', function() {
             let templateController;
-            const validRepo = {
+            const validCodewindRepo = {
                 url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
-                description: 'valid repo',
+                description: 'valid Codewind repo',
             };
             before(() => {
                 fs.ensureDirSync(testWorkspaceConfigDir);
                 templateController = new Templates(testWorkspaceDir);
                 templateController.repositoryList = [...mockRepoList];
-                templateController.addProvider('valid repo', {
+                templateController.addProvider('valid Codewind repo', {
                     getRepositories() {
-                        return [validRepo];
+                        return [validCodewindRepo];
                     },
                 });
             });
@@ -236,11 +236,17 @@ describe('Templates.js', function() {
                 fs.removeSync(testWorkspaceDir);
             });
             it(`updates the repository_list.json correctly`, async function() {
+                const expectedRepo = {
+                    ...validCodewindRepo,
+                    enabled: true,
+                    protected: true,
+                    projectStyles: ['Codewind'],
+                };
                 await templateController.updateRepoListWithReposFromProviders();
                 const repoFile = fs.readJsonSync(templateController.repositoryFile);
                 repoFile.should.deep.equal([
                     ...mockRepoList,
-                    validRepo,
+                    expectedRepo,
                 ]);
             });
         });
@@ -379,7 +385,27 @@ describe('Templates.js', function() {
                     url,
                     description: 'description',
                     enabled: true,
+                    projectStyles: ['Codewind'],
                 });
+            });
+        });
+    });
+    describe('deleteRepository(repoUrl)', function() {
+        const mockRepoList = [sampleRepos.fromAppsodyExtension];
+        let templateController;
+        beforeEach(() => {
+            fs.ensureDirSync(testWorkspaceConfigDir);
+            templateController = new Templates(testWorkspaceDir);
+            templateController.repositoryList = [...mockRepoList];
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspaceDir);
+        });
+        describe('(<existingUrl>)', function() {
+            it('updates the repository_list.json correctly', async function() {
+                const url = mockRepoList[0].url;
+                await templateController.deleteRepository(url);
+                templateController.repositoryList.should.deep.equal([]);
             });
         });
     });
@@ -392,6 +418,12 @@ describe('Templates.js', function() {
         it('returns all repos', function() {
             const output = templateController.getRepositories();
             output.should.deep.equal(mockRepoList);
+        });
+    });
+    describe('getTemplateStyles()', function() {
+        it('returns Codewind by default', function() {
+            const output = Templates.getTemplateStyles([mockRepos.enabled]);
+            output.should.deep.equal(['Codewind']);
         });
     });
     describe('getEnabledRepositories()', function() {
@@ -812,6 +844,32 @@ describe('Templates.js', function() {
         });
     });
 
+    describe('addTemplateStylesToRepos(repos)', function() {
+        const tests = {
+            '1 repo containing only Codewind templates': {
+                input: [sampleRepos.codewind],
+                output: [{
+                    ...sampleRepos.codewind,
+                    projectStyles: ['Codewind'],
+                }],
+            },
+            '1 repo containing only Appsody templates': {
+                input: [sampleRepos.appsody],
+                output: [{
+                    ...sampleRepos.appsody,
+                    projectStyles: ['Appsody'],
+                }],
+            },
+        };
+        for (const [testName, test] of Object.entries(tests)) {
+            describe(testName, function() { // eslint-disable-line no-loop-func
+                it(`returns the expected operation info`, async function() {
+                    const output = await Templates.addTemplateStylesToRepos(test.input);
+                    output.should.deep.equal(test.output);
+                });
+            });
+        }
+    });
     describe('filterTemplatesByStyle(templates, projectStyle)', function() {
         const templates = [sampleCodewindTemplate, sampleAppsodyTemplate];
         describe(`projectStyle='Codewind'`, function() {

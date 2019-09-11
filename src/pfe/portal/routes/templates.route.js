@@ -73,10 +73,9 @@ router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _n
   await sendRepositories(req, res, _next);
 });
 
-async function sendRepositories(req, res, _next) {
+function sendRepositories(req, res, _next) {
   const user = req.cw_user;
   const templatesController = user.templates;
-  await templatesController.updateRepoListWithReposFromProviders();
   const repositoryList = templatesController.getRepositories();
   res.status(200).json(repositoryList);
 }
@@ -95,7 +94,7 @@ router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, re
 router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
   const templateController = user.templates;
-  const styles = await templateController.getTemplateStyles();
+  const styles = await templateController.getAllTemplateStyles();
   res.status(200).json(styles);
 });
 

@@ -25,6 +25,7 @@ const DEFAULT_REPOSITORY_LIST = [
     description: 'Standard Codewind templates.',
     enabled: true,
     protected: true,
+    projectStyles: ['Codewind'],
   },
 ];
 module.exports = class Templates {
@@ -41,11 +42,13 @@ module.exports = class Templates {
   async initializeRepositoryList() {
     try {
       if (await cwUtils.fileExists(this.repositoryFile)) {
-        let list = await fs.readJson(this.repositoryFile);
-        this.repositoryList = list;
+        this.repositoryList = await fs.readJson(this.repositoryFile); // eslint-disable-line require-atomic-updates
+        await this.updateRepoListWithReposFromProviders();
+        this.repositoryList = await addTemplateStylesToRepos(this.repositoryList); // eslint-disable-line require-atomic-updates
         this.needsRefresh = true;
       } else {
         await this.updateRepoListWithReposFromProviders();
+        this.repositoryList = await addTemplateStylesToRepos(this.repositoryList); // eslint-disable-line require-atomic-updates
         await this.writeRepositoryList();
       }
     } catch (err) {
@@ -85,11 +88,15 @@ module.exports = class Templates {
     );
 
     if (extraRepos.length > 0) {
-      extraRepos.forEach(repo => {
-        repo.enabled = true;
-        repo.protected = true;
-      });
-      this.repositoryList = this.repositoryList.concat(extraRepos);
+      const reposWithCodewindSettings = await Promise.all(
+        extraRepos.map(async repo => {
+          repo.enabled = true;
+          repo.protected = true;
+          const repoWithTemplateStyles = await addTemplateStylesToRepo(repo);
+          return repoWithTemplateStyles;
+        })
+      );
+      this.repositoryList = this.repositoryList.concat(reposWithCodewindSettings);
       await this.writeRepositoryList();
     }
   }
@@ -228,11 +235,12 @@ module.exports = class Templates {
       throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', url);
     }
 
-    const newRepo = {
+    let newRepo = {
       url,
       description: repoDescription,
       enabled: true,
     }
+    newRepo = await addTemplateStylesToRepo(newRepo);
     if (isRepoProtected) {
       newRepo.protected = isRepoProtected;
     }
@@ -243,7 +251,7 @@ module.exports = class Templates {
   }
 
   async deleteRepository(repoUrl) {
-    this.repositoryList = this.repositoryList.filter((repo) => repo.url != repoUrl);
+    this.repositoryList = this.repositoryList.filter((repo) => repo.url !== repoUrl);
     this.needsRefresh = true;
     await this.writeRepositoryList();
   }
@@ -253,12 +261,29 @@ module.exports = class Templates {
       this.providers[name] = provider;
   }
 
-  async getTemplateStyles() {
+  async getAllTemplateStyles() {
     const templates = await this.getAllTemplates();
-    const styles = templates.map(template => getTemplateStyle(template));
-    const uniqueStyles = [...new Set(styles)];
-    return uniqueStyles;
+    return getTemplateStyles(templates);
   }
+
+}
+
+function addTemplateStylesToRepos(repos) {
+  return Promise.all(
+    repos.map(repo => addTemplateStylesToRepo(repo))
+  );
+}
+
+async function addTemplateStylesToRepo(repo) {
+  if (repo.projectStyles) {
+    return repo;
+  }
+
+  const templatesFromRepo = await getTemplatesFromRepo(repo);
+  return {
+    ...repo,
+    projectStyles: getTemplateStyles(templatesFromRepo),
+  };
 }
 
 async function getTemplatesFromRepo(repository) {
@@ -304,6 +329,12 @@ function filterTemplatesByStyle(templates, projectStyle) {
     getTemplateStyle(template) === projectStyle
   );
   return relevantTemplates;
+}
+
+function getTemplateStyles(templates) {
+  const styles = templates.map(template => getTemplateStyle(template));
+  const uniqueStyles = [...new Set(styles)];
+  return uniqueStyles;
 }
 
 function getTemplateStyle(template) {
@@ -366,6 +397,8 @@ function isTemplateSummary(obj) {
   return expectedKeys.every(key => obj.hasOwnProperty(key));
 }
 
+module.exports.addTemplateStylesToRepos = addTemplateStylesToRepos;
 module.exports.getTemplatesFromRepo = getTemplatesFromRepo;
 module.exports.filterTemplatesByStyle = filterTemplatesByStyle;
 module.exports.getReposFromProviders = getReposFromProviders;
+module.exports.getTemplateStyles = getTemplateStyles;

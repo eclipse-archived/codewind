@@ -34,8 +34,12 @@ chai.use(chaiResValidator(pathToApiSpec));
 
 describe('Template API tests', function() {
     saveReposBeforeTestAndRestoreAfter();
-    before(async() => {
-        await setTemplateReposTo([{ ...sampleRepos.codewind }]);
+    before(async function() {
+        this.timeout(10000);
+        await setTemplateReposTo([
+            { ...sampleRepos.codewind },
+            { ...sampleRepos.fromAppsodyExtension },
+        ]);
     });
     describe('GET /api/v1/templates', function() {
         describe('?projectStyle=', function() {
@@ -100,10 +104,21 @@ describe('Template API tests', function() {
         });
     });
 
+    describe('GET /api/v1/templates/repositories', function() {
+        it('should return 200 and a list of available template repositories', async function() {
+            this.timeout(10000);
+            const res = await getTemplateRepos();
+
+            res.should.have.status(200).and.satisfyApiSpec;
+            res.body.should.have.deep.members(defaultRepoList);
+        });
+    });
+
     describe('POST /api/v1/templates/repositories', function() {
         describe('when trying to add a repository with', function() {
             describe('an invalid url', function() {
                 it('should return 400', async function() {
+                    this.timeout(10000);
                     const res = await addTemplateRepo({
                         url: '/invalid/url',
                         description: 'Invalid url.',
@@ -113,6 +128,7 @@ describe('Template API tests', function() {
             });
             describe('a duplicate url', function() {
                 it('should return 400', async function() {
+                    this.timeout(10000);
                     // Arrange
                     const res = await getTemplateRepos();
                     const originalTemplateRepos = res.body;
@@ -128,6 +144,7 @@ describe('Template API tests', function() {
             });
             describe('a valid url that does not point to an index.json', function() {
                 it('should return 400', async function() {
+                    this.timeout(10000);
                     const res = await addTemplateRepo({
                         url: validUrlNotPointingToIndexJson,
                         description: 'valid url that does not point to an index.json',
@@ -138,7 +155,7 @@ describe('Template API tests', function() {
         });
     });
 
-    describe('GET|POST|DELETE /api/v1/templates/repositories', function() {
+    describe('DELETE|POST /api/v1/templates/repositories', function() {
         const repoToDelete = sampleRepos.codewind;
         const repoToAdd = sampleRepos.anotherCodewind;
         let originalTemplateRepos;
@@ -151,14 +168,9 @@ describe('Template API tests', function() {
             const res2 = await getTemplates();
             originalNumTemplates = res2.body.length;
         });
-        after(async() => {
-            await setTemplateReposTo(originalTemplateRepos);
-        });
-        it('GET should return a list of available template repositories', async function() {
+        after(async function() {
             this.timeout(10000);
-            const res = await getTemplateRepos();
-            res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.have.deep.members(defaultRepoList);
+            await setTemplateReposTo(originalTemplateRepos);
         });
         // Test deleting repos
         it('DELETE should remove a template repository', async function() {
@@ -175,6 +187,7 @@ describe('Template API tests', function() {
         });
         // Test adding repos
         it('POST should re-add the deleted template repository', async function() {
+            this.timeout(10000);
             const res = await addTemplateRepo(repoToDelete);
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.deep.include(repoToDelete);
@@ -187,6 +200,7 @@ describe('Template API tests', function() {
             res.body.length.should.equal(originalNumTemplates);
         });
         it('POST should add a 2nd template repository', async function() {
+            this.timeout(10000);
             const res = await addTemplateRepo(repoToAdd);
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.deep.include(repoToAdd);

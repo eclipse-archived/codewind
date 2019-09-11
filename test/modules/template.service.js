@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  ******************************************************************************/
-const { ADMIN_COOKIE } = require('../config');
+const { ADMIN_COOKIE, testTimeout } = require('../config');
 const reqService = require('./request.service');
 
 const defaultCodewindTemplates = [
@@ -175,22 +175,26 @@ const sampleRepos = {
         description: 'Standard Codewind templates.',
         enabled: true,
         protected: true,
+        projectStyles: ['Codewind'],
     },
     anotherCodewind: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
         description: 'Additional Codewind templates.',
         enabled: true,
+        projectStyles: ['Codewind'],
     },
     appsody: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-appsody-templates/master/devfiles/index.json',
         description: 'Appsody extension for Codewind',
         enabled: true,
+        projectStyles: ['Appsody'],
     },
     fromAppsodyExtension: {
-        description: '*appsodyhub',
         url: 'https://github.com/appsody/stacks/releases/latest/download/incubator-index.json',
+        description: 'Appsody Stacks - appsodyhub',
         enabled: true,
         protected: true,
+        projectStyles: ['Appsody'],
     },
 };
 const defaultRepoList = [
@@ -287,12 +291,12 @@ async function getTemplateStyles() {
 function saveReposBeforeTestAndRestoreAfter() {
     let originalTemplateRepos;
     before(async function() {
-        this.timeout(5000);
+        this.timeout(testTimeout.short);
         const res = await getTemplateRepos();
         originalTemplateRepos = res.body;
     });
     after(async function() {
-        this.timeout(5000);
+        this.timeout(testTimeout.short);
         await setTemplateReposTo(originalTemplateRepos);
     });
 }
@@ -300,12 +304,12 @@ function saveReposBeforeTestAndRestoreAfter() {
 function saveReposBeforeEachTestAndRestoreAfterEach() {
     let originalTemplateRepos;
     beforeEach(async function() {
-        this.timeout(5000);
+        this.timeout(testTimeout.short);
         const res = await getTemplateRepos();
         originalTemplateRepos = res.body;
     });
     afterEach(async function() {
-        this.timeout(5000);
+        this.timeout(testTimeout.short);
         await setTemplateReposTo(originalTemplateRepos);
     });
 }
