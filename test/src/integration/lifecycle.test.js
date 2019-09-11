@@ -62,6 +62,18 @@ const expectedLogs = {
         build: ['docker.build.log'],
         app: ['-', 'app.log'],
     },
+    go: {
+        build: ['docker.build.log'],
+        app: ['-', 'app.log'],
+    },
+    lagom: {
+        build: ['docker.build.log'],
+        app: ['-', 'app.log'],
+    },
+    openLiberty: {
+        build: ['docker.build.log'],
+        app: ['-', 'app.log'],
+    },
 };
 
 // These are filled in after the project files are created from the template.
@@ -83,97 +95,173 @@ describe('Project Lifecycle Tests', function() {
         socketService = undefined;
     });
 
-    describe('create projects', function() {
-        this.timeout(testTimeout.maxTravis);
+    describe('Lagom', function() {
+        this.timeout(2 * testTimeout.maxTravis);
+        const language = 'lagom';
 
-        it('successfully creates projects', async function() {
-            for (const language in templateOptions) {
-
-                // We can't add the path until the before block that gets
-                // the workspace location has run.
-                createOptions[language].parentPath = workspace_location;
-                const res = await projectService.createProjectFromTemplate(createOptions[language]);
-                res.should.have.status(200);
-
-                bindParams[language] = {
-                    ...res.body.result,
-                    path: res.body.projectPath,
-                    name: createOptions[language].projectName,
-                };
-            }
-        });
-        it('should bind projects', async function() {
-            for (const type in bindParams) {
-                this.timeout(testTimeout.med);
-                const res = await projectService.bindProject(bindParams[type]);
-                res.should.have.status(202);
-                const project = templateOptions[type];
-                const projectID = res.body.projectID;
-                project.projectID = projectID;
-            }
+        describe('create project', function() {
+            CreateProject(language);
         });
 
-        it('should return 409 if project already bound', async function() {
-            for (const type in bindParams) {
-                const originalNumProjects = await projectService.countProjects();
-                await projectService.bindProject(bindParams[type], 409);
-                const finalNumProjects = await projectService.countProjects();
-                finalNumProjects.should.equal(originalNumProjects);
-            }
+        describe('test project', function() {
+            TestProject('lagom', {
+                checkString: 'Listening for HTTP on',
+                needContextRoot: true,
+            });
         });
     });
 
+    describe('Open Liberty', function() {
+        this.timeout(2 * testTimeout.maxTravis);
+        const language = 'openliberty';
+
+        describe('create project', function() {
+            CreateProject(language);
+        });
+
+        describe('test project', function() {
+            TestProject('openliberty', {
+                metricsEndpoint: 'metrics',
+                checkString: 'Web application available',
+            });
+        });
+    });
+    
+    describe('Go', function() {
+        this.timeout(2 * testTimeout.maxTravis);
+        const language = 'go';
+
+        describe('create project', function() {
+            CreateProject(language);
+        });
+
+        describe('test project', function() {
+            TestProject('go', {
+                checkString: 'Go app listening on port',
+            });
+        });
+    });
+    
     describe('NodeJS', function() {
         this.timeout(2 * testTimeout.maxTravis);
-        TestProject('nodejs', {
-            metricsEndpoint: 'appmetrics-dash',
-            checkString: 'appmetrics-dash',
-            skipBuildLogs: true,
+        const language = 'nodejs';
+
+        describe('create project', function() {
+            CreateProject(language);
+        });
+
+        describe('test project', function() {
+            TestProject('nodejs', {
+                metricsEndpoint: 'appmetrics-dash',
+                checkString: 'appmetrics-dash',
+                skipBuildLogs: true,
+            });
         });
     });
 
     describe('Liberty', function() {
         this.timeout(2 * testTimeout.maxTravis);
-        TestProject('liberty', {
-            metricsEndpoint: 'javametrics-dash',
-            checkString: `Starting application ${templateOptions.liberty.name}`,
+        const language = 'liberty';
+
+        describe('create project', function() {
+            CreateProject(language);
+        });
+
+        describe('test project', function() {
+            TestProject('liberty', {
+                metricsEndpoint: 'javametrics-dash',
+                checkString: `Starting application ${templateOptions.liberty.name}`,
+            });
         });
     });
 
     describe('Spring', function() {
         this.timeout(2 * testTimeout.maxTravis);
-        TestProject('spring', {
-            metricsEndpoint: 'javametrics-dash',
-            checkString: 'application.SBApplication',
+        const language = 'spring';
+
+        describe('create project', function() {
+            CreateProject(language);
+        });
+        
+        describe('test project', function() {
+            TestProject('spring', {
+                metricsEndpoint: 'javametrics-dash',
+                checkString: 'application.SBApplication',
+            });
         });
     });
 
-
-
     describe('Swift', function() {
-        before(async function() {
-            const containerArchitecture = await containerService.getArchitecture();
-            if (['ppc64le', 's390x'].includes(containerArchitecture)) {
-                this.skip();
-            }
+        this.timeout(2 * testTimeout.maxTravis);
+        const language = 'swift';
+
+        describe('create project', function() {
+            CreateProject(language);
         });
 
-        this.timeout(testTimeout.maxTravis);
-        TestProject('swift', {
-            metricsEndpoint: 'swiftmetrics-dash',
-            checkString: 'INFO: Swift Application Metrics',
+        describe('test project', function() {
+            before(async function() {
+                const containerArchitecture = await containerService.getArchitecture();
+                if (['ppc64le', 's390x'].includes(containerArchitecture)) {
+                    this.skip();
+                }
+            });
+
+            TestProject('swift', {
+                metricsEndpoint: 'swiftmetrics-dash',
+                checkString: 'INFO: Swift Application Metrics',
+            });
         });
     });
 
     describe('Python', function() {
         this.timeout(2 * testTimeout.maxTravis);
-        TestProject('docker', {
-            checkString: '* Running on http://',
+        const language = 'docker';
+
+        describe('create project', function() {
+            CreateProject(language);
+        });
+
+        describe('test project', function() {
+            TestProject('docker', {
+                checkString: '* Running on http://',
+            });
         });
     });
 
+    function CreateProject(language) {
+        it('successfully creates project', async function() {
+            // We can't add the path until the before block that gets
+            // the workspace location has run.
+            createOptions[language].parentPath = workspace_location;
+            const res = await projectService.createProjectFromTemplate(createOptions[language]);
+            res.should.have.status(200);
+
+            bindParams[language] = {
+                ...res.body.result,
+                path: res.body.projectPath,
+                name: createOptions[language].projectName,
+            };
+        });
+        it('should bind project', async function() {
+            this.timeout(testTimeout.med);
+            const res = await projectService.bindProject(bindParams[language]);
+            res.should.have.status(202);
+            const project = templateOptions[language];
+            const projectID = res.body.projectID;
+            project.projectID = projectID;
+        });
+
+        it('should return 409 if project already bound', async function() {
+            const originalNumProjects = await projectService.countProjects();
+            await projectService.bindProject(bindParams[language], 409);
+            const finalNumProjects = await projectService.countProjects();
+            finalNumProjects.should.equal(originalNumProjects);
+        });
+    }
+
     function TestProject(language, testOptions) {
-        const { metricsEndpoint, needContextRoot, checkString } = testOptions;
+        const { metricsEndpoint, needContextRoot, checkString, appEndpoint } = testOptions;
         const projectName = templateOptions[language].name;
         let projectID;
         let contextRoot;
@@ -202,11 +290,6 @@ describe('Project Lifecycle Tests', function() {
                 const projectInf = await containerService.awaitProjectInfFile(projectID);
                 projectInf.projectID.should.be.a('string');
                 projectID.should.equal(projectInf.projectID);
-
-                if (needContextRoot) {
-                    contextRoot = projectInf.contextRoot;
-                    contextRoot.should.be.a('string');
-                }
             });
         });
 
@@ -311,6 +394,11 @@ describe('Project Lifecycle Tests', function() {
             let port;
 
             before(async function() {
+                if (needContextRoot) {
+                    const projectInf = await containerService.awaitProjectInfFile(projectID);
+                    contextRoot = projectInf.contextRoot;
+                    contextRoot.should.be.a('string');
+                }
                 projectID.should.be.a('string');
                 await containerService.awaitProjectInfFile(projectID);
             });
@@ -358,7 +446,7 @@ async function awaitSuccessResponseFromEndpoint(url, contextRoot = '') {
     let res;
     while (timeAwaited < maxWaitingTime) {
         try {
-            res = await chai.request(url).get(`/${contextRoot}`);
+            res = await chai.request(url).get(`${contextRoot}`);
         } catch (error) {
             // mlog.log(error);
             // mlog.log(`[awaitSuccessResponseFromEndpoint] Endpoint not found - trying again in ${checkingInterval/1000} sec`);

@@ -76,6 +76,22 @@ const templateOptions = {
         language: 'swift',
         metricsAvailable: true,
     },
+    go: {
+        name: 'goTemplate',
+        url: 'https://github.com/microclimate-dev2ops/microclimateGoTemplate',
+        language: 'go',
+        metricsAvailable: false,
+    },
+    lagom: {
+        name: 'javaLagomTemplate',
+        url: 'https://github.com/microclimate-dev2ops/lagomJavaTemplate',
+        language: 'java',
+    },
+    openliberty: {
+        name: 'openLibertyTenplate',
+        url: 'https://github.com/microclimate-dev2ops/openLibertyTemplate',
+        language: 'java',
+    },
 };
 
 
