@@ -935,12 +935,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    url:
-                      type: string
-                    description:
-                      type: string
+                  $ref: '#/components/schemas/TemplateRepo'
         400:
           description: Bad request
     delete:
@@ -955,7 +950,7 @@ paths:
                 - url
               properties:
                 url:
-                    type: string
+                  type: string
       responses:
         200:
           description: Returns all the templates repositories that Codewind will use to find templates
@@ -1378,11 +1373,17 @@ components:
       required:
         - url
         - description
+        - projectStyles
       properties:
         url:
           type: string
         description:
           type: string
+        projectStyles:
+          type: array
+          items:
+            type: string
+          example: ['Codewind', 'Appsody']
         enabled:
           type: boolean
     TemplateRepoSetting:
