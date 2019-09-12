@@ -145,6 +145,65 @@ const defaultAppsodyTemplates = [
     },
 ];
 
+const defaultKabaneroTemplates = [
+    {
+        label: 'Appsody Eclipse MicroProfile® template',
+        description: 'Eclipse MicroProfile on Open Liberty & OpenJ9 using Maven',
+        language: 'java',
+        url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.java-microprofile.v0.2.11.templates.default.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody LoopBack 4 template',
+        description: 'LoopBack 4 API Framework for Node.js',
+        language: 'nodejs',
+        url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.nodejs-loopback.v0.1.4.templates.scaffold.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Node.js Express simple template',
+        description: 'Express web framework for Node.js',
+        language: 'nodejs',
+        url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.nodejs-express.v0.2.5.templates.simple.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Node.js Express skaffold template',
+        description: 'Express web framework for Node.js',
+        language: 'nodejs',
+        url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.nodejs-express.v0.2.5.templates.skaffold.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Node.js template',
+        description: 'Runtime for Node.js applications',
+        language: 'nodejs',
+        url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.nodejs.v0.2.5.templates.simple.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Spring Boot® default template',
+        description: 'Spring Boot using OpenJ9 and Maven',
+        language: 'java',
+        url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.java-spring-boot2.v0.3.9.templates.default.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
+        label: 'Appsody Spring Boot® kotlin template',
+        description: 'Spring Boot using OpenJ9 and Maven',
+        language: 'java',
+        url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.java-spring-boot2.v0.3.9.templates.kotlin.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+];
+
 const defaultTemplates = [
     ...defaultCodewindTemplates,
     ...defaultAppsodyTemplates,
@@ -175,12 +234,6 @@ const sampleRepos = {
         description: 'Standard Codewind templates.',
         enabled: true,
         protected: true,
-        projectStyles: ['Codewind'],
-    },
-    anotherCodewind: {
-        url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
-        description: 'Additional Codewind templates.',
-        enabled: true,
         projectStyles: ['Codewind'],
     },
     appsody: {
@@ -317,6 +370,7 @@ function saveReposBeforeEachTestAndRestoreAfterEach() {
 module.exports = {
     defaultTemplates,
     defaultCodewindTemplates,
+    defaultKabaneroTemplates,
     styledTemplates,
     sampleRepos,
     defaultRepoList,

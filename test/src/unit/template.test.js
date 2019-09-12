@@ -18,6 +18,7 @@ const Templates = rewire('../../../src/pfe/portal/modules/Templates');
 const {
     styledTemplates,
     defaultCodewindTemplates,
+    defaultKabaneroTemplates,
     sampleRepos,
     validUrlNotPointingToIndexJson,
 } = require('../../modules/template.service');
@@ -97,10 +98,14 @@ describe('Templates.js', function() {
     });
     describe('getAllTemplates()', function() {
         describe('', function() {
-            it('returns the default Codewind templates', async function() {
+            it('returns the default templates', async function() {
+                this.timeout(10000);
                 const templateController = new Templates('');
                 const output = await templateController.getAllTemplates();
-                output.should.deep.equal(defaultCodewindTemplates);
+                output.should.have.deep.members([
+                    ...defaultCodewindTemplates,
+                    ...defaultKabaneroTemplates,
+                ]);
             });
         });
         describe('and add an extra template repo', function() {
@@ -113,6 +118,7 @@ describe('Templates.js', function() {
                 ];
             });
             it('returns more templates', async function() {
+                this.timeout(10000);
                 const output = await templateController.getAllTemplates();
                 output.should.include.deep.members(defaultCodewindTemplates);
                 (output.length).should.be.above(defaultCodewindTemplates.length);
@@ -386,6 +392,21 @@ describe('Templates.js', function() {
                     description: 'description',
                     enabled: true,
                     projectStyles: ['Codewind'],
+                });
+            });
+        });
+        describe('(<validUrlUnprotected>, <validDesc>)', function() {
+            it('succeeds', async function() {
+                const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
+                const isRepoProtected = false;
+                const func = () => templateController.addRepository(url, 'description', isRepoProtected);
+                await (func().should.not.be.rejected);
+                templateController.repositoryList.should.deep.include({
+                    url,
+                    description: 'description',
+                    enabled: true,
+                    projectStyles: ['Codewind'],
+                    protected: false,
                 });
             });
         });
@@ -854,9 +875,17 @@ describe('Templates.js', function() {
                 }],
             },
             '1 repo containing only Appsody templates': {
-                input: [sampleRepos.appsody],
+                // We don't use `sampleRepos.appsody` here because for some reason it was being modified by a previous test
+                // We should prevent decoupling systematically, by deep cloning `sampleRepos` whenever it is used
+                input: [{
+                    url: 'https://raw.githubusercontent.com/kabanero-io/codewind-appsody-templates/master/devfiles/index.json',
+                    description: 'Appsody extension for Codewind',
+                    enabled: true,
+                }],
                 output: [{
-                    ...sampleRepos.appsody,
+                    url: 'https://raw.githubusercontent.com/kabanero-io/codewind-appsody-templates/master/devfiles/index.json',
+                    description: 'Appsody extension for Codewind',
+                    enabled: true,
                     projectStyles: ['Appsody'],
                 }],
             },
