@@ -556,7 +556,7 @@ export function actionsTestModule(): void {
                 "error": "Missing required file",
             },
             "combo24": {
-                "description": "good appsody project",
+                "description": "good extension project",
                 "args": {
                     projectType: "appsodyExtension",
                     extensionID: appsodyExtensionPath,
@@ -567,7 +567,7 @@ export function actionsTestModule(): void {
                 "result": "success"
             },
             "combo25": {
-                "description": "appsody project with missing requiredFiles",
+                "description": "extension project with missing requiredFiles",
                 "args": {
                     projectType: "appsodyExtension",
                     extensionID: appsodyExtensionPath,
