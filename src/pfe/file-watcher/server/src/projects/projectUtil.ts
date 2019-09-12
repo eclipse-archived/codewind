@@ -449,20 +449,6 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                     logger.logProjectInfo(`The container was started successfully for application ` + projectLocation, projectID, projectName);
                     projectInfo.status = "success";
 
-                    // if (process.env.NODE_ENV === "test" && operation.projectInfo.projectType === "liberty") {
-                    //     logger.logProjectInfo(`This function should be only called for test purposes for liberty projects`, projectID);
-                    //     await projectStatusController.updateStatus({
-                    //         "projectID": projectID,
-                    //         "type": "buildState",
-                    //         "buildStatus": "success"
-                    //     });
-                    //     await projectStatusController.updateStatus({
-                    //         "projectID": projectID,
-                    //         "type": "appState",
-                    //         "status": "starting"
-                    //     });
-                    // }
-
                     logger.logProjectInfo("Looking up container information for " + operation.containerName, projectID, projectName);
                     const containerInfo = await dockerutil.getApplicationContainerInfo(operation.projectInfo, operation.containerName);
                     if (containerInfo) {
@@ -756,7 +742,6 @@ export async function getContainerName(projectInfo: ProjectInfo): Promise<string
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     logger.logInfo("typeof projectHandler.getContainerName is " + typeof projectHandler.getContainerName);
     if (projectHandler && projectHandler.hasOwnProperty("getContainerName") && typeof projectHandler.getContainerName === "function") {
-        console.log("Inside if statement of get container name ....");
         return projectHandler.getContainerName(projectID, projectLocation);
     }
 
