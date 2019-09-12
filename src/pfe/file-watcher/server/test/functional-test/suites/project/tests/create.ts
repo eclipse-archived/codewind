@@ -19,8 +19,6 @@ import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
-import * as projectUtil from "../../../../../src/projects/projectUtil";
-
 export default class CreateTest {
     testName: string;
 
@@ -94,7 +92,7 @@ export default class CreateTest {
             let eventFound = false;
             let event: any;
             await new Promise((resolve) => {
-                const timer = setInterval(async () => {
+                const timer = setInterval(() => {
                     const events = socket.getAllEvents();
                     if (events && events.length >= 1) {
                         event =  events.filter((value) => {

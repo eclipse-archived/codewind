@@ -564,40 +564,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         async function afterHookInternalPortTestResetPort(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
             await runProjectSpecificationSettingTest(combinations["combo1"], project_configs.defaultInternalPorts[projectLang]);
-
-            const targetEvent = eventConfigs.events.statusChanged;
-            const targetData = {
-                "projectID": projData.projectID,
-                "appStatus": "started",
-            };
-            let eventFound = false;
-            let event: any;
-            await new Promise((resolve) => {
-                const timer = setInterval(() => {
-                    const events = socket.getAllEvents();
-                    if (events && events.length >= 1) {
-                        event =  events.filter((value) => {
-                            if (value.eventName === targetEvent && _.isMatch(value.eventData, targetData)) return value;
-                        })[0];
-                        if (event) {
-                            eventFound = true;
-                            clearInterval(timer);
-                            return resolve();
-                        }
-                    }
-                }, timeoutConfigs.defaultInterval);
-            });
-
-            if (eventFound && event) {
-                expect(event);
-                expect(event.eventName);
-                expect(event.eventName).to.equal(targetEvent);
-                expect(event.eventData);
-                expect(event.eventData.projectID).to.equal(targetData.projectID);
-                expect(event.eventData.appStatus).to.equal(targetData.appStatus);
-            } else {
-                fail(`failed to find ${targetEvent} for project specific setting`);
-            }
+            await utils.rebuildProject(socket, projData);
+            await utils.setBuildStatus(projData);
         }
 
         async function afterHookContextRootTest(hook: any): Promise<void> {
