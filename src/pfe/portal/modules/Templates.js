@@ -246,7 +246,7 @@ module.exports = class Templates {
       enabled: true,
     }
     newRepo = await addTemplateStylesToRepo(newRepo);
-    if (isRepoProtected) {
+    if (isRepoProtected !== undefined) {
       newRepo.protected = isRepoProtected;
     }
 
@@ -270,7 +270,6 @@ module.exports = class Templates {
     const templates = await this.getAllTemplates();
     return getTemplateStyles(templates);
   }
-
 }
 
 function addTemplateStylesToRepos(repos) {
