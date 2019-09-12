@@ -8,6 +8,7 @@ import * as actions from "../../../src/projects/actions";
 import { workspaceConstants, projectConstants } from "../../../src/projects/constants";
 import * as socket from "../../../src/utils/socket";
 import * as locale from "../../../src/utils/locale";
+import * as timeout_configs from "../../functional-test/configs/timeout.config";
 
 
 export function actionsTestModule(): void {
@@ -703,7 +704,7 @@ export function actionsTestModule(): void {
                 } catch (err) {
                     expect(err.toString()).to.equal(expectedResult);
                 }
-            });
+            }).timeout(timeout_configs.defaultTimeout);
         }
     });
 
