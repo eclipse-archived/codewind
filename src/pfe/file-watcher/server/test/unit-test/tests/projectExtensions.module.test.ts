@@ -19,6 +19,7 @@ import * as app_configs from "../../functional-test/configs/app.config";
 import { ProjectInfo, UpdateProjectInfoPair, ProjectCapabilities } from "../../../src/projects/Project";
 import { workspaceConstants } from "../../../src/projects/constants";
 import { existsAsync, mkdirAsync, copyAsync, rmdirAsync, unlinkAsync, writeAsync } from "../../functional-test/lib/utils";
+import * as timeout_configs from "../../functional-test/configs/timeout.config";
 
 export function projectExtensionsTestModule(): void {
 
@@ -383,7 +384,7 @@ export function projectExtensionsTestModule(): void {
                 }
                 const projectCapabilities = projectExtensions.getProjectCapabilities(projectHandler);
                 expect(projectCapabilities.toString()).to.equal(expectedResultProjectCapabilities.toString());
-            });
+            }).timeout(timeout_configs.defaultTimeout);
         }
     });
 
