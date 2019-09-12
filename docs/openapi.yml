@@ -119,7 +119,7 @@ paths:
                   example: "https://github.com/microclimate-dev2ops/nodeExpressTemplate"
       responses:
         200:
-          description: Project creation successful
+          description: Project creation request received and processed
           content:
             application/json:
               schema:
@@ -1439,11 +1439,6 @@ components:
         - status
         - projectPath
       properties:
-        status:
-          type: string
-          enum:
-            - success
-            - failure
         projectPath:
           type: string
           example: /Documents/projectDir/
@@ -1453,6 +1448,7 @@ components:
         - type: object
           required:
             - result
+            - status
           properties:
             result:
               type: object
@@ -1470,6 +1466,10 @@ components:
                     - unknown
                 buildType:
                   type: string
+            status:
+              type: string
+              enum:
+                - success
     LoadrunnerConfig:
       type: object
       required:
@@ -1514,11 +1514,16 @@ components:
         - $ref: '#/components/schemas/BasicInitialize'
         - type: object
           required:
+            - status
             - result
           properties:
             result:
               type: string
               example: Git clone failed - directory to clone into is not empty
+            status:
+              type: string
+              enum:
+                - failure
     LogDetails:
       type: object
       required:
