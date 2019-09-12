@@ -1373,7 +1373,6 @@ components:
       required:
         - url
         - description
-        - projectStyles
       properties:
         url:
           type: string
