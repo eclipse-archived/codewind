@@ -11,7 +11,6 @@ services:
       - HOST_OS=${HOST_OS}
       - CODEWIND_VERSION=${TAG}
       - PERFORMANCE_CONTAINER=codewind-performance${PLATFORM}:${TAG}
-      - REMOTE_MODE=${REMOTE_MODE}
       - HOST_HOME=${HOST_HOME}
       - HOST_MAVEN_OPTS=${HOST_MAVEN_OPTS}
     depends_on:
@@ -20,6 +19,7 @@ services:
       - "127.0.0.1:34000-35000:9090"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - cw-workspace:/codewind-workspace
     networks:
       - network
 
@@ -34,3 +34,6 @@ services:
 
 networks:
   network:
+
+volumes:
+  cw-workspace:

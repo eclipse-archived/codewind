@@ -132,7 +132,6 @@ async function main() {
     // Workspace location *inside* the our container.
     // Volume is mounted from WORKSPACE_DIRECTORY in docker-compose.yaml.
     CODEWIND_WORKSPACE: '/codewind-workspace/',
-    REMOTE_MODE: (process.env.REMOTE_MODE == 'true') || false,
   };
 
   // find if running in kubernetes and build up a whitelist of allowed origins
