@@ -279,17 +279,16 @@ function fetchAllRepositoryDetails(repos) {
 }
 
 async function fetchRepositoryDetails(repo) {
-  await readRepoTemplatesJSON(repo);
+  let newRepo = {...repo}
+  await readRepoTemplatesJSON(newRepo);
 
   if (repo.projectStyles) {
-    return repo;
+    return newRepo;
   }
 
   const templatesFromRepo = await getTemplatesFromRepo(repo);
-  return {
-    ...repo,
-    projectStyles: getTemplateStyles(templatesFromRepo),
-  };
+  newRepo.projectStyles = getTemplateStyles(templatesFromRepo);
+  return newRepo;
 }
 
 async function readRepoTemplatesJSON(repository) {
