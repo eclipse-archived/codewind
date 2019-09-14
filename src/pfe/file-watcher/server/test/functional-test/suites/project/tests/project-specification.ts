@@ -167,7 +167,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             socket.clearEvents();
         });
 
-        utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
+        utils.rebuildProjectAfterHook(socket, projData, [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
+            [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}]);
 
         afterEach("remove build from running queue", async () => {
             await utils.setBuildStatus(projData);
@@ -516,19 +517,12 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 }
             }
             // we need to do two builds for docker projects on local. issue: https://github.com/eclipse/codewind/issues/297
-            if (projData.projectType === "docker") {
-                if (process.env.IN_K8) {
-                    await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                        {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
-                } else {
-                    await utils.rebuildProject(socket, projData);
-                    await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                        {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
-                }
-            } else {
-                await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                    {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
+            if (projData.projectType === "docker" && !process.env.IN_K8) {
+                await utils.rebuildProject(socket, projData);
             }
+            await utils.rebuildProject(socket, projData, [eventConfigs.events.projectChanged],
+                [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}}]);
+            await utils.setBuildStatus(projData);
         }
 
         async function afterHookInternalPortTestSinglePort(hook: any): Promise<void> {
@@ -550,14 +544,12 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 }
             }
             // we need to do two builds for docker projects on local. issue: https://github.com/eclipse/codewind/issues/297
-            if (projData.projectType === "docker") {
-                if (!process.env.IN_K8) {
-                    await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                        {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
-                }
+            if (projData.projectType === "docker" && !process.env.IN_K8) {
+                await utils.rebuildProject(socket, projData, [eventConfigs.events.projectChanged],
+                    [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}}]);
             }
-            await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": defaultInternalPort}});
+            await utils.rebuildProject(socket, projData, [eventConfigs.events.projectChanged],
+                [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": defaultInternalPort}}]);
             await utils.setBuildStatus(projData);
         }
 

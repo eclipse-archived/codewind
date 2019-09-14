@@ -111,7 +111,8 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             }
         });
 
-        utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
+        utils.rebuildProjectAfterHook(socket, projData, [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
+            [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}]);
 
         after("remove build from running queue", async () => {
             await utils.setBuildStatus(projData);
