@@ -491,7 +491,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         }
 
         async function beforeHookInternalPortTest(hook: any): Promise<void> {
-            hook.timeout(timeoutConfigs.defaultTimeout);
+            hook.timeout(timeoutConfigs.createTestTimeout);
             if (! project_configs.oneExposedPortOnly[projectLang][process.env.TEST_TYPE]) return;
 
             const projectInfo = await projectUtil.getProjectInfo(projData.projectID);
@@ -532,7 +532,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         }
 
         async function afterHookInternalPortTestSinglePort(hook: any): Promise<void> {
-            hook.timeout(timeoutConfigs.defaultTimeout);
+            hook.timeout(timeoutConfigs.createTestTimeout);
             if (! project_configs.oneExposedPortOnly[projectLang][process.env.TEST_TYPE]) return;
 
             const dockerfile = path.join(projData.location, "Dockerfile");
@@ -562,7 +562,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         }
 
         async function afterHookInternalPortTestResetPort(hook: any): Promise<void> {
-            hook.timeout(timeoutConfigs.defaultTimeout);
+            hook.timeout(timeoutConfigs.createTestTimeout);
             await runProjectSpecificationSettingTest(combinations["combo1"], project_configs.defaultInternalPorts[projectLang]);
             await utils.rebuildProject(socket, projData);
             await utils.setBuildStatus(projData);

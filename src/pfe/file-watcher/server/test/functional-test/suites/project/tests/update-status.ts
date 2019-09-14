@@ -90,11 +90,7 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
                     socket.clearEvents();
                 });
 
-                if (projData.projectType === "docker") {
-                    utils.rebuildProjectAfterHook(socket, projData);
-                } else {
-                    utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
-                }
+                utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
 
                 const testData = _.cloneDeep(data);
                 testData["type"] = statusTypes[statusType]["name"];
