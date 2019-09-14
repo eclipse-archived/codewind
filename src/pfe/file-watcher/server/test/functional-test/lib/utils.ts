@@ -121,14 +121,14 @@ export function writeToFile(path: string, content: string, callback: (err: Error
     });
 }
 
-export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreation, checkEvent?: string, checkEventData?: any): void {
+export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreation, checkEvent?: Array<string>, checkEventData?: Array<any>): void {
     after(`rebuild project ${projData.projectType}`, async function (): Promise<void> {
         this.timeout(timeoutConfigs.createTestTimeout);
         await rebuildProject(socket, projData, checkEvent, checkEventData);
     });
 }
 
-export async function rebuildProject(socket: SocketIO, projData: ProjectCreation, checkEvent?: string, checkEventData?: any): Promise<void> {
+export async function rebuildProject(socket: SocketIO, projData: ProjectCreation, checkEvent?: Array<string>, checkEventData?: Array<any>): Promise<void> {
     const testData: any = {
         action: "build",
         projectType: projData.projectType,
@@ -139,40 +139,45 @@ export async function rebuildProject(socket: SocketIO, projData: ProjectCreation
     const info: any = await projectAction(testData);
     expect(info);
 
-    const targetEvent = checkEvent || eventConfigs.events.statusChanged;
-    const data = checkEventData || {
+    const targetEvents = checkEvent || [eventConfigs.events.statusChanged];
+    const targetDatas = checkEventData || [{
         "projectID": projData.projectID,
         "appStatus": "started"
-    };
+    }];
 
-    let eventFound = false;
-    let event: any;
-    await new Promise((resolve) => {
-        const timer = setInterval(() => {
-            const events = socket.getAllEvents();
-            if (events && events.length >= 1) {
-                event =  events.filter((value) => {
-                    if (value.eventName === targetEvent && _.isMatch(value.eventData, data)) {
-                        return value;
+    for (const socketEvent of targetEvents) {
+        const index = targetEvents.indexOf(socketEvent);
+        const data = targetDatas[index];
+
+        let eventFound = false;
+        let event: any;
+        await new Promise((resolve) => {
+            const timer = setInterval(() => {
+                const events = socket.getAllEvents();
+                if (events && events.length >= 1) {
+                    event =  events.filter((value) => {
+                        if (value.eventName === socketEvent && _.isMatch(value.eventData, data)) {
+                            return value;
+                        }
+                    })[0];
+                    if (event) {
+                        eventFound = true;
+                        clearInterval(timer);
+                        return resolve();
                     }
-                })[0];
-                if (event) {
-                    eventFound = true;
-                    clearInterval(timer);
-                    return resolve();
                 }
-            }
-        }, timeoutConfigs.defaultInterval);
-    });
+            }, timeoutConfigs.defaultInterval);
+        });
 
-    if (eventFound && event) {
-        expect(event);
-        expect(event.eventName);
-        expect(event.eventName).to.equal(targetEvent);
-        expect(event.eventData);
-        expect(_.isMatch(event.eventData, data));
-    } else {
-        fail(`failed to find ${targetEvent} for rebuild project ${projData.projectType}`);
+        if (eventFound && event) {
+            expect(event);
+            expect(event.eventName);
+            expect(event.eventName).to.equal(socketEvent);
+            expect(event.eventData);
+            expect(_.isMatch(event.eventData, data));
+        } else {
+            fail(`failed to find ${socketEvent} for rebuild project ${projData.projectType}`);
+        }
     }
 }
 
