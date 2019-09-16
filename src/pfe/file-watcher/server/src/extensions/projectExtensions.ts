@@ -127,7 +127,7 @@ export async function determineProjectType(location: string): Promise<Array<stri
 
     // Check for Docker projects if types array is empty
     if (types.length == 0) {
-        isValidLoc = new DockerProject(DOCKER_TYPE).typeMatches(location);
+        isValidLoc = await (new DockerProject(DOCKER_TYPE).typeMatches(location));
         if (isValidLoc) {
             types.push(DOCKER_TYPE);
         }

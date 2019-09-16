@@ -17,6 +17,7 @@ main().catch(err => console.dir(err));
 // Wrap everything in an async function so we can use
 // await to serialize initialisation.
 async function main() {
+  let ready = false;
 
   // Set the umask for file creation.
   process.umask(0o002);
@@ -194,6 +195,7 @@ async function main() {
 
   app.get('/', (req, res) => { res.sendStatus(200); });
   app.get('/health', (req, res) => { res.sendStatus(200); });
+  app.get('/ready', (req, res) => { res.status(200).send(ready); });
   app.use(securityMiddleware);
 
   // Default, single user implementation
@@ -205,6 +207,9 @@ async function main() {
   );
   userList.add(user);
   setRoutes();
+  // We have finished initialising the user, any projects and routes so we are ready now
+  ready = true;
+
 
   /**
    * Function to set up express routes for codewind portal. All external APIs

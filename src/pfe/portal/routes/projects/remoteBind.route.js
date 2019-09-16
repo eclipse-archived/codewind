@@ -16,6 +16,7 @@ const buffer = require('buffer');
 const zlib = require("zlib");
 const { promisify } = require('util');
 const inflateAsync = promisify(zlib.inflate);
+const exec = promisify(require('child_process').exec);
 
 const Logger = require('../../modules/utils/Logger');
 const ProjectInitializerError = require('../../modules/utils/errors/ProjectInitializerError');
@@ -139,6 +140,34 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
     } else {
       res.sendStatus(404);
     } 
+  } catch(err) {
+    log.error(err);
+    res.status(500).send(err);
+  }
+});
+
+/**
+ * API Function to clear the contents of a project ready
+ * for upload of changed source.
+ * @param id the id of the project
+ * @return 200 if the clear is successful
+ * @return 404 if project doesn't exist
+ * @return 500 if internal error
+ */
+// TODO - This is very crude, we should replace it with a more sophisticated
+// mechanism to only delete files that don't exist on the local end.
+router.post('/api/v1/projects/:id/remote-bind/clear', async (req, res) => {
+  const projectID = req.sanitizeParams('id');
+  const user = req.cw_user;
+  try {
+    const project = user.projectList.retrieveProject(projectID);
+    if (project) {
+      const pathToClear = path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
+      await exec(`rm -rf ${pathToClear}/* ${pathToClear}/.[!.]*`);
+      res.sendStatus(200);
+    } else {
+      res.sendStatus(404);
+    }
   } catch(err) {
     log.error(err);
     res.status(500).send(err);

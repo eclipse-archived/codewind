@@ -6,6 +6,7 @@ const defaultSpringSettings = {
     internalDebugPort: '',
     mavenProfiles: [''],
     mavenProperties: [''],
+    isHttps: false,
 };
 
 const defaultLibertySettings = {
@@ -16,6 +17,7 @@ const defaultLibertySettings = {
     ignoredPaths: [''],
     mavenProfiles: [''],
     mavenProperties: [''],
+    isHttps: false,
 };
 
 const defaultNodeSettings = {
@@ -24,6 +26,7 @@ const defaultNodeSettings = {
     internalDebugPort: '',
     healthCheck: '',
     ignoredPaths: [''],
+    isHttps: false,
 };
 
 const defaultSwiftSettings = {
@@ -31,6 +34,7 @@ const defaultSwiftSettings = {
     internalPort: '',
     healthCheck: '',
     ignoredPaths: [''],
+    isHttps: false,
 };
 
 const defaultDockerSettings = {
@@ -38,6 +42,7 @@ const defaultDockerSettings = {
     internalPort: '',
     healthCheck: '',
     ignoredPaths: [''],
+    isHttps: false,
 };
 
 module.exports = {

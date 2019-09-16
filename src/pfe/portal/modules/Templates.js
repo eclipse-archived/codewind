@@ -22,8 +22,15 @@ const log = new Logger('Templates.js');
 const DEFAULT_REPOSITORY_LIST = [
   {
     url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-    description: 'Standard Codewind templates.',
+    description: 'Standard Codewind templates',
     enabled: true,
+    protected: true,
+    projectStyles: ['Codewind'],
+  },
+  {
+    url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
+    description: 'Kabanero Collections',
+    enabled: false,
   },
 ];
 module.exports = class Templates {
@@ -40,10 +47,13 @@ module.exports = class Templates {
   async initializeRepositoryList() {
     try {
       if (await cwUtils.fileExists(this.repositoryFile)) {
-        let list = await fs.readJson(this.repositoryFile);
-        this.repositoryList = list;
+        this.repositoryList = await fs.readJson(this.repositoryFile); // eslint-disable-line require-atomic-updates
+        await this.updateRepoListWithReposFromProviders();
+        this.repositoryList = await addTemplateStylesToRepos(this.repositoryList); // eslint-disable-line require-atomic-updates
         this.needsRefresh = true;
       } else {
+        await this.updateRepoListWithReposFromProviders();
+        this.repositoryList = await addTemplateStylesToRepos(this.repositoryList); // eslint-disable-line require-atomic-updates
         await this.writeRepositoryList();
       }
     } catch (err) {
@@ -61,26 +71,42 @@ module.exports = class Templates {
     return templates;
   }
 
-  getEnabledTemplates() {
+  async getEnabledTemplates() {
+    await this.updateRepoListWithReposFromProviders();
     return this.getTemplatesFromRepos(this.getEnabledRepositories());
   }
 
-  getAllTemplates() {
+  async getAllTemplates() {
     if (!this.needsRefresh) {
       return this.projectTemplates;
     }
+    await this.updateRepoListWithReposFromProviders();
     return this.getTemplatesFromRepos(this.repositoryList);
   }
 
-  async getTemplatesFromRepos(repositoryList) {
+  async updateRepoListWithReposFromProviders() {
     const providers = Object.values(this.providers);
     const providedRepos = await getReposFromProviders(providers);
-    // Avoid processing duplicate repos
-    const extraRepos = providedRepos.filter(repo =>
-      !repositoryList.find(repo2 => repo2.url === repo.url)
-    );
-    const repos = repositoryList.concat(extraRepos);
 
+    const extraRepos = providedRepos.filter(repo =>
+      !this.repositoryList.find(repo2 => repo2.url === repo.url)
+    );
+
+    if (extraRepos.length > 0) {
+      const reposWithCodewindSettings = await Promise.all(
+        extraRepos.map(async repo => {
+          repo.enabled = true;
+          repo.protected = true;
+          const repoWithTemplateStyles = await addTemplateStylesToRepo(repo);
+          return repoWithTemplateStyles;
+        })
+      );
+      this.repositoryList = this.repositoryList.concat(reposWithCodewindSettings);
+      await this.writeRepositoryList();
+    }
+  }
+
+  async getTemplatesFromRepos(repos) {
     let newProjectTemplates = [];
     await Promise.all(repos.map(async(repo) => {
       try {
@@ -109,10 +135,7 @@ module.exports = class Templates {
   }
 
   getEnabledRepositories() {
-    return this.getRepositories().filter(repo =>
-      // if the repo doesn't specify whether it's enabled, consider it enabled
-      (repo.enabled || !repo.hasOwnProperty('enabled'))
-    );
+    return this.getRepositories().filter(repo => repo.enabled);
   }
 
   doesRepositoryExist(repoUrl) {
@@ -198,21 +221,42 @@ module.exports = class Templates {
   /**
    * Add a repository to the list of template repositories.
    */
-  async addRepository(repoUrl, repoDescription) {
-    if (this.getRepositories().find(repo => repo.url == repoUrl)) {
+  async addRepository(repoUrl, repoDescription, isRepoProtected) {
+    let url;
+    try {
+      url = new URL(repoUrl).href;
+    } catch (error) {
+      if (error.message.includes('Invalid URL')) {
+        throw new TemplateError('INVALID_URL', repoUrl);
+      }
+      throw error;
+    }
+
+    if (this.getRepositories().find(repo => repo.url === repoUrl)) {
       throw new TemplateError('DUPLICATE_URL', repoUrl);
     }
-    const newRepo = {
-      url: repoUrl,
-      description: repoDescription,
+
+    if (!(await doesUrlPointToIndexJson(url))) {
+      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', url);
     }
+
+    let newRepo = {
+      url,
+      description: repoDescription,
+      enabled: true,
+    }
+    newRepo = await addTemplateStylesToRepo(newRepo);
+    if (isRepoProtected !== undefined) {
+      newRepo.protected = isRepoProtected;
+    }
+
     this.repositoryList.push(newRepo);
     this.needsRefresh = true;
     await this.writeRepositoryList();
   }
 
   async deleteRepository(repoUrl) {
-    this.repositoryList = this.repositoryList.filter((repo) => repo.url != repoUrl);
+    this.repositoryList = this.repositoryList.filter((repo) => repo.url !== repoUrl);
     this.needsRefresh = true;
     await this.writeRepositoryList();
   }
@@ -222,12 +266,28 @@ module.exports = class Templates {
       this.providers[name] = provider;
   }
 
-  async getTemplateStyles() {
+  async getAllTemplateStyles() {
     const templates = await this.getAllTemplates();
-    const styles = templates.map(template => getTemplateStyle(template));
-    const uniqueStyles = [...new Set(styles)];
-    return uniqueStyles;
+    return getTemplateStyles(templates);
   }
+}
+
+function addTemplateStylesToRepos(repos) {
+  return Promise.all(
+    repos.map(repo => addTemplateStylesToRepo(repo))
+  );
+}
+
+async function addTemplateStylesToRepo(repo) {
+  if (repo.projectStyles) {
+    return repo;
+  }
+
+  const templatesFromRepo = await getTemplatesFromRepo(repo);
+  return {
+    ...repo,
+    projectStyles: getTemplateStyles(templatesFromRepo),
+  };
 }
 
 async function getTemplatesFromRepo(repository) {
@@ -253,13 +313,17 @@ async function getTemplatesFromRepo(repository) {
     throw new Error(`URL '${repoUrl}' should return JSON`);
   }
   const templates = templateSummaries.map(summary => {
-    return {
+    const template = {
       label: summary.displayName,
       description: summary.description,
       language: summary.language,
       url: summary.location,
-      projectType: summary.projectType
+      projectType: summary.projectType,
     };
+    if (summary.projectStyle) {
+      template.projectStyle = summary.projectStyle;
+    }
+    return template;
   });
   return templates;
 }
@@ -269,6 +333,12 @@ function filterTemplatesByStyle(templates, projectStyle) {
     getTemplateStyle(template) === projectStyle
   );
   return relevantTemplates;
+}
+
+function getTemplateStyles(templates) {
+  const styles = templates.map(template => getTemplateStyle(template));
+  const uniqueStyles = [...new Set(styles)];
+  return uniqueStyles;
 }
 
 function getTemplateStyle(template) {
@@ -301,6 +371,38 @@ function isRepo(obj) {
   return obj.hasOwnProperty('url');
 }
 
+async function doesUrlPointToIndexJson(inputUrl) {
+  const url = new URL(inputUrl); // Throws error if `inputUrl` is not a valid url
+
+  const options = {
+    host: url.host,
+    path: url.pathname,
+    method: 'GET',
+  }
+  const res = await cwUtils.asyncHttpRequest(options, undefined, url.protocol === 'https:');
+  if (res.statusCode < 200 || res.statusCode > 299) {
+    return false;
+  }
+  try {
+    const templateSummaries = JSON.parse(res.body);
+    if (templateSummaries.some(summary => !isTemplateSummary(summary))) {
+      return false;
+    }
+  } catch(error) {
+    log.warn(error);
+    return false
+  }
+
+  return true;
+}
+
+function isTemplateSummary(obj) {
+  const expectedKeys = ['displayName', 'description', 'language', 'projectType', 'location', 'links'];
+  return expectedKeys.every(key => obj.hasOwnProperty(key));
+}
+
+module.exports.addTemplateStylesToRepos = addTemplateStylesToRepos;
 module.exports.getTemplatesFromRepo = getTemplatesFromRepo;
 module.exports.filterTemplatesByStyle = filterTemplatesByStyle;
 module.exports.getReposFromProviders = getReposFromProviders;
+module.exports.getTemplateStyles = getTemplateStyles;

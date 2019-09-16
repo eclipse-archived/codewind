@@ -84,24 +84,24 @@ public class IDCContext {
 		this.appDb = new DBMap(appId, idcBase);
 		
 		this.localWorkspaceOrigin = localWorkspaceOrigin;
-		if (appDb.get(Constants.DB_WORKSPACE_ORIGIN) == null && this.localWorkspaceOrigin != null) {
+		if (this.localWorkspaceOrigin != null && appDb.get(Constants.DB_PROJECT_ID) != this.localWorkspaceOrigin) {
 			appDb.put(Constants.DB_WORKSPACE_ORIGIN, this.localWorkspaceOrigin);
 		}
 		
 		// Store the container/image name in the appdb for future access
 		this.containerName = containerName;
-		if (appDb.get(Constants.DB_CONTAINER_NAME) == null && this.containerName != null) {
+		if (this.containerName != null && appDb.get(Constants.DB_CONTAINER_NAME) != this.containerName)  {
 			appDb.put(Constants.DB_CONTAINER_NAME, this.containerName);
 		}
 		
 		// Store the app log name in the appdb for future access
 		this.logName = logName;
-		if (appDb.get(Constants.DB_LOG_NAME) == null && this.logName != null) {
+		if (this.logName != null && appDb.get(Constants.DB_LOG_NAME) != this.logName) {
 			appDb.put(Constants.DB_LOG_NAME, this.logName);
 		}
 		
 		this.projectID = projectID;
-		if (appDb.get(Constants.DB_PROJECT_ID) == null && this.projectID != null) {
+		if (this.projectID != null && appDb.get(Constants.DB_PROJECT_ID) != this.projectID) {
 			appDb.put(Constants.DB_PROJECT_ID, this.projectID);
 		}
 
@@ -164,7 +164,10 @@ public class IDCContext {
 	}
 	
 	public String getLocalWorkspaceOrigin() {
-		if(appDb.get(Constants.DB_WORKSPACE_ORIGIN) != null) {
+		if (System.getenv("NODE_ENV").equals("test")) {
+			return System.getenv("HOST_WORKSPACE_DIRECTORY");
+		} 
+		if (appDb.get(Constants.DB_WORKSPACE_ORIGIN) != null) {
 			return appDb.get(Constants.DB_WORKSPACE_ORIGIN);
 		} else {
 			return "";

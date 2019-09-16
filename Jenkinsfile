@@ -20,6 +20,15 @@ pipeline {
                     
                     // NOTE: change of this sh call should be in sync with './script/build.sh'. 
                     sh '''#!/usr/bin/env bash
+
+                        # Docker system prune
+                        echo "Docker system prune ..."
+                        docker system df
+                        docker system prune -a -f
+                        docker builder prune -a -f
+                        docker system df
+                        df -lh
+
                         echo "Starting build for Eclipse Codewind ..."
                         
                         DIR=`pwd`;
@@ -60,7 +69,7 @@ pipeline {
                         echo -e "\n+++   DOWNLOADING EXTENSIONS   +++\n";
                         mkdir -p ${SRC_DIR}/pfe/extensions
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
-                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.3.0.zip https://github.com/eclipse/codewind-appsody-extension/archive/0.3.0.zip
+                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.4.0.zip https://github.com/eclipse/codewind-appsody-extension/archive/0.4.0.zip
 
                         # BUILD IMAGES
                         # Uses a build file in each of the directories that we want to use
@@ -86,9 +95,8 @@ pipeline {
                 }
             }
         }  
-
-        stage('Run Codewind test suite') {
-            
+        /*
+        stage('Run Codewind test suite') {            
                 steps {
                     withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
@@ -188,7 +196,8 @@ pipeline {
                     }
                 }
             }
-        }  
+        } 
+        */ 
         
         stage('Publish Docker images') {
 
@@ -304,7 +313,15 @@ pipeline {
               else
                   printf "\n${RED}Error removing docker network $RESET\n";
               fi
-              '''
+
+              # Docker system prune
+              echo "Docker system prune ..."
+              docker system df
+              docker system prune -a -f
+              docker builder prune -a -f
+              docker system df
+              df -lh
+            '''
         }
         failure {
           sh '''#!/usr/bin/env bash

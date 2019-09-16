@@ -28,6 +28,10 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
             "projectID": projectID,
         };
 
+        afterEach("remove build from running queue", async () => {
+            await utils.setBuildStatus(projData);
+        });
+
         it("update project status with missing type", async () => {
             const testData = _.cloneDeep(data);
             const info: any = await updateStatus(testData);
@@ -58,7 +62,7 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
                 "statusKeys": ["status"],
                 "parameters": ["projectID", "status", "error"],
                 "values": [projectID],
-                "states": ["starting", "started", "stopping", "stopped", "unknown"],
+                "states": ["unknown", "stopping", "stopped", "starting", "started"],
                 "eventKeys": ["projectID", "appStatus", "appErrorStatus"],
                 "result": {
                     "projectID": projectID
@@ -70,7 +74,7 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
                 "statusKeys": ["buildStatus"],
                 "parameters": ["projectID", "buildStatus", "detailedBuildStatus", "appImageLastBuild", "buildImageLastBuild"],
                 "values": [projectID],
-                "states": ["inProgress", "success", "failed", "unknown", "queued"],
+                "states": ["unknown", "queued", "inProgress", "success", "failed"],
                 "eventKeys": ["projectID", "buildStatus", "detailedBuildStatus", "appImageLastBuild", "buildImageLastBuild"],
                 "result": {
                     "projectID": projectID
@@ -86,7 +90,11 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
                     socket.clearEvents();
                 });
 
-                utils.rebuildProjectAfterHook(socket, projData);
+                if (projData.projectType === "docker") {
+                    utils.rebuildProjectAfterHook(socket, projData);
+                } else {
+                    utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
+                }
 
                 const testData = _.cloneDeep(data);
                 testData["type"] = statusTypes[statusType]["name"];

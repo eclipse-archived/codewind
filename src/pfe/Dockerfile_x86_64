@@ -39,13 +39,13 @@ RUN cd /tmp \
 
 # Download OpenJ9 JRE, fixed to jre8u212-b04_openj9-0.14.2 version
 RUN cd /tmp \
-    && curl -sL -O https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u212-b04_openj9-0.14.2/OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz \
-    && echo 'b0c0aac53694b2ada3a9fdcbb3e9461257a54b50b4573d786d7b0778d6356805  OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz' | sha256sum -c - \
-    && tar -xvf OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz \
+    && curl -sL -O https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u222-b10_openj9-0.15.1/OpenJDK8U-jre_x64_linux_openj9_8u222b10_openj9-0.15.1.tar.gz \
+    && echo 'ae56994a7c8e8c19939c0c2ff8fe5a850eb2f23845c499aa5ede26deb3d5ad28  OpenJDK8U-jre_x64_linux_openj9_8u222b10_openj9-0.15.1.tar.gz' | sha256sum -c - \
+    && tar -xvf OpenJDK8U-jre_x64_linux_openj9_8u222b10_openj9-0.15.1.tar.gz \
     && OPENJ9_JRE=$(find *jre | head -n 1) \
     && mkdir -p /opt/java \
     && cp -r /tmp/$OPENJ9_JRE /opt/java/jre \
-    && rm -rf /tmp/$OPENJ9_JRE /tmp/OpenJDK8U-jre_x64_linux_openj9_8u212b04_openj9-0.14.2.tar.gz
+    && rm -rf /tmp/$OPENJ9_JRE /tmp/OpenJDK8U-jre_x64_linux_openj9_8u222b10_openj9-0.15.1.tar.gz
 
 # Set up PFE container environment variables
 ENV JAVA_HOME=/opt/java/jre \

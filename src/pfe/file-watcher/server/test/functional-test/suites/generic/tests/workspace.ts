@@ -48,6 +48,8 @@ export default class WorkspaceTest {
             });
             afterEach("delete backup settings file, revert back original file and load the current workspace settings", async () => {
                 if (await fs.existsSync(backupSettingsPath)) {
+                    backupSettingsContent = JSON.parse(await fs.readFileSync(backupSettingsPath, {encoding: "utf-8"}));
+                    backupSettingsContent["watcherChunkTimeout"] = backupSettingsContent["watcherChunkTimeout"] || "";
                     await fs.renameSync(backupSettingsPath, settingsPath);
                     await fs.chownSync(settingsPath, 1001, 2004);
                     const info: any = await genericLib.readWorkspaceSettings();

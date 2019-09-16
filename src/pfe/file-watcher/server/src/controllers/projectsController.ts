@@ -36,7 +36,7 @@ interface ProjectInfoCache {
     [file: string]: string;
 }
 
-interface BuildQueueType {
+export interface BuildQueueType {
     operation: Operation;
     handler: any;
 }
@@ -57,8 +57,6 @@ const BUILD_KEY = "projectStatusController.buildRank";
 
 // timeout to ping build projects
 setInterval(checkBuildQueue, 5000);
-
-const availabilityTimeout = 5000;
 
 /**
  * @see [[Filewatcher.getProjectTypes]]
@@ -255,6 +253,9 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         projectInfo.ignoredPaths = selectedProjectHandler.defaultIgnoredPath;
     }
 
+    // Set isHttps to false by default, override if the isHttps settings key is found
+    projectInfo.isHttps = false;
+
     // Persist the Project Settings last since it will have the higher priority over default projectInfo values
     if (settings) {
         for (const key in settings) {
@@ -314,6 +315,15 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                     logger.logProjectInfo("The ignoredPaths array is empty, File-watcher will ignore the setting", projectID, projectName);
                 } else {
                     projectInfo.ignoredPaths = settings.ignoredPaths;
+                }
+            } else if (key == "isHttps") {
+                if (typeof settings.isHttps == "boolean") {
+                    logger.logProjectInfo("Setting isHttps from the project settings", projectID, projectName);
+                    projectInfo.isHttps = settings.isHttps;
+                } else {
+                    // Default to http if we cannot get the isHttps settings
+                    logger.logProjectInfo("Defaulting isHttps to false as the project setting isHttps is not a boolean", projectID, projectName);
+                    projectInfo.isHttps = false;
                 }
             }
         }
@@ -1177,6 +1187,7 @@ export interface IProjectSettings {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     ignoredPaths?: string[];
+    isHttps?: boolean;
 }
 
 export interface IProjectActionParams {

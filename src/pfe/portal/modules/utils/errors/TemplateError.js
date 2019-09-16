@@ -30,8 +30,14 @@ module.exports.DUPLICATE_URL = 'DUPLICATE_URL';
 function constructMessage(code, identifier, message) {
   let output = '';
   switch(code) {
+  case 'INVALID_URL':
+    output = `Invalid URL: ${identifier}`;
+    break;
   case 'DUPLICATE_URL':
-    output = `${identifier} is not a unique URL. Repository URLs must be unique`;
+    output = `${identifier} is already a template repository`;
+    break;
+  case 'URL_DOES_NOT_POINT_TO_INDEX_JSON':
+    output = `${identifier} does not point to a JSON file of the correct form`;
     break;
   default:
     output = 'Unknown template error';

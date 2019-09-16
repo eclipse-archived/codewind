@@ -437,6 +437,54 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
     io.emitOnListener("projectSettingsChanged", data);
 };
 
+/**
+ * @function
+ * @description Reconfig the WWW protocol for a project.
+ *
+ * @param isHttps <Required | Boolean> - isHttps tells if a project is https enabled.
+ *
+ * @param operation <Required | Any> - Operation for a project.
+ *
+ * @returns Promise<any>
+ */
+const reconfigWWWProtocol = async function (isHttps: boolean, operation: Operation): Promise<any> {
+    let projectInfo: ProjectInfo = operation.projectInfo;
+    const projectID = projectInfo.projectID;
+
+    if (typeof isHttps != "boolean") {
+        logger.logProjectError("Failed to update isHttps setting. The isHttps setting is not a boolean", projectID);
+        return;
+    }
+
+    const isHttpsPreviously: boolean = projectInfo.isHttps;
+
+    if (isHttps == isHttpsPreviously) {
+        logger.logProjectInfo("The project WWW protocol is already set to: " + isHttps ? "https" : "http", projectID);
+        return;
+    }
+
+    const keyValuePair: UpdateProjectInfoPair = {
+        key: "isHttps",
+        value: isHttps,
+        saveIntoJsonFile: true
+    };
+    projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
+
+    logger.logProjectInfo("The project has been updated", projectInfo.projectID);
+    logger.logProjectTrace(JSON.stringify(projectInfo), projectInfo.projectID);
+
+    const data: ProjectSettingsEvent = {
+        operationId: operation.operationId,
+        projectID: projectID,
+        status: "success",
+        isHttps: isHttps
+    };
+
+    io.emitOnListener("projectSettingsChanged", data);
+
+    logger.logProjectInfo("The WWW protocol for the project has been changed to: " + isHttps ? "https" : "http", projectID);
+    return;
+};
 
  /**
   * @function
@@ -550,7 +598,17 @@ const changeMavenProfiles = async function (mavenProfiles: any, operation: Opera
         return;
     }
 
-    if (mavenProfiles && !(mavenProfiles instanceof Array)) {
+    let arrayIsNotString = false;
+    if (mavenProfiles instanceof Array) {
+        for (const profile of mavenProfiles) {
+            if (typeof profile !== "string") {
+                arrayIsNotString = true;
+                break;
+            }
+        }
+    }
+
+    if (mavenProfiles && arrayIsNotString) {
         const errorMsg = "BAD_REQUEST: mavenProfiles must be a string array.";
         logger.logProjectError("Failed to change the maven profile list: " + errorMsg, projectID);
 
@@ -645,7 +703,17 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
         return;
     }
 
-    if (mavenProperties && !(mavenProperties instanceof Array)) {
+    let arrayIsNotString = false;
+    if (mavenProperties instanceof Array) {
+        for (const property of mavenProperties) {
+            if (typeof property !== "string") {
+                arrayIsNotString = true;
+                break;
+            }
+        }
+    }
+
+    if (mavenProperties && arrayIsNotString) {
         const errorMsg = "BAD_REQUEST: mavenProperties must be a string array.";
         logger.logProjectError("Failed to change the maven properties: " + errorMsg, projectID);
 
@@ -776,3 +844,4 @@ specificationSettingMap.set("healthCheck", changeHealthCheck);
 specificationSettingMap.set("mavenProfiles", changeMavenProfiles);
 specificationSettingMap.set("mavenProperties", changeMavenProperties);
 specificationSettingMap.set("ignoredPaths", reconfigIgnoredFilesForDaemon);
+specificationSettingMap.set("isHttps", reconfigWWWProtocol);

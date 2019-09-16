@@ -19,6 +19,13 @@ info:
   # - name: admin
   #   description: Operations available only to authenticated admins
 paths:
+  /ready:
+    get:
+      summary: Return true when codewind is ready to accept requests
+      responses:
+        200:
+          description: Status of codewind as a boolean
+
   /api/v1/environment:
     get:
       summary: Get information on the current environment
@@ -35,7 +42,7 @@ paths:
                   - socket_namespace
                   - codewind_version
                   - os_platform
-                  - tekton_dashboard_url
+                  - tekton_dashboard
                 properties:
                   running_in_k8s:
                     type: boolean
@@ -53,9 +60,19 @@ paths:
                     type: string
                     example: 'Linux'
                   tekton_dashboard_url:
-                    type: string
-                    example: '9.20.195.90.nip.io'
-                    description: "Ingress URL of Tekton dashboard if it's available. On local Codewind, it is the empty string. May also be 'error' or 'not-installed'."
+                    type: object
+                    properties:
+                      status:
+                        type: boolean
+                      message:
+                        type: string
+                      url:
+                        type: string
+                    example:
+                      status: true
+                      message: ''
+                      url: '9.20.195.90.nip.io'
+                    description: "An object containing the Ingress URL of Tekton dashboard. If the dashboard is configured and available status=true, if not available then status=false along with a message providing more information."
                   workspace_location:
                     type: string
                     example: '/home/user/codewind-workspace'
@@ -102,7 +119,7 @@ paths:
                   example: "https://github.com/microclimate-dev2ops/nodeExpressTemplate"
       responses:
         200:
-          description: Project creation successful
+          description: Project creation request received and processed
           content:
             application/json:
               schema:
@@ -918,12 +935,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    url:
-                      type: string
-                    description:
-                      type: string
+                  $ref: '#/components/schemas/TemplateRepo'
         400:
           description: Bad request
     delete:
@@ -938,7 +950,7 @@ paths:
                 - url
               properties:
                 url:
-                    type: string
+                  type: string
       responses:
         200:
           description: Returns all the templates repositories that Codewind will use to find templates
@@ -1366,6 +1378,11 @@ components:
           type: string
         description:
           type: string
+        projectStyles:
+          type: array
+          items:
+            type: string
+          example: ['Codewind', 'Appsody']
         enabled:
           type: boolean
     TemplateRepoSetting:
@@ -1421,11 +1438,6 @@ components:
         - status
         - projectPath
       properties:
-        status:
-          type: string
-          enum:
-            - success
-            - failure
         projectPath:
           type: string
           example: /Documents/projectDir/
@@ -1435,6 +1447,7 @@ components:
         - type: object
           required:
             - result
+            - status
           properties:
             result:
               type: object
@@ -1452,6 +1465,10 @@ components:
                     - unknown
                 buildType:
                   type: string
+            status:
+              type: string
+              enum:
+                - success
     LoadrunnerConfig:
       type: object
       required:
@@ -1496,11 +1513,16 @@ components:
         - $ref: '#/components/schemas/BasicInitialize'
         - type: object
           required:
+            - status
             - result
           properties:
             result:
               type: string
               example: Git clone failed - directory to clone into is not empty
+            status:
+              type: string
+              enum:
+                - failure
     LogDetails:
       type: object
       required:

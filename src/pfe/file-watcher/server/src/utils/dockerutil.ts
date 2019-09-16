@@ -380,15 +380,20 @@ const containerExec = function (options: any, container: any, projectID: string)
  *
  * @returns Promise<ProcessResult>
  */
-export async function buildImage(projectID: string, imageName: string, buildOptions: string[], pathOrURL: string, liveStream?: boolean, logFile?: string): Promise<ProcessResult> {
-  // Construct the build command
-  const args: string[] = [];
+export async function buildImage(projectID: string, projectLanguage: string, imageName: string, buildOptions: string[], pathOrURL: string, liveStream?: boolean, logFile?: string): Promise<ProcessResult> {
+
+  // Construct the build command.
+  let args: string[] = [];
+
   if (process.env.IN_K8) {
-    args[0] = "bud";
-    args[1] = "--layers";
+    args = ["bud", "--format", "docker"];
+    // Don't use layer caching on Java projects due to caching issues with buildah and the pom.xml: https://github.com/eclipse/codewind/issues/344
+    if (projectLanguage !== "java") {
+      args.push("--layers");
+    }
   }
   else {
-    args[0] = "build";
+    args = ["build"];
   }
   args.push("--label", "builtBy=codewind", "-t", imageName);
 

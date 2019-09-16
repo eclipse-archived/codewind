@@ -61,7 +61,7 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
 
         function updateProject(type: string): void {
             let filesList = ["file1"];
-            if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectLang];
+            if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectLang] || [];
             for (const file of filesList) {
                 it(`${type.toLowerCase()} file: ${file}`, async () => {
                     const fileToChange = file;
@@ -81,10 +81,13 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
                     expect(info.statusCode);
                     expect(info.statusCode).to.equal(202);
 
-                    const targetEvent = eventConfigs.events.statusChanged;
-                    const targetData = {
+                    const targetEvent = projData.projectType === "docker" && process.env.IN_K8 ? eventConfigs.events.statusChanged : eventConfigs.events.projectChanged;
+                    const targetData = projData.projectType === "docker" && process.env.IN_K8 ? {
                         "projectID": projData.projectID,
                         "appStatus": "started"
+                    } : {
+                        "projectID": projData.projectID,
+                        "status": "success"
                     };
                     let eventFound = false;
                     let event: any;
@@ -113,12 +116,17 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
                         expect(event.eventData);
                         expect(event.eventData).to.haveOwnProperty("projectID");
                         expect(event.eventData.projectID).to.equal(targetData.projectID);
-                        expect(event.eventData).to.haveOwnProperty("appStatus");
-                        expect(event.eventData.appStatus).to.equal(targetData.appStatus);
+                        if (projData.projectType === "docker" && process.env.IN_K8) {
+                            expect(event.eventData).to.haveOwnProperty("appStatus");
+                            expect(event.eventData.appStatus).to.equal(targetData.appStatus);
+                        } else {
+                            expect(event.eventData).to.haveOwnProperty("status");
+                            expect(event.eventData.status).to.equal(targetData.status);
+                        }
                     } else {
                         fail(`failed to find ${targetEvent} for updating docker file`);
                     }
-                }).timeout(timeoutConfigs.defaultTimeout);
+                }).timeout(timeoutConfigs.createTestTimeout);
             }
         }
     });

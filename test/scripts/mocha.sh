@@ -14,7 +14,11 @@
 # This is being passed in from test.sh via the package.json (e.g. npm run test /release)
 # If not set it defaults to all tests in 'src'
 
+start=$(date +%F_%T)
+echo "Tests started at ${start}"
 node_modules/.bin/mocha ${1:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
 rc=$?
+end=$(date +%F_%T)
+echo "Tests finished at ${end}"
 
 exit $rc

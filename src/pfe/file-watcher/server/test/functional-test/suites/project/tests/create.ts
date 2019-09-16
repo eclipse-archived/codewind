@@ -14,6 +14,7 @@ import * as _ from "lodash";
 
 import { ProjectCreation, createProject } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
+import * as utils from "../../../lib/utils";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
@@ -30,13 +31,17 @@ export default class CreateTest {
             this.runCreateWithoutProjectID(projData);
             this.runCreateWithoutProjectType(projData);
             this.runCreateWithValidData(socket, projData);
-            this.afterAllHook(socket);
+            this.afterAllHook(socket, projData);
         });
     }
 
-    private afterAllHook(socket: SocketIO): void {
+    private afterAllHook(socket: SocketIO, projData: ProjectCreation): void {
         after("clear socket events for create test", () => {
             socket.clearEvents();
+        });
+
+        after("remove build from running queue", async () => {
+            await utils.setBuildStatus(projData);
         });
     }
 
@@ -80,7 +85,6 @@ export default class CreateTest {
 
             await waitForCreationEvent();
             await waitForProjectStartedEvent();
-
         }).timeout(timeoutConfigs.createTestTimeout);
 
         async function waitForCreationEvent(): Promise<void> {
@@ -144,7 +148,7 @@ export default class CreateTest {
                 const timer = setInterval(() => {
                     const events = socket.getAllEvents();
                     if (events && events.length >= 1) {
-                        event =  events.filter((value) => {
+                        event = events.filter((value) => {
                             if (value.eventName === targetEvent && _.isMatch(value.eventData, data)) return value;
                         })[0];
                         if (event) {

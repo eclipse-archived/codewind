@@ -81,9 +81,9 @@ class Chart extends Component {
         if (!this.state.lastCounterSelected || this.state.lastCounterSelected === '') {
             return '';
         }
-           
+
         const lineString = getLineData(this.props.chartData, this.state.lastCounterSelected, this.props.projectLanguage, this.props.absolutePath);
-        if (lineString.length > 1) {
+        if (lineString && lineString.length > 1) {
             const values = lineString.slice(1);
             const lineNumbers = values.map(element => { return parseFloat(element) })
             const largestValue = Math.max(...lineNumbers);
@@ -110,13 +110,13 @@ class Chart extends Component {
 
     componentDidUpdate() {
         if (!this.chart) {
-            const colorPattern = { pattern: ChartUtils.getColorPattern(["CPU_PROCESS_MEAN", "MEM_PROCESS_PEAK", "HTTP_RESPONSE", "HTTP_HITS"]) };
 
             // Re-render the entire chart using this base format
             this.chart = c3.generate({
                 data: {
                     columns: [],
                     classes: [],
+                    colors: ChartUtils.getColorPattern(["CPU_PROCESS_MEAN", "MEM_PROCESS_PEAK", "HTTP_RESPONSE", "HTTP_HITS"]),
                     selection: {
                         enabled: true,
                         grouped: false,
@@ -163,7 +163,6 @@ class Chart extends Component {
                         }
                     }
                 },
-                color: colorPattern,
                 point: { r: 5, select: { r: 12 }, focus: { expand: { r: 7 } } },
                 zoom: {
                     enabled: true,
@@ -195,7 +194,7 @@ class Chart extends Component {
         if (!this.chart) return;
 
         const data = buildChartData(this.props.chartData, this.props.projectLanguage, this.props.absolutePath);
-        
+
         // Change chart properties
         if (this.chart) {
             this.chart.axis.labels({ y: this.state.lastCounterSelected });
@@ -203,9 +202,9 @@ class Chart extends Component {
                 columns: data.columns,
                 classes: data.classes
             })
-            
+
             const enabledCounters = (this.props.chartCounters && this.props.chartCounters.enabledCounters) ? this.props.chartCounters.enabledCounters : []
-           
+
             // focus on selected ids:
             const checkedCounters = enabledCounters.filter(counter => counter.checked);
             let enabledCounterNames = checkedCounters.map(counter => {
@@ -224,9 +223,24 @@ class Chart extends Component {
                 }
             } catch (err) {
                 // unable to show zoom extent
-                console.err("Unable to render zoom extent", err);
+                console.error("Unable to render zoom extent", err);
             }
         }
+    }
+
+    /**
+     * Determine if there is data available to plot on the chart
+     */
+    isDataAvailable(dataBundle) {
+        try {
+            if (dataBundle && dataBundle.columns && dataBundle.columns.length > 0 && dataBundle.columns[0].length > 1) {
+                return true;
+            }
+        } catch (err) {
+            console.error(`Unable to check for available data. ${err}`)
+            return false;
+        }
+        return false;
     }
 
     /**
@@ -234,7 +248,7 @@ class Chart extends Component {
      * @param {*} d 
      * @param {*} defaultTitleFormat 
      * @param {*} defaultValueFormat 
-     * @param {*} color 
+     * @param {*} color
      */
     chartTooltipContainer(d, defaultTitleFormat, defaultValueFormat, color) {
         const data = this.config.data_classes;
@@ -255,20 +269,27 @@ class Chart extends Component {
 
     render() {
         const data = buildChartData(this.props.chartData, this.props.projectLanguage, this.props.absolutePath);
+        const testPath = `Path: ${this.props.absolutePath}`;
+        const hasData = this.isDataAvailable(data);
 
         return (
             <div className="Chart">
                 <div className="Chart_actionbar">
                     <div style={{ width: "300px", height: "35px" }}>
+                        {
+                            (hasData) ?
+                                <span className="testPath">{testPath}</span>
+                                : <Fragment />
+                        }
                     </div>
                 </div>
                 <div className="Chart_C3" style={{ padding: "20px" }} >
                     {
-                        data.columns.length === 0 ?
+                        (!hasData) ?
                             <div className="nodata">
                                 <div className="nodata_message">
                                     <div className="nodata_message_title">No metrics available</div>
-                                    <div className="nodata_message_help">Tip: Run a new load test</div>
+                                    <div className="nodata_message_help">Tip: Run a few load tests</div>
                                 </div>
                             </div>
                             : <Fragment />
@@ -293,6 +314,7 @@ const mapStateToProps = stores => {
 Chart.propTypes = {
     chartData: PropTypes.object.isRequired,
     absolutePath: PropTypes.string.isRequired,
+    httpMethod: PropTypes.string.isRequired,
     projectLanguage: PropTypes.string.isRequired,
 }
 

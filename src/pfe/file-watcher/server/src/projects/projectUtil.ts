@@ -12,6 +12,7 @@
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as http from "http";
+import * as https from "https";
 import moment from "moment-timezone";
 import * as path from "path";
 import { TransformOptions } from "stream";
@@ -54,7 +55,7 @@ const containerInfoMap = new Map();
 
 export const containerInfoForceRefreshMap = new Map();
 
-export const LOCAL_WORKSPACE = process.argv[2] ? process.argv[2] : process.env.HOST_WORKSPACE_DIRECTORY;
+export const LOCAL_WORKSPACE = process.env.NODE_ENV === "test" ? process.env.HOST_WORKSPACE_DIRECTORY : (process.argv[2] ? process.argv[2] : process.env.HOST_WORKSPACE_DIRECTORY);
 
 const projectList: Array<string> = [];
 
@@ -74,6 +75,7 @@ export interface ProjectEvent {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     contextRoot?: string;
+    isHttps?: boolean;
 }
 
 export interface ProjectLog {
@@ -322,6 +324,9 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
     }
     if (operation.projectInfo.contextRoot) {
         projectInfo.contextRoot = operation.projectInfo.contextRoot;
+    }
+    if (typeof operation.projectInfo.isHttps == "boolean") {
+        projectInfo.isHttps = operation.projectInfo.isHttps;
     }
 
     const projectMetadata = projectsController.getProjectMetadataById(projectID);
@@ -626,6 +631,7 @@ export async function containerDelete(projectInfo: ProjectInfo, script: string):
 
     containerInfoMap.delete(projectInfo.projectID);
     containerInfoForceRefreshMap.delete(projectInfo.projectID);
+
     if (process.env.IN_K8 === "true") {
         logger.logProjectInfo(`Removing dangling images for ${projectInfo.projectID}`, projectInfo.projectID);
         dockerutil.removeDanglingImages();
@@ -966,14 +972,27 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             updateDetailedAppStatus(projectID, containerInfo.ip, port, path);
         }
 
+        // default value of isHttps is false, overwrite if we have valid projectInfo.isHttps
+        let isHttps: boolean = false;
+        if (typeof projectInfo.isHttps == "boolean") {
+            isHttps = projectInfo.isHttps;
+        }
+
+        const protocol = isHttps ? https : http;
+
         // Try to ping the application
-        const options = {
+        const options: any = {
             hostname: containerInfo.ip,
             port: port,
             path: path,
             method: "GET",
             timeout: 1000
         };
+
+        if (isHttps) {
+            options.rejectUnauthorized = false;
+            options.secure = true;
+        }
 
         if (process.env.IN_K8) {
             options.hostname = containerInfo.serviceName;
@@ -984,7 +1003,7 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
         let statusCode: number = undefined;
         let isGoodStatusCode: Boolean = undefined;
 
-        http.request(options, (res) => {
+        protocol.request(options, (res) => {
             statusCode = res.statusCode;
 
             // We consider the app to be running if we get any non-error status code.
@@ -995,7 +1014,7 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             } else if (!isGoodStatusCode && path === "/health") {
                 options.path = "/";
 
-                http.request(options, (res) => {
+                protocol.request(options, (res) => {
                     statusCode = res.statusCode;
 
                     // We consider the app to be running if we get any non-error status code.
@@ -1204,6 +1223,9 @@ export async function buildAndRun(operation: Operation, command: string): Promis
     }
     if (operation.projectInfo.contextRoot) {
         projectEvent.contextRoot = operation.projectInfo.contextRoot;
+    }
+    if (typeof operation.projectInfo.isHttps == "boolean") {
+        projectEvent.isHttps = operation.projectInfo.isHttps;
     }
     const buildInfo: BuildRequest = {
         projectLocation: projectLocation,
@@ -1436,7 +1458,9 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.inProgress, "buildscripts.buildImage");
         try {
             logger.logProjectInfo("Build container image", buildInfo.projectID);
-            await dockerutil.buildImage(buildInfo.projectID, buildInfo.containerName, [], buildInfo.projectLocation, true, dockerBuildLog);
+            const projectInfo = await getProjectInfo(buildInfo.projectID);
+            const language = projectInfo.language;
+            await dockerutil.buildImage(buildInfo.projectID, language, buildInfo.containerName, [], buildInfo.projectLocation, true, dockerBuildLog);
             const imageLastBuild = Date.now();
             logger.logProjectInfo("Container image build stage complete.", buildInfo.projectID);
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.inProgress, "buildscripts.containerBuildSuccess", imageLastBuild.toString());
@@ -1491,7 +1515,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.success, " ");
         await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.starting, " ");
 
-        const intervalID: NodeJS.Timer = setInterval(isApplicationPodUp, 1000, buildInfo, projectName, operation);
+        const intervalID: NodeJS.Timer = setInterval(isApplicationPodUp, 1000, buildInfo, projectName, operation, event);
         isApplicationPodUpIntervalMap.set(buildInfo.projectID, intervalID);
 
     } else {
@@ -1499,7 +1523,9 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.inProgress, "buildscripts.buildImage");
         try {
             logger.logProjectInfo("Build container image", buildInfo.projectID);
-            await dockerutil.buildImage(buildInfo.projectID, buildInfo.containerName, [], buildInfo.projectLocation, true, dockerBuildLog);
+            const projectInfo = await getProjectInfo(buildInfo.projectID);
+            const language = projectInfo.language;
+            await dockerutil.buildImage(buildInfo.projectID, language, buildInfo.containerName, [], buildInfo.projectLocation, true, dockerBuildLog);
             logger.logProjectInfo("Container image build stage complete.", buildInfo.projectID);
             const imageLastBuild = Date.now();
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.success, " ", imageLastBuild.toString());
@@ -1604,7 +1630,7 @@ async function appendToBuildLogFile(buildInfo: BuildRequest, output: string, log
  *
  * @returns Promise<void>
  */
-export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: string, operation: Operation): Promise<void> {
+export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: string, operation: Operation, event: string): Promise<void> {
     let isPodRunning = false;
     let isPodFailed = false;
     const releaseLabel = "release=" + buildInfo.containerName;
@@ -1640,7 +1666,7 @@ export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: s
         logger.logProjectInfo("Clearing the isApplicationPodUp interval", buildInfo.projectID);
         clearInterval(intervalID);
         isApplicationPodUpIntervalMap.delete(buildInfo.projectID);
-        getPODInfoAndSendToPortal(operation);
+        getPODInfoAndSendToPortal(operation, event);
     }
 
     if (isPodFailed) {
@@ -1653,7 +1679,7 @@ export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: s
         logger.logProjectInfo("Clearing the isApplicationPodUp interval", buildInfo.projectID);
         clearInterval(intervalID);
         isApplicationPodUpIntervalMap.delete(buildInfo.projectID);
-        getPODInfoAndSendToPortal(operation);
+        getPODInfoAndSendToPortal(operation, event);
     }
 }
 
@@ -1721,6 +1747,7 @@ export async function removeProject(projectInfo: ProjectInfo): Promise<void> {
 
     containerInfoMap.delete(projectInfo.projectID);
     containerInfoForceRefreshMap.delete(projectInfo.projectID);
+
     if (process.env.IN_K8 === "true") {
         dockerutil.removeDanglingImages();
     }
@@ -1761,7 +1788,7 @@ export function getUserFriendlyProjectType(internalProjectType: string): string 
  *
  * @returns Promise<any>
  */
-async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
+async function getPODInfoAndSendToPortal(operation: Operation, event: string = "projectCreation"): Promise<any> {
     const projectEvent: ProjectEvent = {
         operationId: operation.operationId,
         projectID: operation.projectInfo.projectID,
@@ -1772,17 +1799,19 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
     const projectLocation = projectInfo.location;
     const projectID = projectInfo.projectID;
     const projectName = projectInfo.projectName;
-    const event = "projectCreation";
     const keyValuePair: UpdateProjectInfoPair = {
         key: "buildRequest",
         value: false
     };
 
-    if (operation.projectInfo.ignoredPaths) {
-        projectInfo.ignoredPaths = operation.projectInfo.ignoredPaths;
+    if (projectInfo.ignoredPaths) {
+        projectEvent.ignoredPaths = projectInfo.ignoredPaths;
     }
-    if (operation.projectInfo.contextRoot) {
-        projectInfo.contextRoot = operation.projectInfo.contextRoot;
+    if (projectInfo.contextRoot) {
+        projectEvent.contextRoot = projectInfo.contextRoot;
+    }
+    if (typeof projectInfo.isHttps == "boolean") {
+        projectEvent.isHttps = projectInfo.isHttps;
     }
 
     const logDir = await logHelper.getLogDir(projectID, projectName);
@@ -1791,13 +1820,13 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
     try {
         logger.logProjectInfo(`The container was started successfully for application ` + projectLocation, projectID, projectName);
 
-        logger.logProjectInfo("The project location for " + operation.projectInfo.projectID + " is " + projectLocation, projectID, projectName);
+        logger.logProjectInfo("The project location for " + projectID + " is " + projectLocation, projectID, projectName);
 
-        const containerInfo = await kubeutil.getApplicationContainerInfo(operation.projectInfo, operation);
+        const containerInfo = await kubeutil.getApplicationContainerInfo(projectInfo, operation);
         projectEvent.status = "success";
         if (containerInfo) {
-            containerInfoMap.set(operation.projectInfo.projectID, containerInfo);
-            containerInfoForceRefreshMap.set(operation.projectInfo.projectID, false);
+            containerInfoMap.set(projectID, containerInfo);
+            containerInfoForceRefreshMap.set(projectID, false);
             if (containerInfo.ip) {
                 projectEvent.host = containerInfo.ip;
             }
@@ -1813,17 +1842,17 @@ async function getPODInfoAndSendToPortal(operation: Operation): Promise<any> {
             }
             logger.logProjectInfo("Found container information: " + JSON.stringify(containerInfo), projectID, projectName);
         } else {
-            containerInfoMap.delete(operation.projectInfo.projectID);
-            containerInfoForceRefreshMap.delete(operation.projectInfo.projectID);
+            containerInfoMap.delete(projectID);
+            containerInfoForceRefreshMap.delete(projectID);
             logger.logProjectInfo("No containerInfo", projectID, projectName);
         }
 
         // stream the app container logs - Kubernetes
-        logger.logProjectInfo("Streaming application logs on Kubernetes for " + projectInfo.projectID, projectInfo.projectID);
+        logger.logProjectInfo("Streaming application logs on Kubernetes for " + projectID, projectID);
         await processManager.spawnDetachedAsync(projectID, "/file-watcher/scripts/dockerScripts/docker-app-log.sh", [appLog, operation.containerName,
             process.env.IN_K8, projectID], {});
 
-        const logs = await getProjectLogs(operation.projectInfo);
+        const logs = await getProjectLogs(projectInfo);
         projectEvent.logs = logs;
     } catch (err) {
         logger.logProjectError(err, projectID, projectName);

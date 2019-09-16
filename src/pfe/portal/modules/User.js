@@ -290,8 +290,8 @@ module.exports = class User {
       let projectArray = this.projectList.getAsArray();
       for (let i = 0; i < projectArray.length; i++) {
         let project = projectArray[i];
-        // Don't request build if autoBuild is false
-        if (project.isOpen() && project.autoBuild) {
+        // Don't request build if project is closed
+        if (project.isOpen()) {
           this.buildAndRunProject(project);
         }
       }

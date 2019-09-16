@@ -18,8 +18,9 @@ import * as _ from "lodash";
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
 import { SocketIO } from "./socket-io";
-import { ProjectCreation, projectAction } from "./project";
+import { ProjectCreation, projectAction, updateStatus } from "./project";
 import { expect } from "chai";
+import * as project_configs from "../configs/project.config";
 import * as eventConfigs from "../configs/event.config";
 import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
@@ -98,7 +99,6 @@ export function setTestEnvVariables(): void {
     process.env.CW_PROJECTDATA_DIR = app_configs.projectDataDir;
     process.env.CW_WORKSPACESETTINGS_DIR = app_configs.workspaceSettingsDir;
     process.env.CW_EXTENSION_DIR = app_configs.extensionDir;
-    process.env.IN_K8_REGISTRY = "codewindtest";
     process.env.DEFAULT_LOG_LEVEL = app_configs.DEFAULT_LOG_LEVEL;
     process.env.TEST_TYPE = process.env.IN_K8 ? "kube" : "local";
 }
@@ -110,10 +110,10 @@ export function writeToFile(path: string, content: string, callback: (err: Error
     });
 }
 
-export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreation): void {
+export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreation, checkEvent?: string, checkEventData?: any): void {
     after(`rebuild project ${projData.projectType}`, async function (): Promise<void> {
         this.timeout(timeoutConfigs.createTestTimeout);
-        await rebuildProject(socket, projData);
+        await rebuildProject(socket, projData, checkEvent, checkEventData);
     });
 }
 
@@ -163,4 +163,29 @@ export async function rebuildProject(socket: SocketIO, projData: ProjectCreation
     } else {
         fail(`failed to find ${targetEvent} for rebuild project ${projData.projectType}`);
     }
+}
+
+/**
+ * @function
+ * @description Util function to set the build status of a project. We need to do it for project that relies on script or IDC code and brute set the build status of a project.
+ *
+ * @param projData <Required | ProjectCreation> - The project creation data.
+ * @param status <Optional | String> - The status to update to.
+ *
+ * @returns Promise<void>
+ */
+export async function setBuildStatus(projData: ProjectCreation, status?: string): Promise<void> {
+    if (project_configs.needManualReset[projData.projectType]["buildStatus"]) {
+        const info = await updateStatus({
+            "projectID": projData.projectID,
+            "type": "buildState",
+            "buildStatus": status || "success"
+        });
+        expect(info);
+        expect(info.statusCode).to.equal(200);
+    }
+}
+
+export async function delay(ms: number): Promise<void> {
+    return new Promise( resolve => setTimeout(resolve, ms) );
 }

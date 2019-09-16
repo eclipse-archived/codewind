@@ -50,37 +50,33 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
   const user = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
   const repositoryDescription = req.sanitizeBody('description');
+  const isRepoProtected = req.sanitizeBody('protected');
 
   try {
-    new URL(repositoryUrl);
-  } catch(err) {
-    log.error(`Invalid repository url: ${err}`);
-    res.status(400).send("Invalid repository URL");
-    return;
-  }
-  try {
-    await user.templates.addRepository(repositoryUrl, repositoryDescription);
+    await user.templates.addRepository(repositoryUrl, repositoryDescription, isRepoProtected);
   } catch (error) {
     log.error(error);
-    if (error instanceof TemplateError && error.code === 'DUPLICATE_URL') {
+    const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON'];
+    if (error instanceof TemplateError && knownErrorCodes.includes(error.code)) {
       res.status(400).send(error.message);
       return;
     }
     throw error;
   }
-  sendRepositories(req, res, _next);
+  await sendRepositories(req, res, _next);
 });
 
 router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
   await user.templates.deleteRepository(repositoryUrl);
-  sendRepositories(req, res, _next);
+  await sendRepositories(req, res, _next);
 });
 
 function sendRepositories(req, res, _next) {
   const user = req.cw_user;
-  const repositoryList = user.templates.getRepositories();
+  const templatesController = user.templates;
+  const repositoryList = templatesController.getRepositories();
   res.status(200).json(repositoryList);
 }
 
@@ -98,7 +94,7 @@ router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, re
 router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
   const templateController = user.templates;
-  const styles = await templateController.getTemplateStyles();
+  const styles = await templateController.getAllTemplateStyles();
   res.status(200).json(styles);
 });
 

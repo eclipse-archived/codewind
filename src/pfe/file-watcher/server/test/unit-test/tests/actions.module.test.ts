@@ -8,6 +8,7 @@ import * as actions from "../../../src/projects/actions";
 import { workspaceConstants, projectConstants } from "../../../src/projects/constants";
 import * as socket from "../../../src/utils/socket";
 import * as locale from "../../../src/utils/locale";
+import * as timeout_configs from "../../functional-test/configs/timeout.config";
 
 
 export function actionsTestModule(): void {
@@ -555,7 +556,7 @@ export function actionsTestModule(): void {
                 "error": "Missing required file",
             },
             "combo24": {
-                "description": "good appsody project",
+                "description": "good extension project",
                 "args": {
                     projectType: "appsodyExtension",
                     extensionID: appsodyExtensionPath,
@@ -566,7 +567,7 @@ export function actionsTestModule(): void {
                 "result": "success"
             },
             "combo25": {
-                "description": "appsody project with missing requiredFiles",
+                "description": "extension project with missing requiredFiles",
                 "args": {
                     projectType: "appsodyExtension",
                     extensionID: appsodyExtensionPath,
@@ -703,7 +704,7 @@ export function actionsTestModule(): void {
                 } catch (err) {
                     expect(err.toString()).to.equal(expectedResult);
                 }
-            });
+            }).timeout(timeout_configs.defaultTimeout);
         }
     });
 

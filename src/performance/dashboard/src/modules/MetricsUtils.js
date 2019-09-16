@@ -11,7 +11,7 @@
 
 /**
  * Returns the counter names for each fo the application metrics engines
- * @param {string} appMetricsName 
+ * @param {string} appMetricsName
  */
 let getLanguageCounters = function (appMetricsName) {
     switch (appMetricsName) {
@@ -122,12 +122,12 @@ let updateAllMetricDeltas = function (model, metricTypes, filteredUrl) {
 
 /**
  *  _getCounterNames
- * 
+ *
  *  Different languages return different counters for each of the metric types. 
- * 
+ *
  *  eg.  Memory metrics in Node would be:  [ "usedHeapAfterGCPeak", "usedNativePeak" ]
  *  eg.  Memory metrics in Swift would be:  [ "systemMean", "systemPeak", "processMean", "processPeak" ]
- * 
+ *
  *  Given a metric type,  this function returns the array list above.
  */
 let getCounterNames = function (mcAPIData, metricType) {
@@ -148,60 +148,50 @@ let getCounterNames = function (mcAPIData, metricType) {
 }
 
 /**
- * Formats the data from the Codewind metrics API into something which can 
+ * Formats the data from the Codewind metrics API into something which can
  * be plotted in a chart.  Only selected metrics (metricNames) will be returned
+ * 
  * @param  mcAPIData the data loaded from the REST service
  * @param  metricType  the type of metric being parsed eg  'memory' or 'cpu' or 'http' etc
  * @param  metricNames eg :    ['systemMean', 'systemPeak', 'processMean', 'processPeak']
  * @param  scaleFactor multiplication scale
  */
 
-let buildChartData = function (mcAPIData, metricType, scaleFactor, chartStyle) {
-
+let buildChartData = function (mcAPIData, filteredData, metricType, scaleFactor) {
     let counterNames = getCounterNames(mcAPIData, metricType);
-
-    let loadedData = mcAPIData.metrics;
     let columnData = [];
-    let testMetricsTypes = {};
-
-    if (loadedData.length > 0) {
-        // find the required section in the loaded data (because the API returns all the metric types in one go) 
-        const metrics = loadedData.find(a => a.type === metricType);
-
-        // extract the counters
-        let counters = metrics['metrics'];
-
-        columnData = counterNames.map(metricName => {
-            let metricsData = (counters.map(test => test.value.data[metricName]));
-
-            // scale the data
-            metricsData = metricsData.map(x => { return (x * scaleFactor).toFixed(); });
-            metricsData.unshift(metricName);
-
-            return metricsData;
+    counterNames.map(counterName => {
+        const counterRow = [];
+        counterRow.push(counterName);
+        filteredData.map(snapshot => {
+            const metricCounters = snapshot[metricType].value.value.data;
+            const value = (metricCounters[counterName] * scaleFactor).toFixed();
+            counterRow.push(value);
         });
-        // Set chart rendering
-        counterNames.forEach(name => {
-            testMetricsTypes[name] = chartStyle;
-        });
-    }
+        columnData.push(counterRow);
+    })
 
-    let chartData = {
+    // columnData should result in an array of counter names and values :
+    //  [
+    // `   ["systemMean", "18", "19", "20", "18", "11", "11", "12", "30", "14", "15"],
+    //     ["systemPeak", "23", "23", "23", "21", "14", "14", "15", "33", "16", "19"],
+    //     ["processMean", "15", "17", "18", "6", "8", "9", "9", "10", "11", "11"],
+    //     ["processPeak", "19", "19", "19", "8", "10", "10", "12", "11", "13", "14"]
+    //  ]
+
+    return {
         columns: columnData,
-        types: testMetricsTypes,
         selection: {
             enabled: true,
-            grouped: true, // select all vertical points
+            grouped: true,
             multiple: true,
             draggable: true,
         },
-
     };
-
-    return chartData;
 }
 
-/** 
+
+/**
  * Remove protocol, hostname and port from the URL if they exist
  */
 let getPathFromURL = function (url) {
@@ -218,71 +208,25 @@ let getPathFromURL = function (url) {
  */
 let buildChartDataHTTP = function (params) {
 
-    const mcAPIData = params.projectMetrics;
-    const scaleFactor = params.scaleFactor;
-    const counterName = params.counterName;
-    const chartType = params.chartType;
-    const urlFilter = params.urlFilter;
+    const {scaleFactor, counterName, urlFilter, decimals, filteredData} = params;
 
     let columnData = [];
-    let metricTypes = {};
-    let loadedData = mcAPIData.metrics;
+    columnData.push(counterName);
 
-    if (loadedData.length > 0) {
-
-        // find the required section in the loaded data (because the API returns all the metric types in one go) 
-        const metrics = loadedData.find(section => section.type === 'http');
-
-        // extract the counters
-        let counters = metrics['metrics'];
-
-        // get the recorded urls (remove protocol, hostname and port)
-        let availableURLs = counters.map(snapshot => {
-            return snapshot.value.data.map(result => {
-                return getPathFromURL(result.url);
-            })
+    filteredData.map(snapshot => {
+        const urlList = snapshot.http.value.value.data;
+        const urlRow = urlList.find(row => {
+            let uri = getPathFromURL(row.url);
+            uri = getEndpoint(uri);
+            return uri === urlFilter
         });
-        if (!availableURLs) { availableURLs = []; }
+        let value = urlRow[counterName]
+        value = (value * scaleFactor).toFixed(decimals);
+        columnData.push(value);
+    });
 
-        // get just the URL endpoints in a flat array
-        let flattenedArrayOfURLs = availableURLs.reduce((accumulatedList, currentValue) => {
-            return accumulatedList.concat(currentValue);
-        }, []
-        );
-
-        flattenedArrayOfURLs = flattenedArrayOfURLs.filter(url => (url === urlFilter));
-
-        if (!flattenedArrayOfURLs) {
-            flattenedArrayOfURLs = [];
-        }
-
-        // an array of unique url endpoints
-        let uniqueURLs = flattenedArrayOfURLs.filter((val, idx, arr) => arr.indexOf(val) === idx);
-        columnData = uniqueURLs.map(urlPath => {
-            let metricsData = (counters.map(test => {
-                // check that the URL path was hit in this snapshot and includes the requested metrics
-                // if it does not,  just return the counter value as ZERO 
-                let urlTests = test.value.data.find(x => {
-                    return getPathFromURL(x.url) === urlPath
-                });
-                return (urlTests) ? urlTests[counterName] : 0;
-            }
-            ));
-
-            // scale the data
-            metricsData = metricsData.map(x => { return (x * scaleFactor).toFixed(2); });
-            metricsData.unshift(urlPath);
-            return metricsData;
-        });
-
-        uniqueURLs.forEach(urlPath => {
-            metricTypes[urlPath] = chartType;
-        });
-    }
-
-    let chartData = {
+    return {
         columns: columnData,
-        types: metricTypes,
         selection: {
             enabled: true,
             grouped: true, // select all vertical points
@@ -290,8 +234,32 @@ let buildChartDataHTTP = function (params) {
             draggable: true,
         }
     };
+}
 
-    return chartData;
+/**
+ * Searches for the HTTP Hits (by path) and then returns the snapshot timestamps for that URL
+ *
+ * @param {*} metrics the loaded metrics from redux
+ * @param {string} filteredUrl the URL path
+ */
+let getHTTPHitTimestamps = function (metrics, filteredUrl) {
+
+    let timestamps = [];
+    const http = metrics.find(metric => { return metric.type === "http" });
+    http.metrics.forEach(snapshot => {
+        const urlList = snapshot.value.data;
+        const foundUrlSamples = urlList.find(urlRow => {
+            if (urlRow && urlRow.url) {
+                let uri = getPathFromURL(urlRow.url);
+                return getEndpoint(uri) === filteredUrl;
+            } 
+            return false;
+        });
+        if (foundUrlSamples) {
+            timestamps.push(snapshot.time);
+        }
+    });
+    return timestamps;
 }
 
 /**
@@ -299,44 +267,30 @@ let buildChartDataHTTP = function (params) {
 */
 let sortMetrics = function (metrics, filteredUrl) {
 
-    // let metrics = this.props.statsMicroclimate.statsMicroclimate;
-    let timestamps = [];
+    // get timestamps keys from the http hits metric 
+    const httpHitTimestamps = getHTTPHitTimestamps(metrics, filteredUrl);
 
-    // read all the timestamps
-    metrics.forEach(metricType => {
-        timestamps = timestamps.concat(metricType.metrics.map(snapshot => {
-            return snapshot["time"]
-        }));
-    });
-
-    // remove any time duplicates
-    let distinctTimestamps = timestamps.filter((value, index, self) => {
-        return self.indexOf(value) === index;
-    })
-
-    // sort the timestamps in ascending order
-    distinctTimestamps.sort();
-
-    // morph and wrap timestamps, give each entry an ID and a plotNumber
     let x = -1;
-    let model = distinctTimestamps.map(t => {
+    let model = httpHitTimestamps.map(t => {
         x = x + 1;
         return { 'id': t.toString(), 'time': t, 'plotNumber': x }
     })
 
-    // merge all the metrics into the data model
-
+    // merge all the metrics into the data model using a timestamp key
     metrics.forEach(metricType => {
         metricType.metrics.forEach(snapshot => {
-            let timestamp = model.find(element => { return element['time'] === snapshot['time'] })
-            let metricsGroup = {}
-            metricsGroup.type = metricType.type;
-            metricsGroup.value = snapshot;
-            timestamp[metricType.type] = metricsGroup;
+            const timestamp = model.find(element => { return element['time'] === snapshot['time'] });
+            if (timestamp) {
+                let metricsGroup = {}
+                metricsGroup.type = metricType.type;
+                metricsGroup.value = snapshot;
+                timestamp[metricType.type] = metricsGroup;
+            }
         })
     });
 
-    // Make the load test description easier to access by copying it out of a metricType (CPU) and into the parent loadTest. 
+    // Make the load test description easier to access by copying it out of a metricType (CPU)
+    // and into the parent loadTest.
     model.forEach(loadTest => {
         loadTest.desc = loadTest.cpu.value.desc;
     })
@@ -354,7 +308,10 @@ let getURLAverageResponseTime = function (urlArray, urlPath) {
         return result;
     }
 
-    let urlEntry = urlArray.find(entry => { return getPathFromURL(entry.url) === urlPath })
+    let urlEntry = urlArray.find(entry => {
+        let uri = getPathFromURL(entry.url);
+        return getEndpoint(uri) === urlPath;
+    });
 
     if (urlEntry) {
         result = urlEntry.averageResponseTime;
@@ -363,7 +320,7 @@ let getURLAverageResponseTime = function (urlArray, urlPath) {
 }
 
 /**
- * 
+ *
  * @param {*} path eg /myApi?a=1
  * @returns {string} /myApi
  */
