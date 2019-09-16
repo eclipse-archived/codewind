@@ -865,7 +865,7 @@ describe('Templates.js', function() {
         });
     });
 
-    describe('addTemplateStylesToRepos(repos)', function() {
+    describe('fetchAllRepositoryDetails(repos)', function() {
         const tests = {
             '1 repo containing only Codewind templates': {
                 input: [sampleRepos.codewind],
@@ -893,7 +893,7 @@ describe('Templates.js', function() {
         for (const [testName, test] of Object.entries(tests)) {
             describe(testName, function() { // eslint-disable-line no-loop-func
                 it(`returns the expected operation info`, async function() {
-                    const output = await Templates.addTemplateStylesToRepos(test.input);
+                    const output = await Templates.fetchAllRepositoryDetails(test.input);
                     output.should.deep.equal(test.output);
                 });
             });
