@@ -42,6 +42,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         const testMavenProfiles: Array<string> = ["profile1", "profile2"];
         const testMavenProperties: Array<string> = ["key1=value1", "key2=value2"];
 
+        let defaultInternalPort: any, defaultInternalDebugPort: any;
+
         const combinations: any = {
             "combo1": {
                 "setting": "internalPort",
@@ -76,6 +78,37 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                         "internalDebugPort": project_configs.exposedDebugPorts[0]
                     }
                 },
+                "beforeHook": [{
+                    "title": "Internal debug port test - Before hook - Get default internal debug port",
+                    "function": async function(hook: any): Promise<void> {
+                        hook.timeout(timeoutConfigs.defaultTimeout);
+                        if (!project_configs.debugCapabilities[projData.projectType]) return;
+                        defaultInternalDebugPort = project_configs.defaultInternalDebugPorts[projectLang];
+                    }
+                }],
+                "afterHook": [{
+                    "title": "Internal debug port test - After hook - Reset internal debug port",
+                    "function": async function(hook: any): Promise<void> {
+                        hook.timeout(timeoutConfigs.createTestTimeout);
+                        if (!project_configs.debugCapabilities[projData.projectType]) return;
+
+                        await runProjectSpecificationSettingTest(combinations["combo2"], defaultInternalDebugPort);
+
+                        const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+                        const mode = action === "restart" ? "run" : undefined;
+                        const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
+                            [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
+                        const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
+
+                        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run")) {
+                            targetEvents.pop();
+                            targetEventDatas.pop();
+                        }
+
+                        await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
+                        await utils.setBuildStatus(projData);
+                    }
+                }],
             },
             "combo3": {
                 "setting": "contextRoot",
@@ -161,14 +194,23 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 },
             }
         };
-        let defaultInternalPort: any;
 
         afterEach("clear socket events", () => {
             socket.clearEvents();
         });
 
-        utils.rebuildProjectAfterHook(socket, projData, [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
-            [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}]);
+        const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+        const mode = action === "restart" ? "run" : undefined;
+        const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
+            [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
+        const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
+
+        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run")) {
+            targetEvents.pop();
+            targetEventDatas.pop();
+        }
+
+        utils.callProjectActionAfterHook(action, mode, socket, projData, targetEvents, targetEventDatas);
 
         afterEach("remove build from running queue", async () => {
             await utils.setBuildStatus(projData);
@@ -518,9 +560,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             }
             // we need to do two builds for docker projects on local. issue: https://github.com/eclipse/codewind/issues/297
             if (projData.projectType === "docker" && !process.env.IN_K8) {
-                await utils.rebuildProject(socket, projData);
+                await utils.callProjectAction("build", undefined, socket, projData);
             }
-            await utils.rebuildProject(socket, projData, [eventConfigs.events.projectChanged],
+            await utils.callProjectAction("build", undefined, socket, projData, [eventConfigs.events.projectChanged],
                 [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}}]);
             await utils.setBuildStatus(projData);
         }
@@ -545,10 +587,10 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             }
             // we need to do two builds for docker projects on local. issue: https://github.com/eclipse/codewind/issues/297
             if (projData.projectType === "docker" && !process.env.IN_K8) {
-                await utils.rebuildProject(socket, projData, [eventConfigs.events.projectChanged],
+                await utils.callProjectAction("build", undefined, socket, projData, [eventConfigs.events.projectChanged],
                     [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}}]);
             }
-            await utils.rebuildProject(socket, projData, [eventConfigs.events.projectChanged],
+            await utils.callProjectAction("build", undefined, socket, projData, [eventConfigs.events.projectChanged],
                 [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": defaultInternalPort}}]);
             await utils.setBuildStatus(projData);
         }
@@ -556,7 +598,14 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         async function afterHookInternalPortTestResetPort(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.createTestTimeout);
             await runProjectSpecificationSettingTest(combinations["combo1"], project_configs.defaultInternalPorts[projectLang]);
-            await utils.rebuildProject(socket, projData);
+
+            const targetEvents = [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged];
+            const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
+            if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run")) {
+                targetEvents.pop();
+                targetEventDatas.pop();
+            }
+            await utils.callProjectAction("build", undefined, socket, projData, targetEvents, targetEventDatas);
             await utils.setBuildStatus(projData);
         }
 
@@ -570,12 +619,12 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultContextRoot[projectLang] || project_configs.defaultHealthCheckEndPoint[projectLang]);
         }
 
-        async function  afterHookMavenProfileTest(hook: any): Promise<void> {
+        async function afterHookMavenProfileTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
             await runProjectSpecificationSettingTest(combinations["combo5"], []);
         }
 
-        async function  afterHookMavenPropertyTest(hook: any): Promise<void> {
+        async function afterHookMavenPropertyTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
             await runProjectSpecificationSettingTest(combinations["combo6"], []);
         }

@@ -17,6 +17,7 @@ import { SocketIO } from "../../../lib/socket-io";
 
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
+import * as project_configs from "../../../configs/project.config";
 import { fail } from "assert";
 
 import * as utils from "../../../lib/utils";
@@ -90,8 +91,16 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
                     socket.clearEvents();
                 });
 
-                utils.rebuildProjectAfterHook(socket, projData, [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
-                    [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}]);
+                const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+                const mode = action === "restart" ? "run" : undefined;
+                const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
+                    [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
+                const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
+
+                if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run")) {
+                    targetEvents.pop();
+                    targetEventDatas.pop();
+                }
 
                 const testData = _.cloneDeep(data);
                 testData["type"] = statusTypes[statusType]["name"];

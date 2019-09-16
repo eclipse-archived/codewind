@@ -21,18 +21,23 @@ import * as swiftProject from "../../../src/projects/swiftProject";
 // We currently need to do that because project that relies on script and IDC code does not follow the typescript code and need to be manually reset.
 export const needManualReset: any = {
     "docker": {
+        "appStatus": false,
         "buildStatus": false
     },
     "nodejs": {
+        "appStatus": true,
         "buildStatus": true
     },
     "liberty": {
+        "appStatus": true,
         "buildStatus": true
     },
     "spring": {
+        "appStatus": true,
         "buildStatus": true,
     },
     "swift": {
+        "appStatus": false,
         "buildStatus": true
     }
 };
@@ -84,31 +89,11 @@ export const startModes: Array<string> = ["run", "debug", "debugNoInit"];
 
 // project specific restart capabilities depending on the above start modes
 export const restartCapabilities: any = {
-    "docker": {
-        [startModes[0]]: false,
-        [startModes[1]]: false,
-        [startModes[2]]: false,
-    },
-    "liberty": {
-        [startModes[0]]: true,
-        [startModes[1]]: true,
-        [startModes[2]]: false,
-    },
-    "nodejs": {
-        [startModes[0]]: true,
-        [startModes[1]]: false,
-        [startModes[2]]: true,
-    },
-    "spring": {
-        [startModes[0]]: true,
-        [startModes[1]]: true,
-        [startModes[2]]: true,
-    },
-    "swift": {
-        [startModes[0]]: false,
-        [startModes[1]]: false,
-        [startModes[2]]: false,
-    }
+    "docker": [],
+    "liberty": [startModes[0], startModes[1]],
+    "nodejs": [startModes[0], startModes[2]],
+    "spring": startModes,
+    "swift": []
 };
 
 // project specific debug capabilities
@@ -189,6 +174,13 @@ export const defaultInternalPorts: any = {
     "nodejs": nodeProject.getDefaultAppPort(),
     "spring": springProject.getDefaultAppPort(),
     "swift": swiftProject.getDefaultAppPort()
+};
+
+// project specific setting for default app debug ports
+export const defaultInternalDebugPorts: any = {
+    "liberty": libertyProject.getDefaultDebugPort(),
+    "nodejs": nodeProject.getDefaultDebugPort(),
+    "spring": springProject.getDefaultDebugPort(),
 };
 
 // project specific settings to mark the main files
