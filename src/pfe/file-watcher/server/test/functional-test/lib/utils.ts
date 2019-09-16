@@ -121,20 +121,21 @@ export function writeToFile(path: string, content: string, callback: (err: Error
     });
 }
 
-export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreation, checkEvent?: Array<string>, checkEventData?: Array<any>): void {
-    after(`rebuild project ${projData.projectType}`, async function (): Promise<void> {
+export function callProjectActionAfterHook(action: string, startMode: string, socket: SocketIO, projData: ProjectCreation, checkEvent?: Array<string>, checkEventData?: Array<any>): void {
+    after(`${action} project ${projData.projectType}`, async function (): Promise<void> {
         this.timeout(timeoutConfigs.createTestTimeout);
-        await rebuildProject(socket, projData, checkEvent, checkEventData);
+        await callProjectAction(action, startMode, socket, projData, checkEvent, checkEventData);
     });
 }
 
-export async function rebuildProject(socket: SocketIO, projData: ProjectCreation, checkEvent?: Array<string>, checkEventData?: Array<any>): Promise<void> {
+export async function callProjectAction(action: string, startMode: string, socket: SocketIO, projData: ProjectCreation, checkEvent?: Array<string>, checkEventData?: Array<any>): Promise<void> {
     const testData: any = {
-        action: "build",
+        action: action,
         projectType: projData.projectType,
         location: projData.location,
         projectID: projData.projectID,
     };
+    if (startMode) testData["startMode"] = startMode;
 
     const info: any = await projectAction(testData);
     expect(info);
@@ -196,6 +197,19 @@ export async function setBuildStatus(projData: ProjectCreation, status?: string)
             "projectID": projData.projectID,
             "type": "buildState",
             "buildStatus": status || "success"
+        });
+        expect(info);
+        expect(info.statusCode).to.equal(200);
+    }
+}
+
+export async function setAppStatus(projData: ProjectCreation, status?: string, msg?: string): Promise<void> {
+    if (project_configs.needManualReset[projData.projectType]["appStatus"]) {
+        const info = await updateStatus({
+            "projectID": projData.projectID,
+            "type": "appState",
+            "status": status || "started",
+            "error": msg || `This message indicates the app status was set in Turbine test`
         });
         expect(info);
         expect(info.statusCode).to.equal(200);

@@ -84,35 +84,66 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             }],
             "afterHook": [afterHookRemoveProjectFromRunningBuild]
         },
-        "combo5": {
+    };
+
+    _.forEach(project_configs.restartCapabilities[projData.projectType], (restartCapability) => {
+        combinations[`restart_${restartCapability}`] = {
             "action": "restart",
+            "mode": restartCapability,
             "returnKeys": ["operationId", "status"],
             "statusCode": 202,
-            "socketEvent": [eventConfigs.events.restartResult, eventConfigs.events.statusChanged],
-            "eventKeys": [["operationId", "projectID", "status", "startMode", "ports"], ["projectID", "appStatus"]],
+            "socketEvent": [eventConfigs.events.restartResult],
+            "eventKeys": [["operationId", "projectID", "status", "startMode", "ports"]],
             "result" : [{
                 "projectID": projData.projectID,
                 "status": "success"
-            }, {
-                "projectID": projData.projectID,
-                "appStatus": "started",
-            }]
-        }
-    };
+            }],
+            "beforeHook": [
+                async function(hook: any): Promise<void> {
+                    hook.timeout(timeoutConfigs.defaultTimeout);
+                    await utils.setAppStatus(projData);
+                }
+            ],
+            "afterHook": [
+                async function(hook: any): Promise<void> {
+                    hook.timeout(timeoutConfigs.createTestTimeout);
+                    await utils.setAppStatus(projData);
+
+                    const comboInUse = _.cloneDeep(combinations[`restart_${restartCapability}`]);
+                    comboInUse.socketEvent.push(eventConfigs.events.statusChanged);
+                    comboInUse.eventKeys.push(["projectID", "appStatus"]);
+                    comboInUse.result.push({
+                        "projectID": projData.projectID,
+                        "appStatus": "started",
+                    });
+                    await setProjectActionTest(comboInUse, "run");
+                    socket.clearEvents();
+                }
+            ]
+        };
+    });
 
     describe("projectAction function", () => {
         afterEach("clear socket events", () => {
             socket.clearEvents();
         });
 
-        after("restart in run mode to reset the app", async () => {
-            if (project_configs.restartCapabilities[projData.projectType]["run"]) {
-                setProjectActionTest(combinations["combo5"], "run");
-            }
+        after("set app status to running", async () => {
+            await utils.setAppStatus(projData);
         });
 
-        utils.rebuildProjectAfterHook(socket, projData, [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
-            [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}]);
+        const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+        const mode = action === "restart" ? "run" : undefined;
+        const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
+            [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
+        const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
+
+        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run")) {
+            targetEvents.pop();
+            targetEventDatas.pop();
+        }
+
+        utils.callProjectActionAfterHook(action, mode, socket, projData, targetEvents, targetEventDatas);
 
         after("remove build from running queue", async () => {
             await utils.setBuildStatus(projData);
@@ -131,131 +162,145 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         });
 
         _.forEach(combinations, (combo) => {
-            describe(`configure project action ${combo.action}`, () => {
-                _.forEach(combo["afterHook"], (afterHook) => {
-                    after(`after hook: ${combo["setting"]} settings test`, async function (): Promise<void> {
-                        await afterHook(this);
-                    });
-                });
+            describe(`configure project action ${combo["action"]}`, () => {
+                setProjectActionDescribe(combo, combo["mode"]);
+            });
+        });
+    });
 
-                if (combo.action.toLowerCase() === "restart") {
-                    _.forEach(startModes, (mode) => {
-                        if (!(project_configs.restartCapabilities[projData.projectType] && project_configs.restartCapabilities[projData.projectType][mode][mode]))  return;
-                        setProjectActionTest(combo, mode);
-                    });
-                } else {
-                    setProjectActionTest(combo);
-                }
+    function setProjectActionDescribe(combo: any, mode?: string): void {
+        _.forEach(combo["beforeHook"], (beforeHook) => {
+            before(`before hook: ${combo["setting"]} settings test`, async function (): Promise<void> {
+                await beforeHook(this);
             });
         });
 
-        function setProjectActionTest(combo: any, mode?: string): void {
-            let testMessage = `set project action to ${combo.action}`;
-            testMessage = mode ? testMessage + ` with mode ${mode}` : testMessage;
+        _.forEach(combo["afterHook"], (afterHook) => {
+            after(`after hook: ${combo["setting"]} settings test`, async function (): Promise<void> {
+                await afterHook(this);
+            });
+        });
 
-            it(testMessage, async () => {
-                const comboInUse = _.cloneDeep(combo);
+        const comboInUse = _.cloneDeep(combo);
+        if (mode === "run") {
+            comboInUse.socketEvent.push(eventConfigs.events.statusChanged);
+            comboInUse.eventKeys.push(["projectID", "appStatus"]);
+            comboInUse.result.push({
+                "projectID": projData.projectID,
+                "appStatus": "started",
+            });
+        }
+        setProjectActionIt(comboInUse, mode);
+    }
 
-                if (comboInUse.action.toLowerCase() === "restart" && process.env.IN_K8) {
-                    comboInUse.statusCode = 400;
-                    delete comboInUse.returnKeys;
-                    delete comboInUse.socketEvent;
-                    delete comboInUse.eventKeys;
-                    delete comboInUse.result;
-                }
+    function setProjectActionIt(combo: any, mode?: string): void {
+        let testMessage = `set project action to ${combo.action}`;
+        testMessage = mode ? testMessage + ` with mode ${mode}` : testMessage;
+        it(testMessage, async () => {
+            await setProjectActionTest(combo, mode);
+        }).timeout(timeoutConfigs.createTestTimeout);
+    }
 
-                const testData = _.cloneDeep(data);
-                testData["action"] = comboInUse.action;
+    async function setProjectActionTest(combo: any, mode?: string): Promise<void> {
+        const comboInUse = _.cloneDeep(combo);
 
-                if (mode) {
-                    testData["startMode"] = mode;
-                }
+        if (comboInUse.action.toLowerCase() === "restart" && process.env.IN_K8) {
+            comboInUse.statusCode = 400;
+            delete comboInUse.returnKeys;
+            delete comboInUse.socketEvent;
+            delete comboInUse.eventKeys;
+            delete comboInUse.result;
+        }
 
-                const info: any = await projectAction(testData);
-                expect(info);
+        const testData = _.cloneDeep(data);
+        testData["action"] = comboInUse.action;
 
-                if (comboInUse["returnKeys"]) {
-                    for (const returnKey of comboInUse["returnKeys"]) {
-                        expect(info[returnKey]);
-                    }
-                }
+        if (mode) {
+            testData["startMode"] = mode;
+        }
 
-                expect(info.statusCode);
-                expect(info.statusCode).to.equal(comboInUse.statusCode);
+        const info: any = await projectAction(testData);
+        expect(info);
 
-                if (comboInUse["status"]) {
-                    expect(info.status);
-                    expect(info.status).to.equal(comboInUse.status);
-                }
+        if (comboInUse["returnKeys"]) {
+            for (const returnKey of comboInUse["returnKeys"]) {
+                expect(info[returnKey]);
+            }
+        }
 
-                const socketEvents = comboInUse["socketEvent"];
-                const eventKeys = comboInUse["eventKeys"];
-                const results = comboInUse["result"];
+        expect(info.statusCode);
+        expect(info.statusCode).to.equal(comboInUse.statusCode);
 
-                if (socketEvents && socketEvents.length > 0 && eventKeys && eventKeys.length > 0 && results && results.length > 0) {
-                    expect(socketEvents.length).to.equal(eventKeys.length);
-                    expect(eventKeys.length).to.equal(results.length);
+        if (comboInUse["status"]) {
+            expect(info.status);
+            expect(info.status).to.equal(comboInUse.status);
+        }
 
-                    for (const socketEvent of socketEvents) {
-                        const index = socketEvents.indexOf(socketEvent);
-                        const eventKey = eventKeys[index];
-                        const result = results[index];
+        const socketEvents = comboInUse["socketEvent"];
+        const eventKeys = comboInUse["eventKeys"];
+        const results = comboInUse["result"];
 
-                        const targetEvent = socketEvent;
-                        let eventFound = false;
-                        let event: any;
-                        await new Promise((resolve) => {
-                            const timer = setInterval(() => {
-                                const events = socket.getAllEvents();
-                                if (events && events.length >= 1) {
-                                    event =  events.filter((value) => {
-                                        if (value.eventName === targetEvent && _.difference(eventKey, Object.keys(value.eventData)).length === 0
-                                        && _.isMatch(value.eventData, result)) {
-                                            return value;
-                                        }
-                                    })[0];
-                                    if (event) {
-                                        eventFound = true;
-                                        clearInterval(timer);
-                                        return resolve();
-                                    }
+        if (socketEvents && socketEvents.length > 0 && eventKeys && eventKeys.length > 0 && results && results.length > 0) {
+            expect(socketEvents.length).to.equal(eventKeys.length);
+            expect(eventKeys.length).to.equal(results.length);
+
+            for (const socketEvent of socketEvents) {
+                const index = socketEvents.indexOf(socketEvent);
+                const eventKey = eventKeys[index];
+                const result = results[index];
+
+                const targetEvent = socketEvent;
+                let eventFound = false;
+                let event: any;
+                await new Promise((resolve) => {
+                    const timer = setInterval(() => {
+                        const events = socket.getAllEvents();
+                        if (events && events.length >= 1) {
+                            event =  events.filter((value) => {
+                                if (value.eventName === targetEvent && _.difference(eventKey, Object.keys(value.eventData)).length === 0
+                                && _.isMatch(value.eventData, result)) {
+                                    return value;
                                 }
-                            }, timeoutConfigs.defaultInterval);
-                        });
-
-                        if (eventFound && event) {
-                            expect(event);
-                            expect(event.eventName);
-                            expect(event.eventName).to.equal(targetEvent);
-                            expect(event.eventData);
-
-                            for (const key of eventKey) {
-                                expect(event.eventData).to.haveOwnProperty(key);
-                                if (key === "projectID") {
-                                    expect(event.eventData[key]).to.equal(projData.projectID);
-                                }
-                                if (key === "projectType") {
-                                    expect(event.eventData[key]).to.equal(projData.projectType);
-                                }
-                                if (key === "location") {
-                                    expect(event.eventData[key]).to.equal(projData.location);
-                                }
-                                if (key === "appStatus") {
-                                    expect(event.eventData[key]).to.equal("started");
-                                }
-                                if (key === "startMode") {
-                                    const expectedMode = mode === "debug" ? "debugNoInit" : mode;
-                                    expect(event.eventData[key]).to.equal(expectedMode);
-                                }
+                            })[0];
+                            if (event) {
+                                eventFound = true;
+                                clearInterval(timer);
+                                return resolve();
                             }
-                        } else {
-                            fail(`failed to find ${targetEvent} for action ${combo.action}`);
+                        }
+                    }, timeoutConfigs.defaultInterval);
+                });
+
+                if (eventFound && event) {
+                    expect(event);
+                    expect(event.eventName);
+                    expect(event.eventName).to.equal(targetEvent);
+                    expect(event.eventData);
+
+                    for (const key of eventKey) {
+                        expect(event.eventData).to.haveOwnProperty(key);
+                        if (key === "projectID") {
+                            expect(event.eventData[key]).to.equal(projData.projectID);
+                        }
+                        if (key === "projectType") {
+                            expect(event.eventData[key]).to.equal(projData.projectType);
+                        }
+                        if (key === "location") {
+                            expect(event.eventData[key]).to.equal(projData.location);
+                        }
+                        if (key === "appStatus") {
+                            expect(event.eventData[key]).to.equal("started");
+                        }
+                        if (key === "startMode") {
+                            expect(event.eventData[key]).to.equal(mode);
                         }
                     }
+                } else {
+                    fail(`failed to find ${targetEvent} for action ${combo.action}`);
                 }
-            }).timeout(timeoutConfigs.createTestTimeout);
+            }
         }
-    });
+    }
 
     async function afterHookRemoveProjectFromRunningBuild(hook: any): Promise<void> {
         hook.timeout(timeoutConfigs.defaultTimeout);
