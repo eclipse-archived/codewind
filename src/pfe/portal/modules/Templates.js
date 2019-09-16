@@ -19,6 +19,8 @@ const TemplateError = require('./utils/errors/TemplateError');
 
 const log = new Logger('Templates.js');
 
+cconst log = new Logger('Templates.js');
+
 const DEFAULT_REPOSITORY_LIST = [
   {
     url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
@@ -27,12 +29,19 @@ const DEFAULT_REPOSITORY_LIST = [
     protected: true,
     projectStyles: ['Codewind'],
   },
-  {
-    url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
-    description: 'Kabanero Collections',
-    enabled: false,
-  },
 ];
+
+const KABANERO_REPO = {
+  url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
+  description: 'Kabanero Collections',
+  enabled: false,
+};
+
+// only add the kabanero repo locally
+if (!global.codewind.RUNNING_IN_K8S) {
+  DEFAULT_REPOSITORY_LIST.push(KABANERO_REPO);
+}
+
 module.exports = class Templates {
 
   constructor(workspace) {
