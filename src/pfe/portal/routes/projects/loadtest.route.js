@@ -163,7 +163,7 @@ router.post('/api/v1/projects/:id/loadtest/config', validateReq, async function 
       delete configOptions.body;
     }
     await project.writeNewLoadTestConfigFile(configOptions);
-    res.status(200).send(`load-test/config.json successfully written to project ${project.name}`);
+    res.status(200).json(`load-test/config.json successfully written to project ${project.name}`);
   } catch (err) {
     log.error(err.info || err);
     res.status(500).send(err.info || err);

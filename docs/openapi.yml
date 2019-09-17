@@ -413,6 +413,10 @@ paths:
       responses:
         200:
           description: Write to runLoad/config.json successful
+          content:
+            application/json:
+              schema:
+                type: string
         400:
           description: Incorrect parameters given
         404:
