@@ -27,12 +27,19 @@ const DEFAULT_REPOSITORY_LIST = [
     protected: true,
     projectStyles: ['Codewind'],
   },
-  {
-    url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
-    description: 'Kabanero Collections',
-    enabled: false,
-  },
 ];
+
+const KABANERO_REPO = {
+  url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
+  description: 'Kabanero Collections',
+  enabled: false,
+};
+
+// only add the kabanero repo locally
+if (!global.codewind.RUNNING_IN_K8S) {
+  DEFAULT_REPOSITORY_LIST.push(KABANERO_REPO);
+}
+
 module.exports = class Templates {
 
   constructor(workspace) {
@@ -49,11 +56,11 @@ module.exports = class Templates {
       if (await cwUtils.fileExists(this.repositoryFile)) {
         this.repositoryList = await fs.readJson(this.repositoryFile); // eslint-disable-line require-atomic-updates
         await this.updateRepoListWithReposFromProviders();
-        this.repositoryList = await addTemplateStylesToRepos(this.repositoryList); // eslint-disable-line require-atomic-updates
+        this.repositoryList = await fetchAllRepositoryDetails(this.repositoryList); // eslint-disable-line require-atomic-updates
         this.needsRefresh = true;
       } else {
         await this.updateRepoListWithReposFromProviders();
-        this.repositoryList = await addTemplateStylesToRepos(this.repositoryList); // eslint-disable-line require-atomic-updates
+        this.repositoryList = await fetchAllRepositoryDetails(this.repositoryList); // eslint-disable-line require-atomic-updates
         await this.writeRepositoryList();
       }
     } catch (err) {
@@ -97,7 +104,7 @@ module.exports = class Templates {
         extraRepos.map(async repo => {
           repo.enabled = true;
           repo.protected = true;
-          const repoWithTemplateStyles = await addTemplateStylesToRepo(repo);
+          const repoWithTemplateStyles = await fetchRepositoryDetails(repo);
           return repoWithTemplateStyles;
         })
       );
@@ -245,7 +252,7 @@ module.exports = class Templates {
       description: repoDescription,
       enabled: true,
     }
-    newRepo = await addTemplateStylesToRepo(newRepo);
+    newRepo = await fetchRepositoryDetails(newRepo);
     if (isRepoProtected !== undefined) {
       newRepo.protected = isRepoProtected;
     }
@@ -272,22 +279,59 @@ module.exports = class Templates {
   }
 }
 
-function addTemplateStylesToRepos(repos) {
+function fetchAllRepositoryDetails(repos) {
   return Promise.all(
-    repos.map(repo => addTemplateStylesToRepo(repo))
+    repos.map(repo => fetchRepositoryDetails(repo))
   );
 }
 
-async function addTemplateStylesToRepo(repo) {
+async function fetchRepositoryDetails(repo) {
+  let newRepo = {...repo}
+  await readRepoTemplatesJSON(newRepo);
+
   if (repo.projectStyles) {
-    return repo;
+    return newRepo;
   }
 
   const templatesFromRepo = await getTemplatesFromRepo(repo);
-  return {
-    ...repo,
-    projectStyles: getTemplateStyles(templatesFromRepo),
-  };
+  newRepo.projectStyles = getTemplateStyles(templatesFromRepo);
+  return newRepo;
+}
+
+async function readRepoTemplatesJSON(repository) {
+  if (!repository.url) {
+    throw new Error(`repo '${repository}' must have a URL`);
+  }
+  const indexUrl = new URL(repository.url);
+  const indexPath = indexUrl.pathname;
+  const templatesPath = path.dirname(indexPath) + '/' + 'templates.json';
+
+  const templatesUrl = new URL(repository.url);
+  templatesUrl.pathname = templatesPath;
+
+  const options = {
+    host: templatesUrl.host,
+    path: templatesUrl.pathname,
+    method: 'GET',
+  }
+
+  const res = await cwUtils.asyncHttpRequest(options, undefined, templatesUrl.protocol === 'https:');
+  if (res.statusCode !== 200) {
+    // Return as templates.json may not exist.
+    return;
+  }
+
+  try {
+    const templateDetails = JSON.parse(res.body);
+    for (const prop of ['name', 'description']) {
+      if (templateDetails.hasOwnProperty(prop)) {
+        repository[prop] = templateDetails[prop];
+      }
+    }
+  } catch (error) {
+    // Log an error but don't throw an exception as this is optional.
+    log.error(`URL '${templatesUrl}' should return JSON`);
+  }
 }
 
 async function getTemplatesFromRepo(repository) {
@@ -401,7 +445,7 @@ function isTemplateSummary(obj) {
   return expectedKeys.every(key => obj.hasOwnProperty(key));
 }
 
-module.exports.addTemplateStylesToRepos = addTemplateStylesToRepos;
+module.exports.fetchAllRepositoryDetails = fetchAllRepositoryDetails;
 module.exports.getTemplatesFromRepo = getTemplatesFromRepo;
 module.exports.filterTemplatesByStyle = filterTemplatesByStyle;
 module.exports.getReposFromProviders = getReposFromProviders;

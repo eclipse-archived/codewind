@@ -50,10 +50,10 @@ git config -f $GIT_CONFIG --add user.email "`git config --get user.email || echo
 # Set docker-compose file
 if [ "$REMOTE_MODE" = true ]; then
   printf "\nRemote mode is enabled\n";
-  DOCKER_COMPOSE_FILE="docker-compose.yaml"
+  DOCKER_COMPOSE_FILE="docker-compose.yaml -f docker-compose-remote.yaml"
 else
   printf "\nDefault Local mode is enabled\n";
-  DOCKER_COMPOSE_FILE="docker-compose.yaml -f docker-compose-local.yaml"
+  DOCKER_COMPOSE_FILE="docker-compose.yaml"
 fi
 
 if [ "$DEVMODE" = true ]; then
@@ -134,6 +134,11 @@ printf "\n\n${BLUE}RUNNING DOCKER-COMPOSE IN: $PWD $RESET\n";
 export REPOSITORY='';
 export TAG
 export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
+if [ "$REMOTE_MODE" = true ]; then
+  export WORKSPACE_VOLUME=cw-workspace
+else
+  export WORKSPACE_VOLUME="$WORKSPACE_DIRECTORY"
+fi
 # Export HOST_OS for fix to Maven failing on Windows only as host
 export HOST_OS=$(uname);
 export REMOTE_MODE;
