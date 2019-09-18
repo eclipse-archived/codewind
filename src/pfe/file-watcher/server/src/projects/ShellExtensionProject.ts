@@ -104,7 +104,7 @@ export class ShellExtensionProject implements IExtensionProject {
             }
         }
         catch (err) {
-            logger.logError(err.message);
+            logger.logError(">> Shell extension | Set language error " + err.message);
         }
 
         this.language = projectInfo.language;
