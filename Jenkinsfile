@@ -220,6 +220,7 @@ pipeline {
                             TAG="latest"
                         else
                             TAG=$GIT_BRANCH
+                            TAG_CUMULATIVE="0.4"
                         fi        
 
                         # Publish docker images with a filter for branch name
@@ -236,6 +237,8 @@ pipeline {
                             do
                                 echo "Publishing $REGISTRY/$i:$TAG"
                                 ./script/publish.sh $i $REGISTRY $TAG
+                                echo "Publishing $REGISTRY/$i:$TAG_CUMULATIVE"
+                                ./script/publish.sh $i $REGISTRY $TAG_CUMULATIVE
                             done
                         else
                             echo "Skip publishing docker images for $GIT_BRANCH branch"
