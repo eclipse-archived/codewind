@@ -206,7 +206,7 @@ export function projectExtensionsTestModule(): void {
         }
     });
 
-    describe("Combinational testing of getProjectHandler function", () => {
+    describe.only("Combinational testing of getProjectHandler function", () => {
 
         const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
         const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
@@ -231,25 +231,26 @@ export function projectExtensionsTestModule(): void {
         };
 
         before("create test directories", async () => {
-            if (!(await existsAsync(nodeProjectMetadataPath))) {
-                await mkdirAsync(nodeProjectMetadataPath);
-                await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
-            }
+            // if (!(await existsAsync(nodeProjectMetadataPath))) {
+            //     await mkdirAsync(nodeProjectMetadataPath);
+            //     await copyAsync(nodeOriginalProjectMetadata, nodeTestProjectMetadata);
+            // }
 
-            if (!(await existsAsync(springProjectMetadataPath))) {
-                await mkdirAsync(springProjectMetadataPath);
-                await copyAsync(springOriginalProjectMetadata, springTestProjectMetadata);
-            }
+            // if (!(await existsAsync(springProjectMetadataPath))) {
+            //     await mkdirAsync(springProjectMetadataPath);
+            //     await copyAsync(springOriginalProjectMetadata, springTestProjectMetadata);
+            // }
 
-            if (!(await existsAsync(swiftProjectMetadataPath))) {
-                await mkdirAsync(swiftProjectMetadataPath);
-                await copyAsync(swiftOriginalProjectMetadata, swiftTestProjectMetadata);
-            }
+            // if (!(await existsAsync(swiftProjectMetadataPath))) {
+            //     await mkdirAsync(swiftProjectMetadataPath);
+            //     await copyAsync(swiftOriginalProjectMetadata, swiftTestProjectMetadata);
+            // }
 
-            if (!(await existsAsync(microprofileProjectMetadataPath))) {
-                await mkdirAsync(microprofileProjectMetadataPath);
-                await copyAsync(microprofileOriginalProjectMetadata, microprofileTestProjectMetadata);
-            }
+            // if (!(await existsAsync(microprofileProjectMetadataPath))) {
+            //     await mkdirAsync(microprofileProjectMetadataPath);
+            //     await copyAsync(microprofileOriginalProjectMetadata, microprofileTestProjectMetadata);
+            // }
+            process.env.HIDE_PFE_LOG = "n";
 
             if (!(await existsAsync(appsodyNodeProjectMetadataPath))) {
                 await mkdirAsync(appsodyNodeProjectMetadataPath);
@@ -273,25 +274,27 @@ export function projectExtensionsTestModule(): void {
         });
 
         after("remove test directories", async () => {
-            if ((await existsAsync(nodeProjectMetadataPath))) {
-                await unlinkAsync(nodeTestProjectMetadata);
-                await rmdirAsync(nodeProjectMetadataPath);
-            }
+            // if ((await existsAsync(nodeProjectMetadataPath))) {
+            //     await unlinkAsync(nodeTestProjectMetadata);
+            //     await rmdirAsync(nodeProjectMetadataPath);
+            // }
 
-            if ((await existsAsync(springProjectMetadataPath))) {
-                await unlinkAsync(springTestProjectMetadata);
-                await rmdirAsync(springProjectMetadataPath);
-            }
+            // if ((await existsAsync(springProjectMetadataPath))) {
+            //     await unlinkAsync(springTestProjectMetadata);
+            //     await rmdirAsync(springProjectMetadataPath);
+            // }
 
-            if ((await existsAsync(swiftProjectMetadataPath))) {
-                await unlinkAsync(swiftTestProjectMetadata);
-                await rmdirAsync(swiftProjectMetadataPath);
-            }
+            // if ((await existsAsync(swiftProjectMetadataPath))) {
+            //     await unlinkAsync(swiftTestProjectMetadata);
+            //     await rmdirAsync(swiftProjectMetadataPath);
+            // }
 
-            if ((await existsAsync(microprofileProjectMetadataPath))) {
-                await unlinkAsync(microprofileTestProjectMetadata);
-                await rmdirAsync(microprofileProjectMetadataPath);
-            }
+            // if ((await existsAsync(microprofileProjectMetadataPath))) {
+            //     await unlinkAsync(microprofileTestProjectMetadata);
+            //     await rmdirAsync(microprofileProjectMetadataPath);
+            // }
+
+            process.env.HIDE_PFE_LOG = "y";
 
             if ((await existsAsync(appsodyNodeProjectMetadataPath))) {
                 await unlinkAsync(appsodyNodeTestProjectMetadata);
@@ -309,46 +312,46 @@ export function projectExtensionsTestModule(): void {
         });
 
         const combinations: any = {
-            "combo1": {
-                "projectID": "dummynodeproject",
-                "resultProjectHandler": "nodejs",
-                "resultProjectCapabilities": {
-                    startModes: ["run", "debugNoInit"],
-                    controlCommands: ["restart"]
-                }
-            },
-            "combo2": {
-                "projectID": "dummyspringproject",
-                "resultProjectHandler": "spring",
-                "resultProjectCapabilities": {
-                    startModes: ["run", "debug", "debugNoInit"],
-                    controlCommands: ["restart"]
-                }
-            },
-            "combo3": {
-                "projectID": "dummyspringproject",
-                "resultProjectHandler": undefined,
-                "resultProjectCapabilities": {
-                    startModes: ["run"],
-                    controlCommands: []
-                }
-            },
-            "combo4": {
-                "projectID": "dummyswiftproject",
-                "resultProjectHandler": "swift",
-                "resultProjectCapabilities": {
-                    startModes: ["run"],
-                    controlCommands: []
-                }
-            },
-            "combo5": {
-                "projectID": "dummymicroprofileproject",
-                "resultProjectHandler": "liberty",
-                "resultProjectCapabilities": {
-                    startModes: ["run", "debug"],
-                    controlCommands: ["restart"]
-                }
-            },
+            // "combo1": {
+            //     "projectID": "dummynodeproject",
+            //     "resultProjectHandler": "nodejs",
+            //     "resultProjectCapabilities": {
+            //         startModes: ["run", "debugNoInit"],
+            //         controlCommands: ["restart"]
+            //     }
+            // },
+            // "combo2": {
+            //     "projectID": "dummyspringproject",
+            //     "resultProjectHandler": "spring",
+            //     "resultProjectCapabilities": {
+            //         startModes: ["run", "debug", "debugNoInit"],
+            //         controlCommands: ["restart"]
+            //     }
+            // },
+            // "combo3": {
+            //     "projectID": "dummyspringproject",
+            //     "resultProjectHandler": undefined,
+            //     "resultProjectCapabilities": {
+            //         startModes: ["run"],
+            //         controlCommands: []
+            //     }
+            // },
+            // "combo4": {
+            //     "projectID": "dummyswiftproject",
+            //     "resultProjectHandler": "swift",
+            //     "resultProjectCapabilities": {
+            //         startModes: ["run"],
+            //         controlCommands: []
+            //     }
+            // },
+            // "combo5": {
+            //     "projectID": "dummymicroprofileproject",
+            //     "resultProjectHandler": "liberty",
+            //     "resultProjectCapabilities": {
+            //         startModes: ["run", "debug"],
+            //         controlCommands: ["restart"]
+            //     }
+            // },
             "combo6": {
                 "projectID": "dummyappsodyproject",
                 "resultProjectHandler": "appsodyExtension",
@@ -374,6 +377,7 @@ export function projectExtensionsTestModule(): void {
                 if (projectInfo.extensionID) {
                     projectInfo.extensionID = appsodyExtensionPath;
                 }
+                console.log(">> Project info: %j", projectInfo);
                 const projectHandler: any = await projectExtensions.getProjectHandler(projectInfo);
                 if (projectInfo.projectType) {
                     expect(projectHandler).to.exist;
@@ -394,6 +398,8 @@ export function projectExtensionsTestModule(): void {
 
 
         before("create test directories", async () => {
+            process.env.HIDE_PFE_LOG = "n";
+
             if (!(await existsAsync(appsodyNodeProjectMetadataPath))) {
                 await mkdirAsync(appsodyNodeProjectMetadataPath);
                 await copyAsync(appsodyNodeOriginalProjectMetadata, appsodyNodeTestProjectMetadata);
@@ -410,6 +416,8 @@ export function projectExtensionsTestModule(): void {
         });
 
         after("remove test directories", async () => {
+            process.env.HIDE_PFE_LOG = "y";
+
             if ((await existsAsync(appsodyNodeProjectMetadataPath))) {
                 await unlinkAsync(appsodyNodeTestProjectMetadata);
                 await rmdirAsync(appsodyNodeProjectMetadataPath);
