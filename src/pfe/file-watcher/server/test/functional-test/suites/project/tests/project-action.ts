@@ -30,8 +30,6 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         projectID: projData.projectID,
     };
 
-    const startModes = project_configs.startModes;
-
     const combinations: any = {
         "combo1": {
             "action": "disableautobuild",
