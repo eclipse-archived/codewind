@@ -121,13 +121,6 @@ export function writeToFile(path: string, content: string, callback: (err: Error
     });
 }
 
-export function callProjectActionAfterHook(action: string, startMode: string, socket: SocketIO, projData: ProjectCreation, checkEvent?: Array<string>, checkEventData?: Array<any>): void {
-    after(`${action} project ${projData.projectType}`, async function (): Promise<void> {
-        this.timeout(timeoutConfigs.createTestTimeout);
-        await callProjectAction(action, startMode, socket, projData, checkEvent, checkEventData);
-    });
-}
-
 export async function callProjectAction(action: string, startMode: string, socket: SocketIO, projData: ProjectCreation, checkEvent?: Array<string>, checkEventData?: Array<any>): Promise<void> {
     const testData: any = {
         action: action,
@@ -149,37 +142,44 @@ export async function callProjectAction(action: string, startMode: string, socke
     for (const socketEvent of targetEvents) {
         const index = targetEvents.indexOf(socketEvent);
         const data = targetDatas[index];
-
-        let eventFound = false;
-        let event: any;
-        await new Promise((resolve) => {
-            const timer = setInterval(() => {
-                const events = socket.getAllEvents();
-                if (events && events.length >= 1) {
-                    event =  events.filter((value) => {
-                        if (value.eventName === socketEvent && _.isMatch(value.eventData, data)) {
-                            return value;
-                        }
-                    })[0];
-                    if (event) {
-                        eventFound = true;
-                        clearInterval(timer);
-                        return resolve();
-                    }
-                }
-            }, timeoutConfigs.defaultInterval);
-        });
-
-        if (eventFound && event) {
-            expect(event);
-            expect(event.eventName);
-            expect(event.eventName).to.equal(socketEvent);
-            expect(event.eventData);
-            expect(_.isMatch(event.eventData, data));
-        } else {
-            fail(`failed to find ${socketEvent} for rebuild project ${projData.projectType}`);
-        }
+        await checkForEvent(socket, socketEvent, data);
     }
+    return;
+}
+
+export async function checkForEvent(socket: SocketIO, socketEvent: string, eventData: any): Promise<void> {
+    let eventFound = false;
+    let event: any;
+
+    await new Promise((resolve) => {
+        const timer = setInterval(() => {
+            const events = socket.getAllEvents();
+            if (events && events.length >= 1) {
+                event =  events.filter((value) => {
+                    if (value.eventName === socketEvent && _.isMatch(value.eventData, eventData)) {
+                        return value;
+                    }
+                })[0];
+                if (event) {
+                    eventFound = true;
+                    clearInterval(timer);
+                    return resolve();
+                }
+            }
+        }, timeoutConfigs.defaultInterval);
+    });
+
+    if (eventFound && event) {
+        expect(event);
+        expect(event.eventName);
+        expect(event.eventName).to.equal(socketEvent);
+        expect(event.eventData);
+        expect(_.isMatch(event.eventData, eventData));
+    } else {
+        fail(`failed to find ${socketEvent}`);
+    }
+
+    return;
 }
 
 /**
