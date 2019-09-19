@@ -33,6 +33,7 @@ const KABANERO_REPO = {
   url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
   description: 'Kabanero Collections',
   enabled: false,
+  protected: true,
 };
 
 // only add the kabanero repo locally
