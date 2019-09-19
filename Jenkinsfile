@@ -95,8 +95,11 @@ pipeline {
                 }
             }
         }  
-        /*
-        stage('Run Codewind test suite') {            
+        
+        stage('Run Codewind test suite') {  
+            options {
+                timeout(time: 2, unit: 'HOURS') 
+            }          
                 steps {
                     withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
@@ -197,7 +200,7 @@ pipeline {
                 }
             }
         } 
-        */ 
+         
         
         stage('Publish Docker images') {
 
