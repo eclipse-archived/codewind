@@ -150,6 +150,7 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
  * API Function to clear the contents of a project ready
  * for upload of changed source.
  * @param id the id of the project
+ * @param fileList a list of files that should be present in the project.
  * @return 200 if the clear is successful
  * @return 404 if project doesn't exist
  * @return 500 if internal error
@@ -158,21 +159,53 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
 // mechanism to only delete files that don't exist on the local end.
 router.post('/api/v1/projects/:id/remote-bind/clear', async (req, res) => {
   const projectID = req.sanitizeParams('id');
+  const keepFileList = req.sanitizeBody('fileList');
   const user = req.cw_user;
   try {
     const project = user.projectList.retrieveProject(projectID);
     if (project) {
       const pathToClear = path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
-      await exec(`rm -rf ${pathToClear}/* ${pathToClear}/.[!.]*`);
+      const currentFileList = await listFiles(pathToClear, '');
+
+      const filesToDeleteSet = new Set(currentFileList);
+      keepFileList.forEach((f) => filesToDeleteSet.delete(f));
+      const filesToDelete = Array.from(filesToDeleteSet);
+
+      log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
+        `${filesToDelete.join(', ')}`);
+
+      await Promise.all(
+        filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
+      );
+
       res.sendStatus(200);
     } else {
       res.sendStatus(404);
     }
-  } catch(err) {
+  } catch (err) {
     log.error(err);
     res.status(500).send(err);
   }
 });
+
+// List all the files under the given directory, return
+// a list of relative paths.
+async function listFiles(absolutePath, relativePath) {
+  const files = await fs.readdir(absolutePath);
+  const fileList = [];
+  for (const f of files) {
+    const nextRelativePath = path.join(relativePath, f);
+    const nextAbsolutePath = path.join(absolutePath, f);
+    fileList.push(nextRelativePath)
+
+    const stats = await fs.stat(nextAbsolutePath);
+    if (stats.isDirectory()) {
+      const subFiles = await listFiles(nextAbsolutePath, nextRelativePath);
+      fileList.push(...subFiles);
+    }
+  }
+  return fileList;
+}
 
 /**
  * API Function to complete binding a given project on a file system visible
