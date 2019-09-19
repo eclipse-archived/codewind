@@ -126,8 +126,13 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             socket.clearEvents();
         });
 
-        after("set app status to running", async () => {
-            await utils.setAppStatus(projData);
+        after("set app status to running", async function (): Promise<void> {
+            this.timeout(timeoutConfigs.defaultTimeout);
+            if (project_configs.needManualReset[projData.projectType]["appStatus"]) {
+                await utils.setAppStatus(projData);
+                await utils.checkForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
+                socket.clearEvents();
+            }
         });
 
         const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
@@ -141,7 +146,10 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             targetEventDatas.pop();
         }
 
-        utils.callProjectActionAfterHook(action, mode, socket, projData, targetEvents, targetEventDatas);
+        after(`${action} project ${projData.projectType}`, async function (): Promise<void> {
+            this.timeout(timeoutConfigs.createTestTimeout);
+            await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
+        });
 
         after("remove build from running queue", async () => {
             await utils.setBuildStatus(projData);
