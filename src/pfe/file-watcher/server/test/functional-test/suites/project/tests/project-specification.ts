@@ -105,6 +105,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                             targetEventDatas.pop();
                         }
 
+                        await utils.setAppStatus(projData);
                         await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
                         await utils.setBuildStatus(projData);
                     }
@@ -197,6 +198,10 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
         afterEach("clear socket events", () => {
             socket.clearEvents();
+        });
+
+        after("set app status to running", async () => {
+            await utils.setAppStatus(projData);
         });
 
         const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
@@ -599,13 +604,19 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             hook.timeout(timeoutConfigs.createTestTimeout);
             await runProjectSpecificationSettingTest(combinations["combo1"], project_configs.defaultInternalPorts[projectLang]);
 
-            const targetEvents = [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged];
+            const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+            const mode = action === "restart" ? "run" : undefined;
+            const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
+                [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
             const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
+
             if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run")) {
                 targetEvents.pop();
                 targetEventDatas.pop();
             }
-            await utils.callProjectAction("build", undefined, socket, projData, targetEvents, targetEventDatas);
+
+            await utils.setAppStatus(projData);
+            await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
             await utils.setBuildStatus(projData);
         }
 

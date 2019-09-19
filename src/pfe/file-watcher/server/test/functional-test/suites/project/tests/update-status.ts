@@ -91,6 +91,10 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
                     socket.clearEvents();
                 });
 
+                after("set app status to running", async () => {
+                    await utils.setAppStatus(projData);
+                });
+
                 const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
                 const mode = action === "restart" ? "run" : undefined;
                 const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
@@ -101,6 +105,12 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
                     targetEvents.pop();
                     targetEventDatas.pop();
                 }
+
+                utils.callProjectActionAfterHook(action, mode, socket, projData, targetEvents, targetEventDatas);
+
+                after("remove build from running queue", async () => {
+                    await utils.setBuildStatus(projData);
+                });
 
                 const testData = _.cloneDeep(data);
                 testData["type"] = statusTypes[statusType]["name"];
