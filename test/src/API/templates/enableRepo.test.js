@@ -56,7 +56,7 @@ describe('Batch enabling repositories', function() {
                     subResponse.status.should.equal(200)
                 );
             });
-            it(`lists those repos as disabled`, async function() {
+            it.skip(`lists those repos as disabled`, async function() {
                 const disabledRepos = testRepos.map(repo => {
                     return {
                         ...repo,
@@ -84,7 +84,7 @@ describe('Batch enabling repositories', function() {
                     subResponse.status.should.equal(200)
                 );
             });
-            it(`lists those repos as enabled`, async function() {
+            it.skip(`lists those repos as enabled`, async function() {
                 const enabledRepos = testRepos.map(repo => {
                     return {
                         ...repo,

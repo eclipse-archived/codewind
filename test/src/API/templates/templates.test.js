@@ -44,7 +44,7 @@ describe('Template API tests', function() {
     describe('GET /api/v1/templates', function() {
         describe('?projectStyle=', function() {
             describe('empty', function() {
-                it('should return a list of all available templates', async function() {
+                it.skip('should return a list of all available templates', async function() {
                     this.timeout(testTimeout.short);
                     const res = await getTemplates();
                     res.should.have.status(200).and.satisfyApiSpec;
@@ -65,7 +65,7 @@ describe('Template API tests', function() {
             });
             for (const projectStyle of ['Appsody']) {
                 describe(projectStyle, function() {
-                    it(`should return only ${projectStyle} templates`, async function() {
+                    it.skip(`should return only ${projectStyle} templates`, async function() {
                         this.timeout(testTimeout.short);
                         const res = await getTemplates({ projectStyle });
                         res.should.have.status(200).and.satisfyApiSpec;
@@ -86,7 +86,7 @@ describe('Template API tests', function() {
         });
         describe('?showEnabledOnly=', function() {
             describe('false', function() {
-                it('should return all templates (from enabled and disabled repos)', async function() {
+                it.skip('should return all templates (from enabled and disabled repos)', async function() {
                     this.timeout(testTimeout.short);
                     const res = await getTemplates({ showEnabledOnly: false });
                     res.should.have.status(200).and.satisfyApiSpec;
@@ -105,7 +105,7 @@ describe('Template API tests', function() {
     });
 
     describe('GET /api/v1/templates/repositories', function() {
-        it('should return 200 and a list of available template repositories', async function() {
+        it.skip('should return 200 and a list of available template repositories', async function() {
             this.timeout(testTimeout.short);
             const res = await getTemplateRepos();
 
@@ -190,20 +190,20 @@ describe('Template API tests', function() {
             res.body.length.should.be.below(originalNumTemplates);
         });
         // Test adding repos
-        it('POST should re-add the deleted template repository', async function() {
+        it.skip('POST should re-add the deleted template repository', async function() {
             this.timeout(testTimeout.short);
             const res = await addTemplateRepo(repoToDelete);
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.deep.include(repoToDelete);
             res.body.length.should.equal(originalTemplateRepos.length);
         });
-        it('should return the original list of available templates', async function() {
+        it.skip('should return the original list of available templates', async function() {
             this.timeout(testTimeout.short);
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.length.should.equal(originalNumTemplates);
         });
-        it('POST should add a 2nd template repository', async function() {
+        it.skip('POST should add a 2nd template repository', async function() {
             this.timeout(testTimeout.short);
             const res = await addTemplateRepo(repoToAdd);
             res.should.have.status(200).and.satisfyApiSpec;
@@ -214,7 +214,7 @@ describe('Template API tests', function() {
             });
             res.body.length.should.equal(originalTemplateRepos.length + 1);
         });
-        it('should return a longer list of available templates', async function() {
+        it.skip('should return a longer list of available templates', async function() {
             this.timeout(testTimeout.short);
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
