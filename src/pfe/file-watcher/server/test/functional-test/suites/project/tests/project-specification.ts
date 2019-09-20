@@ -204,7 +204,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             this.timeout(timeoutConfigs.defaultTimeout);
             if (project_configs.needManualReset[projData.projectType]["appStatus"]) {
                 await utils.setAppStatus(projData);
-                await utils.checkForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
+                await utils.waitForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
                 socket.clearEvents();
             }
         });
@@ -263,25 +263,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             expect(info.operationId);
 
             const targetEvent = eventConfigs.events.settingsChanged;
-            let eventFound = false;
-            let event: any;
-            await new Promise((resolve) => {
-                const timer = setInterval(() => {
-                    const events = socket.getAllEvents();
-                    if (events && events.length >= 1) {
-                        event =  events.filter((value) => {
-                            if (value.eventName === targetEvent) return value;
-                        })[0];
-                        if (event) {
-                            eventFound = true;
-                            clearInterval(timer);
-                            return resolve();
-                        }
-                    }
-                }, timeoutConfigs.defaultInterval);
-            });
-
-            if (eventFound && event) {
+            const event = await utils.waitForEvent(socket, targetEvent);
+            if (event) {
                 expect(event);
                 expect(event.eventName);
                 expect(event.eventName).to.equal(targetEvent);
@@ -310,25 +293,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             expect(info.operationId);
 
             const targetEvent = eventConfigs.events.settingsChanged;
-            let eventFound = false;
-            let event: any;
-            await new Promise((resolve) => {
-                const timer = setInterval(() => {
-                    const events = socket.getAllEvents();
-                    if (events && events.length >= 1) {
-                        event =  events.filter((value) => {
-                            if (value.eventName === targetEvent) return value;
-                        })[0];
-                        if (event) {
-                            eventFound = true;
-                            clearInterval(timer);
-                            return resolve();
-                        }
-                    }
-                }, timeoutConfigs.defaultInterval);
-            });
+            const event = await utils.waitForEvent(socket, targetEvent);
 
-            if (eventFound && event) {
+            if (event) {
                 expect(event);
                 expect(event.eventName);
                 expect(event.eventName).to.equal(targetEvent);
@@ -364,25 +331,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 expect(info.operationId);
 
                 const targetEvent = eventConfigs.events.settingsChanged;
-                let eventFound = false;
-                let event: any;
-                await new Promise((resolve) => {
-                    const timer = setInterval(() => {
-                        const events = socket.getAllEvents();
-                        if (events && events.length >= 1) {
-                            event =  events.filter((value) => {
-                                if (value.eventName === targetEvent && _.isMatch(value.eventData, checkData)) return value;
-                            })[0];
-                            if (event) {
-                                eventFound = true;
-                                clearInterval(timer);
-                                return resolve();
-                            }
-                        }
-                    }, timeoutConfigs.defaultInterval);
-                });
+                const event = await utils.waitForEvent(socket, targetEvent, checkData);
 
-                if (eventFound && event) {
+                if (event) {
                     expect(event);
                     expect(event.eventName);
                     expect(event.eventName).to.equal(targetEvent);
@@ -485,26 +436,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 }
 
                 const targetEvent = comboInUse["socketEvent"];
-                let eventFound = false;
-                let event: any;
-                await new Promise((resolve) => {
-                    const timer = setInterval(() => {
-                        const events = socket.getAllEvents();
-                        if (events && events.length >= 1) {
-                            event =  events.filter((value) => {
-                                if (value.eventName === targetEvent && _.difference(comboInUse["eventKeys"], Object.keys(value.eventData)).length === 0 &&
-                                _.isMatch(value.eventData, comboInUse["result"])) return value;
-                            })[0];
-                            if (event) {
-                                eventFound = true;
-                                clearInterval(timer);
-                                return resolve();
-                            }
-                        }
-                    }, timeoutConfigs.defaultInterval);
-                });
+                const event = await utils.waitForEvent(socket, targetEvent, comboInUse["result"], comboInUse["eventKeys"]);
 
-                if (eventFound && event) {
+                if (event) {
                     expect(event);
                     expect(event.eventName);
                     expect(event.eventName).to.equal(targetEvent);

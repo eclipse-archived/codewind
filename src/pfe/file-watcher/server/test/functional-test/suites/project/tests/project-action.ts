@@ -100,12 +100,14 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
                 async function(hook: any): Promise<void> {
                     hook.timeout(timeoutConfigs.defaultTimeout);
                     await utils.setAppStatus(projData);
+                    socket.clearEvents();
                 }
             ],
             "afterHook": [
                 async function(hook: any): Promise<void> {
                     hook.timeout(timeoutConfigs.createTestTimeout);
                     await utils.setAppStatus(projData);
+                    socket.clearEvents();
 
                     const comboInUse = _.cloneDeep(combinations[`restart_${restartCapability}`]);
                     comboInUse.socketEvent.push(eventConfigs.events.statusChanged);
@@ -130,7 +132,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             this.timeout(timeoutConfigs.defaultTimeout);
             if (project_configs.needManualReset[projData.projectType]["appStatus"]) {
                 await utils.setAppStatus(projData);
-                await utils.checkForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
+                await utils.waitForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
                 socket.clearEvents();
             }
         });
@@ -254,30 +256,9 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
                 const index = socketEvents.indexOf(socketEvent);
                 const eventKey = eventKeys[index];
                 const result = results[index];
-
                 const targetEvent = socketEvent;
-                let eventFound = false;
-                let event: any;
-                await new Promise((resolve) => {
-                    const timer = setInterval(() => {
-                        const events = socket.getAllEvents();
-                        if (events && events.length >= 1) {
-                            event =  events.filter((value) => {
-                                if (value.eventName === targetEvent && _.difference(eventKey, Object.keys(value.eventData)).length === 0
-                                && _.isMatch(value.eventData, result)) {
-                                    return value;
-                                }
-                            })[0];
-                            if (event) {
-                                eventFound = true;
-                                clearInterval(timer);
-                                return resolve();
-                            }
-                        }
-                    }, timeoutConfigs.defaultInterval);
-                });
-
-                if (eventFound && event) {
+                const event = await utils.waitForEvent(socket, targetEvent, result, eventKey);
+                if (event) {
                     expect(event);
                     expect(event.eventName);
                     expect(event.eventName).to.equal(targetEvent);
