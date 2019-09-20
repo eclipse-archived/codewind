@@ -13,6 +13,7 @@ import { expect } from "chai";
 import * as _ from "lodash";
 
 import * as genericLib from "../../../lib/generic";
+import { logMsg } from "../../../lib/utils";
 import { fail } from "assert";
 
 export default class LoggingTest {
@@ -28,6 +29,8 @@ export default class LoggingTest {
             const invalidLevel = _.cloneDeep(logLevels).pop();
             for (const level of logLevels) {
                 it(`set logging level to ${level}`, async () => {
+                    logMsg(this.testName, "it", `Beginning logging level test to set level=${level}`);
+
                     try {
                         await genericLib.setLoggingLevel(level);
                     } catch (err) {
@@ -38,6 +41,8 @@ export default class LoggingTest {
                             fail(`setting log level test failed when setting it to ${level}`);
                         }
                     }
+
+                    logMsg(this.testName, "it", `Ending logging level test to set level=${level}`);
                 });
             }
             this.afterAllHook();
@@ -46,6 +51,7 @@ export default class LoggingTest {
 
     private afterAllHook(): void {
         after(`reset log level to ${process.env.DEFAULT_LOG_LEVEL}`, async () => {
+            logMsg(this.testName, "after", `Resetting log level to ${process.env.DEFAULT_LOG_LEVEL}`);
             await genericLib.setLoggingLevel(process.env.DEFAULT_LOG_LEVEL);
         });
     }
