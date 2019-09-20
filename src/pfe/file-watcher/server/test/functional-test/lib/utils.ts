@@ -25,6 +25,8 @@ import * as eventConfigs from "../configs/event.config";
 import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
 
+const chalk = require("chalk"); // tslint:disable-line:no-require-imports
+
 const pfeURL = pfe_configs.baseURL;
 
 const mcWorkspace = app_configs.codewindWorkspaceDir;
@@ -188,4 +190,19 @@ export async function setBuildStatus(projData: ProjectCreation, status?: string)
 
 export async function delay(ms: number): Promise<void> {
     return new Promise( resolve => setTimeout(resolve, ms) );
+}
+
+export function logMsg(suite: string, context: string, msg: string): void {
+    const colorMaps: any = {
+        "before": "yellowBright",
+        "after": "yellowBright",
+        "describe": "greenBright",
+        "it": "magentaBright",
+        "info": "cyanBright"
+    };
+    writeLog(colorMaps[context], suite, context, msg);
+}
+
+function writeLog(color: any, suite: string, context: string, msg: string): void {
+    console.log(chalk[color](`[${new Date().toUTCString()}] [Suite: ${suite}] [Context: ${context}] ${msg}`));
 }
