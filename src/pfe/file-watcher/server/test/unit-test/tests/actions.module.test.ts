@@ -260,7 +260,7 @@ export function actionsTestModule(): void {
         }
     });
 
-    describe("combinational testing of validate function", () => {
+    describe.only("combinational testing of validate function", () => {
         const libertyProjectPath = path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate");
         const testLibertyServerXMLPath = path.join(libertyProjectPath, "/src/main/liberty/config/");
         const testLibertyServerXML = path.join(testLibertyServerXMLPath, "server.xml");
