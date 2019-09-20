@@ -27,16 +27,41 @@ function addLanguage(projectType, language) {
     projectType.projectSubtypes.items.push(toSubtype(language));
 }
 
-async function initSubtypes(extension, language) {
+async function initSubtypes(extension, templates, language) {
   
-  if (extension) {
-    // todo
+  // simple case, not an extension project type
+  if (!extension) {
+    return {
+      prompt: 'Select the language that best fits your project',
+      items: [ toSubtype(language) ]
+    };
   }
-  
-  return {
-    prompt: 'Select the language that best fits your project',
-    items: [ toSubtype(language) ]
+
+  const subtypes = {
+    prompt: '',
+    items: []
   };
+
+  // get subtypes from extension provider
+  const provider = templates.providers[extension.name];
+  if (provider && typeof provider.getSubtypes == 'function') {
+    const temp = await provider.getSubtypes();
+    subtypes.prompt = temp.prompt;
+    if (Array.isArray(temp.items)) {
+      for (const item of temp.items) {
+        if (!item.id)
+          continue;
+        subtypes.items.push({
+          id: item.id,
+          version: item.version, 
+          label: item.label || item.id,
+          description: item.description
+        });
+      }
+    }
+  }
+
+  return subtypes;
 }
 
 /**
@@ -62,7 +87,7 @@ router.get('/api/v1/project-types', async (req, res) => {
       else {
         projectTypes[projectType] = {
           projectType: projectType,
-          projectSubtypes: await initSubtypes(extension, template.language)
+          projectSubtypes: await initSubtypes(extension, user.templates, template.language)
         };
       }
     }
