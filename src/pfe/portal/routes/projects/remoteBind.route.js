@@ -19,6 +19,7 @@ const inflateAsync = promisify(zlib.inflate);
 const exec = promisify(require('child_process').exec);
 
 const Logger = require('../../modules/utils/Logger');
+const Project = require('../../modules/Project');
 const ProjectInitializerError = require('../../modules/utils/errors/ProjectInitializerError');
 const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
@@ -68,7 +69,8 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
       directory: projectDir,
       workspace: workspaceDir,
       language: language,
-      autoBuild: true
+      autoBuild: true,
+      state: Project.STATES.closed,
     };
 
     if (projectType) {
@@ -226,6 +228,12 @@ router.post('/api/v1/projects/:id/remote-bind/end', async function (req, res) {
       res.status(404).send(`Unable to find project ${projectID}`);
       return;
     }
+    let updatedProject = {
+      projectID,
+      state: Project.STATES.open,
+      startMode: 'run' // always use 'run' mode for new or recently re-opened projects
+    }
+    await user.projectList.updateProject(updatedProject);
     await user.buildAndRunProject(project);
     res.status(200).send(project);
     user.uiSocket.emit('projectBind', { status: 'success', ...project });
