@@ -392,7 +392,7 @@ export function projectExtensionsTestModule(): void {
         }
     });
 
-    describe("testing of removeProjectHandler function", () => {
+    describe.only("testing of removeProjectHandler function", () => {
 
         const projectID: string = "dummyappsodyproject";
 
