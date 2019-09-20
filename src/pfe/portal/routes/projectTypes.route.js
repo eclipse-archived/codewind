@@ -32,7 +32,6 @@ async function initSubtypes(extension, templates, language) {
   // simple case, not an extension project type
   if (!extension) {
     return {
-      prompt: 'Select the language that best fits your project',
       items: [ toSubtype(language) ]
     };
   }

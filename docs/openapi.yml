@@ -1374,7 +1374,6 @@ components:
       description: Descriptor for subtypes of a project type
       type: object
       required:
-        - prompt
         - items
       properties:
         prompt:
