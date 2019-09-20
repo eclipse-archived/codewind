@@ -12,6 +12,7 @@ import mocha from "mocha";
 import { expect } from "chai";
 import { deleteProject } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
+import * as utils from "../../../lib/utils";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
@@ -73,25 +74,8 @@ export default class DeleteTest {
             expect(info.statusCode).to.equal(202);
             expect(info.operationId).to.exist;
 
-            let eventFound = false;
-            let event: any;
-            await new Promise((resolve) => {
-                const timer = setInterval(() => {
-                    const events = socket.getAllEvents();
-                    if (events && events.length >= 1) {
-                        event =  events.filter((value) => {
-                            if (value.eventName === targetEvent) return value;
-                        })[0];
-                        if (event) {
-                            eventFound = true;
-                            clearInterval(timer);
-                            return resolve();
-                        }
-                    }
-                }, timeoutConfigs.deleteEventInterval);
-            });
-
-            if (eventFound && event) {
+            const event = await utils.waitForEvent(socket, targetEvent);
+            if (event) {
                 expect(event);
                 expect(event.eventName);
                 expect(event.eventName).to.equal(targetEvent);

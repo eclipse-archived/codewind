@@ -142,23 +142,23 @@ export async function callProjectAction(action: string, startMode: string, socke
     for (const socketEvent of targetEvents) {
         const index = targetEvents.indexOf(socketEvent);
         const data = targetDatas[index];
-        await checkForEvent(socket, socketEvent, data);
+        await waitForEvent(socket, socketEvent, data);
     }
     return;
 }
 
-export async function checkForEvent(socket: SocketIO, socketEvent: string, eventData: any): Promise<void> {
+export async function waitForEvent(socket: SocketIO, targetEvent: string, eventData?: any, eventKeys?: Array<string>): Promise<any> {
     let eventFound = false;
     let event: any;
 
     await new Promise((resolve) => {
         const timer = setInterval(() => {
             const events = socket.getAllEvents();
+
             if (events && events.length >= 1) {
                 event =  events.filter((value) => {
-                    if (value.eventName === socketEvent && _.isMatch(value.eventData, eventData)) {
-                        return value;
-                    }
+                    const condition = (eventData ? _.isMatch(value.eventData, eventData) : true) && (eventKeys ? _.difference(eventKeys, Object.keys(value.eventData)).length === 0 : true);
+                    if (value.eventName === targetEvent && condition) return value;
                 })[0];
                 if (event) {
                     eventFound = true;
@@ -172,14 +172,14 @@ export async function checkForEvent(socket: SocketIO, socketEvent: string, event
     if (eventFound && event) {
         expect(event);
         expect(event.eventName);
-        expect(event.eventName).to.equal(socketEvent);
+        expect(event.eventName).to.equal(targetEvent);
         expect(event.eventData);
         expect(_.isMatch(event.eventData, eventData));
     } else {
-        fail(`failed to find ${socketEvent}`);
+        fail(`failed to find ${targetEvent}`);
     }
 
-    return;
+    return event;
 }
 
 /**

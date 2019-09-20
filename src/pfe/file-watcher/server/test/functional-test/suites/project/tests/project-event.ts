@@ -15,6 +15,7 @@ import path from "path";
 
 import { ProjectCreation, updateProjectForNewChange } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
+import * as utils from "../../../lib/utils";
 
 import * as eventConfigs from "../../../configs/event.config";
 import * as project_configs from "../../../configs/project.config";
@@ -89,27 +90,9 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
                         "projectID": projData.projectID,
                         "status": "success"
                     };
-                    let eventFound = false;
-                    let event: any;
-                    await new Promise((resolve) => {
-                        const timer = setInterval(() => {
-                            const events = socket.getAllEvents();
-                            if (events && events.length >= 1) {
-                                event =  events.filter((value) => {
-                                    if (value.eventName === targetEvent && _.isMatch(value.eventData, targetData)) {
-                                        return value;
-                                    }
-                                })[0];
-                                if (event) {
-                                    eventFound = true;
-                                    clearInterval(timer);
-                                    return resolve();
-                                }
-                            }
-                        }, timeoutConfigs.defaultInterval);
-                    });
 
-                    if (eventFound && event) {
+                    const event = await utils.waitForEvent(socket, targetEvent, targetData);
+                    if (event) {
                         expect(event);
                         expect(event.eventName);
                         expect(event.eventName).to.equal(targetEvent);

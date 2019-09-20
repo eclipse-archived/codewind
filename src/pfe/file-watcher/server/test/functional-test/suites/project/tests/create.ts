@@ -89,25 +89,8 @@ export default class CreateTest {
 
         async function waitForCreationEvent(): Promise<void> {
             const targetEvent = eventConfigs.events.creation;
-            let eventFound = false;
-            let event: any;
-            await new Promise((resolve) => {
-                const timer = setInterval(() => {
-                    const events = socket.getAllEvents();
-                    if (events && events.length >= 1) {
-                        event =  events.filter((value) => {
-                            if (value.eventName === targetEvent) return value;
-                        })[0];
-                        if (event) {
-                            eventFound = true;
-                            clearInterval(timer);
-                            return resolve();
-                        }
-                    }
-                }, timeoutConfigs.createEventInterval);
-            });
-
-            if (eventFound && event) {
+            const event = await utils.waitForEvent(socket, targetEvent);
+            if (event) {
                 expect(event);
                 expect(event.eventName);
                 expect(event.eventName).to.equal(targetEvent);
@@ -142,25 +125,9 @@ export default class CreateTest {
                 "projectID": projData.projectID,
                 "appStatus": "started"
             };
-            let eventFound = false;
-            let event: any;
-            await new Promise((resolve) => {
-                const timer = setInterval(() => {
-                    const events = socket.getAllEvents();
-                    if (events && events.length >= 1) {
-                        event = events.filter((value) => {
-                            if (value.eventName === targetEvent && _.isMatch(value.eventData, data)) return value;
-                        })[0];
-                        if (event) {
-                            eventFound = true;
-                            clearInterval(timer);
-                            return resolve();
-                        }
-                    }
-                }, timeoutConfigs.createEventInterval);
-            });
 
-            if (eventFound && event) {
+            const event = await utils.waitForEvent(socket, targetEvent, data);
+            if (event) {
                 expect(event);
                 expect(event.eventName);
                 expect(event.eventName).to.equal(targetEvent);

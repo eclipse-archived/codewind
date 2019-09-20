@@ -16,6 +16,7 @@ import fs from "fs";
 import { fail } from "assert";
 
 import * as genericLib from "../../../lib/generic";
+import * as utils from "../../../lib/utils";
 import { SocketIO } from "../../../lib/socket-io";
 
 import * as app_configs from "../../../configs/app.config";
@@ -139,25 +140,8 @@ export default class WorkspaceTest {
                     expect(info.statusCode).to.equal(500);
                     expect(info.msg);
                     expect(info.msg).to.equal(failureMsg);
-                    let eventFound = false;
-                    let event: any;
-                    await new Promise((resolve) => {
-                        const timer = setInterval(() => {
-                            const events = socket.getAllEvents();
-                            if (events && events.length >= 1) {
-                                event =  events.filter((value) => {
-                                    if (value.eventName === targetEvent) return value;
-                                })[0];
-                                if (event) {
-                                    eventFound = true;
-                                    clearInterval(timer);
-                                    return resolve();
-                                }
-                            }
-                        }, timeoutConfigs.deploymentRegistryStatusInterval);
-                    });
-
-                    if (eventFound && event) {
+                    const event = await utils.waitForEvent(socket, targetEvent);
+                    if (event) {
                         expect(event);
                         expect(event.eventName);
                         expect(event.eventName).to.equal(targetEvent);
@@ -216,26 +200,9 @@ export default class WorkspaceTest {
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(200);
-                let eventFound = false;
-                let event: any;
-                await new Promise((resolve) => {
-                    const timer = setInterval(() => {
-                        const events = socket.getAllEvents();
-                        if (events && events.length >= 1) {
-                            event =  events.filter((value) => {
-                                if (value.eventName === targetEvent) return value;
-                            })[0];
-                            if (event) {
-                                eventFound = true;
-                                clearInterval(timer);
-                                return resolve();
-                            }
-                        }
-                    }, timeoutConfigs.deploymentRegistryStatusInterval);
-                });
 
-
-                if (eventFound && event) {
+                const event = await utils.waitForEvent(socket, targetEvent);
+                if (event) {
                     expect(event);
                     expect(event.eventName);
                     expect(event.eventName).to.equal(targetEvent);
