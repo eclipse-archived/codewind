@@ -37,7 +37,6 @@ async function initSubtypes(extension, templates, language) {
   }
 
   const subtypes = {
-    prompt: '',
     items: []
   };
 
