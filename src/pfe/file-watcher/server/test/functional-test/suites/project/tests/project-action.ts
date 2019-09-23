@@ -128,25 +128,25 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             socket.clearEvents();
         });
 
-        after("set app status to running", async function (): Promise<void> {
-            this.timeout(timeoutConfigs.defaultTimeout);
-            if (project_configs.needManualReset[projData.projectType]["appStatus"]) {
-                await utils.setAppStatus(projData);
-                await utils.waitForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
-                socket.clearEvents();
-            }
-        });
-
         const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
         const mode = action === "restart" ? "run" : undefined;
         const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run")) {
+        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run") && projData.projectType != "spring") {
             targetEvents.pop();
             targetEventDatas.pop();
         }
+
+        after("set app status to running", async function (): Promise<void> {
+            this.timeout(timeoutConfigs.defaultTimeout);
+            if (project_configs.needManualReset[projData.projectType]["appStatus"] && action === "restart") {
+                await utils.setAppStatus(projData);
+                await utils.waitForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
+                socket.clearEvents();
+            }
+        });
 
         after(`${action} project ${projData.projectType}`, async function (): Promise<void> {
             this.timeout(timeoutConfigs.createTestTimeout);
