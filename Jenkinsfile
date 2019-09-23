@@ -136,6 +136,7 @@ pipeline {
                         export REPOSITORY='';
                         export TAG
                         export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
+                        export WORKSPACE_VOLUME=cw-workspace;
                         export HOST_OS=$(uname);
                         export REMOTE_MODE;
                         export HOST_HOME=$HOME
@@ -148,7 +149,7 @@ pipeline {
                         fi
 
                         # Start codewind running
-                        ~/docker-compose -f docker-compose.yaml -f docker-compose-local.yaml up -d;
+                        ~/docker-compose -f docker-compose.yaml -f docker-compose-remote.yaml up -d;
 
                         if [ $? -eq 0 ]; then
                             # Reset so we don't get conflicts
