@@ -100,7 +100,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
                         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-                        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run")) {
+                        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run") && projData.projectType != "spring") {
                             targetEvents.pop();
                             targetEventDatas.pop();
                         }
@@ -215,7 +215,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run")) {
+        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run") && projData.projectType != "spring") {
             targetEvents.pop();
             targetEventDatas.pop();
         }
@@ -552,7 +552,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
             const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-            if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run")) {
+            if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run") && projData.projectType != "spring") {
                 targetEvents.pop();
                 targetEventDatas.pop();
             }
