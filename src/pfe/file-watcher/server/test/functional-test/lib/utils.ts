@@ -201,6 +201,16 @@ export async function delay(ms: number): Promise<void> {
     return new Promise( resolve => setTimeout(resolve, ms) );
 }
 
+/**
+ * @function
+ * @description Turbine test logging function which can be used to log at various level of mocha contexts.
+ *
+ * @param suite <Required | String> - The name of the test suite.
+ * @param context <Required | String> - The name of the context, e.g before, after or describe.
+ * @param msg <Required | String> - The log message to display.
+ *
+ * @returns void
+ */
 export function logMsg(suite: string, context: string, msg: string): void {
     if (!TEST_LOG_CONTEXTS.includes(context) || !process.env.HIDE_TURBINE_TEST_LOG) return;
     writeLog(TEST_LOG_COLORS[context], suite, context, msg);
