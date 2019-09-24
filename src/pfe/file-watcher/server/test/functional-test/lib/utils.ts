@@ -41,6 +41,15 @@ export const readFileAsync = promisify(fs.readFile);
 export const openAsync = promisify(fs.open);
 export const readAsync = promisify(fs.readFile);
 
+const TEST_LOG_CONTEXTS = ["before", "after", "describe", "it", "info"];
+const TEST_LOG_COLORS: any = {
+    [TEST_LOG_CONTEXTS[0]]: "yellowBright",
+    [TEST_LOG_CONTEXTS[1]]: "yellowBright",
+    [TEST_LOG_CONTEXTS[2]]: "greenBright",
+    [TEST_LOG_CONTEXTS[3]]: "magentaBright",
+    [TEST_LOG_CONTEXTS[4]]: "cyanBright"
+};
+
 export function pingPFE(callback: request.RequestCallback): request.Request {
     const pingUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.projects;
     return request.get(pingUrl, {rejectUnauthorized: false}, callback);
@@ -193,14 +202,8 @@ export async function delay(ms: number): Promise<void> {
 }
 
 export function logMsg(suite: string, context: string, msg: string): void {
-    const colorMaps: any = {
-        "before": "yellowBright",
-        "after": "yellowBright",
-        "describe": "greenBright",
-        "it": "magentaBright",
-        "info": "cyanBright"
-    };
-    writeLog(colorMaps[context], suite, context, msg);
+    if (!TEST_LOG_CONTEXTS.includes(context) || !process.env.HIDE_TURBINE_TEST_LOG) return;
+    writeLog(TEST_LOG_COLORS[context], suite, context, msg);
 }
 
 function writeLog(color: any, suite: string, context: string, msg: string): void {
