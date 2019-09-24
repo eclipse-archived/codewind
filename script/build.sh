@@ -26,14 +26,6 @@ PERFORMANCE=performance;
 ARCH=`uname -m`;
 TAG=latest;
 REGISTRY=eclipse
-DEVMODE=false
-
-while [ "$#" -gt 0 ]; do
-  case $1 in
-    --dev) DEVMODE=true; shift 1;;
-    *) shift 1;;
-  esac
-done
 
 # On intel, uname -m returns "x86_64", but the convention for our docker images is "amd64"
 if [ "$ARCH" == "x86_64" ]; then
@@ -67,23 +59,22 @@ cp -r $DIR/docs ${SRC_DIR}/pfe/portal/
 mkdir -p ${SRC_DIR}/pfe/extensions
 rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
 
-DEFAULT_APPSODY_EXT_VERSION="0.5.0"
+DOWNLOAD_APPSODY_EXT_VERSION="0.5.0"
 
-if [ "$DEVMODE" == "true" ]; then
-  if [ "$APPSODY_EXT_VERSION" == "none" ]; then 
+# - If APPSODY_EXT_VERSION=none, skip the download
+# - If APPSODY_EXT_VERSION is not set, set to the default version (same as running without --dev)
+# - If value is set for APPSODY_EXT_VERSION, attempt to download it (no error if invalid)
+if [ "$APPSODY_EXT_VERSION" == "none" ]; then
+  DOWNLOAD_APPSODY_EXT_VERSION="none"
+elif [ ! -z "$APPSODY_EXT_VERSION" ]; then 
+  DOWNLOAD_APPSODY_EXT_VERSION=$APPSODY_EXT_VERSION
+fi
+
+if [ "$DOWNLOAD_APPSODY_EXT_VERSION" == "none" ]; then 
     echo -e "\n+++   SKIPPING APPSODY EXTENSION DOWNLOAD DUE TO ENV VARIABLE APPSODY_EXT_VERSION=none +++\n";
   else
-    if [ -z "$APPSODY_EXT_VERSION" ]; then 
-      APPSODY_EXT_VERSION=$DEFAULT_APPSODY_EXT_VERSION
-    fi
-
-    echo -e "\n+++   DOWNLOADING APPSODY EXTENSION: ${APPSODY_EXT_VERSION}  +++\n";
-    curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-${APPSODY_EXT_VERSION}.zip https://github.com/eclipse/codewind-appsody-extension/archive/${APPSODY_EXT_VERSION}.zip
-  fi
-else
-  # If devmode is not set, download the approved version
-  echo -e "\n+++   DOWNLOADING DEFAULT APPSODY EXTENSION: ${DEFAULT_APPSODY_EXT_VERSION}  +++\n";
-  curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-${DEFAULT_APPSODY_EXT_VERSION}.zip https://github.com/eclipse/codewind-appsody-extension/archive/${DEFAULT_APPSODY_EXT_VERSION}.zip
+    echo -e "\n+++   DOWNLOADING DEFAULT APPSODY EXTENSION: ${DOWNLOAD_APPSODY_EXT_VERSION}  +++\n";
+    curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-${DOWNLOAD_APPSODY_EXT_VERSION}.zip https://github.com/eclipse/codewind-appsody-extension/archive/${DOWNLOAD_APPSODY_EXT_VERSION}.zip
 fi
 
 # BUILD IMAGES

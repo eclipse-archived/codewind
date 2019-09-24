@@ -21,5 +21,8 @@ We welcome submitting issues and contributions.
 2. [Contributing](CONTRIBUTING.md)
 3. [View the API documentation](https://eclipse.github.io/codewind/)
 
+## Setting Appsody Codewind extension version
+Use the environment variable `APPSODY_EXT_VERSION` to set the specific Appsody Codewind extension to download. For example, before executing `run.sh` set `APPSODY_EXT_VERSION=0.5.0` to download the 0.5.0 release. To skip the download, set `APPSODY_EXT_VERSION=none` and the existing Appsody extension in `codewind-workspace/.extensions` will be used. If an invalid version is used, the download will be skipped.
+
 ## License
 [EPL 2.0](https://www.eclipse.org/legal/epl-2.0/)
