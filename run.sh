@@ -63,7 +63,7 @@ else
   # Build the docker images
   printf "\n\n${BLUE}BUILDING DOCKER IMAGES${RESET}\n\n";
 
-  ./script/build.sh;
+  ./script/build.sh $DEVMODE;
 
   if [ $? -ne 0 ]; then
     printf "\n${RED}FAILED TO BUILD\nExiting. $RESET";

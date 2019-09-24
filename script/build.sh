@@ -26,6 +26,14 @@ PERFORMANCE=performance;
 ARCH=`uname -m`;
 TAG=latest;
 REGISTRY=eclipse
+DEVMODE=false
+
+while [ "$#" -gt 0 ]; do
+  case $1 in
+    --dev) DEVMODE=true; shift 1;;
+    *) shift 1;;
+  esac
+done
 
 # On intel, uname -m returns "x86_64", but the convention for our docker images is "amd64"
 if [ "$ARCH" == "x86_64" ]; then
@@ -55,10 +63,28 @@ cp -r $DIR/docs ${SRC_DIR}/pfe/portal/
 
 # Copy the appsody extension into portal. The zip file must have a version number e.g. codewind-appsody-extension-0.3.0.zip
 # in order for it to be accepted as a valid extension
-echo -e "\n+++   DOWNLOADING EXTENSIONS   +++\n";
+
 mkdir -p ${SRC_DIR}/pfe/extensions
 rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
-curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.5.0.zip https://github.com/eclipse/codewind-appsody-extension/archive/0.5.0.zip
+
+DEFAULT_APPSODY_EXT_VERSION="0.5.0"
+
+if [ "$DEVMODE" == "true" ]; then
+  if [ "$APPSODY_EXT_VERSION" == "none" ]; then 
+    echo -e "\n+++   SKIPPING APPSODY EXTENSION DOWNLOAD DUE TO ENV VARIABLE APPSODY_EXT_VERSION=none +++\n";
+  else
+    if [ -z "$APPSODY_EXT_VERSION" ]; then 
+      APPSODY_EXT_VERSION=$DEFAULT_APPSODY_EXT_VERSION
+    fi
+
+    echo -e "\n+++   DOWNLOADING APPSODY EXTENSION: ${APPSODY_EXT_VERSION}  +++\n";
+    curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-${APPSODY_EXT_VERSION}.zip https://github.com/eclipse/codewind-appsody-extension/archive/${APPSODY_EXT_VERSION}.zip
+  fi
+else
+  # If devmode is not set, download the approved version
+  echo -e "\n+++   DOWNLOADING DEFAULT APPSODY EXTENSION: ${DEFAULT_APPSODY_EXT_VERSION}  +++\n";
+  curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-${DEFAULT_APPSODY_EXT_VERSION}.zip https://github.com/eclipse/codewind-appsody-extension/archive/${DEFAULT_APPSODY_EXT_VERSION}.zip
+fi
 
 # BUILD IMAGES
 # Uses a build file in each of the directories that we want to use
