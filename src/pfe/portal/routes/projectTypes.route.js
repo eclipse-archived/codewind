@@ -15,51 +15,54 @@ const Logger = require('../modules/utils/Logger');
 const router = express.Router();
 const log = new Logger(__filename);
 
-function toSubtype(language) {
-  return {
-    id: language,
-    label: language
+function sanitizeProjectType(array, type) {
+
+  // doesn't even have the expected fields, no-op return
+  if (!type.projectType || !type.projectSubtypes || !Array.isArray(type.projectSubtypes.items))
+    return array;
+
+  const sanitized = {
+    projectType: String(type.projectType),
+    projectSubtypes: {
+      prompt: String(type.projectSubtypes.prompt),
+      items: []
+    }
   };
+
+  for (const item of type.projectSubtypes.items) {
+    if (!item.id)
+      continue;
+    sanitized.projectSubtypes.items.push({
+      id: String(item.id),
+      version: String(item.version),
+      label: String(item.label || item.id),
+      description: String(item.description)
+    });
+  }
+
+  if (sanitized.projectSubtypes.items.length > 0)
+    array.push(sanitized);
+
+  return array
+}
+
+async function getProjectTypes(provider) {
+  
+  const projectTypes = [];
+
+  // get projectTypes from extension provider
+  if (provider && typeof provider.getProjectTypes == 'function') {
+    const types = await provider.getProjectTypes();
+    if (Array.isArray(types))
+      types.reduce(sanitizeProjectType, projectTypes);
+  }
+
+  return projectTypes;
 }
 
 function addLanguage(projectType, language) {
   if (!projectType.projectSubtypes.items.find(item => item.id == language))
-    projectType.projectSubtypes.items.push(toSubtype(language));
-}
-
-async function initSubtypes(extension, templates, language) {
-  
-  // simple case, not an extension project type
-  if (!extension) {
-    return {
-      items: [ toSubtype(language) ]
-    };
-  }
-
-  const subtypes = {
-    items: []
-  };
-
-  // get subtypes from extension provider
-  const provider = templates.providers[extension.name];
-  if (provider && typeof provider.getSubtypes == 'function') {
-    const temp = await provider.getSubtypes();
-    subtypes.prompt = temp.prompt;
-    if (Array.isArray(temp.items)) {
-      for (const item of temp.items) {
-        if (!item.id)
-          continue;
-        subtypes.items.push({
-          id: item.id,
-          version: item.version, 
-          label: item.label || item.id,
-          description: item.description
-        });
-      }
-    }
-  }
-
-  return subtypes;
+    projectType.projectSubtypes.items.push({ id: language, label: language });
 }
 
 /**
@@ -68,7 +71,8 @@ async function initSubtypes(extension, templates, language) {
  */
 router.get('/api/v1/project-types', async (req, res) => {
   const user = req.cw_user;
-  const projectTypes = {};
+  const projectTypes = [];
+  const seenProjectTypes = {};
   try {
     const templates = await user.templates.getEnabledTemplates();
     for (const template of templates) {
@@ -76,21 +80,32 @@ router.get('/api/v1/project-types', async (req, res) => {
       const projectType = template.projectType;
       const extension = user.extensionList.getExtensionForProjectType(projectType)
       
-      // seen this type before
-      if (projectTypes[projectType]) {
-        if (!extension)
-          addLanguage(projectTypes[projectType], template.language);
+      if (extension) {
+        // only need to get project types from extension once
+        if (seenProjectTypes[projectType])
+          continue;
+        const types = await getProjectTypes(user.templates.providers[extension.name]);
+        projectTypes.push(...types);
+        seenProjectTypes[projectType] = true;
       }
-      // initialize a new entry
       else {
-        projectTypes[projectType] = {
-          projectType: projectType,
-          projectSubtypes: await initSubtypes(extension, user.templates, template.language)
-        };
+        // initialize a new entry
+        if (!seenProjectTypes[projectType]) {
+          const type = {
+            projectType: projectType,
+            projectSubtypes: {
+              items: []
+            }
+          };
+          projectTypes.push(type);
+          seenProjectTypes[projectType] = type;
+        }
+        
+        addLanguage(seenProjectTypes[projectType], template.language);
       }
     }
 
-    res.status(200).send(Object.values(projectTypes));
+    res.status(200).send(projectTypes);
   } catch (err) {
     log.error(err);
     res.status(500).send(err);
