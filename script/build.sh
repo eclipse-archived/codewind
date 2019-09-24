@@ -62,7 +62,7 @@ rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
 DOWNLOAD_APPSODY_EXT_VERSION="0.5.0"
 
 # - If APPSODY_EXT_VERSION=none, skip the download
-# - If APPSODY_EXT_VERSION is not set, set to the default version (same as running without --dev)
+# - If APPSODY_EXT_VERSION is not set, set to the default version
 # - If value is set for APPSODY_EXT_VERSION, attempt to download it (no error if invalid)
 if [ "$APPSODY_EXT_VERSION" == "none" ]; then
   DOWNLOAD_APPSODY_EXT_VERSION="none"
