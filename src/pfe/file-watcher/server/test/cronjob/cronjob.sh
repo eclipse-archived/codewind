@@ -31,7 +31,7 @@ while getopts "t:s:p:c:h" OPTION; do
         t) 
             TEST_TYPE=$OPTARG
             # Check if test type argument is corrent
-            if [[ ($TEST_TYPE != "local") && ($TEST_TYPE != "kube") ]]; then
+            if [[ ($TEST_TYPE != "local") && ($TEST_TYPE != "kube") && ($TEST_TYPE != "both") ]]; then
                 echo -e "${RED}Test type argument is not correct. ${RESET}\n"
                 usage
                 exit 1
@@ -80,9 +80,18 @@ fi
 
 rm -rf $CW_DIR \
 && git clone $CODEWIND_REPO -b $TEST_BRANCH \
-&& cd $CW_TEST_DIR \
-&& ./test.sh -t $TEST_TYPE -s $TEST_SUITE -p $POST_CLEANUP -c $CLEAN_RUN \
-&& rm -rf $CW_DIR
+&& cd $CW_TEST_DIR
+
+if [[ ($TEST_TYPE == "both") ]]; then
+    ./test.sh -t "local" -s $TEST_SUITE -p $POST_CLEANUP -c $CLEAN_RUN & \
+    echo -e "${BLUE}Triggered local $TEST_SUITE suite as cronjob. ${RESET}\n"
+
+    ./test.sh -t "kube" -s $TEST_SUITE -p $POST_CLEANUP -c $CLEAN_RUN & \
+    echo -e "${BLUE}Triggered kube $TEST_SUITE suite as cronjob. ${RESET}\n"
+else
+    ./test.sh -t $TEST_TYPE -s $TEST_SUITE -p $POST_CLEANUP -c $CLEAN_RUN \
+    && rm -rf $CW_DIR
+fi
 
 if [[ ($? -ne 0) ]]; then
     echo -e "${RED}Cronjob has failed. ${RESET}\n"

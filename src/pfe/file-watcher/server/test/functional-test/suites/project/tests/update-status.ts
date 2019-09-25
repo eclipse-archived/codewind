@@ -17,6 +17,7 @@ import { SocketIO } from "../../../lib/socket-io";
 
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
+import * as project_configs from "../../../configs/project.config";
 import { fail } from "assert";
 
 import * as utils from "../../../lib/utils";
@@ -90,11 +91,34 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
                     socket.clearEvents();
                 });
 
-                if (projData.projectType === "docker") {
-                    utils.rebuildProjectAfterHook(socket, projData);
-                } else {
-                    utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
+                after("set app status to running", async function (): Promise<void> {
+                    this.timeout(timeoutConfigs.defaultTimeout);
+                    if (project_configs.needManualReset[projData.projectType]["appStatus"]) {
+                        await utils.setAppStatus(projData);
+                        await utils.waitForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
+                        socket.clearEvents();
+                    }
+                });
+
+                const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+                const mode = action === "restart" ? "run" : undefined;
+                const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
+                    [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
+                const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
+
+                if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run") && projData.projectType != "spring") {
+                    targetEvents.pop();
+                    targetEventDatas.pop();
                 }
+
+                after(`${action} project ${projData.projectType}`, async function (): Promise<void> {
+                    this.timeout(timeoutConfigs.createTestTimeout);
+                    await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
+                });
+
+                after("remove build from running queue", async () => {
+                    await utils.setBuildStatus(projData);
+                });
 
                 const testData = _.cloneDeep(data);
                 testData["type"] = statusTypes[statusType]["name"];
@@ -155,27 +179,9 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation): v
 
                         if (eventKeys) {
                             const targetEvent = eventConfigs.events.statusChanged;
-                            let eventFound = false;
-                            let event: any;
-                            await new Promise((resolve) => {
-                                const timer = setInterval(() => {
-                                    const events = socket.getAllEvents();
-                                    if (events && events.length >= 1) {
-                                        event =  events.filter((value) => {
-                                            if (value.eventName === targetEvent && _.isEqual(_.sortBy(Object.keys(value.eventData)), _.sortBy(eventKeys)) && _.isMatch(value.eventData, result)) {
-                                                return value;
-                                            }
-                                        })[0];
-                                        if (event) {
-                                            eventFound = true;
-                                            clearInterval(timer);
-                                            return resolve();
-                                        }
-                                    }
-                                }, timeoutConfigs.defaultInterval);
-                            });
+                            const event = await utils.waitForEvent(socket, targetEvent, result, eventKeys);
 
-                            if (eventFound && event) {
+                            if (event) {
                                 expect(event);
                                 expect(event.eventName);
                                 expect(event.eventName).to.equal(targetEvent);

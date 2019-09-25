@@ -25,6 +25,8 @@ import * as eventConfigs from "../configs/event.config";
 import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
 
+const chalk = require("chalk"); // tslint:disable-line:no-require-imports
+
 const pfeURL = pfe_configs.baseURL;
 
 const mcWorkspace = app_configs.codewindWorkspaceDir;
@@ -38,6 +40,15 @@ export const writeAsync = promisify(fs.writeFile);
 export const readFileAsync = promisify(fs.readFile);
 export const openAsync = promisify(fs.open);
 export const readAsync = promisify(fs.readFile);
+
+const TEST_LOG_CONTEXTS = ["before", "after", "describe", "it", "info"];
+const TEST_LOG_COLORS: any = {
+    [TEST_LOG_CONTEXTS[0]]: "yellowBright",
+    [TEST_LOG_CONTEXTS[1]]: "yellowBright",
+    [TEST_LOG_CONTEXTS[2]]: "greenBright",
+    [TEST_LOG_CONTEXTS[3]]: "magentaBright",
+    [TEST_LOG_CONTEXTS[4]]: "cyanBright"
+};
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
     const pingUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.projects;
@@ -110,40 +121,44 @@ export function writeToFile(path: string, content: string, callback: (err: Error
     });
 }
 
-export function rebuildProjectAfterHook(socket: SocketIO, projData: ProjectCreation, checkEvent?: string, checkEventData?: any): void {
-    after(`rebuild project ${projData.projectType}`, async function (): Promise<void> {
-        this.timeout(timeoutConfigs.createTestTimeout);
-        await rebuildProject(socket, projData, checkEvent, checkEventData);
-    });
-}
-
-export async function rebuildProject(socket: SocketIO, projData: ProjectCreation, checkEvent?: string, checkEventData?: any): Promise<void> {
+export async function callProjectAction(action: string, startMode: string, socket: SocketIO, projData: ProjectCreation, checkEvent?: Array<string>, checkEventData?: Array<any>): Promise<void> {
     const testData: any = {
-        action: "build",
+        action: action,
         projectType: projData.projectType,
         location: projData.location,
         projectID: projData.projectID,
     };
+    if (startMode) testData["startMode"] = startMode;
 
     const info: any = await projectAction(testData);
     expect(info);
 
-    const targetEvent = checkEvent || eventConfigs.events.statusChanged;
-    const data = checkEventData || {
+    const targetEvents = checkEvent || [eventConfigs.events.statusChanged];
+    const targetDatas = checkEventData || [{
         "projectID": projData.projectID,
         "appStatus": "started"
-    };
+    }];
 
+    for (const socketEvent of targetEvents) {
+        const index = targetEvents.indexOf(socketEvent);
+        const data = targetDatas[index];
+        await waitForEvent(socket, socketEvent, data);
+    }
+    return;
+}
+
+export async function waitForEvent(socket: SocketIO, targetEvent: string, eventData?: any, eventKeys?: Array<string>): Promise<any> {
     let eventFound = false;
     let event: any;
+
     await new Promise((resolve) => {
         const timer = setInterval(() => {
             const events = socket.getAllEvents();
+
             if (events && events.length >= 1) {
                 event =  events.filter((value) => {
-                    if (value.eventName === targetEvent && _.isMatch(value.eventData, data)) {
-                        return value;
-                    }
+                    const condition = (eventData ? _.isMatch(value.eventData, eventData) : true) && (eventKeys ? _.difference(eventKeys, Object.keys(value.eventData)).length === 0 : true);
+                    if (value.eventName === targetEvent && condition) return value;
                 })[0];
                 if (event) {
                     eventFound = true;
@@ -159,10 +174,12 @@ export async function rebuildProject(socket: SocketIO, projData: ProjectCreation
         expect(event.eventName);
         expect(event.eventName).to.equal(targetEvent);
         expect(event.eventData);
-        expect(_.isMatch(event.eventData, data));
+        expect(_.isMatch(event.eventData, eventData));
     } else {
-        fail(`failed to find ${targetEvent} for rebuild project ${projData.projectType}`);
+        fail(`failed to find ${targetEvent}`);
     }
+
+    return event;
 }
 
 /**
@@ -186,6 +203,38 @@ export async function setBuildStatus(projData: ProjectCreation, status?: string)
     }
 }
 
+export async function setAppStatus(projData: ProjectCreation, status?: string, msg?: string): Promise<void> {
+    if (project_configs.needManualReset[projData.projectType]["appStatus"]) {
+        const info = await updateStatus({
+            "projectID": projData.projectID,
+            "type": "appState",
+            "status": status || "started",
+            "error": msg || `This message indicates the app status was set in Turbine test`
+        });
+        expect(info);
+        expect(info.statusCode).to.equal(200);
+    }
+}
+
 export async function delay(ms: number): Promise<void> {
     return new Promise( resolve => setTimeout(resolve, ms) );
+}
+
+/**
+ * @function
+ * @description Turbine test logging function which can be used to log at various level of mocha contexts.
+ *
+ * @param suite <Required | String> - The name of the test suite.
+ * @param context <Required | String> - The name of the context, e.g before, after or describe.
+ * @param msg <Required | String> - The log message to display.
+ *
+ * @returns void
+ */
+export function logMsg(suite: string, context: string, msg: string): void {
+    if (!TEST_LOG_CONTEXTS.includes(context) || !process.env.HIDE_TURBINE_TEST_LOG) return;
+    writeLog(TEST_LOG_COLORS[context], suite, context, msg);
+}
+
+function writeLog(color: any, suite: string, context: string, msg: string): void {
+    console.log(chalk[color](`[${new Date().toUTCString()}] [Suite: ${suite}] [Context: ${context}] ${msg}`));
 }

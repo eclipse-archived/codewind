@@ -95,8 +95,11 @@ pipeline {
                 }
             }
         }  
-        /*
-        stage('Run Codewind test suite') {            
+        
+        stage('Run Codewind test suite') {  
+            options {
+                timeout(time: 2, unit: 'HOURS') 
+            }          
                 steps {
                     withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
@@ -133,6 +136,7 @@ pipeline {
                         export REPOSITORY='';
                         export TAG
                         export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
+                        export WORKSPACE_VOLUME=cw-workspace;
                         export HOST_OS=$(uname);
                         export REMOTE_MODE;
                         export HOST_HOME=$HOME
@@ -145,7 +149,7 @@ pipeline {
                         fi
 
                         # Start codewind running
-                        ~/docker-compose -f docker-compose.yaml -f docker-compose-local.yaml up -d;
+                        ~/docker-compose -f docker-compose.yaml -f docker-compose-remote.yaml up -d;
 
                         if [ $? -eq 0 ]; then
                             # Reset so we don't get conflicts
@@ -197,7 +201,7 @@ pipeline {
                 }
             }
         } 
-        */ 
+         
         
         stage('Publish Docker images') {
 
@@ -225,7 +229,7 @@ pipeline {
                         # Publish docker images with a filter for branch name
                         # Acceptable branch names: master, start with '<number>.<number>'
                         if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
-        
+
                             declare -a DOCKER_IMAGE_ARRAY=("codewind-initialize-amd64" 
                                                         "codewind-performance-amd64" 
                                                         "codewind-pfe-amd64")
@@ -236,16 +240,6 @@ pipeline {
                             do
                                 echo "Publishing $REGISTRY/$i:$TAG"
                                 ./script/publish.sh $i $REGISTRY $TAG
-
-                                if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
-                                    TAG_MAJOR = $GIT_BRANCH.tokenize(".")[0]​
-                                    TAG_MINOR = $GIT_BRANCH.tokenize(".")[1]​
-
-                                    TAG_CUMULATIVE= $TAG_MAJOR.$TAG_MINOR
-                                    
-                                    echo "Publishing $REGISTRY/$i:$TAG_CUMULATIVE"
-                                    ./script/publish.sh $i $REGISTRY $TAG_CUMULATIVE
-                                fi 
                             done
                         else
                             echo "Skip publishing docker images for $GIT_BRANCH branch"

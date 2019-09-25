@@ -13,6 +13,7 @@ import { expect } from "chai";
 import * as _ from "lodash";
 import { shutdown, ProjectCreation } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
+import * as utils from "../../../lib/utils";
 
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
@@ -41,27 +42,9 @@ export default class ShutdownTest {
                     "status": "success"
                 };
                 const targetEvent = eventConfigs.events.filewatcherShutdown;
-                let eventFound = false;
-                let event: any;
-                await new Promise((resolve) => {
-                    const timer = setInterval(() => {
-                        const events = socket.getAllEvents();
-                        if (events && events.length >= 1) {
-                            event =  events.filter((value) => {
-                                if (value.eventName === targetEvent) {
-                                    return value;
-                                }
-                            })[0];
-                            if (event) {
-                                eventFound = true;
-                                clearInterval(timer);
-                                return resolve();
-                            }
-                        }
-                    }, timeoutConfigs.defaultInterval);
-                });
+                const event = await utils.waitForEvent(socket, targetEvent);
 
-                if (eventFound && event) {
+                if (event) {
                     expect(event);
                     expect(event.eventName);
                     expect(event.eventName).to.equal(targetEvent);

@@ -14,6 +14,7 @@ import * as _ from "lodash";
 
 import { getProjectLogs, checkNewLogFile, ProjectCreation } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
+import * as utils from "../../../lib/utils";
 
 import * as log_configs from "../../../configs/log.config";
 import * as eventConfigs from "../../../configs/event.config";
@@ -138,27 +139,8 @@ export function logsTest(socket: SocketIO, projData: ProjectCreation): void {
 
                 const targetEvent = eventConfigs.events.logsListChanged;
                 const returnData = info.logs;
-                let eventFound = false;
-                let event: any;
-                await new Promise((resolve) => {
-                    const timer = setInterval(() => {
-                        const events = socket.getAllEvents();
-                        if (events && events.length >= 1) {
-                            event =  events.filter((value) => {
-                                if (value.eventName === targetEvent && _.isMatch(value.eventData, returnData)) {
-                                    return value;
-                                }
-                            })[0];
-                            if (event) {
-                                eventFound = true;
-                                clearInterval(timer);
-                                return resolve();
-                            }
-                        }
-                    }, timeoutConfigs.defaultInterval);
-                });
-
-                if (eventFound && event) {
+                const event = await utils.waitForEvent(socket, targetEvent, returnData);
+                if (event) {
                     expect(event);
                     expect(event.eventName);
                     expect(event.eventName).to.equal(targetEvent);

@@ -12,6 +12,7 @@ import mocha from "mocha";
 import { expect } from "chai";
 
 import * as genericLib from "../../../lib/generic";
+import { logMsg } from "../../../lib/utils";
 
 export default class LocaleTest {
   testName: string;
@@ -39,8 +40,13 @@ export default class LocaleTest {
 
       for (const combo of Object.keys(combinations)) {
         it(combo + " => " + "locale: " + combinations[combo]["locale"], async () => {
+          logMsg(this.testName, "it", `Beginning locale test for ${combo}`);
+
           const info = await genericLib.setLocaleAPI(combinations[combo]["locale"]);
+          logMsg(this.testName, "info", `Recieved locale information: ${JSON.stringify(info)}`);
           expect(info).to.deep.equal(combinations[combo]["result"]);
+
+          logMsg(this.testName, "it", `Ending locale test for ${combo}`);
         });
       }
     });

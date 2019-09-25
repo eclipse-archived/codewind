@@ -42,6 +42,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         const testMavenProfiles: Array<string> = ["profile1", "profile2"];
         const testMavenProperties: Array<string> = ["key1=value1", "key2=value2"];
 
+        let defaultInternalPort: any, defaultInternalDebugPort: any;
+
         const combinations: any = {
             "combo1": {
                 "setting": "internalPort",
@@ -76,6 +78,38 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                         "internalDebugPort": project_configs.exposedDebugPorts[0]
                     }
                 },
+                "beforeHook": [{
+                    "title": "Internal debug port test - Before hook - Get default internal debug port",
+                    "function": async function(hook: any): Promise<void> {
+                        hook.timeout(timeoutConfigs.defaultTimeout);
+                        if (!project_configs.debugCapabilities[projData.projectType]) return;
+                        defaultInternalDebugPort = project_configs.defaultInternalDebugPorts[projectLang];
+                    }
+                }],
+                "afterHook": [{
+                    "title": "Internal debug port test - After hook - Reset internal debug port",
+                    "function": async function(hook: any): Promise<void> {
+                        hook.timeout(timeoutConfigs.createTestTimeout);
+                        if (!project_configs.debugCapabilities[projData.projectType]) return;
+
+                        await runProjectSpecificationSettingTest(combinations["combo2"], defaultInternalDebugPort);
+
+                        const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+                        const mode = action === "restart" ? "run" : undefined;
+                        const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
+                            [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
+                        const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
+
+                        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run") && projData.projectType != "spring") {
+                            targetEvents.pop();
+                            targetEventDatas.pop();
+                        }
+
+                        await utils.setAppStatus(projData);
+                        await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
+                        await utils.setBuildStatus(projData);
+                    }
+                }],
             },
             "combo3": {
                 "setting": "contextRoot",
@@ -161,13 +195,35 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 },
             }
         };
-        let defaultInternalPort: any;
 
         afterEach("clear socket events", () => {
             socket.clearEvents();
         });
 
-        utils.rebuildProjectAfterHook(socket, projData, eventConfigs.events.projectChanged, {"projectID": projData.projectID, "status": "success"});
+        after("set app status to running", async function (): Promise<void> {
+            this.timeout(timeoutConfigs.defaultTimeout);
+            if (project_configs.needManualReset[projData.projectType]["appStatus"]) {
+                await utils.setAppStatus(projData);
+                await utils.waitForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
+                socket.clearEvents();
+            }
+        });
+
+        const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+        const mode = action === "restart" ? "run" : undefined;
+        const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
+            [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
+        const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
+
+        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run") && projData.projectType != "spring") {
+            targetEvents.pop();
+            targetEventDatas.pop();
+        }
+
+        after(`${action} project ${projData.projectType}`, async function (): Promise<void> {
+            this.timeout(timeoutConfigs.createTestTimeout);
+            await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
+        });
 
         afterEach("remove build from running queue", async () => {
             await utils.setBuildStatus(projData);
@@ -207,25 +263,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             expect(info.operationId);
 
             const targetEvent = eventConfigs.events.settingsChanged;
-            let eventFound = false;
-            let event: any;
-            await new Promise((resolve) => {
-                const timer = setInterval(() => {
-                    const events = socket.getAllEvents();
-                    if (events && events.length >= 1) {
-                        event =  events.filter((value) => {
-                            if (value.eventName === targetEvent) return value;
-                        })[0];
-                        if (event) {
-                            eventFound = true;
-                            clearInterval(timer);
-                            return resolve();
-                        }
-                    }
-                }, timeoutConfigs.defaultInterval);
-            });
-
-            if (eventFound && event) {
+            const event = await utils.waitForEvent(socket, targetEvent);
+            if (event) {
                 expect(event);
                 expect(event.eventName);
                 expect(event.eventName).to.equal(targetEvent);
@@ -254,25 +293,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             expect(info.operationId);
 
             const targetEvent = eventConfigs.events.settingsChanged;
-            let eventFound = false;
-            let event: any;
-            await new Promise((resolve) => {
-                const timer = setInterval(() => {
-                    const events = socket.getAllEvents();
-                    if (events && events.length >= 1) {
-                        event =  events.filter((value) => {
-                            if (value.eventName === targetEvent) return value;
-                        })[0];
-                        if (event) {
-                            eventFound = true;
-                            clearInterval(timer);
-                            return resolve();
-                        }
-                    }
-                }, timeoutConfigs.defaultInterval);
-            });
+            const event = await utils.waitForEvent(socket, targetEvent);
 
-            if (eventFound && event) {
+            if (event) {
                 expect(event);
                 expect(event.eventName);
                 expect(event.eventName).to.equal(targetEvent);
@@ -308,25 +331,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 expect(info.operationId);
 
                 const targetEvent = eventConfigs.events.settingsChanged;
-                let eventFound = false;
-                let event: any;
-                await new Promise((resolve) => {
-                    const timer = setInterval(() => {
-                        const events = socket.getAllEvents();
-                        if (events && events.length >= 1) {
-                            event =  events.filter((value) => {
-                                if (value.eventName === targetEvent && _.isMatch(value.eventData, checkData)) return value;
-                            })[0];
-                            if (event) {
-                                eventFound = true;
-                                clearInterval(timer);
-                                return resolve();
-                            }
-                        }
-                    }, timeoutConfigs.defaultInterval);
-                });
+                const event = await utils.waitForEvent(socket, targetEvent, checkData);
 
-                if (eventFound && event) {
+                if (event) {
                     expect(event);
                     expect(event.eventName);
                     expect(event.eventName).to.equal(targetEvent);
@@ -429,26 +436,9 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 }
 
                 const targetEvent = comboInUse["socketEvent"];
-                let eventFound = false;
-                let event: any;
-                await new Promise((resolve) => {
-                    const timer = setInterval(() => {
-                        const events = socket.getAllEvents();
-                        if (events && events.length >= 1) {
-                            event =  events.filter((value) => {
-                                if (value.eventName === targetEvent && _.difference(comboInUse["eventKeys"], Object.keys(value.eventData)).length === 0 &&
-                                _.isMatch(value.eventData, comboInUse["result"])) return value;
-                            })[0];
-                            if (event) {
-                                eventFound = true;
-                                clearInterval(timer);
-                                return resolve();
-                            }
-                        }
-                    }, timeoutConfigs.defaultInterval);
-                });
+                const event = await utils.waitForEvent(socket, targetEvent, comboInUse["result"], comboInUse["eventKeys"]);
 
-                if (eventFound && event) {
+                if (event) {
                     expect(event);
                     expect(event.eventName);
                     expect(event.eventName).to.equal(targetEvent);
@@ -491,7 +481,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
         }
 
         async function beforeHookInternalPortTest(hook: any): Promise<void> {
-            hook.timeout(timeoutConfigs.defaultTimeout);
+            hook.timeout(timeoutConfigs.createTestTimeout);
             if (! project_configs.oneExposedPortOnly[projectLang][process.env.TEST_TYPE]) return;
 
             const projectInfo = await projectUtil.getProjectInfo(projData.projectID);
@@ -516,23 +506,16 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 }
             }
             // we need to do two builds for docker projects on local. issue: https://github.com/eclipse/codewind/issues/297
-            if (projData.projectType === "docker") {
-                if (process.env.IN_K8) {
-                    await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                        {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
-                } else {
-                    await utils.rebuildProject(socket, projData);
-                    await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                        {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
-                }
-            } else {
-                await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                    {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
+            if (projData.projectType === "docker" && !process.env.IN_K8) {
+                await utils.callProjectAction("build", undefined, socket, projData);
             }
+            await utils.callProjectAction("build", undefined, socket, projData, [eventConfigs.events.projectChanged],
+                [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}}]);
+            await utils.setBuildStatus(projData);
         }
 
         async function afterHookInternalPortTestSinglePort(hook: any): Promise<void> {
-            hook.timeout(timeoutConfigs.defaultTimeout);
+            hook.timeout(timeoutConfigs.createTestTimeout);
             if (! project_configs.oneExposedPortOnly[projectLang][process.env.TEST_TYPE]) return;
 
             const dockerfile = path.join(projData.location, "Dockerfile");
@@ -550,21 +533,32 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 }
             }
             // we need to do two builds for docker projects on local. issue: https://github.com/eclipse/codewind/issues/297
-            if (projData.projectType === "docker") {
-                if (!process.env.IN_K8) {
-                    await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                        {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}});
-                }
+            if (projData.projectType === "docker" && !process.env.IN_K8) {
+                await utils.callProjectAction("build", undefined, socket, projData, [eventConfigs.events.projectChanged],
+                    [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}}]);
             }
-            await utils.rebuildProject(socket, projData, eventConfigs.events.projectChanged,
-                {"projectID": projData.projectID, "status": "success", "ports": {"internalPort": defaultInternalPort}});
+            await utils.callProjectAction("build", undefined, socket, projData, [eventConfigs.events.projectChanged],
+                [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": defaultInternalPort}}]);
             await utils.setBuildStatus(projData);
         }
 
         async function afterHookInternalPortTestResetPort(hook: any): Promise<void> {
-            hook.timeout(timeoutConfigs.defaultTimeout);
+            hook.timeout(timeoutConfigs.createTestTimeout);
             await runProjectSpecificationSettingTest(combinations["combo1"], project_configs.defaultInternalPorts[projectLang]);
-            await utils.rebuildProject(socket, projData);
+
+            const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+            const mode = action === "restart" ? "run" : undefined;
+            const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
+                [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
+            const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
+
+            if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run") && projData.projectType != "spring") {
+                targetEvents.pop();
+                targetEventDatas.pop();
+            }
+
+            await utils.setAppStatus(projData);
+            await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
             await utils.setBuildStatus(projData);
         }
 
@@ -578,12 +572,12 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultContextRoot[projectLang] || project_configs.defaultHealthCheckEndPoint[projectLang]);
         }
 
-        async function  afterHookMavenProfileTest(hook: any): Promise<void> {
+        async function afterHookMavenProfileTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
             await runProjectSpecificationSettingTest(combinations["combo5"], []);
         }
 
-        async function  afterHookMavenPropertyTest(hook: any): Promise<void> {
+        async function afterHookMavenPropertyTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
             await runProjectSpecificationSettingTest(combinations["combo6"], []);
         }
