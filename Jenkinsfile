@@ -114,6 +114,7 @@ pipeline {
                             fi
                             
                             # Run the unit test suite
+                            echo "Started running Turbine Unit Test Suite"
                             npm run unit:test
                             '''
                 }
