@@ -94,7 +94,30 @@ pipeline {
                     '''
                 }
             }
-        }  
+        }
+
+        stage('Run Turbine Unit Test Suite') {
+            options {
+                timeout(time: 30, unit: 'MINUTES') 
+            }
+                steps {
+                    withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
+                        withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
+                            sh '''#!/usr/bin/env bash
+
+                            # Run eslint on turbine code
+                            cd src/pfe/file-watcher
+                            npm install
+                            npm run eslint
+                            if [ $? -ne 0 ]; then
+                                exit 1
+                            fi
+                            
+                            # Run the unit test suite
+                            npm run unit:test
+                            '''
+                }
+        }
         
         stage('Run Codewind test suite') {  
             options {
@@ -201,7 +224,6 @@ pipeline {
                 }
             }
         } 
-         
         
         stage('Publish Docker images') {
 
@@ -249,6 +271,7 @@ pipeline {
              }
         } 
     }
+
     post {
         always {
            sh '''#!/usr/bin/env bash
