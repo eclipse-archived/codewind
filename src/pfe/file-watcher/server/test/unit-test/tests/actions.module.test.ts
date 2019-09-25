@@ -100,7 +100,7 @@ export function actionsTestModule(): void {
         }
     });
 
-    describe("combinational testing of enableautobuild & disableautobuild function", () => {
+    describe.only("combinational testing of enableautobuild & disableautobuild function", () => {
 
         const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
         const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
@@ -160,7 +160,8 @@ export function actionsTestModule(): void {
             if (!(await existsAsync(appsodyExtensionPath))) {
                 fse.ensureDirSync(appsodyExtensionPath);
                 await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
-                await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
+                await writeAsync(appsodyExtensionTestArtifactPath2, "#!/bin/bash\nknStack=\"somestack\"\necho -n \"{ \\\"language\\\": \\\"$knStack\\\" }\"");
+                await fs.chmodSync(appsodyExtensionTestArtifactPath2, 0o755);
             }
         });
 
@@ -309,7 +310,7 @@ export function actionsTestModule(): void {
             if (!(await existsAsync(appsodyExtensionPath))) {
                 fse.ensureDirSync(appsodyExtensionPath);
                 await writeAsync(appsodyExtensionTestArtifactPath1, '{"requiredFiles": ["/testRequiredFiles"]}');
-                await writeAsync(appsodyExtensionTestArtifactPath2, `echo -n "{ \"language\": \"somestack\" }"`);
+                await writeAsync(appsodyExtensionTestArtifactPath2, "#!/bin/bash\nknStack=\"somestack\"\necho -n \"{ \\\"language\\\": \\\"$knStack\\\" }\"");
                 await fs.chmodSync(appsodyExtensionTestArtifactPath2, 0o755);
             }
 
