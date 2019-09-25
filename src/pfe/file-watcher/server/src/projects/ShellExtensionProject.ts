@@ -90,11 +90,6 @@ export class ShellExtensionProject implements IExtensionProject {
         ];
 
         try {
-            if (process.env.NODE_ENV == "test") {
-                // Dont try to read the dummy script on test mode
-                logger.logInfo(">> Returning since we are in test mode");
-                return;
-            }
             const result = await processManager.spawnDetachedAsync(
                 projectInfo.projectID,
                 path.join(this.fullPath, "entrypoint.sh"),

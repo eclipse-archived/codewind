@@ -268,7 +268,8 @@ export function projectExtensionsTestModule(): void {
             expect(fs.statSync(appsodyExtensionPath)).to.exist;
 
             await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
-            await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
+            await writeAsync(appsodyExtensionTestArtifactPath2, `echo -n "{ \"language\": \"somestack\" }"`);
+            await fs.chmodSync(appsodyExtensionTestArtifactPath2, 0o755);
             expect(fs.statSync(appsodyExtensionTestArtifactPath1)).to.exist;
             expect(fs.statSync(appsodyExtensionTestArtifactPath2)).to.exist;
         });
@@ -410,7 +411,8 @@ export function projectExtensionsTestModule(): void {
                 if (!await existsAsync(appsodyExtensionPath)) {
                     await mkdirAsync(appsodyExtensionPath);
                     await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
-                    await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
+                    await writeAsync(appsodyExtensionTestArtifactPath2, `echo -n "{ \"language\": \"somestack\" }"`);
+                    await fs.chmodSync(appsodyExtensionTestArtifactPath2, 0o755);
                 }
             }
         });
