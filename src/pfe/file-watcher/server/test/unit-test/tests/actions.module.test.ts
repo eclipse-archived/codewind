@@ -309,7 +309,8 @@ export function actionsTestModule(): void {
             if (!(await existsAsync(appsodyExtensionPath))) {
                 fse.ensureDirSync(appsodyExtensionPath);
                 await writeAsync(appsodyExtensionTestArtifactPath1, '{"requiredFiles": ["/testRequiredFiles"]}');
-                await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
+                await writeAsync(appsodyExtensionTestArtifactPath2, `echo -n "{ \"language\": \"somestack\" }"`);
+                await fs.chmodSync(appsodyExtensionTestArtifactPath2, 0o755);
             }
 
             expect(fs.statSync(extensionsPath)).to.exist;
