@@ -29,7 +29,7 @@ describe('Project Types API tests', function() {
         res.body.should.be.an('array');
         res.body.map((item) => {
             return item.projectType;
-        }).should.have.members([
+        }).should.include.members([
             'liberty',
             'nodejs',
             'spring',
