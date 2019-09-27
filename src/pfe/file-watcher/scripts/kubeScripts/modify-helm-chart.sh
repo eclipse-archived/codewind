@@ -19,14 +19,19 @@ releaseName=$3
 
 function addOwnerReference() {
     local filename="$1"
+    local ownerRefName="$2"
+    local ownerRefUID="$3"
     local index=$(getIndex $filename metadata.ownerReferences[*].apiVersion)
     yq w -i $filename -- metadata.ownerReferences[+].apiVersion apps/v1
     yq w -i $filename -- metadata.ownerReferences[$index].blockOwnerDeletion true
     yq w -i $filename -- metadata.ownerReferences[$index].controller true
     yq w -i $filename -- metadata.ownerReferences[$index].kind ReplicaSet
-    yq w -i $filename -- metadata.ownerReferences[$index].name $OWNER_REF_NAME
-    yq w -i $filename -- metadata.ownerReferences[$index].uid $OWNER_REF_UID
+    yq w -i $filename -- metadata.ownerReferences[$index].name $ownerRefName
+    yq w -i $filename -- metadata.ownerReferences[$index].uid $ownerRefUID
 }
+
+ownerReferenceName=$( kubectl get po --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath='{.items[0].metadata.ownerReferences[0].name}' )
+ownerReferenceUID=$( kubectl get po --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath='{.items[0].metadata.ownerReferences[0].uid}' )
 
 # Set the name of the deployment and service to the release name
 concatenatedReleaseName=$(echo $releaseName | head -c 62 | sed 's/\-$//')
@@ -38,7 +43,7 @@ yq w -i $deploymentFile -- metadata.labels.release $releaseName
 yq w -i $deploymentFile -- spec.template.metadata.labels.release $releaseName
 
 # Add owner reference for deletion when workspace is deleted
-addOwnerReference $deploymentFile
+addOwnerReference $deploymentFile $ownerReferenceName $ownerReferenceUID
 
 # Add the serviceAccount name to the deployment
 yq w -i $deploymentFile -- spec.template.spec.serviceAccountName $SERVICE_ACCOUNT_NAME
@@ -47,4 +52,4 @@ yq w -i $deploymentFile -- spec.template.spec.serviceAccountName $SERVICE_ACCOUN
 yq w -i $serviceFile -- metadata.labels.release $releaseName
 
 # Add owner reference for deletion when workspace is deleted
-addOwnerReference $serviceFile
+addOwnerReference $serviceFile $ownerReferenceName $ownerReferenceUID
