@@ -30,8 +30,9 @@ function addOwnerReference() {
     yq w -i $filename -- metadata.ownerReferences[$index].uid $ownerRefUID
 }
 
-ownerReferenceName=$( kubectl get po --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath='{.items[0].metadata.ownerReferences[0].name}' )
-ownerReferenceUID=$( kubectl get po --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath='{.items[0].metadata.ownerReferences[0].uid}' )
+# Get the UID of the Codewind replicaset
+ownerReferenceName=$( kubectl get replicaset --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath='{.items[0].metadata.name}' )
+ownerReferenceUID=$( kubectl get replicaset --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath='{.items[0].metadata.uid}' )
 
 # Set the name of the deployment and service to the release name
 concatenatedReleaseName=$(echo $releaseName | head -c 62 | sed 's/\-$//')
