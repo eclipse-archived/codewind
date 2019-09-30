@@ -20,7 +20,7 @@ chai.should();
 describe('Project Types API tests', function() {
 
     it('should return expected list of project types', async function() {
-        this.timeout(5000);
+        this.timeout(10000);
         const res = await reqService.chai
             .get('/api/v1/project-types')
             .set('Cookie', ADMIN_COOKIE);

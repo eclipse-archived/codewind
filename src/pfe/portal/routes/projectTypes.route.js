@@ -61,8 +61,11 @@ async function getProjectTypes(provider) {
 }
 
 function addLanguage(projectType, language) {
-  if (!projectType.projectSubtypes.items.find(item => item.id == language))
+  if (!projectType.projectSubtypes.items.find(item => item.id == language)) {
+    // label is mainly for extension project types to supply custom labels for subtypes
+    // for Codewind the label for the language is just the language itself
     projectType.projectSubtypes.items.push({ id: language, label: language });
+  }
 }
 
 /**
