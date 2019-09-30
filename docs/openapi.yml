@@ -1376,8 +1376,8 @@ components:
       required:
         - items
       properties:
-        prompt:
-          description: A prompt for user to select a subtype
+        label:
+          description: A name label to refer to the subtype
           type: string
         items:
           type: array

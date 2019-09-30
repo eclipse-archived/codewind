@@ -24,7 +24,7 @@ function sanitizeProjectType(array, type) {
   const sanitized = {
     projectType: String(type.projectType),
     projectSubtypes: {
-      prompt: String(type.projectSubtypes.prompt),
+      label: String(type.projectSubtypes.label),
       items: []
     }
   };
