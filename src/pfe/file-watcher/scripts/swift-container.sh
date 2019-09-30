@@ -18,6 +18,7 @@ CONTAINER_NAME=$5
 logName=$7
 FOLDER_NAME=${11}
 DEPLOYMENT_REGISTRY=${12}
+TURBINE_SYNC=${13}
 
 WORKSPACE=/codewind-workspace
 LOG_FOLDER=$WORKSPACE/.logs/$FOLDER_NAME
@@ -37,6 +38,7 @@ echo "*** CONTAINER_NAME = $CONTAINER_NAME"
 echo "*** FOLDER_NAME = $FOLDER_NAME"
 echo "*** LOG_FOLDER = $LOG_FOLDER"
 echo "*** DEPLOYMENT_REGISTRY = $DEPLOYMENT_REGISTRY"
+echo "*** TURBINE_SYNC = $TURBINE_SYNC"
 
 tag=microclimate-dev-swift
 projectName=$( basename "$ROOT" )
@@ -245,7 +247,16 @@ function dockerRun() {
 	workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
 	echo "Workspace path used for volume mounting is: "$workspace""
 
-	$IMAGE_COMMAND run --network=codewind_network --name "$project" -dt -P -v $workspace/"$projectName":/swift-project -w /swift-project "$project"
+	if [ "$TURBINE_SYNC" == "true" ]; then
+		echo -e "Turbine sync set to $TURBINE_SYNC. Running docker run command without volume mounts"
+		$IMAGE_COMMAND run --network=codewind_network --name "$project" -dt -P -w /swift-project "$project"
+		if [ $? -eq 0 ]; then
+			echo -e "Copying over source files"
+			docker cp "$WORKSPACE/$projectName" $project:/swift-project
+		fi
+	else
+		$IMAGE_COMMAND run --network=codewind_network --name "$project" -dt -P -v $workspace/"$projectName":/swift-project -w /swift-project "$project"
+	fi
 }
 
 function deployLocal() {
