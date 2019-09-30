@@ -25,6 +25,7 @@ pipeline {
                         echo "Docker system prune ..."
                         docker system df
                         docker system prune -a -f
+                        docker system prune --volumes -f
                         docker builder prune -a -f
                         docker system df
                         df -lh
@@ -322,6 +323,7 @@ pipeline {
               echo "Docker system prune ..."
               docker system df
               docker system prune -a -f
+              docker system prune --volumes -f
               docker builder prune -a -f
               docker system df
               df -lh
