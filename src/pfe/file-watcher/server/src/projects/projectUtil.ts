@@ -166,7 +166,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command,
         operation.containerName, String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode,
-        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry];
+        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, "true"];
 
         if (projectType == "liberty" || projectType == "spring") {
 
@@ -186,7 +186,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
             args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
                 String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings];
+                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings, "true"];
         } else if (projectType == "odo") {
             const componentName: string = await getComponentName(projectName);
 
