@@ -73,7 +73,7 @@ function create() {
 	if [ -f "$STOP_WATCHING_CHECK" ]; then
 		echo "Stop watching flag found. Doing nothing.";
 	else
-		# If the maven m2 cache doesn't exist then pull it from duckerhub
+		# If the maven m2 cache doesn't exist then pull it from dockerhub
 		if [ ! -d $MAVEN_M2_CACHE ]; then
 			if [ "$IN_K8" == "true" ]; then
 				echo "Pulling maven m2 cache image for $ROOT using buildah"
