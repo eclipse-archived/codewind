@@ -45,7 +45,7 @@ export interface IExtensionProject {
      *
      * @param projectInfo <Required | ProjectInfo> - The metadata information for the project.
      */
-    start(projectInfo: ProjectInfo): Promise<void>;
+    start?(projectInfo: ProjectInfo): Promise<void>;
 
     /**
      * @function
@@ -53,7 +53,7 @@ export interface IExtensionProject {
      *
      * @param projectInfo <Required | ProjectInfo> - The metadata information for the project.
      */
-    stop(projectInfo: ProjectInfo): Promise<void>;
+    stop?(projectInfo: ProjectInfo): Promise<void>;
 
     /**
      * @function
@@ -130,7 +130,27 @@ export interface IExtensionProject {
      * @param projectID <Required | string> - An alphanumeric identifier for a project.
      * @param projectLocation <Required | string> - The project location directory.
      *
-     * @returns string
+     * @returns Promise<string>
      */
-    getContainerName?(projectID: string, projectLocation: string): string;
+    getContainerName?(projectID: string, projectLocation: string): Promise<string>;
+
+    /**
+     * @function
+     * @description Return a reproducible app name for the project.
+     *
+     * @param projectID <Required | string> - An alphanumeric identifier for a project.
+     *
+     * @returns Promise<string>
+     */
+    getAppName?(projectID: string): Promise<string>;
+
+    /**
+     * @function
+     * @description Get the internal app port that the project uses.
+     *
+     * @param projectID <Required | string> - An alphanumeric identifier for a project.
+     *
+     * @returns Promise<string>
+     */
+    getAppPort?(projectID: string): Promise<string>;
 }

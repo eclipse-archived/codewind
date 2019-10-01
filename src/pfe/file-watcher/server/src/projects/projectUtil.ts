@@ -186,7 +186,19 @@ export async function containerCreate(operation: Operation, script: string, comm
             args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
                 String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
                 (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings];
-    }
+        } else if (projectType == "odo") {
+            const componentName: string = await getComponentName(projectName);
+
+            args = [
+                projectLocation,
+                operation.projectInfo.projectID,
+                command,
+                operation.projectInfo.language,
+                componentName,
+                logDir,
+                String(operation.projectInfo.autoBuildEnabled)
+            ];
+        }
 
     executeBuildScript(operation, script, args, event);
 
@@ -287,6 +299,18 @@ export async function containerUpdate(operation: Operation, script: string, comm
         args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
             String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
             (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings];
+    } else if (projectType == "odo") {
+        const componentName: string = await getComponentName(projectName);
+
+        args = [
+            projectLocation,
+            operation.projectInfo.projectID,
+            command,
+            operation.projectInfo.language,
+            componentName,
+            logDir,
+            String(operation.projectInfo.autoBuildEnabled)
+        ];
     }
 
     executeBuildScript(operation, script, args, event);
@@ -618,10 +642,27 @@ export async function containerDelete(projectInfo: ProjectInfo, script: string):
     processManager.killRunningProcesses(projectInfo.projectID, projectName);
 
     try {
+        let args: any[] = [projectInfo.location, LOCAL_WORKSPACE, projectID, "remove", containerName, undefined, undefined, undefined, undefined, undefined, undefined, deploymentRegistry];
+
+        if (projectInfo.projectType == "odo") {
+            const logDir: string = await logHelper.getLogDir(projectID, projectName);
+            const componentName: string = await getComponentName(projectName);
+
+            args = [
+                projectInfo.location,
+                projectInfo.projectID,
+                "remove",
+                projectInfo.language,
+                componentName,
+                logDir,
+                String(projectInfo.autoBuildEnabled)
+            ];
+        }
+
         await processManager.spawnDetachedAsync(
             projectInfo.projectID,
             script,
-            [projectInfo.location, LOCAL_WORKSPACE, projectID, "remove", containerName, undefined, undefined, undefined, undefined, undefined, undefined, deploymentRegistry],
+            args,
             {}
         );
     } catch (err) {
@@ -746,6 +787,18 @@ export async function getContainerName(projectInfo: ProjectInfo): Promise<string
     }
 
     return getDefaultContainerName(projectID, projectLocation);
+}
+
+/**
+ * @function
+ * @description Use project name to get component name that used for odo extension.
+ *
+ * @param projectName <Required | string> - Project name.
+ *
+ * @returns Promise<string>
+ */
+async function getComponentName(projectName: string): Promise<string> {
+    return "cw-" + projectName;
 }
 
 /**
@@ -883,7 +936,7 @@ export async function isContainerActive(projectID: string, handler: any): Promis
         const containerName = await getContainerName(projectInfo);
         let containerState = undefined;
         if (process.env.IN_K8 === "true") {
-            containerState = await kubeutil.isContainerActive(containerName);
+            containerState = await kubeutil.isContainerActive(containerName, projectInfo);
         } else {
             containerState = await dockerutil.isContainerActive(containerName);
         }
@@ -1172,8 +1225,23 @@ export async function runScript(projectInfo: ProjectInfo, script: string, comman
     const containerName = await getContainerName(projectInfo);
     const logName = getLogName(projectInfo.projectID, projectInfo.location);
     const logDir = await logHelper.getLogDir(projectInfo.projectID, projectInfo.projectName);
-    const args = [projectInfo.location, LOCAL_WORKSPACE, projectID, command, containerName, String(projectInfo.autoBuildEnabled), logName, projectInfo.startMode,
+    const projectName = path.basename(projectInfo.location);
+    let args = [projectInfo.location, LOCAL_WORKSPACE, projectID, command, containerName, String(projectInfo.autoBuildEnabled), logName, projectInfo.startMode,
         projectInfo.debugPort, "NONE", logDir];
+
+    if (projectInfo.projectType == "odo") {
+        const componentName: string = await getComponentName(projectName);
+
+        args = [
+            projectInfo.location,
+            projectInfo.projectID,
+            command,
+            projectInfo.language,
+            componentName,
+            logDir,
+            String(projectInfo.autoBuildEnabled)
+        ];
+    }
 
     return await processManager.spawnDetachedAsync(projectInfo.projectID, script, args, {});
 }
