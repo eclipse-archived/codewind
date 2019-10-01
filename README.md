@@ -16,6 +16,10 @@ Use the following instructions to install Codewind with your choice of editor:
 3. [Eclipse Che plugin](https://github.com/eclipse/codewind-che-plugin)
 
 ## Building Codewind from the source
+1. Clone the `codewind` repository.
+2. Run the `./script/build.sh` script to run the Codewind build, or run the `./run.sh` script to build and start Codewind.
+
+You can also build Codewind from the IDEs:
 - For Eclipse, see "Building" in the [`codewind-eclipse` repository](https://github.com/eclipse/codewind-eclipse/blob/master/README.md).
 - For VS Code, see "Building Codewind from the source" in the [`codewind-vscode` repository](https://github.com/eclipse/codewind-vscode/blob/master/README.md).
 
