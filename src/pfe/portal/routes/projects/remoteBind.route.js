@@ -17,6 +17,7 @@ const zlib = require("zlib");
 const { promisify } = require('util');
 const inflateAsync = promisify(zlib.inflate);
 const exec = promisify(require('child_process').exec);
+//const docker = require('../../modules/utils/dockerFunctions');
 
 const Logger = require('../../modules/utils/Logger');
 const Project = require('../../modules/Project');
@@ -61,8 +62,9 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
       return;
     }
 
-    const workspaceDir = path.dirname(projectPath) + path.sep;
+    const workspaceDir = global.codewind.CODEWIND_WORKSPACE
     const projectDir = path.basename(projectPath)
+   
 
     const projectDetails = {
       name: name,
@@ -99,6 +101,7 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
 
   try {
     let dirName = path.join(global.codewind.CODEWIND_WORKSPACE, newProject.name)
+    newProject.workspaceDir = dirName
     log.debug(`Creating directory in ${dirName}`);
     await fs.mkdir(dirName);
     user.uiSocket.emit('projectBind', { status: 'success', ...newProject });
@@ -121,7 +124,7 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
  * @param id the id of the project
  * @param path the path of the file, relative to the project directory
  * @param msg the gzipped file content
- * @return 200 if file upload is successful 
+ * @return 200 if file upload is successful
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
@@ -137,11 +140,23 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
       const unzippedFile = await inflateAsync(zippedFile);
       const fileToWrite = JSON.parse(unzippedFile.toString());
       const pathToWriteTo = path.join(global.codewind.CODEWIND_WORKSPACE, project.name, relativePathOfFile)
-      await fs.outputFile(pathToWriteTo, fileToWrite);
+      await fs.outputFileSync(pathToWriteTo, fileToWrite);
+
+      // if the project container has started, send the uploaded file to it
+
+      let projectRoot = getProjectSourceRoot(project);
+
+      if (project.containerId) {
+        const dockerCommand = `docker cp ${pathToWriteTo} ${project.containerId}:${projectRoot}/${relativePathOfFile}`;
+        console.log(dockerCommand);
+        // remove codewind-workspace/projname
+        // docker cp uploaded file to the project container
+        await exec(dockerCommand);
+      }
       res.sendStatus(200);
     } else {
       res.sendStatus(404);
-    } 
+    }
   } catch(err) {
     log.error(err);
     res.status(500).send(err);
@@ -176,9 +191,24 @@ router.post('/api/v1/projects/:id/remote-bind/clear', async (req, res) => {
       log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
         `${filesToDelete.join(', ')}`);
 
+      // remove the file from pfe container
       await Promise.all(
         filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
       );
+
+      // remove the file from the project container
+      // if (project.containerId) {
+      //   await Promise.all(
+      //     filesToDelete.map(oldFile => {
+      //       const filePath = path.join("/app", oldFile);
+      //       let dockerCommand = `docker exec ${project.containerId} /bin/rm -fR ${filePath}`;
+      //       console.log(dockerCommand);
+      //       exec(dockerCommand);
+      //     })
+      //   ).catch(function(err) {
+      //     log.info(`Unable to remove file: ${oldFile}`, err);
+      //   })
+      // }
 
       res.sendStatus(200);
     } else {
@@ -208,6 +238,32 @@ async function listFiles(absolutePath, relativePath) {
   }
   return fileList;
 }
+
+
+function getProjectSourceRoot(project) {
+  let projectRoot = "";
+  switch (project.projectType) {
+    case 'nodejs': {
+      projectRoot = "/app";
+      break
+    }
+    case 'liberty': {
+      projectRoot = "/home/default/app";
+      break
+    }
+    case 'swift': {
+      projectRoot = "/home/default/app";
+      break
+    }
+    default: {
+      projectRoot = "/app";
+      break
+    }
+  }
+  return projectRoot;
+}
+
+
 
 /**
  * API Function to complete binding a given project on a file system visible

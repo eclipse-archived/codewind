@@ -55,7 +55,7 @@ const containerInfoMap = new Map();
 
 export const containerInfoForceRefreshMap = new Map();
 
-export const LOCAL_WORKSPACE = process.env.NODE_ENV === "test" ? process.env.HOST_WORKSPACE_DIRECTORY : (process.argv[2] ? process.argv[2] : process.env.HOST_WORKSPACE_DIRECTORY);
+export const LOCAL_WORKSPACE = "/codewind-workspace";
 
 const projectList: Array<string> = [];
 

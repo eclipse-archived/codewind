@@ -239,7 +239,7 @@ module.exports = class User {
     } ));
     if (this.workspaceSettingObject == undefined) {
       const workspaceSettingObj = {};
-      workspaceSettingObj.pathToMonitor  = path.join(process.env.HOST_WORKSPACE_DIRECTORY, '/.config');
+      workspaceSettingObj.pathToMonitor  = path.join(global.codewind.CODEWIND_WORKSPACE, '/.config');
       if (process.env.HOST_OS === "windows") {
         workspaceSettingObj.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(workspaceSettingObj.pathToMonitor );
       }
