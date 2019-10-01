@@ -165,7 +165,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command,
         operation.containerName, String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode,
-        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, "true"];
+        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, String(false)];
 
         if (projectType == "liberty" || projectType == "spring") {
 
@@ -185,7 +185,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
             args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
                 String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings, "true"];
+                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings, String(false)];
         }
 
     executeBuildScript(operation, script, args, event);
