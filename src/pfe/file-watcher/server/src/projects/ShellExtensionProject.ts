@@ -305,10 +305,9 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param projectID <Required | string> - An alphanumeric identifier for a project.
      * @param projectLocation <Required | string> - The project location directory.
      *
-     * @returns string
+     * @returns Promise<string>
      */
-    getContainerName = (projectID: string, projectLocation: string): string => {
-
+    getContainerName = async (projectID: string, projectLocation: string): Promise<string> => {
         const name = projectUtil.getDefaultContainerName(projectID, projectLocation);
 
         if (this.config.container) {

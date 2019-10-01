@@ -22,6 +22,7 @@ import * as swiftProject from "../projects/swiftProject";
 import * as nodeProject from "../projects/nodejsProject";
 import { DockerProject } from "../projects/DockerProject";
 import { ShellExtensionProject } from "../projects/ShellExtensionProject";
+import { OdoExtensionProject } from "../projects/OdoExtensionProject";
 import { ProjectInfo, ProjectCapabilities, defaultProjectCapabilities } from "../projects/Project";
 import { workspaceConstants } from "../projects/constants";
 
@@ -163,12 +164,14 @@ export function getAllProjectTypes(): Array<string> {
 async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any> {
 
     const key = projectInfo.projectID;
+    const projectName = path.basename(projectInfo.location);
     let handler = extensionProjectHandlers[key];
 
     // is there an extension handler for the project?
     if (!handler) {
 
         const fullPath = projectInfo.extensionID;
+        logger.logProjectInfo("Extension absolute path is: " + fullPath, key, projectName);
 
         // try to load extension handler if ID was provided
         if (fullPath) {
@@ -177,14 +180,17 @@ async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any
                 if (files) {
                     if (files.includes(".sh-extension")) {
                         handler = new ShellExtensionProject(projectInfo.projectType);
-                        await handler.init(projectInfo);
-                        extensionProjectHandlers[key] = handler;
+                    } else if (files.includes(".odo-extension-config.json")) {
+                        handler = new OdoExtensionProject(projectInfo.projectType);
                     }
+
+                    await handler.init(projectInfo);
+                    extensionProjectHandlers[key] = handler;
                 }
             }
             catch (err) {
-                logger.logError(`Failed to get extension project handler ${fullPath} for ${projectInfo.location}`);
-                logger.logError(err);
+                logger.logProjectError(`Failed to get extension project handler ${fullPath} for ${projectInfo.location}`, key, projectName);
+                logger.logProjectError(err, key, projectName);
                 return undefined;
             }
         }
