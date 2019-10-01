@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-<!-- Please fill out the following form to ask a quesstion. If some fields do not apply to your situation, feel free to skip them.-->
+<!-- Please fill out the following form to ask a question. If some fields do not apply to your situation, feel free to skip them.-->
 
 **Codewind version:**
 **OS:**

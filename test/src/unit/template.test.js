@@ -99,7 +99,7 @@ describe('Templates.js', function() {
     describe('getAllTemplates()', function() {
         describe('', function() {
             it('returns the default templates', async function() {
-                this.timeout(10000);
+                this.timeout(30000);
                 const templateController = new Templates('');
                 const output = await templateController.getAllTemplates();
                 output.should.have.deep.members([
@@ -118,7 +118,7 @@ describe('Templates.js', function() {
                 ];
             });
             it('returns more templates', async function() {
-                this.timeout(10000);
+                this.timeout(30000);
                 const output = await templateController.getAllTemplates();
                 output.should.include.deep.members(defaultCodewindTemplates);
                 (output.length).should.be.above(defaultCodewindTemplates.length);
