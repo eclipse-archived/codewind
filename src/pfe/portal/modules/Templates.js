@@ -229,7 +229,7 @@ module.exports = class Templates {
   /**
    * Add a repository to the list of template repositories.
    */
-  async addRepository(repoUrl, repoDescription, isRepoProtected) {
+  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
     let url;
     try {
       url = new URL(repoUrl).href;
@@ -249,6 +249,7 @@ module.exports = class Templates {
     }
 
     let newRepo = {
+      name: repoName,
       url,
       description: repoDescription,
       enabled: true,
@@ -325,7 +326,7 @@ async function readRepoTemplatesJSON(repository) {
   try {
     const templateDetails = JSON.parse(res.body);
     for (const prop of ['name', 'description']) {
-      if (templateDetails.hasOwnProperty(prop)) {
+      if (templateDetails.hasOwnProperty(prop) && !repository[prop]) {
         repository[prop] = templateDetails[prop];
       }
     }

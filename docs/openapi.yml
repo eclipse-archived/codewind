@@ -1376,9 +1376,10 @@ components:
       type: object
       required:
         - url
-        - description
       properties:
         url:
+          type: string
+        name:
           type: string
         description:
           type: string
