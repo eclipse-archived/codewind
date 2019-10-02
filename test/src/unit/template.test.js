@@ -412,6 +412,20 @@ describe('Templates.js', function() {
                 });
             });
         });
+        describe('(<validUrl>, <NoDesc> <NoName>)', function() {
+            it('succeeds, and gets the name and description from templates.json', async function() {
+                const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
+                const func = () => templateController.addRepository(url);
+                await (func().should.not.be.rejected);
+                templateController.repositoryList.should.deep.include({
+                    url,
+                    name: 'Default templates',
+                    description: 'The default set of templates for new projects in Codewind.',
+                    enabled: true,
+                    projectStyles: ['Codewind'],
+                });
+            });
+        });
     });
     describe('deleteRepository(repoUrl)', function() {
         const mockRepoList = [sampleRepos.fromAppsodyExtension];
