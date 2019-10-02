@@ -27,6 +27,8 @@ export MICROCLIMATE_WS_ORIGIN=$5
 
 export LOGFOLDER=$6
 
+export TURBINE_SYNC=$7
+
 # The directory that contains this shell script (which is also the installation artifact/ dir)
 export ARTIFACTS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -59,21 +61,41 @@ if [[ $MICROCLIMATE_WS_ORIGIN &&  "$APPDIR" == '/codewind-workspace'* ]]
 		LOGSDIR=$MICROCLIMATE_WS_ORIGIN/.logs/"$LOGFOLDER"
 		echo "Log path used for volume mounting is: "$LOGSDIR""
 
-		docker run -dt \
-		--entrypoint "/home/default/artifacts/new_entrypoint.sh" \
-		--name $CONTAINER_NAME \
-		--network=codewind_network \
-		-v "$APPDIR":$HOME/app \
-		-v "$LOGSDIR":$HOME/logs \
-		$PORT_MAPPING_PARAMS \
-		$CONTAINER_IMAGE_NAME
-
+		if [ "$TURBINE_SYNC" == "true" ]; then
+			echo -e "Turbine sync set to $TURBINE_SYNC. Running docker run command without volume mounts"
+			# on liberty the docker run checks for the output of the the command - check ContainerRunTask.java line 77 https://github.com/eclipse/codewind/blob/deebc7bdf94d8a27f8ff1756e7ba63c6030d87c8/src/pfe/iterative-dev/idc-java/IDC/src/org/eclipse/codewind/iterdev/tasks/ContainerRunTask.java#L77
+			OUTPUT_DOCKER_RUN="$(docker run -dt --entrypoint "/home/default/artifacts/new_entrypoint.sh" --name $CONTAINER_NAME -v "$LOGSDIR":$HOME/logs --network=codewind_network $PORT_MAPPING_PARAMS $CONTAINER_IMAGE_NAME)"
+			if [ $? -eq 0 ]; then
+				echo -e "Copying over source files"
+				docker cp "$APPDIR" $CONTAINER_NAME:$HOME/app
+				echo "${OUTPUT_DOCKER_RUN}"
+			fi
+		else
+			docker run -dt \
+				--entrypoint "/home/default/artifacts/new_entrypoint.sh" \
+				--name $CONTAINER_NAME \
+				--network=codewind_network \
+				-v "$APPDIR":$HOME/app \
+				-v "$LOGSDIR":$HOME/logs \
+				$PORT_MAPPING_PARAMS \
+				$CONTAINER_IMAGE_NAME
+		fi
 	else
-		docker run -dt \
-		--name $CONTAINER_NAME \
-		-v "$APPDIR":$HOME/app \
-		-v "$LOGSDIR":$HOME/logs \
-		$PORT_MAPPING_PARAMS \
-		$CONTAINER_IMAGE_NAME
-
+		if [ "$TURBINE_SYNC" == "true" ]; then
+			echo -e "Turbine sync set to $TURBINE_SYNC. Running docker run command without volume mounts"
+			# on liberty the docker run checks for the output of the the command - check ContainerRunTask.java line 77 https://github.com/eclipse/codewind/blob/deebc7bdf94d8a27f8ff1756e7ba63c6030d87c8/src/pfe/iterative-dev/idc-java/IDC/src/org/eclipse/codewind/iterdev/tasks/ContainerRunTask.java#L77
+			OUTPUT_DOCKER_RUN="$(docker run -dt --name $CONTAINER_NAME -v "$LOGSDIR":$HOME/logs $PORT_MAPPING_PARAMS $CONTAINER_IMAGE_NAME)"
+			if [ $? -eq 0 ]; then
+				echo -e "Copying over source files"
+				docker cp "$APPDIR" $CONTAINER_NAME:$HOME/app
+				echo "${OUTPUT_DOCKER_RUN}"
+			fi
+		else
+			docker run -dt \
+				--name $CONTAINER_NAME \
+				-v "$APPDIR":$HOME/app \
+				-v "$LOGSDIR":$HOME/logs \
+				$PORT_MAPPING_PARAMS \
+				$CONTAINER_IMAGE_NAME
+		fi
 fi
