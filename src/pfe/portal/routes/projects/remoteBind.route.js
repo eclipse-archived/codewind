@@ -193,20 +193,6 @@ router.post('/api/v1/projects/:id/remote-bind/clear', async (req, res) => {
         filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
       );
 
-      // remove the file from the project container
-      // if (project.containerId) {
-      //   await Promise.all(
-      //     filesToDelete.map(oldFile => {
-      //       const filePath = path.join("/app", oldFile);
-      //       let dockerCommand = `docker exec ${project.containerId} /bin/rm -fR ${filePath}`;
-      //       console.log(dockerCommand);
-      //       exec(dockerCommand);
-      //     })
-      //   ).catch(function(err) {
-      //     log.info(`Unable to remove file: ${oldFile}`, err);
-      //   })
-      // }
-
       res.sendStatus(200);
     } else {
       res.sendStatus(404);
