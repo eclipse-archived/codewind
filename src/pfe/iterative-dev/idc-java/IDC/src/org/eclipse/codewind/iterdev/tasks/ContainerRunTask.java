@@ -49,7 +49,7 @@ public class ContainerRunTask {
                     + context.getContainerName() + " " + context.getImageName() + " \"-p "
                     + debugPortPublishArg + " -P\"" + " "
                     + context.getAppDockerBase() + " " + context.getLocalWorkspaceOrigin() + " "
-                    + context.getLogDir();
+                    + context.getLogDir() + " " + context.getTurbineSync();
         }
 
         ProcessRunner pr = runContainer(cmd, context);
