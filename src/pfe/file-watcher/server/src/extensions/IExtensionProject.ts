@@ -153,4 +153,14 @@ export interface IExtensionProject {
      * @returns Promise<string>
      */
     getAppPort?(projectID: string): Promise<string>;
+
+    /**
+     * @function
+     * @description Get the app ingress URL as app base URL.
+     *
+     * @param projectID <Required | string> - An alphanumeric identifier for a project.
+     *
+     * @returns Promise<string>
+     */
+    getAppBaseURL?(projectID: string): Promise<string>;
 }

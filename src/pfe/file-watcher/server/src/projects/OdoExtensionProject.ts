@@ -272,4 +272,42 @@ export class OdoExtensionProject implements IExtensionProject {
 
         return appPort;
     }
+
+    /**
+     * @function
+     * @description Get the app ingress URL as app base URL.
+     *
+     * @param projectID <Required | string> - An alphanumeric identifier for a project.
+     *
+     * @returns Promise<string>
+     */
+    getAppBaseURL = async (projectID: string): Promise<string> => {
+        let appBaseURL: string = undefined;
+        const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
+        const projectLocation = projectInfo.location;
+        const projectName = path.basename(projectLocation);
+        const args: string[] = [
+            projectLocation,
+            "",
+            "getURL",
+            "",
+            "",
+            "",
+            ""
+        ];
+
+        try {
+            const result = await processManager.spawnDetachedAsync(projectID, path.join(this.fullPath, "odo-extension-entrypoint.sh"), args, {});
+
+            if (result.exitCode != 0) {
+                logger.logProjectError(result.stderr, projectID, projectName);
+            } else {
+                appBaseURL = result.stdout;
+            }
+        } catch (err) {
+            logger.logProjectError(err, projectID, projectName);
+        }
+
+        return appBaseURL;
+    }
 }

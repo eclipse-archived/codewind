@@ -76,6 +76,7 @@ export interface ProjectEvent {
     mavenProperties?: string[];
     contextRoot?: string;
     isHttps?: boolean;
+    appBaseURL?: string;
 }
 
 export interface ProjectLog {
@@ -424,6 +425,12 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                     }
                     const logs = await getProjectLogs(operation.projectInfo);
                     projectInfo.logs = logs;
+
+                    if (operation.projectInfo.projectType == "odo") {
+                        const projectHandler = await projectExtensions.getProjectHandler(operation.projectInfo);
+                        const appBaseURL: string = await projectHandler.getAppBaseURL(projectID);
+                        projectInfo.appBaseURL = appBaseURL.trim();
+                    }
                 } catch (err) {
                     logger.logProjectError(err, projectID, projectName);
                     projectInfo.error = err;
