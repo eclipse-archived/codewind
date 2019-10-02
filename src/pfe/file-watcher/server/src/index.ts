@@ -270,7 +270,22 @@ export default class Filewatcher {
      *  @property 400: Error when attempting to read the workspace settings file
      *
      */
-    readWorkspaceSettings: () => Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>;
+    readWorkspaceSettings: (newWorkspaceSettings: any) => Promise<any>;
+
+    /**
+     * @function
+     * @description Read the workspace settings file and load the properties into cache if they're valid.
+     *
+     * @example await filewatcher.writeWorkspaceSettings();
+     *
+     * @returns Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>
+     * Response codes:
+     *  @property 200: Successfully received the request
+     *  @property 500: Error when attempting to write the workspace settings file
+     *
+     */
+    writeWorkspaceSettings: (newWorkspaceSettings: any) => Promise<any>;
+
 
     /**
      * @function
@@ -648,6 +663,7 @@ export default class Filewatcher {
         this.setLocale = locale.setLocale;
         this.setLoggingLevel = logger.setLoggingLevel;
         this.readWorkspaceSettings = workspaceSettings.readWorkspaceSettings;
+        this.writeWorkspaceSettings = workspaceSettings.writeWorkspaceSettings;
         this.testDeploymentRegistry = workspaceSettings.testDeploymentRegistry;
         this.registerListener = socket.registerListener;
         this.createProject = projectsController.createProject;
