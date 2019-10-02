@@ -326,6 +326,7 @@ async function readRepoTemplatesJSON(repository) {
   try {
     const templateDetails = JSON.parse(res.body);
     for (const prop of ['name', 'description']) {
+      // Only add the name or description if not set by the user on adding
       if (templateDetails.hasOwnProperty(prop) && !repository[prop]) {
         repository[prop] = templateDetails[prop];
       }
