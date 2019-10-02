@@ -385,10 +385,11 @@ describe('Templates.js', function() {
         describe('(<validUrlPointingToIndexJson>, <validDesc>)', function() {
             it('succeeds', async function() {
                 const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
-                const func = () => templateController.addRepository(url, 'description');
+                const func = () => templateController.addRepository(url, 'description', 'name');
                 await (func().should.not.be.rejected);
                 templateController.repositoryList.should.deep.include({
                     url,
+                    name: 'name',
                     description: 'description',
                     enabled: true,
                     projectStyles: ['Codewind'],
@@ -399,10 +400,11 @@ describe('Templates.js', function() {
             it('succeeds', async function() {
                 const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
                 const isRepoProtected = false;
-                const func = () => templateController.addRepository(url, 'description', isRepoProtected);
+                const func = () => templateController.addRepository(url, 'description', 'name', isRepoProtected);
                 await (func().should.not.be.rejected);
                 templateController.repositoryList.should.deep.include({
                     url,
+                    name: 'name',
                     description: 'description',
                     enabled: true,
                     projectStyles: ['Codewind'],

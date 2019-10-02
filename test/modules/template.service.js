@@ -1,4 +1,4 @@
-/*******************************************************************************
+ /*******************************************************************************
  * Copyright (c) 2019 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -13,60 +13,60 @@ const reqService = require('./request.service');
 
 const defaultCodewindTemplates = [
     {
-        label: 'Go template',
+        label: 'Go',
         description: 'Sample microservice for simple go app',
         language: 'go',
         url: 'https://github.com/microclimate-dev2ops/microclimateGoTemplate',
         projectType: 'docker',
     },
     {
-        label: 'Java Lagom template',
-        description: 'Template for building Lagom Reactive microservice in Java',
+        label: 'Lagom Java',
+        description: 'Sample for building Lagom Reactive microservice in Java',
         language: 'java',
         url: 'https://github.com/microclimate-dev2ops/lagomJavaTemplate',
         projectType: 'docker',
     },
     {
-        label: 'Java MicroProfile template',
-        description: 'Cloud Microservice Starter for Java - MicroProfile / Java EE',
-        language: 'java',
-        url: 'https://github.com/microclimate-dev2ops/javaMicroProfileTemplate',
-        projectType: 'liberty',
-    },
-    {
-        label: 'Node.js template',
+        label: 'Node.js Express',
         description: 'Cloud-ready Node.js Express sample application',
         language: 'nodejs',
         url: 'https://github.com/microclimate-dev2ops/nodeExpressTemplate',
         projectType: 'nodejs',
     },
     {
-        label: 'Open Liberty template',
+        label: 'Open Liberty',
         description: 'Template for building an Open Liberty microservice in Java',
         language: 'java',
         url: 'https://github.com/microclimate-dev2ops/openLibertyTemplate',
         projectType: 'docker',
     },
     {
-        label: 'Python template',
+        label: 'Python',
         description: 'HelloWorld microservice written in python',
         language: 'python',
         url: 'https://github.com/microclimate-dev2ops/SVTPythonTemplate',
         projectType: 'docker',
     },
     {
-        label: 'Spring template',
-        description: 'Template for building a Spring microservice',
+        label: 'Spring Boot®',
+        description: 'Spring Boot® using IBM Java',
         language: 'java',
         url: 'https://github.com/microclimate-dev2ops/springJavaTemplate',
         projectType: 'spring',
     },
     {
-        label: 'Swift microservice template',
-        description: 'Template for building a Swift microservice',
+        label: 'Swift',
+        description: 'Sample for building a Swift microservice',
         language: 'swift',
         url: 'https://github.com/microclimate-dev2ops/swiftTemplate',
         projectType: 'swift',
+    },
+    {
+        label: 'WebSphere Liberty MicroProfile®',
+        description: 'Eclipse MicroProfile® on Websphere Liberty',
+        language: 'java',
+        url: 'https://github.com/microclimate-dev2ops/javaMicroProfileTemplate',
+        projectType: 'liberty',
     },
 ];
 
@@ -235,6 +235,7 @@ const sampleRepos = {
         enabled: true,
         protected: true,
         projectStyles: ['Codewind'],
+        name: 'Default templates',
     },
     appsody: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-appsody-templates/master/devfiles/index.json',
