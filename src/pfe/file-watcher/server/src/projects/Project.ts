@@ -33,6 +33,7 @@ export interface ProjectInfo {
     extensionID?: string;
     language?: string;
     isHttps?: boolean;
+    appBaseURL?: string;
 }
 
 export interface ProjectMetadata {
