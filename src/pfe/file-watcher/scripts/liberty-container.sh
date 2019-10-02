@@ -53,7 +53,7 @@ cd "$ROOT"
 mkdir -p target/liberty/wlp/usr/shared/resources
 
 function create() {
-	# If the zip file of liberty feature cache or maven m2 cache doesn't exist then pull it from duckerhub
+	# If the zip file of liberty feature cache or maven m2 cache doesn't exist then pull it from dockerhub
 	if [ ! -f libertyrepocache.zip ] || [ ! -f localm2cache.zip ]; then
 		if [ "$IN_K8" == "true" ]; then
 			echo "Pulling cache image for $ROOT using buildah"
