@@ -62,6 +62,27 @@ let contents: any = {};
 
 /**
  * @function
+ * @description Write a JSON file asynchronously.
+ *
+ * @param file <Required | String> - The path to the file location.
+ * @param object <Required | any> - The content to store
+ *
+ * @returns Promise<any> - returns the file contents as JSON object.
+ */
+export async function asyncWriteJSONFile(filePath: string, object: any): Promise<boolean> {
+    let contents: any = {};
+    try {
+        contents = await fse.writeJSON(filePath, object, { spaces: 2 });
+        return true;
+    } catch (err) {
+        logger.logError("Error writing file " + filePath);
+        logger.logError(err);
+        return false;
+    }
+}
+
+/**
+ * @function
  * @description Check if the folder is a directory asynchronously.
  *
  * @param file <Required | String> - The path to the folder location.

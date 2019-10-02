@@ -1218,8 +1218,12 @@ paths:
                     description: false if deployment registry was not set
                     example: false
     post:
-      summary: Test the specified Deployment Registry
-      description: The API also emits a socket event `deploymentRegistryStatus` with data `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
+      summary: Test or set the specified Deployment Registry
+      description: >
+        On test the API also emits a socket event `deploymentRegistryStatus` with data
+        `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
+        A set operation will set the registry without testing to allow the client to force save the
+        value.
       requestBody:
         content:
           application/json:
@@ -1230,6 +1234,11 @@ paths:
               properties:
                 deploymentRegistry:
                   type: string
+                operation:
+                  type: string
+                  enum:
+                    - test
+                    - set
       responses:
         200:
           description: Successfully completed
