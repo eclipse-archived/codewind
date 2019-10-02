@@ -17,6 +17,7 @@ const zlib = require("zlib");
 const { promisify } = require('util');
 const inflateAsync = promisify(zlib.inflate);
 const exec = promisify(require('child_process').exec);
+const cwUtils = require('../../modules/utils/sharedFunctions');
 //const docker = require('../../modules/utils/dockerFunctions');
 
 const Logger = require('../../modules/utils/Logger');
@@ -147,11 +148,12 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
       let projectRoot = getProjectSourceRoot(project);
 
       if (project.containerId) {
-        const dockerCommand = `docker cp ${pathToWriteTo} ${project.containerId}:${projectRoot}/${relativePathOfFile}`;
-        console.log(dockerCommand);
+        await cwUtils.copyFile(project, pathToWriteTo, projectRoot, relativePathOfFile);
+        // const dockerCommand = `docker cp ${pathToWriteTo} ${project.containerId}:${projectRoot}/${relativePathOfFile}`;
+        // console.log(dockerCommand);
         // remove codewind-workspace/projname
         // docker cp uploaded file to the project container
-        await exec(dockerCommand);
+        // await exec(dockerCommand);
       }
       res.sendStatus(200);
     } else {

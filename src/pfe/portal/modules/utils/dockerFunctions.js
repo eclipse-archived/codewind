@@ -12,6 +12,8 @@ const dockerApi = require('dockerode');
 const docker = new dockerApi();
 const Logger = require('../utils/Logger');
 const log = new Logger('dockerFunctions.js');
+const { promisify } = require('util');
+const exec = promisify(require('child_process').exec);
 
 const { spawn } = require('child_process');
 
@@ -104,6 +106,12 @@ module.exports.readFile = function readFile(project, path) {
       });
     }
   });
+}
+
+module.exports.copyFile = async function copyFile(project, pathToWriteTo, projectRoot, relativePathOfFile) {
+  const dockerCommand = `docker cp ${pathToWriteTo} ${project.containerId}:${projectRoot}/${relativePathOfFile}`;
+  log.debug(`[docker cp command] ${dockerCommand}`);
+  await exec(dockerCommand);
 }
 
 function convertToArray(object) {
