@@ -149,11 +149,6 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
 
       if (project.containerId) {
         await cwUtils.copyFile(project, pathToWriteTo, projectRoot, relativePathOfFile);
-        // const dockerCommand = `docker cp ${pathToWriteTo} ${project.containerId}:${projectRoot}/${relativePathOfFile}`;
-        // console.log(dockerCommand);
-        // remove codewind-workspace/projname
-        // docker cp uploaded file to the project container
-        // await exec(dockerCommand);
       }
       res.sendStatus(200);
     } else {
