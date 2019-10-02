@@ -348,15 +348,18 @@ async function getTemplatesFromRepo(repository) {
   }
   const repoUrl = new URL(repository.url);
 
-  var templateSummariesText = '[]';
+  let templateSummariesText = '[]';
   // check if repository url points to a local file and read it accordingly
   if ( repoUrl.protocol === 'file:' ) {
-    fs.readFile(repoUrl.pathname, "utf-8", (err, data) => {
-      if (err) {
-        throw new Error(`repo '${repository}' cannot be read`);
+    try {
+      if ( fs.existsSync(repoUrl.pathname) ) {
+        let data = fs.readFileSync(repoUrl.pathname, "utf-8");
+        templateSummariesText = data.toString();
       }
-      templateSummariesText = data.toString();
-    });
+    }
+    catch (err) {
+      throw new Error(`repo file '${repoUrl.pathname}' cannot be read`);
+    }
   }
   else {
     const options = {
