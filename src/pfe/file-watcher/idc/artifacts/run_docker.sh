@@ -68,8 +68,8 @@ if [[ $MICROCLIMATE_WS_ORIGIN &&  "$APPDIR" == '/codewind-workspace'* ]]
 			if [ $? -eq 0 ]; then
 				echo -e "Copying over source files"
 				docker cp "$APPDIR" $CONTAINER_NAME:$HOME/app
-				echo "${OUTPUT_DOCKER_RUN}"
 			fi
+			echo "${OUTPUT_DOCKER_RUN}"
 		else
 			docker run -dt \
 				--entrypoint "/home/default/artifacts/new_entrypoint.sh" \
@@ -88,8 +88,8 @@ if [[ $MICROCLIMATE_WS_ORIGIN &&  "$APPDIR" == '/codewind-workspace'* ]]
 			if [ $? -eq 0 ]; then
 				echo -e "Copying over source files"
 				docker cp "$APPDIR" $CONTAINER_NAME:$HOME/app
-				echo "${OUTPUT_DOCKER_RUN}"
 			fi
+			echo "${OUTPUT_DOCKER_RUN}"
 		else
 			docker run -dt \
 				--name $CONTAINER_NAME \
