@@ -270,7 +270,7 @@ export default class Filewatcher {
      *  @property 400: Error when attempting to read the workspace settings file
      *
      */
-    readWorkspaceSettings: (newWorkspaceSettings: any) => Promise<any>;
+    readWorkspaceSettings: () => Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>;
 
     /**
      * @function
