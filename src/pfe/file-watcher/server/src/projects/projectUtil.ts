@@ -1908,7 +1908,7 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
         status: "failed"
     };
 
-    const projectInfo = operation.projectInfo;
+    let projectInfo = operation.projectInfo;
     const projectLocation = projectInfo.location;
     const projectID = projectInfo.projectID;
     const projectName = projectInfo.projectName;
@@ -1934,6 +1934,12 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
         logger.logProjectInfo(`The container was started successfully for application ` + projectLocation, projectID, projectName);
 
         logger.logProjectInfo("The project location for " + projectID + " is " + projectLocation, projectID, projectName);
+
+        if (projectInfo.projectType == "odo") {
+            // this if loop is  used to get the odo app name to set the odo app name in the project info file and reload it back
+            await setOdoAppName(projectInfo);
+            projectInfo = await getProjectInfo(projectInfo.projectID);
+        }
 
         const containerInfo = await kubeutil.getApplicationContainerInfo(projectInfo, operation);
         projectEvent.status = "success";

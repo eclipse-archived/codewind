@@ -206,7 +206,7 @@ export async function isContainerActive(containerName: string, projectInfo?: Pro
         let releaseLabel = "release=" + containerName;
         if (projectInfo.projectType == "odo") {
             const componentName = path.basename(projectInfo.location);
-            releaseLabel = "deploymentconfig=" + "cw-" + componentName + "-" + projectInfo.appName;
+            releaseLabel = "deploymentconfig=" + "cw-" + componentName + "-" + projectInfo.odoAppName;
         }
         let containerState = {state: ContainerStates.containerNotFound};
         // We are getting the list of pods by the release label
