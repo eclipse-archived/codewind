@@ -361,68 +361,78 @@ describe('Templates.js', function() {
         afterEach(() => {
             fs.removeSync(testWorkspaceDir);
         });
-        describe('(<invalidUrl>, <validDesc>)', function() {
-            it('throws an error', function() {
-                const url = 'some string';
-                const func = () => templateController.addRepository(url, 'description');
-                return func().should.be.rejectedWith(`Invalid URL: ${url}`);
+        describe('repo without name and description in templates.json', () => {
+            describe('(<invalidUrl>, <validDesc>)', function() {
+                it('throws an error', function() {
+                    const url = 'some string';
+                    const func = () => templateController.addRepository(url, 'description');
+                    return func().should.be.rejectedWith(`Invalid URL: ${url}`);
+                });
             });
-        });
-        describe('(<existingUrl>, <validDesc>)', function() {
-            it('throws an error', function() {
-                const { url } = mockRepoList[0];
-                const func = () => templateController.addRepository(url, 'description');
-                return func().should.be.rejectedWith(`${url} is already a template repository`);
+            describe('(<existingUrl>, <validDesc>)', function() {
+                it('throws an error', function() {
+                    const { url } = mockRepoList[0];
+                    const func = () => templateController.addRepository(url, 'description');
+                    return func().should.be.rejectedWith(`${url} is already a template repository`);
+                });
             });
-        });
-        describe('(<validUrlNotPointingToIndexJson>, <validDesc>)', function() {
-            it('throws an error', function() {
-                const url = validUrlNotPointingToIndexJson;
-                const func = () => templateController.addRepository(url, 'description');
-                return func().should.be.rejectedWith(`${url} does not point to a JSON file of the correct form`);
+            describe('(<validUrlNotPointingToIndexJson>, <validDesc>)', function() {
+                it('throws an error', function() {
+                    const url = validUrlNotPointingToIndexJson;
+                    const func = () => templateController.addRepository(url, 'description');
+                    return func().should.be.rejectedWith(`${url} does not point to a JSON file of the correct form`);
+                });
             });
-        });
-        describe('(<validUrlPointingToIndexJson>, <validDesc>)', function() {
-            it('succeeds', async function() {
-                const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
-                const func = () => templateController.addRepository(url, 'description', 'name');
-                await (func().should.not.be.rejected);
-                templateController.repositoryList.should.deep.include({
-                    url,
-                    name: 'name',
-                    description: 'description',
-                    enabled: true,
-                    projectStyles: ['Codewind'],
+            describe('(<validUrlPointingToIndexJson>, <validDesc>, <validName>)', function() {
+                it('succeeds', async function() {
+                    const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
+                    const func = () => templateController.addRepository(url, 'description', 'name');
+                    await (func().should.not.be.rejected);
+                    templateController.repositoryList.should.deep.include({
+                        url,
+                        name: 'name',
+                        description: 'description',
+                        enabled: true,
+                        projectStyles: ['Codewind'],
+                    });
+                });
+            });
+            describe('(<validUrlUnprotected>, <validDesc>, <validName>)', function() {
+                it('succeeds', async function() {
+                    const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
+                    const isRepoProtected = false;
+                    const func = () => templateController.addRepository(url, 'description', 'name', isRepoProtected);
+                    await (func().should.not.be.rejected);
+                    templateController.repositoryList.should.deep.include({
+                        url,
+                        name: 'name',
+                        description: 'description',
+                        enabled: true,
+                        projectStyles: ['Codewind'],
+                        protected: false,
+                    });
                 });
             });
         });
-        describe('(<validUrlUnprotected>, <validDesc>)', function() {
-            it('succeeds', async function() {
-                const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
-                const isRepoProtected = false;
-                const func = () => templateController.addRepository(url, 'description', 'name', isRepoProtected);
-                await (func().should.not.be.rejected);
-                templateController.repositoryList.should.deep.include({
-                    url,
-                    name: 'name',
-                    description: 'description',
-                    enabled: true,
-                    projectStyles: ['Codewind'],
-                    protected: false,
+        describe('repo with name and description in templates.json', () => {
+            describe('(<validUrl>, <ValidDesc>, <ValidName>)', function() {
+                it('succeeds, and allows the user to set the name and description', async function() {
+                    const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
+                    const func = () => templateController.addRepository(url, 'description', 'name', false);
+                    await (func().should.not.be.rejected);
+                    templateController.repositoryList.should.deep.include({ ...sampleRepos.codewind,
+                        name: 'name',
+                        description: 'description',
+                        protected: false,
+                    });
                 });
             });
-        });
-        describe('(<validUrl>, <NoDesc> <NoName>)', function() {
-            it('succeeds, and gets the name and description from templates.json', async function() {
-                const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
-                const func = () => templateController.addRepository(url);
-                await (func().should.not.be.rejected);
-                templateController.repositoryList.should.deep.include({
-                    url,
-                    name: 'Default templates',
-                    description: 'The default set of templates for new projects in Codewind.',
-                    enabled: true,
-                    projectStyles: ['Codewind'],
+            describe('(repo with templates.json, <validUrl>, <NoDesc>, <NoName>)', function() {
+                it('succeeds, and gets the name and description from templates.json', async function() {
+                    const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
+                    const func = () => templateController.addRepository(url, '', '', false);
+                    await (func().should.not.be.rejected);
+                    templateController.repositoryList.should.deep.include({ ...sampleRepos.codewind, protected: false });
                 });
             });
         });

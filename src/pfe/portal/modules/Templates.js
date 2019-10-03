@@ -289,7 +289,11 @@ function fetchAllRepositoryDetails(repos) {
 
 async function fetchRepositoryDetails(repo) {
   let newRepo = {...repo}
-  await readRepoTemplatesJSON(newRepo);
+
+  // Only set the name or description of the repo if not given by the user
+  if (!(repo.name && repo.description)){
+    await readRepoTemplatesJSON(newRepo);
+  }
 
   if (repo.projectStyles) {
     return newRepo;
@@ -326,8 +330,7 @@ async function readRepoTemplatesJSON(repository) {
   try {
     const templateDetails = JSON.parse(res.body);
     for (const prop of ['name', 'description']) {
-      // Only set the name or description of the repo if not given by the user
-      if (templateDetails.hasOwnProperty(prop) && !repository[prop]) {
+      if (templateDetails.hasOwnProperty(prop)) {
         repository[prop] = templateDetails[prop];
       }
     }

@@ -231,7 +231,7 @@ const styledTemplates = {
 const sampleRepos = {
     codewind: {
         url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-        description: 'Standard Codewind templates',
+        description: 'The default set of templates for new projects in Codewind.',
         enabled: true,
         protected: true,
         projectStyles: ['Codewind'],
