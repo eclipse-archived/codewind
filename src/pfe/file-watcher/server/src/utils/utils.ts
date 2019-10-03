@@ -70,9 +70,8 @@ let contents: any = {};
  * @returns Promise<any> - returns the file contents as JSON object.
  */
 export async function asyncWriteJSONFile(filePath: string, object: any): Promise<boolean> {
-    let contents: any = {};
     try {
-        contents = await fse.writeJSON(filePath, object, { spaces: 2 });
+        await fse.writeJSON(filePath, object, { spaces: 2 });
         return true;
     } catch (err) {
         logger.logError("Error writing file " + filePath);
