@@ -27,6 +27,8 @@ const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
 const log = new Logger(__filename);
 
+
+
 /**
  * API Function to begin binding a given project that is not currently
  * on a file system visible to Codewind.
@@ -147,7 +149,7 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
 
       let projectRoot = getProjectSourceRoot(project);
 
-      if (project.containerId) {
+      if (!global.codewind.RUNNING_IN_K8S && project.containerId) {
         await cwUtils.copyFile(project, pathToWriteTo, projectRoot, relativePathOfFile);
       }
       res.sendStatus(200);
@@ -202,6 +204,65 @@ router.post('/api/v1/projects/:id/remote-bind/clear', async (req, res) => {
     res.status(500).send(err);
   }
 });
+
+
+router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
+  const projectID = req.sanitizeParams('id');
+  const keepFileList = req.sanitizeBody('fileList');
+  const modifiedList = req.sanitizeBody('modifiedList');
+  const timestamp = req.sanitizeBody('timestamp');
+  const IFileChangeEvent = [];
+
+  const user = req.cw_user;
+  try {
+    const project = user.projectList.retrieveProject(projectID);
+    if (project) {
+      const pathToClear = path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
+      const currentFileList = await listFiles(pathToClear, '');
+
+      const filesToDeleteSet = new Set(currentFileList);
+      keepFileList.forEach((f) => filesToDeleteSet.delete(f));
+      const filesToDelete = Array.from(filesToDeleteSet);
+
+      log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
+        `${filesToDelete.join(', ')}`);
+      // remove the file from pfe container
+      await Promise.all(
+        filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
+      );
+
+      filesToDelete.forEach((f) => {
+        const data = {
+          path: f,
+          timestamp: timestamp,
+          type: "DELETE",
+          directory: false
+        }
+        IFileChangeEvent.push(data);
+      });
+
+      modifiedList.forEach((f) => {
+        const data = {
+          path: f,
+          timestamp: timestamp,
+          type: "MODIFY",
+          directory: false
+        }
+        IFileChangeEvent.push(data);
+      });
+
+      user.fileChanged(projectID, timestamp, 1, 1, IFileChangeEvent);
+
+      res.sendStatus(200);
+    } else {
+      res.sendStatus(404);
+    }
+  } catch (err) {
+    log.error(err);
+    res.status(500).send(err);
+  }
+});
+
 
 // List all the files under the given directory, return
 // a list of relative paths.

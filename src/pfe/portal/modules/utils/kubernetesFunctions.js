@@ -38,8 +38,3 @@ module.exports.getContainerLogStream = function getContainerLogStream(project, o
   }
 }
 
-module.exports.copyFile = async function copyFile(project, pathToWriteTo, projectRoot, relativePathOfFile) {
-  const kubeCommand = `kubectl cp ${pathToWriteTo} ${project.containerId}:${projectRoot}/${relativePathOfFile}`;
-  log.debug(`[kubectl cp command] ${kubeCommand}`);
-  await exec(kubeCommand);
-}
