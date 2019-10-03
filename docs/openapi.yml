@@ -1381,13 +1381,17 @@ components:
         projectType:
           type: string
           example: "docker"
+        source:
+          type: string
+          example: "Default Codewind Templates"
     TemplateRepo:
       type: object
       required:
         - url
-        - description
       properties:
         url:
+          type: string
+        name:
           type: string
         description:
           type: string

@@ -26,12 +26,14 @@ const DEFAULT_REPOSITORY_LIST = [
     enabled: true,
     protected: true,
     projectStyles: ['Codewind'],
+    name: 'Default templates',
   },
 ];
 
 const KABANERO_REPO = {
   url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
-  description: 'Kabanero Collections',
+  name: 'Kabanero Collections',
+  description: 'The default set of templates from Kabanero Collections',
   enabled: false,
   protected: true,
 };
@@ -229,7 +231,7 @@ module.exports = class Templates {
   /**
    * Add a repository to the list of template repositories.
    */
-  async addRepository(repoUrl, repoDescription, isRepoProtected) {
+  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
     let url;
     try {
       url = new URL(repoUrl).href;
@@ -249,6 +251,7 @@ module.exports = class Templates {
     }
 
     let newRepo = {
+      name: repoName,
       url,
       description: repoDescription,
       enabled: true,
@@ -288,7 +291,11 @@ function fetchAllRepositoryDetails(repos) {
 
 async function fetchRepositoryDetails(repo) {
   let newRepo = {...repo}
-  await readRepoTemplatesJSON(newRepo);
+
+  // Only set the name or description of the repo if not given by the user
+  if (!(repo.name && repo.description)){
+    await readRepoTemplatesJSON(newRepo);
+  }
 
   if (repo.projectStyles) {
     return newRepo;
@@ -365,9 +372,14 @@ async function getTemplatesFromRepo(repository) {
       url: summary.location,
       projectType: summary.projectType,
     };
+
     if (summary.projectStyle) {
       template.projectStyle = summary.projectStyle;
     }
+    if (repository.name) {
+      template.source = repository.name;
+    }
+
     return template;
   });
   return templates;
