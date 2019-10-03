@@ -100,7 +100,7 @@ export function actionsTestModule(): void {
         }
     });
 
-    describe.only("combinational testing of enableautobuild & disableautobuild function", () => {
+    describe("combinational testing of enableautobuild & disableautobuild function", () => {
 
         const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
         const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
@@ -261,7 +261,7 @@ export function actionsTestModule(): void {
         }
     });
 
-    describe.only("combinational testing of validate function", () => {
+    describe("combinational testing of validate function", () => {
         const libertyProjectPath = path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate");
         const testLibertyServerXMLPath = path.join(libertyProjectPath, "/src/main/liberty/config/");
         const testLibertyServerXML = path.join(testLibertyServerXMLPath, "server.xml");
