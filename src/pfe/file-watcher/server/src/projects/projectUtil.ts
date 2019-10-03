@@ -948,7 +948,7 @@ export async function getAllProjectInfo(handler: any): Promise<void> {
  */
 export async function isContainerActive(projectID: string, handler: any): Promise<void> {
     try {
-        const projectInfo = await getProjectInfo(projectID);
+        let projectInfo = await getProjectInfo(projectID);
         if (!projectInfo) {
             handler({ error: await locale.getTranslation("projectUtil.projectInfoError") });
             return;
@@ -957,6 +957,11 @@ export async function isContainerActive(projectID: string, handler: any): Promis
         const containerName = await getContainerName(projectInfo);
         let containerState = undefined;
         if (process.env.IN_K8 === "true") {
+            if (projectInfo.projectType == "odo") {
+                // this if loop is  used to get the odo app name to set the odo app name in the project info file and reload it back
+                await setOdoAppName(projectInfo);
+                projectInfo = await getProjectInfo(projectInfo.projectID);
+            }
             containerState = await kubeutil.isContainerActive(containerName, projectInfo);
         } else {
             containerState = await dockerutil.isContainerActive(containerName);
