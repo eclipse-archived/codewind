@@ -67,7 +67,7 @@ let contents: any = {};
  * @param file <Required | String> - The path to the file location.
  * @param object <Required | any> - The content to store
  *
- * @returns Promise<any> - returns the file contents as JSON object.
+ * @returns Promise<boolean> - returns true if the file successfully finished writing.
  */
 export async function asyncWriteJSONFile(filePath: string, object: any): Promise<boolean> {
     try {
