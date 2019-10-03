@@ -206,7 +206,7 @@ export function projectExtensionsTestModule(): void {
         }
     });
 
-    describe.only("Combinational testing of getProjectHandler function", () => {
+    describ("Combinational testing of getProjectHandler function", () => {
 
         const nodeProjectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
         const nodeOriginalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
@@ -314,46 +314,46 @@ export function projectExtensionsTestModule(): void {
         });
 
         const combinations: any = {
-            // "combo1": {
-            //     "projectID": "dummynodeproject",
-            //     "resultProjectHandler": "nodejs",
-            //     "resultProjectCapabilities": {
-            //         startModes: ["run", "debugNoInit"],
-            //         controlCommands: ["restart"]
-            //     }
-            // },
-            // "combo2": {
-            //     "projectID": "dummyspringproject",
-            //     "resultProjectHandler": "spring",
-            //     "resultProjectCapabilities": {
-            //         startModes: ["run", "debug", "debugNoInit"],
-            //         controlCommands: ["restart"]
-            //     }
-            // },
-            // "combo3": {
-            //     "projectID": "dummyspringproject",
-            //     "resultProjectHandler": undefined,
-            //     "resultProjectCapabilities": {
-            //         startModes: ["run"],
-            //         controlCommands: []
-            //     }
-            // },
-            // "combo4": {
-            //     "projectID": "dummyswiftproject",
-            //     "resultProjectHandler": "swift",
-            //     "resultProjectCapabilities": {
-            //         startModes: ["run"],
-            //         controlCommands: []
-            //     }
-            // },
-            // "combo5": {
-            //     "projectID": "dummymicroprofileproject",
-            //     "resultProjectHandler": "liberty",
-            //     "resultProjectCapabilities": {
-            //         startModes: ["run", "debug"],
-            //         controlCommands: ["restart"]
-            //     }
-            // },
+            "combo1": {
+                "projectID": "dummynodeproject",
+                "resultProjectHandler": "nodejs",
+                "resultProjectCapabilities": {
+                    startModes: ["run", "debugNoInit"],
+                    controlCommands: ["restart"]
+                }
+            },
+            "combo2": {
+                "projectID": "dummyspringproject",
+                "resultProjectHandler": "spring",
+                "resultProjectCapabilities": {
+                    startModes: ["run", "debug", "debugNoInit"],
+                    controlCommands: ["restart"]
+                }
+            },
+            "combo3": {
+                "projectID": "dummyspringproject",
+                "resultProjectHandler": undefined,
+                "resultProjectCapabilities": {
+                    startModes: ["run"],
+                    controlCommands: []
+                }
+            },
+            "combo4": {
+                "projectID": "dummyswiftproject",
+                "resultProjectHandler": "swift",
+                "resultProjectCapabilities": {
+                    startModes: ["run"],
+                    controlCommands: []
+                }
+            },
+            "combo5": {
+                "projectID": "dummymicroprofileproject",
+                "resultProjectHandler": "liberty",
+                "resultProjectCapabilities": {
+                    startModes: ["run", "debug"],
+                    controlCommands: ["restart"]
+                }
+            },
             "combo6": {
                 "projectID": "dummyappsodyproject",
                 "resultProjectHandler": "appsodyExtension",
@@ -394,7 +394,7 @@ export function projectExtensionsTestModule(): void {
         }
     });
 
-    describe.only("testing of removeProjectHandler function", () => {
+    describe("testing of removeProjectHandler function", () => {
 
         const projectID: string = "dummyappsodyproject";
 
