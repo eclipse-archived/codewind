@@ -310,7 +310,14 @@ async function readRepoTemplatesJSON(repository) {
   if (!repository.url) {
     throw new Error(`repo '${repository}' must have a URL`);
   }
+
   const indexUrl = new URL(repository.url);
+
+  // return if repository url points to a local file
+  if ( indexUrl.protocol === 'file:' ) {
+    return;
+  }
+
   const indexPath = indexUrl.pathname;
   const templatesPath = path.dirname(indexPath) + '/' + 'templates.json';
 
@@ -348,19 +355,35 @@ async function getTemplatesFromRepo(repository) {
   }
   const repoUrl = new URL(repository.url);
 
-  const options = {
-    host: repoUrl.host,
-    path: repoUrl.pathname,
-    method: 'GET',
+  let templateSummariesText = '[]';
+  // check if repository url points to a local file and read it accordingly
+  if ( repoUrl.protocol === 'file:' ) {
+    try {
+      if ( fs.existsSync(repoUrl.pathname) ) {
+        let data = fs.readFileSync(repoUrl.pathname, "utf-8");
+        templateSummariesText = data.toString();
+      }
+    }
+    catch (err) {
+      throw new Error(`repo file '${repoUrl.pathname}' cannot be read`);
+    }
   }
-  const res = await cwUtils.asyncHttpRequest(options, undefined, repoUrl.protocol === 'https:');
-  if (res.statusCode !== 200) {
-    throw new Error(`Unexpected HTTP status for ${repository}: ${res.statusCode}`);
+  else {
+    const options = {
+      host: repoUrl.host,
+      path: repoUrl.pathname,
+      method: 'GET',
+    }
+    const res = await cwUtils.asyncHttpRequest(options, undefined, repoUrl.protocol === 'https:');
+    if (res.statusCode !== 200) {
+      throw new Error(`Unexpected HTTP status for ${repository}: ${res.statusCode}`);
+    }
+    templateSummariesText = res.body;
   }
 
   let templateSummaries;
   try {
-    templateSummaries = JSON.parse(res.body);
+    templateSummaries = JSON.parse(templateSummariesText);
   } catch (error) {
     throw new Error(`URL '${repoUrl}' should return JSON`);
   }
