@@ -26,12 +26,14 @@ const DEFAULT_REPOSITORY_LIST = [
     enabled: true,
     protected: true,
     projectStyles: ['Codewind'],
+    name: 'Default templates',
   },
 ];
 
 const KABANERO_REPO = {
   url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
-  description: 'Kabanero Collections',
+  name: 'Kabanero Collections',
+  description: 'The default set of templates from Kabanero Collections',
   enabled: false,
   protected: true,
 };
@@ -370,9 +372,14 @@ async function getTemplatesFromRepo(repository) {
       url: summary.location,
       projectType: summary.projectType,
     };
+
     if (summary.projectStyle) {
       template.projectStyle = summary.projectStyle;
     }
+    if (repository.name) {
+      template.source = repository.name;
+    }
+
     return template;
   });
   return templates;

@@ -18,6 +18,7 @@ const defaultCodewindTemplates = [
         language: 'go',
         url: 'https://github.com/microclimate-dev2ops/microclimateGoTemplate',
         projectType: 'docker',
+        source: 'Default templates',
     },
     {
         label: 'Lagom Java',
@@ -25,6 +26,7 @@ const defaultCodewindTemplates = [
         language: 'java',
         url: 'https://github.com/microclimate-dev2ops/lagomJavaTemplate',
         projectType: 'docker',
+        source: 'Default templates',
     },
     {
         label: 'Node.js Express',
@@ -32,6 +34,7 @@ const defaultCodewindTemplates = [
         language: 'nodejs',
         url: 'https://github.com/microclimate-dev2ops/nodeExpressTemplate',
         projectType: 'nodejs',
+        source: 'Default templates',
     },
     {
         label: 'Open Liberty',
@@ -39,6 +42,7 @@ const defaultCodewindTemplates = [
         language: 'java',
         url: 'https://github.com/microclimate-dev2ops/openLibertyTemplate',
         projectType: 'docker',
+        source: 'Default templates',
     },
     {
         label: 'Python',
@@ -46,6 +50,7 @@ const defaultCodewindTemplates = [
         language: 'python',
         url: 'https://github.com/microclimate-dev2ops/SVTPythonTemplate',
         projectType: 'docker',
+        source: 'Default templates',
     },
     {
         label: 'Spring Boot®',
@@ -53,6 +58,7 @@ const defaultCodewindTemplates = [
         language: 'java',
         url: 'https://github.com/microclimate-dev2ops/springJavaTemplate',
         projectType: 'spring',
+        source: 'Default templates',
     },
     {
         label: 'Swift',
@@ -60,6 +66,7 @@ const defaultCodewindTemplates = [
         language: 'swift',
         url: 'https://github.com/microclimate-dev2ops/swiftTemplate',
         projectType: 'swift',
+        source: 'Default templates',
     },
     {
         label: 'WebSphere Liberty MicroProfile®',
@@ -67,6 +74,7 @@ const defaultCodewindTemplates = [
         language: 'java',
         url: 'https://github.com/microclimate-dev2ops/javaMicroProfileTemplate',
         projectType: 'liberty',
+        source: 'Default templates',
     },
 ];
 
@@ -153,6 +161,7 @@ const defaultKabaneroTemplates = [
         url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.java-microprofile.v0.2.11.templates.default.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
+        source: 'Kabanero Collections',
     },
     {
         label: 'Appsody LoopBack 4 template',
@@ -161,6 +170,7 @@ const defaultKabaneroTemplates = [
         url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.nodejs-loopback.v0.1.4.templates.scaffold.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
+        source: 'Kabanero Collections',
     },
     {
         label: 'Appsody Node.js Express simple template',
@@ -169,6 +179,7 @@ const defaultKabaneroTemplates = [
         url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.nodejs-express.v0.2.5.templates.simple.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
+        source: 'Kabanero Collections',
     },
     {
         label: 'Appsody Node.js Express skaffold template',
@@ -177,6 +188,7 @@ const defaultKabaneroTemplates = [
         url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.nodejs-express.v0.2.5.templates.skaffold.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
+        source: 'Kabanero Collections',
     },
     {
         label: 'Appsody Node.js template',
@@ -185,6 +197,7 @@ const defaultKabaneroTemplates = [
         url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.nodejs.v0.2.5.templates.simple.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
+        source: 'Kabanero Collections',
     },
     {
         label: 'Appsody Spring Boot® default template',
@@ -193,6 +206,7 @@ const defaultKabaneroTemplates = [
         url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.java-spring-boot2.v0.3.9.templates.default.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
+        source: 'Kabanero Collections',
     },
     {
         label: 'Appsody Spring Boot® kotlin template',
@@ -201,6 +215,7 @@ const defaultKabaneroTemplates = [
         url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/incubator.java-spring-boot2.v0.3.9.templates.kotlin.tar.gz',
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
+        source: 'Kabanero Collections',
     },
 ];
 
@@ -216,6 +231,7 @@ const styledTemplates = {
         language: 'go',
         url: 'https://github.com/microclimate-dev2ops/microclimateGoTemplate',
         projectType: 'docker',
+        source: 'Default templates',
         // defaults to projectStyle 'Codewind'
     },
     appsody: {
