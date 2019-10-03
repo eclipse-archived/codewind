@@ -344,223 +344,223 @@ export function actionsTestModule(): void {
             }
         });
         const combinations: any = {
-            // "combo1": {
-            //     "description": "request missing project type and location",
-            //     "args": {},
-            //     "result": "BAD_REQUEST: Validation requires a project type and location."
-            // },
-            // "combo2": {
-            //     "description": "request with invalidProjectType",
-            //     "args": {
-            //         projectType: "invalidProjectType",
-            //         projectID: "javaMicroProfileTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
-            //     },
-            //     "result": "BAD_REQUEST: The project type invalidProjectType is not supported"
-            // },
-            // "combo3": {
-            //     "description": "request with non-exist project location",
-            //     "args": {
-            //         projectType: "liberty",
-            //         location: "test/projectName"
-            //     },
-            //     "result": "FILE_NOT_EXIST: The provided location does not exist: test/projectName"
-            // },
-            // "combo4": {
-            //     "description": "good microprofile project",
-            //     "args": {
-            //         projectType: "liberty",
-            //         projectID: "javaMicroProfileTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
-            //     },
-            //     "result": "success"
-            // },
-            // "combo5": {
-            //     "description": "microprofile project with missing Dockerfile",
-            //     "args": {
-            //         projectType: "liberty",
-            //         projectID: "javaMicroProfileTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Missing required file",
-            // },
-            // "combo6": {
-            //     "description": "microprofile project with missing server.xml",
-            //     "args": {
-            //         projectType: "liberty",
-            //         projectID: "javaMicroProfileTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Missing required file"
-            // },
-            // "combo7": {
-            //     "description": "microprofile project with root user dockerfile-build",
-            //     "args": {
-            //         projectType: "liberty",
-            //         projectID: "javaMicroProfileTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Migration may required to run project container as a non-root user"
-            // },
-            // "combo8": {
-            //     "description": "microprofile project with bad inner most pom.xml elements",
-            //     "args": {
-            //         projectType: "liberty",
-            //         projectID: "javaMicroProfileTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": ["Missing Liberty parent POM groupId", "Missing Liberty parent POM artifactId", "Missing profile activation", "liberty-maven-plugin extensions not enabled", "liberty-maven-plugin looseApplication is not enabled"],
-            // },
-            // "combo9": {
-            //     "description": "microprofile project with bad pom.xml due to missing liberty maven plugin",
-            //     "args": {
-            //         projectType: "liberty",
-            //         projectID: "javaMicroProfileTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Missing liberty-maven-plugin configuration"
-            // },
-            // "combo10": {
-            //     "description": "microprofile project with bad pom.xml due to bad profile",
-            //     "args": {
-            //         projectType: "liberty",
-            //         projectID: "javaMicroProfileTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "A maven profile named 'microclimate' was not found."
-            // },
-            // "combo11": {
-            //     "description": "microprofile project with bad pom.xml syntax",
-            //     "args": {
-            //         projectType: "liberty",
-            //         projectID: "javaMicroProfileTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "POM parsing error"
-            // },
-            // "combo12": {
-            //     "description": "microprofile project with missing parent in pom",
-            //     "args": {
-            //         projectType: "liberty",
-            //         projectID: "javaMicroProfileTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Missing Liberty parent POM"
-            // },
-            // "combo13": {
-            //     "description": "good spring project",
-            //     "args": {
-            //         projectType: "spring",
-            //         projectID: "springJavaTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "springJavaTemplate")
-            //     },
-            //     "result": "success"
-            // },
-            // "combo14": {
-            //     "description": "spring project with missing Dockerfile",
-            //     "args": {
-            //         projectType: "spring",
-            //         projectID: "springJavaTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "springJavaTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Missing required file",
-            // },
-            // "combo15": {
-            //     "description": "spring project with bad inner most pom.xml elements",
-            //     "args": {
-            //         projectType: "spring",
-            //         projectID: "springJavaTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "springJavaTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": ["Invalid packaging for Spring project", "Spring Boot dependency not found"],
-            // },
-            // "combo16": {
-            //     "description": "good nodejs project",
-            //     "args": {
-            //         projectType: "nodejs",
-            //         projectID: "nodeExpressTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "nodeExpressTemplate")
-            //     },
-            //     "result": "success"
-            // },
-            // "combo17": {
-            //     "description": "nodejs project with missing Dockerfile",
-            //     "args": {
-            //         projectType: "nodejs",
-            //         projectID: "nodeExpressTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "nodeExpressTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Missing required file",
-            // },
-            // "combo18": {
-            //     "description": "nodejs project with missing package.json",
-            //     "args": {
-            //         projectType: "nodejs",
-            //         projectID: "nodeExpressTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "nodeExpressTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Missing required file",
-            // },
-            // "combo19": {
-            //     "description": "good swift project",
-            //     "args": {
-            //         projectType: "swift",
-            //         projectID: "swiftTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "swiftTemplate")
-            //     },
-            //     "result": "success"
-            // },
-            // "combo20": {
-            //     "description": "swift project with missing Dockerfile-tools",
-            //     "args": {
-            //         projectType: "swift",
-            //         projectID: "swiftTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "swiftTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Missing required file",
-            // },
-            // "combo21": {
-            //     "description": "swift project with missing Package.swift",
-            //     "args": {
-            //         projectType: "swift",
-            //         projectID: "swiftTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "swiftTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Missing required file",
-            // },
-            // "combo22": {
-            //     "description": "good python project",
-            //     "args": {
-            //         projectType: "docker",
-            //         projectID: "SVTPythonTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "SVTPythonTemplate")
-            //     },
-            //     "result": "success"
-            // },
-            // "combo23": {
-            //     "description": "python project with missing Dockerfile",
-            //     "args": {
-            //         projectType: "docker",
-            //         projectID: "SVTPythonTemplate",
-            //         location: path.join(process.env.CW_WORKSPACE, "SVTPythonTemplate")
-            //     },
-            //     "result": "failed",
-            //     "error": "Missing required file",
-            // },
+            "combo1": {
+                "description": "request missing project type and location",
+                "args": {},
+                "result": "BAD_REQUEST: Validation requires a project type and location."
+            },
+            "combo2": {
+                "description": "request with invalidProjectType",
+                "args": {
+                    projectType: "invalidProjectType",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "BAD_REQUEST: The project type invalidProjectType is not supported"
+            },
+            "combo3": {
+                "description": "request with non-exist project location",
+                "args": {
+                    projectType: "liberty",
+                    location: "test/projectName"
+                },
+                "result": "FILE_NOT_EXIST: The provided location does not exist: test/projectName"
+            },
+            "combo4": {
+                "description": "good microprofile project",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "success"
+            },
+            "combo5": {
+                "description": "microprofile project with missing Dockerfile",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo6": {
+                "description": "microprofile project with missing server.xml",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file"
+            },
+            "combo7": {
+                "description": "microprofile project with root user dockerfile-build",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "Migration may required to run project container as a non-root user"
+            },
+            "combo8": {
+                "description": "microprofile project with bad inner most pom.xml elements",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": ["Missing Liberty parent POM groupId", "Missing Liberty parent POM artifactId", "Missing profile activation", "liberty-maven-plugin extensions not enabled", "liberty-maven-plugin looseApplication is not enabled"],
+            },
+            "combo9": {
+                "description": "microprofile project with bad pom.xml due to missing liberty maven plugin",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "Missing liberty-maven-plugin configuration"
+            },
+            "combo10": {
+                "description": "microprofile project with bad pom.xml due to bad profile",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "A maven profile named 'microclimate' was not found."
+            },
+            "combo11": {
+                "description": "microprofile project with bad pom.xml syntax",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "POM parsing error"
+            },
+            "combo12": {
+                "description": "microprofile project with missing parent in pom",
+                "args": {
+                    projectType: "liberty",
+                    projectID: "javaMicroProfileTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "javaMicroProfileTemplate")
+                },
+                "result": "failed",
+                "error": "Missing Liberty parent POM"
+            },
+            "combo13": {
+                "description": "good spring project",
+                "args": {
+                    projectType: "spring",
+                    projectID: "springJavaTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "springJavaTemplate")
+                },
+                "result": "success"
+            },
+            "combo14": {
+                "description": "spring project with missing Dockerfile",
+                "args": {
+                    projectType: "spring",
+                    projectID: "springJavaTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "springJavaTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo15": {
+                "description": "spring project with bad inner most pom.xml elements",
+                "args": {
+                    projectType: "spring",
+                    projectID: "springJavaTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "springJavaTemplate")
+                },
+                "result": "failed",
+                "error": ["Invalid packaging for Spring project", "Spring Boot dependency not found"],
+            },
+            "combo16": {
+                "description": "good nodejs project",
+                "args": {
+                    projectType: "nodejs",
+                    projectID: "nodeExpressTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "nodeExpressTemplate")
+                },
+                "result": "success"
+            },
+            "combo17": {
+                "description": "nodejs project with missing Dockerfile",
+                "args": {
+                    projectType: "nodejs",
+                    projectID: "nodeExpressTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "nodeExpressTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo18": {
+                "description": "nodejs project with missing package.json",
+                "args": {
+                    projectType: "nodejs",
+                    projectID: "nodeExpressTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "nodeExpressTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo19": {
+                "description": "good swift project",
+                "args": {
+                    projectType: "swift",
+                    projectID: "swiftTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "swiftTemplate")
+                },
+                "result": "success"
+            },
+            "combo20": {
+                "description": "swift project with missing Dockerfile-tools",
+                "args": {
+                    projectType: "swift",
+                    projectID: "swiftTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "swiftTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo21": {
+                "description": "swift project with missing Package.swift",
+                "args": {
+                    projectType: "swift",
+                    projectID: "swiftTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "swiftTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
+            "combo22": {
+                "description": "good python project",
+                "args": {
+                    projectType: "docker",
+                    projectID: "SVTPythonTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "SVTPythonTemplate")
+                },
+                "result": "success"
+            },
+            "combo23": {
+                "description": "python project with missing Dockerfile",
+                "args": {
+                    projectType: "docker",
+                    projectID: "SVTPythonTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "SVTPythonTemplate")
+                },
+                "result": "failed",
+                "error": "Missing required file",
+            },
             "combo24": {
                 "description": "good extension project",
                 "args": {

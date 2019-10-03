@@ -169,14 +169,12 @@ async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any
 
     // is there an extension handler for the project?
     if (!handler) {
-        logger.logInfo(`>> Could not find handler`);
 
         const fullPath = projectInfo.extensionID;
         logger.logProjectInfo("Extension absolute path is: " + fullPath, key, projectName);
 
         // try to load extension handler if ID was provided
         if (fullPath) {
-            logger.logInfo(`>> Inside full path ${fullPath}`);
             try {
                 const files = await utils.asyncReadDir(fullPath);
                 if (files) {
@@ -198,7 +196,6 @@ async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any
         }
     }
 
-    logger.logInfo(`>> Returning appsody project extension handler ${JSON.stringify(handler)}`);
     return handler;
 }
 
@@ -229,7 +226,6 @@ export async function getProjectHandler(projectInfo: ProjectInfo): Promise<any> 
     if (handler)
         return handler;
 
-    logger.logInfo(`>> Returning docker project handler`);
     return new DockerProject(DOCKER_TYPE);
 }
 
