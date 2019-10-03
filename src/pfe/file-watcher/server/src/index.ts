@@ -274,13 +274,13 @@ export default class Filewatcher {
 
     /**
      * @function
-     * @description Read the workspace settings file and load the properties into cache if they're valid.
-     *
-     * @example await filewatcher.writeWorkspaceSettings();
+     * @description Write the provided workspace settings to the workspace settings file.
+     * @param newWorkspaceSettings  <Required | Object>: New workspace settings to write to the file
+     * @example await filewatcher.writeWorkspaceSettings(newWorkspaceSettings);
      *
      * @returns Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>
      * Response codes:
-     *  @property 200: Successfully received the request
+     *  @property 200: Successfully wrote the file
      *  @property 500: Error when attempting to write the workspace settings file
      *
      */
