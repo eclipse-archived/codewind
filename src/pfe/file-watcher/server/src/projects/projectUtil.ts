@@ -400,6 +400,13 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                     projectInfo.status = "success";
 
                     logger.logProjectInfo("The project location for " + operation.projectInfo.projectID + " is " + projectLocation, projectID, projectName);
+
+                    if (operation.projectInfo.projectType == "odo") {
+                        // this if loop is  used to get the odo app name to set the odo app name in the project info file and reload it back
+                        await setOdoAppName(operation.projectInfo);
+                        operation.projectInfo = await getProjectInfo(operation.projectInfo.projectID);
+                    }
+
                     const containerInfo = await kubeutil.getApplicationContainerInfo(operation.projectInfo, operation);
                     if (containerInfo) {
                         containerInfoMap.set(operation.projectInfo.projectID, containerInfo);
@@ -830,6 +837,13 @@ export async function getContainerInfo(projectInfo: ProjectInfo, forceRefresh: b
     if (process.env.IN_K8 === "true") {
         const operation = new Operation("general", projectInfo);
         operation.containerName = containerName;
+
+        if (projectInfo.projectType == "odo") {
+            // this if loop is  used to get the odo app name to set the odo app name in the project info file and reload it back
+            await setOdoAppName(projectInfo);
+            projectInfo = await getProjectInfo(projectInfo.projectID);
+        }
+
         containerInfo = await kubeutil.getApplicationContainerInfo(projectInfo, operation);
     } else {
         containerInfo = await dockerutil.getApplicationContainerInfo(projectInfo, containerName);
@@ -965,6 +979,25 @@ export async function isContainerActive(projectID: string, handler: any): Promis
         const msg = "Error getting container status: " + err;
         logger.logError(msg);
     }
+}
+
+/**
+ * @function
+ * @description Set the ODO app name and save it to the project info file.
+ *
+ * @param projectInfo <Required | ProjectInfo> - The metadata information for a project.
+ *
+ * @returns Promsie<void>
+ */
+export async function setOdoAppName(projectInfo: ProjectInfo): Promise<void> {
+    const projectID = projectInfo.projectID;
+
+    const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+    const appName = await projectHandler.getAppName(projectID);
+
+    projectInfo.odoAppName = appName;
+
+    return await projectsController.saveProjectInfo(projectID, projectInfo, true);
 }
 
 /**

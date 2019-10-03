@@ -69,9 +69,7 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
     let releaseLabel = "release=" + releaseName;
     if (projectInfo.projectType == "odo") {
         const componentName = path.basename(projectInfo.location);
-        const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
-        const appName = await projectHandler.getAppName(projectID);
-        releaseLabel = "deploymentconfig=" + "cw-" + componentName + "-" + appName;
+        releaseLabel = "deploymentconfig=" + "cw-" + componentName + "-" + projectInfo.odoAppName;
     }
     const projectName = path.basename(projectLocation);
 
