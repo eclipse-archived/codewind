@@ -1021,7 +1021,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ProjectType'
+                  $ref: '#/components/schemas/ProjectTypeDescriptor'
         204:
           description: No templates found
 
@@ -1353,6 +1353,45 @@ components:
     ProjectType:
       description: the build type for the project. Built-in types are 'liberty', 'spring', 'swift', 'nodejs', and 'docker'.
       type: string
+    ProjectTypeDescriptor:
+      description: Descriptor of a project type, including possible subtypes
+      type: object
+      required:
+        - projectType
+        - projectSubtypes
+      properties:
+        projectType:
+          $ref: '#/components/schemas/ProjectType'
+        projectSubtypes:
+          $ref: '#/components/schemas/ProjectSubtypesDescriptor'
+    ProjectSubtype:
+      description: A project subtype defined by a project extension
+      type: object
+      required:
+        - id
+        - label
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+    ProjectSubtypesDescriptor:
+      description: Descriptor for subtypes of a project type
+      type: object
+      required:
+        - items
+      properties:
+        label:
+          description: A name label to refer to the subtype
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSubtype'
     testRunTime:
       description: The time of a load-test run, whose format is yyyymmddHHMMss
       type: number
