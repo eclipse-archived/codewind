@@ -454,17 +454,33 @@ function isRepo(obj) {
 async function doesUrlPointToIndexJson(inputUrl) {
   const url = new URL(inputUrl); // Throws error if `inputUrl` is not a valid url
 
-  const options = {
-    host: url.host,
-    path: url.pathname,
-    method: 'GET',
+  let templateSummariesText = '[]';
+  if ( url.protocol === 'file:' ) {
+    try {
+      if ( fs.existsSync(url.pathname) ) {
+        let data = fs.readFileSync(url.pathname, "utf-8");
+        templateSummariesText = data.toString();
+      }
+    }
+    catch (err) {
+      throw new Error(`repo file '${url.pathname}' cannot be read`);
+    }
   }
-  const res = await cwUtils.asyncHttpRequest(options, undefined, url.protocol === 'https:');
-  if (res.statusCode < 200 || res.statusCode > 299) {
-    return false;
+  else {
+    const options = {
+      host: url.host,
+      path: url.pathname,
+      method: 'GET',
+    }
+    const res = await cwUtils.asyncHttpRequest(options, undefined, url.protocol === 'https:');
+    if (res.statusCode < 200 || res.statusCode > 299) {
+      return false;
+    }
+    templateSummariesText = res.body
   }
+
   try {
-    const templateSummaries = JSON.parse(res.body);
+    const templateSummaries = JSON.parse(templateSummariesText);
     if (templateSummaries.some(summary => !isTemplateSummary(summary))) {
       return false;
     }
