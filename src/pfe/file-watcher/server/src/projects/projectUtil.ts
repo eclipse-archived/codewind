@@ -429,14 +429,14 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
 
                     if (operation.projectInfo.projectType == "odo") {
                         const projectHandler = await projectExtensions.getProjectHandler(operation.projectInfo);
-                        const projectinfo: ProjectInfo = operation.projectInfo;
+                        const odoProjectInfo: ProjectInfo = operation.projectInfo;
                         const appBaseURL: string = (await projectHandler.getAppBaseURL(projectID)).trim();
                         const appName: string = (await projectHandler.getAppName(projectID)).trim();
                         projectInfo.appBaseURL = appBaseURL;
                         projectInfo.compositeAppName = appName;
-                        projectinfo.appBaseURL = appBaseURL;
-                        projectinfo.compositeAppName = appName;
-                        await projectsController.saveProjectInfo(projectID, projectinfo, true);
+                        odoProjectInfo.appBaseURL = appBaseURL;
+                        odoProjectInfo.compositeAppName = appName;
+                        await projectsController.saveProjectInfo(projectID, odoProjectInfo, true);
                     }
                 } catch (err) {
                     logger.logProjectError(err, projectID, projectName);
