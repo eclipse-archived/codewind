@@ -77,6 +77,7 @@ export interface ProjectEvent {
     contextRoot?: string;
     isHttps?: boolean;
     appBaseURL?: string;
+    compositeAppName?: string;
 }
 
 export interface ProjectLog {
@@ -428,8 +429,14 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
 
                     if (operation.projectInfo.projectType == "odo") {
                         const projectHandler = await projectExtensions.getProjectHandler(operation.projectInfo);
-                        const appBaseURL: string = await projectHandler.getAppBaseURL(projectID);
-                        projectInfo.appBaseURL = appBaseURL.trim();
+                        const projectinfo: ProjectInfo = operation.projectInfo;
+                        const appBaseURL: string = (await projectHandler.getAppBaseURL(projectID)).trim();
+                        const appName: string = (await projectHandler.getAppName(projectID)).trim();
+                        projectInfo.appBaseURL = appBaseURL;
+                        projectInfo.compositeAppName = appName;
+                        projectinfo.appBaseURL = appBaseURL;
+                        projectinfo.compositeAppName = appName;
+                        await projectsController.saveProjectInfo(projectID, projectinfo, true);
                     }
                 } catch (err) {
                     logger.logProjectError(err, projectID, projectName);
@@ -835,7 +842,7 @@ export async function getContainerInfo(projectInfo: ProjectInfo, forceRefresh: b
         containerInfo = await dockerutil.getApplicationContainerInfo(projectInfo, containerName);
     }
     // Only cache the container info if it is complete
-    if (containerInfo && containerInfo.ip && containerInfo.internalPort) {
+    if (containerInfo && process.env.IN_K8 ? containerInfo.serviceName : containerInfo.ip && containerInfo.internalPort) {
         containerInfoMap.set(projectInfo.projectID, containerInfo);
 
         // Set the containerInfo Force Refresh Map to false, since it has been refereshed
