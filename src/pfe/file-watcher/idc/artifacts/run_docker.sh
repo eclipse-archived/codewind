@@ -34,6 +34,7 @@ export ARTIFACTS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # App dir
 export APPDIR=`pwd`
+APP_DIRECTORY="$APPDIR"
 
 export APPNAME=$(dirname "$APPDIR")
 
@@ -67,7 +68,7 @@ if [[ $MICROCLIMATE_WS_ORIGIN &&  "$APPDIR" == '/codewind-workspace'* ]]
 			OUTPUT_DOCKER_RUN="$(docker run -dt --entrypoint "/home/default/artifacts/new_entrypoint.sh" --name $CONTAINER_NAME -v "$LOGSDIR":$HOME/logs --network=codewind_network $PORT_MAPPING_PARAMS $CONTAINER_IMAGE_NAME)"
 			if [ $? -eq 0 ]; then
 				echo -e "Copying over source files"
-				docker cp "$APPDIR" $CONTAINER_NAME:$HOME/app
+				docker cp "$APP_DIRECTORY" $CONTAINER_NAME:$HOME/app
 			fi
 			echo "${OUTPUT_DOCKER_RUN}"
 		else
@@ -87,7 +88,7 @@ if [[ $MICROCLIMATE_WS_ORIGIN &&  "$APPDIR" == '/codewind-workspace'* ]]
 			OUTPUT_DOCKER_RUN="$(docker run -dt --name $CONTAINER_NAME -v "$LOGSDIR":$HOME/logs $PORT_MAPPING_PARAMS $CONTAINER_IMAGE_NAME)"
 			if [ $? -eq 0 ]; then
 				echo -e "Copying over source files"
-				docker cp "$APPDIR" $CONTAINER_NAME:$HOME/app
+				docker cp "$APP_DIRECTORY" $CONTAINER_NAME:$HOME/app
 			fi
 			echo "${OUTPUT_DOCKER_RUN}"
 		else
