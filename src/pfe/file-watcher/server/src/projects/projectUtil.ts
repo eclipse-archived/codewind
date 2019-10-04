@@ -401,10 +401,12 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
 
                     logger.logProjectInfo("The project location for " + operation.projectInfo.projectID + " is " + projectLocation, projectID, projectName);
 
+                    // this if loop is used to get the odo app name and set the odo app name in the project info file and reload it back
                     if (operation.projectInfo.projectType == "odo") {
-                        // this if loop is  used to get the odo app name to set the odo app name in the project info file and reload it back
-                        await setOdoAppName(operation.projectInfo);
-                        operation.projectInfo = await getProjectInfo(operation.projectInfo.projectID);
+                        if (!operation.projectInfo.odoAppName) {
+                            await getAndSaveOdoAppName(operation.projectInfo);
+                            operation.projectInfo = await getProjectInfo(operation.projectInfo.projectID);
+                        }
                     }
 
                     const containerInfo = await kubeutil.getApplicationContainerInfo(operation.projectInfo, operation);
@@ -838,10 +840,12 @@ export async function getContainerInfo(projectInfo: ProjectInfo, forceRefresh: b
         const operation = new Operation("general", projectInfo);
         operation.containerName = containerName;
 
+        // this if loop is used to get the odo app name and set the odo app name in the project info file and reload it back
         if (projectInfo.projectType == "odo") {
-            // this if loop is  used to get the odo app name to set the odo app name in the project info file and reload it back
-            await setOdoAppName(projectInfo);
-            projectInfo = await getProjectInfo(projectInfo.projectID);
+            if (!projectInfo.odoAppName) {
+                await getAndSaveOdoAppName(projectInfo);
+                projectInfo = await getProjectInfo(projectInfo.projectID);
+            }
         }
 
         containerInfo = await kubeutil.getApplicationContainerInfo(projectInfo, operation);
@@ -957,10 +961,12 @@ export async function isContainerActive(projectID: string, handler: any): Promis
         const containerName = await getContainerName(projectInfo);
         let containerState = undefined;
         if (process.env.IN_K8 === "true") {
+            // this if loop is used to get the odo app name and set the odo app name in the project info file and reload it back
             if (projectInfo.projectType == "odo") {
-                // this if loop is  used to get the odo app name to set the odo app name in the project info file and reload it back
-                await setOdoAppName(projectInfo);
-                projectInfo = await getProjectInfo(projectInfo.projectID);
+                if (!projectInfo.odoAppName) {
+                    await getAndSaveOdoAppName(projectInfo);
+                    projectInfo = await getProjectInfo(projectInfo.projectID);
+                }
             }
             containerState = await kubeutil.isContainerActive(containerName, projectInfo);
         } else {
@@ -988,17 +994,17 @@ export async function isContainerActive(projectID: string, handler: any): Promis
 
 /**
  * @function
- * @description Set the ODO app name and save it to the project info file.
+ * @description Get the ODO app name and save it to the project info file.
  *
  * @param projectInfo <Required | ProjectInfo> - The metadata information for a project.
  *
  * @returns Promsie<void>
  */
-export async function setOdoAppName(projectInfo: ProjectInfo): Promise<void> {
+export async function getAndSaveOdoAppName(projectInfo: ProjectInfo): Promise<void> {
     const projectID = projectInfo.projectID;
 
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
-    const appName = await projectHandler.getAppName(projectID);
+    const appName = projectHandler.hasOwnProperty("getAppName") ? await projectHandler.getAppName(projectID) : undefined;
 
     projectInfo.odoAppName = appName;
 
@@ -1935,10 +1941,12 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
 
         logger.logProjectInfo("The project location for " + projectID + " is " + projectLocation, projectID, projectName);
 
+        // this if loop is used to get the odo app name and set the odo app name in the project info file and reload it back
         if (projectInfo.projectType == "odo") {
-            // this if loop is  used to get the odo app name to set the odo app name in the project info file and reload it back
-            await setOdoAppName(projectInfo);
-            projectInfo = await getProjectInfo(projectInfo.projectID);
+            if (!projectInfo.odoAppName) {
+                await getAndSaveOdoAppName(projectInfo);
+                projectInfo = await getProjectInfo(projectInfo.projectID);
+            }
         }
 
         const containerInfo = await kubeutil.getApplicationContainerInfo(projectInfo, operation);

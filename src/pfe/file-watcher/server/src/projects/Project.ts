@@ -34,6 +34,7 @@ export interface ProjectInfo {
     language?: string;
     isHttps?: boolean;
     appBaseURL?: string;
+    odoAppName?: string;
 }
 
 export interface ProjectMetadata {
