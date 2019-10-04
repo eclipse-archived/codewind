@@ -96,7 +96,44 @@ pipeline {
                     '''
                 }
             }
-        }  
+        }
+
+        stage('Run Turbine Unit Test Suite') {
+            options {
+                timeout(time: 30, unit: 'MINUTES') 
+            }
+            steps {
+                withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
+                    withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
+                        sh '''#!/usr/bin/env bash
+                        echo "Starting unit tests for Turbine..."
+                        export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
+                        
+                        ARCH=`uname -m`;
+                        printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
+
+                        # Install nvm to easily set version of node to use
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                        export NVM_DIR="$HOME/.nvm" 
+                        . $NVM_DIR/nvm.sh
+                        nvm i 10
+                        
+                        # Run eslint on turbine code
+                        cd src/pfe/file-watcher/server
+                        npm install
+                        
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+                            
+                        # Run the unit test suite
+                        echo "Started running Turbine Unit Test Suite"
+                        npm run unit:test
+                        '''
+                    }
+                }
+            }
+        }
         
         stage('Run Codewind test suite') {  
             options {
@@ -111,12 +148,6 @@ pipeline {
 
                         ARCH=`uname -m`;
                         printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
-
-                        # Install nvm to easily set version of node to use
-                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-                        export NVM_DIR="$HOME/.nvm" 
-                        . $NVM_DIR/nvm.sh
-                        nvm i 10
 
                         # Install docker-compose 
                         curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o ~/docker-compose
@@ -203,7 +234,6 @@ pipeline {
                 }
             }
         } 
-         
         
         stage('Publish Docker images') {
 
@@ -264,6 +294,7 @@ pipeline {
              }
         } 
     }
+
     post {
         always {
            sh '''#!/usr/bin/env bash
