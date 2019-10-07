@@ -149,6 +149,12 @@ pipeline {
                         ARCH=`uname -m`;
                         printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
 
+                        # Install nvm to easily set version of node to use
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                        export NVM_DIR="$HOME/.nvm" 
+                        . $NVM_DIR/nvm.sh
+                        nvm i 10
+                        
                         # Install docker-compose 
                         curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o ~/docker-compose
                         chmod +x ~/docker-compose
