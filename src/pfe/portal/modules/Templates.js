@@ -359,8 +359,8 @@ async function getTemplatesFromRepo(repository) {
   // check if repository url points to a local file and read it accordingly
   if ( repoUrl.protocol === 'file:' ) {
     try {
-      if ( fs.existsSync(repoUrl.pathname) ) {
-        let data = fs.readFileSync(repoUrl.pathname, "utf-8");
+      if ( await fs.exists(repoUrl.pathname) ) {
+        let data = await fs.readFile(repoUrl.pathname, "utf-8");
         templateSummariesText = data.toString();
       }
     }
@@ -457,8 +457,8 @@ async function doesUrlPointToIndexJson(inputUrl) {
   let templateSummariesText = '[]';
   if ( url.protocol === 'file:' ) {
     try {
-      if ( fs.existsSync(url.pathname) ) {
-        let data = fs.readFileSync(url.pathname, "utf-8");
+      if ( await fs.exists(url.pathname) ) {
+        let data = await fs.readFile(url.pathname, "utf-8");
         templateSummariesText = data.toString();
       }
     }
