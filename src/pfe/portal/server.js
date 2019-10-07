@@ -275,7 +275,10 @@ async function main() {
       }
     });
 
-    app.use(bodyParser.json());
+    app.use(bodyParser.json({
+      limit: '1mb'
+    }));
+
     app.use(bodyParser.urlencoded({
       extended: false
     }));
