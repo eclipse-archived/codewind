@@ -537,26 +537,32 @@ export function loggerTestModule(): void {
             const regex = new RegExp(logContentsPrefix1 + ".*" + logContentsPrefix2 + ".*" + msg, "g");
 
             it(combo + " => msg: " + msg + ", level: " + level, async() => {
-                logger.setLoggingLevel(level);
-                let intervalCtr = 0;
-                const retval = await new Promise((resolve) => {
-                    const intervaltimer = setInterval(async () => {
-                        // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
-                        const turbineLogContents = await readFileAsync(turbineLogPath);
-                        intervalCtr++;
-                        const isContentPresent = regex.test(turbineLogContents.toString());
-                        if (isContentPresent) {
-                            clearInterval(intervaltimer);
-                            return resolve(isContentPresent);
-                        }
-                        if (intervalCtr == 5) {
-                            clearInterval(intervaltimer);
-                            return resolve(false);
-                        }
-                    }, 1000);
-                });
-                expect(retval).to.equal(expectedResult);
+                try {
+                    await logger.setLoggingLevel(level);
+                } catch (err) {}
+                const turbineLogContent = await getTurbineLogContent(turbineLogPath, regex);
+                expect(turbineLogContent).to.equal(expectedResult);
             }).timeout(10000);
         }
+    });
+}
+
+async function getTurbineLogContent(logPath: string, regex: RegExp): Promise<any> {
+    let intervalCtr = 0;
+    return new Promise((resolve) => {
+        const intervaltimer = setInterval(async () => {
+            // attempt to read the Turbine.log file 5 times as the tests have to wait for log4js to log to the file
+            const turbineLogContents = await readFileAsync(logPath);
+            intervalCtr++;
+            const isContentPresent = regex.test(turbineLogContents.toString());
+            if (isContentPresent) {
+                clearInterval(intervaltimer);
+                return resolve(isContentPresent);
+            }
+            if (intervalCtr == 5) {
+                clearInterval(intervaltimer);
+                return resolve(false);
+            }
+        }, 1000);
     });
 }
