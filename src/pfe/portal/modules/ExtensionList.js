@@ -56,7 +56,6 @@ module.exports = class ExtensionList {
           const version = match[2];
 
           if ((name == odoExtensionName) && (process.env.ON_OPENSHIFT != 'true')) {
-            log.info("continue... not good");
             continue;
           }
 
