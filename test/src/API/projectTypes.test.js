@@ -9,23 +9,28 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const chai = require('chai');
+const chaiResValidator = require('chai-openapi-response-validator');
 
 const reqService = require('../../modules/request.service');
-const { ADMIN_COOKIE } = require('../../config');
+const { ADMIN_COOKIE, pathToApiSpec } = require('../../config');
 
+chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
 describe('Project Types API tests', function() {
 
     it('should return expected list of project types', async function() {
+        this.timeout(10000);
         const res = await reqService.chai
             .get('/api/v1/project-types')
             .set('Cookie', ADMIN_COOKIE);
 
-        res.should.have.status(200);
+        res.should.have.status(200).and.satisfyApiSpec;
         res.should.have.ownProperty('body');
         res.body.should.be.an('array');
-        res.body.should.have.members([
+        res.body.map((item) => {
+            return item.projectType;
+        }).should.include.members([
             'liberty',
             'nodejs',
             'spring',

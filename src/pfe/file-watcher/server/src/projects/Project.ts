@@ -34,6 +34,7 @@ export interface ProjectInfo {
     language?: string;
     isHttps?: boolean;
     appBaseURL?: string;
+    compositeAppName?: string;
 }
 
 export interface ProjectMetadata {
