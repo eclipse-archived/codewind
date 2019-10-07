@@ -23,6 +23,8 @@ const log = new Logger(__filename);
 const extensionsDir = '/extensions';
 const extensionsPattern = /^(\S+)-(\d+\.\d+\.\d+)\.zip$/; // e.g. extension-name-0.0.1.zip
 const suffixOld = '__old';
+const odoExtensionName = "codewind-odo-extension";
+const odoBinarySource = "https://github.com/openshift/odo/releases/latest/download/odo-linux-amd64"
 
 /**
  * The ExtensionList class
@@ -53,6 +55,11 @@ module.exports = class ExtensionList {
           const name = match[1];
           const version = match[2];
 
+          if ((name == odoExtensionName) && (process.env.ON_OPENSHIFT != 'true')) {
+            log.info("continue... not good");
+            continue;
+          }
+
           const source = path.join(extensionsDir, entry.name);
           const target = path.join(targetDir, name);
           const targetWithVersion = target + '-' + version;
@@ -60,6 +67,11 @@ module.exports = class ExtensionList {
           try {
             if (await prepForUnzip(target, version)) {
               await exec(`unzip ${source} -d ${targetDir}`);
+              
+              if (name == odoExtensionName) {
+                await exec(`mkdir -p ${targetWithVersion}/bin`);
+                await exec(`curl -L ${odoBinarySource} -o ${targetWithVersion}/bin/odo && chmod +x ${targetWithVersion}/bin/odo`);
+              }
 
               // top-level directory in zip will have the version suffix
               // rename to remove the version
