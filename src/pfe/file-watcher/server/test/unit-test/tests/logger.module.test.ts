@@ -539,7 +539,9 @@ export function loggerTestModule(): void {
             it(combo + " => msg: " + msg + ", level: " + level, async() => {
                 try {
                     await logger.setLoggingLevel(level);
-                } catch (err) {}
+                } catch (err) {
+                    // an error here is expected when setting invalid level - we verify that in the line below by reading the turbine logs
+                }
                 const turbineLogContent = await getTurbineLogContent(turbineLogPath, regex);
                 expect(turbineLogContent).to.equal(expectedResult);
             }).timeout(10000);
