@@ -44,7 +44,11 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
  * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
  */
-router.get('/api/v1/templates/repositories', sendRepositories);
+router.get('/api/v1/templates/repositories', async (req, res, _next) => {
+  const user = req.cw_user;
+  await user.templates.updateRepoListWithReposFromProviders();
+  await sendRepositories(req, res, _next);
+});
 
 router.post('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
