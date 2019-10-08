@@ -194,7 +194,6 @@ export async function validate(operation: Operation): Promise<void> {
  * @returns Promise<any>
  */
 export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isError: boolean): Promise<any> {
-    if (process.env.NODE_ENV === "test") return;
     // have the message match the Maven format
     const msgLabel = isError ? "ERROR" : "INFO";
     const fullMsg = `\n[${msgLabel}] ${msg}`;
@@ -215,11 +214,14 @@ export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isErr
 
     logger.logProjectInfo(`Writing to build log at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
 
-    fs.appendFile(buildLogPath, fullMsg, (err) => {
-        if (err) {
-            logger.logProjectError("File system error writing to build log: " + err, projectInfo.projectID);
-        }
-    });
+    // if the build log path is defined, only then we write it
+    if (buildLogPath) {
+        fs.appendFile(buildLogPath, fullMsg, (err) => {
+            if (err) {
+                logger.logProjectError("File system error writing to build log: " + err, projectInfo.projectID);
+            }
+        });
+    }
 }
 
 /**
