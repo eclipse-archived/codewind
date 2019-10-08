@@ -250,6 +250,7 @@ export function projectExtensionsTestModule(): void {
                 await mkdirAsync(microprofileProjectMetadataPath);
                 await copyAsync(microprofileOriginalProjectMetadata, microprofileTestProjectMetadata);
             }
+            process.env.HIDE_PFE_LOG = "n";
 
             if (!(await existsAsync(appsodyNodeProjectMetadataPath))) {
                 await mkdirAsync(appsodyNodeProjectMetadataPath);
@@ -267,7 +268,9 @@ export function projectExtensionsTestModule(): void {
             expect(fs.statSync(appsodyExtensionPath)).to.exist;
 
             await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
-            await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
+            await writeAsync(appsodyExtensionTestArtifactPath2, "#!/bin/bash\nknStack=\"somestack\"\necho -n \"{ \\\"language\\\": \\\"$knStack\\\" }\"");
+            await fs.chmodSync(appsodyExtensionTestArtifactPath2, 0o755);
+
             expect(fs.statSync(appsodyExtensionTestArtifactPath1)).to.exist;
             expect(fs.statSync(appsodyExtensionTestArtifactPath2)).to.exist;
         });
@@ -292,6 +295,8 @@ export function projectExtensionsTestModule(): void {
                 await unlinkAsync(microprofileTestProjectMetadata);
                 await rmdirAsync(microprofileProjectMetadataPath);
             }
+
+            process.env.HIDE_PFE_LOG = "y";
 
             if ((await existsAsync(appsodyNodeProjectMetadataPath))) {
                 await unlinkAsync(appsodyNodeTestProjectMetadata);
@@ -394,6 +399,8 @@ export function projectExtensionsTestModule(): void {
 
 
         before("create test directories", async () => {
+            process.env.HIDE_PFE_LOG = "n";
+
             if (!(await existsAsync(appsodyNodeProjectMetadataPath))) {
                 await mkdirAsync(appsodyNodeProjectMetadataPath);
                 await copyAsync(appsodyNodeOriginalProjectMetadata, appsodyNodeTestProjectMetadata);
@@ -404,12 +411,15 @@ export function projectExtensionsTestModule(): void {
                 if (!await existsAsync(appsodyExtensionPath)) {
                     await mkdirAsync(appsodyExtensionPath);
                     await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
-                    await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
+                    await writeAsync(appsodyExtensionTestArtifactPath2, "#!/bin/bash\nknStack=\"somestack\"\necho -n \"{ \\\"language\\\": \\\"$knStack\\\" }\"");
+                    await fs.chmodSync(appsodyExtensionTestArtifactPath2, 0o755);
                 }
             }
         });
 
         after("remove test directories", async () => {
+            process.env.HIDE_PFE_LOG = "y";
+
             if ((await existsAsync(appsodyNodeProjectMetadataPath))) {
                 await unlinkAsync(appsodyNodeTestProjectMetadata);
                 await rmdirAsync(appsodyNodeProjectMetadataPath);
