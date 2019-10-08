@@ -16,6 +16,7 @@ const TemplateError = require('../modules/utils/errors/TemplateError');
 
 const router = express.Router();
 const log = new Logger(__filename);
+let updated = false;
 
 /**
  * API Function to return a list of available templates
@@ -46,7 +47,10 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
  */
 router.get('/api/v1/templates/repositories', async (req, res, _next) => {
   const user = req.cw_user;
-  await user.templates.updateRepoListWithReposFromProviders();
+  if (!updated) {
+    await user.templates.updateRepoListWithReposFromProviders();
+    updated = true;
+  }
   await sendRepositories(req, res, _next);
 });
 
