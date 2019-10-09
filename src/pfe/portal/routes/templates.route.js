@@ -48,12 +48,18 @@ router.get('/api/v1/templates/repositories', sendRepositories);
 
 router.post('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
+  const repositoryName = req.sanitizeBody('name')
   const repositoryUrl = req.sanitizeBody('url');
   const repositoryDescription = req.sanitizeBody('description');
   const isRepoProtected = req.sanitizeBody('protected');
 
   try {
-    await user.templates.addRepository(repositoryUrl, repositoryDescription, isRepoProtected);
+    await user.templates.addRepository(
+      repositoryUrl,
+      repositoryDescription,
+      repositoryName,
+      isRepoProtected
+    );
   } catch (error) {
     log.error(error);
     const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON'];

@@ -201,8 +201,6 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         return {  "statusCode": 404, "error": {"msg": msg }};
     }
 
-    const imageId = projectID + "-" + projectType + "-" + crypto.createHash("sha1", { encoding: "utf8" }).update(projectLocation).digest("hex");
-    logger.logProjectInfo("The generated image ID is: " + imageId, projectID, projectName);
     logger.logProjectInfo("Project data directory: " + constants.projectConstants.projectsDataDir, projectID, projectName);
 
     const projectInfo: ProjectInfo = {

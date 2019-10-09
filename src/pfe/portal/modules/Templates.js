@@ -26,12 +26,14 @@ const DEFAULT_REPOSITORY_LIST = [
     enabled: true,
     protected: true,
     projectStyles: ['Codewind'],
+    name: 'Default templates',
   },
 ];
 
 const KABANERO_REPO = {
   url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
-  description: 'Kabanero Collections',
+  name: 'Kabanero Collections',
+  description: 'The default set of templates from Kabanero Collections',
   enabled: false,
   protected: true,
 };
@@ -229,7 +231,7 @@ module.exports = class Templates {
   /**
    * Add a repository to the list of template repositories.
    */
-  async addRepository(repoUrl, repoDescription, isRepoProtected) {
+  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
     let url;
     try {
       url = new URL(repoUrl).href;
@@ -249,6 +251,7 @@ module.exports = class Templates {
     }
 
     let newRepo = {
+      name: repoName,
       url,
       description: repoDescription,
       enabled: true,
@@ -288,7 +291,11 @@ function fetchAllRepositoryDetails(repos) {
 
 async function fetchRepositoryDetails(repo) {
   let newRepo = {...repo}
-  await readRepoTemplatesJSON(newRepo);
+
+  // Only set the name or description of the repo if not given by the user
+  if (!(repo.name && repo.description)){
+    await readRepoTemplatesJSON(newRepo);
+  }
 
   if (repo.projectStyles) {
     return newRepo;
@@ -303,7 +310,14 @@ async function readRepoTemplatesJSON(repository) {
   if (!repository.url) {
     throw new Error(`repo '${repository}' must have a URL`);
   }
+
   const indexUrl = new URL(repository.url);
+
+  // return if repository url points to a local file
+  if ( indexUrl.protocol === 'file:' ) {
+    return;
+  }
+
   const indexPath = indexUrl.pathname;
   const templatesPath = path.dirname(indexPath) + '/' + 'templates.json';
 
@@ -341,19 +355,35 @@ async function getTemplatesFromRepo(repository) {
   }
   const repoUrl = new URL(repository.url);
 
-  const options = {
-    host: repoUrl.host,
-    path: repoUrl.pathname,
-    method: 'GET',
+  let templateSummariesText = '[]';
+  // check if repository url points to a local file and read it accordingly
+  if ( repoUrl.protocol === 'file:' ) {
+    try {
+      if ( fs.existsSync(repoUrl.pathname) ) {
+        let data = fs.readFileSync(repoUrl.pathname, "utf-8");
+        templateSummariesText = data.toString();
+      }
+    }
+    catch (err) {
+      throw new Error(`repo file '${repoUrl.pathname}' cannot be read`);
+    }
   }
-  const res = await cwUtils.asyncHttpRequest(options, undefined, repoUrl.protocol === 'https:');
-  if (res.statusCode !== 200) {
-    throw new Error(`Unexpected HTTP status for ${repository}: ${res.statusCode}`);
+  else {
+    const options = {
+      host: repoUrl.host,
+      path: repoUrl.pathname,
+      method: 'GET',
+    }
+    const res = await cwUtils.asyncHttpRequest(options, undefined, repoUrl.protocol === 'https:');
+    if (res.statusCode !== 200) {
+      throw new Error(`Unexpected HTTP status for ${repository}: ${res.statusCode}`);
+    }
+    templateSummariesText = res.body;
   }
 
   let templateSummaries;
   try {
-    templateSummaries = JSON.parse(res.body);
+    templateSummaries = JSON.parse(templateSummariesText);
   } catch (error) {
     throw new Error(`URL '${repoUrl}' should return JSON`);
   }
@@ -365,9 +395,14 @@ async function getTemplatesFromRepo(repository) {
       url: summary.location,
       projectType: summary.projectType,
     };
+
     if (summary.projectStyle) {
       template.projectStyle = summary.projectStyle;
     }
+    if (repository.name) {
+      template.source = repository.name;
+    }
+
     return template;
   });
   return templates;

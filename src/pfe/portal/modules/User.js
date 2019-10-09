@@ -656,6 +656,22 @@ module.exports = class User {
   }
 
   /**
+   * Function to write workspace settings
+   */
+  async writeWorkspaceSettings(workspaceSettings) {
+    let retval;
+    try{
+      log.info(`Writing workspace settings file.`);
+      retval = await this.fw.writeWorkspaceSettings(workspaceSettings);
+    } catch (err) {
+      log.error(`Error in writeWorkspaceSettings`);
+      log.error(err);
+    }
+    console.log(`writeWorkspaceSettings returning ${retval}`);
+    return retval;
+  }
+
+  /**
    * Function to get test deployment registry
    */
   async testDeploymentRegistry(deploymentRegistry) {
