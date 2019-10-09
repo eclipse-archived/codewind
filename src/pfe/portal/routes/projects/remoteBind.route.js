@@ -198,7 +198,14 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
       // remove the file from pfe container
       await Promise.all(
         filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
+
       );
+
+      // need to delete from the build container as well
+      await Promise.all(
+        filesToDelete.map(file => cwUtils.deleteFile(project, file))
+      )
+
 
       filesToDelete.forEach((f) => {
         const data = {
@@ -208,6 +215,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
           directory: false
         }
         IFileChangeEvent.push(data);
+  
       });
 
       modifiedList.forEach((f) => {
