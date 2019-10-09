@@ -274,6 +274,21 @@ export default class Filewatcher {
 
     /**
      * @function
+     * @description Write the provided workspace settings to the workspace settings file.
+     * @param newWorkspaceSettings  <Required | Object>: New workspace settings to write to the file
+     * @example await filewatcher.writeWorkspaceSettings(newWorkspaceSettings);
+     *
+     * @returns Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>
+     * Response codes:
+     *  @property 200: Successfully wrote the file
+     *  @property 500: Error when attempting to write the workspace settings file
+     *
+     */
+    writeWorkspaceSettings: (newWorkspaceSettings: any) => Promise<any>;
+
+
+    /**
+     * @function
      * @description Test the deployment registry to check if its a valid registry for building projects on Kubernetes.
      *
      * @param deploymentRegistry <Required | String>: Deployment Registry string
@@ -648,6 +663,7 @@ export default class Filewatcher {
         this.setLocale = locale.setLocale;
         this.setLoggingLevel = logger.setLoggingLevel;
         this.readWorkspaceSettings = workspaceSettings.readWorkspaceSettings;
+        this.writeWorkspaceSettings = workspaceSettings.writeWorkspaceSettings;
         this.testDeploymentRegistry = workspaceSettings.testDeploymentRegistry;
         this.registerListener = socket.registerListener;
         this.createProject = projectsController.createProject;

@@ -46,7 +46,6 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
   try {
     // Null checks on required parameters are done by validateReq.
     const name = req.sanitizeBody('name');
-    const projectPath = req.sanitizeBody('path');
     const language = req.sanitizeBody('language');
     const projectType = req.sanitizeBody('projectType');
 
@@ -66,12 +65,10 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
     }
 
     const workspaceDir = global.codewind.CODEWIND_WORKSPACE
-    const projectDir = path.basename(projectPath)
    
-
     const projectDetails = {
       name: name,
-      directory: projectDir,
+      directory: name,
       workspace: workspaceDir,
       language: language,
       autoBuild: true,
@@ -287,22 +284,22 @@ async function listFiles(absolutePath, relativePath) {
 function getProjectSourceRoot(project) {
   let projectRoot = "";
   switch (project.projectType) {
-    case 'nodejs': {
-      projectRoot = "/app";
-      break
-    }
-    case 'liberty': {
-      projectRoot = "/home/default/app";
-      break
-    }
-    case 'swift': {
-      projectRoot = "/home/default/app";
-      break
-    }
-    default: {
-      projectRoot = "/app";
-      break
-    }
+  case 'nodejs': {
+    projectRoot = "/app";
+    break
+  }
+  case 'liberty': {
+    projectRoot = "/home/default/app";
+    break
+  }
+  case 'swift': {
+    projectRoot = "/home/default/app";
+    break
+  }
+  default: {
+    projectRoot = "/";
+    break
+  }
   }
   return projectRoot;
 }

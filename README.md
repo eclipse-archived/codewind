@@ -16,15 +16,12 @@ Use the following instructions to install Codewind with your choice of editor:
 3. [Eclipse Che plugin](https://github.com/eclipse/codewind-che-plugin)
 
 ## Building Codewind from the source
-1. Install [Eclipse](https://www.eclipse.org/codewind/mdteclipsegettingstarted.html) or [VS Code](https://www.eclipse.org/codewind/mdt-vsc-getting-started.html).
-2. Clone the `codewind` repository.
-3. Clone the Eclipse or VS Code repository:
-   - If you want to build the Eclipse plug-in, clone the [`codewind-eclipse` repo](https://github.com/eclipse/codewind-eclipse).
-   - If you want to build the VS Code plug-in, clone the [`codewind-vscode` repo](https://github.com/eclipse/codewind-vscode).
-4. Run the `./script/build.sh` script to run the Codewind build, or run the `./run.sh` script to build and start Codewind.
-5. Run the plug-in that corresponds to the repository that you cloned:
-   - For the Eclipse plug-in, follow the [Building section instructions](https://github.com/eclipse/codewind-eclipse/blob/master/README.md).
-   - For the VS Code plug-in, follow the [Developing section instructions](https://github.com/eclipse/codewind-vscode/blob/master/README.md).
+1. Clone the `codewind` repository.
+2. Run the `./script/build.sh` script to run the Codewind build, or run the `./run.sh` script to build and start Codewind.
+
+After you build Codewind with the build scripts, you can build one of the IDEs for Codewind:
+- For Eclipse, see "Building" in the [`codewind-eclipse` repository](https://github.com/eclipse/codewind-eclipse/blob/master/README.md).
+- For VS Code, see "Building Codewind from the source" in the [`codewind-vscode` repository](https://github.com/eclipse/codewind-vscode/blob/master/README.md).
 
 ## Contributing
 We welcome submitting issues and contributions.

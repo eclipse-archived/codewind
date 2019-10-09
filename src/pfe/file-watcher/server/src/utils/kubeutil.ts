@@ -20,6 +20,7 @@ import { ContainerStates } from "../projects/constants";
 import * as processManager from "./processManager";
 import { ProcessResult } from "./processManager";
 import { ProjectInfo } from "../projects/Project";
+import * as projectExtensions from "../extensions/projectExtensions";
 
 const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
 const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
@@ -65,7 +66,13 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
     }
 
     const releaseName = operation.containerName;
-    const releaseLabel = "release=" + releaseName;
+    let releaseLabel = "release=" + releaseName;
+    if (projectInfo.projectType == "odo") {
+        const componentName = path.basename(projectInfo.location);
+        const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+        const appName = await projectHandler.getAppName(projectID);
+        releaseLabel = "deploymentconfig=" + "cw-" + componentName + "-" + appName;
+    }
     const projectName = path.basename(projectLocation);
 
     // Before deploying the application, we added a release label to the deployment, pod, and service,
@@ -115,14 +122,25 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
         const internalPorts: Array<string> = [];
         const exposedPorts: Array<string> = [];
         const appPorts = projectInfo.appPorts;
-        const resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).services.get({ qs: { labelSelector: releaseLabel } });
+        let resp: any = undefined;
+        let deploymentconfig: string = undefined;
+
+        if (projectInfo.projectType == "odo") {
+            resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).services.get();
+            const res: string[] = releaseLabel.split("=");
+            deploymentconfig = res[1].trim();
+        } else {
+            resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).services.get({ qs: { labelSelector: releaseLabel } });
+        }
 
         // iterate through the available ports and store both the internal and exposed ports
         for ( let i = 0 ; i < resp.body.items.length ; i++ ) {
-            info.serviceName = resp.body.items[i].metadata.name;
-            for (let j = 0; j < resp.body.items[i].spec.ports.length; j++) {
-                internalPorts.push(String(resp.body.items[i].spec.ports[j].targetPort));
-                exposedPorts.push(String(resp.body.items[i].spec.ports[j].nodePort));
+            if (projectInfo.projectType != "odo" || (projectInfo.projectType == "odo" && resp.body.items[i].spec.selector.deploymentconfig == deploymentconfig)) {
+                info.serviceName = resp.body.items[i].metadata.name;
+                for (let j = 0; j < resp.body.items[i].spec.ports.length; j++) {
+                    internalPorts.push(String(resp.body.items[i].spec.ports[j].targetPort));
+                    exposedPorts.push(String(resp.body.items[i].spec.ports[j].nodePort));
+                }
             }
         }
 
@@ -185,9 +203,15 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
  *
  * @returns Promise<any>
  */
-export async function isContainerActive(containerName: string): Promise<any> {
+export async function isContainerActive(containerName: string, projectInfo?: ProjectInfo): Promise<any> {
     try {
-        const releaseLabel = "release=" + containerName;
+        let releaseLabel = "release=" + containerName;
+        if (projectInfo.projectType == "odo") {
+            const componentName = path.basename(projectInfo.location);
+            const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+            const appName = await projectHandler.getAppName(projectInfo.projectID);
+            releaseLabel = "deploymentconfig=" + "cw-" + componentName + "-" + appName;
+        }
         let containerState = {state: ContainerStates.containerNotFound};
         // We are getting the list of pods by the release label
         const resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).pods.get({ qs: { labelSelector: releaseLabel } });

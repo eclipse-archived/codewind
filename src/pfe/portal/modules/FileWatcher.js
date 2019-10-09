@@ -550,6 +550,21 @@ module.exports = class FileWatcher {
     }
   }
 
+  async writeWorkspaceSettings(workspaceSettings) {
+    let retval;
+    try{
+      retval = await filewatcher.writeWorkspaceSettings(workspaceSettings);
+      this.logFWReturnedMsg(retval);
+    } catch (err) {
+      log.error(err);
+    }
+    if (retval.statusCode != 200) {
+      throw new Error(`writeWorkspaceSettings ${retval.statusCode}`);
+    }
+    return retval;
+  }
+
+
   /**
    * Function to shutdown the user's projects
    */

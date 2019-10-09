@@ -1021,7 +1021,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ProjectType'
+                  $ref: '#/components/schemas/ProjectTypeDescriptor'
         204:
           description: No templates found
 
@@ -1218,8 +1218,12 @@ paths:
                     description: false if deployment registry was not set
                     example: false
     post:
-      summary: Test the specified Deployment Registry
-      description: The API also emits a socket event `deploymentRegistryStatus` with data `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
+      summary: Test or set the specified Deployment Registry
+      description: >
+        On test the API also emits a socket event `deploymentRegistryStatus` with data
+        `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
+        A set operation will set the registry without testing to allow the client to force save the
+        value.
       requestBody:
         content:
           application/json:
@@ -1230,6 +1234,11 @@ paths:
               properties:
                 deploymentRegistry:
                   type: string
+                operation:
+                  type: string
+                  enum:
+                    - test
+                    - set
       responses:
         200:
           description: Successfully completed
@@ -1344,6 +1353,45 @@ components:
     ProjectType:
       description: the build type for the project. Built-in types are 'liberty', 'spring', 'swift', 'nodejs', and 'docker'.
       type: string
+    ProjectTypeDescriptor:
+      description: Descriptor of a project type, including possible subtypes
+      type: object
+      required:
+        - projectType
+        - projectSubtypes
+      properties:
+        projectType:
+          $ref: '#/components/schemas/ProjectType'
+        projectSubtypes:
+          $ref: '#/components/schemas/ProjectSubtypesDescriptor'
+    ProjectSubtype:
+      description: A project subtype defined by a project extension
+      type: object
+      required:
+        - id
+        - label
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+    ProjectSubtypesDescriptor:
+      description: Descriptor for subtypes of a project type
+      type: object
+      required:
+        - items
+      properties:
+        label:
+          description: A name label to refer to the subtype
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSubtype'
     testRunTime:
       description: The time of a load-test run, whose format is yyyymmddHHMMss
       type: number
@@ -1372,13 +1420,17 @@ components:
         projectType:
           type: string
           example: "docker"
+        source:
+          type: string
+          example: "Default Codewind Templates"
     TemplateRepo:
       type: object
       required:
         - url
-        - description
       properties:
         url:
+          type: string
+        name:
           type: string
         description:
           type: string
