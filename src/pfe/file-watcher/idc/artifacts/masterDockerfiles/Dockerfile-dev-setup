@@ -14,6 +14,8 @@
 USER root
 ADD /artifacts/artifacts.tar.gz $HOME/artifacts
 RUN chown -R default $HOME/artifacts
+RUN mkdir -p $HOME/logs
+RUN chown -R default $HOME/logs
 RUN chmod g+w /config/resources
 RUN if [ -z $(which unzip) ]; then apt update; apt install -y unzip; fi
 USER default

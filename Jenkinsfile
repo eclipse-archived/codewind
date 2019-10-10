@@ -69,7 +69,9 @@ pipeline {
                         echo -e "\n+++   DOWNLOADING EXTENSIONS   +++\n";
                         mkdir -p ${SRC_DIR}/pfe/extensions
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
+                        rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
                         curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.5.0.zip https://github.com/eclipse/codewind-appsody-extension/archive/0.5.0.zip
+                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-0.5.0.zip https://github.com/eclipse/codewind-odo-extension/archive/0.5.0.zip
 
                         # BUILD IMAGES
                         # Uses a build file in each of the directories that we want to use
