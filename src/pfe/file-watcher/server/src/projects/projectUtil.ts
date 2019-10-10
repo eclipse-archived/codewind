@@ -77,6 +77,7 @@ export interface ProjectEvent {
     contextRoot?: string;
     isHttps?: boolean;
     appBaseURL?: string;
+    compositeAppName?: string;
 }
 
 export interface ProjectLog {
@@ -168,7 +169,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command,
         operation.containerName, String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode,
-        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, String(REMOTE_MODE)];
+        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, String(true)];
 
         if (projectType == "liberty" || projectType == "spring") {
 
@@ -188,7 +189,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
             args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
                 String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings, String(REMOTE_MODE)];
+                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings, String(true)];
         } else if (projectType == "odo") {
             const componentName: string = await getComponentName(projectName);
 
@@ -430,8 +431,14 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
 
                     if (operation.projectInfo.projectType == "odo") {
                         const projectHandler = await projectExtensions.getProjectHandler(operation.projectInfo);
-                        const appBaseURL: string = await projectHandler.getAppBaseURL(projectID);
-                        projectInfo.appBaseURL = appBaseURL.trim();
+                        const odoProjectInfo: ProjectInfo = operation.projectInfo;
+                        const appBaseURL: string = (await projectHandler.getAppBaseURL(projectID)).trim();
+                        const appName: string = (await projectHandler.getAppName(projectID)).trim();
+                        projectInfo.appBaseURL = appBaseURL;
+                        projectInfo.compositeAppName = appName;
+                        odoProjectInfo.appBaseURL = appBaseURL;
+                        odoProjectInfo.compositeAppName = appName;
+                        await projectsController.saveProjectInfo(projectID, odoProjectInfo, true);
                     }
                 } catch (err) {
                     logger.logProjectError(err, projectID, projectName);
@@ -837,7 +844,7 @@ export async function getContainerInfo(projectInfo: ProjectInfo, forceRefresh: b
         containerInfo = await dockerutil.getApplicationContainerInfo(projectInfo, containerName);
     }
     // Only cache the container info if it is complete
-    if (containerInfo && containerInfo.ip && containerInfo.internalPort) {
+    if (containerInfo && process.env.IN_K8 ? containerInfo.serviceName : containerInfo.ip && containerInfo.internalPort) {
         containerInfoMap.set(projectInfo.projectID, containerInfo);
 
         // Set the containerInfo Force Refresh Map to false, since it has been refereshed

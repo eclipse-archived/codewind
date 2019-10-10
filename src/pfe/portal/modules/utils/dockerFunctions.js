@@ -114,6 +114,12 @@ module.exports.copyFile = async function copyFile(project, pathToWriteTo, projec
   await exec(dockerCommand);
 }
 
+module.exports.deleteFile = async function deleteFile(project, relativePathOfFile) {
+  const dockerCommand = `docker rm  ${project.containerId}:${relativePathOfFile}`;
+  log.debug(`[docker rm command] ${dockerCommand}`);
+  await exec(dockerCommand);
+}
+
 function convertToArray(object) {
   if(object === null || object === undefined) return [];
   return Array.isArray(object) ? object : [object];

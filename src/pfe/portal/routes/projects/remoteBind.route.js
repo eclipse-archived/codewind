@@ -146,7 +146,7 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
 
       let projectRoot = getProjectSourceRoot(project);
 
-      if (!global.codewind.RUNNING_IN_K8S && project.containerId) {
+      if (!global.codewind.RUNNING_IN_K8S && project.containerId && (project.projectType != 'docker')) {
         await cwUtils.copyFile(project, pathToWriteTo, projectRoot, relativePathOfFile);
       }
       res.sendStatus(200);
@@ -164,43 +164,15 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
  * for upload of changed source.
  * @param id the id of the project
  * @param fileList a list of files that should be present in the project.
+ * @param modifiedList a list of files that have been changed.
+ * @param timestamp time since epoch when last sync was done.
  * @return 200 if the clear is successful
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
 // TODO - This is very crude, we should replace it with a more sophisticated
 // mechanism to only delete files that don't exist on the local end.
-router.post('/api/v1/projects/:id/remote-bind/clear', async (req, res) => {
-  const projectID = req.sanitizeParams('id');
-  const keepFileList = req.sanitizeBody('fileList');
-  const user = req.cw_user;
-  try {
-    const project = user.projectList.retrieveProject(projectID);
-    if (project) {
-      const pathToClear = path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
-      const currentFileList = await listFiles(pathToClear, '');
 
-      const filesToDeleteSet = new Set(currentFileList);
-      keepFileList.forEach((f) => filesToDeleteSet.delete(f));
-      const filesToDelete = Array.from(filesToDeleteSet);
-
-      log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
-        `${filesToDelete.join(', ')}`);
-
-      // remove the file from pfe container
-      await Promise.all(
-        filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
-      );
-
-      res.sendStatus(200);
-    } else {
-      res.sendStatus(404);
-    }
-  } catch (err) {
-    log.error(err);
-    res.status(500).send(err);
-  }
-});
 
 
 router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
@@ -226,7 +198,15 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
       // remove the file from pfe container
       await Promise.all(
         filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
+
       );
+
+      // need to delete from the build container as well
+      if (!global.codewind.RUNNING_IN_K8S && project.containerId && (project.projectType != 'docker')) {
+        await Promise.all(
+          filesToDelete.map(file => cwUtils.deleteFile(project, file))
+        )
+      }
 
       filesToDelete.forEach((f) => {
         const data = {
@@ -236,6 +216,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
           directory: false
         }
         IFileChangeEvent.push(data);
+  
       });
 
       modifiedList.forEach((f) => {
@@ -294,6 +275,14 @@ function getProjectSourceRoot(project) {
   }
   case 'swift': {
     projectRoot = "/home/default/app";
+    break
+  }
+  case 'spring': {
+    projectRoot = "/root/app";
+    break
+  }
+  case 'docker': {
+    projectRoot = "/code";
     break
   }
   default: {

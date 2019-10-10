@@ -61,6 +61,9 @@ if [[ $1 && $1 == "prod" ]]; then
 	exit 0
 fi
 
+mkdir -p $HOME/logs
+chown -R 1001 $HOME/logs
+
 if [ -f $SERVER_XML ]; then
 	if [[ $3 && $3 == "config" ]]; then
 		echo "Start mvn build with config change for $LOGNAME $(date)"

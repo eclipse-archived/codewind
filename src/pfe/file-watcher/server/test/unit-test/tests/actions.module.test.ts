@@ -160,7 +160,8 @@ export function actionsTestModule(): void {
             if (!(await existsAsync(appsodyExtensionPath))) {
                 fse.ensureDirSync(appsodyExtensionPath);
                 await writeAsync(appsodyExtensionTestArtifactPath1, '{"container": {"prefix": "testprefix-", "suffix": "-testsuffix"}}');
-                await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
+                await writeAsync(appsodyExtensionTestArtifactPath2, "#!/bin/bash\nknStack=\"somestack\"\necho -n \"{ \\\"language\\\": \\\"$knStack\\\" }\"");
+                await fs.chmodSync(appsodyExtensionTestArtifactPath2, 0o755);
             }
         });
 
@@ -304,10 +305,13 @@ export function actionsTestModule(): void {
         const testappsodyrequiredFiles = path.join(appsodyProjectPath, "testRequiredFiles");
 
         before("create the required extension folder for shellExtension project testing", async () => {
+            process.env.HIDE_PFE_LOG = "n";
+
             if (!(await existsAsync(appsodyExtensionPath))) {
                 fse.ensureDirSync(appsodyExtensionPath);
                 await writeAsync(appsodyExtensionTestArtifactPath1, '{"requiredFiles": ["/testRequiredFiles"]}');
-                await writeAsync(appsodyExtensionTestArtifactPath2, "echo $(pwd)");
+                await writeAsync(appsodyExtensionTestArtifactPath2, "#!/bin/bash\nknStack=\"somestack\"\necho -n \"{ \\\"language\\\": \\\"$knStack\\\" }\"");
+                await fs.chmodSync(appsodyExtensionTestArtifactPath2, 0o755);
             }
 
             expect(fs.statSync(extensionsPath)).to.exist;
@@ -321,6 +325,8 @@ export function actionsTestModule(): void {
         });
 
         after("cleanup the test directories", async() => {
+            process.env.HIDE_PFE_LOG = "y";
+
             if ((await existsAsync(extensionsPath))) {
                 if (await existsAsync(appsodyExtensionPath)) {
                     await unlinkAsync(appsodyExtensionTestArtifactPath1);
