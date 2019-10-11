@@ -180,7 +180,7 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
 router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   const projectID = req.sanitizeParams('id');
   const keepFileList = req.sanitizeBody('fileList');
-  const modifiedList = req.sanitizeBody('modifiedList');
+  const modifiedList = req.sanitizeBody('modifiedList') || [];
   const timestamp = req.sanitizeBody('timestamp');
   const IFileChangeEvent = [];
 
