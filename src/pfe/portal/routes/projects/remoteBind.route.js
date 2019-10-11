@@ -181,7 +181,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   const projectID = req.sanitizeParams('id');
   const keepFileList = req.sanitizeBody('fileList');
   const modifiedList = req.sanitizeBody('modifiedList') || [];
-  const timestamp = req.sanitizeBody('timestamp');
+  const timeStamp = req.sanitizeBody('timeStamp');
   const IFileChangeEvent = [];
 
   const user = req.cw_user;
@@ -199,7 +199,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         `${filesToDelete.join(', ')}`);
       // remove the file from pfe container
       await Promise.all(
-        filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
+        filesToDelete.map(oldFile => exec(`rm -f ${path.join(pathToClear, oldFile)}`))
 
       );
 
@@ -213,7 +213,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
       filesToDelete.forEach((f) => {
         const data = {
           path: f,
-          timestamp: timestamp,
+          timestamp: timeStamp,
           type: "DELETE",
           directory: false
         }
@@ -224,14 +224,14 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
       modifiedList.forEach((f) => {
         const data = {
           path: f,
-          timestamp: timestamp,
+          timestamp: timeStamp,
           type: "MODIFY",
           directory: false
         }
         IFileChangeEvent.push(data);
       });
 
-      user.fileChanged(projectID, timestamp, 1, 1, IFileChangeEvent);
+      user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
 
       res.sendStatus(200);
     } else {
@@ -252,12 +252,14 @@ async function listFiles(absolutePath, relativePath) {
   for (const f of files) {
     const nextRelativePath = path.join(relativePath, f);
     const nextAbsolutePath = path.join(absolutePath, f);
-    fileList.push(nextRelativePath)
+
 
     const stats = await fs.stat(nextAbsolutePath);
     if (stats.isDirectory()) {
       const subFiles = await listFiles(nextAbsolutePath, nextRelativePath);
       fileList.push(...subFiles);
+    } else {
+      fileList.push(nextRelativePath);
     }
   }
   return fileList;
