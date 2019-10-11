@@ -74,7 +74,7 @@ module.exports = class Project {
     this.directory = args.directory || this.name;
     this.infLockFlag = false;
     // locOnDisk is used by the UI and needs to match what it sees.
-    this.locOnDisk = `${global.codewind.CODEWIND_WORKSPACE}${this.directory}`;
+    this.locOnDisk = args.locOnDisk || `${global.codewind.CODEWIND_WORKSPACE}${this.directory}`;
     this.loadTestPath = join(workspace, this.name, 'load-test');
 
     if (this.language === 'java') {

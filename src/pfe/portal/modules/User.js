@@ -212,7 +212,8 @@ module.exports = class User {
           }
           const project = {};
           const projName = projFile.name;
-          project.pathToMonitor = path.join(projFile.workspace, projFile.directory);
+          project.pathToMonitor = projFile.locOnDisk;
+          //project.pathToMonitor = path.join(projFile.workspace, projFile.directory);
           if (process.env.HOST_OS === "windows") {
             project.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(project.pathToMonitor);
           }

@@ -48,6 +48,7 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
     const name = req.sanitizeBody('name');
     const language = req.sanitizeBody('language');
     const projectType = req.sanitizeBody('projectType');
+    const locOnDisk = req.sanitizeBody('path');
 
     const illegalNameChars = ILLEGAL_PROJECT_NAME_CHARS.filter(char => name.includes(char));
     if (illegalNameChars.length > 0) {
@@ -72,6 +73,7 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
       workspace: workspaceDir,
       language: language,
       autoBuild: true,
+      locOnDisk: locOnDisk,
       state: Project.STATES.closed,
     };
 
