@@ -164,12 +164,12 @@ export async function containerCreate(operation: Operation, script: string, comm
     const projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
     logger.logTrace("The projectInfo has been updated for deploymentRegistry: " + JSON.stringify(projectInfo));
 
-    const REMOTE_MODE = (process.env.REMOTE_MODE == "true") || false;
-    // const REMOTE_MODE = true;
+    const REMOTE_MODE = (process.env.REMOTE_MODE) || false;
+    logger.logTrace("Running with --remote=" + REMOTE_MODE);
 
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command,
         operation.containerName, String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode,
-        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, String(true)];
+        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, String(REMOTE_MODE)];
 
         if (projectType == "liberty" || projectType == "spring") {
 
@@ -189,7 +189,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
             args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
                 String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings, String(true)];
+                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings, String(REMOTE_MODE)];
         } else if (projectType == "odo") {
             const componentName: string = await getComponentName(projectName);
 

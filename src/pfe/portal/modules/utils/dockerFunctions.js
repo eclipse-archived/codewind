@@ -109,13 +109,13 @@ module.exports.readFile = function readFile(project, path) {
 }
 
 module.exports.copyFile = async function copyFile(project, pathToWriteTo, projectRoot, relativePathOfFile) {
-  const dockerCommand = `docker cp ${pathToWriteTo} ${project.containerId}:${projectRoot}/${relativePathOfFile}`;
+  const dockerCommand = `docker exec ${project.containerId} cp ${pathToWriteTo} ${projectRoot}/${relativePathOfFile}`;
   log.debug(`[docker cp command] ${dockerCommand}`);
   await exec(dockerCommand);
 }
 
-module.exports.deleteFile = async function deleteFile(project, relativePathOfFile) {
-  const dockerCommand = `docker rm  ${project.containerId}:${relativePathOfFile}`;
+module.exports.deleteFile = async function deleteFile(project, projectRoot, relativePathOfFile) {
+  const dockerCommand = `docker exec ${project.containerId} rm -rf ${projectRoot}/${relativePathOfFile}`;
   log.debug(`[docker rm command] ${dockerCommand}`);
   await exec(dockerCommand);
 }

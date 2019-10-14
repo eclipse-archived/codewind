@@ -25,7 +25,7 @@ printf "\n\n${BLUE}Running 'run.sh' to build and start codewind. $RESET\n";
 while [ "$#" -gt 0 ]; do
   case $1 in
     --dev) DEVMODE='--dev'; shift 1;;
-    --remote) REMOTE_MODE=--remote; shift 1;;
+    --remote) REMOTE_MODE='--remote'; shift 1;;
     *) shift 1;;
   esac
 done
