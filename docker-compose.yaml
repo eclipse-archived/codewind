@@ -52,12 +52,13 @@ services:
       build: ./src/gatekeeper/.
       image: codewind-gatekeeper${PLATFORM}:${TAG}
       environment:
-        auth_url: "https://add_keycloak_url_here"
-        client_id: "codewind"
-        client_secret: "add_client_secret_here"
-        enable_auth: 1
-        realm: "codewind"
-        session_secret: "add_your_session_secret_here"
+        AUTH_URL: "https://add_keycloak_url_here"
+        CLIENT_ID: "codewind"
+        CLIENT_SECRET: "add_client_secret_here"
+        ENABLE_AUTH: 1
+        REALM: "codewind"
+        SESSION_SECRET: "add_your_session_secret_here"
+        GATEKEEPER_INGRESS: "add_ingress_host_here_eg: 127.0.0.1:9096"
       ports:
         - "0.0.0.0:9096:9096"
         - "0.0.0.0:9496:9496"

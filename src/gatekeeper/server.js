@@ -20,12 +20,12 @@ process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 console.log("Gatekeeper configuration:")
 console.log(`** PFE Service: ${pfe_protocol}://${pfe_host}:${pfe_port}`);
 
-let sessionSecret = process.env.session_secret
-let realm = process.env.realm
-let client_id = process.env.client_id
-let auth_url = process.env.auth_url
-let client_secret = process.env.client_secret
-let enable_auth = process.env.enable_auth
+let sessionSecret = process.env.SESSION_SECRET
+let realm = process.env.REALM
+let client_id = process.env.CLIENT_ID
+let auth_url = process.env.AUTH_URL
+let client_secret = process.env.CLIENT_SECRET
+let enable_auth = process.env.ENABLE_AUTH
 
 // check environment variables
 if (!sessionSecret) {
@@ -114,8 +114,13 @@ app.get('/health', (req, res) => res.send('OK'))
 app.use('*', authMiddleware, function (req, res) {
     try {
         console.log(`req.originalUrl = ${req.originalUrl}`);
-        let url = `http://${pfe_host}:${pfe_port}${req.originalUrl}`;
-        let r = request(url);
+        const options = {
+            url:`http://${pfe_host}:${pfe_port}${req.originalUrl}`,
+            headers: {
+                "x-forwarded-host": process.env.GATEKEEPER_INGRESS
+            }
+        }
+        let r = request(options);
         req.pipe(r).on('error', function (err) {
             console.log(err);
             res.status(502).send({ error: err.code });
