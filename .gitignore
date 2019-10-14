@@ -14,6 +14,7 @@ package-lock.json
 src/performance/webclient/build/
 test/test-results.xml
 test/tmp.json
+test/resources/codewind-license-data/bin/*
 src/performance/LICENSE
 src/performance/NOTICE.md
 src/pfe/portal/LICENSE

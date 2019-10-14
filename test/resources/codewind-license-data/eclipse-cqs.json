@@ -1,0 +1,2072 @@
+[
+    {
+        "bug_id": 20526,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "pending",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(binary unmodified arms-length) buildha 1.9.2"
+    },
+    {
+        "bug_id": 20562,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "pending",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(binary unmodified arms-length) curl 7.65.3-r0"
+    },
+    {
+        "bug_id": 20561,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "pending",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(binary unmodified arms-length) docker-ce 18.09.6"
+    },
+    {
+        "bug_id": 20527,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(binary unmodified arms-length) epel-release 7.11.0"
+    },
+    {
+        "bug_id": 20523,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(binary unmodified arms-length) helm 2.9.1"
+    },
+    {
+        "bug_id": 20525,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "pending",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(binary unmodified arms-length) kubectl 1.15.1"
+    },
+    {
+        "bug_id": 20530,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(binary unmodified arms-length) openssl 1.0.2k-16.el7_6.1"
+    },
+    {
+        "bug_id": 20529,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "pending",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(binary unmodified arms-length) sudo 1.8.23-3.el7"
+    },
+    {
+        "bug_id": 20515,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "sharon.corbett@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(binary unmodified arms-length) unzip 6.0-19.el7"
+    },
+    {
+        "bug_id": 20514,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "sharon.corbett@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(binary unmodified arms-length) zip 3.0-11.el7"
+    },
+    {
+        "bug_id": 20446,
+        "bug_severity": "exempt_prereq",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "sharon.corbett@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(docker) centos 7"
+    },
+    {
+        "bug_id": 20528,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(docker) nginx:stable-alpine"
+    },
+    {
+        "bug_id": 20401,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "pending",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) afero 1.2.2"
+    },
+    {
+        "bug_id": 20468,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) appsody 0.2.5 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20467,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) appsody-controller 0.2.1 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20466,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) appsodyExtension 0.2.1 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20447,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/cpuguy83/go-md2man 1.0.10 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20448,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/fsnotify/fsnotify 1.4.7 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20449,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/gosuri/uitable master (for appsody dependency)"
+    },
+    {
+        "bug_id": 20450,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/hashicorp/hcl 1.0.0 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20451,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/inconshreveable/mousetrap 1.0.0 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20452,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/magiconair/properties 1.8.0 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20453,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/mattn/go-runewidth 0.0.4 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20454,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/mitchellh/go-homedir 1.1.0 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20455,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/pelletier/go-toml 1.3.0 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20456,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/russross/blackfriday 1.5.2 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20465,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/shurcooL/sanitized_anchor_name 1.0.0 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20457,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/spf13/cast 1.3.0 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20458,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/spf13/cobra 0.0.3 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20461,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) github.com/spf13/pflag 1.0.3 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20462,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) golang.org/x/sys master (for appsody dependency) release-branch.go1.12"
+    },
+    {
+        "bug_id": 20463,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) gopkg.in/yaml.v2 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20464,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(go) k8s.io/klog 0.3.0 (for appsody dependency)"
+    },
+    {
+        "bug_id": 20524,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "pending",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(go) yq 2.4.0"
+    },
+    {
+        "bug_id": 20118,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) client-prototype 1.0.0"
+    },
+    {
+        "bug_id": 20145,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(node) Codewind 0.1 - June10th2019"
+    },
+    {
+        "bug_id": 20119,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) codewind 0.1.0"
+    },
+    {
+        "bug_id": 20303,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(node) Codewind 0.2 - June27th2019"
+    },
+    {
+        "bug_id": 20646,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "sharon.corbett@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(node) Codewind 0.3 - August12th2019"
+    },
+    {
+        "bug_id": 20336,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) Codewind 0.3 - July10th2019 - chai-openapi-response-validator"
+    },
+    {
+        "bug_id": 20817,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "(node) Codewind 0.4 - September12th2019"
+    },
+    {
+        "bug_id": 20120,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) codewind-test 1.0.0"
+    },
+    {
+        "bug_id": 20121,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) eslint-plugin-microclimate-portal-eslint 0.0.0"
+    },
+    {
+        "bug_id": 20122,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) file-watcher 1.0.1"
+    },
+    {
+        "bug_id": 20123,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) loadrunner 1.0.0"
+    },
+    {
+        "bug_id": 20124,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) microclimate-ls-java-prof-vscode-client 0.1.0"
+    },
+    {
+        "bug_id": 20126,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) microclimate-ls-node-prof 19.3.0"
+    },
+    {
+        "bug_id": 20127,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) microclimate-ls-node-prof-server 0.0.1"
+    },
+    {
+        "bug_id": 20128,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) microclimate-ls-node-prof-theia-client 0.1.0"
+    },
+    {
+        "bug_id": 20129,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) microclimate-ls-node-prof-vscode-client 0.1.0"
+    },
+    {
+        "bug_id": 20130,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) microclimate-portal 1.0.0"
+    },
+    {
+        "bug_id": 20131,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) microclimatetestnodejs 1.0.0"
+    },
+    {
+        "bug_id": 20132,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) nodefolder 1.0.0"
+    },
+    {
+        "bug_id": 20133,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) performance 0.1.0"
+    },
+    {
+        "bug_id": 20134,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) performanceserver 1.0.0"
+    },
+    {
+        "bug_id": 20135,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) server-prototype 1.0.0"
+    },
+    {
+        "bug_id": 20136,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) tempest-ls-java-prof 19.3.0"
+    },
+    {
+        "bug_id": 20137,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(node) validation 0.0.0"
+    },
+    {
+        "bug_id": 20469,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(runtime) github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u212-b04_openj9-0.14.2"
+    },
+    {
+        "bug_id": 20516,
+        "bug_severity": "withdrawn",
+        "priority": "P2",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "ecd.codewind-inbox@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "(runtime) Node.js 2:10.16.0-1nodesource"
+    },
+    {
+        "bug_id": 19995,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "analytics-node"
+    },
+    {
+        "bug_id": 19997,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "appmetrics-dash"
+    },
+    {
+        "bug_id": 20488,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_analysis",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "appsody-controller Version: 0.2.2"
+    },
+    {
+        "bug_id": 19998,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "body-parser"
+    },
+    {
+        "bug_id": 20171,
+        "bug_severity": "workswith",
+        "priority": "P3",
+        "op_sys": "awaiting_pmc",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "Build-only dependencies: maven-compiler-plugin 3.5.1"
+    },
+    {
+        "bug_id": 20172,
+        "bug_severity": "workswith",
+        "priority": "P3",
+        "op_sys": "awaiting_pmc",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "Build-only dependencies: maven-shade-plugin 3.0.0"
+    },
+    {
+        "bug_id": 19983,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "carbon 1.13.0 (PB CQ9049)"
+    },
+    {
+        "bug_id": 19984,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "carbon 1.13.0 (PB CQ9049)"
+    },
+    {
+        "bug_id": 19985,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "carbon 1.13.0 (PB CQ9049)"
+    },
+    {
+        "bug_id": 19999,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "carbon-components"
+    },
+    {
+        "bug_id": 20000,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "carbon-components-react"
+    },
+    {
+        "bug_id": 20001,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "carbon-icons"
+    },
+    {
+        "bug_id": 19908,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "chai 4.2.0"
+    },
+    {
+        "bug_id": 20002,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "chai 4.2.0 (PB CQ19908)"
+    },
+    {
+        "bug_id": 19988,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "chai-as-promised 7.1.1 (PB CQ17279)"
+    },
+    {
+        "bug_id": 20003,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "chai-as-promised 7.1.1 (PB CQ17279)"
+    },
+    {
+        "bug_id": 20004,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "chalk 2.4.1 (PB CQ17280)"
+    },
+    {
+        "bug_id": 20014,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "chokidar"
+    },
+    {
+        "bug_id": 19901,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "circular-json 0.5.9"
+    },
+    {
+        "bug_id": 20074,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "cli@1.20.0"
+    },
+    {
+        "bug_id": 19950,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "Codewind 0.1 clearance of approved packages"
+    },
+    {
+        "bug_id": 20005,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "dateformat"
+    },
+    {
+        "bug_id": 20006,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "deep-equal 1.0.1 (PB CQ17287)"
+    },
+    {
+        "bug_id": 20007,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "dockerode"
+    },
+    {
+        "bug_id": 20008,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "dockerode (PB CQ20007)"
+    },
+    {
+        "bug_id": 19927,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "engine.io-client-java 1.0.0"
+    },
+    {
+        "bug_id": 19876,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "express 4.16.2 (PB CQ17959)"
+    },
+    {
+        "bug_id": 20010,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "express-openapi-validate@0.4.4"
+    },
+    {
+        "bug_id": 20009,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "express@4.17.1"
+    },
+    {
+        "bug_id": 20011,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "fs-extra@7.0.1"
+    },
+    {
+        "bug_id": 20084,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "fsnotify-1.4.7 (go)"
+    },
+    {
+        "bug_id": 20075,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "github.com/docker/distribution       28602af (PB CQ17619)"
+    },
+    {
+        "bug_id": 20077,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "github.com/docker/go-connections     ecb4cb2 (PB CQ17621)"
+    },
+    {
+        "bug_id": 20079,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "github.com/docker/go-units           8a7beac (PB CQ17622)"
+    },
+    {
+        "bug_id": 20080,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "github.com/Microsoft/go-winio        v0.3.8 (PB CQ17617)"
+    },
+    {
+        "bug_id": 20631,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "github.com/openshift/api v3.9.0 (PB CQ19237)"
+    },
+    {
+        "bug_id": 20076,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "github.com/pkg/errors v0.8.1 (PB CQ19967)"
+    },
+    {
+        "bug_id": 20621,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "github.com/Sirupsen/logrus v1.4.2 (PB CQ19963)"
+    },
+    {
+        "bug_id": 20078,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "go-digest 1.0.0"
+    },
+    {
+        "bug_id": 20018,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_pmc",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "http-errors"
+    },
+    {
+        "bug_id": 20632,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "https://github.com/openshift/client-go (go)"
+    },
+    {
+        "bug_id": 19902,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "i18next 8.3.0"
+    },
+    {
+        "bug_id": 19941,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "i18next 8.4.3"
+    },
+    {
+        "bug_id": 19903,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "i18next-node-fs-backend 2.1.0"
+    },
+    {
+        "bug_id": 20025,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "i18next-node-fs-backend@2.1.3"
+    },
+    {
+        "bug_id": 20012,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "i18next@15.1.3"
+    },
+    {
+        "bug_id": 19948,
+        "bug_severity": "pending",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "sharon.macdonald@eclipse-foundation.org",
+        "bug_status": "REOPENED",
+        "resolution": "",
+        "short_desc": "Initial Contribution (move) of Codewind core functions"
+    },
+    {
+        "bug_id": 19843,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "awaiting_analysis",
+        "assigned_to": "sharon.macdonald@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "Initial Contribution (move) of Codewind's Eclipse plugin"
+    },
+    {
+        "bug_id": 20183,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "awaiting_analysis",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "Initial Contribution (move) of Codewind's Open API VSCode extension"
+    },
+    {
+        "bug_id": 19886,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "awaiting_analysis",
+        "assigned_to": "sharon.macdonald@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "Initial Contribution (move) of Codewind's VSCode extension"
+    },
+    {
+        "bug_id": 20486,
+        "bug_severity": "awaiting_analysis",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "NEW",
+        "resolution": "",
+        "short_desc": "Initial Contribution of Appsody Codewind Extension"
+    },
+    {
+        "bug_id": 20021,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "awaiting_analysis",
+        "assigned_to": "sharon.macdonald@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "Initial Contribution of Codewind Che plugin"
+    },
+    {
+        "bug_id": 20148,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "awaiting_analysis",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "Initial Contribution of Codewind filewatchers"
+    },
+    {
+        "bug_id": 19949,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "Initial Contribution of Codewind installer"
+    },
+    {
+        "bug_id": 19980,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "awaiting_analysis",
+        "assigned_to": "sharon.macdonald@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "Initial Contribution of Codewind installer"
+    },
+    {
+        "bug_id": 19981,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "sharon.macdonald@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "Initial Contribution of Codewind java plugin"
+    },
+    {
+        "bug_id": 19982,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "sharon.macdonald@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "Initial Contribution of Codewind node plugin"
+    },
+    {
+        "bug_id": 20191,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "awaiting_analysis",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "Initial Contribution of Codewind's Open API Eclipse extension"
+    },
+    {
+        "bug_id": 20026,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "install@0.12.2"
+    },
+    {
+        "bug_id": 20023,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "ip@1.1.5"
+    },
+    {
+        "bug_id": 20028,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "js-yaml Version: 3.6.1 (PB CQ11684) (PB CQ11918)"
+    },
+    {
+        "bug_id": 19943,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "json.org java impl of json parser Version: 2008-09-18 (PB Orbit CQ3603)"
+    },
+    {
+        "bug_id": 20015,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "JUnit Version: 4.12 (PB CQ9232) (PB CQ18462)"
+    },
+    {
+        "bug_id": 20411,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "k8s.io/api 7cf5895f2711"
+    },
+    {
+        "bug_id": 20412,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "k8s.io/apimachinery 1799e75a0719"
+    },
+    {
+        "bug_id": 20413,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "k8s.io/client-go 78d2af792bab"
+    },
+    {
+        "bug_id": 20029,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "kubernetes-client@6.12.1"
+    },
+    {
+        "bug_id": 20031,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "loadtest@3.0.7"
+    },
+    {
+        "bug_id": 20032,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "lock@1.1.0"
+    },
+    {
+        "bug_id": 20034,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "log4js@3.0.6"
+    },
+    {
+        "bug_id": 20016,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "maven-compiler-plugin 3.5.1"
+    },
+    {
+        "bug_id": 20017,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "maven-shade-plugin 3.0.0"
+    },
+    {
+        "bug_id": 20036,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "mocha 6.1.4 (PB CQ19661)"
+    },
+    {
+        "bug_id": 20037,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "mocha-jenkins-reporter@0.4.1"
+    },
+    {
+        "bug_id": 20040,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "mocha-sinon@2.1.0"
+    },
+    {
+        "bug_id": 20043,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "moment-timezone@0.5.25"
+    },
+    {
+        "bug_id": 20019,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_pmc",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "morgan-1.9.1"
+    },
+    {
+        "bug_id": 20083,
+        "bug_severity": "exempt_prereq",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "node-10-alpine"
+    },
+    {
+        "bug_id": 20045,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "nodemon@1.19.1"
+    },
+    {
+        "bug_id": 20047,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "npm@6.9.0"
+    },
+    {
+        "bug_id": 20052,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "nyc@14.1.1"
+    },
+    {
+        "bug_id": 19928,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "okhttp 3.8.1 (PB CQ15029)"
+    },
+    {
+        "bug_id": 19929,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "okio Version: 1.13.0 (PB CQ13639)"
+    },
+    {
+        "bug_id": 20173,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "openapi-generator version:4.0.1"
+    },
+    {
+        "bug_id": 20057,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "pem@1.14.2"
+    },
+    {
+        "bug_id": 20060,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "proxyquire@2.1.0"
+    },
+    {
+        "bug_id": 20062,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "query-string@6.5.0"
+    },
+    {
+        "bug_id": 20064,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "react 16.8 (PB CQ18978)"
+    },
+    {
+        "bug_id": 20065,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "react-c3js@0.1.20"
+    },
+    {
+        "bug_id": 20067,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "react-dom@16.8.6"
+    },
+    {
+        "bug_id": 20068,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "react-redux@6.0.1"
+    },
+    {
+        "bug_id": 20070,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "react-router-dom@4.3.1"
+    },
+    {
+        "bug_id": 20072,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "react-scripts@3.0.0"
+    },
+    {
+        "bug_id": 20073,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "react-transition-group@2.9.0"
+    },
+    {
+        "bug_id": 20069,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "redux-logger@3.0.6"
+    },
+    {
+        "bug_id": 20066,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "redux-thunk@2.3.0"
+    },
+    {
+        "bug_id": 20071,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "redux@4.0.1"
+    },
+    {
+        "bug_id": 20063,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "replace-in-file@4.1.0"
+    },
+    {
+        "bug_id": 20061,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "request (PB CQ19600)"
+    },
+    {
+        "bug_id": 19904,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "request (PB CQ19600)"
+    },
+    {
+        "bug_id": 19905,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "request-promise-native 1.0.5"
+    },
+    {
+        "bug_id": 20059,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "requireindex@1.1.0"
+    },
+    {
+        "bug_id": 20058,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "rewire@4.0.1"
+    },
+    {
+        "bug_id": 20056,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "sanitizer@0.1.3"
+    },
+    {
+        "bug_id": 20055,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "simple-git@1.113.0"
+    },
+    {
+        "bug_id": 20053,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "sinon-chai@3.3.0"
+    },
+    {
+        "bug_id": 20054,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "sinon@7.3.2"
+    },
+    {
+        "bug_id": 19875,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "socket.io 2.0.3 (PB CQ14034)"
+    },
+    {
+        "bug_id": 20051,
+        "bug_severity": "approved",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "socket.io 2.0.3 (PB CQ14034)"
+    },
+    {
+        "bug_id": 19906,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "socket.io-client 2.1.1"
+    },
+    {
+        "bug_id": 19942,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "socket.io-client 2.2.0"
+    },
+    {
+        "bug_id": 20050,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "socket.io-client 2.2.0 (PB CQ19942)"
+    },
+    {
+        "bug_id": 19926,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "socket.io-client-java 1.0.0"
+    },
+    {
+        "bug_id": 19909,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "socketio-wildcard 2.0.0"
+    },
+    {
+        "bug_id": 20049,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "source-map-support@0.5.12"
+    },
+    {
+        "bug_id": 19907,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "stack-trace 0.0.10"
+    },
+    {
+        "bug_id": 20048,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "stack-trace 0.0.10 (PB CQ19907)"
+    },
+    {
+        "bug_id": 19910,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "ts-node 7.0.1"
+    },
+    {
+        "bug_id": 20046,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "ts-node@5.0.1"
+    },
+    {
+        "bug_id": 19911,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "tslint 5.11.0"
+    },
+    {
+        "bug_id": 20044,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "tslint 5.11.0 (PB CQ19911)"
+    },
+    {
+        "bug_id": 19879,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/chai 4.1.7"
+    },
+    {
+        "bug_id": 19987,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/chai 4.1.7 (PB CQ19879)"
+    },
+    {
+        "bug_id": 19880,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/circular-json 0.4.0"
+    },
+    {
+        "bug_id": 19881,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/i18next 11.9.3"
+    },
+    {
+        "bug_id": 19882,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/i18next-node-fs-backend 0.0.30"
+    },
+    {
+        "bug_id": 19883,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/mocha 2.2.42"
+    },
+    {
+        "bug_id": 19877,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "types/mocha 5.2.6"
+    },
+    {
+        "bug_id": 19884,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/node 10.12.1"
+    },
+    {
+        "bug_id": 19896,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/request 2.47.1"
+    },
+    {
+        "bug_id": 19897,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/request-promise-native 1.0.16"
+    },
+    {
+        "bug_id": 19898,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/socket.io-client 1.4.32"
+    },
+    {
+        "bug_id": 19899,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/socketio-wildcard 2.0.1"
+    },
+    {
+        "bug_id": 19900,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/stack-trace 0.0.29"
+    },
+    {
+        "bug_id": 20013,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "types/ws"
+    },
+    {
+        "bug_id": 19912,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "typescript 3.1.5"
+    },
+    {
+        "bug_id": 20042,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "typescript v2.9.2 (PB CQ16945)"
+    },
+    {
+        "bug_id": 20039,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "unescape@1.0.1"
+    },
+    {
+        "bug_id": 20038,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_committer",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "url-parse@1.4.7"
+    },
+    {
+        "bug_id": 20035,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "uuid 3.3.2 (PB CQ17304)"
+    },
+    {
+        "bug_id": 19925,
+        "bug_severity": "workswith",
+        "priority": "P3",
+        "op_sys": "awaiting_pmc",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "vscode 1.1.22"
+    },
+    {
+        "bug_id": 20085,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "awaiting_ipteam",
+        "assigned_to": "shawn.kilpatrick@eclipse-foundation.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "websocket (from GoLang) 1.4.0 (PB CQ17924)"
+    },
+    {
+        "bug_id": 20020,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "ws-7.0.0"
+    },
+    {
+        "bug_id": 20033,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "ws@7.0.0"
+    },
+    {
+        "bug_id": 20030,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "xml2js@0.4.19"
+    },
+    {
+        "bug_id": 20027,
+        "bug_severity": "withdrawn",
+        "priority": "P3",
+        "op_sys": "new",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "WORKSFORME",
+        "short_desc": "xss@1.0.6"
+    },
+    {
+        "bug_id": 20024,
+        "bug_severity": "license_certified",
+        "priority": "P3",
+        "op_sys": "license_certified",
+        "assigned_to": "emo-ip-team@eclipse.org",
+        "bug_status": "RESOLVED",
+        "resolution": "FIXED",
+        "short_desc": "yamljs@0.3.0"
+    }
+]
