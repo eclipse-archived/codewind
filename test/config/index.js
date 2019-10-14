@@ -95,6 +95,16 @@ const templateOptions = {
 };
 
 
+
+const packageJsons = {
+    'performance-server': path.resolve(__dirname, '../../src/performance'),
+    'performance-loadrunner': path.resolve(__dirname, '../../src/performance/loadrunner'),
+    'performance-dashboard': path.resolve(__dirname, '../../src/performance/dashboard'),
+    'file-watcher': path.resolve(__dirname, '../../src/pfe/file-watcher/server'),
+    'codewind-portal': path.resolve(__dirname, '../../src/pfe/portal'),
+};
+
+
 module.exports = {
     CODEWIND_URL,
     CODEWIND_HOST,
@@ -113,4 +123,5 @@ module.exports = {
     MOCK_LOADTEST_DIR,
     pathToApiSpec,
     templateOptions,
+    packageJsons,
 };

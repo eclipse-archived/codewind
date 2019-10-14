@@ -1,0 +1,32 @@
+{
+    "examplePackage@1.0.1": {
+        "license": "MIT",
+        "comment": "Dual licensed under MIT and GPL. Being used under MIT alone",
+        "allowedToUse": true
+    },
+    "examplePackage@1.0.2": {
+        "license": "MIT",
+        "comment": "This package processes licenses. GPL mentioned in many locations but package is used under MIT.",
+        "allowedToUse": true
+    },
+    "examplePackage@1.0.3": {
+        "license": "GPL",
+        "comment": "GPL mentioned in package files found to be a hidden dependency licensed under GPL.",
+        "allowedToUse": false
+    },
+    "initialize@0.0.0": {
+        "license": "EPL-2.0",
+        "comment": "This is Codewind itself, it's a package.json in the project",
+        "allowedToUse": true
+    },
+    "dashboard@0.1.0": {
+        "license": "EPL-2.0",
+        "comment": "This is Codewind itself, it's a package.json in the project",
+        "allowedToUse": true
+    },
+    "codewind-portal@1.0.0": {
+        "license": "EPL-2.0",
+        "comment": "This is Codewind itself, it's a package.json in the project",
+        "allowedToUse": true
+    }   
+}
