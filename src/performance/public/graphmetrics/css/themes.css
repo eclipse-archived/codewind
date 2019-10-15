@@ -1,0 +1,505 @@
+/*******************************************************************************
+ * Copyright 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ ******************************************************************************/
+@import './dark-diff.css';
+@import './light.css';
+
+@viewport {
+  width: 320;
+}
+
+body,
+html {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+}
+
+h4 {
+  font-family: 'IBM Helvetica', Helvetica Neue, HelveticaNeue, Helvetica, sans-serif;
+  font-size: 20px;
+  font-weight: bold;
+  color: #3b4b54;
+}
+
+p {
+  font-family: 'IBM Helvetica', Helvetica Neue, HelveticaNeue, Helvetica, sans-serif;
+  font-size: 16px;
+  color: #3b4b54;
+}
+
+
+svg {
+  margin: 3px;
+  border: 1px solid #aabbd4;
+  background-color: #ffffff;
+}
+
+.headerDiv {
+  position: absolute;
+  width: 100%;
+  height: 50px;
+  padding: 15px 20px 20px 20px;
+  font-family: 'IBM Helvetica', Helvetica Neue, HelveticaNeue, Helvetica, sans-serif;
+  font-size: 16px;
+  z-index: 100;
+  background-color: #1D3649;
+}
+
+.rightHeader {
+  color: #FFFFFF;
+  float: right;
+}
+
+a {
+  color: #FFFFFF;
+  text-decoration: none;
+}
+
+li a {
+  font-family: 'IBM Helvetica', Helvetica Neue, HelveticaNeue, Helvetica, sans-serif;
+  color: #BBC3C8;
+}
+
+li a:hover {
+  color: black;
+  text-decoration: underline;
+}
+
+.container {
+  padding-top: 60px;
+  width: 100%;
+}
+
+.leftHeader {
+  color: #BBC3C8;
+  float: left;
+}
+
+.container-fluid {
+  background-color: #f5f7fa;
+}
+
+#detailsDiv {
+  border: 1px solid #aabbd4;
+  background-color: white;
+  color: black;
+}
+
+#detailsDiv div {
+  padding: 10px;
+}
+
+[class*="col-"] {
+  padding-right: 1px;
+  padding-left: 1px;
+  padding-top: 0px;
+  padding-bottom: 0px
+}
+
+#flameDiv [class*="col-"] {
+  padding-right: 15px;
+}
+
+.height-2 {
+  height: 520px;
+}
+
+.cpuChart path,
+.memChart path,
+.gcChart path,
+.elChart path,
+.httpThroughPutChart path,
+.httpChart path {
+  stroke: #00b4a0;
+  stroke-width: 2;
+  fill: none;
+}
+
+path.line1,
+path.usedHeapLine {
+  stroke: #00b4a0;
+  stroke-width: 2;
+  fill: none;
+}
+
+path.line2,
+path.processLine,
+path.usedNonHeapLine {
+  stroke: #734098;
+  stroke-width: 2;
+  fill: none;
+}
+
+path.line3,
+path.httpline,
+path.totalUsedLine {
+  stroke: #5aaafa;
+  stroke-width: 2;
+  fill: none;
+}
+
+path.httpsline {
+  stroke: #dc267f;
+  stroke-width: 2;
+  fill: none;
+}
+
+path.usedHeapAfterGCLine {
+  stroke: #ff7832;
+  stroke-width: 2;
+  fill: none;
+}
+
+g.xAxis path,
+g.xAxis line,
+g.yAxis path,
+g.yAxis line {
+  fill: none;
+  stroke: #42535c;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+g.tick line {
+  stroke: #8c9ba5;
+}
+
+.axis2 path,
+.axis2 line {
+  fill: none;
+  stroke: gray;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.lineLabel,
+.lineLabel2,
+.avglatestlabel,
+.minlatestlabel {
+  text-anchor: left;
+}
+
+.colourbox1 {
+  fill: #00b4a0;
+  stroke: #dbe6e9;
+  stroke-width: 1px;
+}
+
+.colourbox2 {
+  fill: #734098;
+  stroke: #dbe6e9;
+  stroke-width: 1px;
+}
+
+.colourbox3 {
+  fill: #5aaafa;
+  stroke: #dbe6e9;
+  stroke-width: 1px;
+}
+
+.colourbox4 {
+  fill: #dc267f;
+  stroke: #dbe6e9;
+  stroke-width: 1px;
+}
+
+g.arc {
+  fill: #6decd7;
+}
+
+g.pointer {
+  fill: #959f9f;
+  stroke: #000000;
+}
+
+g.label text {
+  text-anchor: middle;
+  text-align: center;
+  font-size: 12px;
+}
+
+.httpTop5Chart .bar {
+  fill: #5aaafa;
+}
+
+.titlebox {
+  fill: #dde4ee;
+  stroke: #aabbd4;
+  stroke-width: 1px;
+}
+
+.titlebox text {
+  font-size: 30px;
+}
+
+.invisible {
+  display: none;
+}
+
+.graph-container {
+  position: relative;
+}
+
+.fullscreen {
+  position: absolute;
+  z-index: 1;
+  /* Use view height and width to make div independent of parent */
+  width: 100vw;
+  height: 90vh;
+  margin-left: -15px;
+  padding-left: 15px;
+}
+
+.heapDumppopup {
+  display: none;
+  /* Hidden by default */
+  position: fixed;
+  /* Stay in place */
+  z-index: 1;
+  /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 80%;
+  /* Full width */
+  padding: 20px;
+  background-color: #fefefe;
+  border: 1px solid #888;
+}
+
+.btn-default {
+  color: white;
+  background-color: #0062ff;
+
+}
+
+.sidenavButton {
+  float: left;
+  align-content: top;
+  margin-right: 20px;
+  cursor: pointer;
+}
+
+.sidenav {
+  position: absolute;
+  left: 0px;
+  top: -200px;
+  z-index: 50;
+  background-color: #1D3649;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 0px;
+  white-space: nowrap;
+}
+
+.sidenav.expanded {
+  top: 50px;
+}
+
+.sidenavEntry {
+  cursor: pointer;
+}
+
+.sidenav a {
+  padding: 8px 16px;
+  text-decoration: none;
+  color: #FFFFFF;
+  display: block;
+  transition: 0.5s;
+}
+
+.sidenav a:hover,
+.offcanvas a:focus {
+  background-color: #0062ff;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {
+    padding-top: 15px;
+  }
+
+  .sidenav a {
+    font-size: 18px;
+  }
+}
+
+/*  TABLES INSIDE SVG STYLES (textTable.js and httpSummary.js)  */
+
+/* Everytime we use a foreignObject to "escape" the svg set a body colour */
+foreignObject>body {
+  background-color: #ffffff;
+}
+
+foreignObject>body>div {
+  color: black;
+  font-size: 14px;
+  padding: 10px 0px 10px 10px;
+}
+
+foreignObject>body>div,
+foreignObject>body>div table {
+  height: 100%;
+  width: 100%;
+  table-layout: fixed;
+}
+
+foreignObject>body>div table>tr {
+  display: list-item;
+  list-style-type: none;
+}
+
+foreignObject>body>div table>tr>td {
+  padding: 1px 0px;
+  display: inline-block;
+  height: inherit;
+}
+
+foreignObject>body>div table>tr>td>p {
+  color: black;
+}
+
+/* Control how a Value looks if it is bigger than one line */
+foreignObject>body>div table>tr>td.largeValue {
+  padding-left: 2px;
+  overflow-y: auto;
+}
+
+foreignObject>body>div table>tr>td.largeValue>p {
+  border: 0;
+  background-color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  margin: 0;
+  padding: 0;
+  word-break: break-all;
+  word-wrap: break-word;
+  white-space: normal;
+  display: block;
+  line-height: 16px;
+}
+
+.envData>g>foreignObject>body>div table>tr>td {
+  white-space: nowrap;
+}
+
+/* Only set the width of the td when it is a text table. */
+.envData>g>foreignObject>body>div table>tr>td:first-child {
+  width: 40%;
+}
+
+.envData>g>foreignObject>body>div table>tr>td:last-child {
+  width: 60%;
+}
+
+.envData td:first-child {
+  font-weight: bold;
+}
+
+/* HTTP SUMMARY STYLES */
+.httpSummaryContent table>tr {
+  display: list-item;
+  list-style-type: none;
+}
+
+.httpSummaryDiv {
+  padding: 0;
+}
+
+.httpSummaryContent table>tr>td {
+  /*font-size: 14px;*/
+  text-align: center;
+  vertical-align: top;
+  word-wrap: break-word;
+  padding: 10px 10px;
+}
+
+.httpSummaryContent table>tr>td:first-child {
+  text-align: left;
+  width: 35%;
+  padding: 10px 10px;
+}
+
+.httpSummaryContent table>tr>td:nth-child(2) {
+  width: 17%;
+}
+
+.httpSummaryContent table>tr>td:nth-child(3) {
+  width: 24%;
+}
+
+.httpSummaryContent table>tr>td:nth-child(4) {
+  width: 24%;
+}
+
+.httpSummaryTableHeaderDiv table>tr>td {
+  height: 50px;
+  overflow: hidden;
+  margin: 10px 0px 0px 0px;
+  vertical-align: center;
+}
+
+.httpSummaryTableHeader {
+  cursor: pointer;
+  height: auto;
+  border-radius: 3px;
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -khtml-user-select: none;
+  /* Konqueror HTML */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Non-prefixed version, currently
+                            supported by Chrome and Opera */
+}
+
+.httpSummaryTableHeader:hover {
+  background-color: #dde4ee;
+}
+
+.httpSummaryTableHeader.active {
+  background-color: #dde4ee;
+  font-weight: bold;
+}
+
+.httpSummaryContentDiv {
+  overflow-y: scroll;
+  /* padding: 0px 10px; */
+}
+
+.arrow {
+  border: solid black;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 3px;
+  margin-left: 5px;
+}
+
+.arrow-up {
+  transform: rotate(-135deg);
+  -webkit-transform: rotate(-135deg);
+}
+
+.arrow-down {
+  transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+}

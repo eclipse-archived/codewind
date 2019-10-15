@@ -1,0 +1,198 @@
+/*******************************************************************************
+ * Copyright 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ ******************************************************************************/
+.darkmode {
+  background-color: #282828;
+  color: white;
+}
+
+.darkmode text {
+  fill: white;
+}
+
+.darkmode svg {
+  border: 1px solid #3d3d3d;
+  background-color: black;
+}
+
+.darkmode .headerDiv {
+  background-color: black;
+}
+
+.darkmode .leftHeader {
+  color: #FFFFFF;
+}
+
+.darkmode #detailsDiv {
+  color: white;
+  background-color: black;
+  border: 1px solid #3d3d3d;
+}
+
+.darkmode .container-fluid {
+  background-color: #282828;
+}
+
+.darkmode path.line1,
+.darkmode path.usedHeapLine,
+.darkmode .memChart path,
+.darkmode .cpuChart path,
+.darkmode .gcChart path,
+.darkmode .elChart path,
+.darkmode .httpThroughPutChart path,
+.darkmode .httpChart path {
+  stroke: #95d13c;
+}
+
+.darkmode g.xAxis path,
+.darkmode g.xAxis line,
+.darkmode g.yAxis path,
+.darkmode g.yAxis line {
+  stroke: #343434;
+}
+
+.darkmode path.line2,
+.darkmode path.processLine,
+.darkmode path.usedNonHeapLine {
+  stroke: #fa4abf;
+}
+
+.darkmode path.line3,
+.darkmode path.httpline,
+.darkmode path.totalUsedLine {
+  stroke: #0094E5;
+}
+
+.darkmode path.httpsline {
+  stroke: #a36df5;
+}
+
+.darkmode .lineLabel,
+.darkmode .lineLabel2,
+.darkmode .avglatestlabel,
+.darkmode .minlatestlabel {
+  fill: #ffffff;
+}
+
+.darkmode .colourbox1 {
+  fill: #95D13C;
+}
+
+.darkmode .colourbox2 {
+  fill: #fa4abf;
+}
+
+.darkmode .colourbox4 {
+  fill: #a36df5;
+}
+
+.darkmode .modal .btn-default {
+  color: white;
+  background-color: #0062ff;
+  border-radius: 0;
+  border: none;
+}
+
+.darkmode .sidenav {
+  background-color: #3f3f3f;
+}
+
+.darkmode .modal .close {
+  color: white;
+  opacity: 1;
+}
+
+.darkmode .modal-footer {
+  border-top: 1px solid #565656;
+}
+
+.darkmode .modal-header {
+  border-bottom: 0;
+}
+
+.darkmode .modal-content,
+.darkmode .modal-body,
+.darkmode .modal-title {
+  border-radius: 0;
+  color: white;
+}
+
+.darkmode .modaltext {
+  color: #bebebe;
+}
+
+.darkmode .titlebox {
+  fill: #565656;
+  stroke: #565656;
+}
+
+.darkmode .sidenavEntry:hover {
+  background-color: #282828;
+}
+
+.darkmode .nav-tabs {
+  border: none;
+}
+
+.darkmode .nav-tabs>li.active>a,
+.darkmode .nav-tabs>li.active>a:hover {
+  color: white;
+  background-color: #0062ff;
+  border-color: #3d3d3d;
+  border-bottom-color: transparent;
+}
+
+.darkmode .nav-tabs>li>a:hover {
+  color: white;
+  border-color: #3d3d3d;
+  background-color: #171717;
+}
+
+.darkmode .modal-content {
+  background-color: #3d3d3d;
+}
+
+.darkmode .textTable {
+  color: white;
+  background-color: black;
+}
+
+.darkmode .httpSummaryDiv {
+  color: white;
+  background-color: black;
+}
+
+.darkmode .envDiv {
+  color: white;
+  background-color: black;
+}
+
+.darkmode .httpSummaryTableHeader:hover {
+  background-color: #282828;
+}
+
+.darkmode .httpSummaryTableHeader.active {
+  background-color: #282828;
+  font-weight: bold;
+}
+
+.darkmode .summaryDiv {
+  color: white;
+  background-color: black;
+}
+
+.darkmode foreignObject>body>div table>tr>td>p {
+  color: white;
+}
