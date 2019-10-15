@@ -4,15 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "PORT=9095 node server.js"
+    "start": "PORT=9095 nodemon server.js"
   },
   "author": "",
   "license": "ISC",
   "proxy": "http://localhost:3001",
   "dependencies": {
-    "express": "^4.16.4",
     "body-parser": "^1.18.3",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
     "loadtest": "^3.0.0",
+    "nodemon": "^1.19.3",
+    "parse-prometheus-text-format": "^1.1.1",
     "socket.io": "^2.0.3"
   }
 }
