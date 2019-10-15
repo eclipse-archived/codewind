@@ -13,6 +13,10 @@ const http = require('follow-redirects').http;
 const https = require('follow-redirects').https;
 const fs = require('fs-extra');
 const request = require('request');
+const Logger = require('../utils/Logger');
+const log = new Logger('sharedFunctions.js');
+const { promisify } = require('util');
+const exec = promisify(require('child_process').exec);
 
 // This if statement allows us to only include one utils function, exporting either
 //      the Docker of K8s one depending on which environment we're in
@@ -102,6 +106,11 @@ module.exports.updateObject = function updateObject(objectToUpdate, fieldsToAddT
   return objectToUpdate;
 }
 
+module.exports.copyProject = async function copyFile(fromProjectPath, toProjectPath) {
+  const copyCommand = `rm -fr ${toProjectPath}; mv ${fromProjectPath} ${toProjectPath}`;
+  log.debug(`[copyCommand] ${copyCommand}`);
+  await exec(copyCommand);
+}
 
 /** C:\helloThere -> /c/helloThere */
 module.exports.convertFromWindowsDriveLetter = function convertFromWindowsDriveLetter(absolutePath) {

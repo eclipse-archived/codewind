@@ -40,7 +40,10 @@ const log = new Logger(__filename);
  * @return 409 if the project path or name are already in use
  * @return 500 if there was an error
  */
-router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
+router.post('/api/v1/projects/remote-bind/start', async function (req, res) {await bindStart(req, res)});
+router.post('/api/v1/projects/bind/start', async function (req, res) {await bindStart(req, res)});
+
+async function bindStart(req, res) {
   let newProject;
   const user = req.cw_user;
   try {
@@ -102,10 +105,16 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
   }
 
   try {
-    let dirName = path.join(global.codewind.CODEWIND_WORKSPACE, newProject.name)
-    newProject.workspaceDir = dirName
-    log.debug(`Creating directory in ${dirName}`);
+    let tempDirName = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE);
+    await fs.mkdir(tempDirName);
+    let dirName = path.join(global.codewind.CODEWIND_WORKSPACE, newProject.name);
     await fs.mkdir(dirName);
+    let tempProjPath = path.join(tempDirName, newProject.name);
+    await fs.mkdir(tempProjPath);
+
+    newProject.workspaceDir = dirName;
+    log.debug(`Creating directory in ${dirName} and ${tempDirName}`);
+
     user.uiSocket.emit('projectBind', { status: 'success', ...newProject });
     log.info(`Successfully created project - name: ${newProject.name}, ID: ${newProject.projectID}`);
 
@@ -119,7 +128,7 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
     }
     user.uiSocket.emit('projectBind', data);
   }
-});
+};
 
 /**
  * API Function to receive gzipped content of a file, and write this to codewind-workspace
@@ -130,7 +139,10 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
-router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
+router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {await uploadFile(req,res)});
+router.put('/api/v1/projects/:id/upload', async (req, res) => {await uploadFile(req,res)});
+
+async function uploadFile(req, res) {
   const projectID = req.sanitizeParams('id');
   const user = req.cw_user;
   try {
@@ -141,11 +153,13 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
       const zippedFile = buffer.Buffer.from(req.body.msg, "base64"); // eslint-disable-line microclimate-portal-eslint/sanitise-body-parameters
       const unzippedFile = await inflateAsync(zippedFile);
       const fileToWrite = JSON.parse(unzippedFile.toString());
-      const pathToWriteTo = path.join(global.codewind.CODEWIND_WORKSPACE, project.name, relativePathOfFile)
+      const pathToWriteTo = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name, relativePathOfFile)
       await fs.outputFileSync(pathToWriteTo, fileToWrite);
 
       // if the project container has started, send the uploaded file to it
 
+
+      // Need to move this to upload/end
       let projectRoot = getProjectSourceRoot(project);
 
       if (!global.codewind.RUNNING_IN_K8S && project.containerId && (project.projectType != 'docker')) {
@@ -159,7 +173,7 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
     log.error(err);
     res.status(500).send(err);
   }
-});
+};
 
 /**
  * API Function to clear the contents of a project ready
@@ -188,7 +202,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   try {
     const project = user.projectList.retrieveProject(projectID);
     if (project) {
-      const pathToClear = path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
+      const pathToClear = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
       const currentFileList = await listFiles(pathToClear, '');
 
       const filesToDeleteSet = new Set(currentFileList);
@@ -202,6 +216,9 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
 
       );
+
+      // now move temp project to real project
+      cwUtils.copyProject(pathToClear, path.join(global.codewind.CODEWIND_WORKSPACE, project.name));
 
       let projectRoot = getProjectSourceRoot(project);
       // need to delete from the build container as well
@@ -255,8 +272,10 @@ async function listFiles(absolutePath, relativePath) {
     const nextAbsolutePath = path.join(absolutePath, f);
 
 
+    // eslint-disable-next-line no-await-in-loop
     const stats = await fs.stat(nextAbsolutePath);
     if (stats.isDirectory()) {
+      // eslint-disable-next-line no-await-in-loop
       const subFiles = await listFiles(nextAbsolutePath, nextRelativePath);
       fileList.push(...subFiles);
     } else {
@@ -308,7 +327,10 @@ function getProjectSourceRoot(project) {
  * @return 404 if the project was not found
  * @return 500 if there was an error
  */
-router.post('/api/v1/projects/:id/remote-bind/end', async function (req, res) {
+router.post('/api/v1/projects/:id/remote-bind/end', async function (req, res) {await bindEnd(req, res)});
+router.post('/api/v1/projects/:id/bind/end', async function (req, res) {await bindEnd(req, res)});
+
+async function bindEnd(req, res) {
   const user = req.cw_user;
   // Null checks on projectID done by validateReq.
   const projectID = req.sanitizeParams('id');
@@ -319,6 +341,11 @@ router.post('/api/v1/projects/:id/remote-bind/end', async function (req, res) {
       res.status(404).send(`Unable to find project ${projectID}`);
       return;
     }
+
+    const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
+    // now move temp project to real project
+    cwUtils.copyProject(pathToCopy, path.join(global.codewind.CODEWIND_WORKSPACE, project.name))
+
     let updatedProject = {
       projectID,
       state: Project.STATES.open,
@@ -340,6 +367,6 @@ router.post('/api/v1/projects/:id/remote-bind/end', async function (req, res) {
     res.status(500);
     user.uiSocket.emit('projectBind', data);
   }
-});
+}
 
 module.exports = router;
