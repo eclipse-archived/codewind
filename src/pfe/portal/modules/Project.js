@@ -62,6 +62,7 @@ module.exports = class Project {
     if (args.gitURL) this.gitURL = args.gitURL;
     if (args.validate) this.validate = args.validate;
     if (args.extension) this.extension = args.extension;
+    if (args.locOnDisk) this.locOnDisk = args.locOnDisk;
     
     // Project status information
     this.host = args.host || '';
@@ -73,8 +74,7 @@ module.exports = class Project {
     this.workspace = args.workspace || workspace;
     this.directory = args.directory || this.name;
     this.infLockFlag = false;
-    // locOnDisk is used by the UI and needs to match what it sees.
-    this.locOnDisk = `${global.codewind.CODEWIND_WORKSPACE}${this.directory}`;
+
     this.loadTestPath = join(workspace, this.name, 'load-test');
 
     if (this.language === 'java') {

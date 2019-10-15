@@ -418,7 +418,7 @@ module.exports = class FileWatcher {
           changeType = "update";
         }
         const ignoredPaths = fwProject.ignoredPaths;
-        let pathToMonitor = path.join(project.workspace, project.directory);
+        let pathToMonitor = project.locOnDisk;
         if (process.env.HOST_OS === "windows") {
           pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
         }

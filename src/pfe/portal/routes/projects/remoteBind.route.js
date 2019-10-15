@@ -17,6 +17,8 @@ const zlib = require("zlib");
 const { promisify } = require('util');
 const inflateAsync = promisify(zlib.inflate);
 const exec = promisify(require('child_process').exec);
+const cwUtils = require('../../modules/utils/sharedFunctions');
+//const docker = require('../../modules/utils/dockerFunctions');
 
 const Logger = require('../../modules/utils/Logger');
 const Project = require('../../modules/Project');
@@ -24,6 +26,8 @@ const ProjectInitializerError = require('../../modules/utils/errors/ProjectIniti
 const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
 const log = new Logger(__filename);
+
+
 
 /**
  * API Function to begin binding a given project that is not currently
@@ -42,9 +46,9 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
   try {
     // Null checks on required parameters are done by validateReq.
     const name = req.sanitizeBody('name');
-    const projectPath = req.sanitizeBody('path');
     const language = req.sanitizeBody('language');
     const projectType = req.sanitizeBody('projectType');
+    const locOnDisk = req.sanitizeBody('path');
 
     const illegalNameChars = ILLEGAL_PROJECT_NAME_CHARS.filter(char => name.includes(char));
     if (illegalNameChars.length > 0) {
@@ -61,15 +65,15 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
       return;
     }
 
-    const workspaceDir = path.dirname(projectPath) + path.sep;
-    const projectDir = path.basename(projectPath)
-
+    const codewindWorkspace = global.codewind.CODEWIND_WORKSPACE
+   
     const projectDetails = {
       name: name,
-      directory: projectDir,
-      workspace: workspaceDir,
+      directory: name,
+      workspace: codewindWorkspace,
       language: language,
       autoBuild: true,
+      locOnDisk: locOnDisk,
       state: Project.STATES.closed,
     };
 
@@ -99,6 +103,7 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
 
   try {
     let dirName = path.join(global.codewind.CODEWIND_WORKSPACE, newProject.name)
+    newProject.workspaceDir = dirName
     log.debug(`Creating directory in ${dirName}`);
     await fs.mkdir(dirName);
     user.uiSocket.emit('projectBind', { status: 'success', ...newProject });
@@ -121,7 +126,7 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
  * @param id the id of the project
  * @param path the path of the file, relative to the project directory
  * @param msg the gzipped file content
- * @return 200 if file upload is successful 
+ * @return 200 if file upload is successful
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
@@ -137,11 +142,19 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
       const unzippedFile = await inflateAsync(zippedFile);
       const fileToWrite = JSON.parse(unzippedFile.toString());
       const pathToWriteTo = path.join(global.codewind.CODEWIND_WORKSPACE, project.name, relativePathOfFile)
-      await fs.outputFile(pathToWriteTo, fileToWrite);
+      await fs.outputFileSync(pathToWriteTo, fileToWrite);
+
+      // if the project container has started, send the uploaded file to it
+
+      let projectRoot = getProjectSourceRoot(project);
+
+      if (!global.codewind.RUNNING_IN_K8S && project.containerId && (project.projectType != 'docker')) {
+        await cwUtils.copyFile(project, pathToWriteTo, projectRoot, relativePathOfFile);
+      }
       res.sendStatus(200);
     } else {
       res.sendStatus(404);
-    } 
+    }
   } catch(err) {
     log.error(err);
     res.status(500).send(err);
@@ -153,15 +166,24 @@ router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {
  * for upload of changed source.
  * @param id the id of the project
  * @param fileList a list of files that should be present in the project.
+ * @param modifiedList a list of files that have been changed.
+ * @param timestamp time since epoch when last sync was done.
  * @return 200 if the clear is successful
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
 // TODO - This is very crude, we should replace it with a more sophisticated
 // mechanism to only delete files that don't exist on the local end.
-router.post('/api/v1/projects/:id/remote-bind/clear', async (req, res) => {
+
+
+
+router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   const projectID = req.sanitizeParams('id');
   const keepFileList = req.sanitizeBody('fileList');
+  const modifiedList = req.sanitizeBody('modifiedList') || [];
+  const timeStamp = req.sanitizeBody('timeStamp');
+  const IFileChangeEvent = [];
+
   const user = req.cw_user;
   try {
     const project = user.projectList.retrieveProject(projectID);
@@ -175,10 +197,42 @@ router.post('/api/v1/projects/:id/remote-bind/clear', async (req, res) => {
 
       log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
         `${filesToDelete.join(', ')}`);
-
+      // remove the file from pfe container
       await Promise.all(
         filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
+
       );
+
+      let projectRoot = getProjectSourceRoot(project);
+      // need to delete from the build container as well
+      if (!global.codewind.RUNNING_IN_K8S && project.containerId && (project.projectType != 'docker')) {
+        await Promise.all(
+          filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file))
+        )
+      }
+
+      filesToDelete.forEach((f) => {
+        const data = {
+          path: f,
+          timestamp: timeStamp,
+          type: "DELETE",
+          directory: false
+        }
+        IFileChangeEvent.push(data);
+  
+      });
+
+      modifiedList.forEach((f) => {
+        const data = {
+          path: f,
+          timestamp: timeStamp,
+          type: "MODIFY",
+          directory: false
+        }
+        IFileChangeEvent.push(data);
+      });
+
+      user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
 
       res.sendStatus(200);
     } else {
@@ -190,6 +244,7 @@ router.post('/api/v1/projects/:id/remote-bind/clear', async (req, res) => {
   }
 });
 
+
 // List all the files under the given directory, return
 // a list of relative paths.
 async function listFiles(absolutePath, relativePath) {
@@ -198,16 +253,52 @@ async function listFiles(absolutePath, relativePath) {
   for (const f of files) {
     const nextRelativePath = path.join(relativePath, f);
     const nextAbsolutePath = path.join(absolutePath, f);
-    fileList.push(nextRelativePath)
+
 
     const stats = await fs.stat(nextAbsolutePath);
     if (stats.isDirectory()) {
       const subFiles = await listFiles(nextAbsolutePath, nextRelativePath);
       fileList.push(...subFiles);
+    } else {
+      fileList.push(nextRelativePath)
     }
   }
   return fileList;
 }
+
+
+function getProjectSourceRoot(project) {
+  let projectRoot = "";
+  switch (project.projectType) {
+  case 'nodejs': {
+    projectRoot = "/app";
+    break
+  }
+  case 'liberty': {
+    projectRoot = "/home/default/app";
+    break
+  }
+  case 'swift': {
+    projectRoot = "/home/default/app";
+    break
+  }
+  case 'spring': {
+    projectRoot = "/root/app";
+    break
+  }
+  case 'docker': {
+    projectRoot = "/code";
+    break
+  }
+  default: {
+    projectRoot = "/";
+    break
+  }
+  }
+  return projectRoot;
+}
+
+
 
 /**
  * API Function to complete binding a given project on a file system visible

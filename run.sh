@@ -25,7 +25,7 @@ printf "\n\n${BLUE}Running 'run.sh' to build and start codewind. $RESET\n";
 while [ "$#" -gt 0 ]; do
   case $1 in
     --dev) DEVMODE='--dev'; shift 1;;
-    --remote) REMOTE_MODE=--remote; shift 1;;
+    --remote) REMOTE_MODE='--remote'; shift 1;;
     *) shift 1;;
   esac
 done
@@ -42,12 +42,12 @@ if [ "$MVN_RET_CODE" -ne 0 ]; then
 fi
 
 # CREATE CODEWIND-WORKSPACE IF NOT EXISTS
-printf "\n\n${BLUE}CREATING CODEWIND-WORKSPACE IF IT DOESN'T EXIST${RESET}\n"
-mkdir -m 777 -p codewind-workspace
+printf "\n\n${BLUE}CREATING ~/.codewind IF IT DOESN'T EXIST${RESET}\n"
+mkdir -m 777 -p ~/.codewind
 
 # Save the git config required to make an initial commit.
-mkdir -m 777 -p codewind-workspace/.config
-GIT_CONFIG=codewind-workspace/.config/git.config
+mkdir -m 777 -p ~/.codewind/config
+GIT_CONFIG=~/.codewind/config/git.config
 rm $GIT_CONFIG
 git config -f $GIT_CONFIG --add user.name "`git config --get user.name || echo 'codewind user'`"
 git config -f $GIT_CONFIG --add user.email "`git config --get user.email || echo 'codewind.user@localhost'`"

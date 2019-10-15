@@ -212,7 +212,8 @@ module.exports = class User {
           }
           const project = {};
           const projName = projFile.name;
-          project.pathToMonitor = path.join(projFile.workspace, projFile.directory);
+          project.pathToMonitor = projFile.locOnDisk;
+          //project.pathToMonitor = path.join(projFile.workspace, projFile.directory);
           if (process.env.HOST_OS === "windows") {
             project.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(project.pathToMonitor);
           }
@@ -237,21 +238,21 @@ module.exports = class User {
         }
       }
     } ));
-    if (this.workspaceSettingObject == undefined) {
-      const workspaceSettingObj = {};
-      workspaceSettingObj.pathToMonitor  = path.join(process.env.HOST_WORKSPACE_DIRECTORY, '/.config');
-      if (process.env.HOST_OS === "windows") {
-        workspaceSettingObj.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(workspaceSettingObj.pathToMonitor );
-      }
-      workspaceSettingObj.projectID = crypto.randomBytes(16).toString("hex");
-      workspaceSettingObj.ignoredPaths = [];
-      workspaceSettingObj.projectWatchStateId = crypto.randomBytes(16).toString("hex");
-      workspaceSettingObj.type = "non-project";
-      this.workspaceSettingObject = workspaceSettingObj;
-      watchList.projects.push(workspaceSettingObj);
-    }else {
-      watchList.projects.push(this.workspaceSettingObject);
-    }
+    // if (this.workspaceSettingObject == undefined) {
+    //   const workspaceSettingObj = {};
+    //   workspaceSettingObj.pathToMonitor  = path.join(global.codewind.CODEWIND_WORKSPACE, '/.config');
+    //   if (process.env.HOST_OS === "windows") {
+    //     workspaceSettingObj.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(workspaceSettingObj.pathToMonitor );
+    //   }
+    //   workspaceSettingObj.projectID = crypto.randomBytes(16).toString("hex");
+    //   workspaceSettingObj.ignoredPaths = [];
+    //   workspaceSettingObj.projectWatchStateId = crypto.randomBytes(16).toString("hex");
+    //   workspaceSettingObj.type = "non-project";
+    //   this.workspaceSettingObject = workspaceSettingObj;
+    //   watchList.projects.push(workspaceSettingObj);
+    // }else {
+    //   watchList.projects.push(this.workspaceSettingObject);
+    // }
     log.debug("The watch list: " + JSON.stringify(watchList));
     return watchList;
   }
