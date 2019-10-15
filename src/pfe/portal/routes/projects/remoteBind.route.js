@@ -65,12 +65,12 @@ router.post('/api/v1/projects/remote-bind/start', async function (req, res) {
       return;
     }
 
-    const workspaceDir = global.codewind.CODEWIND_WORKSPACE
+    const codewindWorkspace = global.codewind.CODEWIND_WORKSPACE
    
     const projectDetails = {
       name: name,
       directory: name,
-      workspace: workspaceDir,
+      workspace: codewindWorkspace,
       language: language,
       autoBuild: true,
       locOnDisk: locOnDisk,
