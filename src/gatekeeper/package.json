@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "log4js": "^3.0.6",
     "express": "^4.15.4",
     "express-session": "^1.16.2",
     "keycloak-connect": "^7.0.0",

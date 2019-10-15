@@ -7,8 +7,8 @@ const default_realm = "codewind";
 const default_clientID = "codewind";
 const default_sessionSecret = "codewind";
 
-const pfe_host = "codewind-pfe";  // use container name
-const pfe_port = '9090';          // use internal port (we are on the same network)
+let pfe_host = "codewind-pfe";  // use container name
+let pfe_port = '9090';          // use internal port (we are on the same network)
 let pfe_protocol = "http"
 
 const app = express()
@@ -17,50 +17,67 @@ const port = 9096
 // Accept self signed certificates
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
-console.log("Gatekeeper configuration:")
-console.log(`** PFE Service: ${pfe_protocol}://${pfe_host}:${pfe_port}`);
-
+// Load environment variables
 let sessionSecret = process.env.SESSION_SECRET
 let realm = process.env.REALM
 let client_id = process.env.CLIENT_ID
 let auth_url = process.env.AUTH_URL
 let client_secret = process.env.CLIENT_SECRET
 let enable_auth = process.env.ENABLE_AUTH
+let gatekeeper_host = process.env.GATEKEEPER_HOST
+let workspace_service = process.env.WORKSPACE_SERVICE
+
+if (workspace_service!="") {
+    pfe_host = process.env[(workspace_service + "_SERVICE_HOST").toUpperCase()]
+    pfe_port = process.env[(workspace_service + "_SERVICE_PORT").toUpperCase()]
+    pfe_protocol = "http"
+}
+
+console.log("Gatekeeper configuration:")
+console.log(`** PFE Service: ${pfe_protocol}://${pfe_host}:${pfe_port}`);
 
 // check environment variables
 if (!sessionSecret) {
-    console.log(`** session_secret:  session_secret env variable is not defined - using default of: ${default_sessionSecret}`);
+    console.log(`** SESSION_SECRET: env variable is not defined - using default of: ${default_sessionSecret}`);
     sessionSecret = default_sessionSecret;
 } else {
-    console.log(`** sessionSecret: <not-displayed>`)
+    console.log(`** SESSION_SECRET: <not-displayed>`)
 }
 
 if (!realm) {
-    console.log(`** realm: realm env variable is not defined - using default of: ${default_realm}`);
+    console.log(`** REALM: env variable is not defined - using default of: ${default_realm}`);
     realm = default_realm;
 } else {
-    console.log(`** realm: ${realm}`)
+    console.log(`** REALM: ${realm}`)
 }
 
 if (!client_id) {
-    console.log(`** client_id:  client_id env variable is not defined - using default of: ${default_clientID}`);
+    console.log(`** CLIENT_ID: env variable is not defined - using default of: ${default_clientID}`);
     client_id = default_clientID;
 } else {
-    console.log(`** client_id: ${client_id}`)
+    console.log(`** CLIENT_ID: ${client_id}`)
 }
 
 if (!auth_url) {
-    console.log("** auth_url: auth_url env variable is not defined - Please set container environment variable to something valid : https://mykeycloak.mydomain:9496");
+    console.log("** AUTH_URL: env variable is not defined - Please set container environment variable in format : https://mykeycloak.mydomain:9496");
     auth_url = "";
 } else {
-    console.log(`** auth_url: ${auth_url}`)
+    console.log(`** AUTH_URL: ${auth_url}`)
 }
 
 if (!client_secret) {
-    console.log("** client_secret: client_secret is not defined - Please set container environment variable to a valid secret eg: c8479984-ea64-479b-9ef1-bbb720ebfda7 ");
+    console.log("** CLIENT_SECRET: env variable is not defined - Please set container environment variable to a valid secret eg: c8479984-ea64-479b-9ef1-bbb720ebfda7 ");
     client_secret = ""
 } else {
-    console.log(`** client_secret: <not-displayed>`)
+    console.log(`** CLIENT_SECRET: <not-displayed>`)
+}
+
+if (!gatekeeper_host) {
+    console.log("** GATEKEEPER_HOST: env variable is not defined - Please set container environment variable in format : 127.0.0.1:9096 ");
+    gatekeeper_host = ""
+} else {
+    gatekeeper_host = gatekeeper_host.toUpperCase();
+    console.log(`** GATEKEEPER_HOST: ${gatekeeper_host}`)
 }
 
 // Create a session-store for the express-session and keycloak middleware.
@@ -86,11 +103,11 @@ let authMiddleware = function (req, res, next) { next() }
 
 // Activate / Disable authenticated routes features
 if (enable_auth == "1") {
-    console.log("** Gatekeeper: Authentication is enabled");
+    console.log(`** Gatekeeper: Authentication is enabled - ENABLE_AUTH=${enable_auth}`);
     authMiddleware = keyCloak.protect();
     app.use(keyCloak.middleware({ logout: '/logout', admin: '/' }));
 } else {
-    console.log("** Gatekeeper: Authentication is disabled");
+    console.log(`** Gatekeeper: Authentication is disabled - ENABLE_AUTH=${enable_auth}`);
 }
 
 // environment route
@@ -117,7 +134,7 @@ app.use('*', authMiddleware, function (req, res) {
         const options = {
             url:`http://${pfe_host}:${pfe_port}${req.originalUrl}`,
             headers: {
-                "x-forwarded-host": process.env.GATEKEEPER_INGRESS
+                "x-forwarded-host": gatekeeper_host
             }
         }
         let r = request(options);
