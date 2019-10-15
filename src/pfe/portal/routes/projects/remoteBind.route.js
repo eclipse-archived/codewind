@@ -199,7 +199,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         `${filesToDelete.join(', ')}`);
       // remove the file from pfe container
       await Promise.all(
-        filesToDelete.map(oldFile => exec(`rm -f ${path.join(pathToClear, oldFile)}`))
+        filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
 
       );
 
