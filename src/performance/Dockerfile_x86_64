@@ -56,10 +56,11 @@ RUN npm ci --only=production
 COPY --from=build-performance-ui /usr/src/app/dashboard/build /usr/src/app/dashboard/build
 
 
-
+# TODO:
+COPY public/ /usr/src/app/public/
 
 # Install npm production packages
-COPY loadrunner/package.json /usr/src/app/
+COPY package.json /usr/src/app/
 COPY loadrunner/runload.js /usr/src/app/
 RUN npm ci --production
 
