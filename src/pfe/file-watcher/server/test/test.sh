@@ -13,6 +13,13 @@ POST_CLEANUP="n"
 CLEAN_RUN="n"
 CLEAN_WORKSPACE="n"
 
+CHE_USER="admin"
+CHE_PASS="admin"
+
+KEYCLOAK_HOSTNAME=keycloak-"$CHE_NS"."$CLUSTER_IP".nip.io
+TOKEN_ENDPOINT="http://${KEYCLOAK_HOSTNAME}/auth/realms/che/protocol/openid-connect/token" 
+CHE_ACCESS_TOKEN=$(curl -sSL --data "grant_type=password&client_id=che-public&username=${CHE_USER}&password=${CHE_PASS}" ${TOKEN_ENDPOINT} | jq -r '.access_token')
+
 # Set up variables
 cd ../../../../../
 CW_DIR=$(pwd)
@@ -40,8 +47,8 @@ function run {
         ./run.sh
         cd -
     elif [ $TEST_TYPE == "kube" ]; then
-        HTTPSTATUS=$(curl -si http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/ | head -n 1 | cut -d ' ' -f2)
-        HTTPRESPONSE=$(curl -si http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/ | tail -n 1)
+        HTTPSTATUS=$(curl -si --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/ | head -n 1 | cut -d ' ' -f2)
+        HTTPRESPONSE=$(curl -si --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/ | tail -n 1)
 
         if [ $HTTPSTATUS -ne 200 ]; then
             echo -e "${RED}Failed to get the Codewind workspaces... ${RESET}\n"
