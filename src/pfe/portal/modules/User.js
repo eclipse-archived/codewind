@@ -479,6 +479,9 @@ module.exports = class User {
   async closeProject(project) {
     let projectPath = path.join(this.directories.workspace, project.directory);
     let projectID = project.projectID;
+    // Stop streaming the logs files.
+    project.stopStreamingAllLogs();
+    
     if (await fs.pathExists(projectPath)) {
       try {
         await this.fw.closeProject(project);
