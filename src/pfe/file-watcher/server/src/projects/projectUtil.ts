@@ -56,7 +56,7 @@ const containerInfoMap = new Map();
 
 export const containerInfoForceRefreshMap = new Map();
 
-export const LOCAL_WORKSPACE = REMOTE_MODE ? "/codewind-workspace" : process.env.NODE_ENV === "test" ? process.env.HOST_WORKSPACE_DIRECTORY : (process.argv[2] ? process.argv[2] : process.env.HOST_WORKSPACE_DIRECTORY);
+export const LOCAL_WORKSPACE = REMOTE_MODE === "true" ? "/codewind-workspace" : (process.env.NODE_ENV === "test" ? process.env.HOST_WORKSPACE_DIRECTORY : (process.argv[2] ? process.argv[2] : process.env.HOST_WORKSPACE_DIRECTORY));
 
 const projectList: Array<string> = [];
 
