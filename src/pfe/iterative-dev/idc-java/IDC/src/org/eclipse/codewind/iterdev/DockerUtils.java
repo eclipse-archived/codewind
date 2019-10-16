@@ -31,12 +31,13 @@ public class DockerUtils {
 		boolean isPresent = false;
 
 		String imageCommand = context.getImageCommand();
+		String imagesFormatString = context.getImagesFormatString();
 		
-		ProcessRunner pr = TaskUtils.runCmd(imageCommand + " images --format \"{{.Repository}}\"", context, false);
+		ProcessRunner pr = TaskUtils.runCmd(imageCommand + " images --format " + imagesFormatString, context, false);
 
 		Thread.sleep(1000);
 		for (String str : pr.getReceived().split("\\r?\\n")) {
-			if (str != null && str.equals(context.getImageName())) {
+			if (str != null && str.contains(context.getImageName())) {
 				isPresent = true;
 				Logger.info("----");
 				Logger.info("Container Image already present: " + str);

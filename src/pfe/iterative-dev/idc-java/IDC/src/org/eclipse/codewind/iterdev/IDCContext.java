@@ -58,6 +58,8 @@ public class IDCContext {
 	private final boolean isWin;
 
 	private final String imageCommand;
+
+	private final String imagesFormatString;
 	
 	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String deploymentRegistry, String startMode, String debugPort) throws IOException {
 
@@ -149,6 +151,14 @@ public class IDCContext {
 		else {
 			this.imageCommand = "docker";
 		}
+
+		if (this.isK8s) {
+			this.imagesFormatString = "\"{{.Name}}\"";
+		}
+		else {
+			this.imagesFormatString = "\"{{.Repository}}\"";
+		}
+
 	}
 
 	public DBMap getAppDb() {
@@ -358,5 +368,9 @@ public class IDCContext {
 
 	public String getImageCommand() {
 		return this.imageCommand;
+	}
+
+	public String getImagesFormatString() {
+		return this.imagesFormatString;
 	}
 }
