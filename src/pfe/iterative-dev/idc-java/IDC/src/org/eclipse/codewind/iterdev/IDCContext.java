@@ -35,8 +35,6 @@ public class IDCContext {
 
 	private final String rootPassword;
 
-	private String turbineSync;
-
 	private final String localWorkspaceOrigin;
 
 	private final String deploymentRegistry;
@@ -60,9 +58,10 @@ public class IDCContext {
 	private final boolean isWin;
 
 	private final String imageCommand;
+
+	private final String imagesFormatString;
 	
-	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String deploymentRegistry, 
-	String startMode, String debugPort, String turbineSync) throws IOException {
+	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String deploymentRegistry, String startMode, String debugPort) throws IOException {
 
 		this.rootPassword = rootPassword;
 
@@ -123,11 +122,6 @@ public class IDCContext {
 			appDb.put(Constants.DB_DEBUG_PORT, this.debugPort);
 		}
 
-		this.turbineSync = turbineSync;
-		if (this.turbineSync != null) {
-			appDb.put(Constants.DB_TURBINE_SYNC, this.turbineSync);
-		}
-
 		this.artifactsDirectory = getArtifactsFromInstallDir();
 
 		this.appDirectory = new File(System.getProperty("user.dir"));
@@ -157,6 +151,14 @@ public class IDCContext {
 		else {
 			this.imageCommand = "docker";
 		}
+
+		if (this.isK8s) {
+			this.imagesFormatString = "\"{{.Name}}\"";
+		}
+		else {
+			this.imagesFormatString = "\"{{.Repository}}\"";
+		}
+
 	}
 
 	public DBMap getAppDb() {
@@ -181,14 +183,6 @@ public class IDCContext {
 
 	public DBMap getGlobalDb() {
 		return globalDb;
-	}
-
-	public String getTurbineSync() {
-		if (appDb.get(Constants.DB_TURBINE_SYNC) != null) {
-			return appDb.get(Constants.DB_TURBINE_SYNC);
-		} else {
-			return "false";
-		}
 	}
 
 	public String getContainerName() {
@@ -374,5 +368,9 @@ public class IDCContext {
 
 	public String getImageCommand() {
 		return this.imageCommand;
+	}
+
+	public String getImagesFormatString() {
+		return this.imagesFormatString;
 	}
 }
