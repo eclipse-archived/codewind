@@ -50,12 +50,13 @@ if (process.env.IN_K8) {
 }
 
 const KUBE_NAMESPACE = process.env.KUBE_NAMESPACE || "default";
+const REMOTE_MODE = (process.env.REMOTE_MODE) || false;
 
 const containerInfoMap = new Map();
 
 export const containerInfoForceRefreshMap = new Map();
 
-export const LOCAL_WORKSPACE = "/codewind-workspace";
+export const LOCAL_WORKSPACE = REMOTE_MODE ? "/codewind-workspace" : process.env.NODE_ENV === "test" ? process.env.HOST_WORKSPACE_DIRECTORY : (process.argv[2] ? process.argv[2] : process.env.HOST_WORKSPACE_DIRECTORY);
 
 const projectList: Array<string> = [];
 
@@ -164,7 +165,6 @@ export async function containerCreate(operation: Operation, script: string, comm
     const projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
     logger.logTrace("The projectInfo has been updated for deploymentRegistry: " + JSON.stringify(projectInfo));
 
-    const REMOTE_MODE = (process.env.REMOTE_MODE) || false;
     logger.logTrace("Running with --remote=" + REMOTE_MODE);
 
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command,
