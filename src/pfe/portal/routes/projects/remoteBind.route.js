@@ -18,8 +18,6 @@ const { promisify } = require('util');
 const inflateAsync = promisify(zlib.inflate);
 const exec = promisify(require('child_process').exec);
 const cwUtils = require('../../modules/utils/sharedFunctions');
-//const docker = require('../../modules/utils/dockerFunctions');
-
 const Logger = require('../../modules/utils/Logger');
 const Project = require('../../modules/Project');
 const ProjectInitializerError = require('../../modules/utils/errors/ProjectInitializerError');
@@ -128,7 +126,7 @@ async function bindStart(req, res) {
     }
     user.uiSocket.emit('projectBind', data);
   }
-};
+}
 
 /**
  * API Function to receive gzipped content of a file, and write this to codewind-workspace
@@ -157,14 +155,6 @@ async function uploadFile(req, res) {
       await fs.outputFileSync(pathToWriteTo, fileToWrite);
 
       // if the project container has started, send the uploaded file to it
-
-
-      // Need to move this to upload/end
-      let projectRoot = getProjectSourceRoot(project);
-
-      if (!global.codewind.RUNNING_IN_K8S && project.containerId && (project.projectType != 'docker')) {
-        await cwUtils.copyFile(project, pathToWriteTo, projectRoot, relativePathOfFile);
-      }
       res.sendStatus(200);
     } else {
       res.sendStatus(404);
@@ -173,7 +163,7 @@ async function uploadFile(req, res) {
     log.error(err);
     res.status(500).send(err);
   }
-};
+}
 
 /**
  * API Function to clear the contents of a project ready
@@ -217,39 +207,51 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
 
       );
 
-      // now move temp project to real project
-      cwUtils.copyProject(pathToClear, path.join(global.codewind.CODEWIND_WORKSPACE, project.name));
+      // If the current project is being built, we do not want to copy the files as this will
+      // interfere with the current build
 
-      let projectRoot = getProjectSourceRoot(project);
-      // need to delete from the build container as well
-      if (!global.codewind.RUNNING_IN_K8S && project.containerId && (project.projectType != 'docker')) {
-        await Promise.all(
-          filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file))
-        )
-      }
-
-      filesToDelete.forEach((f) => {
-        const data = {
-          path: f,
-          timestamp: timeStamp,
-          type: "DELETE",
-          directory: false
+      if (project.buildStatus != "inProgress") {
+        // now move temp project to real project
+        cwUtils.copyProject(pathToClear, path.join(global.codewind.CODEWIND_WORKSPACE, project.name));
+        
+        let projectRoot = getProjectSourceRoot(project);
+        // need to delete from the build container as well
+        if (!global.codewind.RUNNING_IN_K8S && project.docker && (project.projectType != 'docker')) {
+          await Promise.all(
+            filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file))
+          )
+          // update files if needed
+          await Promise.all(
+            modifiedList.forEach((file) => {
+              log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
+              cwUtils.copyFile(project, file, projectRoot, file);
+            })
+          )
         }
-        IFileChangeEvent.push(data);
+
+        filesToDelete.forEach((f) => {
+          const data = {
+            path: f,
+            timestamp: timeStamp,
+            type: "DELETE",
+            directory: false
+          }
+          IFileChangeEvent.push(data);
+    
+        });
   
-      });
-
-      modifiedList.forEach((f) => {
-        const data = {
-          path: f,
-          timestamp: timeStamp,
-          type: "MODIFY",
-          directory: false
-        }
-        IFileChangeEvent.push(data);
-      });
-
-      user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
+        modifiedList.forEach((f) => {
+          const data = {
+            path: f,
+            timestamp: timeStamp,
+            type: "MODIFY",
+            directory: false
+          }
+          IFileChangeEvent.push(data);
+        });
+  
+        user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
+      }
 
       res.sendStatus(200);
     } else {
