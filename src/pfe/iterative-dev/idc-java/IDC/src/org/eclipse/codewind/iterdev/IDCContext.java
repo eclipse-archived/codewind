@@ -152,6 +152,8 @@ public class IDCContext {
 			this.imageCommand = "docker";
 		}
 
+		// for buildah on K8, the format is Name
+		// for docker on local, the format is Repository
 		if (this.isK8s) {
 			this.imagesFormatString = "\"{{.Name}}\"";
 		}
