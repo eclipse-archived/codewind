@@ -56,11 +56,11 @@ pipeline {
                         fi
 
                         # Copy the license files to the portal, performance, initialize
-                        cp -r $DIR/LICENSE.md ${SRC_DIR}/pfe/portal/
+                        cp -r $DIR/LICENSE ${SRC_DIR}/pfe/portal/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/pfe/portal/
                         cp -r $DIR/LICENSE ${SRC_DIR}/initialize/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/initialize/
-                        cp -r $DIR/LICENSE.md ${SRC_DIR}/performance/
+                        cp -r $DIR/LICENSE ${SRC_DIR}/performance/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/performance/
 
                         # Copy the docs into portal
