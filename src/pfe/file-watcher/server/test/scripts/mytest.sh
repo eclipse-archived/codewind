@@ -12,6 +12,8 @@ CODEWIND_ODO_EXTENSION="codewind-odo-extension"
 CLUSTER_IP=
 CLUSTER_USER=
 CLUSTER_PASS=
+CLUSTER_TOKEN=
+CHE_ROUTE=
 CHE_VERSION="next"
 CHE_NS="che"
 CLEAN_DEPLOY="n"
@@ -30,8 +32,10 @@ Options:
     --cluster-ip        Cluster ip - Required
     --cluster-user      Cluster username - Required
     --cluster-pass      Cluster password - Required
-    --che-version       Che version to install - default: next 
+    --cluster-token     Cluster token - Optional (can be used instead of user/pass)
+    --che-route         Che version to install - default: uses the cluster-ip
     --che-ns            Namespace to install Che - default: che
+    --che-version       Che version to install - default: next
     --clean-deploy      Deploy a clean che - default: n
     --operator-yaml     Absolute Path to che operator yaml - default: github.com/eclipse/codewind-che-plugin/master/setup/install_che/che-operator/codewind-checluster.yaml
     --service-account   Service account name - default: che-user
@@ -79,6 +83,12 @@ while [ "$#" -gt 0 ]; do
         --cluster-pass )        shift
                                 CLUSTER_PASS=$1
                                 ;;
+        --cluster-token )       shift
+                                CLUSTER_TOKEN=$1
+                                ;;
+        --che-route )           shift
+                                CHE_ROUTE=$1
+                                ;;
         --che-version )         shift
                                 CHE_VERSION=$1
                                 ;;
@@ -107,18 +117,22 @@ if [[ -z "$CLUSTER_IP" ]]; then
     echo -e "${RED}✖ Cluster ip is a required parameter. ${RESET}\n"
     usage
     exit 1
-elif [[ -z "$CLUSTER_USER" ]]; then
-    echo -e "${RED}✖ Cluster username is a required parameter. ${RESET}\n"
+elif [[ -z "$CLUSTER_USER" ]] && [[ -z "$CLUSTER_TOKEN" ]]; then
+    echo -e "${RED}✖ Cluster username or token is a required parameter. ${RESET}\n"
     usage
     exit 1
-elif [[ -z "$CLUSTER_PASS" ]]; then
-    echo -e "${RED}✖ Cluster password is a required parameter. ${RESET}\n"
+elif [[ -z "$CLUSTER_PASS" ]] && [[ -z "$CLUSTER_TOKEN" ]]; then
+    echo -e "${RED}✖ Cluster password or token is a required parameter. ${RESET}\n"
     usage
     exit 1
 fi
 
 # setup for keyclaok
-KEYCLOAK_HOSTNAME="keycloak-$CHE_NS.$CLUSTER_IP"
+IP_TO_USE="$CLUSTER_IP"
+if [[ ! -z "$CHE_ROUTE" ]]; then
+    IP_TO_USE="$CHE_ROUTE"
+fi
+KEYCLOAK_HOSTNAME="keycloak-$CHE_NS.$IP_TO_USE.nip.io"
 TOKEN_ENDPOINT="http://${KEYCLOAK_HOSTNAME}/auth/realms/che/protocol/openid-connect/token"
 
 # check if OC is installed
@@ -129,7 +143,14 @@ displayMsg $OC_EC "Missing openshift cloud command. Please install and try again
 
 # login to the cluster
 echo -e "${BLUE}> Logging into cluster${RESET}"
-oc login $CLUSTER_IP:8443 -u $CLUSTER_USER -p $CLUSTER_PASS --insecure-skip-tls-verify=true
+LOGIN_FLAGS=
+if [[ ! -z "$CLUSTER_TOKEN" ]]; then
+    LOGIN_FLAGS="--token=$CLUSTER_TOKEN"
+else
+    LOGIN_FLAGS="-u $CLUSTER_USER -p $CLUSTER_PASS"
+fi
+
+oc login $CLUSTER_IP:8443 ${LOGIN_FLAGS}
 displayMsg $? "Failed to login. Please check your credentials and try again." true
 
 # check if chectl is installed
@@ -208,11 +229,9 @@ DECODED_TOKEN=$(echo "$ENCODED_TOKEN" | $base64Name -di)
 echo "Registry is: docker-registry.default.svc:5000"
 echo -e "Token is: $DECODED_TOKEN \n"
 
-KEYCLOAK_HOSTNAME=keycloak-"$CHE_NS"."$CLUSTER_IP".nip.io
-TOKEN_ENDPOINT="http://${KEYCLOAK_HOSTNAME}/auth/realms/che/protocol/openid-connect/token" 
 export CHE_ACCESS_TOKEN=$(curl -sSL --data "grant_type=password&client_id=che-public&username=${CHE_USER}&password=${CHE_PASS}" ${TOKEN_ENDPOINT} | jq -r '.access_token')
 echo -e "CHE Access Token is: $CHE_ACCESS_TOKEN \n"
 
-echo -e "${GREEN}✔ Che is up and running at che-$CHE_NS.$CLUSTER_IP.nip.io\n"
+echo -e "${GREEN}✔ Che is up and running at che-$CHE_NS.$IP_TO_USE.nip.io\n"
 echo -e "${GREEN}✔ Username: $CHE_USER${RESET}\n"
 echo -e "${GREEN}✔ Password: $CHE_PASS${RESET}\n"
