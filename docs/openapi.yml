@@ -11,7 +11,7 @@ info:
     email: example@ibm.com
   license:
     name: Codewind Developer License
-    url: 'https://github.com/eclipse/codewind/blob/master/LICENSE/LICENSE.md'
+    url: 'https://github.com/eclipse/codewind/blob/master/LICENSE'
 
 # tags:
   # - name: users
