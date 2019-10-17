@@ -41,7 +41,7 @@ RUN npm run build
 FROM node:10-alpine
 
 # Copy our license files into the new image
-COPY LICENSE.md NOTICE.md /
+COPY LICENSE NOTICE.md /
 
 # Create app directory
 WORKDIR /usr/src/app
