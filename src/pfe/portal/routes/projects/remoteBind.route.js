@@ -300,7 +300,7 @@ function getProjectSourceRoot(project) {
     break
   }
   case 'swift': {
-    projectRoot = "/home/default/app";
+    projectRoot = "/swift-project";
     break
   }
   case 'spring': {
