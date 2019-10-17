@@ -104,6 +104,14 @@ const defaultAppsodyTemplates = [
         projectStyle: 'Appsody',
     },
     {
+        label: 'Appsody starter sample runnable stack template',
+        description: 'starter sample stack that can be run by appsody, to help creation of more stacks',
+        language: 'bash',
+        url: 'https://github.com/appsody/stacks/releases/download/starter-v0.1.0/incubator.starter.v0.1.0.templates.simple.tar.gz',
+        projectType: 'appsodyExtension',
+        projectStyle: 'Appsody',
+    },
+    {
         label: 'Appsody Node.js Express skaffold template',
         description: 'Express web framework for Node.js',
         language: 'nodejs',
