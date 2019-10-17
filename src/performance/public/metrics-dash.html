@@ -56,8 +56,9 @@
 
   <div class="headerDiv">
     <span class="sidenavButton" onclick="toggleMenu()">&#9776;</span>
-    <span class="active" onclick="getMetricsAndUpdateGraphs('metrics/codewind')">&#9776;</span>
+    <span class="active" onclick="getMetricsAndUpdateGraphs()">&#9776;</span>
     <span class="active" onclick="getProfilingDataAndUpdateFlameGraph()">&#9776;</span>
+    <span class="active" onclick="getEnvDataAndUpdateEnvSummary()">&#9776;</span>
     <span class="leftHeader"></span>
     <span class="rightHeader"></span>
   </div>
@@ -204,24 +205,44 @@
   <script type="module" src="public/parse-prometheus-text-format/dist/parse-prometheus-text-format.umd.js"></script>
 
   <script>
-    const appPort = 32769; // TODO: get this from PORT env variable?
+    const appPort = 32769; // TODO get this from PORT env variable?
+    const pollInterval = 2000;
 
-    // TODO:
-    // getMetricsAndUpdateGraphs('metrics/codewind/');
+    // TODO remove when finished dev
+    let maxPolls = 10;
+    let numPollsToMetricsCodewind = 0;
+    let numPollsToMetricsCodewindProfiling = 0;
 
-    function getMetricsAndUpdateGraphs(path) {
+    // Summary data
+    // CPU
+    let totalProcessCPULoad = 0.0;
+    let totalSystemCPULoad = 0.0;
+    let numCPULoadSamples = 0;
+    // GC
+    let gcDurationTotal = 0.0;
+    let maxHeapUsed = 0;
+
+    const logAjaxResponseError = (jqXKR, textStatus, errorThrown) => {
+      console.log('jqXKR');
+      console.log(jqXKR);
+      console.log('textStatus');
+      console.log(textStatus);
+      console.log('errorThrown');
+      console.log(errorThrown);
+    };
+    
+    // getMetricsAndUpdateGraphs();
+    // getProfilingDataAndUpdateFlameGraph();
+    getEnvDataAndUpdateEnvSummary();
+
+
+    function getMetricsAndUpdateGraphs() {
+      const path = 'metrics/codewind';
       $.ajax({
         method: 'GET',
         url: `http://127.0.0.1:${appPort}/${path}`,
         crossDomain: true,
-        error: (jqXKR, textStatus, errorThrown) => {
-          console.log('jqXKR');
-          console.log(jqXKR);
-          console.log('textStatus');
-          console.log(textStatus);
-          console.log('errorThrown');
-          console.log(errorThrown);
-        },
+        error: logAjaxResponseError,
         success: (resBody) => {
           console.log("resBody");
           console.log(resBody);
@@ -231,11 +252,16 @@
           console.log(metrics);
           updateGraphs(time, metrics);
         },
-        // TODO:
-        // complete: setTimeout(
-        //   () => getMetricsAndUpdateGraphs(path),
-        //   2000,
-        // ),
+        complete: () => {
+          numPollsToMetricsCodewind++;
+          if (numPollsToMetricsCodewind < maxPolls) {
+            return setTimeout(
+              () => getMetricsAndUpdateGraphs(path),
+              pollInterval,
+            );
+          }
+          console.log('finished polling');
+        },
         timeout: 30000,
       });
     }
@@ -246,26 +272,38 @@
         method: 'GET',
         url: `http://127.0.0.1:${appPort}/${path}`,
         crossDomain: true,
-        error: (jqXKR, textStatus, errorThrown) => {
-          console.log('jqXKR');
-          console.log(jqXKR);
-          console.log('textStatus');
-          console.log(textStatus);
-          console.log('errorThrown');
-          console.log(errorThrown);
-        },
+        error: logAjaxResponseError,
         success: (resBody) => {
           console.log("resBody");
           console.log(resBody);
-          // console.log('metrics');
-          // console.log(metrics);
           updateFlameGraph(resBody);
         },
-        // TODO:
-        // complete: setTimeout(
-        //   () => getMetricsAndUpdateGraphs(path),
-        //   2000,
-        // ),
+        complete: () => {
+          numPollsToMetricsCodewindProfiling++;
+          if (numPollsToMetricsCodewindProfiling < maxPolls) {
+            return setTimeout(
+              () => getProfilingDataAndUpdateFlameGraph(),
+              pollInterval,
+            );
+          }
+          console.log('finished polling');
+        },
+        timeout: 30000,
+      });
+    }
+
+    function getEnvDataAndUpdateEnvSummary() {
+      const path = 'metrics/codewind/environment';
+      $.ajax({
+        method: 'GET',
+        url: `http://127.0.0.1:${appPort}/${path}`,
+        crossDomain: true,
+        error: logAjaxResponseError,
+        success: (resBody) => {
+          console.log("resBody");
+          console.log(resBody);
+          envTable.populateTableJSON(JSON.stringify(resBody));
+        },
         timeout: 30000,
       });
     }
@@ -274,15 +312,13 @@
 
     function updateFlameGraph(profilingSamples) {
       const newProfilingSamples = profilingSamples.slice(indexOfLastViewedSample);
-      for (const sample of newProfilingSamples) {
-        // console.log('sample');
-        // console.log(sample);
-        processProfilingSample(sample);
-      }
-      indexOfLastViewedSample += newProfilingSamples.length;
-      // console.log('indexOfLastViewedSample');
-      // console.log(indexOfLastViewedSample);
+      console.log('newProfilingSample');
+      console.log(newProfilingSample);
 
+      newProfilingSamples.forEach(sample => {
+        processProfilingSample(sample);
+      });
+      indexOfLastViewedSample += newProfilingSamples.length;
     }
 
     function updateGraphs(time, metrics) {
@@ -316,68 +352,116 @@
       //     'base:gc_global_time_seconds',
       //   ],
       // };
-      const cpuData = {
-        time,
-        // processMean, // TODO: how to get these? are they calculated?
-        // systemMean,
-      };
-      const memData = {
-        time,
-      };
+      const cpuData = { time, };
+      const memData = { time, };
       const httpData = {
         time,
-        "url":"/health" // TODO: do I need this? or just add all http data together. if do need it: how to get this without using handler? handle multiple? research how other people do it
+        "url":"/health" // TODO do I need this? or just add all http data together. if do need it: how to get this without using handler? handle multiple? research how other people do it
       };
+      const eventLoopData = {}; // TODO this is based on the stuff from codewind-node-metrics.js
+      const gcData = { time, }
       for (const metric of metrics) {
-        // Nodejs metrics
+        const metricsObj = metric.metrics[0];
+        const metricValue = metricsObj.value;
         if (['os_cpu_used_ratio', 'base:cpu_system_load_average'].includes(metric.name)) {
-          cpuData.system = metric.metrics[0].value;
+          cpuData.system = metricValue;
         } else if (['process_cpu_used_ratio', 'cpu_process_cpu_load_percent'].includes(metric.name)) {
-          cpuData.process = metric.metrics[0].value;
+          cpuData.process = metricValue;
         } else if (metric.name === 'os_resident_memory_bytes') {
-          memData.physical_used = metric.metrics[0].value;
+          memData.physical_used = metricValue;
         } else if (metric.name === 'process_resident_memory_bytes') {
-          memData.physical = metric.metrics[0].value;
+          memData.physical = metricValue;
         } else if (metric.name === 'process_virtual_memory_bytes') {
-          memData.virtual = metric.metrics[0].value;
-        } else if (metric.name.includes('http_request_duration_microseconds')) {
-          console.log('metric.metrics');
-          console.log(metric.metrics);
-          metricsObj = metric.metrics[0];
+          memData.virtual = metricValue;
+
+        } else if (metric.name === 'http_request_duration_microseconds') {
           httpData.total = metricsObj.count;
           httpData.average = metricsObj.sum / metricsObj.count;
-          httpData.longest = metricsObj.quantiles['0.99'];
-        }
+          httpData.longest = metricsObj.quantiles['0.99']; // TODO: check this
 
+        } else if (metric.name === 'event_loop_tick_min_milliseconds') {
+          eventLoopData.minimum = metricValue;
+        } else if (metric.name === 'event_loop_tick_max_milliseconds') {
+          eventLoopData.maximum = metricValue;
+        } else if (metric.name === 'event_loop_tick_count') {
+          eventLoopData.count = metricValue;
+        } else if (metric.name === 'event_loop_tick_average_milliseconds') {
+          eventLoopData.average = metricValue;
+        } else if (metric.name === 'event_loop_cpu_user') {
+          eventLoopData.cpu_user = metricValue;
+        } else if (metric.name === 'event_loop_cpu_system') {
+          eventLoopData.cpu_system = metricValue;
+
+        } else if (metric.name === 'heap_size_bytes') {
+          gcData.size = metricValue;
+        } else if (metric.name === 'heap_memory_used_bytes') {
+          gcData.used = metricValue;
+        } else if (metric.name === 'gc_cycle_duration_milliseconds') {
+          gcData.duration = metricValue;
+        }
       }
 
-      processCPUData(JSON.stringify(cpuData));
+      processCPUData(
+        cpuData,
+        totalProcessCPULoad,
+        totalSystemCPULoad,
+        numCPULoadSamples,
+      );
       updateMemData(JSON.stringify(memData));
       updateHttpData(JSON.stringify(httpData));
+      updateLoopData(JSON.stringify(eventLoopData));
+      processGCData(
+        gcData,
+        gcDurationTotal,
+        maxHeapUsed,
+      );
     }
-  </script>
 
-  <script>
+    const summary = {
+      cpu: {},
+      gc: {},
+      memoryPools: {},
+    };
 
-    let summary = {cpu:{}, gc:{}, memoryPools:{}};
     let hostname = location.host.split(':')[0];
     let envTable = new TextTable('#envDiv', '#summary', localizedStrings.envTitle);
     let summaryTable = new TextTable('#summaryDiv', '#summary', localizedStrings.summaryTitle);
     let httpSummary = new HttpSummary('#httpSummaryDiv', '#summary', localizedStrings.httpSummaryTitle);
     httpSummary.setHttpSummaryOptions({host: hostname, filteredPath: dashboardRoot});
 
-    function processCPUData(data) {
-      updateCPUData(data);
-      let json = JSON.parse(data);
-      summary.cpu.processMean = json.processMean;
-      summary.cpu.systemMean = json.systemMean;
+    function processCPUData(data, totalProcessCPULoad, totalSystemCPULoad, numCPULoadSamples) {
+      updateCPUData(JSON.stringify(data));
+
+      totalProcessCPULoad += data.process;
+      totalSystemCPULoad += data.system;
+      numCPULoadSamples++;
+      const processMean = (totalProcessCPULoad / numCPULoadSamples);
+      const systemMean = (totalSystemCPULoad / numCPULoadSamples);
+
+      summary.cpu.processMean = processMean;
+      summary.cpu.systemMean = systemMean;
+      updateSummaryTable();
+    }
+
+    function processGCData(data) {
+      updateGCData(JSON.stringify(data));
+
+      const usedHeapAfterGCMax = Math.max(maxHeapUsed, data.used);
+      summary.gc.usedHeapAfterGCMax = usedHeapAfterGCMax;
+
+      // TODO which `process` do we need? from the app itself, or the monitoring?
+      // gcDurationTotal += data.duration;
+      // const timeSummary = (gcDurationTotal / (process.uptime() * 1000));
+      // summary.gc.time = timeSummary;
       updateSummaryTable();
     }
     // socket.on('cpu', (data) => processCPUData(data));
 
+    // TODO:
     // socket.on('environment', function(data) {
     //   envTable.populateTableJSON(data);
     // });
+
     // socket.on('loop', function(data) {
     //   updateLoopData(data);
     // });
