@@ -146,8 +146,8 @@ COPY --from=codewind-pfe-portal /portal /portal
 
 # Copy the license files to the root directory
 # to satisfy requirement from legal
-COPY /portal/LICENSE /LICENSE
-COPY /portal/NOTICE.md /LICENSE
+COPY /portal/LICENSE /
+COPY /portal/NOTICE.md /
 
 WORKDIR /portal
 ARG NODE_ENV
