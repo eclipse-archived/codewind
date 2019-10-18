@@ -145,7 +145,7 @@ app.get('/performance/*', function (req, res) {
     res.sendFile(path.join(__dirname, 'dashboard', 'build', 'index.html'));
 });
 
-app.use('/public', express.static('public'));
+app.use('/', express.static('public'));
 
 app.get('/codewind-metrics', function (req, res, next) {
     console.log('hit codewind-metrics');
