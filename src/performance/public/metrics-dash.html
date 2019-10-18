@@ -18,8 +18,8 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 
-<link rel="stylesheet" href="public/graphmetrics/bootstrap-3.3.7-dist/css/bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="public/graphmetrics/css/themes.css" title="Themes">
+<link rel="stylesheet" href="graphmetrics/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="graphmetrics/css/themes.css" title="Themes">
 
 <head>
   <title>Codewind Application Metrics Dashboard</title>
@@ -30,9 +30,9 @@
   <!--<h1>Application Metrics Dashboard for Node.js</h1>-->
   <!-- load the d3.js library -->
   <script src="socket.io/socket.io.js"></script>
-  <script src="public/graphmetrics/d3/d3.v3.min.js"></script>
-  <script src="public/graphmetrics/jquery/jquery-3.1.1.min.js"></script>
-  <script src="public/graphmetrics/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+  <script src="graphmetrics/d3/d3.v3.min.js"></script>
+  <script src="graphmetrics/jquery/jquery-3.1.1.min.js"></script>
+  <script src="graphmetrics/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
   <script>
     function toggleMenu() {
       $('#sideMenu').toggleClass( "expanded" );
@@ -59,8 +59,10 @@
     <span class="active" onclick="getMetricsAndUpdateGraphs()">&#9776;</span>
     <span class="active" onclick="getProfilingDataAndUpdateFlameGraph()">&#9776;</span>
     <span class="active" onclick="getEnvDataAndUpdateEnvSummary()">&#9776;</span>
-    <span class="leftHeader"></span>
-    <span class="rightHeader"></span>
+    <span class="leftHeader">Application Metrics for Node.js</span>
+    <span class="rightHeader">
+      <a class="docLink" href="https://developer.ibm.com/node/application-metrics-node-js/" target="_blank">Go To Documentation</a>
+    </span>
   </div>
 
   <div id="sideMenu" class="sidenav">
@@ -146,7 +148,7 @@
     </div>
   </div>
 
-  <script type="text/javascript" src="public/graphmetrics/js/i18n.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/i18n.js"></script>
   <script>
     // Global variables
     var localizedStrings = {};
@@ -185,31 +187,31 @@
     populateLocalizedStrings();
   </script>
 
-  <script type="text/javascript" src="public/graphmetrics/js/header.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/textTable.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/nodeReport.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/cpuChart.js"></script>
+  <!-- <script type="text/javascript" src="graphmetrics/js/header.js"></script> -->
+  <script type="text/javascript" src="graphmetrics/js/textTable.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/nodeReport.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/cpuChart.js"></script>
 
-  <script type="text/javascript" src="public/graphmetrics/js/httpHttpsRequestsChart.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/httpThroughPutChart.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/top5.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/httpSummary.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/httpHttpsOutboundRequestsChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/httpHttpsRequestsChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/httpThroughPutChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/top5.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/httpSummary.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/httpHttpsOutboundRequestsChart.js"></script>
 
-  <script type="text/javascript" src="public/graphmetrics/js/memChart.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/gcChart.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/loopChart.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/probeEventsChart.js"></script>
-  <script type="text/javascript" src="public/graphmetrics/js/flamegraph.js"></script>
-  <script type="text/javascript" src="public/profiling.js"></script>
-  <script type="module" src="public/parse-prometheus-text-format/dist/parse-prometheus-text-format.umd.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/memChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/gcChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/loopChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/probeEventsChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/flamegraph.js"></script>
+  <script type="text/javascript" src="profiling.js"></script>
+  <script type="module" src="parse-prometheus-text-format/dist/parse-prometheus-text-format.umd.js"></script>
 
   <script>
-    const appPort = 32769; // TODO get this from PORT env variable?
+    const appPort = 32770; // TODO get this from PORT env variable?
     const pollInterval = 2000;
 
     // TODO remove when finished dev
-    let maxPolls = 10;
+    let maxPolls = 8;
     let numPollsToMetricsCodewind = 0;
     let numPollsToMetricsCodewindProfiling = 0;
 
@@ -225,13 +227,11 @@
     const logAjaxResponseError = (jqXKR, textStatus, errorThrown) => {
       console.log('jqXKR');
       console.log(jqXKR);
-      console.log('textStatus');
-      console.log(textStatus);
-      console.log('errorThrown');
-      console.log(errorThrown);
+      console.log(`textStatus: ${textStatus}`);
+      console.log(`errorThrown: ${errorThrown}`);
     };
-    
-    // getMetricsAndUpdateGraphs();
+
+    getMetricsAndUpdateGraphs();
     // getProfilingDataAndUpdateFlameGraph();
     getEnvDataAndUpdateEnvSummary();
 
