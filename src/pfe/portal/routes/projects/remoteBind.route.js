@@ -193,70 +193,76 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
     const project = user.projectList.retrieveProject(projectID);
     if (project) {
       const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
-      const currentFileList = await listFiles(pathToTempProj, '');
+      // eslint-disable-next-line no-sync
+      if (!fs.existsSync(pathToTempProj)) {
+        res.status(404).send("No files have been synced");
+      } else {
+      
+        const currentFileList = await listFiles(pathToTempProj, '');
 
-      const filesToDeleteSet = new Set(currentFileList);
-      keepFileList.forEach((f) => filesToDeleteSet.delete(f));
-      const filesToDelete = Array.from(filesToDeleteSet);
+        const filesToDeleteSet = new Set(currentFileList);
+        keepFileList.forEach((f) => filesToDeleteSet.delete(f));
+        const filesToDelete = Array.from(filesToDeleteSet);
 
-      log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
-        `${filesToDelete.join(', ')}`);
-      // remove the file from pfe container
-      await Promise.all(
-        filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToTempProj, oldFile)}`))
-
-      );
-
-      // If the current project is being built, we do not want to copy the files as this will
-      // interfere with the current build
-
-      if (project.buildStatus != "inProgress") {
-        const globalProjectPath =  path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
-        // We now need to remove any files that have been deleted from the global workspace
+        log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
+          `${filesToDelete.join(', ')}`);
+        // remove the file from pfe container
         await Promise.all(
-          filesToDelete.map(oldFile => exec(`rm -rf ${path.join(globalProjectPath, oldFile)}`))
+          filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToTempProj, oldFile)}`))
+
         );
 
-        // now move temp project to real project
-        cwUtils.copyProject(pathToTempProj, global.codewind.CODEWIND_WORKSPACE);
-        
-        let projectRoot = getProjectSourceRoot(project);
-        // need to delete from the build container as well
-        if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker') {
-          await Promise.all(
-            filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file))
-          )
-          // update files if needed
-          // await Promise.all(
-          modifiedList.forEach((file) => {
-            log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
-            cwUtils.copyFile(project, path.join(globalProjectPath,file), projectRoot, file);
-          })
-          // )
-        }
+        // If the current project is being built, we do not want to copy the files as this will
+        // interfere with the current build
 
-        filesToDelete.forEach((f) => {
-          const data = {
-            path: f,
-            timestamp: timeStamp,
-            type: "DELETE",
-            directory: false
+        if (project.buildStatus != "inProgress") {
+          const globalProjectPath =  path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
+          // We now need to remove any files that have been deleted from the global workspace
+          await Promise.all(
+            filesToDelete.map(oldFile => exec(`rm -rf ${path.join(globalProjectPath, oldFile)}`))
+          );
+
+          // now move temp project to real project
+          cwUtils.copyProject(pathToTempProj, global.codewind.CODEWIND_WORKSPACE);
+          
+          let projectRoot = getProjectSourceRoot(project);
+          // need to delete from the build container as well
+          if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker') {
+            await Promise.all(
+              filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file))
+            )
+            // update files if needed
+            // await Promise.all(
+            modifiedList.forEach((file) => {
+              log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
+              cwUtils.copyFile(project, path.join(globalProjectPath,file), projectRoot, file);
+            })
+            // )
           }
-          IFileChangeEvent.push(data);
+
+          filesToDelete.forEach((f) => {
+            const data = {
+              path: f,
+              timestamp: timeStamp,
+              type: "DELETE",
+              directory: false
+            }
+            IFileChangeEvent.push(data);
+      
+          });
     
-        });
-  
-        modifiedList.forEach((f) => {
-          const data = {
-            path: f,
-            timestamp: timeStamp,
-            type: "MODIFY",
-            directory: false
-          }
-          IFileChangeEvent.push(data);
-        });
-  
-        user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
+          modifiedList.forEach((f) => {
+            const data = {
+              path: f,
+              timestamp: timeStamp,
+              type: "MODIFY",
+              directory: false
+            }
+            IFileChangeEvent.push(data);
+          });
+    
+          user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
+        }
       }
 
       res.sendStatus(200);
