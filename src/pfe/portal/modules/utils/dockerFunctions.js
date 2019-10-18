@@ -108,8 +108,9 @@ module.exports.readFile = function readFile(project, path) {
   });
 }
 
-module.exports.copyFile = async function copyFile(project, pathToWriteTo, projectRoot, relativePathOfFile) {
-  const dockerCommand = `docker exec ${project.containerId} cp ${pathToWriteTo} ${projectRoot}/${relativePathOfFile}`;
+module.exports.copyFile = async function copyFile(project, fileToCopy, projectRoot, relativePathOfFile) {
+//  const dockerCommand = `docker exec ${project.containerId} cp ${fileToCopy} ${projectRoot}/${relativePathOfFile}`;
+  const dockerCommand = `docker cp ${fileToCopy} ${project.containerId}:${projectRoot}/${relativePathOfFile}`;
   log.debug(`[docker cp command] ${dockerCommand}`);
   await exec(dockerCommand);
 }

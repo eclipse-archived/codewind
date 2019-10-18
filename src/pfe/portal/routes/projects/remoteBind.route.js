@@ -222,17 +222,17 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         
         let projectRoot = getProjectSourceRoot(project);
         // need to delete from the build container as well
-        if (!global.codewind.RUNNING_IN_K8S && project.docker && (project.projectType != 'docker')) {
+        if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker') {
           await Promise.all(
             filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file))
           )
           // update files if needed
-          await Promise.all(
-            modifiedList.forEach((file) => {
-              log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
-              cwUtils.copyFile(project, file, projectRoot, file);
-            })
-          )
+          // await Promise.all(
+          modifiedList.forEach((file) => {
+            log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
+            cwUtils.copyFile(project, path.join(globalProjectPath,file), projectRoot, file);
+          })
+          // )
         }
 
         filesToDelete.forEach((f) => {
