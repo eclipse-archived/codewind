@@ -215,14 +215,10 @@
     let numPollsToMetricsCodewind = 0;
     let numPollsToMetricsCodewindProfiling = 0;
 
-    // Summary data
-    // CPU
-    let totalProcessCPULoad = 0.0;
-    let totalSystemCPULoad = 0.0;
+    // CPU Summary data
+    let totalProcessCPULoad = 0.0; // TODO should this be here or in cw-node-metrics?
+    let totalSystemCPULoad = 0.0; // TODO should this be here or in cw-node-metrics?
     let numCPULoadSamples = 0;
-    // GC
-    let gcDurationTotal = 0.0;
-    let maxHeapUsed = 0;
 
     const logAjaxResponseError = (jqXKR, textStatus, errorThrown) => {
       console.log('jqXKR');
@@ -244,8 +240,8 @@
         crossDomain: true,
         error: logAjaxResponseError,
         success: (resBody) => {
-          console.log("resBody");
-          console.log(resBody);
+          // console.log("resBody");
+          // console.log(resBody);
           const time = Date.now();
           const metrics = parsePrometheusTextFormat(resBody);
           console.log('metrics');
@@ -274,8 +270,8 @@
         crossDomain: true,
         error: logAjaxResponseError,
         success: (resBody) => {
-          console.log("resBody");
-          console.log(resBody);
+          // console.log("resBody");
+          // console.log(resBody);
           updateFlameGraph(resBody);
         },
         complete: () => {
@@ -300,8 +296,8 @@
         crossDomain: true,
         error: logAjaxResponseError,
         success: (resBody) => {
-          console.log("resBody");
-          console.log(resBody);
+          // console.log("resBody");
+          // console.log(resBody);
           envTable.populateTableJSON(JSON.stringify(resBody));
         },
         timeout: 30000,
@@ -354,11 +350,8 @@
       // };
       const cpuData = { time, };
       const memData = { time, };
-      const httpData = {
-        time,
-        "url":"/health" // TODO do I need this? or just add all http data together. if do need it: how to get this without using handler? handle multiple? research how other people do it
-      };
-      const eventLoopData = {}; // TODO this is based on the stuff from codewind-node-metrics.js
+      const httpRequestData = { time, }; // TODO add handler
+      const eventLoopData = {};
       const gcData = { time, }
       for (const metric of metrics) {
         const metricsObj = metric.metrics[0];
@@ -375,9 +368,9 @@
           memData.virtual = metricValue;
 
         } else if (metric.name === 'http_request_duration_microseconds') {
-          httpData.total = metricsObj.count;
-          httpData.average = metricsObj.sum / metricsObj.count;
-          httpData.longest = metricsObj.quantiles['0.99']; // TODO: check this
+          httpRequestData.total = metricsObj.count;
+          httpRequestData.average = metricsObj.sum / metricsObj.count;
+          httpRequestData.longest = metricsObj.quantiles['0.99']; // TODO: check this is the correct
 
         } else if (metric.name === 'event_loop_tick_min_milliseconds') {
           eventLoopData.minimum = metricValue;
@@ -396,8 +389,14 @@
           gcData.size = metricValue;
         } else if (metric.name === 'heap_memory_used_bytes') {
           gcData.used = metricValue;
+        } else if (metric.name === 'heap_memory_used_max_bytes') {
+          gcData.maxHeapUsed = metricValue;
         } else if (metric.name === 'gc_cycle_duration_milliseconds') {
           gcData.duration = metricValue;
+        } else if (metric.name === 'gc_cycle_duration_total_milliseconds') {
+          gcData.durationTotal = metricValue;
+        } else if (metric.name === 'process_uptime_count_seconds') {
+          gcData.processUptime = metricValue;
         }
       }
 
@@ -408,13 +407,11 @@
         numCPULoadSamples,
       );
       updateMemData(JSON.stringify(memData));
-      updateHttpData(JSON.stringify(httpData));
+      // console.log('httpRequestData');
+      // console.log(httpRequestData);
+      updateHttpData(JSON.stringify(httpRequestData));
       updateLoopData(JSON.stringify(eventLoopData));
-      processGCData(
-        gcData,
-        gcDurationTotal,
-        maxHeapUsed,
-      );
+      processGCData(gcData);
     }
 
     const summary = {
@@ -445,19 +442,12 @@
 
     function processGCData(data) {
       updateGCData(JSON.stringify(data));
-
-      const usedHeapAfterGCMax = Math.max(maxHeapUsed, data.used);
-      summary.gc.usedHeapAfterGCMax = usedHeapAfterGCMax;
-
-      // TODO which `process` do we need? from the app itself, or the monitoring?
-      // gcDurationTotal += data.duration;
-      // const timeSummary = (gcDurationTotal / (process.uptime() * 1000));
-      // summary.gc.time = timeSummary;
+      summary.gc.usedHeapAfterGCMax = data.maxHeapUsed;
+      summary.gc.time = ((data.durationTotal/1000) / data.processUptime);
       updateSummaryTable();
     }
     // socket.on('cpu', (data) => processCPUData(data));
 
-    // TODO:
     // socket.on('environment', function(data) {
     //   envTable.populateTableJSON(data);
     // });
