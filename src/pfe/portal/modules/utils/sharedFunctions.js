@@ -107,9 +107,13 @@ module.exports.updateObject = function updateObject(objectToUpdate, fieldsToAddT
 }
 
 module.exports.copyProject = async function copyFile(fromProjectPath, toProjectPath) {
-  const copyCommand = `rm -fr ${toProjectPath}; mv ${fromProjectPath} ${toProjectPath}`;
+  const copyCommand = `cp -R ${fromProjectPath} ${toProjectPath}`;
   log.debug(`[copyCommand] ${copyCommand}`);
   await exec(copyCommand);
+  // now clean up old directory
+  const cleanCommand = `rm -fr ${fromProjectPath}`;
+  log.debug(`[cleanCommand] ${cleanCommand}`);
+  await exec(cleanCommand);
 }
 
 /** C:\helloThere -> /c/helloThere */

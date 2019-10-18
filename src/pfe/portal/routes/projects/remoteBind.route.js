@@ -192,8 +192,8 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   try {
     const project = user.projectList.retrieveProject(projectID);
     if (project) {
-      const pathToClear = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
-      const currentFileList = await listFiles(pathToClear, '');
+      const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
+      const currentFileList = await listFiles(pathToTempProj, '');
 
       const filesToDeleteSet = new Set(currentFileList);
       keepFileList.forEach((f) => filesToDeleteSet.delete(f));
@@ -203,7 +203,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         `${filesToDelete.join(', ')}`);
       // remove the file from pfe container
       await Promise.all(
-        filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToClear, oldFile)}`))
+        filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToTempProj, oldFile)}`))
 
       );
 
@@ -211,8 +211,14 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
       // interfere with the current build
 
       if (project.buildStatus != "inProgress") {
+        const globalProjectPath =  path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
+        // We now need to remove any files that have been deleted from the global workspace
+        await Promise.all(
+          filesToDelete.map(oldFile => exec(`rm -rf ${path.join(globalProjectPath, oldFile)}`))
+        );
+
         // now move temp project to real project
-        cwUtils.copyProject(pathToClear, path.join(global.codewind.CODEWIND_WORKSPACE, project.name));
+        cwUtils.copyProject(pathToTempProj, global.codewind.CODEWIND_WORKSPACE);
         
         let projectRoot = getProjectSourceRoot(project);
         // need to delete from the build container as well
