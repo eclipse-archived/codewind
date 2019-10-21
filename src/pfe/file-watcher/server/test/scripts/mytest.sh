@@ -201,11 +201,11 @@ if [[ $CLEAN_DEPLOY == "y" ]]; then
     oc delete project $CHE_NS --force --grace-period=0 > /dev/null 2>&1
     installChe
     displayMsg $? "Failed to clean deploy che." true
-fi
 
-echo -e "${BLUE}> Creating a service account ${RESET}"
-oc create serviceaccount "$SERVICE_ACCOUNT"
-displayMsg $? "Failed to create service account." true
+    echo -e "${BLUE}> Creating a service account ${RESET}"
+    oc create serviceaccount "$SERVICE_ACCOUNT"
+    displayMsg $? "Failed to create service account." true
+fi
 
 echo -e "${BLUE}> Adding role image-builder to service account ${RESET}"
 oc policy add-role-to-user system:image-builder system:serviceaccount:"$CHE_NS":"$SERVICE_ACCOUNT"
@@ -226,11 +226,20 @@ fi
 
 ENCODED_TOKEN=$(oc get secret $(oc describe sa $SERVICE_ACCOUNT | tail -n 2 | head -n 1 | awk '{$1=$1};1') -o json | jq ".data.token")
 DECODED_TOKEN=$(echo "$ENCODED_TOKEN" | $base64Name -di)
-echo "Registry is: docker-registry.default.svc:5000"
+echo "Registry is: $DEFAULT_REGISTRY"
 echo -e "Token is: $DECODED_TOKEN \n"
 
 export CHE_ACCESS_TOKEN=$(curl -sSL --data "grant_type=password&client_id=che-public&username=${CHE_USER}&password=${CHE_PASS}" ${TOKEN_ENDPOINT} | jq -r '.access_token')
 echo -e "CHE Access Token is: $CHE_ACCESS_TOKEN \n"
+
+PING_URL="http://$SERVICE_ACCOUNT:$DECODED_TOKEN@$DEFAULT_REGISTRY"
+echo -e "Ping url: $PING_URL \n"
+
+DOCKER_CREDS=$(echo -n "$PING_URL" | $base64Name)
+TIME_STAMP=$(date +"%s")
+echo -e "Docker creds: $DOCKER_CREDS"
+
+# curl -X POST --header 'Content-Type: application/json' --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' -d '{"codenvy:created": '"$TIME_STAMP"',"temporary": "false", "git.contribute.activate.projectSelection":"false", "dockerCredentials": '"$DOCKER_CREDS"'}' http://che-$CHE_NS.$IP_TO_USE.nip.io/api/preferences
 
 echo -e "${GREEN}✔ Che is up and running at che-$CHE_NS.$IP_TO_USE.nip.io\n"
 echo -e "${GREEN}✔ Username: $CHE_USER${RESET}\n"
