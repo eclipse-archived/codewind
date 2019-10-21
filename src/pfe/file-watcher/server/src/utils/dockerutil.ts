@@ -294,38 +294,42 @@ export async function fileExistInContainer(projectID: string, containerName: str
  */
 export async function getFilesInContainerWithTimestamp(projectID: string, containerName: string, fileLocation: string): Promise<Array<logHelper.LogFiles>> {
   logger.logProjectInfo("Looking for all log files in container " + containerName, projectID);
-  const container = docker.getContainer(containerName);
-  const cmd = "ls -lt " + fileLocation + " | tail -n +2";
-  const options = {
-    Cmd: ["sh", "-c", cmd],
-    AttachStdout: true,
-    AttachStderr: true
-  };
+  if (!containerName) {
+    return;
+  } else {
+    const container = docker.getContainer(containerName);
+    const cmd = "ls -lt " + fileLocation + " | tail -n +2";
+    const options = {
+      Cmd: ["sh", "-c", cmd],
+      AttachStdout: true,
+      AttachStderr: true
+    };
 
-  try {
-    // get all data from the container exec
-    const data: string = await containerExec(options, container, projectID);
-    if (data.indexOf("No such file or directory") > -1) {
-      logger.logInfo("No files were found");
-      return [];
-    } else {
-      logger.logInfo("At least one file was found");
-      const files = data.replace(/\n/g, " ").replace(/[^ -~]+/g, "").split(" ").filter((entry: string) => { return entry.trim() != ""; });
-      const fileIndex = 8; // file is the 9th argument from the above command
-      const filesTimestamp: Array<logHelper.LogFiles> = [];
-      for (let index = fileIndex; index < files.length; index = index + fileIndex + 1) {
-        const file = files[index];
-        const dateString = files[index - 1] + " " + files[index - 2] + " " + files[index - 3];
-        filesTimestamp.push({file: path.join(fileLocation, file), time: moment(dateString).unix()});
+    try {
+      // get all data from the container exec
+      const data: string = await containerExec(options, container, projectID);
+      if (data.indexOf("No such file or directory") > -1) {
+        logger.logInfo("No files were found");
+        return [];
+      } else {
+        logger.logInfo("At least one file was found");
+        const files = data.replace(/\n/g, " ").replace(/[^ -~]+/g, "").split(" ").filter((entry: string) => { return entry.trim() != ""; });
+        const fileIndex = 8; // file is the 9th argument from the above command
+        const filesTimestamp: Array<logHelper.LogFiles> = [];
+        for (let index = fileIndex; index < files.length; index = index + fileIndex + 1) {
+          const file = files[index];
+          const dateString = files[index - 1] + " " + files[index - 2] + " " + files[index - 3];
+          filesTimestamp.push({file: path.join(fileLocation, file), time: moment(dateString).unix()});
+        }
+        return filesTimestamp;
       }
-      return filesTimestamp;
+    } catch (err) {
+      const errMsg = "Error checking existence for " + fileLocation + " in container " + containerName;
+      logger.logProjectError(errMsg, projectID);
+      logger.logProjectError(err, projectID);
     }
-  } catch (err) {
-    const errMsg = "Error checking existence for " + fileLocation + " in container " + containerName;
-    logger.logProjectError(errMsg, projectID);
-    logger.logProjectError(err, projectID);
+    return;
   }
-  return;
 }
 
 /**

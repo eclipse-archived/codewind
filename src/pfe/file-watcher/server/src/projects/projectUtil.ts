@@ -83,7 +83,7 @@ export interface ProjectEvent {
 
 export interface ProjectLog {
     app: AppLog;
-    build: BuildLog;
+    build: Array<BuildLog>;
 }
 
 const projectEventErrorMsgs = {
@@ -607,12 +607,12 @@ export async function getProjectLogs(projectInfo: ProjectInfo): Promise<ProjectL
     const logDirectory = path.join(projectConstants.projectsLogDir, projectLogDir);
 
     let applogs: AppLog;
-    let buildlogs: BuildLog;
+    let buildlogs: Array<BuildLog>;
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     const identifier = projectHandler.constructor.name === undefined ? projectType : projectHandler.constructor.name;
 
-    if (projectHandler.getBuildLog) {
-        buildlogs = await projectHandler.getBuildLog(logDirectory);
+    if (projectHandler.getBuildLogTest) {
+        buildlogs = await projectHandler.getBuildLogTest(logDirectory, projectID, projectLocation);
     } else {
         logger.logProjectInfo(identifier + " projects do not specify build logs.", projectID);
     }

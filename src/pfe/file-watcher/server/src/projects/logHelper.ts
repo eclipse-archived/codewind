@@ -126,6 +126,7 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
  */
 export async function getLogFilesFromContainer(projectID: string, containerName: string, logDirectory: string, logSuffix: Array<string>): Promise<Array<LogFiles>> {
     try {
+        if (!containerName) return;
         const logFiles = await dockerutil.getFilesInContainerWithTimestamp(projectID, containerName, logDirectory);
         logSuffix = logSuffix.map((value) => {
             return value + logExtension;
@@ -217,12 +218,29 @@ export async function getLogDir(projectID: string, projectName?: string): Promis
  *
  * @returns Promise<BuildLog>
  */
-export async function getBuildLogs(logDirectory: string, logSuffixes: Array<string>): Promise<BuildLog> {
+export async function getBuildLogs(logDirectory: string, logSuffixes: Array<string>, origin: string = "workspace"): Promise<BuildLog> {
     const buildLog: BuildLog = {
-        origin: "workspace",
+        origin: origin,
         files: []
     };
     buildLog.files = await this.getLogFiles(logDirectory, logSuffixes);
+    return buildLog;
+}
+
+export async function getBuildLogsTest(logsObject: any, suffix: string): Promise<BuildLog> {
+    const buildLog: BuildLog = {
+        origin: logsObject.origin,
+        files: []
+    };
+
+    if (logsObject.origin === "workspace") {
+        buildLog.files = await getLogFiles(logsObject.dir, [suffix]);
+    } else if (logsObject.origin === "container") {
+        if (!logsObject.containerName) return;
+        const logs = await getLogFilesFromContainer(logsObject.projectID, logsObject.containerName, logsObject.dir, [suffix]);
+        buildLog.files = await sortLogFiles(logs);
+    }
+
     return buildLog;
 }
 
