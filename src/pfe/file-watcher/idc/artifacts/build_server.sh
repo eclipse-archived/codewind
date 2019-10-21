@@ -64,6 +64,9 @@ fi
 mkdir -p $HOME/logs
 chown -R 1001 $HOME/logs
 
+echo -e "Touching maven build log file: "$HOME/logs/$MAVEN_BUILD.log""
+touch $HOME/logs/$MAVEN_BUILD.log
+
 if [ -f $SERVER_XML ]; then
 	if [[ $3 && $3 == "config" ]]; then
 		echo "Start mvn build with config change for $LOGNAME $(date)"

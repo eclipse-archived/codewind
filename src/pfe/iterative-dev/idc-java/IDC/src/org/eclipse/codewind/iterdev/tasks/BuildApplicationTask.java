@@ -145,8 +145,18 @@ public class BuildApplicationTask {
 		statusMsg = "buildApplicationTask.compileApplication";
 		Logger.info("Compiling application for project " + context.getAppName());
 		StatusTracker.updateProjectState(context, "build", "inProgress", statusMsg, null);
+
+		boolean logFileTouched = touchLogFile(cmdTemplate, "/home/default/logs/maven.build.log", context);
+		if (!logFileTouched) {
+			statusMsg =  "buildApplicationTask.buildFail";
+			Logger.error("Application build failed for project " + context.getAppName() +
+			". Please check the log in the build log view for more details");
+			StatusTracker.updateProjectState(context, "build", "failed", statusMsg, null);
+			return false;
+		}
+
 		ProcessRunner pr = TaskUtils.runCmd(curRunCmd, context, true);
-		
+
 		Logger.info("Triggering log file event for: maven build log");
 		StatusTracker.newLogFileAvailable(context, "build");
 
@@ -163,6 +173,15 @@ public class BuildApplicationTask {
 			StatusTracker.updateProjectState(context, "build", "failed", statusMsg, null);
 			return false;
 		}
+	}
+
+	private static boolean touchLogFile(String cmdTemplate, String logFilePath, IDCContext context) throws Exception {
+		String curRunCmd = cmdTemplate + " touch " + logFilePath;
+		ProcessRunner pr = TaskUtils.runCmd(curRunCmd, context, true);
+		String buildOutput = pr.getReceived();
+
+		System.out.println(">> Build output: " + buildOutput);
+		return !buildOutput.contains("No such file or directory");
 	}
 
 	private static boolean commandContainsOption(String args[], String curOption) {

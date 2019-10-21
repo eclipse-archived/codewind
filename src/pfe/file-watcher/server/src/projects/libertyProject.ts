@@ -133,7 +133,7 @@ export async function validate(operation: Operation): Promise<void> {
         logger.logProjectError("server.xml not found at: " + fullServerXmlPath, operation.projectInfo.projectID);
 
         const missingServerXmlMsg = await getTranslation("buildApplicationTask.missingServerXml", { path: fullServerXmlPath });
-        await logBuildEvent(operation.projectInfo, missingServerXmlMsg, true);
+        // await logBuildEvent(operation.projectInfo, missingServerXmlMsg, true);
     }
 
     const filepath = operation.projectInfo.location + "/pom.xml";
@@ -193,36 +193,36 @@ export async function validate(operation: Operation): Promise<void> {
  *
  * @returns Promise<any>
  */
-export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isError: boolean): Promise<any> {
-    // have the message match the Maven format
-    const msgLabel = isError ? "ERROR" : "INFO";
-    const fullMsg = `\n[${msgLabel}] ${msg}`;
+// export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isError: boolean): Promise<any> {
+//     // have the message match the Maven format
+//     const msgLabel = isError ? "ERROR" : "INFO";
+//     const fullMsg = `\n[${msgLabel}] ${msg}`;
 
-    const buildLog = await projectUtil.getProjectLogs(projectInfo);
-    let buildLogPath;
+//     const buildLog = await projectUtil.getProjectLogs(projectInfo);
+//     let buildLogPath;
 
-    if (buildLog && buildLog.build && buildLog.build.files) {
-        // the log build event is only called from liberty project and the file info is dumped into maven build file
-        buildLogPath = buildLog.build.files.filter((value) => {
-            return value.indexOf(logHelper.buildLogs.mavenBuild) > -1;
-        })[0];
-    }
-    else {
-        logger.logProjectError("Could not get build log for project", projectInfo.projectID);
-        return;
-    }
+//     if (buildLog && buildLog.build && buildLog.build.files) {
+//         // the log build event is only called from liberty project and the file info is dumped into maven build file
+//         buildLogPath = buildLog.build.files.filter((value) => {
+//             return value.indexOf(logHelper.buildLogs.mavenBuild) > -1;
+//         })[0];
+//     }
+//     else {
+//         logger.logProjectError("Could not get build log for project", projectInfo.projectID);
+//         return;
+//     }
 
-    logger.logProjectInfo(`Writing to build log at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
+//     logger.logProjectInfo(`Writing to build log at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
 
-    // if the build log path is defined, only then we write it
-    if (buildLogPath) {
-        fs.appendFile(buildLogPath, fullMsg, (err) => {
-            if (err) {
-                logger.logProjectError("File system error writing to build log: " + err, projectInfo.projectID);
-            }
-        });
-    }
-}
+//     // if the build log path is defined, only then we write it
+//     if (buildLogPath) {
+//         fs.appendFile(buildLogPath, fullMsg, (err) => {
+//             if (err) {
+//                 logger.logProjectError("File system error writing to build log: " + err, projectInfo.projectID);
+//             }
+//         });
+//     }
+// }
 
 /**
  * @function
@@ -238,6 +238,34 @@ export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isErr
 export async function getBuildLog(logDirectory: string): Promise<BuildLog> {
     const logSuffixes = [logHelper.buildLogs.mavenBuild, logHelper.buildLogs.dockerBuild];
     return await logHelper.getBuildLogs(logDirectory, logSuffixes);
+}
+
+export async function getBuildLogTest(logDirectory: string, projectID: string, projectLocation: string): Promise<Array<BuildLog>> {
+    const buildLogs: Array<BuildLog> = [];
+
+    const logsList: any = {
+        [logHelper.buildLogs.dockerBuild]: {
+            "origin": "workspace",
+            "dir": logDirectory
+        },
+        [logHelper.buildLogs.mavenBuild]: {
+            "origin": "container",
+            "dir": path.join("home", "default", "logs"), // "/home/default/logs"
+            "projectID": projectID,
+            "projectLocation": projectLocation
+        }
+    };
+
+    for (const suffix of Object.keys(logsList)) {
+        const logsInf = logsList[suffix];
+        const buildLog: BuildLog = await logHelper.getBuildLogsTest(logsInf, suffix);
+        if (buildLog) {
+            buildLogs.push(buildLog);
+        }
+    }
+
+    // reverse the array so the latest logs will be on top
+    return buildLogs.reverse();
 }
 
 /**
