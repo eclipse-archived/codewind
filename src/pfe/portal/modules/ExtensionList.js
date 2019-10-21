@@ -24,7 +24,7 @@ const extensionsDir = '/extensions';
 const extensionsPattern = /^(\S+)-(\d+\.\d+\.\d+)\.zip$/; // e.g. extension-name-0.0.1.zip
 const suffixOld = '__old';
 const odoExtensionName = "codewind-odo-extension";
-const odoBinarySource = "https://github.com/openshift/odo/releases/latest/download/odo-linux-amd64"
+const odoBinarySource = "https://mirror.openshift.com/pub/openshift-v4/clients/odo/latest/odo-linux-amd64"
 
 /**
  * The ExtensionList class
