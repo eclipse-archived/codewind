@@ -59,6 +59,7 @@ interface ShellExtensionProjectConfig {
 export class ShellExtensionProject implements IExtensionProject {
 
     supportedType: string;
+    defaultIgnoredPath: string[] = ["*/*"];
 
     private fullPath: string;
     private config: ShellExtensionProjectConfig;
