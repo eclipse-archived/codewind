@@ -252,7 +252,7 @@ function dockerRun() {
 		$IMAGE_COMMAND run --network=codewind_network --name "$project" -dt -P -w /swift-project "$project"
 		if [ $? -eq 0 ]; then
 			echo -e "Copying over source files"
-			docker cp "$WORKSPACE/$projectName" $project:/swift-project
+			docker cp "$workspace/$projectName" "$project":/swift-project
 		fi
 	else
 		$IMAGE_COMMAND run --network=codewind_network --name "$project" -dt -P -v $workspace/"$projectName":/swift-project -w /swift-project "$project"
@@ -317,8 +317,21 @@ function deployLocal() {
 		echo "$project-build container does not exist. Starting container for $project-build..."
 		workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
 		echo "Workspace path used for volume mounting is: "$workspace""
-		$IMAGE_COMMAND run --name $project-build -v "$workspace/$projectName":/swift-project -w /swift-project $project-build /swift-utils/tools-utils.sh build release > "$LOG_FOLDER/$COMPILE_BUILD.log"
-		if [ $? -eq 0 ]; then
+		
+		if [ "$TURBINE_SYNC" == "true" ]; then
+			echo -e "Turbine sync set to $TURBINE_SYNC. Running docker run command without volume mounts"
+			RUN_CMD=$($IMAGE_COMMAND run --name $project-build -w /swift-project $project-build /swift-utils/tools-utils.sh build release > "$LOG_FOLDER/$COMPILE_BUILD.log")
+			RUN_CMD_EC=$?
+			if [ $RUN_CMD_EC -eq 0 ]; then
+				echo -e "Copying over source files back to PFE container from build container"
+				docker cp $project-build:/swift-project/.build-ubuntu "$workspace/$projectName/.build-ubuntu" 
+			fi
+		else
+			RUN_CMD=$($IMAGE_COMMAND run --name $project-build -v "$workspace/$projectName":/swift-project -w /swift-project $project-build /swift-utils/tools-utils.sh build release > "$LOG_FOLDER/$COMPILE_BUILD.log")
+			RUN_CMD_EC=$?
+		fi
+		
+		if [ $RUN_CMD_EC -eq 0 ]; then
 			echo "Start container stage succeeded for $project-build"
 		else
 			echo "Start container stage failed for $project-build" >&2
