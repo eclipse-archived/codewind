@@ -118,7 +118,7 @@ WORKDIR /initialize
 RUN npm ci \
     && npm run build \
     && rm -rf node_modules \
-    && npm ci --production \
+    && npm ci --production
 
 RUN mkdir /portal
 
