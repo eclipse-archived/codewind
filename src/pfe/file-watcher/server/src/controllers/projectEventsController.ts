@@ -79,32 +79,6 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
         let isProjectBuildRequired = false;
 
         try {
-            // TODO - We should merge the two loops but we never want to stop
-            // this one early.
-            // Check if we are in remote mode, while that mode is experimental and non-default.
-            // if (process.env["REMOTE_MODE"] == "true") {
-            //     for (const event of eventArray) {
-            //         // TODO - Check for modify and delete events.
-            //         const filePath = path.join(projectInfo.location, event.path);
-            //         // console.log(`handling project event, event.hasOwnProperty("content")=${event.hasOwnProperty("content")}, filePath=${filePath}:`);
-            //         // console.dir(event);
-            //         if (event.type == "DELETE") {
-            //             if (event.directory) {
-            //                 await rmdir(filePath);
-            //             } else {
-            //                 await unlink(filePath);
-            //             }
-            //         } else if (event.type == "MODIFY") {
-            //             const content = event.content;
-            //             try {
-            //                 await ensureDir(path.dirname(filePath));
-            //                 await writeFile(filePath, content, { encoding: "utf8" });
-            //             } catch (err) {
-            //                 logger.logProjectError(`Codewind was unable to update file ${filePath}`, projectID);
-            //             }
-            //         }
-            //     }
-            // }
             for (let i = 0; i < eventArrayLength; i++) {
                 if (isSettingFileChanged && isProjectBuildRequired) {
                     // Once we have all the necessary flags, dont process any more events
