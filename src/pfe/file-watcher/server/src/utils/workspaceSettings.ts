@@ -93,7 +93,25 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
 
    const workspaceSettingsCache = JSON.parse( await loadWorkspaceSettings(settingsFileContent) );
 
-    return { "statusCode": 200, "workspaceSettings": workspaceSettingsCache};
+   return { "statusCode": 200, "workspaceSettings": workspaceSettingsCache};
+}
+
+export async function writeWorkspaceSettings(newWorkspaceSettings: any): Promise<IWorkspaceSettingsSuccess | IWorkspaceSettingsFailure> {
+    const workspaceSettingsFile = constants.workspaceConstants.workspaceSettingsFile;
+    const workspaceSettingsInfo = await getWorkspaceSettingsInfo();
+    for (const setting in newWorkspaceSettings) {
+        workspaceSettingsInfo[setting] = newWorkspaceSettings[setting];
+    }
+    // Write the new settings and invalidate the cache.
+    const writeStatus = await utils.asyncWriteJSONFile(workspaceSettingsFile, workspaceSettingsInfo);
+    workspaceSettingsInfoCache = undefined;
+
+    if (writeStatus) {
+        return { "statusCode": 200 , workspaceSettings: workspaceSettingsInfo};
+    } else {
+        const msg = "Codewind encountered an error when trying to write the workspace settings file";
+        return { statusCode: 500 , msg };
+    }
 }
 
 /**

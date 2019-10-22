@@ -367,7 +367,7 @@ module.exports = class FileWatcher {
       const retval = await filewatcher.updateStatus(body);
       this.logFWReturnedMsg(retval);
       if (retval.statusCode != 200){
-        throw new Error(`project update ${retval.statusCode} ${retval.err.msg}`);
+        throw new Error(`project update ${retval.statusCode} ${retval.error.msg}`);
       }
     } catch (err) {
       log.error(err);
@@ -392,7 +392,7 @@ module.exports = class FileWatcher {
       const retval = await filewatcher.updateProjectForNewChange(projectID, timestamp, chunk, chunk_total, eventArray);
       this.logFWReturnedMsg(retval);
       if (retval.statusCode != 202){
-        throw new Error(`project update ${retval.statusCode} ${retval.err.msg}`);
+        throw new Error(`project update ${retval.statusCode} ${retval.error.msg}`);
       }
     } catch (err) {
       log.error(err);
@@ -418,7 +418,7 @@ module.exports = class FileWatcher {
           changeType = "update";
         }
         const ignoredPaths = fwProject.ignoredPaths;
-        let pathToMonitor = path.join(project.workspace, project.directory);
+        let pathToMonitor = project.locOnDisk;
         if (process.env.HOST_OS === "windows") {
           pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
         }
@@ -549,6 +549,21 @@ module.exports = class FileWatcher {
       throw new Error(`readWorkspaceSettings ${retval.statusCode} ${retval.workspaceSettings.msg}`);
     }
   }
+
+  async writeWorkspaceSettings(workspaceSettings) {
+    let retval;
+    try{
+      retval = await filewatcher.writeWorkspaceSettings(workspaceSettings);
+      this.logFWReturnedMsg(retval);
+    } catch (err) {
+      log.error(err);
+    }
+    if (retval.statusCode != 200) {
+      throw new Error(`writeWorkspaceSettings ${retval.statusCode}`);
+    }
+    return retval;
+  }
+
 
   /**
    * Function to shutdown the user's projects

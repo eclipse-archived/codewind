@@ -18,6 +18,7 @@ services:
       - codewind-performance
     ports:
       - "127.0.0.1:34000-35000:9090"
+      - "127.0.0.1:9777:9777"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${WORKSPACE_VOLUME}:/codewind-workspace

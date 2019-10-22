@@ -56,11 +56,11 @@ pipeline {
                         fi
 
                         # Copy the license files to the portal, performance, initialize
-                        cp -r $DIR/LICENSE.md ${SRC_DIR}/pfe/portal/
+                        cp -r $DIR/LICENSE ${SRC_DIR}/pfe/portal/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/pfe/portal/
                         cp -r $DIR/LICENSE ${SRC_DIR}/initialize/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/initialize/
-                        cp -r $DIR/LICENSE.md ${SRC_DIR}/performance/
+                        cp -r $DIR/LICENSE ${SRC_DIR}/performance/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/performance/
 
                         # Copy the docs into portal
@@ -69,7 +69,9 @@ pipeline {
                         echo -e "\n+++   DOWNLOADING EXTENSIONS   +++\n";
                         mkdir -p ${SRC_DIR}/pfe/extensions
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
+                        rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
                         curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.5.0.zip https://github.com/eclipse/codewind-appsody-extension/archive/0.5.0.zip
+                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-0.5.0.zip https://github.com/eclipse/codewind-odo-extension/archive/0.5.0.zip
 
                         # BUILD IMAGES
                         # Uses a build file in each of the directories that we want to use
@@ -94,7 +96,44 @@ pipeline {
                     '''
                 }
             }
-        }  
+        }
+
+        stage('Run Turbine Unit Test Suite') {
+            options {
+                timeout(time: 30, unit: 'MINUTES') 
+            }
+            steps {
+                withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
+                    withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
+                        sh '''#!/usr/bin/env bash
+                        echo "Starting unit tests for Turbine..."
+                        export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
+                        
+                        ARCH=`uname -m`;
+                        printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
+
+                        # Install nvm to easily set version of node to use
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                        export NVM_DIR="$HOME/.nvm" 
+                        . $NVM_DIR/nvm.sh
+                        nvm i 10
+                        
+                        # Run eslint on turbine code
+                        cd src/pfe/file-watcher/server
+                        npm install
+                        
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+                            
+                        # Run the unit test suite
+                        echo "Started running Turbine Unit Test Suite"
+                        npm run unit:test
+                        '''
+                    }
+                }
+            }
+        }
         
         stage('Run Codewind test suite') {  
             options {
@@ -115,7 +154,7 @@ pipeline {
                         export NVM_DIR="$HOME/.nvm" 
                         . $NVM_DIR/nvm.sh
                         nvm i 10
-
+                        
                         # Install docker-compose 
                         curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o ~/docker-compose
                         chmod +x ~/docker-compose
@@ -201,7 +240,6 @@ pipeline {
                 }
             }
         } 
-         
         
         stage('Publish Docker images') {
 
@@ -241,6 +279,19 @@ pipeline {
                                 echo "Publishing $REGISTRY/$i:$TAG"
                                 ./script/publish.sh $i $REGISTRY $TAG
                             done
+
+                            if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
+                                IFS='.' # set '.' as delimiter
+                                read -ra TOKENS <<< "$GIT_BRANCH"    
+                                IFS=' ' # reset delimiter
+                                export TAG_CUMULATIVE=${TOKENS[0]}.${TOKENS[1]}
+
+                                for i in "${DOCKER_IMAGE_ARRAY[@]}"
+                                do
+                                    echo "Publishing $REGISTRY/$i:$TAG_CUMULATIVE"
+                                    ./script/publish.sh $i $REGISTRY $TAG_CUMULATIVE
+                                done
+                            fi
                         else
                             echo "Skip publishing docker images for $GIT_BRANCH branch"
                         fi
@@ -249,6 +300,7 @@ pipeline {
              }
         } 
     }
+
     post {
         always {
            sh '''#!/usr/bin/env bash

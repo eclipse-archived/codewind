@@ -15,7 +15,7 @@ LABEL org.label-schema.name="Codewind PFE" org.label-schema.description="Codewin
       org.label-schema.url="https://codewind.dev/" \
       org.label-schema.vcs-url="https://github.com/eclipse/codewind" org.label-schema.vendor="IBM"
 
-ARG BUILDAH_RPM=https://download-ib01.fedoraproject.org/pub/fedora/linux/updates/30/Everything/x86_64/Packages/b/buildah-1.11.2-2.git0bafbfe.fc30.x86_64.rpm
+ARG BUILDAH_RPM=https://cbs.centos.org/kojifiles/packages/buildah/1.11.2/2.git0bafbfe.el7/x86_64/buildah-1.11.2-2.git0bafbfe.el7.x86_64.rpm
 
 # Download the buildah RPM
 RUN curl -f -o buildah.rpm $BUILDAH_RPM
@@ -118,7 +118,7 @@ WORKDIR /initialize
 RUN npm ci \
     && npm run build \
     && rm -rf node_modules \
-    && npm ci --production \
+    && npm ci --production
 
 RUN mkdir /portal
 
@@ -146,8 +146,8 @@ COPY --from=codewind-pfe-portal /portal /portal
 
 # Copy the license files to the root directory
 # to satisfy requirement from legal
-COPY /portal/LICENSE.md /LICENSE
-COPY /portal/NOTICE.md /LICENSE
+COPY /portal/LICENSE /
+COPY /portal/NOTICE.md /
 
 WORKDIR /portal
 ARG NODE_ENV

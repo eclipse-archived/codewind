@@ -43,6 +43,12 @@ function clone () {
     elif [ $TEST_TYPE == "kube" ]; then
         kubectl exec -i $CODEWIND_POD_ID -- bash -c "$PROJECT_CLONE_CMD"
     fi
+    CURL_EC=$?
+    echo "\nCurl exit command is: $CURL_EC"
+    if [[ ($CURL_EC -ne 0) ]]; then
+        echo -e "${RED}Cloning project $1 failed. ${RESET}\n"
+        exit 1
+    fi
 }
 
 function setup {
@@ -105,11 +111,6 @@ function setup {
         echo -e "\n\nProject name is: $PROJECT_NAME, project URL is $PROJECT_URL"
         echo -e "${BLUE}Cloning $PROJECT_URL. ${RESET}"
         clone $PROJECT_NAME $PROJECT_PATH $PROJECT_URL
-
-        if [[ ($? -ne 0) ]]; then
-            echo -e "${RED}Cloning project $PROJECT_NAME failed. ${RESET}\n"
-            exit 1
-        fi
     done
 }
 

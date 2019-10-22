@@ -14,10 +14,9 @@ package-lock.json
 src/performance/webclient/build/
 test/test-results.xml
 test/tmp.json
-src/performance/LICENSE.md
+src/performance/LICENSE
 src/performance/NOTICE.md
-src/pfe/portal/LICENSE.md
+src/pfe/portal/LICENSE
 src/pfe/portal/NOTICE.md
+src/initialize/LICENSE
 src/initialize/NOTICE.md
-src/initialize/LICENSE/LICENSE.md
-src/initialize/LICENSE/NOTICE.md

@@ -97,6 +97,11 @@ router.put('/api/v1/projects/:id/file-changes/:projectWatchStateId/status', func
  * @return 500 if there was an error
  */
 router.post('/api/v1/projects/:id/file-changes', async function (req, res) {
+  if (global.codewind.REMOTE_MODE) {
+    res.sendStatus(200);
+    return;
+  }
+  
   try {
     const user = req.cw_user;
     const projectID = req.sanitizeParams('id');

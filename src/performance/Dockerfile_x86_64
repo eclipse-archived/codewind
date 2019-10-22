@@ -22,29 +22,29 @@ COPY . .
 
 
 ##############################################
-# Build the performance dashboard (Codewind) 
+# Build the performance dashboard (Codewind)
 ##############################################
 
 WORKDIR /usr/src/app/dashboard
 
-# Install nodeJS dependancies
+# Install nodeJS dependencies
 RUN npm install
 
-# Build React webapp 
+# Build React webapp
 RUN npm run build
 
 
 ############################################################
-# We now have a built ui, begin setup of a new runtime image 
+# We now have a built ui, begin setup of a new runtime image
 ############################################################
 
 FROM node:10-alpine
 
-# Copy our license files into the new image
-COPY LICENSE.md NOTICE.md /
-
 # Create app directory
 WORKDIR /usr/src/app
+
+# Copy our license files into the new image
+COPY LICENSE NOTICE.md ./
 
 # Install performance server
 COPY package*.json server.js ./

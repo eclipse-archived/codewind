@@ -16,6 +16,7 @@ const TemplateError = require('../modules/utils/errors/TemplateError');
 
 const router = express.Router();
 const log = new Logger(__filename);
+let updatePromise = null;
 
 /**
  * API Function to return a list of available templates
@@ -44,16 +45,28 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
  * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
  */
-router.get('/api/v1/templates/repositories', sendRepositories);
+router.get('/api/v1/templates/repositories', async (req, res, _next) => {
+  const user = req.cw_user;
+  if (!updatePromise)
+    updatePromise = user.templates.updateRepoListWithReposFromProviders();
+  await updatePromise;
+  await sendRepositories(req, res, _next);
+});
 
 router.post('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const user = req.cw_user;
+  const repositoryName = req.sanitizeBody('name')
   const repositoryUrl = req.sanitizeBody('url');
   const repositoryDescription = req.sanitizeBody('description');
   const isRepoProtected = req.sanitizeBody('protected');
 
   try {
-    await user.templates.addRepository(repositoryUrl, repositoryDescription, isRepoProtected);
+    await user.templates.addRepository(
+      repositoryUrl,
+      repositoryDescription,
+      repositoryName,
+      isRepoProtected
+    );
   } catch (error) {
     log.error(error);
     const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON'];

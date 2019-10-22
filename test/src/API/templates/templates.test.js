@@ -32,7 +32,7 @@ const { pathToApiSpec, testTimeout } = require('../../../config');
 chai.should();
 chai.use(chaiResValidator(pathToApiSpec));
 
-describe('Template API tests', function() {
+describe.skip('Template API tests', function() {
     saveReposBeforeTestAndRestoreAfter();
     before(async function() {
         this.timeout(testTimeout.short);

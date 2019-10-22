@@ -212,7 +212,8 @@ module.exports = class User {
           }
           const project = {};
           const projName = projFile.name;
-          project.pathToMonitor = path.join(projFile.workspace, projFile.directory);
+          project.pathToMonitor = projFile.locOnDisk;
+          //project.pathToMonitor = path.join(projFile.workspace, projFile.directory);
           if (process.env.HOST_OS === "windows") {
             project.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(project.pathToMonitor);
           }
@@ -239,7 +240,7 @@ module.exports = class User {
     } ));
     if (this.workspaceSettingObject == undefined) {
       const workspaceSettingObj = {};
-      workspaceSettingObj.pathToMonitor  = path.join(process.env.HOST_WORKSPACE_DIRECTORY, '/.config');
+      workspaceSettingObj.pathToMonitor  = path.join(global.codewind.CODEWIND_WORKSPACE, '/.config');
       if (process.env.HOST_OS === "windows") {
         workspaceSettingObj.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(workspaceSettingObj.pathToMonitor );
       }
@@ -478,6 +479,9 @@ module.exports = class User {
   async closeProject(project) {
     let projectPath = path.join(this.directories.workspace, project.directory);
     let projectID = project.projectID;
+    // Stop streaming the logs files.
+    project.stopStreamingAllLogs();
+    
     if (await fs.pathExists(projectPath)) {
       try {
         await this.fw.closeProject(project);
@@ -653,6 +657,22 @@ module.exports = class User {
       log.error(`Error in readWorkspaceSettings`);
       log.error(err);
     }
+  }
+
+  /**
+   * Function to write workspace settings
+   */
+  async writeWorkspaceSettings(workspaceSettings) {
+    let retval;
+    try{
+      log.info(`Writing workspace settings file.`);
+      retval = await this.fw.writeWorkspaceSettings(workspaceSettings);
+    } catch (err) {
+      log.error(`Error in writeWorkspaceSettings`);
+      log.error(err);
+    }
+    console.log(`writeWorkspaceSettings returning ${retval}`);
+    return retval;
   }
 
   /**

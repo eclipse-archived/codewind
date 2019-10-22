@@ -40,6 +40,7 @@ public class Constants {
 	public static final String DB_DEPLOYMENT_REGISTRY = "DEPLOYMENT_REGISTRY";
 	public static final String DB_START_MODE = "START_MODE";
 	public static final String DB_DEBUG_PORT = "DEBUG_PORT";
+	public static final String DB_TURBINE_SYNC = "TURBINE_SYNC";
 	
 	// IDC modes
 	public static final String MODE_KEY = "MODE";
@@ -122,6 +123,9 @@ public class Constants {
 	
 	public static final String LOCAL_WORKSPACE_ORIGIN = "localWorkspaceOrigin";
 	public static final String LOCAL_WORKSPACE_ORIGIN_KEY = "--localWorkspaceOrigin=";
+
+	public static final String TURBINE_SYNC = "turbineSync";
+	public static final String TURBINE_SYNC_KEY = "--turbineSync=";
 
 	public static final String DEPLOYMENT_REGISTRY = "DEPLOYMENT_REGISTRY";
 	public static final String DEPLOYMENT_REGISTRY_KEY = "--deploymentRegistry=";
