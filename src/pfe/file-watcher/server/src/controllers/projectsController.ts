@@ -1100,7 +1100,6 @@ export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, sav
 
         logger.logInfo("Fetching logs for project " + projectID);
         const logsJson: projectUtil.ProjectLog = await projectUtil.getProjectLogs(projectInfo);
-        console.log(">>> logsJson received: %j", logsJson);
         let result: ILogFilesResult;
         if (type === "build") {
             result = {
@@ -1125,37 +1124,36 @@ export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, sav
             await io.emitOnListener("projectLogsListChanged", result);
             return { "statusCode": 200, "logs": result };
         } else {
-            logHelper.logFileLists[projectID][type] = result[type];
-            console.log(">>>> logHelper.logFileLists: %j", logHelper.logFileLists);
-            await io.emitOnListener("projectLogsListChanged", result);
-            return { "statusCode": 200, "logs": result };
+            if (!logHelper.logFileLists[projectID][type]) {
+                // when a log file is emitted but of a different type, i.e build log exists but an app log is emitted
+                logHelper.logFileLists[projectID][type] = result[type];
+                await io.emitOnListener("projectLogsListChanged", result);
+                return { "statusCode": 200, "logs": result };
+            } else {
+                // this is the case where the same type of log file exists, so we check if the list is the same as the cached list
+                // for codewind: we don't care about the order of the files list, so we just check if the cache list is a subset of the original list and vice versa
+
+                const logList: Array<BuildLog | AppLog> = logHelper.logFileLists[projectID][type];
+                let areBothArraysEqual = false;
+                logList.forEach((logObject: BuildLog | AppLog, index) => {
+                    const cache = logObject.files;
+                    const original = result[type][index].files;
+                    areBothArraysEqual = cache.every((val: string) => original.includes(val)) && original.every((val: string) => cache.includes(val));
+                    // we can short-circuit out of the for loop if we find that at least one of the object has lists that are not equal
+                    if (!areBothArraysEqual) return;
+                });
+
+                // if the list is different, we emit the new list and update the cache
+                if (!areBothArraysEqual) {
+                    logHelper.logFileLists[projectID][type] = result[type];
+                    await io.emitOnListener("projectLogsListChanged", result);
+                    return { "statusCode": 200, "logs": result };
+                } else {
+                    // if the log file list didn't change just return
+                    return { "statusCode": 200};
+                }
+            }
         }
-
-
-        // else {
-        //     if (!logHelper.logFileLists[projectID][type]) {
-        //         // when a log file is emitted but of a different type, i.e build log exists but an app log is emitted
-        //         logHelper.logFileLists[projectID][type] = result[type];
-        //         await io.emitOnListener("projectLogsListChanged", result);
-        //         return { "statusCode": 200, "logs": result };
-        //     } else {
-        //         // this is the case where the same type of log file exists, so we check if the list is the same as the cached list
-        //         // for codewind: we don't care about the order of the files list, so we just check if the cache list is a subset of the original list and vice versa
-        //         const cache = logHelper.logFileLists[projectID][type].files;
-        //         const original = result[type].files;
-        //         const areBothArraysEqual = cache.every((val: string) => original.includes(val)) && original.every((val: string) => cache.includes(val));
-
-        //         // if the list is different, we emit the new list and update the cache
-        //         if (!areBothArraysEqual) {
-        //             logHelper.logFileLists[projectID][type] = result[type];
-        //             await io.emitOnListener("projectLogsListChanged", result);
-        //             return { "statusCode": 200, "logs": result };
-        //         } else {
-        //             // if the log file list didn't change just return
-        //             return { "statusCode": 200};
-        //         }
-        //     }
-        // }
     } catch (err) {
         let returnCode: 404 | 500;
         if (err.code == "ENOENT")
@@ -1294,7 +1292,7 @@ export interface IShutdownFailure {
 export interface ILogFilesResult {
     projectID: string;
     type: "app" | "build";
-    app?: AppLog;
+    app?: Array<AppLog>;
     build?: Array<BuildLog>;
 }
 

@@ -560,6 +560,15 @@ public class IDC {
 			}
 		}
 
+		String logPathPrefix = HOST_OS.contains("windows") ? "/tmp/liberty/" : "/home/default/app/mc-target/";
+		String messagesLog = logPathPrefix + "liberty/wlp/usr/servers/defaultServer/logs/messages.log";
+		Logger.info("Touching application messages log: " + messagesLog);
+		boolean logFileTouched = BuildApplicationTask.touchLogFile(curRunCmd, messagesLog, context);
+		if (!logFileTouched) {
+			appDb.put(Constants.DB_SERVER_START, "false");
+			StatusTracker.updateProjectState(context, "app", "stopped", "projectStatusController.serverNotStarted",  null);
+		}
+
 		// only messages.log is available till now so we emit that
 		Logger.info("Triggering log file event for: application messages log");
 		StatusTracker.newLogFileAvailable(context, "app");
@@ -578,6 +587,14 @@ public class IDC {
 			StatusTracker.updateProjectState(context, "app", "stopped", "projectStatusController.serverNotStarted",  null);
 		} else {
 			appDb.put(Constants.DB_SERVER_START, "true");
+		}
+
+		String consoleLog = logPathPrefix + "liberty/wlp/usr/servers/defaultServer/logs/console.log";
+		Logger.info("Touching application messages log: " + consoleLog);
+		logFileTouched = BuildApplicationTask.touchLogFile(curRunCmd, consoleLog, context);
+		if (!logFileTouched) {
+			appDb.put(Constants.DB_SERVER_START, "false");
+			StatusTracker.updateProjectState(context, "app", "stopped", "projectStatusController.serverNotStarted",  null);
 		}
 
 		// console.log is available till now so we emit that

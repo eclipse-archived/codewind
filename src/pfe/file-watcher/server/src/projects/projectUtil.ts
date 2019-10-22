@@ -82,7 +82,7 @@ export interface ProjectEvent {
 }
 
 export interface ProjectLog {
-    app: AppLog;
+    app: Array<AppLog>;
     build: Array<BuildLog>;
 }
 
@@ -607,7 +607,7 @@ export async function getProjectLogs(projectInfo: ProjectInfo): Promise<ProjectL
     const logDirectory = path.join(projectConstants.projectsLogDir, projectLogDir);
     const containerName = await getContainerName(projectInfo);
 
-    let applogs: AppLog;
+    let applogs: Array<AppLog>;
     let buildlogs: Array<BuildLog>;
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     const identifier = projectHandler.constructor.name === undefined ? projectType : projectHandler.constructor.name;
@@ -619,8 +619,8 @@ export async function getProjectLogs(projectInfo: ProjectInfo): Promise<ProjectL
     }
     logger.logProjectInfo("buildlog path:\n " + JSON.stringify(buildlogs), projectID, projectName);
 
-    if (projectHandler.getAppLog) {
-        applogs = await projectHandler.getAppLog(logDirectory, projectID, projectName, projectLocation);
+    if (projectHandler.getAppLogT) {
+        applogs = await projectHandler.getAppLogT(logDirectory, projectID, projectName, projectLocation, containerName);
     } else {
         logger.logProjectInfo(identifier + " projects do not specify app logs.", projectID);
     }

@@ -37,6 +37,11 @@ const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debug],
 
 export const supportedType: string = "liberty";
 
+const supportedLogs: any = {
+    "build": [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.mavenBuild],
+    "app": [logHelper.appLogs.console, logHelper.appLogs.messages, logHelper.appLogs.app]
+};
+
 /**
  * @description Relative path from project's root directory
  *
@@ -237,29 +242,30 @@ export async function validate(operation: Operation): Promise<void> {
  */
 export async function getBuildLog(logDirectory: string, projectID: string, projectLocation: string, containerName: string): Promise<Array<BuildLog>> {
     const type = "build";
-    const supportedBuildLogs = logHelper.supportedLogs[supportedType][type];
+    const supportedTypeLogs = supportedLogs[type];
 
     const buildLogs: Array<BuildLog> = [];
-    const logsList = logHelper.logsList;
+    const logsList = logHelper.buildLogsOrigin;
 
-    // need to set project specific configs for docker build
+    // need to set project specific configs for docker build log
     logsList[logHelper.buildLogs.dockerBuild]["dir"] = logDirectory;
 
-    // need to set project specific configs for maven build
+    // need to set project specific configs for maven build log
     logsList[logHelper.buildLogs.mavenBuild]["dir"] = path.join("home", "default", "logs");
     logsList[logHelper.buildLogs.mavenBuild]["projectID"] = projectID;
     logsList[logHelper.buildLogs.mavenBuild]["projectLocation"] = projectLocation;
     logsList[logHelper.buildLogs.mavenBuild]["containerName"] = containerName;
 
-    for (const suffix of supportedBuildLogs) {
+    for (const suffix of supportedTypeLogs) {
         const logsInf = logsList[suffix];
-        const buildLog: BuildLog = await logHelper.getBuildLogsTest(logsInf, suffix);
+        const buildLog: BuildLog = await logHelper.getLogs(type, logsInf, suffix);
         if (buildLog) {
             buildLogs.push(buildLog);
         }
     }
 
     // reverse the array so the latest logs will be on top
+    console.log(">>> Build logs: %j", buildLogs);
     return buildLogs.reverse();
 }
 
@@ -315,6 +321,46 @@ export async function getAppLog(logDirectory: string, projectID: string, project
     appLog.files = await logHelper.sortLogFiles(allAppLogFiles);
 
     return appLog;
+}
+
+export async function getAppLogT(logDirectory: string, projectID: string, projectName: string, projectLocation: string, containerName: string): Promise<Array<AppLog>> {
+    const type = "app";
+    const supportedTypeLogs = supportedLogs[type];
+
+    const appLogs: Array<AppLog> = [];
+    const logsList = logHelper.appLogsOrigin;
+
+    // need to set project specific configs for app container log
+    logsList[logHelper.appLogs.app]["dir"] = logDirectory;
+
+    // need to set project specific configs for console and messages log
+    const inContainerAppLogsDirectory = path.join(process.env.HOST_OS === "windows" ? path.join("tmp", "liberty") : path.join("home", "default", "app", "mc-target"), "liberty", "wlp", "usr", "servers", "defaultServer", "logs");
+
+    logsList[logHelper.appLogs.messages]["dir"] = inContainerAppLogsDirectory;
+    logsList[logHelper.appLogs.messages]["projectID"] = projectID;
+    logsList[logHelper.appLogs.messages]["projectLocation"] = projectLocation;
+    logsList[logHelper.appLogs.messages]["containerName"] = containerName;
+
+    logsList[logHelper.appLogs.console]["dir"] = inContainerAppLogsDirectory;
+    logsList[logHelper.appLogs.console]["projectID"] = projectID;
+    logsList[logHelper.appLogs.console]["projectLocation"] = projectLocation;
+    logsList[logHelper.appLogs.console]["containerName"] = containerName;
+
+    console.log(">>> Log List: %j", logsList);
+
+    for (const suffix of supportedTypeLogs) {
+        console.log(">>> Suffix: %s", suffix);
+        const logsInf = logsList[suffix];
+        const appLog: AppLog = await logHelper.getLogs(type, logsInf, suffix);
+        console.log(">>> AppLog log: %j\n", appLog);
+        if (appLog) {
+            appLogs.push(appLog);
+        }
+    }
+
+    // reverse the array so the latest logs will be on top
+    console.log(">>> App logs: %j", appLogs);
+    return appLogs.reverse();
 }
 
 /**
