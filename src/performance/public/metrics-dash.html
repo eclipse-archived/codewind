@@ -207,11 +207,11 @@
   <script type="module" src="parse-prometheus-text-format/dist/parse-prometheus-text-format.umd.js"></script>
 
   <script>
-    const appPort = 32770; // TODO get this from PORT env variable?
+    const appPort = 32769; // TODO get this from PORT env variable?
     const pollInterval = 2000;
 
     // TODO remove when finished dev
-    let maxPolls = 8;
+    let maxPolls = 10;
     let numPollsToMetricsCodewind = 0;
     let numPollsToMetricsCodewindProfiling = 0;
 
@@ -308,9 +308,6 @@
 
     function updateFlameGraph(profilingSamples) {
       const newProfilingSamples = profilingSamples.slice(indexOfLastViewedSample);
-      console.log('newProfilingSample');
-      console.log(newProfilingSample);
-
       newProfilingSamples.forEach(sample => {
         processProfilingSample(sample);
       });
@@ -350,7 +347,8 @@
       // };
       const cpuData = { time, };
       const memData = { time, };
-      const httpRequestData = { time, }; // TODO add handler
+      const aggregateDataAboutHttpRequestsReceivedInSnapshot = { time, };
+      const alltimeDataAboutHttpRequests = {};
       const eventLoopData = {};
       const gcData = { time, }
       for (const metric of metrics) {
@@ -360,6 +358,7 @@
           cpuData.system = metricValue;
         } else if (['process_cpu_used_ratio', 'cpu_process_cpu_load_percent'].includes(metric.name)) {
           cpuData.process = metricValue;
+
         } else if (metric.name === 'os_resident_memory_bytes') {
           memData.physical_used = metricValue;
         } else if (metric.name === 'process_resident_memory_bytes') {
@@ -367,10 +366,32 @@
         } else if (metric.name === 'process_virtual_memory_bytes') {
           memData.virtual = metricValue;
 
-        } else if (metric.name === 'http_request_duration_microseconds') {
-          httpRequestData.total = metricsObj.count;
-          httpRequestData.average = metricsObj.sum / metricsObj.count;
-          httpRequestData.longest = metricsObj.quantiles['0.99']; // TODO: check this is the correct
+        } else if (metric.name === 'http_requests_total') {
+          aggregateDataAboutHttpRequestsReceivedInSnapshot.total = metricsObj.value;
+        } else if (metric.name === 'http_requests_duration_average_microseconds') {
+          aggregateDataAboutHttpRequestsReceivedInSnapshot.average = metricsObj.value;
+        } else if (metric.name === 'http_requests_duration_max_microseconds') {
+          aggregateDataAboutHttpRequestsReceivedInSnapshot.url = metricsObj.labels.handler;;
+          aggregateDataAboutHttpRequestsReceivedInSnapshot.longest = metricsObj.value;
+
+        } else if (metric.name.includes('alltime')) {
+          for (const metricsObj of metric.metrics) {
+            const path = metricsObj.labels.handler;
+            if (!alltimeDataAboutHttpRequests.hasOwnProperty(path)) {
+              alltimeDataAboutHttpRequests[path] = {
+                // TODO: make this dynamic
+                url: `GET ${path}`,
+              };
+            }
+            const alltimeData = alltimeDataAboutHttpRequests[path];
+            if (metric.name === 'http_requests_alltime_total') {
+              alltimeData.hits = metricsObj.value;
+            } else if (metric.name === 'http_requests_alltime_duration_average_microseconds') {
+              alltimeData.averageResponseTime = metricsObj.value;
+            } else if (metric.name === 'http_requests_alltime_duration_max_microseconds') {
+              alltimeData.longestResponseTime = metricsObj.value;
+            }
+          }
 
         } else if (metric.name === 'event_loop_tick_min_milliseconds') {
           eventLoopData.minimum = metricValue;
@@ -407,9 +428,8 @@
         numCPULoadSamples,
       );
       updateMemData(JSON.stringify(memData));
-      // console.log('httpRequestData');
-      // console.log(httpRequestData);
-      updateHttpData(JSON.stringify(httpRequestData));
+      updateHttpData(JSON.stringify(aggregateDataAboutHttpRequestsReceivedInSnapshot));
+      httpSummary.updateURLData(JSON.stringify(Object.values(alltimeDataAboutHttpRequests)));
       updateLoopData(JSON.stringify(eventLoopData));
       processGCData(gcData);
     }
