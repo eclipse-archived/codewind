@@ -44,6 +44,24 @@ export const appLogs = Object.assign(defaultAppLogs, libertyAppLogs);
 
 export const logExtension = ".log";
 
+export const logsList: any = {
+    [buildLogs.dockerBuild]: {
+        "origin": "workspace"
+    },
+    [buildLogs.mavenBuild]: {
+        "origin": "container",
+    }
+};
+
+export const supportedLogs: any = {
+    "liberty": {
+        "build": [buildLogs.dockerBuild, buildLogs.mavenBuild]
+    },
+    "nodejs": {
+        "build": [buildLogs.dockerBuild]
+    }
+};
+
 export interface LogFiles {
     file: string;
     time: number;
@@ -128,6 +146,7 @@ export async function getLogFilesFromContainer(projectID: string, containerName:
     try {
         if (!containerName) return;
         const logFiles = await dockerutil.getFilesInContainerWithTimestamp(projectID, containerName, logDirectory);
+        console.log(">>> logFiles in directory %s: %j", logDirectory, logFiles);
         logSuffix = logSuffix.map((value) => {
             return value + logExtension;
         });
@@ -236,9 +255,12 @@ export async function getBuildLogsTest(logsObject: any, suffix: string): Promise
     if (logsObject.origin === "workspace") {
         buildLog.files = await getLogFiles(logsObject.dir, [suffix]);
     } else if (logsObject.origin === "container") {
+        console.log(">>> Came here to with container name: %s", logsObject.containerName);
         if (!logsObject.containerName) return;
+        console.log(">>> Came here to get container log files");
         const logs = await getLogFilesFromContainer(logsObject.projectID, logsObject.containerName, logsObject.dir, [suffix]);
         buildLog.files = await sortLogFiles(logs);
+        console.log(">>> Received container log files: %j", buildLog.files);
     }
 
     return buildLog;

@@ -131,7 +131,6 @@ export async function validate(operation: Operation): Promise<void> {
 
     if (!await utils.asyncFileExists(fullServerXmlPath)) {
         logger.logProjectError("server.xml not found at: " + fullServerXmlPath, operation.projectInfo.projectID);
-
         const missingServerXmlMsg = await getTranslation("buildApplicationTask.missingServerXml", { path: fullServerXmlPath });
         // await logBuildEvent(operation.projectInfo, missingServerXmlMsg, true);
     }
@@ -224,6 +223,7 @@ export async function validate(operation: Operation): Promise<void> {
 //     }
 // }
 
+
 /**
  * @function
  * @description Get the build log for a liberty project.
@@ -235,28 +235,23 @@ export async function validate(operation: Operation): Promise<void> {
  *
  * @returns Promise<BuildLog>
  */
-export async function getBuildLog(logDirectory: string): Promise<BuildLog> {
-    const logSuffixes = [logHelper.buildLogs.mavenBuild, logHelper.buildLogs.dockerBuild];
-    return await logHelper.getBuildLogs(logDirectory, logSuffixes);
-}
+export async function getBuildLog(logDirectory: string, projectID: string, projectLocation: string, containerName: string): Promise<Array<BuildLog>> {
+    const type = "build";
+    const supportedBuildLogs = logHelper.supportedLogs[supportedType][type];
 
-export async function getBuildLogTest(logDirectory: string, projectID: string, projectLocation: string): Promise<Array<BuildLog>> {
     const buildLogs: Array<BuildLog> = [];
+    const logsList = logHelper.logsList;
 
-    const logsList: any = {
-        [logHelper.buildLogs.dockerBuild]: {
-            "origin": "workspace",
-            "dir": logDirectory
-        },
-        [logHelper.buildLogs.mavenBuild]: {
-            "origin": "container",
-            "dir": path.join("home", "default", "logs"), // "/home/default/logs"
-            "projectID": projectID,
-            "projectLocation": projectLocation
-        }
-    };
+    // need to set project specific configs for docker build
+    logsList[logHelper.buildLogs.dockerBuild]["dir"] = logDirectory;
 
-    for (const suffix of Object.keys(logsList)) {
+    // need to set project specific configs for maven build
+    logsList[logHelper.buildLogs.mavenBuild]["dir"] = path.join("home", "default", "logs");
+    logsList[logHelper.buildLogs.mavenBuild]["projectID"] = projectID;
+    logsList[logHelper.buildLogs.mavenBuild]["projectLocation"] = projectLocation;
+    logsList[logHelper.buildLogs.mavenBuild]["containerName"] = containerName;
+
+    for (const suffix of supportedBuildLogs) {
         const logsInf = logsList[suffix];
         const buildLog: BuildLog = await logHelper.getBuildLogsTest(logsInf, suffix);
         if (buildLog) {

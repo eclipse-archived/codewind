@@ -168,9 +168,26 @@ export async function getContainerStatus(projectInfo: ProjectInfo, containerName
  *
  * @returns Promise<BuildLog>
  */
-export async function getBuildLog(logDirectory: string): Promise<BuildLog> {
-    const logSuffixes = [logHelper.buildLogs.dockerBuild];
-    return await logHelper.getBuildLogs(logDirectory, logSuffixes);
+export async function getBuildLog(logDirectory: string): Promise<Array<BuildLog>> {
+    const type = "build";
+    const supportedBuildLogs = logHelper.supportedLogs[supportedType][type];
+
+    const buildLogs: Array<BuildLog> = [];
+    const logsList =  logHelper.logsList;
+
+    // need to set project specific configs for docker build
+    logsList[logHelper.buildLogs.dockerBuild]["dir"] = logDirectory;
+
+    for (const suffix of supportedBuildLogs) {
+        const logsInf = logsList[suffix];
+        const buildLog: BuildLog = await logHelper.getBuildLogsTest(logsInf, suffix);
+        if (buildLog) {
+            buildLogs.push(buildLog);
+        }
+    }
+
+    // reverse the array so the latest logs will be on top
+    return buildLogs.reverse();
 }
 
 /**

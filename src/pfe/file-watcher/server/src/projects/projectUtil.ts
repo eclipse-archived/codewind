@@ -605,14 +605,15 @@ export async function getProjectLogs(projectInfo: ProjectInfo): Promise<ProjectL
     const projectType = projectInfo.projectType;
     const projectLogDir = await logHelper.getLogDir(projectID, projectName);
     const logDirectory = path.join(projectConstants.projectsLogDir, projectLogDir);
+    const containerName = await getContainerName(projectInfo);
 
     let applogs: AppLog;
     let buildlogs: Array<BuildLog>;
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     const identifier = projectHandler.constructor.name === undefined ? projectType : projectHandler.constructor.name;
 
-    if (projectHandler.getBuildLogTest) {
-        buildlogs = await projectHandler.getBuildLogTest(logDirectory, projectID, projectLocation);
+    if (projectHandler.getBuildLog) {
+        buildlogs = await projectHandler.getBuildLog(logDirectory, projectID, projectLocation, containerName);
     } else {
         logger.logProjectInfo(identifier + " projects do not specify build logs.", projectID);
     }

@@ -146,7 +146,9 @@ public class BuildApplicationTask {
 		Logger.info("Compiling application for project " + context.getAppName());
 		StatusTracker.updateProjectState(context, "build", "inProgress", statusMsg, null);
 
-		boolean logFileTouched = touchLogFile(cmdTemplate, "/home/default/logs/maven.build.log", context);
+		String mavenBuildLog = "/home/default/logs/maven.build.log";
+		Logger.info("Touching maven build log file: " + mavenBuildLog);
+		boolean logFileTouched = touchLogFile(cmdTemplate, mavenBuildLog, context);
 		if (!logFileTouched) {
 			statusMsg =  "buildApplicationTask.buildFail";
 			Logger.error("Application build failed for project " + context.getAppName() +
