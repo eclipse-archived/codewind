@@ -238,21 +238,21 @@ module.exports = class User {
         }
       }
     } ));
-    // if (this.workspaceSettingObject == undefined) {
-    //   const workspaceSettingObj = {};
-    //   workspaceSettingObj.pathToMonitor  = path.join(global.codewind.CODEWIND_WORKSPACE, '/.config');
-    //   if (process.env.HOST_OS === "windows") {
-    //     workspaceSettingObj.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(workspaceSettingObj.pathToMonitor );
-    //   }
-    //   workspaceSettingObj.projectID = crypto.randomBytes(16).toString("hex");
-    //   workspaceSettingObj.ignoredPaths = [];
-    //   workspaceSettingObj.projectWatchStateId = crypto.randomBytes(16).toString("hex");
-    //   workspaceSettingObj.type = "non-project";
-    //   this.workspaceSettingObject = workspaceSettingObj;
-    //   watchList.projects.push(workspaceSettingObj);
-    // }else {
-    //   watchList.projects.push(this.workspaceSettingObject);
-    // }
+    if (this.workspaceSettingObject == undefined) {
+      const workspaceSettingObj = {};
+      workspaceSettingObj.pathToMonitor  = path.join(global.codewind.CODEWIND_WORKSPACE, '/.config');
+      if (process.env.HOST_OS === "windows") {
+        workspaceSettingObj.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(workspaceSettingObj.pathToMonitor );
+      }
+      workspaceSettingObj.projectID = crypto.randomBytes(16).toString("hex");
+      workspaceSettingObj.ignoredPaths = [];
+      workspaceSettingObj.projectWatchStateId = crypto.randomBytes(16).toString("hex");
+      workspaceSettingObj.type = "non-project";
+      this.workspaceSettingObject = workspaceSettingObj;
+      watchList.projects.push(workspaceSettingObj);
+    }else {
+      watchList.projects.push(this.workspaceSettingObject);
+    }
     log.debug("The watch list: " + JSON.stringify(watchList));
     return watchList;
   }
