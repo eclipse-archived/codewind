@@ -27,6 +27,11 @@ const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debugNo
 
 export const supportedType = "nodejs";
 
+const supportedLogs: any = {
+    "build": [logHelper.buildLogs.dockerBuild],
+    "app": [logHelper.appLogs.app]
+};
+
 /**
  * @description Relative path from project's root directory
  *
@@ -170,17 +175,17 @@ export async function getContainerStatus(projectInfo: ProjectInfo, containerName
  */
 export async function getBuildLog(logDirectory: string): Promise<Array<BuildLog>> {
     const type = "build";
-    const supportedBuildLogs = logHelper.supportedLogs[supportedType][type];
+    const supportedBuildLogs = supportedLogs[type];
 
     const buildLogs: Array<BuildLog> = [];
-    const logsList =  logHelper.logsList;
+    const logsList =  logHelper.buildLogsOrigin;
 
     // need to set project specific configs for docker build
     logsList[logHelper.buildLogs.dockerBuild]["dir"] = logDirectory;
 
     for (const suffix of supportedBuildLogs) {
         const logsInf = logsList[suffix];
-        const buildLog: BuildLog = await logHelper.getBuildLogsTest(logsInf, suffix);
+        const buildLog: BuildLog = await logHelper.getLogs(type, logsInf, suffix);
         if (buildLog) {
             buildLogs.push(buildLog);
         }

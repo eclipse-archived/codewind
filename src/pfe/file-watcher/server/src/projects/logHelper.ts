@@ -19,6 +19,7 @@ import * as logger from "../utils/logger";
 import * as projectsController from "../controllers/projectsController";
 import * as dockerutil from "../utils/dockerutil";
 import { BuildLog, AppLog } from "./Project";
+import { ContainerStates } from "../projects/constants";
 
 const statAsync = promisify(fs.stat);
 const existsSync = promisify(fs.exists);
@@ -44,23 +45,31 @@ export const appLogs = Object.assign(defaultAppLogs, libertyAppLogs);
 
 export const logExtension = ".log";
 
-export const logsList: any = {
+export const buildLogsOrigin: any = {
     [buildLogs.dockerBuild]: {
         "origin": "workspace"
     },
     [buildLogs.mavenBuild]: {
         "origin": "container",
-    }
+    },
 };
 
-export const supportedLogs: any = {
-    "liberty": {
-        "build": [buildLogs.dockerBuild, buildLogs.mavenBuild]
+export const appLogsOrigin: any = {
+    [appLogs.app]: {
+        "origin": "workspace"
     },
-    "nodejs": {
-        "build": [buildLogs.dockerBuild]
-    }
+    [appLogs.console]: {
+        "origin": "container"
+    },
+    [appLogs.messages]: {
+        "origin": "container"
+    },
 };
+
+// export const appLogsOrigin: any = {
+//     "container": [appLogs.console, appLogs.messages],
+//     "workspace": [appLogs.app]
+// };
 
 export interface LogFiles {
     file: string;
@@ -144,9 +153,12 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
  */
 export async function getLogFilesFromContainer(projectID: string, containerName: string, logDirectory: string, logSuffix: Array<string>): Promise<Array<LogFiles>> {
     try {
-        if (!containerName) return;
+        console.log(">> Container name: %s", containerName);
+        console.log(">> Is container active: ", await dockerutil.isContainerActive(containerName));
+        const containerIsActive = await dockerutil.isContainerActive(containerName);
+        console.log(">> Condition: ", !containerName || containerIsActive.state === ContainerStates.containerNotFound);
+        if (!containerName || containerIsActive.state === ContainerStates.containerNotFound) return [];
         const logFiles = await dockerutil.getFilesInContainerWithTimestamp(projectID, containerName, logDirectory);
-        console.log(">>> logFiles in directory %s: %j", logDirectory, logFiles);
         logSuffix = logSuffix.map((value) => {
             return value + logExtension;
         });
@@ -246,24 +258,25 @@ export async function getBuildLogs(logDirectory: string, logSuffixes: Array<stri
     return buildLog;
 }
 
-export async function getBuildLogsTest(logsObject: any, suffix: string): Promise<BuildLog> {
-    const buildLog: BuildLog = {
+export async function getLogs(logType: string, logsObject: any, suffix: string): Promise<BuildLog> {
+    if (logType.toLowerCase() != "build" && logType.toLowerCase() != "app") return;
+
+    const log: AppLog | BuildLog = {
         origin: logsObject.origin,
         files: []
     };
 
     if (logsObject.origin === "workspace") {
-        buildLog.files = await getLogFiles(logsObject.dir, [suffix]);
+        log.files = await getLogFiles(logsObject.dir, [suffix]);
     } else if (logsObject.origin === "container") {
-        console.log(">>> Came here to with container name: %s", logsObject.containerName);
         if (!logsObject.containerName) return;
-        console.log(">>> Came here to get container log files");
         const logs = await getLogFilesFromContainer(logsObject.projectID, logsObject.containerName, logsObject.dir, [suffix]);
-        buildLog.files = await sortLogFiles(logs);
-        console.log(">>> Received container log files: %j", buildLog.files);
+        if (logs.length === 0) return;
+        console.log(">> Log files from container: %j", logs);
+        log.files = await sortLogFiles(logs);
     }
 
-    return buildLog;
+    return log;
 }
 
 /**

@@ -177,7 +177,7 @@ public class BuildApplicationTask {
 		}
 	}
 
-	private static boolean touchLogFile(String cmdTemplate, String logFilePath, IDCContext context) throws Exception {
+	public static boolean touchLogFile(String cmdTemplate, String logFilePath, IDCContext context) throws Exception {
 		String curRunCmd = cmdTemplate + " touch " + logFilePath;
 		ProcessRunner pr = TaskUtils.runCmd(curRunCmd, context, true);
 		String buildOutput = pr.getReceived();
