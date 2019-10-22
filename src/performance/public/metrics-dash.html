@@ -376,14 +376,14 @@
 
         } else if (metric.name.includes('alltime')) {
           for (const metricsObj of metric.metrics) {
-            const path = metricsObj.labels.handler;
-            if (!alltimeDataAboutHttpRequests.hasOwnProperty(path)) {
-              alltimeDataAboutHttpRequests[path] = {
-                // TODO: make this dynamic
-                url: `GET ${path}`,
+            const { handler, method } = metricsObj.labels;
+            const endpoint = `${method.toUpperCase()} ${handler}`;
+            if (!alltimeDataAboutHttpRequests.hasOwnProperty(endpoint)) {
+              alltimeDataAboutHttpRequests[endpoint] = {
+                url: endpoint,
               };
             }
-            const alltimeData = alltimeDataAboutHttpRequests[path];
+            const alltimeData = alltimeDataAboutHttpRequests[endpoint];
             if (metric.name === 'http_requests_alltime_total') {
               alltimeData.hits = metricsObj.value;
             } else if (metric.name === 'http_requests_alltime_duration_average_microseconds') {
