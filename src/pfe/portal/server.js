@@ -132,6 +132,7 @@ async function main() {
     // Workspace location *inside* the our container.
     // Volume is mounted from WORKSPACE_DIRECTORY in docker-compose.yaml.
     CODEWIND_WORKSPACE: '/codewind-workspace/',
+    CODEWIND_TEMP_WORKSPACE: '/cw-temp/',
     REMOTE_MODE: (process.env.REMOTE_MODE == 'true') || false,
   };
 

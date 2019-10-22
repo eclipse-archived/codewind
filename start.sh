@@ -16,7 +16,7 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 DEVMODE=false
-REMOTE_MODE=false
+REMOTE_MODE=true
 
 printf "\n\n${BLUE}Running 'start.sh' to start codewind. $RESET\n";
 
@@ -24,7 +24,7 @@ while [ "$#" -gt 0 ]; do
   case $1 in
     -t|--tag) TAG="$2"; shift 2;;
     --dev) DEVMODE=true; shift 1;;
-    --remote) REMOTE_MODE=true; shift 1;;
+    --remoteOff) REMOTE_MODE=false; shift 1;;
     *) shift 1;;
   esac
 done
