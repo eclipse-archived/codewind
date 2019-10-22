@@ -189,7 +189,8 @@ module.exports = class Project {
   projectPath(inPortal) {
     // this.workspace will include the user directory if we are in multi-user.
     // Codewind workspace is hardcoded in filewatcherDeployment.js
-    return (inPortal ? this.workspace + this.directory :  `/codewind-workspace/${this.directory}` );
+    // return (inPortal ? this.workspace + this.directory :  `/codewind-workspace/${this.directory}` );
+    return join(this.workspace, this.directory);
   }
 
   /**

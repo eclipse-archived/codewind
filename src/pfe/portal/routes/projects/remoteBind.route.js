@@ -93,6 +93,8 @@ async function bindStart(req, res) {
       let extension = user.extensionList.getExtensionForProjectType(projectType);
       if (extension) {
         projectDetails.extension = extension;
+        if (extension.config.needsMount)
+          projectDetails.workspace = global.codewind.MOUNTED_WORKSPACE;
       }
     }
 
@@ -114,7 +116,7 @@ async function bindStart(req, res) {
   try {
     let tempDirName = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE);
     await fs.mkdir(tempDirName);
-    let dirName = path.join(global.codewind.CODEWIND_WORKSPACE, newProject.name);
+    let dirName = path.join(newProject.workspace, newProject.name);
     await fs.mkdir(dirName);
     let tempProjPath = path.join(tempDirName, newProject.name);
     await fs.mkdir(tempProjPath);
@@ -225,14 +227,14 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         // interfere with the current build
 
         if (project.buildStatus != "inProgress") {
-          const globalProjectPath =  path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
+          const globalProjectPath =  path.join(project.workspace, project.name);
           // We now need to remove any files that have been deleted from the global workspace
           await Promise.all(
             filesToDelete.map(oldFile => exec(`rm -rf ${path.join(globalProjectPath, oldFile)}`))
           );
 
           // now move temp project to real project
-          cwUtils.copyProject(pathToTempProj, global.codewind.CODEWIND_WORKSPACE);
+          cwUtils.copyProject(pathToTempProj, project.workspace);
           
           let projectRoot = getProjectSourceRoot(project);
           // need to delete from the build container as well
@@ -367,7 +369,7 @@ async function bindEnd(req, res) {
 
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     // now move temp project to real project
-    cwUtils.copyProject(pathToCopy, path.join(global.codewind.CODEWIND_WORKSPACE, project.name))
+    cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.name))
 
     let updatedProject = {
       projectID,

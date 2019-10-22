@@ -175,10 +175,10 @@ module.exports = class User {
           const projFile = await fs.readJson(file);
           // should now have a project name
           const projName = projFile.name;
-          let settingsFilePath = path.join(this.directories.workspace, projName, '.cw-settings');
+          let settingsFilePath = path.join(projFile.workspace, projName, '.cw-settings');
           const settFileExists = await fs.pathExists(settingsFilePath);
           const settFile = settFileExists ? await fs.readJson(settingsFilePath) : {};
-          let project = new Project({ ...projFile, ...settFile }, this.directories.workspace);
+          let project = new Project({ ...projFile, ...settFile }, projFile.workspace);
           this.projectList.addProject(project);
         } catch (err) {
           // Corrupt project inf file
@@ -307,7 +307,7 @@ module.exports = class User {
    * @param projectJson, the project to add to the projectList
    */
   async createProject(projectJson) {
-    let project = new Project(projectJson, this.directories.workspace);
+    let project = new Project(projectJson, projectJson.workspace);
     this.projectList.addProject(project);
     // If checkIfMetricsAvailable errors, it should not break project creation
     // try {
