@@ -348,6 +348,7 @@
       const cpuData = { time, };
       const memData = { time, };
       const aggregateDataAboutHttpRequestsReceivedInSnapshot = { time, };
+      const aggregateDataAboutHttpRequestsSentDuringSnapshot = { time, };
       const alltimeDataAboutHttpRequests = {};
       const eventLoopData = {};
       const gcData = { time, }
@@ -373,6 +374,14 @@
         } else if (metric.name === 'http_requests_duration_max_microseconds') {
           aggregateDataAboutHttpRequestsReceivedInSnapshot.url = metricsObj.labels.handler;;
           aggregateDataAboutHttpRequestsReceivedInSnapshot.longest = metricsObj.value;
+
+        } else if (metric.name === 'http_outbound_requests_total') {
+          aggregateDataAboutHttpRequestsSentDuringSnapshot.total = metricsObj.value;
+        } else if (metric.name === 'http_outbound_requests_duration_average_microseconds') {
+          aggregateDataAboutHttpRequestsSentDuringSnapshot.average = metricsObj.value;
+        } else if (metric.name === 'http_outbound_requests_duration_max_microseconds') {
+          aggregateDataAboutHttpRequestsSentDuringSnapshot.url = metricsObj.labels.handler;
+          aggregateDataAboutHttpRequestsSentDuringSnapshot.longest = metricsObj.value;
 
         } else if (metric.name.includes('alltime')) {
           for (const metricsObj of metric.metrics) {
@@ -428,8 +437,11 @@
         numCPULoadSamples,
       );
       updateMemData(JSON.stringify(memData));
+
       updateHttpData(JSON.stringify(aggregateDataAboutHttpRequestsReceivedInSnapshot));
+      updateHttpOBData(JSON.stringify(aggregateDataAboutHttpRequestsSentDuringSnapshot));
       httpSummary.updateURLData(JSON.stringify(Object.values(alltimeDataAboutHttpRequests)));
+
       updateLoopData(JSON.stringify(eventLoopData));
       processGCData(gcData);
     }
