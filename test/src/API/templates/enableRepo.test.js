@@ -22,7 +22,7 @@ const {
 
 chai.should();
 
-describe('Batch enabling repositories', function() {
+describe.skip('Batch enabling repositories', function() {
     const tests = {
         '1 repo': {
             testRepos: [{ ...sampleRepos.fromAppsodyExtension }],
