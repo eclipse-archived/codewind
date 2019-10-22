@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
+
 import org.apache.commons.codec.digest.DigestUtils;
 
 public class IDCContext {
@@ -34,8 +35,6 @@ public class IDCContext {
 	private final String projectID;
 
 	private final String rootPassword;
-
-	private String turbineSync;
 
 	private final String localWorkspaceOrigin;
 
@@ -60,9 +59,12 @@ public class IDCContext {
 	private final boolean isWin;
 
 	private final String imageCommand;
+
+	private final String imagesFormatString;
+
+	private String turbineSync;
 	
-	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String deploymentRegistry, 
-	String startMode, String debugPort, String turbineSync) throws IOException {
+	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String deploymentRegistry, String startMode, String debugPort, String turbineSync) throws IOException {
 
 		this.rootPassword = rootPassword;
 
@@ -157,6 +159,16 @@ public class IDCContext {
 		else {
 			this.imageCommand = "docker";
 		}
+
+		// for buildah on K8, the format is Name
+		// for docker on local, the format is Repository
+		if (this.isK8s) {
+			this.imagesFormatString = "\"{{.Name}}\"";
+		}
+		else {
+			this.imagesFormatString = "\"{{.Repository}}\"";
+		}
+
 	}
 
 	public DBMap getAppDb() {
@@ -374,5 +386,9 @@ public class IDCContext {
 
 	public String getImageCommand() {
 		return this.imageCommand;
+	}
+
+	public String getImagesFormatString() {
+		return this.imagesFormatString;
 	}
 }

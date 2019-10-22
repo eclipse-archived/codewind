@@ -44,7 +44,8 @@ function install {
         fi
         echo -e "${BLUE}Downloading devfile from:${GREEN} $DEFAULT_DEVFILE ${RESET}\n"
         
-        HTTPSTATUS=$(curl $DEFAULT_DEVFILE | curl -s --header "Content-Type: text/yaml" --request POST --data-binary @- -D- -o/dev/null http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true 2>/dev/null | sed -n 3p | cut -d ' ' -f2) 
+        echo -e "Che access token set to $CHE_ACCESS_TOKEN"
+        HTTPSTATUS=$(curl $DEFAULT_DEVFILE | curl -s --header "Content-Type: text/yaml" --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request POST --data-binary @- -D- -o/dev/null http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true 2>/dev/null | sed -n 3p | cut -d ' ' -f2) 
         if [[ $HTTPSTATUS -ne 201 ]]; then
             echo -e "${RED}Codewind workspace setup has failed. ${RESET}\n"
             exit 1
@@ -90,7 +91,7 @@ function uninstall {
 
             # Stop the Codewind Workspace
             echo -e "${BLUE}Stopping the Codewind Workspace ${RESET}\n"
-            HTTPSTATUS=$(curl -I --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID/runtime 2>/dev/null | head -n 1| cut -d$' ' -f2)
+            HTTPSTATUS=$(curl -I --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID/runtime 2>/dev/null | head -n 1| cut -d$' ' -f2)
             if [[ $HTTPSTATUS -ne 204 ]]; then
                 echo -e "${RED}Codewind workspace has failed to stop. Will attempt to remove the workspace... ${RESET}\n"
             fi
@@ -100,7 +101,7 @@ function uninstall {
 
             # Remove the Codewind Workspace
             echo -e "${BLUE}Removing the Codewind Workspace ${RESET}\n"
-            HTTPSTATUS=$(curl -I --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID 2>/dev/null | head -n 1| cut -d$' ' -f2)
+            HTTPSTATUS=$(curl -I --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request DELETE http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/$WORKSPACE_ID 2>/dev/null | head -n 1| cut -d$' ' -f2)
             if [[ $HTTPSTATUS -ne 204 ]]; then
                 echo -e "${RED}Codewind workspace has failed to be removed... ${RESET}\n"
                 exit 1

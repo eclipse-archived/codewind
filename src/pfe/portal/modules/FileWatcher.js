@@ -367,7 +367,7 @@ module.exports = class FileWatcher {
       const retval = await filewatcher.updateStatus(body);
       this.logFWReturnedMsg(retval);
       if (retval.statusCode != 200){
-        throw new Error(`project update ${retval.statusCode} ${retval.err.msg}`);
+        throw new Error(`project update ${retval.statusCode} ${retval.error.msg}`);
       }
     } catch (err) {
       log.error(err);
@@ -392,7 +392,7 @@ module.exports = class FileWatcher {
       const retval = await filewatcher.updateProjectForNewChange(projectID, timestamp, chunk, chunk_total, eventArray);
       this.logFWReturnedMsg(retval);
       if (retval.statusCode != 202){
-        throw new Error(`project update ${retval.statusCode} ${retval.err.msg}`);
+        throw new Error(`project update ${retval.statusCode} ${retval.error.msg}`);
       }
     } catch (err) {
       log.error(err);
