@@ -348,6 +348,7 @@
       const cpuData = { time, };
       const memData = { time, };
       const aggregateDataAboutHttpRequestsReceivedInSnapshot = { time, };
+      const aggregateDataAboutHttpsRequestsReceivedInSnapshot = { time, };
       const aggregateDataAboutHttpRequestsSentDuringSnapshot = { time, };
       const aggregateDataAboutHttpsRequestsSentDuringSnapshot = { time, };
       const alltimeDataAboutHttpRequests = {};
@@ -375,6 +376,14 @@
         } else if (metric.name === 'http_requests_duration_max_microseconds') {
           aggregateDataAboutHttpRequestsReceivedInSnapshot.url = metricsObj.labels.handler;
           aggregateDataAboutHttpRequestsReceivedInSnapshot.longest = metricsObj.value;
+
+        } else if (metric.name === 'https_requests_total') {
+          aggregateDataAboutHttpsRequestsReceivedInSnapshot.total = metricsObj.value;
+        } else if (metric.name === 'https_requests_duration_average_microseconds') {
+          aggregateDataAboutHttpsRequestsReceivedInSnapshot.average = metricsObj.value;
+        } else if (metric.name === 'https_requests_duration_max_microseconds') {
+          aggregateDataAboutHttpsRequestsReceivedInSnapshot.url = metricsObj.labels.handler;
+          aggregateDataAboutHttpsRequestsReceivedInSnapshot.longest = metricsObj.value;
 
         } else if (metric.name === 'http_outbound_requests_total') {
           aggregateDataAboutHttpRequestsSentDuringSnapshot.total = metricsObj.value;
@@ -448,6 +457,7 @@
       updateMemData(JSON.stringify(memData));
 
       updateHttpData(JSON.stringify(aggregateDataAboutHttpRequestsReceivedInSnapshot));
+      updateHttpsData(JSON.stringify(aggregateDataAboutHttpsRequestsReceivedInSnapshot));
       updateHttpOBData(JSON.stringify(aggregateDataAboutHttpRequestsSentDuringSnapshot));
       updateHttpsOBData(JSON.stringify(aggregateDataAboutHttpsRequestsSentDuringSnapshot));
       httpSummary.updateURLData(JSON.stringify(Object.values(alltimeDataAboutHttpRequests)));
