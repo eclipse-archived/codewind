@@ -12,6 +12,7 @@ CODEWIND_ODO_EXTENSION="codewind-odo-extension"
 CLUSTER_IP=
 CLUSTER_USER=
 CLUSTER_PASS=
+CLUSTER_PORT=8443
 CLUSTER_TOKEN=
 CHE_ROUTE=
 CHE_VERSION="next"
@@ -32,6 +33,7 @@ Options:
     --cluster-ip        Cluster ip - Required
     --cluster-user      Cluster username - Required
     --cluster-pass      Cluster password - Required
+    --cluster-port      Cluster port - default: 8443
     --cluster-token     Cluster token - Optional (can be used instead of user/pass)
     --che-route         Che version to install - default: uses the cluster-ip
     --che-ns            Namespace to install Che - default: che
@@ -60,9 +62,10 @@ function displayMsg() {
 
 function installChe() {
     if [ -f "$OPERATOR_YAML" ]; then
-            chectl server:start --platform=openshift --installer=operator --che-operator-cr-yaml=$OPERATOR_YAML -n $CHE_NS
-        else
-            displayMsg 1 "Failed to find operator yaml file on disk." true
+        chectl server:start --platform=openshift --installer=operator --che-operator-cr-yaml=$OPERATOR_YAML -n $CHE_NS
+        displayMsg $? "Failed to clean deploy che." true
+    else
+        displayMsg 1 "Failed to find operator yaml file on disk." true
     fi
     oc adm policy add-scc-to-group privileged system:serviceaccounts:$CHE_NS
     displayMsg $? "Failed to set admin policy: privileged." true
@@ -82,6 +85,9 @@ while [ "$#" -gt 0 ]; do
                                 ;;
         --cluster-pass )        shift
                                 CLUSTER_PASS=$1
+                                ;;
+        --cluster-port )        shift
+                                CLUSTER_PORT=$1
                                 ;;
         --cluster-token )       shift
                                 CLUSTER_TOKEN=$1
@@ -150,7 +156,7 @@ else
     LOGIN_FLAGS="-u $CLUSTER_USER -p $CLUSTER_PASS"
 fi
 
-oc login $CLUSTER_IP:8443 ${LOGIN_FLAGS}
+oc login $CLUSTER_IP:$CLUSTER_PORT ${LOGIN_FLAGS}
 displayMsg $? "Failed to login. Please check your credentials and try again." true
 
 # check if chectl is installed
@@ -199,8 +205,14 @@ displayMsg $? "Failed to apply kubectl ODO role binding." true
 if [[ $CLEAN_DEPLOY == "y" ]]; then
     echo -e "${BLUE}> Clean deploying che${RESET}"
     oc delete project $CHE_NS --force --grace-period=0 > /dev/null 2>&1
+    PROJECTS_LIST=$(oc projects 2>&1)
+    echo -e -n "${BLUE}>> Waiting for cleaning up old che resources .${RESET}"
+    while [[ ! "$PROJECTS_LIST" =~ "$CHE_NS" ]]; do
+        PROJECTS_LIST=$(oc projects 2>&1)
+        sleep 2s
+        echo -e -n "${BLUE}.${RESET}"
+    done
     installChe
-    displayMsg $? "Failed to clean deploy che." true
 
     echo -e "${BLUE}> Creating a service account ${RESET}"
     oc create serviceaccount "$SERVICE_ACCOUNT"
