@@ -93,7 +93,7 @@ async function bindStart(req, res) {
       let extension = user.extensionList.getExtensionForProjectType(projectType);
       if (extension) {
         projectDetails.extension = extension;
-        if (extension.config.needsMount)
+        if (extension.config.needsMount && !global.codewind.RUNNING_IN_K8S)
           projectDetails.workspace = global.codewind.MOUNTED_WORKSPACE;
       }
     }
