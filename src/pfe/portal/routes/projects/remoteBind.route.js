@@ -370,7 +370,7 @@ async function bindEnd(req, res) {
 
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     // now move temp project to real project
-    cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.name))
+    cwUtils.copyProject(pathToCopy, project.workspace);
 
     let updatedProject = {
       projectID,
