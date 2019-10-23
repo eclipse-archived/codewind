@@ -48,7 +48,7 @@ const logsOrigin: any = {
         },
         "workspace": {
             "files": {
-                [logHelper.buildLogs.dockerBuild]: undefined
+                [logHelper.buildLogs.dockerBuild]: undefined // set during runtime
             }
         }
     },
@@ -64,7 +64,7 @@ const logsOrigin: any = {
         },
         "workspace": {
             "files": {
-                [logHelper.appLogs.app]: undefined
+                [logHelper.appLogs.app]: undefined // set during runtime
             },
         }
     }

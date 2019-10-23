@@ -27,9 +27,21 @@ const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debugNo
 
 export const supportedType = "nodejs";
 
-const supportedLogs: any = {
-    "build": [logHelper.buildLogs.dockerBuild],
-    "app": [logHelper.appLogs.app]
+const logsOrigin: any = {
+    "build": {
+        "workspace": {
+            "files": {
+                [logHelper.buildLogs.dockerBuild]: undefined
+            }
+        }
+    },
+    "app": {
+        "workspace": {
+            "files": {
+                [logHelper.appLogs.app]: undefined
+            },
+        }
+    }
 };
 
 /**
@@ -165,47 +177,9 @@ export async function getContainerStatus(projectInfo: ProjectInfo, containerName
     }
 }
 
-/**
- * @function
- * @description Get the build log for a node.js project.
- *
- * @param logDirectory <Required | String> - The log location directory.
- *
- * @returns Promise<BuildLog>
- */
-// export async function getBuildLog(logDirectory: string): Promise<Array<BuildLog>> {
-//     const type = "build";
-//     const supportedBuildLogs = supportedLogs[type];
-
-//     const buildLogs: Array<BuildLog> = [];
-//     const logsList =  logHelper.buildLogsOrigin;
-
-//     // need to set project specific configs for docker build
-//     logsList[logHelper.buildLogs.dockerBuild]["dir"] = logDirectory;
-
-//     for (const suffix of supportedBuildLogs) {
-//         const logsInf = logsList[suffix];
-//         const buildLog: BuildLog = await logHelper.getLogs(type, logsInf, suffix);
-//         if (buildLog) {
-//             buildLogs.push(buildLog);
-//         }
-//     }
-
-//     // reverse the array so the latest logs will be on top
-//     return buildLogs.reverse();
-// }
-
-/**
- * @function
- * @description Get the app log for a node.js project.
- *
- * @param logDirectory <Required | String> - The log location directory.
- *
- * @returns Promise<AppLog>
- */
-export async function getAppLog(logDirectory: string): Promise<AppLog> {
-    const logSuffixes = [logHelper.appLogs.app];
-    return await logHelper.getAppLogs(logDirectory, logSuffixes);
+export async function getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
+    if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+    return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
 }
 
 /**
