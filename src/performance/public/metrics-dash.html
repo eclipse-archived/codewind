@@ -207,7 +207,7 @@
   <script type="module" src="parse-prometheus-text-format/dist/parse-prometheus-text-format.umd.js"></script>
 
   <script>
-    const appPort = 32769; // TODO get this from PORT env variable?
+    const appPort = 32769; // TODO: get this from PORT env variable? or set dynamically via a route?
     const pollInterval = 2000;
 
     // TODO remove when finished dev
@@ -216,7 +216,7 @@
     let numPollsToMetricsCodewindProfiling = 0;
 
     // CPU Summary data
-    let totalProcessCPULoad = 0.0; // TODO should this be here or in cw-node-metrics?
+    let totalProcessCPULoad = 0.0; // TODO should this be here or in cw-node-metrics? (Recommended to be in here because: https://prometheus.io/docs/instrumenting/writing_exporters/#drop-less-useful-statistics)
     let totalSystemCPULoad = 0.0; // TODO should this be here or in cw-node-metrics?
     let numCPULoadSamples = 0;
 
