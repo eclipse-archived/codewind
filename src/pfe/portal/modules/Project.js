@@ -64,7 +64,7 @@ module.exports = class Project {
     if (args.extension) this.extension = args.extension;
 
     // locOnDisk is used by the UI and needs to match what it sees.
-    this.locOnDisk = `${global.codewind.CODEWIND_WORKSPACE}${this.directory}`;
+    if (args.locOnDisk) this.locOnDisk = args.locOnDisk;
     
     // Project status information
     this.host = args.host || '';
