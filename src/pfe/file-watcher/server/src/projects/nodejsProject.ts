@@ -173,27 +173,27 @@ export async function getContainerStatus(projectInfo: ProjectInfo, containerName
  *
  * @returns Promise<BuildLog>
  */
-export async function getBuildLog(logDirectory: string): Promise<Array<BuildLog>> {
-    const type = "build";
-    const supportedBuildLogs = supportedLogs[type];
+// export async function getBuildLog(logDirectory: string): Promise<Array<BuildLog>> {
+//     const type = "build";
+//     const supportedBuildLogs = supportedLogs[type];
 
-    const buildLogs: Array<BuildLog> = [];
-    const logsList =  logHelper.buildLogsOrigin;
+//     const buildLogs: Array<BuildLog> = [];
+//     const logsList =  logHelper.buildLogsOrigin;
 
-    // need to set project specific configs for docker build
-    logsList[logHelper.buildLogs.dockerBuild]["dir"] = logDirectory;
+//     // need to set project specific configs for docker build
+//     logsList[logHelper.buildLogs.dockerBuild]["dir"] = logDirectory;
 
-    for (const suffix of supportedBuildLogs) {
-        const logsInf = logsList[suffix];
-        const buildLog: BuildLog = await logHelper.getLogs(type, logsInf, suffix);
-        if (buildLog) {
-            buildLogs.push(buildLog);
-        }
-    }
+//     for (const suffix of supportedBuildLogs) {
+//         const logsInf = logsList[suffix];
+//         const buildLog: BuildLog = await logHelper.getLogs(type, logsInf, suffix);
+//         if (buildLog) {
+//             buildLogs.push(buildLog);
+//         }
+//     }
 
-    // reverse the array so the latest logs will be on top
-    return buildLogs.reverse();
-}
+//     // reverse the array so the latest logs will be on top
+//     return buildLogs.reverse();
+// }
 
 /**
  * @function

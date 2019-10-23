@@ -590,7 +590,7 @@ public class IDC {
 		}
 
 		String consoleLog = logPathPrefix + "liberty/wlp/usr/servers/defaultServer/logs/console.log";
-		Logger.info("Touching application messages log: " + consoleLog);
+		Logger.info("Touching application console log: " + consoleLog);
 		logFileTouched = BuildApplicationTask.touchLogFile(curRunCmd, consoleLog, context);
 		if (!logFileTouched) {
 			appDb.put(Constants.DB_SERVER_START, "false");
