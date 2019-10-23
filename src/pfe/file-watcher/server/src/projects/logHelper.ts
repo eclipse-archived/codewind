@@ -54,23 +54,6 @@ export const buildLogsOrigin: any = {
     },
 };
 
-export const appLogsOrigin: any = {
-    [appLogs.app]: {
-        "origin": "workspace"
-    },
-    [appLogs.console]: {
-        "origin": "container"
-    },
-    [appLogs.messages]: {
-        "origin": "container"
-    },
-};
-
-// export const appLogsOrigin: any = {
-//     "container": [appLogs.console, appLogs.messages],
-//     "workspace": [appLogs.app]
-// };
-
 export interface LogFiles {
     file: string;
     time: number;
@@ -87,12 +70,10 @@ export const logFileLists: any = {};
  *
  * @returns Promise<Array<string>>
  */
-export async function getLogFiles(logDirectory: string, logSuffix: Array<string>): Promise<Array<string>> {
+export async function getLogFiles(logDirectory: string, logSuffix: Array<string>): Promise<Array<LogFiles>> {
     try {
         const logs = await getLogFilesWithTimestamp(logDirectory, logSuffix);
-        const logList = await sortLogFiles(logs);
-
-        return logList;
+        return logs;
     } catch (err) {
         logger.logError("Failed to get the list of log files from " + logDirectory);
         logger.logError(err);
@@ -109,8 +90,17 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
   *
   * @returns Promise<Array<string>>
   */
- export async function getLogFilesWithTimestamp(logDirectory: string, logSuffix: Array<string>): Promise<Array<LogFiles>> {
+ export async function getLogFilesWithTimestamp(logDirectory: string, logSuffix: Array<string>, checkLogFile?: string): Promise<Array<LogFiles>> {
     const logs: Array<LogFiles> = [];
+
+    if (checkLogFile) {
+        const logPath = path.join(logDirectory, checkLogFile);
+        if (await utils.asyncFileExists(logPath)) {
+            const timestamp = (await statAsync(logPath)).mtime.getTime();
+            logs.push({file: logPath, time: timestamp});
+        }
+        return logs;
+    }
 
      for (const suffix of logSuffix) {
         const logPath = path.join(logDirectory, suffix + ".log");
@@ -122,6 +112,19 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
     }
 
      return logs;
+}
+
+ export async function getLogFolderWithTimestamp(logDirectory: string, folderName: string): Promise<Array<LogFiles>> {
+    const logs: Array<LogFiles> = [];
+
+    const logPath = path.join(logDirectory, folderName);
+    console.log("Came here with log path: %s", logPath);
+    console.log(await utils.asyncFileExists(logPath));
+    if (await utils.asyncFileExists(logPath)) {
+        const timestamp = (await statAsync(logPath)).mtime.getTime();
+        logs.push({file: logPath, time: timestamp});
+    }
+    return logs;
 }
 
  /**
@@ -153,10 +156,7 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
  */
 export async function getLogFilesFromContainer(projectID: string, containerName: string, logDirectory: string, logSuffix: Array<string>): Promise<Array<LogFiles>> {
     try {
-        console.log(">> Container name: %s", containerName);
-        console.log(">> Is container active: ", await dockerutil.isContainerActive(containerName));
         const containerIsActive = await dockerutil.isContainerActive(containerName);
-        console.log(">> Condition: ", !containerName || containerIsActive.state === ContainerStates.containerNotFound);
         if (!containerName || containerIsActive.state === ContainerStates.containerNotFound) return [];
         const logFiles = await dockerutil.getFilesInContainerWithTimestamp(projectID, containerName, logDirectory);
         logSuffix = logSuffix.map((value) => {
@@ -258,25 +258,70 @@ export async function getBuildLogs(logDirectory: string, logSuffixes: Array<stri
     return buildLog;
 }
 
-export async function getLogs(logType: string, logsObject: any, suffix: string): Promise<BuildLog> {
-    if (logType.toLowerCase() != "build" && logType.toLowerCase() != "app") return;
+export async function getLogs(type: string, logsOrigin: any, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
+    // check if type is either "build" or "app"
+    if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
 
-    const log: AppLog | BuildLog = {
-        origin: logsObject.origin,
-        files: []
-    };
+    let resultLogs: Array<AppLog | BuildLog> = [];
 
-    if (logsObject.origin === "workspace") {
-        log.files = await getLogFiles(logsObject.dir, [suffix]);
-    } else if (logsObject.origin === "container") {
-        if (!logsObject.containerName) return;
-        const logs = await getLogFilesFromContainer(logsObject.projectID, logsObject.containerName, logsObject.dir, [suffix]);
-        if (logs.length === 0) return;
-        console.log(">> Log files from container: %j", logs);
-        log.files = await sortLogFiles(logs);
+    // log origins: container or workspace
+    const keys = Object.keys(logsOrigin[type]);
+
+    for (const origin of keys) {
+        const currentLog: AppLog | BuildLog = {
+            origin: origin,
+            files: []
+        };
+
+        // log types: files or dirs
+        const logTypes = Object.keys(logsOrigin[type][origin]);
+
+        for (const logType of logTypes) {
+            let allLogs: LogFiles[] = [];
+
+            // each type of log
+            const logs = Object.keys(logsOrigin[type][origin][logType]);
+
+            for (const log of logs) {
+                const logDir = logsOrigin[type][origin][logType][log] || logDirectory;
+                const receivedLogs: LogFiles[] = logType === "files" ? await getLogFromFiles(origin, logDir, log, projectID, containerName) : await getLogFromDirs(origin, logDir, log, projectID, containerName);
+
+                if (receivedLogs && receivedLogs.length > 0) {
+                    allLogs = allLogs.concat(receivedLogs);
+                }
+            }
+
+            if (allLogs && allLogs.length > 0) {
+                if (logType === "files") {
+                    currentLog.files = await sortLogFiles(allLogs);
+                    currentLog.bestTime = allLogs.map((value: LogFiles) => {
+                        if (currentLog.files[0] === value.file) return value.time;
+                    })[0];
+                } else if (logType === "dirs") {
+                    currentLog.dirs = await sortLogFiles(allLogs);
+                    currentLog.bestTime = allLogs.map((value: LogFiles) => {
+                        if (currentLog.dirs[0] === value.file) return value.time;
+                    })[0];
+                }
+            }
+        }
+
+        if (currentLog.files.length > 0) {
+            resultLogs.push(currentLog);
+        }
     }
 
-    return log;
+    // sort each object according to their latest time and drop the bestTime key
+    if (resultLogs && resultLogs.length > 0) {
+        resultLogs = resultLogs.sort((a, b) => {
+            return b.bestTime - a.bestTime;
+        }).map((obj: AppLog) => {
+            delete obj.bestTime;
+            return obj;
+        });
+    }
+
+    return resultLogs;
 }
 
 /**
@@ -295,4 +340,32 @@ export async function getAppLogs(logDirectory: string, logSuffixes: Array<string
     };
     appLog.files = await this.getLogFiles(logDirectory, logSuffixes);
     return appLog;
+}
+
+export async function getLogFromFiles(origin: string = "workspace", logDirectory: string, logSuffix: string, projectID: string, containerName: string): Promise<LogFiles[]> {
+    let logs;
+
+    if (origin.toLowerCase() === "workspace") {
+        logs = await getLogFiles(logDirectory, [logSuffix]);
+    } else if (origin.toLowerCase() === "container") {
+        if (!containerName) return;
+        logs = await getLogFilesFromContainer(projectID, containerName, logDirectory, [logSuffix]);
+    }
+
+    if (logs.length === 0) return;
+    return logs;
+}
+
+export async function getLogFromDirs(origin: string = "workspace", logDirectory: string, folderName: string, projectID: string,  containerName: string): Promise<LogFiles[]> {
+    let logs;
+
+    if (origin.toLowerCase() === "workspace") {
+        logs = await getLogFolderWithTimestamp(logDirectory, folderName);
+    } else if (origin.toLowerCase() === "container") {
+        if (!containerName) return;
+        logs = await dockerutil.getFoldersInContainerWithTimestamp(projectID, containerName, logDirectory, folderName);
+    }
+
+    if (logs.length === 0) return;
+    return logs;
 }

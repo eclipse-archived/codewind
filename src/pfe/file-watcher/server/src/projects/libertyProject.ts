@@ -37,9 +37,37 @@ const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debug],
 
 export const supportedType: string = "liberty";
 
-const supportedLogs: any = {
-    "build": [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.mavenBuild],
-    "app": [logHelper.appLogs.console, logHelper.appLogs.messages, logHelper.appLogs.app]
+const inContainerAppLogsDirectory = path.join(process.env.HOST_OS === "windows" ? path.join(path.sep, "tmp", "liberty") : path.join(path.sep, "home", "default", "app", "mc-target"), "liberty", "wlp", "usr", "servers", "defaultServer", "logs");
+
+const logsOrigin: any = {
+    "build": {
+        "container": {
+            "files": {
+                [logHelper.buildLogs.mavenBuild]: path.join(path.sep, "home", "default", "logs")
+            }
+        },
+        "workspace": {
+            "files": {
+                [logHelper.buildLogs.dockerBuild]: undefined
+            }
+        }
+    },
+    "app": {
+        "container": {
+            "files": {
+                [logHelper.appLogs.console]: inContainerAppLogsDirectory,
+                [logHelper.appLogs.messages]: inContainerAppLogsDirectory
+            },
+            "dirs": {
+                "ffdc": inContainerAppLogsDirectory
+            }
+        },
+        "workspace": {
+            "files": {
+                [logHelper.appLogs.app]: undefined
+            },
+        }
+    }
 };
 
 /**
@@ -240,127 +268,9 @@ export async function validate(operation: Operation): Promise<void> {
  *
  * @returns Promise<BuildLog>
  */
-export async function getBuildLog(logDirectory: string, projectID: string, projectLocation: string, containerName: string): Promise<Array<BuildLog>> {
-    const type = "build";
-    const supportedTypeLogs = supportedLogs[type];
-
-    const buildLogs: Array<BuildLog> = [];
-    const logsList = logHelper.buildLogsOrigin;
-
-    // need to set project specific configs for docker build log
-    logsList[logHelper.buildLogs.dockerBuild]["dir"] = logDirectory;
-
-    // need to set project specific configs for maven build log
-    logsList[logHelper.buildLogs.mavenBuild]["dir"] = path.join("home", "default", "logs");
-    logsList[logHelper.buildLogs.mavenBuild]["projectID"] = projectID;
-    logsList[logHelper.buildLogs.mavenBuild]["projectLocation"] = projectLocation;
-    logsList[logHelper.buildLogs.mavenBuild]["containerName"] = containerName;
-
-    for (const suffix of supportedTypeLogs) {
-        const logsInf = logsList[suffix];
-        const buildLog: BuildLog = await logHelper.getLogs(type, logsInf, suffix);
-        if (buildLog) {
-            buildLogs.push(buildLog);
-        }
-    }
-
-    // reverse the array so the latest logs will be on top
-    console.log(">>> Build logs: %j", buildLogs);
-    return buildLogs.reverse();
-}
-
-/**
- * @function
- * @description Get the app log for a liberty project.
- *
- * @param logDirectory <Required | String> - The log location directory.
- * @param projectID <Required | String> - An alphanumeric identifier for a project.
- * @param projectName <Required | String> - The project name.
- * @param projectLocation <Required | String> - The project location directory.
- *
- * @returns Promise<AppLog>
- */
-export async function getAppLog(logDirectory: string, projectID: string, projectName: string, projectLocation: string): Promise<AppLog> {
-    const appLogOrigin = process.env.HOST_OS === "windows" ? "container" : "workspace";
-    const appLog: AppLog = {
-        origin: appLogOrigin,
-        files: []
-    };
-
-    const logDirs = [
-        path.resolve(projectLocation + "/mc-target/liberty/wlp/usr/servers/defaultServer/logs/"), // for console.log and messages.log
-        logDirectory, // for app.log
-    ];
-
-    const logSuffixes = [logHelper.libertyAppLogs.console, logHelper.libertyAppLogs.messages];
-    const ffdclogPath = path.join(logDirs[0], `ffdc`);
-    const inWorkspaceLogFiles = await logHelper.getLogFilesWithTimestamp(logDirs[1], [logHelper.appLogs.app]);
-
-    let allAppLogFiles: logHelper.LogFiles[] = [];
-
-    if (process.env.HOST_OS === "windows") {
-        logDirs[0] = "/tmp/liberty/liberty/wlp/usr/servers/defaultServer/logs/";
-
-        const containerName = projectUtil.getDefaultContainerName(projectID, projectLocation);
-        const inContainerLogFiles = await logHelper.getLogFilesFromContainer(projectID, containerName, logDirs[0], logSuffixes);
-        allAppLogFiles = inContainerLogFiles ? inContainerLogFiles.concat(inWorkspaceLogFiles) : allAppLogFiles;
-
-        if ((await dockerutil.fileExistInContainer(projectID, containerName, ffdclogPath, projectName))) {
-            appLog.dir = ffdclogPath;
-        }
-    } else {
-        const inAppLogFiles = await logHelper.getLogFilesWithTimestamp(logDirs[0], logSuffixes);
-        allAppLogFiles = inAppLogFiles ? inAppLogFiles.concat(inWorkspaceLogFiles) : allAppLogFiles;
-
-        if (await utils.asyncFileExists(ffdclogPath)) {
-            appLog.dir = ffdclogPath;
-        }
-    }
-
-    // sort the log files in the recent order
-    appLog.files = await logHelper.sortLogFiles(allAppLogFiles);
-
-    return appLog;
-}
-
-export async function getAppLogT(logDirectory: string, projectID: string, projectName: string, projectLocation: string, containerName: string): Promise<Array<AppLog>> {
-    const type = "app";
-    const supportedTypeLogs = supportedLogs[type];
-
-    const appLogs: Array<AppLog> = [];
-    const logsList = logHelper.appLogsOrigin;
-
-    // need to set project specific configs for app container log
-    logsList[logHelper.appLogs.app]["dir"] = logDirectory;
-
-    // need to set project specific configs for console and messages log
-    const inContainerAppLogsDirectory = path.join(process.env.HOST_OS === "windows" ? path.join("tmp", "liberty") : path.join("home", "default", "app", "mc-target"), "liberty", "wlp", "usr", "servers", "defaultServer", "logs");
-
-    logsList[logHelper.appLogs.messages]["dir"] = inContainerAppLogsDirectory;
-    logsList[logHelper.appLogs.messages]["projectID"] = projectID;
-    logsList[logHelper.appLogs.messages]["projectLocation"] = projectLocation;
-    logsList[logHelper.appLogs.messages]["containerName"] = containerName;
-
-    logsList[logHelper.appLogs.console]["dir"] = inContainerAppLogsDirectory;
-    logsList[logHelper.appLogs.console]["projectID"] = projectID;
-    logsList[logHelper.appLogs.console]["projectLocation"] = projectLocation;
-    logsList[logHelper.appLogs.console]["containerName"] = containerName;
-
-    console.log(">>> Log List: %j", logsList);
-
-    for (const suffix of supportedTypeLogs) {
-        console.log(">>> Suffix: %s", suffix);
-        const logsInf = logsList[suffix];
-        const appLog: AppLog = await logHelper.getLogs(type, logsInf, suffix);
-        console.log(">>> AppLog log: %j\n", appLog);
-        if (appLog) {
-            appLogs.push(appLog);
-        }
-    }
-
-    // reverse the array so the latest logs will be on top
-    console.log(">>> App logs: %j", appLogs);
-    return appLogs.reverse();
+export async function getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
+    if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+    return logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
 }
 
 /**

@@ -47,12 +47,15 @@ export interface ProjectMetadata {
 export interface AppLog {
     origin: string;
     files: string[];
-    dir?: string;
+    dirs?: string[];
+    bestTime?: number;
 }
 
 export interface BuildLog {
     origin: string;
     files: string[];
+    dirs?: string[];
+    bestTime?: number;
 }
 
 export interface BuildRequest {

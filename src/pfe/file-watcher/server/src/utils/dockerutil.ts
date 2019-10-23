@@ -263,7 +263,7 @@ export async function isContainerActive(containerName: string): Promise<any> {
 export async function fileExistInContainer(projectID: string, containerName: string, fileLocation: string, projectName: string): Promise<Boolean> {
   logger.logProjectInfo("Looking for file existency for " + fileLocation + " in container " + containerName, projectID, projectName);
   const container = docker.getContainer(containerName);
-  const cmd = "[ -e " + fileLocation + " ]&& echo 'true' || echo 'false'";
+  const cmd = `ls ${fileLocation}`;
   const options = {
     Cmd: ["sh", "-c", cmd],
     AttachStdout: true,
@@ -272,7 +272,7 @@ export async function fileExistInContainer(projectID: string, containerName: str
 
   try {
     const data: string = await containerExec(options, container, projectID);
-    const returnVal = Boolean(data.replace(/\W/g, "")); // remove nonalphanumeric Ascii chars
+    const returnVal = data.indexOf(`No such file or directory`) === -1;
     logger.logProjectInfo("File exists in container: " + data, projectID, projectName);
     return returnVal;
   } catch (err) {
@@ -325,6 +325,49 @@ export async function getFilesInContainerWithTimestamp(projectID: string, contai
       }
     } catch (err) {
       const errMsg = "Error checking existence for " + fileLocation + " in container " + containerName;
+      logger.logProjectError(errMsg, projectID);
+      logger.logProjectError(err, projectID);
+    }
+    return;
+  }
+}
+
+export async function getFoldersInContainerWithTimestamp(projectID: string, containerName: string, directory: string, folderName: string): Promise<Array<logHelper.LogFiles>> {
+  logger.logProjectInfo("Looking for all log files in container " + containerName, projectID);
+  if (!containerName) {
+    return;
+  } else {
+    const container = docker.getContainer(containerName);
+    const cmd = "ls -lt " + directory + " | tail -n +2";
+    const options = {
+      Cmd: ["sh", "-c", cmd],
+      AttachStdout: true,
+      AttachStderr: true
+    };
+
+    try {
+      // get all data from the container exec
+      const data: string = await containerExec(options, container, projectID);
+      if (data.indexOf("No such file or directory") > -1) {
+        logger.logInfo("No files were found");
+        return [];
+      } else {
+        logger.logInfo("At least one file was found");
+        const files = data.replace(/\n/g, " ").replace(/[^ -~]+/g, "").split(" ").filter((entry: string) => { return entry.trim() != ""; });
+        const fileIndex = 8; // file is the 9th argument from the above command
+        const filesTimestamp: Array<logHelper.LogFiles> = [];
+        for (let index = fileIndex; index < files.length; index = index + fileIndex + 1) {
+          const file = files[index];
+          const dateString = files[index - 1] + " " + files[index - 2] + " " + files[index - 3];
+          if (folderName && file.toLowerCase() === folderName.toLowerCase()) {
+            filesTimestamp.push({file: path.join(directory, folderName), time: moment(dateString).unix()});
+            break;
+          }
+        }
+        return filesTimestamp;
+      }
+    } catch (err) {
+      const errMsg = "Error checking existence for " + directory + " in container " + containerName;
       logger.logProjectError(errMsg, projectID);
       logger.logProjectError(err, projectID);
     }
