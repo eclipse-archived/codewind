@@ -1115,8 +1115,6 @@ export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, sav
             };
         }
 
-        console.log(">>>> Result: %j", result);
-
         if (!logHelper.logFileLists[projectID]) {
             // when the first time a log file is available for a new project
             logHelper.logFileLists[projectID] = {};
@@ -1133,15 +1131,18 @@ export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, sav
                 // this is the case where the same type of log file exists, so we check if the list is the same as the cached list
                 // for codewind: we don't care about the order of the files list, so we just check if the cache list is a subset of the original list and vice versa
 
-                const logList: Array<BuildLog | AppLog> = logHelper.logFileLists[projectID][type];
-                let areBothArraysEqual = false;
-                logList.forEach((logObject: BuildLog | AppLog, index) => {
-                    const cache = logObject.files;
-                    const original = result[type][index].files;
-                    areBothArraysEqual = cache.every((val: string) => original.includes(val)) && original.every((val: string) => cache.includes(val));
-                    // we can short-circuit out of the for loop if we find that at least one of the object has lists that are not equal
-                    if (!areBothArraysEqual) return;
+                const logListCache: Array<BuildLog | AppLog> = logHelper.logFileLists[projectID][type];
+                let cache: Array<string> = [];
+                logListCache.forEach((value: AppLog | BuildLog) => {
+                    cache = cache.concat(value.files);
                 });
+
+                let original: Array<string> = [];
+                result[type].forEach((value: AppLog | BuildLog) => {
+                    original = original.concat(value.files);
+                });
+
+                const areBothArraysEqual = cache.every((val: string) => original.includes(val)) && original.every((val: string) => cache.includes(val));
 
                 // if the list is different, we emit the new list and update the cache
                 if (!areBothArraysEqual) {

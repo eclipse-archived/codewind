@@ -270,7 +270,7 @@ export async function validate(operation: Operation): Promise<void> {
  */
 export async function getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
     if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
-    return logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
+    return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
 }
 
 /**

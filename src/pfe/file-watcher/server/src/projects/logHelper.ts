@@ -45,15 +45,6 @@ export const appLogs = Object.assign(defaultAppLogs, libertyAppLogs);
 
 export const logExtension = ".log";
 
-export const buildLogsOrigin: any = {
-    [buildLogs.dockerBuild]: {
-        "origin": "workspace"
-    },
-    [buildLogs.mavenBuild]: {
-        "origin": "container",
-    },
-};
-
 export interface LogFiles {
     file: string;
     time: number;
@@ -90,17 +81,8 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
   *
   * @returns Promise<Array<string>>
   */
- export async function getLogFilesWithTimestamp(logDirectory: string, logSuffix: Array<string>, checkLogFile?: string): Promise<Array<LogFiles>> {
+ export async function getLogFilesWithTimestamp(logDirectory: string, logSuffix: Array<string>): Promise<Array<LogFiles>> {
     const logs: Array<LogFiles> = [];
-
-    if (checkLogFile) {
-        const logPath = path.join(logDirectory, checkLogFile);
-        if (await utils.asyncFileExists(logPath)) {
-            const timestamp = (await statAsync(logPath)).mtime.getTime();
-            logs.push({file: logPath, time: timestamp});
-        }
-        return logs;
-    }
 
      for (const suffix of logSuffix) {
         const logPath = path.join(logDirectory, suffix + ".log");
@@ -118,8 +100,6 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
     const logs: Array<LogFiles> = [];
 
     const logPath = path.join(logDirectory, folderName);
-    console.log("Came here with log path: %s", logPath);
-    console.log(await utils.asyncFileExists(logPath));
     if (await utils.asyncFileExists(logPath)) {
         const timestamp = (await statAsync(logPath)).mtime.getTime();
         logs.push({file: logPath, time: timestamp});
@@ -158,7 +138,7 @@ export async function getLogFilesFromContainer(projectID: string, containerName:
     try {
         const containerIsActive = await dockerutil.isContainerActive(containerName);
         if (!containerName || containerIsActive.state === ContainerStates.containerNotFound) return [];
-        const logFiles = await dockerutil.getFilesInContainerWithTimestamp(projectID, containerName, logDirectory);
+        const logFiles = await dockerutil.getFilesOrFoldersInContainerWithTimestamp(projectID, containerName, logDirectory);
         logSuffix = logSuffix.map((value) => {
             return value + logExtension;
         });
@@ -363,7 +343,7 @@ export async function getLogFromDirs(origin: string = "workspace", logDirectory:
         logs = await getLogFolderWithTimestamp(logDirectory, folderName);
     } else if (origin.toLowerCase() === "container") {
         if (!containerName) return;
-        logs = await dockerutil.getFoldersInContainerWithTimestamp(projectID, containerName, logDirectory, folderName);
+        logs = await dockerutil.getFilesOrFoldersInContainerWithTimestamp(projectID, containerName, logDirectory, folderName);
     }
 
     if (logs.length === 0) return;

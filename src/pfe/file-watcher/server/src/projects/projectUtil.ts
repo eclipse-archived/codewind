@@ -618,7 +618,7 @@ export async function getProjectLogs(projectInfo: ProjectInfo): Promise<ProjectL
         logger.logProjectInfo("buildlog path:\n " + JSON.stringify(buildlogs), projectID, projectName);
 
         // get the app logs
-        applogs = await await projectHandler.getLogs("app", logDirectory, projectID, containerName);
+        applogs = await projectHandler.getLogs("app", logDirectory, projectID, containerName);
         logger.logProjectInfo("applog path:\n" + JSON.stringify(applogs), projectID, projectName);
     } else {
         logger.logProjectInfo(identifier + " projects do not specify logs functionality.", projectID);
