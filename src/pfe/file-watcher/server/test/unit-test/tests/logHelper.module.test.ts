@@ -131,7 +131,7 @@ export function logHelperTestModule(): void {
             expect(fs.statSync(dirPath)).to.exist;
 
             const createReturn = await logHelper.createLogDir(dirName, process.cwd());
-            expect(createReturn).to.be.undefined;
+            expect(createReturn).to.equal(path.join(process.cwd(), dirName));
 
             try {
                 fs.rmdirSync(dirPath);

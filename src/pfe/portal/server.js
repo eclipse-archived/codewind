@@ -134,6 +134,8 @@ async function main() {
     CODEWIND_WORKSPACE: '/codewind-workspace/',
     CODEWIND_TEMP_WORKSPACE: '/cw-temp/',
     REMOTE_MODE: (process.env.REMOTE_MODE == 'true') || false,
+    // temporary mounted workspace directory retained for projects that still require it
+    MOUNTED_WORKSPACE: '/mounted-workspace'
   };
 
   // find if running in kubernetes and build up a whitelist of allowed origins

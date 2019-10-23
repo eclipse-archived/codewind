@@ -153,8 +153,8 @@ export async function getLogFilesFromContainer(projectID: string, containerName:
  *
  * @returns Promise<void>
  */
-export async function createLogDir(dirName: string, logPath: string): Promise<void> {
-    if (!dirName || !logPath) return;
+export async function createLogDir(dirName: string, logPath: string): Promise<string> {
+    if (!dirName || !logPath) return undefined;
 
     const folderpath = path.join(logPath, dirName);
 
@@ -164,7 +164,7 @@ export async function createLogDir(dirName: string, logPath: string): Promise<vo
     } else {
         logger.logInfo("Log directory found at: " + folderpath + "\nSkipping directory creation.");
     }
-    return;
+    return folderpath;
 }
 
 /**

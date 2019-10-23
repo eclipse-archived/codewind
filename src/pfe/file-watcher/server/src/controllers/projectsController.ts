@@ -152,7 +152,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     // create log storing directory for the project
     logger.logInfo("Creating project logs directory");
     const dirName = await logHelper.getLogDir(projectID, projectName);
-    await logHelper.createLogDir(dirName, constants.projectConstants.projectsLogDir);
+    const logDirectory = await logHelper.createLogDir(dirName, constants.projectConstants.projectsLogDir);
 
     let projInfo: ProjectInfo;
     try {
@@ -356,8 +356,6 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     logger.logProjectInfo("operationId: " + operation.operationId, projectID, projectName);
 
     // set default docker build log for initial project creation
-    const projectLogDir = await logHelper.getLogDir(projectID, projectName);
-    const logDirectory = path.resolve(projectLocation + "/../.logs/" + projectLogDir);
     const logFilePath = path.join(logDirectory, logHelper.buildLogs.dockerBuild + logHelper.logExtension);
 
 
