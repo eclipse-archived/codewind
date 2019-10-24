@@ -22,7 +22,7 @@ import * as projectEventsController from "../controllers/projectEventsController
 import { IExtensionProject } from "../extensions/IExtensionProject";
 import * as processManager from "../utils/processManager";
 import * as logger from "../utils/logger";
-import { StartModes } from "./constants";
+import { projectConstants, StartModes } from "./constants";
 
 /**
  * @interface
@@ -59,6 +59,7 @@ interface ShellExtensionProjectConfig {
 export class ShellExtensionProject implements IExtensionProject {
 
     supportedType: string;
+    defaultIgnoredPath: string[] = ["*/*"];
 
     private fullPath: string;
     private config: ShellExtensionProjectConfig;
@@ -82,11 +83,21 @@ export class ShellExtensionProject implements IExtensionProject {
      */
     private setLanguage = async (projectInfo: ProjectInfo): Promise<void> => {
 
+        const logDir = await logHelper.getLogDir(
+            projectInfo.projectID, path.basename(projectInfo.location));
+
         const args = [
             projectInfo.location,
             projectUtil.LOCAL_WORKSPACE,
             projectInfo.projectID,
-            projectInfo.language
+            projectInfo.language,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            logDir
         ];
 
         try {
@@ -97,8 +108,8 @@ export class ShellExtensionProject implements IExtensionProject {
                 {});
 
             if (!result.stderr) {
-                const lastLine = result.stdout.substring(result.stdout.lastIndexOf("\n") + 1);
-                const json = JSON.parse(lastLine);
+                const json = await fs.readJson(
+                    path.join(projectConstants.projectsLogDir, logDir, "settings.json"), { encoding: "utf8" });
                 this.language = json.language;
                 return;
             }

@@ -93,6 +93,8 @@ async function bindStart(req, res) {
       let extension = user.extensionList.getExtensionForProjectType(projectType);
       if (extension) {
         projectDetails.extension = extension;
+        if (extension.config.needsMount && !global.codewind.RUNNING_IN_K8S)
+          projectDetails.workspace = global.codewind.MOUNTED_WORKSPACE;
       }
     }
 
@@ -114,7 +116,7 @@ async function bindStart(req, res) {
   try {
     let tempDirName = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE);
     await fs.mkdir(tempDirName);
-    let dirName = path.join(global.codewind.CODEWIND_WORKSPACE, newProject.name);
+    let dirName = path.join(newProject.workspace, newProject.name);
     await fs.mkdir(dirName);
     let tempProjPath = path.join(tempDirName, newProject.name);
     await fs.mkdir(tempProjPath);
@@ -359,7 +361,7 @@ async function bindEnd(req, res) {
 
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     // now move temp project to real project
-    cwUtils.copyProject(pathToCopy, path.join(global.codewind.CODEWIND_WORKSPACE, project.name))
+    cwUtils.copyProject(pathToCopy,project.workspace)
 
     let updatedProject = {
       projectID,
