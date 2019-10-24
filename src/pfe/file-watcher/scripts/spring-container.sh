@@ -269,11 +269,6 @@ function deployK8() {
 	# Delete any pods for the project left that are terminating, to ensure they go away
 	/file-watcher/scripts/kubeScripts/clear-terminating-pods.sh $project
 
-	echo -e "Touching maven build log file: "$LOG_FOLDER/$MAVEN_BUILD.log""
-	touch "$LOG_FOLDER/$MAVEN_BUILD.log"
-	echo -e "Triggering log file event for: maven build log"
-  	$util newLogFileAvailable $PROJECT_ID "build"
-
 	# Build the spring application
 	runMavenBuild
 
@@ -357,11 +352,6 @@ function deployLocal() {
 		fi
 	fi
 
-	echo -e "Touching maven build log file: "$LOG_FOLDER/$MAVEN_BUILD.log""
-	touch "$LOG_FOLDER/$MAVEN_BUILD.log"
-	echo -e "Triggering log file event for: maven build log"
-  	$util newLogFileAvailable $PROJECT_ID "build"
-
 	# Build the Spring application
 	runMavenBuild
 
@@ -395,9 +385,24 @@ function runMavenBuild() {
 	$util updateBuildState $PROJECT_ID $BUILD_STATE_INPROGRESS "buildscripts.buildMaven"
 	if [[ "$IN_K8" == "true" ]]; then
 		POD_NAME="$( kubectl get po --selector=release=$project | grep 'Running' | cut -d ' ' -f 1 )"
+
+		# before running the spring build, we should touch the maven build file and call the logs api to emit its availability
+		echo -e "Touching maven build log file: "/root/logs/$MAVEN_BUILD.log""
+		kubectl exec $POD_NAME -- bash "touch "/root/logs/$MAVEN_BUILD.log""
+		
+		echo -e "Triggering log file event for: maven build log"
+  		$util newLogFileAvailable $PROJECT_ID "build"
+		
 		kubectl exec $POD_NAME -- bash "/scripts/spring-build.sh" $logName "$projectName" "$FOLDER_NAME" "$MAVEN_SETTINGS"
 		exit_code=$?
 	else
+		# before running the spring build, we should touch the maven build file and call the logs api to emit its availability
+		echo -e "Touching maven build log file: "/root/logs/$MAVEN_BUILD.log""
+		$IMAGE_COMMAND exec $project bash -c "touch "/root/logs/$MAVEN_BUILD.log""
+		
+		echo -e "Triggering log file event for: maven build log"
+  		$util newLogFileAvailable $PROJECT_ID "build"
+
 		$IMAGE_COMMAND exec $project /scripts/spring-build.sh $logName "$projectName" "$FOLDER_NAME" "$MAVEN_SETTINGS"
 		exit_code=$?
 	fi

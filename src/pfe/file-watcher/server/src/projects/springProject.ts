@@ -32,6 +32,28 @@ const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debug, 
 
 export const supportedType = "spring";
 
+const logsOrigin: any = {
+    "build": {
+        "container": {
+            "files": {
+                [logHelper.buildLogs.mavenBuild]: path.join(path.sep, "root", "logs")
+            }
+        },
+        "workspace": {
+            "files": {
+                [logHelper.buildLogs.dockerBuild]: undefined // set during runtime
+            }
+        }
+    },
+    "app": {
+        "workspace": {
+            "files": {
+                [logHelper.appLogs.app]: undefined // set during runtime
+            },
+        }
+    }
+};
+
 /**
  * @description Relative path from project's root directory
  *
@@ -154,23 +176,29 @@ export async function validate(operation: Operation): Promise<void> {
  *
  * @returns Promise<BuildLog>
  */
-export async function getBuildLog(logDirectory: string): Promise<BuildLog> {
-    const logSuffixes = [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.mavenBuild];
-    return await logHelper.getBuildLogs(logDirectory, logSuffixes);
+// export async function getBuildLog(logDirectory: string): Promise<BuildLog> {
+//     const logSuffixes = [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.mavenBuild];
+//     return await logHelper.getBuildLogs(logDirectory, logSuffixes);
+// }
+
+// /**
+//  * @function
+//  * @description Get the app log for a spring project.
+//  *
+//  * @param logDirectory <Required | String> - The log location directory.
+//  *
+//  * @returns Promise<AppLog>
+//  */
+// export async function getAppLog(logDirectory: string): Promise<AppLog> {
+//     const logSuffixes = [logHelper.appLogs.app];
+//     return await logHelper.getAppLogs(logDirectory, logSuffixes);
+// }
+
+export async function getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
+    if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+    return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
 }
 
-/**
- * @function
- * @description Get the app log for a spring project.
- *
- * @param logDirectory <Required | String> - The log location directory.
- *
- * @returns Promise<AppLog>
- */
-export async function getAppLog(logDirectory: string): Promise<AppLog> {
-    const logSuffixes = [logHelper.appLogs.app];
-    return await logHelper.getAppLogs(logDirectory, logSuffixes);
-}
 
 /**
  * @function
