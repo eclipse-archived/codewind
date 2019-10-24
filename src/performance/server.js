@@ -14,7 +14,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const childProcess = require('child_process');
 const app = express();
-const serverPort = 9096;
+const serverPort = 9095;
 const server = app.listen(serverPort, () => console.log(`Performance server listening on port ${serverPort}!`))
 const io = require('socket.io').listen(server);
 const path = require('path');
