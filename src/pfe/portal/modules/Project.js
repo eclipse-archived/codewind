@@ -186,10 +186,11 @@ module.exports = class Project {
    * @arg inPortal true if we want the location in the portal container (with username)
    * @return the path to the project directory.
    */
-  projectPath(inPortal) {
+  projectPath(_) {
     // this.workspace will include the user directory if we are in multi-user.
     // Codewind workspace is hardcoded in filewatcherDeployment.js
-    return (inPortal ? this.workspace + this.directory :  `/codewind-workspace/${this.directory}` );
+    // return (inPortal ? this.workspace + this.directory :  `/codewind-workspace/${this.directory}` );
+    return join(this.workspace, this.directory);
   }
 
   /**
