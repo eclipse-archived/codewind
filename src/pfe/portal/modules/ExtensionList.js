@@ -24,7 +24,7 @@ const extensionsDir = '/extensions';
 const extensionsPattern = /^(\S+)-(\d+\.\d+\.\d+)\.zip$/; // e.g. extension-name-0.0.1.zip
 const suffixOld = '__old';
 const odoExtensionName = "codewind-odo-extension";
-const odoBinarySource = "https://mirror.openshift.com/pub/openshift-v4/clients/odo/latest/odo-linux-amd64"
+const odoBinarySource = "/extensions/odo"
 
 /**
  * The ExtensionList class
@@ -69,7 +69,7 @@ module.exports = class ExtensionList {
               
               if (name == odoExtensionName) {
                 await exec(`mkdir -p ${targetWithVersion}/bin`);
-                await exec(`curl -L ${odoBinarySource} -o ${targetWithVersion}/bin/odo && chmod +x ${targetWithVersion}/bin/odo`);
+                await exec(`mv ${odoBinarySource} ${targetWithVersion}/bin/odo && chmod +x ${targetWithVersion}/bin/odo`);
               }
 
               // top-level directory in zip will have the version suffix
