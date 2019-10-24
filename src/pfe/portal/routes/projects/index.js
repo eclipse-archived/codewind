@@ -27,12 +27,8 @@ const router = express.Router();
   require('./internal.route'),
   require('./binding.route'),
   require('./fileChanges.route'),
+  require('./remoteBind.route')
 ]
   .forEach((subRouter) => router.use(subRouter));
-
-// Enable remote bind in remote mode only.
-if (global.codewind.REMOTE_MODE) {
-  router.use(require('./remoteBind.route'));
-}
 
 module.exports = router;
