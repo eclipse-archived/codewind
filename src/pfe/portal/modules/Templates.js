@@ -12,6 +12,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const util = require('util');
+const uuidv5 = require('uuid/v5');
 
 const cwUtils = require('../modules/utils/sharedFunctions');
 const Logger = require('./utils/Logger');
@@ -251,6 +252,7 @@ module.exports = class Templates {
     }
 
     let newRepo = {
+      id: uuidv5(url, uuidv5.URL),
       name: repoName,
       url,
       description: repoDescription,

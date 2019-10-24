@@ -1428,6 +1428,9 @@ components:
       required:
         - url
       properties:
+        id:
+          type: string
+          format: uuid
         url:
           type: string
         name:
