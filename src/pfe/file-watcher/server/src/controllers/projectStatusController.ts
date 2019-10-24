@@ -199,8 +199,10 @@ export async function updateProjectStatus(type: string, projectID: string, statu
             oldDetailedState = appStateMap.get(projectID).detailedAppStatus;
             oldError = appStateMap.get(projectID).msg;
         }
+
         // Only update if the state or message has changed. Also protect against changing from stopped state to stopping.
-        if ((newState != oldState || newDetailedState != oldDetailedState || newError != oldError) && !(oldState == AppState.stopped && newState == AppState.stopping)) {
+        // Also protect against changing from unknown state to stopped. For first time project creation, app status should be unknown before it's changed to starting state.
+        if ((newState != oldState || newDetailedState != oldDetailedState || newError != oldError) && !(oldState == AppState.stopped && newState == AppState.stopping) && !(oldState == AppState.unknown && newState == AppState.stopped)) {
             logger.logProjectInfo("Application state changed for project: " + projectID + " from: " + oldState + ", to: " + newState + (newDetailedState ? ", with message: " + newDetailedState : ""), projectID);
             appStateMap.set(projectID, new ProjectState(newState, newError, undefined, undefined, undefined, newDetailedState));
 
@@ -391,21 +393,24 @@ function pingApplications(): void {
                     } else if (newMsg) {
                         newState = AppState.stopped;
                     }
-                    appStateMap.set(projectID, new ProjectState(newState, newMsg));
+                    // Protect against changing from unknown state to stopped. For first time project creation, app status should be unknown before it's changed to starting state.
+                    if (!(oldState == AppState.unknown && newState == AppState.stopped)) {
+                        appStateMap.set(projectID, new ProjectState(newState, newMsg));
 
-                    // Ensure that only new messages are logged
-                    if (newMsg && (newMsg.toString() !== (oldMsg ? oldMsg.toString() : oldMsg))) {
-                        logger.logProjectInfo("pingApplications: Application state error message: " + newMsg, projectID);
-                    }
+                        // Ensure that only new messages are logged
+                        if (newMsg && (newMsg.toString() !== (oldMsg ? oldMsg.toString() : oldMsg))) {
+                            logger.logProjectInfo("pingApplications: Application state error message: " + newMsg, projectID);
+                        }
 
-                    // Update the state only if it has changed
-                    if (newState != oldState) {
-                        logger.logProjectInfo("pingApplications: Application state for project " + projectID + " has changed from " + oldState + " to " + newState, projectID);
-                        const data: any = {
-                            projectID: projectID,
-                            appStatus: newState
-                        };
-                        io.emitOnListener("projectStatusChanged", data);
+                        // Update the state only if it has changed
+                        if (newState != oldState) {
+                            logger.logProjectInfo("pingApplications: Application state for project " + projectID + " has changed from " + oldState + " to " + newState, projectID);
+                            const data: any = {
+                                projectID: projectID,
+                                appStatus: newState
+                            };
+                            io.emitOnListener("projectStatusChanged", data);
+                        }
                     }
                 }
             });
