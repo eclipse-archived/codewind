@@ -797,7 +797,6 @@ export async function getContainerName(projectInfo: ProjectInfo): Promise<string
     const projectLocation: string = projectInfo.location;
 
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
-    logger.logInfo("typeof projectHandler.getContainerName is " + typeof projectHandler.getContainerName);
     if (projectHandler && projectHandler.hasOwnProperty("getContainerName") && typeof projectHandler.getContainerName === "function") {
         return projectHandler.getContainerName(projectID, projectLocation);
     }
