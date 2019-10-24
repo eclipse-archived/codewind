@@ -207,7 +207,7 @@
   <script type="module" src="parse-prometheus-text-format/dist/parse-prometheus-text-format.umd.js"></script>
 
   <script>
-    const appPort = 32769; // TODO: get this from PORT env variable? or set dynamically via a route?
+    const appOrigin = queryStringValues.get('appOrigin');
     const pollInterval = 2000;
 
     // TODO remove when finished dev
@@ -236,7 +236,7 @@
       const path = 'metrics/codewind';
       $.ajax({
         method: 'GET',
-        url: `http://127.0.0.1:${appPort}/${path}`,
+        url: `${appOrigin}/${path}`,
         crossDomain: true,
         error: logAjaxResponseError,
         success: (resBody) => {
@@ -266,7 +266,7 @@
       const path = 'metrics/codewind/profiling';
       $.ajax({
         method: 'GET',
-        url: `http://127.0.0.1:${appPort}/${path}`,
+        url: `${appOrigin}/${path}`,
         crossDomain: true,
         error: logAjaxResponseError,
         success: (resBody) => {
@@ -292,7 +292,7 @@
       const path = 'metrics/codewind/environment';
       $.ajax({
         method: 'GET',
-        url: `http://127.0.0.1:${appPort}/${path}`,
+        url: `${appOrigin}/${path}`,
         crossDomain: true,
         error: logAjaxResponseError,
         success: (resBody) => {

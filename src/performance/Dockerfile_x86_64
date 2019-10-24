@@ -56,8 +56,8 @@ RUN npm ci --only=production
 COPY --from=build-performance-ui /usr/src/app/dashboard/build /usr/src/app/dashboard/build
 
 
-# TODO:
-COPY public/ /usr/src/app/public/
+# For codewind metrics dashboards
+COPY public /usr/src/app/public
 
 # Install npm production packages
 COPY package.json /usr/src/app/
