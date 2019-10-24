@@ -206,6 +206,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
       const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
       // eslint-disable-next-line no-sync
       if (!fs.existsSync(pathToTempProj)) {
+        log.info("Temporary project directory doesn't exist, not syncing any files");
         res.status(404).send("No files have been synced");
       } else {
       
@@ -275,9 +276,8 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
     
           user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
         }
+        res.sendStatus(200);
       }
-
-      res.sendStatus(200);
     } else {
       res.sendStatus(404);
     }
