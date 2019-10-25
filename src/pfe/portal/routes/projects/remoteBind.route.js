@@ -206,6 +206,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
       const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
       // eslint-disable-next-line no-sync
       if (!fs.existsSync(pathToTempProj)) {
+        log.info("Temporary project directory doesn't exist, not syncing any files");
         res.status(404).send("No files have been synced");
       } else {
       
@@ -275,7 +276,7 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
   } else {
     // if a build is in progress, wait 5 seconds and try again
     await cwUtils.timeout(5000)
-    await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
+     await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
   }
 }
 
