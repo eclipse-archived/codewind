@@ -41,27 +41,7 @@ router.put('/api/v1/projects/:id/file-changes/:projectWatchStateId/status', func
       res.status(400).send("Missing required parameter, projectID, projectWatchStateId and status are required to be provided. ");
       return;
     }
-    let project;
-    if ( user.workspaceSettingObject && projectID === user.workspaceSettingObject.projectID) {
-      project = user.workspaceSettingObject;
-      if (project.projectWatchStateId == projectWatchStateId && status === "success") {
-        user.workspaceSettingsFileWatchEstablished = true;
-      } else if (project.projectWatchStateId == projectWatchStateId && status === "failed"){
-        // if the watch to workspace settings file can not be established, retry
-        const projectWatchStateId = crypto.randomBytes(16).toString("hex");
-        const data = {
-          changeType: "add",
-          projectWatchStateId: projectWatchStateId,
-          projectID: project.projectID,
-          pathToMonitor: project.pathToMonitor,
-          ignoredPaths: project.ignoredPaths,
-        }
-        user.workspaceSettingObject.projectWatchStateId = projectWatchStateId;
-        WebSocket.watchListChanged(data);
-      }
-    } else {
-      project = user.projectList.retrieveProject(projectID);
-    }
+    const project = user.projectList.retrieveProject(projectID);
     if (!project) {
       res.status(404).send(`Unable to find project ${projectID}`);
       return;
@@ -121,19 +101,6 @@ router.post('/api/v1/projects/:id/file-changes', async function (req, res) {
     const output = await inflateAsync(compressed);
     const eventArray = JSON.parse(output.toString());
 
-    // workspace settings file has been changed
-    if ( user.workspaceSettingObject && projectID === user.workspaceSettingObject.projectID) {
-      for (let element of eventArray) {
-        if (element.path && element.path.includes("settings.json")) {
-          log.debug("workspace settings file changed.", projectID);
-          user.readWorkspaceSettings();
-          // to break out of foreach loop
-          break;
-        }
-      }
-      res.sendStatus(200);
-      return;
-    }
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
       res.status(404).send(`Unable to find project ${projectID}`);
