@@ -5,8 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "./npm-start.sh",
-    "prod": "node --inspect=0.0.0.0:9777 server.js",
-    "dev": "node --inspect=0.0.0.0:9777 server.js",
+    "prod": "node server.js",
+    "dev": "node server.js",
     "coverage": "nyc node server.js",
     "local": "node server.js --local",
     "eslint": "eslint ."
