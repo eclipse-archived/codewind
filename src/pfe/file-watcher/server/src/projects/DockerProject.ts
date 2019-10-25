@@ -24,12 +24,28 @@ interface ProjectExtension {
     create(operation: Operation): void;
     update(operation: Operation, changedFiles: projectEventsController.IFileChangeEvent[]): void;
     typeMatches(location: string): Promise<boolean>;
-    getBuildLog(projectLocation: string, projectID: string, logDirectory: string, apiVersion: string): Promise<BuildLog>;
-    getAppLog(projectLocation: string, projectType: string, projectID: string, projectName: string, apiVersion: string): Promise<AppLog>;
+    getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>>;
     validate(operation: Operation): void;
 }
 
 export const requiredFiles = [ "/Dockerfile" ];
+
+const logsOrigin: any = {
+    "build": {
+        "workspace": {
+            "files": {
+                [logHelper.buildLogs.dockerBuild]: undefined // set during runtime
+            }
+        }
+    },
+    "app": {
+        "workspace": {
+            "files": {
+                [logHelper.appLogs.app]: undefined // set during runtime
+            },
+        }
+    }
+};
 
 /**
  * @class
@@ -132,22 +148,9 @@ export class DockerProject implements ProjectExtension {
      *
      * @returns Promise<BuildLog>
      */
-    async getBuildLog(logDirectory: string): Promise<BuildLog> {
-        const logSuffixes = [logHelper.buildLogs.dockerBuild];
-        return await logHelper.getBuildLogs(logDirectory, logSuffixes);
-    }
-
-    /**
-     * @function
-     * @description Get the app log for a docker project.
-     *
-     * @param logDirectory <Required | String> - The log location directory.
-     *
-     * @returns Promise<AppLog>
-     */
-    async getAppLog(logDirectory: string): Promise<AppLog> {
-        const logSuffixes = [logHelper.appLogs.app];
-        return await logHelper.getAppLogs(logDirectory, logSuffixes);
+    async getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
+        if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+        return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
     }
 
     /**
