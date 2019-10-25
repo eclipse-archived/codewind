@@ -38,8 +38,10 @@ interface PortMappings {
  */
 interface ShellExtensionProjectConfig {
     requiredFiles: string[];
-    buildLogs: string[];
-    appLogs: string[];
+    buildContainerLogs?: any;
+    buildWorkspaceLogs?: any;
+    appContainerLogs?: any;
+    appWorkspaceLogs?: any;
     appPort?: string[] | PortMappings; // string[] for backward compatibility
     debugPort?: PortMappings;
     capabilities?: ProjectCapabilities;
@@ -48,6 +50,30 @@ interface ShellExtensionProjectConfig {
         suffix: string;
     };
 }
+
+// skeleton for the logs originated from the extension script
+const logsOrigin: any = {
+    "build": {
+        "container": {
+            "files": {},
+            "dirs": {}
+        },
+        "workspace": {
+            "files": {},
+            "dirs": {}
+        },
+    },
+    "app": {
+        "container": {
+            "files": {},
+            "dirs": {}
+        },
+        "workspace": {
+            "files": {},
+            "dirs": {}
+        },
+    },
+};
 
 /**
  * @class
@@ -214,20 +240,26 @@ export class ShellExtensionProject implements IExtensionProject {
      *
      * @returns Promise<BuildLog>
      */
-    getBuildLog = async (logDirectory: string): Promise<BuildLog> => {
-        return await logHelper.getBuildLogs(logDirectory, this.config.buildLogs);
+    getLogs = async (type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> => {
+        if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+        this.setLogsOriginFromExtension();
+        return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
     }
 
-    /**
-     * @function
-     * @description Get the app log for the project.
-     *
-     * @param logDirectory <Required | String> - The log location directory.
-     *
-     * @returns Promise<AppLog>
-     */
-    getAppLog = async (logDirectory: string): Promise<AppLog> => {
-        return await logHelper.getAppLogs(logDirectory, this.config.appLogs);
+    setLogsOriginFromExtension(): void {
+        if (this.config.buildContainerLogs) {
+            logsOrigin["build"]["container"] = this.config.buildContainerLogs;
+        }
+        if (this.config.buildWorkspaceLogs) {
+            logsOrigin["build"]["workspace"] = this.config.buildWorkspaceLogs;
+        }
+
+        if (this.config.appContainerLogs) {
+            logsOrigin["app"]["container"] = this.config.appContainerLogs;
+        }
+        if (this.config.appWorkspaceLogs) {
+            logsOrigin["app"]["workspace"] = this.config.appWorkspaceLogs;
+        }
     }
 
     /**
