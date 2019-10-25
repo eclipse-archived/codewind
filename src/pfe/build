@@ -4,11 +4,6 @@ if [ $? -ne 0 ]; then
     exit 1;
 fi
 
-# We need to copy the initialize npm in to use locally in che.
-rm -rf initialize
-mkdir -p initialize
-cp -r ../initialize/*.json ../initialize/src ./initialize
-
 # read and source the .env file
 env_file=./devbuild.env
 if [ -f $env_file ]; then

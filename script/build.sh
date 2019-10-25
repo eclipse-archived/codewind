@@ -21,7 +21,6 @@
 DIR=`pwd`;
 SRC_DIR=$DIR/src;
 PFE=pfe
-INITIALIZE=initialize
 PERFORMANCE=performance;
 ARCH=`uname -m`;
 TAG=latest;
@@ -34,7 +33,7 @@ else
   IMAGE_ARCH=$ARCH
 fi
 
-ALL_IMAGES="$PFE $PERFORMANCE $INITIALIZE";
+ALL_IMAGES="$PFE $PERFORMANCE";
 
 # Copy .env over to file-watcher
 if [ -f $DIR/.env ]; then
@@ -42,11 +41,9 @@ if [ -f $DIR/.env ]; then
   cp $DIR/.env ${SRC_DIR}/${PFE}/file-watcher/scripts/.env
 fi
 
-# Copy the license files to the portal, performance, initialize
+# Copy the license files to the portal, performance
 cp -r $DIR/LICENSE ${SRC_DIR}/pfe/portal/
 cp -r $DIR/NOTICE.md ${SRC_DIR}/pfe/portal/
-cp -r $DIR/LICENSE ${SRC_DIR}/initialize/
-cp -r $DIR/NOTICE.md ${SRC_DIR}/initialize/
 cp -r $DIR/LICENSE ${SRC_DIR}/performance/
 cp -r $DIR/NOTICE.md ${SRC_DIR}/performance/
 

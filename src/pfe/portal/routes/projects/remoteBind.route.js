@@ -25,14 +25,13 @@ const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
 const log = new Logger(__filename);
 
-
-
 /**
  * API Function to begin binding a given project that is not currently
  * on a file system visible to Codewind.
  * @param name the name of the project to open
  * @param language the project language (e.g. java|nodejs|swift)
  * @param projectType the project type for the project, required
+ * @param path the path to the project on disk
  * @return 202 if project directory was successfully bound as a codewind project
  * @return 400 if there was an error in the parameters
  * @return 409 if the project path or name are already in use
