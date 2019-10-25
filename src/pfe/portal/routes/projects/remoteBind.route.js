@@ -221,11 +221,10 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         await Promise.all(
           filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToTempProj, oldFile)}`))
         );
-        
+        res.sendStatus(200);
+
         await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
       }
-
-      res.sendStatus(200);
     } else {
       res.sendStatus(404);
     }
@@ -275,7 +274,8 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
     user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
   } else {
     // if a build is in progress, wait 5 seconds and try again
-    setTimeout(syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID), 5000);
+    await cwUtils.timeout(5000)
+    await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
   }
 }
 
@@ -361,7 +361,7 @@ async function bindEnd(req, res) {
 
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     // now move temp project to real project
-    cwUtils.copyProject(pathToCopy,project.workspace)
+    cwUtils.copyProject(pathToCopy, project.workspace);
 
     let updatedProject = {
       projectID,
