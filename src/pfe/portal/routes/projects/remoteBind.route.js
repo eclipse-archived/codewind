@@ -220,62 +220,10 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         // remove the file from pfe container
         await Promise.all(
           filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToTempProj, oldFile)}`))
-
         );
-
-        // If the current project is being built, we do not want to copy the files as this will
-        // interfere with the current build
-
-        if (project.buildStatus != "inProgress") {
-          const globalProjectPath =  path.join(project.workspace, project.name);
-          // We now need to remove any files that have been deleted from the global workspace
-          await Promise.all(
-            filesToDelete.map(oldFile => exec(`rm -rf ${path.join(globalProjectPath, oldFile)}`))
-          );
-
-          // now move temp project to real project
-          cwUtils.copyProject(pathToTempProj, project.workspace);
-          
-          let projectRoot = getProjectSourceRoot(project);
-          // need to delete from the build container as well
-          if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
-            (!project.extension || !project.extension.config.needsMount)) {
-            await Promise.all(
-              filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file))
-            )
-            // update files if needed
-            // await Promise.all(
-            modifiedList.forEach((file) => {
-              log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
-              cwUtils.copyFile(project, path.join(globalProjectPath,file), projectRoot, file);
-            })
-            // )
-          }
-
-          filesToDelete.forEach((f) => {
-            const data = {
-              path: f,
-              timestamp: timeStamp,
-              type: "DELETE",
-              directory: false
-            }
-            IFileChangeEvent.push(data);
-      
-          });
-    
-          modifiedList.forEach((f) => {
-            const data = {
-              path: f,
-              timestamp: timeStamp,
-              type: "MODIFY",
-              directory: false
-            }
-            IFileChangeEvent.push(data);
-          });
-    
-          user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
-        }
         res.sendStatus(200);
+
+        await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
       }
     } else {
       res.sendStatus(404);
@@ -286,6 +234,50 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   }
 });
 
+
+async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID) {
+  // If the current project is being built, we do not want to copy the files as this will
+  // interfere with the current build
+  if (project.buildStatus != "inProgress") {
+    const globalProjectPath = path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
+    // We now need to remove any files that have been deleted from the global workspace
+    await Promise.all(filesToDelete.map(oldFile => exec(`rm -rf ${path.join(globalProjectPath, oldFile)}`)));
+    // now move temp project to real project
+    cwUtils.copyProject(pathToTempProj, global.codewind.CODEWIND_WORKSPACE);
+    let projectRoot = getProjectSourceRoot(project);
+    // need to delete from the build container as well
+    if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker') {
+      await Promise.all(filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file)));
+      modifiedList.forEach((file) => {
+        log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
+        cwUtils.copyFile(project, path.join(globalProjectPath, file), projectRoot, file);
+      });
+    }
+    filesToDelete.forEach((f) => {
+      const data = {
+        path: f,
+        timestamp: timeStamp,
+        type: "DELETE",
+        directory: false
+      };
+      IFileChangeEvent.push(data);
+    });
+    modifiedList.forEach((f) => {
+      const data = {
+        path: f,
+        timestamp: timeStamp,
+        type: "MODIFY",
+        directory: false
+      };
+      IFileChangeEvent.push(data);
+    });
+    user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
+  } else {
+    // if a build is in progress, wait 5 seconds and try again
+    await cwUtils.timeout(5000)
+     await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
+  }
+}
 
 // List all the files under the given directory, return
 // a list of relative paths.
