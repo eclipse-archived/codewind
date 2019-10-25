@@ -26,11 +26,15 @@ let client_secret = process.env.CLIENT_SECRET
 let enable_auth = process.env.ENABLE_AUTH
 let gatekeeper_host = process.env.GATEKEEPER_HOST
 let workspace_service = process.env.WORKSPACE_SERVICE
+let portal_secure = process.env.PORTAL_HTTPS
 
 if (workspace_service!="") {
     pfe_host = process.env[(workspace_service + "_SERVICE_HOST").toUpperCase()]
     pfe_port = process.env[(workspace_service + "_SERVICE_PORT").toUpperCase()]
     pfe_protocol = "http"
+    if (portal_secure=="true") {
+        pfe_protocol = "https"
+    }
 }
 
 console.log("Gatekeeper configuration:")
@@ -146,9 +150,6 @@ app.use('*', authMiddleware, function (req, res) {
         console.log(err);
     }
 });
-
-console.log("TODO :  Use logger not console.log")
-console.log("TODO :  Detect PFE port and protocol rather than default http:9090 since in K8S will be using https")
 
 app.listen(port, () => console.log(`Codewind gatekeeper listening on port: ${port}!`))
 
