@@ -1351,6 +1351,8 @@ components:
         source:
           type: string
           example: "Default Codewind Templates"
+        sourceId:
+          type: string
     TemplateRepo:
       type: object
       required:

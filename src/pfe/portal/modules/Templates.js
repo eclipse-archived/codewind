@@ -404,6 +404,9 @@ async function getTemplatesFromRepo(repository) {
     if (repository.name) {
       template.source = repository.name;
     }
+    if (repository.id) {
+      template.sourceId = repository.id;
+    }
 
     return template;
   });
