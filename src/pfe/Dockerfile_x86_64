@@ -111,15 +111,6 @@ RUN cp -r src/utils/locales dist/utils/locales
 # Changes outside /portal will be lost.
 FROM codewind-pfe-base as codewind-pfe-portal
 
-# Install and build the initialization module.
-RUN mkdir /initialize
-COPY /initialize /initialize
-WORKDIR /initialize
-RUN npm ci \
-    && npm run build \
-    && rm -rf node_modules \
-    && npm ci --production
-
 RUN mkdir /portal
 
 WORKDIR /portal
@@ -141,7 +132,6 @@ FROM codewind-pfe-base
 
 # Don't force a file-watcher rebuild on a portal change.
 # (Improves development builds significantly.)
-COPY --from=codewind-pfe-portal /initialize /initialize
 COPY --from=codewind-pfe-portal /portal /portal
 
 # Copy the license files to the root directory

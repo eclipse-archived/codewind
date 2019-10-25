@@ -27,7 +27,6 @@
     "fs-extra": "^7.0.1",
     "i18next": "^15.0.9",
     "i18next-node-fs-backend": "^2.1.3",
-    "initialize": "file:../initialize",
     "js-yaml": "^3.12.0",
     "kubernetes-client": "^6.11.0",
     "lock": "^1.1.0",

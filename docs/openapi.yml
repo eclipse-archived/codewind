@@ -90,47 +90,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Project'
-    post:
-      summary: Create a project from a template
-      description: This will create a new project on disk from a template
-      requestBody:
-        description: Template options
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - projectName
-                - parentPath
-                - url
-              properties:
-                projectName:
-                  $ref: '#/components/schemas/ProjectName'
-                parentPath:
-                  description: >
-                    The absolute path on the file system into which the project
-                    directory will be created. If not an existing directory, a
-                    new one will be created.
-                  type: string
-                  example: /Documents/projectDir/
-                url:
-                  description: the url of the project to create template from.
-                  type: string
-                  example: "https://github.com/microclimate-dev2ops/nodeExpressTemplate"
-      responses:
-        200:
-          description: Project creation request received and processed
-          content:
-            application/json:
-              schema:
-                anyOf:
-                  - $ref: '#/components/schemas/InitializeSuccess'
-                  - $ref: '#/components/schemas/InitializeError'
-        400:
-          description: Supplied values are invalid
-        500:
-          description: Any other error
-
+ 
   /api/v1/projects/{id}/build:
     post:
       summary: Build a given project
@@ -671,38 +631,6 @@ paths:
           description: if the project with id was not found
         500:
           description: if an error occurred
-
-  /api/v1/validate:
-    post:
-      summary: Validate a project before binding
-      description: >
-        The API will be passed the location on disk of a project.
-        It will check this project can be mounted to a docker container,
-        determine its project type and write a .cw-settings file into it.
-      requestBody:
-        description: Location on disk
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - projectPath
-              properties:
-                projectPath:
-                  description: the absolute path on the file system to the project
-                  type: string
-                  example: /Documents/projectDir/
-      responses:
-        200:
-          description: The validation result, including the project type
-          content:
-            application/json:
-                schema:
-                  anyOf:
-                    - $ref: '#/components/schemas/InitializeSuccess'
-                    - $ref: '#/components/schemas/InitializeError'
-        400:
-          $ref: '#/components/responses/400'
 
   /api/v1/projects/{id}/metrics:
     get:

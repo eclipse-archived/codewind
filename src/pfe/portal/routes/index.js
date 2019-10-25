@@ -18,7 +18,6 @@ const router = express.Router();
   require('./locale.route'),
   require('./registry.route'),
   require('./logging.route'),
-  require('./validate.route'),
   require('./projectTypes.route'),
   require('./extensions.route'),
 ]
