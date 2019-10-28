@@ -1351,11 +1351,16 @@ components:
         source:
           type: string
           example: "Default Codewind Templates"
+        sourceId:
+          type: string
     TemplateRepo:
       type: object
       required:
         - url
       properties:
+        id:
+          type: string
+          format: uuid
         url:
           type: string
         name:
