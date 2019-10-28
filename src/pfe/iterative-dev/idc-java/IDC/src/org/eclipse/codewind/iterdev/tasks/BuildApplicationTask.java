@@ -181,8 +181,6 @@ public class BuildApplicationTask {
 		String curRunCmd = cmdTemplate + " touch " + logFilePath;
 		ProcessRunner pr = TaskUtils.runCmd(curRunCmd, context, true);
 		String buildOutput = pr.getReceived();
-
-		System.out.println(">> Build output: " + buildOutput);
 		return !buildOutput.contains("No such file or directory");
 	}
 
