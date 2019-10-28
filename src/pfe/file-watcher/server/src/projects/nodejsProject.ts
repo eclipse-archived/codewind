@@ -27,7 +27,7 @@ const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debugNo
 
 export const supportedType = "nodejs";
 
-const logsOrigin: any = {
+const logsOrigin: logHelper.ILogTypes = {
     "build": {
         "workspace": {
             "files": {

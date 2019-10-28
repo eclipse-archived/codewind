@@ -22,7 +22,7 @@ export const requiredFiles = [ "/Dockerfile", "/Dockerfile-tools", "/Package.swi
 
 export const supportedType = "swift";
 
-const logsOrigin: any = {
+const logsOrigin: logHelper.ILogTypes = {
     "build": {
         "workspace": {
             "files": {

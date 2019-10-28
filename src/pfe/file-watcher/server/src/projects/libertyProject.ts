@@ -39,7 +39,7 @@ export const supportedType: string = "liberty";
 
 const inContainerAppLogsDirectory = path.join(process.env.HOST_OS === "windows" ? path.join(path.sep, "tmp", "liberty") : path.join(path.sep, "home", "default", "app", "mc-target"), "liberty", "wlp", "usr", "servers", "defaultServer", "logs");
 
-const logsOrigin: any = {
+const logsOrigin: logHelper.ILogTypes = {
     "build": {
         "container": {
             "files": {

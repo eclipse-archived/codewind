@@ -30,7 +30,7 @@ interface ProjectExtension {
 
 export const requiredFiles = [ "/Dockerfile" ];
 
-const logsOrigin: any = {
+const logsOrigin: logHelper.ILogTypes = {
     "build": {
         "workspace": {
             "files": {

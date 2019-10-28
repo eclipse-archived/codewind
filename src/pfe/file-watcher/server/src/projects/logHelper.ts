@@ -52,6 +52,31 @@ export interface LogFiles {
 
 export const logFileLists: any = {};
 
+interface ILogInstance {
+    files?: string[];
+    dirs?: string[];
+    bestTime?: number;
+}
+
+interface ILogOriginFolerOrFiles {
+    [x: string]: string;
+}
+
+interface ILogOriginTypes {
+    files?: ILogOriginFolerOrFiles;
+    dirs?: ILogOriginFolerOrFiles;
+}
+
+interface ILogOrigins {
+    container?: ILogOriginTypes;
+    workspace?: ILogOriginTypes;
+}
+
+export interface ILogTypes {
+    build?: ILogOrigins;
+    app?: ILogOrigins;
+}
+
 /**
  * @function
  * @description Get list of log files in most recent completed order.
@@ -236,60 +261,90 @@ export async function getBuildLogs(logDirectory: string, logSuffixes: Array<stri
     return buildLog;
 }
 
-export async function getLogs(type: string, logsOrigin: any, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
-    // check if type is either "build" or "app"
-    if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
 
+async function getLogsFromFilesOrFolders(origin: string, logSource: string, logsOrigin: ILogOriginFolerOrFiles, logDirectory: string, projectID: string, containerName: string): Promise<Array<LogFiles>> {
+    const logs = Object.keys(logsOrigin);
+    let allLogs: LogFiles[] = [];
+
+    for (const log of logs) {
+        const logDir = logsOrigin[log] || logDirectory;
+        let receivedLogs: LogFiles[];
+
+        if (logSource.toLowerCase() === "files") {
+            receivedLogs = await getLogFromFiles(origin, logDir, log, projectID, containerName);
+        } else if (logSource.toLowerCase() === "dirs") {
+            receivedLogs = await getLogFromDirs(origin, logDir, log, projectID, containerName);
+        }
+
+        if (receivedLogs && receivedLogs.length > 0) {
+            allLogs = allLogs.concat(receivedLogs);
+        }
+    }
+    return allLogs;
+}
+
+async function getLogsFromOriginTypes(origin: string, logsOrigin: ILogOriginTypes, logDirectory: string, projectID: string, containerName: string): Promise<ILogInstance> {
+    const logSources = Object.keys(logsOrigin);
+    const currentLog: ILogInstance = {};
+
+    for (const logSource of logSources) {
+        let receivedLogs: LogFiles[] = [];
+
+        if (logSource.toLowerCase() === "files") {
+            receivedLogs = await getLogsFromFilesOrFolders(origin, logSource, logsOrigin.files, logDirectory, projectID, containerName);
+            if (receivedLogs && receivedLogs.length > 0) {
+                currentLog.files = await sortLogFiles(receivedLogs);
+                const bestTime = receivedLogs.map((value: LogFiles) => {
+                    if (currentLog.files[0] === value.file) return value.time;
+                })[0];
+                currentLog.bestTime = currentLog.bestTime ? Math.max(currentLog.bestTime, bestTime) : bestTime;
+            }
+        } else if (logSource.toLowerCase() === "dirs") {
+            receivedLogs = await getLogsFromFilesOrFolders(origin, logSource, logsOrigin.dirs, logDirectory, projectID, containerName);
+            if (receivedLogs && receivedLogs.length > 0) {
+                currentLog.dirs = await sortLogFiles(receivedLogs);
+                const bestTime = receivedLogs.map((value: LogFiles) => {
+                    if (currentLog.dirs[0] === value.file) return value.time;
+                })[0];
+                currentLog.bestTime = currentLog.bestTime ? Math.max(currentLog.bestTime, bestTime) : bestTime;
+            }
+        }
+    }
+    return currentLog;
+}
+
+async function getLogsFromOrigin(logsOrigin: ILogOrigins, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
+    const origins = Object.keys(logsOrigin);
     let resultLogs: Array<AppLog | BuildLog> = [];
 
-    // log origins: container or workspace
-    const keys = Object.keys(logsOrigin[type]);
-
-    for (const origin of keys) {
+    for (const origin of origins) {
         const currentLog: AppLog | BuildLog = {
             origin: origin,
             files: []
         };
 
-        // log types: files or dirs
-        const logTypes = Object.keys(logsOrigin[type][origin]);
-
-        for (const logType of logTypes) {
-            let allLogs: LogFiles[] = [];
-
-            // each type of log
-            const logs = Object.keys(logsOrigin[type][origin][logType]);
-
-            for (const log of logs) {
-                const logDir = logsOrigin[type][origin][logType][log] || logDirectory;
-                const receivedLogs: LogFiles[] = logType === "files" ? await getLogFromFiles(origin, logDir, log, projectID, containerName) : await getLogFromDirs(origin, logDir, log, projectID, containerName);
-
-                if (receivedLogs && receivedLogs.length > 0) {
-                    allLogs = allLogs.concat(receivedLogs);
-                }
-            }
-
-            if (allLogs && allLogs.length > 0) {
-                if (logType === "files") {
-                    currentLog.files = await sortLogFiles(allLogs);
-                    currentLog.bestTime = allLogs.map((value: LogFiles) => {
-                        if (currentLog.files[0] === value.file) return value.time;
-                    })[0];
-                } else if (logType === "dirs") {
-                    currentLog.dirs = await sortLogFiles(allLogs);
-                    currentLog.bestTime = allLogs.map((value: LogFiles) => {
-                        if (currentLog.dirs[0] === value.file) return value.time;
-                    })[0];
-                }
-            }
+        let logInst: ILogInstance;
+        if (origin.toLowerCase() === "container") {
+            logInst = await getLogsFromOriginTypes(origin, logsOrigin.container, logDirectory, projectID, containerName);
+        } else if (origin.toLowerCase() === "workspace") {
+            logInst = await getLogsFromOriginTypes(origin, logsOrigin.workspace, logDirectory, projectID, containerName);
         }
 
-        if (currentLog.files.length > 0) {
+        if (logInst.files) {
+            currentLog.files = logInst.files;
+        }
+        if (logInst.dirs) {
+            currentLog.dirs = logInst.dirs;
+        }
+        if (logInst.bestTime) {
+            currentLog.bestTime = logInst.bestTime;
+        }
+
+        if ((currentLog.files && currentLog.files.length > 0) || (currentLog.dirs && currentLog.dirs.length > 0)) {
             resultLogs.push(currentLog);
         }
     }
 
-    // sort each object according to their latest time and drop the bestTime key
     if (resultLogs && resultLogs.length > 0) {
         resultLogs = resultLogs.sort((a, b) => {
             return b.bestTime - a.bestTime;
@@ -297,6 +352,22 @@ export async function getLogs(type: string, logsOrigin: any, logDirectory: strin
             delete obj.bestTime;
             return obj;
         });
+    }
+
+    return resultLogs;
+}
+
+
+export async function getLogs(type: string, logsOrigin: ILogTypes, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
+    // check if type is either "build" or "app"
+    if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+
+    let resultLogs: Array<AppLog | BuildLog> = [];
+
+    if (type.toLowerCase() === "build") {
+        resultLogs = await getLogsFromOrigin(logsOrigin.build, logDirectory, projectID, containerName);
+    } else if (type.toLowerCase() === "app") {
+        resultLogs = await getLogsFromOrigin(logsOrigin.app, logDirectory, projectID, containerName);
     }
 
     return resultLogs;
