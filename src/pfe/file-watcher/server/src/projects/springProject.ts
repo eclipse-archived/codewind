@@ -32,7 +32,7 @@ const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debug, 
 
 export const supportedType = "spring";
 
-const logsOrigin: any = {
+const logsOrigin: logHelper.ILogTypes = {
     "build": {
         "container": {
             "files": {

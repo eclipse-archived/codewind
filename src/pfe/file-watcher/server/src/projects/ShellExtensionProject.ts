@@ -52,7 +52,7 @@ interface ShellExtensionProjectConfig {
 }
 
 // skeleton for the logs originated from the extension script
-const logsOrigin: any = {
+const logsOrigin: logHelper.ILogTypes = {
     "build": {
         "container": {
             "files": {},
