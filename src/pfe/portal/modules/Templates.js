@@ -265,18 +265,57 @@ module.exports = class Templates {
 
     this.repositoryList.push(newRepo);
     this.needsRefresh = true;
+    await this.addRepositoryToProviders(newRepo);
     await this.writeRepositoryList();
   }
 
   async deleteRepository(repoUrl) {
-    this.repositoryList = this.repositoryList.filter((repo) => repo.url !== repoUrl);
-    this.needsRefresh = true;
-    await this.writeRepositoryList();
+    let deleted;
+    this.repositoryList = this.repositoryList.filter((repo) => {
+      if (repo.url === repoUrl) {
+        deleted = repo;
+        return false;
+      }
+      return true;
+    });
+    if (deleted) {
+      this.needsRefresh = true;
+      await this.removeRepositoryFromProviders(deleted);
+      await this.writeRepositoryList();
+    }
   }
 
   addProvider(name, provider) {
-    if (provider && typeof provider.getRepositories == 'function')
+    if (provider && typeof provider.getRepositories === 'function')
       this.providers[name] = provider;
+  }
+
+  async addRepositoryToProviders(repo) {
+    for (const provider of Object.values(this.providers)) {
+      if (typeof provider.addRepository === 'function') {
+        try {
+          // invoke with a copy so original cannot be altered
+          await provider.addRepository(Object.assign({}, repo));
+        }
+        catch (err) {
+          log.error(err.message);
+        }
+      }
+    }
+  }
+
+  async removeRepositoryFromProviders(repo) {
+    for (const provider of Object.values(this.providers)) {
+      if (typeof provider.removeRepository === 'function') { 
+        try {
+          // invoke with a copy so original cannot be altered
+          await provider.removeRepository(Object.assign({}, repo));
+        }
+        catch (err) {
+          log.error(err.message);
+        }
+      }
+    }
   }
 
   async getAllTemplateStyles() {
