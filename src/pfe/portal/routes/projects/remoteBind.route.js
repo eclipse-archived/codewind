@@ -239,14 +239,15 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
   // If the current project is being built, we do not want to copy the files as this will
   // interfere with the current build
   if (project.buildStatus != "inProgress") {
-    const globalProjectPath = path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
+    const globalProjectPath = path.join(project.workspace, project.name);
     // We now need to remove any files that have been deleted from the global workspace
     await Promise.all(filesToDelete.map(oldFile => exec(`rm -rf ${path.join(globalProjectPath, oldFile)}`)));
     // now move temp project to real project
-    cwUtils.copyProject(pathToTempProj, global.codewind.CODEWIND_WORKSPACE);
+    cwUtils.copyProject(pathToTempProj, project.workspace);
     let projectRoot = getProjectSourceRoot(project);
     // need to delete from the build container as well
-    if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker') {
+    if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
+      (!project.extension || !project.extension.config.needsMount)) {
       await Promise.all(filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file)));
       modifiedList.forEach((file) => {
         log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
