@@ -107,12 +107,4 @@ if [ "$IN_K8" == "true" ]; then
 		cp /file-watcher/scripts/wrappers/helm_wrapper.sh /usr/local/bin/helm
 		chmod +x /usr/local/bin/helm
 	fi
-
-	# Use a wrapper for kubectl if the user specified an alternate namespace
-	if [[ $KUBE_NAMESPACE ]]; then
-		echo "Creating kubectl wrapper"
-		mv /usr/local/bin/kubectl /usr/local/bin/_kubectl
-		cp /file-watcher/scripts/wrappers/kubectl_wrapper.sh /usr/local/bin/kubectl
-		chmod +x /usr/local/bin/kubectl
-	fi
 fi
