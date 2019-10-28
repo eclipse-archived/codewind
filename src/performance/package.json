@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "PORT=9095 nodemon server.js"
+    "start": "PORT=9095 node server.js"
   },
   "author": "",
   "license": "ISC",
