@@ -17,8 +17,6 @@ const buffer = require('buffer');
 const zlib = require("zlib");
 const {promisify} = require('util');
 const inflateAsync = promisify(zlib.inflate);
-const crypto = require('crypto');
-const WebSocket = require('../../modules/WebSocket');
 
 /**
  * API Function to put the watch status of a project with a particular projectWatchStateId
