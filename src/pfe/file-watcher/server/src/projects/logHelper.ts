@@ -18,6 +18,7 @@ import * as utils from "../utils/utils";
 import * as logger from "../utils/logger";
 import * as projectsController from "../controllers/projectsController";
 import * as dockerutil from "../utils/dockerutil";
+import * as kubeutil from "../utils/kubeutil";
 import { BuildLog, AppLog } from "./Project";
 import { ContainerStates } from "../projects/constants";
 
@@ -91,7 +92,7 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
         const logs = await getLogFilesOrFoldersWithTimestamp(logDirectory, logSuffix);
         return logs;
     } catch (err) {
-        logger.logError("Failed to get the list of log files from " + logDirectory);
+        logger.logError("Failed to get the list of log files from workspace " + logDirectory);
         logger.logError(err);
         return;
     }
@@ -159,9 +160,9 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
  */
 export async function getLogFilesFromContainer(projectID: string, containerName: string, logDirectory: string, logSuffix: Array<string>): Promise<Array<LogFiles>> {
     try {
-        const containerIsActive = await dockerutil.isContainerActive(containerName);
+        const containerIsActive = await (process.env.IN_K8 ? kubeutil : dockerutil).isContainerActive(containerName);
         if (!containerName || containerIsActive.state === ContainerStates.containerNotFound) return [];
-        const logFiles = await dockerutil.getFilesOrFoldersInContainerWithTimestamp(projectID, containerName, logDirectory);
+        const logFiles =  await (process.env.IN_K8 ? kubeutil : dockerutil).getFilesOrFoldersInContainerWithTimestamp(projectID, containerName, logDirectory);
         logSuffix = logSuffix.map((value) => {
             return value + logExtension;
         });
@@ -173,7 +174,7 @@ export async function getLogFilesFromContainer(projectID: string, containerName:
         }
         return logFilesArr;
     } catch (err) {
-        logger.logError("Failed to get the list of log files from " + logDirectory);
+        logger.logError("Failed to get the list of log files from container " + logDirectory);
         logger.logError(err);
         return;
     }
@@ -401,7 +402,7 @@ export async function getLogFromFiles(origin: string = "workspace", logDirectory
         logs = await getLogFilesFromContainer(projectID, containerName, logDirectory, [logSuffix]);
     }
 
-    if (logs.length === 0) return;
+    if (logs && logs.length === 0) return;
     return logs;
 }
 
@@ -412,7 +413,7 @@ export async function getLogFromDirs(origin: string = "workspace", logDirectory:
         logs = await getLogFilesOrFoldersWithTimestamp(logDirectory, [], folderName);
     } else if (origin.toLowerCase() === "container") {
         if (!containerName) return;
-        logs = await dockerutil.getFilesOrFoldersInContainerWithTimestamp(projectID, containerName, logDirectory, folderName);
+        logs = await (process.env.IN_K8 ? kubeutil : dockerutil).getFilesOrFoldersInContainerWithTimestamp(projectID, containerName, logDirectory, folderName);
     }
 
     if (logs.length === 0) return;
