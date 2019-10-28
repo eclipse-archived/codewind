@@ -207,17 +207,20 @@
   <script type="module" src="parse-prometheus-text-format/dist/parse-prometheus-text-format.umd.js"></script>
 
   <script>
-    const appOrigin = queryStringValues.get('appOrigin');
+    const appHost = queryStringValues.get('appHost') // || internalIp.v4.sync(); // TODO: use this when this is a react app. // Or use Mark's suggestion
+    const appPort = queryStringValues.get('appPort');
+    const appOrigin = `${appHost}:${appPort}`;
+
     const pollInterval = 2000;
 
-    // TODO remove when finished dev
-    let maxPolls = 10;
+    // TODO: remove when finished dev
+    let maxPolls = 20;
     let numPollsToMetricsCodewind = 0;
     let numPollsToMetricsCodewindProfiling = 0;
 
     // CPU Summary data
-    let totalProcessCPULoad = 0.0; // TODO should this be here or in cw-node-metrics? (Recommended to be in here because: https://prometheus.io/docs/instrumenting/writing_exporters/#drop-less-useful-statistics)
-    let totalSystemCPULoad = 0.0; // TODO should this be here or in cw-node-metrics?
+    let totalProcessCPULoad = 0.0;
+    let totalSystemCPULoad = 0.0;
     let numCPULoadSamples = 0;
 
     const logAjaxResponseError = (jqXKR, textStatus, errorThrown) => {
@@ -227,39 +230,49 @@
       console.log(`errorThrown: ${errorThrown}`);
     };
 
-    getMetricsAndUpdateGraphs();
-    // getProfilingDataAndUpdateFlameGraph();
-    getEnvDataAndUpdateEnvSummary();
+    const parseResBody = (resBody) => {
+      // console.log("resBody");
+      // console.log(resBody);
+      const metrics = parsePrometheusTextFormat(resBody);
+      // console.log('metrics');
+      // console.log(metrics);
+      return metrics;
+    };
 
+    const repeatPoll = (func) => {
+      numPollsToMetricsCodewind++;
+      if (numPollsToMetricsCodewind < maxPolls) {
+        return setTimeout(func, pollInterval);
+      }
+      console.log('finished polling');
+    };
 
-    function getMetricsAndUpdateGraphs() {
-      const path = 'metrics/codewind';
-      $.ajax({
-        method: 'GET',
-        url: `${appOrigin}/${path}`,
-        crossDomain: true,
-        error: logAjaxResponseError,
-        success: (resBody) => {
-          // console.log("resBody");
-          // console.log(resBody);
-          const time = Date.now();
-          const metrics = parsePrometheusTextFormat(resBody);
-          console.log('metrics');
-          console.log(metrics);
-          updateGraphs(time, metrics);
+    const getMetrics = (path, onSuccess, onComplete) => $.ajax({
+      method: 'GET',
+      url: `${appOrigin}/${path}`,
+      crossDomain: true,
+      error: logAjaxResponseError,
+      success: onSuccess,
+      complete: onComplete,
+      timeout: 30000,
+    });
+
+    const getMetricsAndUpdateGraphs = () => {
+      let metricsFromCodewind = [];
+      getMetrics(
+        'metrics',
+        (resBody) => {
+          const metricsFromUser = parseResBody(resBody);
+          getMetrics(
+            'metrics/codewind',
+            (resBody2) => metricsFromCodewind = parseResBody(resBody2),
+            () => {
+              updateGraphs(metricsFromUser, metricsFromCodewind);
+              repeatPoll(getMetricsAndUpdateGraphs);
+            },
+          )
         },
-        complete: () => {
-          numPollsToMetricsCodewind++;
-          if (numPollsToMetricsCodewind < maxPolls) {
-            return setTimeout(
-              () => getMetricsAndUpdateGraphs(path),
-              pollInterval,
-            );
-          }
-          console.log('finished polling');
-        },
-        timeout: 30000,
-      });
+      );
     }
 
     function getProfilingDataAndUpdateFlameGraph() {
@@ -274,16 +287,7 @@
           // console.log(resBody);
           updateFlameGraph(resBody);
         },
-        complete: () => {
-          numPollsToMetricsCodewindProfiling++;
-          if (numPollsToMetricsCodewindProfiling < maxPolls) {
-            return setTimeout(
-              () => getProfilingDataAndUpdateFlameGraph(),
-              pollInterval,
-            );
-          }
-          console.log('finished polling');
-        },
+        complete: () => repeatPoll(getProfilingDataAndUpdateFlameGraph),
         timeout: 30000,
       });
     }
@@ -304,6 +308,10 @@
       });
     }
 
+    getEnvDataAndUpdateEnvSummary();
+    getMetricsAndUpdateGraphs();
+    getProfilingDataAndUpdateFlameGraph();
+
     let indexOfLastViewedSample = 0;
 
     function updateFlameGraph(profilingSamples) {
@@ -314,52 +322,33 @@
       indexOfLastViewedSample += newProfilingSamples.length;
     }
 
-    function updateGraphs(time, metrics) {
-      // const metricsAvailableInLanguage = {
-      //   node: [
-      //     'os_cpu_used_ratio', // = base:cpu_system_load_average
-      //     'process_cpu_used_ratio', // = cpu_process_cpu_load_percent
-      //     'os_resident_memory_bytes',
-      //     'process_resident_memory_bytes',
-      //     'process_virtual_memory_bytes',
-      //     'http_request_duration_microseconds',
-              // + my new stuff
-      //   ],
-      //   java: [
-      //     'base:classloader_total_loaded_class_count',
-      //     'base:gc_global_count',
-      //     'base:cpu_system_load_average',
-      //     'base:thread_count',
-      //     'base:classloader_current_loaded_class_count',
-      //     'base:gc_scavenge_time_seconds',
-      //     'base:jvm_uptime_seconds',
-      //     'base:memory_committed_heap_bytes',
-      //     'base:thread_max_count',
-      //     'base:cpu_available_processors',
-      //     'base:thread_daemon_count',
-      //     'base:gc_scavenge_count',
-      //     'base:classloader_total_unloaded_class_count',
-      //     'base:memory_max_heap_bytes',
-      //     'base:cpu_process_cpu_load_percent',
-      //     'base:memory_used_heap_bytes',
-      //     'base:gc_global_time_seconds',
-      //   ],
-      // };
-      const cpuData = { time, };
-      const memData = { time, };
-      const aggregateDataAboutHttpRequestsReceivedInSnapshot = { time, };
-      const aggregateDataAboutHttpsRequestsReceivedInSnapshot = { time, };
-      const aggregateDataAboutHttpRequestsSentDuringSnapshot = { time, };
-      const aggregateDataAboutHttpsRequestsSentDuringSnapshot = { time, };
+    function updateGraphs(metricsFromUser, metricsFromCodewind) {
+      const metricsFromUserNotProvidedByCodewind = metricsFromUser.filter(userMetric =>
+        !metricsFromCodewind.some(cwMetric => cwMetric.name === userMetric.name)
+      );
+      // console.log('metricsFromUserNotProvidedByCodewind');
+      // console.log(metricsFromUserNotProvidedByCodewind);
+
+      const metrics = metricsFromCodewind.concat(metricsFromUserNotProvidedByCodewind);
+      // console.log('metrics (combined)');
+      // console.log(metrics);
+
+      const time = Date.now();
+      const cpuData = { time };
+      const memData = { time };
+      const aggregateDataAboutHttpRequestsReceivedInSnapshot = { time };
+      const aggregateDataAboutHttpsRequestsReceivedInSnapshot = { time };
+      const aggregateDataAboutHttpRequestsSentDuringSnapshot = { time };
+      const aggregateDataAboutHttpsRequestsSentDuringSnapshot = { time };
       const alltimeDataAboutHttpRequests = {};
       const eventLoopData = {};
-      const gcData = { time, }
+      const gcData = { time };
       for (const metric of metrics) {
         const metricsObj = metric.metrics[0];
         const metricValue = metricsObj.value;
-        if (['os_cpu_used_ratio', 'base:cpu_system_load_average'].includes(metric.name)) {
+        if (metric.name === 'os_cpu_used_ratio') {
           cpuData.system = metricValue;
-        } else if (['process_cpu_used_ratio', 'cpu_process_cpu_load_percent'].includes(metric.name)) {
+        } else if (metric.name === 'process_cpu_used_ratio') {
           cpuData.process = metricValue;
 
         } else if (metric.name === 'os_resident_memory_bytes') {

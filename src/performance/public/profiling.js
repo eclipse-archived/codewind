@@ -97,13 +97,11 @@ let tree_root = new TreeNode('(root)', '', 0);
 // });
 
 function processProfilingSample(profilingSample) {
-    console.log("Building tree...");
-    // let profiling_row = profilingSample;
+    // console.log("Building tree...");
 
     let profiling_row = JSON.parse(JSON.stringify(profilingSample)); // parses the data into a JSON array
-    // let profiling_row = JSON.parse(profilingSample); // parses the data into a JSON array
-    console.log("Adding sample: " + profiling_row.time);
-    console.dir(profiling_row);
+    // console.log("Adding sample: " + profiling_row.time);
+    // console.dir(profiling_row);
     let indexed_nodes = {};
     // Index this so we can find parents faster.
     profiling_row.functions.map((node) => { indexed_nodes[node.self] = node; });
