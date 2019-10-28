@@ -10,7 +10,10 @@
 ################################################################################
 
 FROM node:10-alpine
+
 EXPOSE 9096 9496
+
+RUN apk add --no-cache --update openssl
 
 # Create UI app directory and install source code
 WORKDIR /usr/src/app

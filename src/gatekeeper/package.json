@@ -13,6 +13,7 @@
     "express": "^4.15.4",
     "express-session": "^1.16.2",
     "keycloak-connect": "^7.0.0",
+    "pem": "^1.14.1",
     "request": "^2.88.0"
   }
 }
