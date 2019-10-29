@@ -274,17 +274,16 @@ export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isErr
     }
 }
 
-
 /**
  * @function
- * @description Get the build log for a liberty project.
+ * @description Get logs from files or directories.
  *
- * @param projectLocation <Required | String> - The project location directory.
- * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param type <Required | String> - The type of log ("build" or "app")
  * @param logDirectory <Required | String> - The log location directory.
- * @param apiVersion <Required | String> - The filewatcher log api version.
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
  *
- * @returns Promise<BuildLog>
+ * @returns Promise<Array<AppLog | BuildLog>>
  */
 export async function getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
     if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;

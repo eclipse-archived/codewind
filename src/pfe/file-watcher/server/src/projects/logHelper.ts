@@ -87,7 +87,7 @@ export interface ILogTypes {
  * @param logDirectory <Required | String> - The directory to fetch the logs from.
  * @param logSuffix <Required | Array<String>> - The suffix of the log name e.g. `docker_build` or `app`.
  *
- * @returns Promise<Array<string>>
+ * @returns Promise<Array<LogFiles>>
  */
 export async function getLogFiles(logDirectory: string, logSuffix: Array<string>): Promise<Array<LogFiles>> {
     try {
@@ -105,9 +105,10 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
   * @description Get log files with timestap.
   *
   * @param logDirectory <Required | String> - The directory to fetch the logs from.
-  * @param logSuffix <Optional | Array<String>> - The suffix of the log name e.g. `docker_build` or `app`.
+  * @param logSuffix <Optional | Array<String> - The suffix of the log name e.g. `docker_build` or `app`.
+  * @param folderName <Optional | String> - An option to check for folder names as well.
   *
-  * @returns Promise<Array<string>>
+  * @returns Promise<Array<LogFiles>>
   */
  export async function getLogFilesOrFoldersWithTimestamp(logDirectory: string, logSuffix: Array<string>, folderName?: string): Promise<Array<LogFiles>> {
     const logs: Array<LogFiles> = [];
@@ -248,23 +249,17 @@ export async function getLogDir(projectID: string, projectName?: string): Promis
 
 /**
  * @function
- * @description Default function to get build logs given the log directory and log suffixes
+ * @description Get logs from specific files or folders.
  *
+ * @param origin <Required | String> - The origin of the logs ("container" or "workspace")
+ * @param logSource <Required | String> - The source of the logs ("files" or "dirs")
+ * @param logsOrigin <Required | ILogOriginFolerOrFiles> - The object containing the logs tree.
  * @param logDirectory <Required | String> - The log location directory.
- * @param logSuffixes <Required | Array<string> - The list of log file suffixes
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
  *
- * @returns Promise<BuildLog>
+ * @returns Promise<Array<LogFiles>>
  */
-export async function getBuildLogs(logDirectory: string, logSuffixes: Array<string>, origin: string = "workspace"): Promise<BuildLog> {
-    const buildLog: BuildLog = {
-        origin: origin,
-        files: []
-    };
-    buildLog.files = await this.getLogFiles(logDirectory, logSuffixes);
-    return buildLog;
-}
-
-
 async function getLogsFromFilesOrFolders(origin: string, logSource: string, logsOrigin: ILogOriginFolerOrFiles, logDirectory: string, projectID: string, containerName: string): Promise<Array<LogFiles>> {
     const logs = Object.keys(logsOrigin);
     let allLogs: LogFiles[] = [];
@@ -274,9 +269,9 @@ async function getLogsFromFilesOrFolders(origin: string, logSource: string, logs
         let receivedLogs: LogFiles[];
 
         if (logSource.toLowerCase() === "files") {
-            receivedLogs = await getLogFromFiles(origin, logDir, log, projectID, containerName);
+            receivedLogs = await getLogFromFiles(logDir, log, projectID, containerName, origin);
         } else if (logSource.toLowerCase() === "dirs") {
-            receivedLogs = await getLogFromDirs(origin, logDir, log, projectID, containerName);
+            receivedLogs = await getLogFromDirs(logDir, log, projectID, containerName, origin);
         }
 
         if (receivedLogs && receivedLogs.length > 0) {
@@ -286,6 +281,18 @@ async function getLogsFromFilesOrFolders(origin: string, logSource: string, logs
     return allLogs;
 }
 
+/**
+ * @function
+ * @description Get logs from specific origin type.
+ *
+ * @param origin <Required | String> - The origin of the logs ("container" or "workspace")
+ * @param logsOrigin <Required | ILogOriginTypes> - The object containing the logs tree.
+ * @param logDirectory <Required | String> - The log location directory.
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
+ *
+ * @returns Promise<ILogInstance>
+ */
 async function getLogsFromOriginTypes(origin: string, logsOrigin: ILogOriginTypes, logDirectory: string, projectID: string, containerName: string): Promise<ILogInstance> {
     const logSources = Object.keys(logsOrigin);
     const currentLog: ILogInstance = {};
@@ -316,6 +323,17 @@ async function getLogsFromOriginTypes(origin: string, logsOrigin: ILogOriginType
     return currentLog;
 }
 
+/**
+ * @function
+ * @description Get logs from the origin.
+ *
+ * @param logsOrigin <Required | ILogOrigins> - The object containing the logs tree.
+ * @param logDirectory <Required | String> - The log location directory.
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
+ *
+ * @returns Promise<Array<AppLog | BuildLog>>
+ */
 async function getLogsFromOrigin(logsOrigin: ILogOrigins, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
     const origins = Object.keys(logsOrigin);
     let resultLogs: Array<AppLog | BuildLog> = [];
@@ -371,7 +389,18 @@ async function getLogsFromOrigin(logsOrigin: ILogOrigins, logDirectory: string, 
     return resultLogs;
 }
 
-
+/**
+ * @function
+ * @description Get logs from files or directories.
+ *
+ * @param type <Required | String> - The type of log ("build" or "app")
+ * @param logsOrigin <Required | ILogTypes> - The object containing the logs tree.
+ * @param logDirectory <Required | String> - The log location directory.
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
+ *
+ * @returns Promise<Array<AppLog | BuildLog>>
+ */
 export async function getLogs(type: string, logsOrigin: ILogTypes, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
     // check if type is either "build" or "app"
     if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
@@ -389,23 +418,15 @@ export async function getLogs(type: string, logsOrigin: ILogTypes, logDirectory:
 
 /**
  * @function
- * @description Default function to get app logs given the log directory and log suffixes
+ * @description List logs from specific files.
  *
  * @param logDirectory <Required | String> - The log location directory.
- * @param logSuffixes <Required | Array<string> - The list of log file suffixes
- *
- * @returns Promise<AppLog>
+ * @param logSuffix <Required | String> - The suffix of the log name e.g. `docker_build` or `app`.
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
+ * @param origin <Optional | String> - The origin of the logs ("container" or "workspace"), defaults to "workspace"
  */
-export async function getAppLogs(logDirectory: string, logSuffixes: Array<string>): Promise<AppLog> {
-    const appLog: AppLog = {
-        origin: "workspace",
-        files: []
-    };
-    appLog.files = await this.getLogFiles(logDirectory, logSuffixes);
-    return appLog;
-}
-
-export async function getLogFromFiles(origin: string = "workspace", logDirectory: string, logSuffix: string, projectID: string, containerName: string): Promise<LogFiles[]> {
+export async function getLogFromFiles(logDirectory: string, logSuffix: string, projectID: string, containerName: string, origin: string = "workspace"): Promise<LogFiles[]> {
     let logs;
 
     if (origin.toLowerCase() === "workspace") {
@@ -419,7 +440,17 @@ export async function getLogFromFiles(origin: string = "workspace", logDirectory
     return logs;
 }
 
-export async function getLogFromDirs(origin: string = "workspace", logDirectory: string, folderName: string, projectID: string,  containerName: string): Promise<LogFiles[]> {
+/**
+ * @function
+ * @description List logs from specific folders.
+ *
+ * @param logDirectory <Required | String> - The log location directory.
+ * @param folderName <Required | String> - The log folder name.
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
+ * @param origin <Optional | String> - The origin of the logs ("container" or "workspace"), defaults to "workspace"
+ */
+export async function getLogFromDirs(logDirectory: string, folderName: string, projectID: string, containerName: string, origin: string = "workspace"): Promise<LogFiles[]> {
     let logs;
 
     if (origin.toLowerCase() === "workspace") {
