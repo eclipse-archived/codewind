@@ -388,7 +388,7 @@ function runMavenBuild() {
 
 		# before running the spring build, we should touch the maven build file and call the logs api to emit its availability
 		echo -e "Touching maven build log file: "/root/logs/$MAVEN_BUILD.log""
-		kubectl exec $POD_NAME -- bash "touch "/root/logs/$MAVEN_BUILD.log""
+		kubectl exec $POD_NAME -- bash -c "touch "/root/logs/$MAVEN_BUILD.log""
 		
 		echo -e "Triggering log file event for: maven build log"
   		$util newLogFileAvailable $PROJECT_ID "build"

@@ -57,6 +57,8 @@ interface ILogInstance {
     files?: string[];
     dirs?: string[];
     bestTime?: number;
+    containerName?: string;
+    podName?: string;
 }
 
 interface ILogOriginFolerOrFiles {
@@ -327,6 +329,11 @@ async function getLogsFromOrigin(logsOrigin: ILogOrigins, logDirectory: string, 
         let logInst: ILogInstance;
         if (origin.toLowerCase() === "container") {
             logInst = await getLogsFromOriginTypes(origin, logsOrigin.container, logDirectory, projectID, containerName);
+            if (process.env.IN_K8)  {
+                logInst.podName = await kubeutil.getPodName(projectID, "release=" + containerName);
+            } else {
+                logInst.containerName = containerName;
+            }
         } else if (origin.toLowerCase() === "workspace") {
             logInst = await getLogsFromOriginTypes(origin, logsOrigin.workspace, logDirectory, projectID, containerName);
         }
@@ -339,6 +346,12 @@ async function getLogsFromOrigin(logsOrigin: ILogOrigins, logDirectory: string, 
         }
         if (logInst.bestTime) {
             currentLog.bestTime = logInst.bestTime;
+        }
+        if (logInst.containerName) {
+            currentLog.containerName = logInst.containerName;
+        }
+        if (logInst.podName) {
+            currentLog.podName = logInst.podName;
         }
 
         if ((currentLog.files && currentLog.files.length > 0) || (currentLog.dirs && currentLog.dirs.length > 0)) {
