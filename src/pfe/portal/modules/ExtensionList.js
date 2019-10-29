@@ -84,7 +84,7 @@ module.exports = class ExtensionList {
           }
           finally {
             // to be safe, try to remove directory with version name if it still exist
-            await fs.remove(targetWithVersion);
+            await utils.forceRemove(targetWithVersion);
           }
         }
     }
@@ -284,7 +284,7 @@ async function prepForUnzip(target, version) {
     const targetOld = target + suffixOld;
 
     // try to remove previous backup that may or may not exist before rename
-    await fs.remove(targetOld);
+    await utils.forceRemove(targetOld);
     await fs.rename(target, targetOld);
   }
 
