@@ -61,13 +61,13 @@ interface ILogInstance {
     podName?: string;
 }
 
-interface ILogOriginFolerOrFiles {
+interface ILogOriginFolderOrFiles {
     [x: string]: string;
 }
 
 export interface ILogOriginTypes {
-    files?: ILogOriginFolerOrFiles;
-    dirs?: ILogOriginFolerOrFiles;
+    files?: ILogOriginFolderOrFiles;
+    dirs?: ILogOriginFolderOrFiles;
 }
 
 interface ILogOrigins {
@@ -253,14 +253,14 @@ export async function getLogDir(projectID: string, projectName?: string): Promis
  *
  * @param origin <Required | String> - The origin of the logs ("container" or "workspace")
  * @param logSource <Required | String> - The source of the logs ("files" or "dirs")
- * @param logsOrigin <Required | ILogOriginFolerOrFiles> - The object containing the logs tree.
+ * @param logsOrigin <Required | ILogOriginFolderOrFiles> - The object containing the logs tree.
  * @param logDirectory <Required | String> - The log location directory.
  * @param projectID <Required | String> - An alphanumeric identifier for a project.
  * @param containerName <Required | String> - The docker container name.
  *
  * @returns Promise<Array<LogFiles>>
  */
-async function getLogsFromFilesOrFolders(origin: string, logSource: string, logsOrigin: ILogOriginFolerOrFiles, logDirectory: string, projectID: string, containerName: string): Promise<Array<LogFiles>> {
+async function getLogsFromFilesOrFolders(origin: string, logSource: string, logsOrigin: ILogOriginFolderOrFiles, logDirectory: string, projectID: string, containerName: string): Promise<Array<LogFiles>> {
     const logs = Object.keys(logsOrigin);
     let allLogs: LogFiles[] = [];
 
