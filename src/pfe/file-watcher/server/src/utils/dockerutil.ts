@@ -284,11 +284,12 @@ export async function fileExistInContainer(projectID: string, containerName: str
 
 /**
  * @function
- * @description Check for files in a docker container directory.
+ * @description Get files of folders from a docker container with timestamps.
  *
  * @param projectID <Required | String> - An alphanumeric identifier for a project.
  * @param containerName <Required | String> - The docker container name.
- * @param fileLocation <Required | String> - The path to the files location.
+ * @param fileLocation <Required | String> - The file location inside the container.
+ * @param folderName <Optional | String> - Check for folder names if specified.
  *
  * @returns Promise<Array<logHelper.LogFiles>>
  */

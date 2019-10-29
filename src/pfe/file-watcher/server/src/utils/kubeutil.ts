@@ -197,6 +197,17 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
     return info;
 }
 
+/**
+ * @function
+ * @description Get files of folders from a kube container with timestamps.
+ *
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
+ * @param fileLocation <Required | String> - The file location inside the container.
+ * @param folderName <Optional | String> - Check for folder names if specified.
+ *
+ * @returns Promise<Array<logHelper.LogFiles>>
+ */
 export async function getFilesOrFoldersInContainerWithTimestamp(projectID: string, containerName: string, fileLocation: string, folderName?: string): Promise<Array<logHelper.LogFiles>> {
     logger.logProjectInfo("Looking for all log files in container " + containerName, projectID);
     const containerIsActive = await isContainerActive(containerName);
@@ -387,6 +398,8 @@ export async function installChart(projectID: string, deploymentName: string, ch
  *
  * @param projectID <Required | String> - An alphanumeric identifier for a project.
  * @param args <Required | String[]> - List of args to pass to the helm command.
+ *
+ * @returns Promise<ProcessResult>
  */
 async function runHelmCommand(projectID: string, args: string[]): Promise<ProcessResult> {
     try {
@@ -397,6 +410,15 @@ async function runHelmCommand(projectID: string, args: string[]): Promise<Proces
     }
 }
 
+/**
+ * @function
+ * @description Run a kubectl command.
+ *
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param args <Required | String[]> - List of args to pass to the kubectl command.
+ *
+ * @returns Promise<ProcessResult>
+ */
 export async function runKubeCommand(projectID: string, args: string[]): Promise<ProcessResult> {
     try {
         logger.logProjectInfo("Running kube command: kubectl " + args, projectID);
@@ -406,7 +428,15 @@ export async function runKubeCommand(projectID: string, args: string[]): Promise
     }
 }
 
-
+/**
+ * @function
+ * @description Get pod name give the release label.
+ *
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param releaseLabel <Required | String> - The release label generated from the container id.
+ *
+ * @returns Promise<string>
+ */
 export async function getPodName(projectID: string, releaseLabel: string): Promise<string> {
     let podName;
     const resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).pods.get({ qs: { labelSelector: releaseLabel } });

@@ -177,6 +177,17 @@ export async function getContainerStatus(projectInfo: ProjectInfo, containerName
     }
 }
 
+/**
+ * @function
+ * @description Get logs from files or directories.
+ *
+ * @param type <Required | String> - The type of log ("build" or "app")
+ * @param logDirectory <Required | String> - The log location directory.
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
+ *
+ * @returns Promise<Array<AppLog | BuildLog>>
+ */
 export async function getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
     if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
     return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
