@@ -165,18 +165,18 @@ export class OdoExtensionProject implements IExtensionProject {
     }
 
     setLogsOriginFromExtension(): void {
-        if (this.config.buildContainerLogs) {
-            logsOrigin["build"]["container"] = this.config.buildContainerLogs;
+        if (this.config.buildContainerLogs && (this.config.buildContainerLogs.files || this.config.buildContainerLogs.dirs)) {
+            logsOrigin.build.container = this.config.buildContainerLogs;
         }
-        if (this.config.buildWorkspaceLogs) {
-            logsOrigin["build"]["workspace"] = this.config.buildWorkspaceLogs;
+        if (this.config.buildWorkspaceLogs && (this.config.buildWorkspaceLogs.files || this.config.buildWorkspaceLogs.dirs)) {
+            logsOrigin.build.workspace = this.config.buildWorkspaceLogs;
         }
 
-        if (this.config.appContainerLogs) {
-            logsOrigin["app"]["container"] = this.config.appContainerLogs;
+        if (this.config.appContainerLogs && (this.config.appContainerLogs.files || this.config.appContainerLogs.dirs)) {
+            logsOrigin.app.container = this.config.appContainerLogs;
         }
-        if (this.config.appWorkspaceLogs) {
-            logsOrigin["app"]["workspace"] = this.config.appWorkspaceLogs;
+        if (this.config.appWorkspaceLogs && (this.config.appWorkspaceLogs.files || this.config.appWorkspaceLogs.dirs)) {
+            logsOrigin.app.workspace = this.config.appWorkspaceLogs;
         }
     }
 
