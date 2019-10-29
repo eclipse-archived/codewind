@@ -24,32 +24,27 @@ Options:
 EOF
 }
 
-function getCurl() {
-    protocol="http"
-    port="9090"
-    if [ $TEST_TYPE == "kube" ]; then
-        protocol="https"
-        port="9191"
-        flags="--insecure"
-    fi
-    PROJECT_CLONE_CMD="curl -H \"Content-type: application/json\" -d '{\"projectName\": \"$1\", \"parentPath\": \"$2\", \"url\": \"$3\"}' \"$protocol://localhost:$port/api/v1/projects\" $flags"
-}
-
-function clone () {
-    getCurl $1 $2 $3
-
+function downloadCwctl() {
+    EXECUTABLE_NAME="cwctl"
+    DOWNLOAD_CMD="curl -X GET http://download.eclipse.org/codewind/codewind-installer/master/latest/cwctl-linux --output $EXECUTABLE_NAME"
     if [ $TEST_TYPE == "local" ]; then
-        docker exec -i $CODEWIND_CONTAINER_ID bash -c "$PROJECT_CLONE_CMD"
+        docker exec -i $CODEWIND_CONTAINER_ID bash -c "$DOWNLOAD_CMD"
+        docker exec -i $CODEWIND_CONTAINER_ID bash -c "chmod +x $EXECUTABLE_NAME"
     elif [ $TEST_TYPE == "kube" ]; then
-        kubectl exec -i $CODEWIND_POD_ID -- bash -c "$PROJECT_CLONE_CMD"
-    fi
-    CURL_EC=$?
-    echo "\nCurl exit command is: $CURL_EC"
-    if [[ ($CURL_EC -ne 0) ]]; then
-        echo -e "${RED}Cloning project $1 failed. ${RESET}\n"
-        exit 1
+        kubectl exec -i $CODEWIND_POD_ID -- bash -c "$DOWNLOAD_CMD"
+        kubectl exec -i $CODEWIND_POD_ID -- bash -c "chmod +x $EXECUTABLE_NAME"
     fi
 }
+
+function createProject() {
+    CREATE_CMD="./$EXECUTABLE_NAME project create --url $1 $2"
+    if [ $TEST_TYPE == "local" ]; then
+        docker exec -i $CODEWIND_CONTAINER_ID bash -c "$CREATE_CMD"
+    elif [ $TEST_TYPE == "kube" ]; then
+        kubectl exec -i $CODEWIND_POD_ID -- bash -c "$CREATE_CMD"
+    fi
+}
+
 
 function setup {
     DATE_NOW=$(date +"%d-%m-%Y")
@@ -91,14 +86,16 @@ function setup {
     fi
 
     if [ $TEST_TYPE == "local" ]; then
-        PROJECT_PATH="$CW_DIR/codewind-workspace"
+        PROJECT_PATH="/codewind-workspace"
     elif [ $TEST_TYPE == "kube" ]; then
         PROJECT_PATH=/projects
     fi
 
+    downloadCwctl
+
     CTR=0
     # Read project git config
-    echo -e "${BLUE}Cloning projects to $PROJECT_PATH. ${RESET}"
+    echo -e "${BLUE}Creating projects to $PROJECT_PATH. ${RESET}"
     while IFS='\n' read -r LINE; do
         PROJECT_CLONE[$CTR]=$LINE
         let CTR++
@@ -109,8 +106,8 @@ function setup {
         PROJECT_NAME=$(echo $i | cut -d "=" -f 1)
         PROJECT_URL=$(echo $i | cut -d "=" -f 2)
         echo -e "\n\nProject name is: $PROJECT_NAME, project URL is $PROJECT_URL"
-        echo -e "${BLUE}Cloning $PROJECT_URL. ${RESET}"
-        clone $PROJECT_NAME $PROJECT_PATH $PROJECT_URL
+        echo -e "${BLUE}Creating project $PROJECT_NAME from $PROJECT_URL in "$PROJECT_PATH/$PROJECT_NAME" ${RESET}"
+        createProject $PROJECT_URL "$PROJECT_PATH/$PROJECT_NAME"
     done
 }
 

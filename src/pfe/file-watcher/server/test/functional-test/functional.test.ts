@@ -74,7 +74,7 @@ describe("PFE - functional test", () => {
 });
 
 function runAllTests(): void {
-  genericSuite.runTest(true);
+  genericSuite.runTest();
   for (const chosenType of projectTypes) {
     if (chosenType === "docker") {
       for (const chosenDocker of dockerProjects) {
