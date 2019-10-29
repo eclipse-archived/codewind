@@ -53,6 +53,8 @@ git config -f $GIT_CONFIG --add user.name "`git config --get user.name || echo '
 git config -f $GIT_CONFIG --add user.email "`git config --get user.email || echo 'codewind.user@localhost'`"
 
 DIR=`pwd`
+# Shutdown and cleanup.
+./stop.sh;
 
 # Setting the NOBUILD env var to true uses the current images.
 # Used in travis when we build and push the images with script/build.sh
