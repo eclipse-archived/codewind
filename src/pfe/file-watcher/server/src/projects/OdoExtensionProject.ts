@@ -23,14 +23,40 @@ import { ProjectInfo, BuildLog, AppLog, ProjectCapabilities, defaultProjectCapab
 import { Validator } from "./Validator";
 import { IExtensionProject } from "../extensions/IExtensionProject";
 
+// skeleton for the logs originated from the extension json
+const logsOrigin: logHelper.ILogTypes = {
+    "build": {
+        "container": {
+            "files": {},
+            "dirs": {}
+        },
+        "workspace": {
+            "files": {},
+            "dirs": {}
+        },
+    },
+    "app": {
+        "container": {
+            "files": {},
+            "dirs": {}
+        },
+        "workspace": {
+            "files": {},
+            "dirs": {}
+        },
+    },
+};
+
 /**
  * @interface
  * @description Interface for odo extension project configuration.
  */
 interface OdoExtensionProjectConfig {
     requiredFiles: string[];
-    buildLogs: string[];
-    appLogs: string[];
+    buildContainerLogs?: logHelper.ILogOriginTypes;
+    buildWorkspaceLogs?: logHelper.ILogOriginTypes;
+    appContainerLogs?: logHelper.ILogOriginTypes;
+    appWorkspaceLogs?: logHelper.ILogOriginTypes;
     capabilities?: ProjectCapabilities;
 }
 
@@ -129,20 +155,26 @@ export class OdoExtensionProject implements IExtensionProject {
      *
      * @returns Promise<BuildLog>
      */
-    getBuildLog = async (logDirectory: string): Promise<BuildLog> => {
-        return await logHelper.getBuildLogs(logDirectory, this.config.buildLogs);
+    getLogs = async (type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> => {
+        if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+        this.setLogsOriginFromExtension();
+        return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
     }
 
-    /**
-     * @function
-     * @description Get the app log path for the project.
-     *
-     * @param logDirectory <Required | String> - The log location directory.
-     *
-     * @returns Promise<AppLog>
-     */
-    getAppLog = async (logDirectory: string): Promise<AppLog> => {
-        return await logHelper.getAppLogs(logDirectory, this.config.appLogs);
+    setLogsOriginFromExtension(): void {
+        if (this.config.buildContainerLogs) {
+            logsOrigin["build"]["container"] = this.config.buildContainerLogs;
+        }
+        if (this.config.buildWorkspaceLogs) {
+            logsOrigin["build"]["workspace"] = this.config.buildWorkspaceLogs;
+        }
+
+        if (this.config.appContainerLogs) {
+            logsOrigin["app"]["container"] = this.config.appContainerLogs;
+        }
+        if (this.config.appWorkspaceLogs) {
+            logsOrigin["app"]["workspace"] = this.config.appWorkspaceLogs;
+        }
     }
 
     /**

@@ -38,10 +38,10 @@ interface PortMappings {
  */
 interface ShellExtensionProjectConfig {
     requiredFiles: string[];
-    buildContainerLogs?: any;
-    buildWorkspaceLogs?: any;
-    appContainerLogs?: any;
-    appWorkspaceLogs?: any;
+    buildContainerLogs?: logHelper.ILogOriginTypes;
+    buildWorkspaceLogs?: logHelper.ILogOriginTypes;
+    appContainerLogs?: logHelper.ILogOriginTypes;
+    appWorkspaceLogs?: logHelper.ILogOriginTypes;
     appPort?: string[] | PortMappings; // string[] for backward compatibility
     debugPort?: PortMappings;
     capabilities?: ProjectCapabilities;

@@ -65,7 +65,7 @@ interface ILogOriginFolerOrFiles {
     [x: string]: string;
 }
 
-interface ILogOriginTypes {
+export interface ILogOriginTypes {
     files?: ILogOriginFolerOrFiles;
     dirs?: ILogOriginFolerOrFiles;
 }
