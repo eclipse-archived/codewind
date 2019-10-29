@@ -610,7 +610,7 @@ export async function removeDanglingImages(): Promise<void> {
  *
  * @returns Promise<ProcessResult>
  */
-async function runDockerCommand(projectID: string, args: string[]): Promise<ProcessResult> {
+export async function runDockerCommand(projectID: string, args: string[]): Promise<ProcessResult> {
   try {
     logger.logProjectDebug("Run docker command: docker " + args, projectID);
     return await processManager.spawnDetachedAsync(projectID, "docker", args, {});

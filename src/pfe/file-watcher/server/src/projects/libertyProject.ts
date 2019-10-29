@@ -25,7 +25,9 @@ import { StartModes, ControlCommands } from "./constants";
 import * as locale from "../utils/locale";
 import * as logger from "../utils/logger";
 import * as logHelper from "./logHelper";
+import * as kubeutil from "../utils/kubeutil";
 import * as projectEventsController from "../controllers/projectEventsController";
+import { ProcessResult } from "../utils/processManager";
 
 
 const readFileAsync = promisify(fs.readFile);
@@ -165,7 +167,7 @@ export async function validate(operation: Operation): Promise<void> {
     if (!await utils.asyncFileExists(fullServerXmlPath)) {
         logger.logProjectError("server.xml not found at: " + fullServerXmlPath, operation.projectInfo.projectID);
         const missingServerXmlMsg = await getTranslation("buildApplicationTask.missingServerXml", { path: fullServerXmlPath });
-        // await logBuildEvent(operation.projectInfo, missingServerXmlMsg, true);
+        await logBuildEvent(operation.projectInfo, missingServerXmlMsg, true);
     }
 
     const filepath = operation.projectInfo.location + "/pom.xml";
@@ -225,36 +227,52 @@ export async function validate(operation: Operation): Promise<void> {
  *
  * @returns Promise<any>
  */
-// export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isError: boolean): Promise<any> {
-//     // have the message match the Maven format
-//     const msgLabel = isError ? "ERROR" : "INFO";
-//     const fullMsg = `\n[${msgLabel}] ${msg}`;
+export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isError: boolean): Promise<any> {
+    // have the message match the Maven format
+    const msgLabel = isError ? "ERROR" : "INFO";
+    const fullMsg = `\n[${msgLabel}] ${msg}`;
 
-//     const buildLog = await projectUtil.getProjectLogs(projectInfo);
-//     let buildLogPath;
+    const buildLog = await projectUtil.getProjectLogs(projectInfo);
+    let buildLogPath;
 
-//     if (buildLog && buildLog.build && buildLog.build.files) {
-//         // the log build event is only called from liberty project and the file info is dumped into maven build file
-//         buildLogPath = buildLog.build.files.filter((value) => {
-//             return value.indexOf(logHelper.buildLogs.mavenBuild) > -1;
-//         })[0];
-//     }
-//     else {
-//         logger.logProjectError("Could not get build log for project", projectInfo.projectID);
-//         return;
-//     }
+    if (buildLog && buildLog.build) {
+        // the log build event is only called from liberty project and the file info is dumped into maven build file
+        buildLog.build.filter((logInstance) => {
+            if (logInstance && logInstance.files) {
+                logInstance.files.filter((value) => {
+                    if (value.indexOf(logHelper.buildLogs.mavenBuild) > -1) {
+                        buildLogPath = value;
+                        return;
+                    }
+                });
+            }
+        });
+    } else {
+        logger.logProjectError("Could not get build log for project", projectInfo.projectID);
+        return;
+    }
 
-//     logger.logProjectInfo(`Writing to build log at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
+    const containerName = await projectUtil.getContainerName(projectInfo);
+    const targetContainer = process.env.IN_K8 ? await kubeutil.getPodName(projectInfo.projectID, `release=${containerName}`) : containerName;
 
-//     // if the build log path is defined, only then we write it
-//     if (buildLogPath) {
-//         fs.appendFile(buildLogPath, fullMsg, (err) => {
-//             if (err) {
-//                 logger.logProjectError("File system error writing to build log: " + err, projectInfo.projectID);
-//             }
-//         });
-//     }
-// }
+    logger.logProjectInfo(`Writing to build log in container ${targetContainer} at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
+
+    // if the build log path is defined, only then we write it
+    if (buildLogPath && targetContainer) {
+        const cmd = `echo "${fullMsg}" >> ${buildLogPath}`;
+        const args = process.env.IN_K8 ? ["exec", "-i", targetContainer, "--", "sh", "-c", cmd] : ["exec", "-i", targetContainer, "sh", "-c", cmd];
+        let data: ProcessResult;
+        if (process.env.IN_K8) {
+            data = await kubeutil.runKubeCommand(projectInfo.projectID, args);
+        } else {
+            data = await dockerutil.runDockerCommand(projectInfo.projectID, args);
+        }
+        if (data && data.exitCode != 0) {
+            logger.logProjectError("File system error writing to build log: " + data.stderr, projectInfo.projectID);
+            return;
+        }
+    }
+}
 
 
 /**
