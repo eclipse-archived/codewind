@@ -356,23 +356,23 @@ async function getLogsFromOrigin(logsOrigin: ILogOrigins, logDirectory: string, 
             logInst = await getLogsFromOriginTypes(origin, logsOrigin.workspace, logDirectory, projectID, containerName);
         }
 
-        if (logInst.files) {
+        if (logInst && logInst.files) {
             currentLog.files = logInst.files;
         }
-        if (logInst.dirs) {
+        if (logInst && logInst.dirs) {
             currentLog.dirs = logInst.dirs;
         }
-        if (logInst.bestTime) {
+        if (logInst && logInst.bestTime) {
             currentLog.bestTime = logInst.bestTime;
         }
-        if (logInst.containerName) {
+        if (logInst && logInst.containerName) {
             currentLog.containerName = logInst.containerName;
         }
-        if (logInst.podName) {
+        if (logInst && logInst.podName) {
             currentLog.podName = logInst.podName;
         }
 
-        if ((currentLog.files && currentLog.files.length > 0) || (currentLog.dirs && currentLog.dirs.length > 0)) {
+        if (currentLog && ((currentLog.files && currentLog.files.length > 0) || (currentLog.dirs && currentLog.dirs.length > 0))) {
             resultLogs.push(currentLog);
         }
     }
