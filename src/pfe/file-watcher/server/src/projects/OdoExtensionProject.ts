@@ -92,6 +92,7 @@ export class OdoExtensionProject implements IExtensionProject {
     init = async (projectInfo: ProjectInfo): Promise<void> => {
         this.fullPath = projectInfo.extensionID;
         this.config = await fs.readJson(path.join(this.fullPath, ".odo-extension-config.json"));
+        this.setLogsOriginFromExtension();
     }
 
     /**
@@ -160,7 +161,6 @@ export class OdoExtensionProject implements IExtensionProject {
      */
     getLogs = async (type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> => {
         if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
-        this.setLogsOriginFromExtension();
         return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
     }
 
