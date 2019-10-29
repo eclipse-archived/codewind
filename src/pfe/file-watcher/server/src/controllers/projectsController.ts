@@ -1134,12 +1134,12 @@ export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, sav
                 const logListCache: Array<BuildLog | AppLog> = logHelper.logFileLists[projectID][type];
                 let cache: Array<string> = [];
                 logListCache.forEach((value: AppLog | BuildLog) => {
-                    cache = cache.concat(value.files);
+                    if (value) cache = cache.concat(value.files);
                 });
 
                 let original: Array<string> = [];
                 result[type].forEach((value: AppLog | BuildLog) => {
-                    original = original.concat(value.files);
+                    if (value) original = original.concat(value.files);
                 });
 
                 const areBothArraysEqual = cache.every((val: string) => original.includes(val)) && original.every((val: string) => cache.includes(val));
