@@ -110,7 +110,7 @@ module.exports.copyProject = async function copyFile(fromProjectPath, toProjectP
   log.debug(`copyProject fromPath: ${fromProjectPath}, toPath: ${toProjectPath}`);
   await fs.copy(fromProjectPath, toProjectPath);
   // now clean up old directory
-  await fs.remove(fromProjectPath)
+  await forceRemove(fromProjectPath)
 }
 
 /** C:\helloThere -> /c/helloThere */
