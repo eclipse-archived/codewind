@@ -53,7 +53,7 @@ git config -f $GIT_CONFIG --add user.name "`git config --get user.name || echo '
 git config -f $GIT_CONFIG --add user.email "`git config --get user.email || echo 'codewind.user@localhost'`"
 
 DIR=`pwd`
-# Shutdown and cleanup.
+# Shutdown and cleanup to ensure the docker network gets recreated before attempting start
 ./stop.sh;
 
 # Setting the NOBUILD env var to true uses the current images.
