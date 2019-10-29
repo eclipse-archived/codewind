@@ -71,8 +71,7 @@ module.exports = class User {
       }
       await this.createDirectories();
       this.projectList = new ProjectList();
-      this.workspaceSettingObject = undefined;
-      this.workspaceSettingsFileWatchEstablished = false;
+      
       // Add the projectList to args
       await this.initialiseExistingProjects();
 
@@ -238,21 +237,7 @@ module.exports = class User {
         }
       }
     } ));
-    if (this.workspaceSettingObject == undefined) {
-      const workspaceSettingObj = {};
-      workspaceSettingObj.pathToMonitor  = path.join(global.codewind.CODEWIND_WORKSPACE, '/.config');
-      if (process.env.HOST_OS === "windows") {
-        workspaceSettingObj.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(workspaceSettingObj.pathToMonitor );
-      }
-      workspaceSettingObj.projectID = crypto.randomBytes(16).toString("hex");
-      workspaceSettingObj.ignoredPaths = [];
-      workspaceSettingObj.projectWatchStateId = crypto.randomBytes(16).toString("hex");
-      workspaceSettingObj.type = "non-project";
-      this.workspaceSettingObject = workspaceSettingObj;
-      watchList.projects.push(workspaceSettingObj);
-    }else {
-      watchList.projects.push(this.workspaceSettingObject);
-    }
+    
     log.debug("The watch list: " + JSON.stringify(watchList));
     return watchList;
   }
@@ -577,6 +562,7 @@ module.exports = class User {
    * Function to get status of deployment registry in workspace settings file
    */
   async getDeploymentRegistryStatus() {
+    // workspaceSettingsFile is the path inside PFE Container
     const workspaceSettingsFile = path.join(this.directories["config"], "settings.json");
     let contents;
     let isDeploymentRegistrySet = false;
@@ -609,44 +595,19 @@ module.exports = class User {
     if (contents && contents.deploymentRegistry && contents.deploymentRegistry.length > 0) {
       log.debug(`Workspace settings deploymentRegistry` + contents.deploymentRegistry);
       isDeploymentRegistrySet = true;
-    }
-    log.info(`Workspace settings deployment registry status: ${isDeploymentRegistrySet}`);
 
-    if(contents) {
-      // trigger the FW workspaceSettings.readWorkspaceSettings() function to load up the cache if valid
+      // trigger the FW workspaceSettings.readWorkspaceSettings() function to load up the cache since it's valid
       log.info(`Workspace settings file present, reading the settings file`);
       await this.readWorkspaceSettings();
     }
+    log.info(`Workspace settings deployment registry status: ${isDeploymentRegistrySet}`);
 
-    let workspaceSettingsFileWatchCtr = 0;
+    const workspaceSettings = {
+      statusCode: 200,
+      deploymentRegistry: isDeploymentRegistrySet
+    }
 
-    const retval = await new Promise((resolve) => {
-      const intervaltimer = setInterval(() => {
-        // wait till the watch has been established on the workspace settings file
-        workspaceSettingsFileWatchCtr++;
-        log.debug(`Checking if workspace settings file is being watched`);
-        if (this.workspaceSettingsFileWatchEstablished) {
-          log.info(`Watch had already been established for the workspace settings file`);
-          clearInterval(intervaltimer);
-          const workspaceSettings = {
-            statusCode: 200,
-            deploymentRegistry: isDeploymentRegistrySet
-          }
-          return resolve(workspaceSettings);
-        }
-        if (workspaceSettingsFileWatchCtr == 20) {
-          log.info(`Could not determine if watch for the workspace settings file had been established`);
-          clearInterval(intervaltimer);
-          const workspaceSettings = {
-            statusCode: 500,
-            deploymentRegistry: false
-          }
-          return resolve(workspaceSettings);
-        }
-      }, 1000);
-    });
-
-    return retval;
+    return workspaceSettings;
   }
   /**
    * Function to read workspace settings
@@ -673,7 +634,7 @@ module.exports = class User {
       log.error(`Error in writeWorkspaceSettings`);
       log.error(err);
     }
-    console.log(`writeWorkspaceSettings returning ${retval}`);
+    log.debug(`writeWorkspaceSettings return value: ` + JSON.stringify(retval));
     return retval;
   }
 
