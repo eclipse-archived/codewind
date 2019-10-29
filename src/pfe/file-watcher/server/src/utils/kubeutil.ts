@@ -397,7 +397,7 @@ async function runHelmCommand(projectID: string, args: string[]): Promise<Proces
     }
 }
 
-async function runKubeCommand(projectID: string, args: string[]): Promise<ProcessResult> {
+export async function runKubeCommand(projectID: string, args: string[]): Promise<ProcessResult> {
     try {
         logger.logProjectInfo("Running kube command: kubectl " + args, projectID);
         return await processManager.spawnDetachedAsync(projectID, "kubectl", args, {});
