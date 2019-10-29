@@ -83,7 +83,7 @@ module.exports = class ExtensionList {
           }
           finally {
             // to be safe, try to remove directory with version name if it still exist
-            await forceRemove(targetWithVersion);
+            await utils.forceRemove(targetWithVersion);
           }
         }
     }
@@ -264,20 +264,6 @@ function isNewer(version, existingVersion) {
 }
 
 /**
- * Force remove a path, regardless of whether it exists, or it's file or directory that may or may not be empty.
- * 
- * @param {string} path, path to remove
- */
-async function forceRemove(path) {
-  try {
-    await exec(`rm -rf ${path}`);
-  }
-  catch (err) {
-    log.warn(err.message);
-  }
-}
-
-/**
  * Prepare the directory where an extension will be unzipped to. If directory
  * exists with the same name, it will be renamed by appending the "__old" suffix to it.
  * 
@@ -297,7 +283,7 @@ async function prepForUnzip(target, version) {
     const targetOld = target + suffixOld;
 
     // try to remove previous backup that may or may not exist before rename
-    await forceRemove(targetOld);
+    await utils.forceRemove(targetOld);
     await fs.rename(target, targetOld);
   }
 
