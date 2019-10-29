@@ -97,14 +97,16 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
 }
 
 export async function writeWorkspaceSettings(newWorkspaceSettings: any): Promise<IWorkspaceSettingsSuccess | IWorkspaceSettingsFailure> {
+    logger.logInfo("Writing new workspace settings: " + JSON.stringify(newWorkspaceSettings));
     const workspaceSettingsFile = constants.workspaceConstants.workspaceSettingsFile;
     const workspaceSettingsInfo = await getWorkspaceSettingsInfo();
     for (const setting in newWorkspaceSettings) {
         workspaceSettingsInfo[setting] = newWorkspaceSettings[setting];
     }
-    // Write the new settings and invalidate the cache.
+    // Write the new settings, invalidate the cache and reload the cache since we no longer have file watch on the workspace settings file
     const writeStatus = await utils.asyncWriteJSONFile(workspaceSettingsFile, workspaceSettingsInfo);
     workspaceSettingsInfoCache = undefined;
+    await readWorkspaceSettings();
 
     if (writeStatus) {
         return { "statusCode": 200 , workspaceSettings: workspaceSettingsInfo};

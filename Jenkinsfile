@@ -70,8 +70,10 @@ pipeline {
                         mkdir -p ${SRC_DIR}/pfe/extensions
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
+                        rm -f ${SRC_DIR}/pfe/extensions/odo
                         curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.6.0.zip http://download.eclipse.org/codewind/codewind-appsody-extension/master/latest/codewind-appsody-extension-0.6.0.zip
                         curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-0.5.0.zip https://github.com/eclipse/codewind-odo-extension/archive/0.5.0.zip
+                        curl -Lo ${SRC_DIR}/pfe/extensions/odo https://mirror.openshift.com/pub/openshift-v4/clients/odo/latest/odo-linux-amd64
 
                         # BUILD IMAGES
                         # Uses a build file in each of the directories that we want to use
