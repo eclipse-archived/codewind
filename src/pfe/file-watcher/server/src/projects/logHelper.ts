@@ -261,7 +261,7 @@ export async function getLogDir(projectID: string, projectName?: string): Promis
  * @returns Promise<Array<LogFiles>>
  */
 async function getLogsFromFilesOrFolders(origin: string, logSource: string, logsOrigin: ILogOriginFolderOrFiles, logDirectory: string, projectID: string, containerName: string): Promise<Array<LogFiles>> {
-    const logs = Object.keys(logsOrigin);
+    const logs = (typeof logsOrigin == "object" && logsOrigin instanceof Object && !(logsOrigin instanceof Array)) ? Object.keys(logsOrigin) : [];
     let allLogs: LogFiles[] = [];
 
     for (const log of logs) {
@@ -294,7 +294,7 @@ async function getLogsFromFilesOrFolders(origin: string, logSource: string, logs
  * @returns Promise<ILogInstance>
  */
 async function getLogsFromOriginTypes(origin: string, logsOrigin: ILogOriginTypes, logDirectory: string, projectID: string, containerName: string): Promise<ILogInstance> {
-    const logSources = Object.keys(logsOrigin);
+    const logSources = (typeof logsOrigin == "object" && logsOrigin instanceof Object && !(logsOrigin instanceof Array)) ? Object.keys(logsOrigin) : [];
     const currentLog: ILogInstance = {};
 
     for (const logSource of logSources) {
@@ -335,7 +335,7 @@ async function getLogsFromOriginTypes(origin: string, logsOrigin: ILogOriginType
  * @returns Promise<Array<AppLog | BuildLog>>
  */
 async function getLogsFromOrigin(logsOrigin: ILogOrigins, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
-    const origins = Object.keys(logsOrigin);
+    const origins = (typeof logsOrigin == "object" && logsOrigin instanceof Object && !(logsOrigin instanceof Array)) ? Object.keys(logsOrigin) : [];
     let resultLogs: Array<AppLog | BuildLog> = [];
 
     for (const origin of origins) {
