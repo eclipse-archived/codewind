@@ -407,7 +407,7 @@ async function runKubeCommand(projectID: string, args: string[]): Promise<Proces
 }
 
 
-async function getPodName(projectID: string, releaseLabel: string): Promise<string> {
+export async function getPodName(projectID: string, releaseLabel: string): Promise<string> {
     let podName;
     const resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).pods.get({ qs: { labelSelector: releaseLabel } });
     // We are getting the list of pods by the release label

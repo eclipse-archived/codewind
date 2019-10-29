@@ -36,7 +36,7 @@ const logsOrigin: logHelper.ILogTypes = {
     "build": {
         "container": {
             "files": {
-                [logHelper.buildLogs.mavenBuild]: path.join(path.sep, "root", "logs")
+                [logHelper.buildLogs.mavenBuild]: path.join(path.sep, "root", "logs", path.sep)
             }
         },
         "workspace": {

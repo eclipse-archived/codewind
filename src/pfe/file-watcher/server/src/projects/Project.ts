@@ -49,6 +49,8 @@ export interface AppLog {
     files: string[];
     dirs?: string[];
     bestTime?: number;
+    containerName?: string;
+    podName?: string;
 }
 
 export interface BuildLog {
@@ -56,6 +58,8 @@ export interface BuildLog {
     files: string[];
     dirs?: string[];
     bestTime?: number;
+    containerName?: string;
+    podName?: string;
 }
 
 export interface BuildRequest {
