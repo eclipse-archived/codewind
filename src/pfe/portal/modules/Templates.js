@@ -276,7 +276,7 @@ module.exports = class Templates {
     }
     catch (err) {
       // rollback
-      this.repositoryList = this.repositoryList.filter(repo => repo.url === url);
+      this.repositoryList = this.repositoryList.filter(repo => repo.url !== url);
       this.removeRepositoryFromProviders(newRepo).catch(error => log.warn(error.message));
       throw err;
     }
