@@ -131,6 +131,12 @@ pipeline {
                         # Run the unit test suite
                         echo "Started running Turbine Unit Test Suite"
                         npm run unit:test
+                        if [ $? -eq 0 ]; then
+                            echo "+++   TURBINE UNIT TESTS COMPLETED SUCCESSFULLY   +++";
+                        else
+                            echo "+++   TURBINE UNIT TESTS FAILED   +++";
+                            exit 12;
+                        fi
                         '''
                     }
                 }
