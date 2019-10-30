@@ -150,7 +150,7 @@ module.exports = class FileWatcher {
             log.error('projectLogsListChanged: Unknown log type.');
             break;
           }
-          let file = fwProject[logType].files[0];
+          let file = fwProject[logType][0].files[0];
           let logName = path.basename(file);
           let logObject = { logName: logName }
           if (fwProject[logType].origin == 'workspace') {

@@ -24,12 +24,28 @@ interface ProjectExtension {
     create(operation: Operation): void;
     update(operation: Operation, changedFiles: projectEventsController.IFileChangeEvent[]): void;
     typeMatches(location: string): Promise<boolean>;
-    getBuildLog(projectLocation: string, projectID: string, logDirectory: string, apiVersion: string): Promise<BuildLog>;
-    getAppLog(projectLocation: string, projectType: string, projectID: string, projectName: string, apiVersion: string): Promise<AppLog>;
+    getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>>;
     validate(operation: Operation): void;
 }
 
 export const requiredFiles = [ "/Dockerfile" ];
+
+const logsOrigin: logHelper.ILogTypes = {
+    "build": {
+        "workspace": {
+            "files": {
+                [logHelper.buildLogs.dockerBuild]: undefined // set during runtime
+            }
+        }
+    },
+    "app": {
+        "workspace": {
+            "files": {
+                [logHelper.appLogs.app]: undefined // set during runtime
+            },
+        }
+    }
+};
 
 /**
  * @class
@@ -126,28 +142,18 @@ export class DockerProject implements ProjectExtension {
 
     /**
      * @function
-     * @description Get the build log for a docker project.
+     * @description Get logs from files or directories.
      *
+     * @param type <Required | String> - The type of log ("build" or "app")
      * @param logDirectory <Required | String> - The log location directory.
+     * @param projectID <Required | String> - An alphanumeric identifier for a project.
+     * @param containerName <Required | String> - The docker container name.
      *
-     * @returns Promise<BuildLog>
+     * @returns Promise<Array<AppLog | BuildLog>>
      */
-    async getBuildLog(logDirectory: string): Promise<BuildLog> {
-        const logSuffixes = [logHelper.buildLogs.dockerBuild];
-        return await logHelper.getBuildLogs(logDirectory, logSuffixes);
-    }
-
-    /**
-     * @function
-     * @description Get the app log for a docker project.
-     *
-     * @param logDirectory <Required | String> - The log location directory.
-     *
-     * @returns Promise<AppLog>
-     */
-    async getAppLog(logDirectory: string): Promise<AppLog> {
-        const logSuffixes = [logHelper.appLogs.app];
-        return await logHelper.getAppLogs(logDirectory, logSuffixes);
+    async getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
+        if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+        return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
     }
 
     /**
