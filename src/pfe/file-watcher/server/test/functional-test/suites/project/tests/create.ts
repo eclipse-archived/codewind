@@ -16,6 +16,7 @@ import { ProjectCreation, createProject } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 import * as utils from "../../../lib/utils";
 import * as eventConfigs from "../../../configs/event.config";
+import * as logConfigs from "../../../configs/log.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
@@ -83,11 +84,11 @@ export default class CreateTest {
             expect(info.logs).to.exist;
             expect(info.logs.build).to.exist;
 
-            await waitForCreationEvent();
+            await waitForCreationEvent(projData.projectType);
             await waitForProjectStartedEvent();
         }).timeout(timeoutConfigs.createTestTimeout);
 
-        async function waitForCreationEvent(): Promise<void> {
+        async function waitForCreationEvent(projectType: string): Promise<void> {
             const targetEvent = eventConfigs.events.creation;
             const event = await utils.waitForEvent(socket, targetEvent);
             if (event) {
@@ -108,12 +109,29 @@ export default class CreateTest {
                 expect(event.eventData["ports"]).to.haveOwnProperty("internalPort");
                 if (!process.env.IN_K8) expect(event.eventData).to.haveOwnProperty("containerId");
                 expect(event.eventData).to.haveOwnProperty("logs");
-                expect(event.eventData["logs"]).to.haveOwnProperty("build");
-                expect(event.eventData["logs"]["build"]).to.haveOwnProperty("origin");
-                expect(event.eventData["logs"]["build"]).to.haveOwnProperty("files");
-                expect(event.eventData["logs"]).to.haveOwnProperty("app");
-                expect(event.eventData["logs"]["app"]).to.haveOwnProperty("origin");
-                expect(event.eventData["logs"]["app"]).to.haveOwnProperty("files");
+                for (const logType of logConfigs.logTypes) {
+                    expect(event.eventData["logs"]).to.haveOwnProperty(logType);
+                    expect(event.eventData["logs"][logType]).to.be.an.instanceof(Array);
+                    expect(event.eventData["logs"][logType].length).to.equal(logConfigs.logFileMappings[projectType][logType].length);
+                    for (let i = 0; i < event.eventData["logs"][logType].length; i++) {
+                        expect(event.eventData["logs"][logType][i]).to.haveOwnProperty("origin");
+                        expect(event.eventData["logs"][logType][i]["origin"]).to.equal(logConfigs.logFileMappings[projectType][logType][i]["origin"]);
+                        if (event.eventData["logs"][logType][i]["origin"].toLowerCase() === "container") {
+                            if (process.env.IN_K8) {
+                                expect(event.eventData["logs"][logType][i]).to.haveOwnProperty("podName");
+                            } else {
+                                expect(event.eventData["logs"][logType][i]).to.haveOwnProperty("containerName");
+                            }
+                        }
+                        expect(event.eventData["logs"][logType][i]).to.haveOwnProperty("files");
+                        expect(event.eventData["logs"][logType][i]["files"]).to.be.an.instanceof(Array);
+                        for (const file of event.eventData["logs"][logType][i]["files"]) {
+                            const tokens = file.split("/");
+                            const fileName = tokens[tokens.length - 1];
+                            expect(_.includes(logConfigs.logFileMappings[projectType][logType][i]["files"], fileName));
+                        }
+                    }
+                }
             } else {
                 fail(`create project test failed to listen for ${targetEvent}`);
             }
