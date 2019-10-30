@@ -14,7 +14,7 @@
     "test": "npm run unit:test && npm run functional:test",
     "unit:setup": "./test/scripts/unit_setup.sh",
     "unit:cleanup": "./test/scripts/unit_cleanup.sh",
-    "unit:test": "npm run unit:setup ; NODE_ENV=test HIDE_PFE_LOG=y CW_LOCALES_DIR=$(pwd)/src/utils/locales/ CW_WORKSPACE=$(pwd)/test/resources CW_PROJECTDATA_DIR=$(pwd)/test/resources/ nyc mocha test/unit-test/unit.test.ts ; npm run unit:cleanup",
+    "unit:test": "npm run unit:setup && NODE_ENV=test HIDE_PFE_LOG=y CW_LOCALES_DIR=$(pwd)/src/utils/locales/ CW_WORKSPACE=$(pwd)/test/resources CW_PROJECTDATA_DIR=$(pwd)/test/resources/ nyc mocha test/unit-test/unit.test.ts && npm run unit:cleanup",
     "unit:test:xml": "npm run unit:setup ; NODE_ENV=test HIDE_PFE_LOG=y CW_LOCALES_DIR=$(pwd)/src/utils/locales/  CW_WORKSPACE=$(pwd)/test/resources CW_PROJECTDATA_DIR=$(pwd)/test/resources/ nyc mocha test/unit-test/unit.test.ts --colors --reporter mocha-jenkins-reporter ; npm run unit:cleanup",
     "functional:test": "NODE_ENV=test nyc mocha test/functional-test/functional.test.ts",
     "functional:test:xml": "NODE_ENV=test nyc mocha test/functional-test/functional.test.ts --colors --reporter mocha-jenkins-reporter",
