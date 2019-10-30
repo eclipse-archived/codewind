@@ -135,7 +135,7 @@ pipeline {
                             echo "+++   TURBINE UNIT TESTS COMPLETED SUCCESSFULLY   +++";
                         else
                             echo "+++   TURBINE UNIT TESTS FAILED   +++";
-                            exit 12;
+                            exit 1;
                         fi
                         '''
                     }
