@@ -136,6 +136,26 @@ async function main() {
 
     app.get('/health', (req, res) => res.send('OK'))
 
+    // allow a route to PFE to check when PFE is ready
+    app.get("/api/pfe/ready", function (req, res) {
+        try {
+            console.log(`req.originalUrl = ${req.originalUrl}`);
+            const options = {
+                url: `${pfe_protocol}://${pfe_host}:${pfe_port}/health`,
+                headers: {
+                    "x-forwarded-host": gatekeeper_host
+                }
+            }
+            let r = request(options);
+            req.pipe(r).on('error', function (err) {
+                console.log(err);
+                res.status(502).send({ error: err.code });
+            }).pipe(res);
+        } catch (err) {
+            console.log(err);
+        }
+    });
+
     /* Proxy Performance container routes */
     app.use('*', authMiddleware, function (req, res) {
         try {
