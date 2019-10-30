@@ -263,10 +263,22 @@ module.exports = class Templates {
       newRepo.protected = isRepoProtected;
     }
 
+    try {
+      await this.addRepositoryToProviders(newRepo);
+    }
+    catch (err) {
+      throw new TemplateError('ADD_TO_PROVIDER_FAILURE', url, err.message);
+    }
     this.repositoryList.push(newRepo);
-    this.needsRefresh = true;
-    await this.addRepositoryToProviders(newRepo);
-    await this.writeRepositoryList();
+    try {
+      await this.writeRepositoryList();
+      this.needsRefresh = true;
+    }
+    catch (err) {
+      // rollback
+      this.repositoryList = this.repositoryList.filter(repo => repo.url === url);
+      throw err;
+    }
   }
 
   async deleteRepository(repoUrl) {
@@ -279,9 +291,16 @@ module.exports = class Templates {
       return true;
     });
     if (deleted) {
-      this.needsRefresh = true;
-      await this.removeRepositoryFromProviders(deleted);
-      await this.writeRepositoryList();
+      try {
+        await this.removeRepositoryFromProviders(deleted);
+        await this.writeRepositoryList();
+        this.needsRefresh = true;
+      }
+      catch (err) {
+        // rollback
+        this.repositoryList.push(deleted);
+        throw err;
+      }
     }
   }
 
@@ -291,31 +310,31 @@ module.exports = class Templates {
   }
 
   async addRepositoryToProviders(repo) {
+
+    const promises = [];
+
     for (const provider of Object.values(this.providers)) {
       if (typeof provider.addRepository === 'function') {
-        try {
-          // invoke with a copy so original cannot be altered
-          await provider.addRepository(Object.assign({}, repo));
-        }
-        catch (err) {
-          log.error(err.message);
-        }
+        // invoke with a copy so original cannot be altered
+        promises.push(provider.addRepository(Object.assign({}, repo)));
       }
     }
+
+    return Promise.all(promises);
   }
 
   async removeRepositoryFromProviders(repo) {
+
+    const promises = [];
+
     for (const provider of Object.values(this.providers)) {
       if (typeof provider.removeRepository === 'function') { 
-        try {
-          // invoke with a copy so original cannot be altered
-          await provider.removeRepository(Object.assign({}, repo));
-        }
-        catch (err) {
-          log.error(err.message);
-        }
+        // invoke with a copy so original cannot be altered
+        promises.push(provider.removeRepository(Object.assign({}, repo)));
       }
     }
+
+    return Promise.all(promises);
   }
 
   async getAllTemplateStyles() {
