@@ -114,7 +114,6 @@ async function bindStart(req, res) {
 
   try {
     let tempDirName = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE);
-    await fs.mkdir(tempDirName);
     let dirName = path.join(newProject.workspace, newProject.name);
     await fs.mkdir(dirName);
     let tempProjPath = path.join(tempDirName, newProject.name);
