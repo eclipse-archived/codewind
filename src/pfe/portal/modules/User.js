@@ -498,6 +498,8 @@ module.exports = class User {
     try {
       // Remove project meta inf
       await fs.unlink(`${this.directories.workspace}.projects/${project.projectID}.inf`);
+      log.info(`Removing project directory at ${project.location}`);
+      await cwUtils.forceRemove(project.location);
     } catch (err) {
       // Make sure both these operations complete, we will throw an error later on if
       // the files failed to delete.

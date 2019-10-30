@@ -418,7 +418,7 @@ elif [ "$COMMAND" == "remove" ]; then
 
 	if [ "$IN_K8" == "true" ]; then
 		echo "Killing app log process"
-		pgrep -f "_kubectl logs -f" | xargs kill -9
+		pgrep -f "kubectl logs -f" | xargs kill -9
 
 		# Remove the helm release
 		helm delete $project --purge

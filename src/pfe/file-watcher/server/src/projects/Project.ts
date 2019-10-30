@@ -47,12 +47,19 @@ export interface ProjectMetadata {
 export interface AppLog {
     origin: string;
     files: string[];
-    dir?: string;
+    dirs?: string[];
+    bestTime?: number;
+    containerName?: string;
+    podName?: string;
 }
 
 export interface BuildLog {
     origin: string;
     files: string[];
+    dirs?: string[];
+    bestTime?: number;
+    containerName?: string;
+    podName?: string;
 }
 
 export interface BuildRequest {
