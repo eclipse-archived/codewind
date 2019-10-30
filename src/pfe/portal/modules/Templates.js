@@ -277,7 +277,7 @@ module.exports = class Templates {
     catch (err) {
       // rollback
       this.repositoryList = this.repositoryList.filter(repo => repo.url === url);
-      this.removeRepositoryFromProviders(repo).catch(error => log.warn(error.message));
+      this.removeRepositoryFromProviders(newRepo).catch(error => log.warn(error.message));
       throw err;
     }
   }
@@ -301,7 +301,7 @@ module.exports = class Templates {
       catch (err) {
         // rollback
         this.repositoryList.push(deleted);
-        this.addRepositoryToProviders(repo).catch(error => log.warn(error.message));
+        this.addRepositoryToProviders(deleted).catch(error => log.warn(error.message));
         throw err;
       }
     }
