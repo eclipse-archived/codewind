@@ -277,13 +277,14 @@ module.exports = class Templates {
     catch (err) {
       // rollback
       this.repositoryList = this.repositoryList.filter(repo => repo.url === url);
+      this.removeRepositoryFromProviders(repo).catch(error => log.warn(error.message));
       throw err;
     }
   }
 
   async deleteRepository(repoUrl) {
     let deleted;
-    this.repositoryList = this.repositoryList.filter((repo) => {
+    const repositoryList = this.repositoryList.filter((repo) => {
       if (repo.url === repoUrl) {
         deleted = repo;
         return false;
@@ -291,14 +292,16 @@ module.exports = class Templates {
       return true;
     });
     if (deleted) {
+      await this.removeRepositoryFromProviders(deleted);
+      this.repositoryList = repositoryList;
       try {
-        await this.removeRepositoryFromProviders(deleted);
         await this.writeRepositoryList();
         this.needsRefresh = true;
       }
       catch (err) {
         // rollback
         this.repositoryList.push(deleted);
+        this.addRepositoryToProviders(repo).catch(error => log.warn(error.message));
         throw err;
       }
     }
@@ -314,7 +317,8 @@ module.exports = class Templates {
     const promises = [];
 
     for (const provider of Object.values(this.providers)) {
-      if (typeof provider.addRepository === 'function') {
+      if ((typeof provider.canHandle === 'function' && provider.canHandle(repo)) && 
+        typeof provider.addRepository === 'function') {
         // invoke with a copy so original cannot be altered
         promises.push(provider.addRepository(Object.assign({}, repo)));
       }
@@ -328,7 +332,8 @@ module.exports = class Templates {
     const promises = [];
 
     for (const provider of Object.values(this.providers)) {
-      if (typeof provider.removeRepository === 'function') { 
+      if ((typeof provider.canHandle === 'function' && canHandle(repo)) && 
+        typeof provider.removeRepository === 'function') {
         // invoke with a copy so original cannot be altered
         promises.push(provider.removeRepository(Object.assign({}, repo)));
       }
