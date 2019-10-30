@@ -332,7 +332,7 @@ module.exports = class Templates {
     const promises = [];
 
     for (const provider of Object.values(this.providers)) {
-      if ((typeof provider.canHandle === 'function' && canHandle(repo)) && 
+      if ((typeof provider.canHandle === 'function' && provider.canHandle(repo)) && 
         typeof provider.removeRepository === 'function') {
         // invoke with a copy so original cannot be altered
         promises.push(provider.removeRepository(Object.assign({}, repo)));
