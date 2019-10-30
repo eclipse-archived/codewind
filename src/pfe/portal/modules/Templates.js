@@ -317,10 +317,15 @@ module.exports = class Templates {
     const promises = [];
 
     for (const provider of Object.values(this.providers)) {
-      if ((typeof provider.canHandle === 'function' && provider.canHandle(repo)) && 
-        typeof provider.addRepository === 'function') {
-        // invoke with a copy so original cannot be altered
-        promises.push(provider.addRepository(Object.assign({}, repo)));
+      
+      if (typeof provider.canHandle === 'function') {
+
+        // make a new copy to for each provider to be invoked with
+        // in case any provider modifies it (which they shouldn't do)
+        const copy = Object.assign({}, repo);
+
+        if (provider.canHandle(copy) && typeof provider.addRepository === 'function')
+          promises.push(provider.addRepository(copy));
       }
     }
 
@@ -332,10 +337,15 @@ module.exports = class Templates {
     const promises = [];
 
     for (const provider of Object.values(this.providers)) {
-      if ((typeof provider.canHandle === 'function' && provider.canHandle(repo)) && 
-        typeof provider.removeRepository === 'function') {
-        // invoke with a copy so original cannot be altered
-        promises.push(provider.removeRepository(Object.assign({}, repo)));
+
+      if (typeof provider.canHandle === 'function') {
+
+        // make a new copy to for each provider to be invoked with
+        // in case any provider modifies it (which they shouldn't do)
+        const copy = Object.assign({}, repo);
+        
+        if (provider.canHandle(copy) && typeof provider.removeRepository === 'function')
+          promises.push(provider.removeRepository(copy));
       }
     }
 
