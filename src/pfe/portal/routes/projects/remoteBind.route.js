@@ -368,6 +368,7 @@ async function bindEnd(req, res) {
       state: Project.STATES.open,
       startMode: 'run' // always use 'run' mode for new or recently re-opened projects
     }
+    user.uiSocket.emit('projectStatusChanged', updatedProject);
     await user.projectList.updateProject(updatedProject);
     await user.buildAndRunProject(project);
     res.status(200).send(project);
