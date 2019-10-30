@@ -14,7 +14,6 @@
 <#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayWide=false>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" class="${properties.kcHtmlClass!}">
-
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -43,12 +42,10 @@
         </#list>
     </#if>
 </head>
-
 <body class="${properties.kcBodyClass!}">
   <div class="${properties.kcLoginClass!}">
     <div id="kc-header" class="${properties.kcHeaderClass!}">
-      <!--<div id="kc-header-wrapper" class="${properties.kcHeaderWrapperClass!}">${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}</div>-->
-      <div id="kc-header-wrapper" class="${properties.kcHeaderWrapperClass!}"/>
+     <div id="kc-header-wrapper" class="${properties.kcHeaderWrapperClass!}"/>
     </div>
     <div class="${properties.kcFormCardClass!} <#if displayWide>${properties.kcFormCardAccountClass!}</#if>">
       <header class="${properties.kcFormHeaderClass!}">
@@ -79,9 +76,7 @@
                   <span class="kc-feedback-text">${kcSanitize(message.summary)?no_esc}</span>
               </div>
           </#if>
-
           <#nested "form">
-
           <#if displayInfo>
               <div id="kc-info" class="${properties.kcSignUpClass!}">
                   <div id="kc-info-wrapper" class="${properties.kcInfoAreaWrapperClass!}">
@@ -90,8 +85,7 @@
               </div>
           </#if>
         </div>
-      </div>
-
+      </div
     </div>
   </div>
 </body>
