@@ -85,7 +85,7 @@ const logsOrigin: logHelper.ILogTypes = {
 export class ShellExtensionProject implements IExtensionProject {
 
     supportedType: string;
-    defaultIgnoredPath: string[] = ["*/*"];
+    // defaultIgnoredPath: string[] = ["*/*"];
 
     private fullPath: string;
     private config: ShellExtensionProjectConfig;
