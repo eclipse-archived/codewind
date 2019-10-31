@@ -1514,7 +1514,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             }
 
             // Add the missing labels to the chart
-            await processManager.spawnDetachedAsync(buildInfo.projectID, "bash", ["/file-watcher/scripts/kubeScripts/modify-helm-chart.sh", deploymentFile, serviceFile, buildInfo.containerName], {});
+            await processManager.spawnDetachedAsync(buildInfo.projectID, "bash", ["/file-watcher/scripts/kubeScripts/modify-helm-chart.sh", deploymentFile, serviceFile, buildInfo.containerName, buildInfo.projectID], {});
         }
         catch (err) {
             logger.logProjectError("Error modifying the chart to add the necessary labels", buildInfo.projectID);
