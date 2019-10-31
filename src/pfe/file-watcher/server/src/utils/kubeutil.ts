@@ -20,6 +20,7 @@ import { ContainerStates } from "../projects/constants";
 import * as processManager from "./processManager";
 import { ProcessResult } from "./processManager";
 import { ProjectInfo } from "../projects/Project";
+import * as logHelper from "../projects/logHelper";
 
 const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
 const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
@@ -198,6 +199,63 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
 
 /**
  * @function
+ * @description Get files of folders from a kube container with timestamps.
+ *
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
+ * @param fileLocation <Required | String> - The file location inside the container.
+ * @param folderName <Optional | String> - Check for folder names if specified.
+ *
+ * @returns Promise<Array<logHelper.LogFiles>>
+ */
+export async function getFilesOrFoldersInContainerWithTimestamp(projectID: string, containerName: string, fileLocation: string, folderName?: string): Promise<Array<logHelper.LogFiles>> {
+    logger.logProjectInfo("Looking for all log files in container " + containerName, projectID);
+    const containerIsActive = await isContainerActive(containerName);
+    if (!containerName || !containerIsActive.state || containerIsActive.state === ContainerStates.containerNotFound) return [];
+    else {
+        const releaseLabel = "release=" + containerName;
+        const podName = await getPodName(projectID, releaseLabel);
+        if (!podName) return [];
+        const cmd = `ls --full-time ${fileLocation} | tail -n +2`;
+        try {
+            // get all data from the container exec
+            const data: ProcessResult = await runKubeCommand(projectID, ["exec", "-i", podName, "--", "sh", "-c", cmd]);
+            if (data.exitCode != 0) {
+                logger.logInfo("Failed to execute kubectl command");
+                return;
+            } else if (data.stdout.indexOf("No such file or directory") > -1) {
+                logger.logInfo("No files were found");
+                return [];
+            } else {
+            logger.logInfo("At least one file was found");
+            const files = data.stdout.replace(/\n/g, " ").replace(/[^ -~]+/g, "").split(" ").filter((entry: string) => { return entry.trim() != ""; });
+            const fileIndex = 8; // file is the 9th argument from the above command
+            const filesTimestamp: Array<logHelper.LogFiles> = [];
+            for (let index = fileIndex; index < files.length; index = index + fileIndex + 1) {
+                const file = files[index];
+                const dateString = files[index - 3] + " " + files[index - 2] + " " + files[index - 1];
+                if (!folderName) {
+                filesTimestamp.push({file: path.join(fileLocation, file), time: +new Date(dateString)});
+                } else {
+                if (file.toLowerCase() === folderName.toLowerCase()) {
+                    filesTimestamp.push({file: path.join(fileLocation, folderName), time: +new Date(dateString)});
+                    break;
+                }
+                }
+            }
+            return filesTimestamp;
+            }
+        } catch (err) {
+            const errMsg = "Error checking existence for " + fileLocation + " in container " + containerName;
+            logger.logProjectError(errMsg, projectID);
+            logger.logProjectError(err, projectID);
+        }
+        return;
+    }
+  }
+
+/**
+ * @function
  * @description Check to see if container is active.
  *
  * @param containerName <Required | String> - The kube container name.
@@ -207,7 +265,7 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
 export async function isContainerActive(containerName: string, projectInfo?: ProjectInfo): Promise<any> {
     try {
         let releaseLabel = "release=" + containerName;
-        if (projectInfo.projectType == "odo") {
+        if (projectInfo && projectInfo.projectType == "odo") {
             const componentName = path.basename(projectInfo.location);
             releaseLabel = "deploymentconfig=" + "cw-" + componentName + "-" + projectInfo.compositeAppName;
         }
@@ -255,6 +313,7 @@ export async function isContainerActive(containerName: string, projectInfo?: Pro
         return {error: err};
     }
 }
+
 
 /**
  * @function
@@ -339,6 +398,8 @@ export async function installChart(projectID: string, deploymentName: string, ch
  *
  * @param projectID <Required | String> - An alphanumeric identifier for a project.
  * @param args <Required | String[]> - List of args to pass to the helm command.
+ *
+ * @returns Promise<ProcessResult>
  */
 async function runHelmCommand(projectID: string, args: string[]): Promise<ProcessResult> {
     try {
@@ -347,4 +408,50 @@ async function runHelmCommand(projectID: string, args: string[]): Promise<Proces
     } catch (err) {
         throw err;
     }
+}
+
+/**
+ * @function
+ * @description Run a kubectl command.
+ *
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param args <Required | String[]> - List of args to pass to the kubectl command.
+ *
+ * @returns Promise<ProcessResult>
+ */
+export async function runKubeCommand(projectID: string, args: string[]): Promise<ProcessResult> {
+    try {
+        logger.logProjectInfo("Running kube command: kubectl " + args, projectID);
+        return await processManager.spawnDetachedAsync(projectID, "kubectl", args, {});
+    } catch (err) {
+        throw err;
+    }
+}
+
+/**
+ * @function
+ * @description Get pod name give the release label.
+ *
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param releaseLabel <Required | String> - The release label generated from the container id.
+ *
+ * @returns Promise<string>
+ */
+export async function getPodName(projectID: string, releaseLabel: string): Promise<string> {
+    let podName;
+    const resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).pods.get({ qs: { labelSelector: releaseLabel } });
+    // We are getting the list of pods by the release label
+    for ( let i = 0 ; i < resp.body.items.length ; i++ ) {
+        if (resp.body.items[i].status && resp.body.items[i].status.phase) {
+            // For a terminating pod, the metadata.deletionTimestamp will be set
+            if (resp.body.items[i].status.phase !== "Running") {
+                logger.logProjectInfo("Application pod is not running, the status is: " + resp.body.items[i].status.phase, projectID);
+                continue;
+            } else if (resp.body.items[i].metadata.deletionTimestamp == undefined) {
+                podName = resp.body.items[i].metadata.name;
+            }
+        }
+    }
+
+    return podName;
 }

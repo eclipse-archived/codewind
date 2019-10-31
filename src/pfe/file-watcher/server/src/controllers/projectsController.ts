@@ -1115,10 +1115,7 @@ export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, sav
             };
         }
 
-        if (result[type].files.length === 0) {
-            // we don't have any files yet, so we call the api again
-            return checkNewLogFile(projectID, type);
-        } else if (!logHelper.logFileLists[projectID]) {
+        if (!logHelper.logFileLists[projectID]) {
             // when the first time a log file is available for a new project
             logHelper.logFileLists[projectID] = {};
             logHelper.logFileLists[projectID][type] = result[type];
@@ -1133,8 +1130,18 @@ export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, sav
             } else {
                 // this is the case where the same type of log file exists, so we check if the list is the same as the cached list
                 // for codewind: we don't care about the order of the files list, so we just check if the cache list is a subset of the original list and vice versa
-                const cache = logHelper.logFileLists[projectID][type].files;
-                const original = result[type].files;
+
+                const logListCache: Array<BuildLog | AppLog> = logHelper.logFileLists[projectID][type];
+                let cache: Array<string> = [];
+                logListCache.forEach((value: AppLog | BuildLog) => {
+                    if (value) cache = cache.concat(value.files);
+                });
+
+                let original: Array<string> = [];
+                result[type].forEach((value: AppLog | BuildLog) => {
+                    if (value) original = original.concat(value.files);
+                });
+
                 const areBothArraysEqual = cache.every((val: string) => original.includes(val)) && original.every((val: string) => cache.includes(val));
 
                 // if the list is different, we emit the new list and update the cache
@@ -1286,8 +1293,8 @@ export interface IShutdownFailure {
 export interface ILogFilesResult {
     projectID: string;
     type: "app" | "build";
-    app?: AppLog;
-    build?: BuildLog;
+    app?: Array<AppLog>;
+    build?: Array<BuildLog>;
 }
 
 export interface ICheckNewLogFileSuccess {

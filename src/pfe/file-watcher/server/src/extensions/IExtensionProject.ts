@@ -81,23 +81,16 @@ export interface IExtensionProject {
 
     /**
      * @function
-     * @description Get the build log for the project.
+     * @description Get logs from files or directories.
      *
-     * @param logDirectory <Required | string> - The log location directory.
-     *
-     * @returns Promise<BuildLog>
-     */
-    getBuildLog?(logDirectory: string): Promise<BuildLog>;
-
-    /**
-     * @function
-     * @description Get the app log for the project.
-     *
+     * @param type <Required | String> - The type of log ("build" or "app")
      * @param logDirectory <Required | String> - The log location directory.
+     * @param projectID <Required | String> - An alphanumeric identifier for a project.
+     * @param containerName <Required | String> - The docker container name.
      *
-     * @returns Promise<AppLog>
+     * @returns Promise<Array<AppLog | BuildLog>>
      */
-    getAppLog?(logDirectory: string): Promise<AppLog>;
+    getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>>;
 
     /**
      * @function
@@ -113,7 +106,7 @@ export interface IExtensionProject {
      *
      * @returns string
      */
-    getDefaultDebugPort?(): string;
+    getDefaultDebugPort? (): string          ;
 
     /**
      * @function
@@ -121,7 +114,7 @@ export interface IExtensionProject {
      *
      * @returns ProjectCapabilities
      */
-    getProjectCapabilities?(): ProjectCapabilities;
+    getProjectCapabilities ? (): ProjectCapabilities           ;
 
     /**
      * @function
@@ -132,7 +125,7 @@ export interface IExtensionProject {
      *
      * @returns Promise<string>
      */
-    getContainerName?(projectID: string, projectLocation: string): Promise<string>;
+    getContainerName ? (projectID: string, projectLocation: string): Promise<string>           ;
 
     /**
      * @function
@@ -142,7 +135,7 @@ export interface IExtensionProject {
      *
      * @returns Promise<string>
      */
-    getAppName?(projectID: string): Promise<string>;
+    getAppName ? (projectID: string): Promise<string>           ;
 
     /**
      * @function
@@ -152,7 +145,9 @@ export interface IExtensionProject {
      *
      * @returns Promise<string>
      */
-    getAppPort?(projectID: string): Promise<string>;
+    getAppPort ? (projectID: string): Promise<string>           ;
+
+
 
     /**
      * @function
@@ -162,5 +157,5 @@ export interface IExtensionProject {
      *
      * @returns Promise<string>
      */
-    getAppBaseURL?(projectID: string): Promise<string>;
+    getAppBaseURL ? (projectID: string): Promise<string>             ;
 }
