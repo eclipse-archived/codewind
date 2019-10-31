@@ -14,6 +14,7 @@ services:
       - REMOTE_MODE=${REMOTE_MODE}
       - HOST_HOME=${HOST_HOME}
       - HOST_MAVEN_OPTS=${HOST_MAVEN_OPTS}
+      - NODE_ENV=${NODE_ENV}
     depends_on:
       - codewind-performance
     ports:

@@ -157,6 +157,9 @@ if [[ $HOST_OS == *"MINGW"* ]]; then
   export HOST_OS=windows
 fi
 
+# Set NODE_ENV to development to expose the -inspect=0.0.0.0:9777
+export NODE_ENV=development
+
 docker-compose -f $DOCKER_COMPOSE_FILE up -d;
 if [ $? -eq 0 ]; then
     # Reset so we don't get conflicts
