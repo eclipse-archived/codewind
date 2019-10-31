@@ -55,15 +55,6 @@ async function bindStart(req, res) {
       throw new ProjectInitializerError('INVALID_PROJECT_NAME', `invalid characters : ${JSON.stringify(illegalNameChars)}`);
     }
 
-    const projectList = user.projectList.getAsArray();
-    const nameUsed = projectList.some((project) => project.name == name);
-    if (nameUsed) {
-      const msg = `project name ${name} is already in use`;
-      res.status(409).send(msg);
-      log.warn(msg);
-      return;
-    }
-
     const validProjectTypes = await user.projectTypes();
 
     if (!validProjectTypes.includes(projectType)) {
@@ -78,7 +69,6 @@ async function bindStart(req, res) {
    
     const projectDetails = {
       name: name,
-      directory: name,
       workspace: codewindWorkspace,
       language: language,
       autoBuild: true,
@@ -114,12 +104,11 @@ async function bindStart(req, res) {
 
   try {
     let tempDirName = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE);
-    let dirName = path.join(newProject.workspace, newProject.name);
+    let dirName = path.join(newProject.workspace, newProject.directory);
     await fs.mkdir(dirName);
-    let tempProjPath = path.join(tempDirName, newProject.name);
+    let tempProjPath = path.join(tempDirName, newProject.directory);
     await fs.mkdir(tempProjPath);
 
-    newProject.workspaceDir = dirName;
     log.debug(`Creating directory in ${dirName} and ${tempDirName}`);
 
     user.uiSocket.emit('projectBind', { status: 'success', ...newProject });
@@ -160,7 +149,7 @@ async function uploadFile(req, res) {
       const zippedFile = buffer.Buffer.from(req.body.msg, "base64"); // eslint-disable-line microclimate-portal-eslint/sanitise-body-parameters
       const unzippedFile = await inflateAsync(zippedFile);
       const fileToWrite = JSON.parse(unzippedFile.toString());
-      const pathToWriteTo = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name, relativePathOfFile)
+      const pathToWriteTo = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.directory, relativePathOfFile)
       await fs.outputFileSync(pathToWriteTo, fileToWrite);
 
       // if the project container has started, send the uploaded file to it
@@ -201,7 +190,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   try {
     const project = user.projectList.retrieveProject(projectID);
     if (project) {
-      const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
+      const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.directory);
       // eslint-disable-next-line no-sync
       if (!fs.existsSync(pathToTempProj)) {
         log.info("Temporary project directory doesn't exist, not syncing any files");
@@ -238,9 +227,8 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
   // If the current project is being built, we do not want to copy the files as this will
   // interfere with the current build
   if (project.buildStatus != "inProgress") {
-    const globalProjectPath = path.join(project.workspace, project.name);
     // We now need to remove any files that have been deleted from the global workspace
-    await Promise.all(filesToDelete.map(oldFile => exec(`rm -rf ${path.join(globalProjectPath, oldFile)}`)));
+    await Promise.all(filesToDelete.map(oldFile => exec(`rm -rf ${path.join(project.directory, oldFile)}`)));
     // now move temp project to real project
     await cwUtils.copyProject(pathToTempProj, project.workspace);
     let projectRoot = getProjectSourceRoot(project);
@@ -249,8 +237,8 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
       (!project.extension || !project.extension.config.needsMount)) {
       await Promise.all(filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file)));
       modifiedList.forEach((file) => {
-        log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
-        cwUtils.copyFile(project, path.join(globalProjectPath, file), projectRoot, file);
+        log.info(`project is ${project.name} file is ${file} projectRoot is ${projectRoot}`);
+        cwUtils.copyFile(project, path.join(project.workspace, project.directory, file), projectRoot, file);
       });
     }
     filesToDelete.forEach((f) => {
@@ -359,7 +347,7 @@ async function bindEnd(req, res) {
       return;
     }
 
-    const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
+    const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.directory);
     // now move temp project to real project
     await cwUtils.copyProject(pathToCopy, project.workspace);
 

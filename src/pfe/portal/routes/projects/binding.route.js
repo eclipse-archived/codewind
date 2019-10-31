@@ -58,23 +58,6 @@ router.post('/api/v1/projects/bind', validateReq, async function (req, res) {
       return;
     }
 
-    // Query all projects and make sure this is not already bound.
-    const projectAlreadyBound = projectList.some((project) => path.join(project.workspace, project.directory) == projectPath);
-    if (projectAlreadyBound) {
-      const msg = `a Codewind project already exists at ${projectPath}`;
-      res.status(409).send(msg);
-      log.warn(msg);
-      return;
-    }
-
-    const nameUsed = projectList.some((project) => project.name == name);
-    if (nameUsed) {
-      const msg = `project name ${name} is already in use`;
-      res.status(409).send(msg);
-      log.warn(msg);
-      return;
-    }
-
     // Workspace should have trailing separator.
     const workspaceDir = path.dirname(projectPath) + path.sep;
     const projectDir = path.basename(projectPath)

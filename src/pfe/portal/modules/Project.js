@@ -74,7 +74,7 @@ module.exports = class Project {
     // NOT the global.codewind.CODEWIND_WORKSPACE we store
     // project.inf and log files in.
     this.workspace = args.workspace || workspace;
-    this.directory = args.directory || this.name;
+    this.directory = args.directory || `${this.name}-${this.projectID}`;
     this.infLockFlag = false;
 
     this.loadTestPath = join(workspace, this.name, 'load-test');
