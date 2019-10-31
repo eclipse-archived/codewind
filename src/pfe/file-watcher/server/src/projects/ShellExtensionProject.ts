@@ -246,7 +246,6 @@ export class ShellExtensionProject implements IExtensionProject {
      */
     getLogs = async (type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> => {
         if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
-        console.log(">>> LOGS ORIGIN: %j", logsOrigin);
         return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
     }
 
