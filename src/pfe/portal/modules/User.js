@@ -68,6 +68,7 @@ module.exports = class User {
         logs: path.join(this.workspace, '/.logs/'),
         config: path.join(this.workspace, '/.config/'),
         extensions: path.join(this.workspace, '/.extensions/'),
+        temp: path.join(this.workspace, global.codewind.CODEWIND_TEMP_WORKSPACE),
       }
       await this.createDirectories();
       this.projectList = new ProjectList();
@@ -462,32 +463,29 @@ module.exports = class User {
    * @param project, the project to close
    */
   async closeProject(project) {
-    let projectPath = path.join(this.directories.workspace, project.directory);
     let projectID = project.projectID;
     // Stop streaming the logs files.
     project.stopStreamingAllLogs();
     
-    if (await fs.pathExists(projectPath)) {
-      try {
-        await this.fw.closeProject(project);
-      } catch (err) {
-        // IF FW not up we can simply update the state and emit event
-        if (err instanceof FilewatcherError && err.code == 'CONNECTION_FAILED') {
-          let projectUpdate = {
-            projectID: projectID,
-            ports: '',
-            buildStatus: 'unknown',
-            appStatus: 'unknown',
-            state: Project.STATES.closed
-          }
-          // Set the container key to '' as the container has stopped.
-          const containerKey = (global.codewind.RUNNING_IN_K8S ? 'podName' : 'containerId');
-          projectUpdate[containerKey] = '';
-          let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-          this.user.uiSocket.emit('projectClosed', {...updatedProject, status: 'success'});
-          log.debug('project ' + projectID + ' successfully closed');
-        } else throw err;
-      }
+    try {
+      await this.fw.closeProject(project);
+    } catch (err) {
+      // IF FW not up we can simply update the state and emit event
+      if (err instanceof FilewatcherError && err.code == 'CONNECTION_FAILED') {
+        let projectUpdate = {
+          projectID: projectID,
+          ports: '',
+          buildStatus: 'unknown',
+          appStatus: 'unknown',
+          state: Project.STATES.closed
+        }
+        // Set the container key to '' as the container has stopped.
+        const containerKey = (global.codewind.RUNNING_IN_K8S ? 'podName' : 'containerId');
+        projectUpdate[containerKey] = '';
+        let updatedProject = await this.user.projectList.updateProject(projectUpdate);
+        this.user.uiSocket.emit('projectClosed', {...updatedProject, status: 'success'});
+        log.debug('project ' + projectID + ' successfully closed');
+      } else throw err;
     }
   }
 
