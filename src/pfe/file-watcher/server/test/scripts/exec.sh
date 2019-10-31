@@ -26,18 +26,18 @@ EOF
 
 function downloadCwctl() {
     EXECUTABLE_NAME="cwctl"
-    DOWNLOAD_CMD="curl -X GET http://download.eclipse.org/codewind/codewind-installer/master/latest/cwctl-linux --output $EXECUTABLE_NAME"
+    DOWNLOAD_CMD="curl -X GET http://download.eclipse.org/codewind/codewind-installer/master/latest/cwctl-linux --output /usr/local/bin/$EXECUTABLE_NAME"
     if [ $TEST_TYPE == "local" ]; then
         docker exec -i $CODEWIND_CONTAINER_ID bash -c "$DOWNLOAD_CMD"
-        docker exec -i $CODEWIND_CONTAINER_ID bash -c "chmod +x $EXECUTABLE_NAME"
+        docker exec -i $CODEWIND_CONTAINER_ID bash -c "chmod +x /usr/local/bin/$EXECUTABLE_NAME"
     elif [ $TEST_TYPE == "kube" ]; then
         kubectl exec -i $CODEWIND_POD_ID -- bash -c "$DOWNLOAD_CMD"
-        kubectl exec -i $CODEWIND_POD_ID -- bash -c "chmod +x $EXECUTABLE_NAME"
+        kubectl exec -i $CODEWIND_POD_ID -- bash -c "chmod +x /usr/local/bin/$EXECUTABLE_NAME"
     fi
 }
 
 function createProject() {
-    CREATE_CMD="./$EXECUTABLE_NAME project create --url $1 $2"
+    CREATE_CMD="$EXECUTABLE_NAME project create --url $1 $2"
     if [ $TEST_TYPE == "local" ]; then
         docker exec -i $CODEWIND_CONTAINER_ID bash -c "$CREATE_CMD"
     elif [ $TEST_TYPE == "kube" ]; then
