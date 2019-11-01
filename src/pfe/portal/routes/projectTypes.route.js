@@ -52,9 +52,15 @@ async function getProjectTypes(provider) {
 
   // get projectTypes from extension provider
   if (provider && typeof provider.getProjectTypes == 'function') {
-    const types = await provider.getProjectTypes();
-    if (Array.isArray(types))
-      types.reduce(sanitizeProjectType, projectTypes);
+    // guard against bad providers
+    try {
+      const types = await provider.getProjectTypes();
+      if (Array.isArray(types))
+        types.reduce(sanitizeProjectType, projectTypes);
+    }
+    catch (err) {
+      log.error(err.message);
+    }
   }
 
   return projectTypes;
