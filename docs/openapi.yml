@@ -90,7 +90,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Project'
- 
+
   /api/v1/projects/{id}/build:
     post:
       summary: Build a given project
@@ -1172,6 +1172,33 @@ paths:
                   $ref: '#/components/schemas/Extension'
         500:
           description: if an error occurred
+
+  /api/v1/ignoredPaths:
+    get:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - projectType
+              properties:
+                projectType:
+                  type: string
+                  example: 'swift'
+      summary: Get the ignoredPaths for a projectType
+      responses:
+       200:
+          description: list of ignoredPaths fot that projectType
+          content:
+            application/json:
+                schema:
+                  type: array
+                  items:
+                    type: string
+                    example: "/Dockerfile-tools"
+       500:
+          description: Internal Server Error
 
 components:
   schemas:

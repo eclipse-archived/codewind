@@ -11,6 +11,7 @@
 const express = require('express');
 const router = express.Router();
 
+const { validateReq } = require('../middleware/reqValidator');
 const Logger = require('../modules/utils/Logger');
 const { projectTypeToIgnoredPaths, dockerIgnoredPaths } = require('../modules/utils/ignoredPaths')
 
@@ -19,7 +20,7 @@ const log = new Logger(__filename);
 /**
  * API Function to get ignoredPaths, for a particular projectType
  */
-router.get('/api/v1/ignoredPaths', function (req, res) {
+router.get('/api/v1/ignoredPaths', validateReq, function (req, res) {
   try {
     const projectType = req.sanitizeBody('projectType')
     log.debug(`Getting ignoredPaths for project of type  ${projectType}`);

@@ -13,25 +13,30 @@ const { projectTypeToIgnoredPaths } = require('../../../src/pfe/portal/modules/u
 const chai = require('chai');
 chai.should();
 
-describe.only('ignoredPaths.js', () => {
+describe('ignoredPaths.js', () => {
     it('returns array for docker projectType', () => {
         const ignoredPaths = projectTypeToIgnoredPaths['docker'];
         ignoredPaths.should.be.an('array');
+        ignoredPaths.should.include('*/.DS_Store');
     });
     it('returns array for swift projectType', () => {
         const ignoredPaths = projectTypeToIgnoredPaths['swift'];
         ignoredPaths.should.be.an('array');
+        ignoredPaths.should.include('.swift-version');
     });
     it('returns array for nodejs projectType', () => {
         const ignoredPaths = projectTypeToIgnoredPaths['swift'];
         ignoredPaths.should.be.an('array');
+        ignoredPaths.should.include('*/node_modules*');
     });
     it('returns array for liberty projectType', () => {
         const ignoredPaths = projectTypeToIgnoredPaths['liberty'];
         ignoredPaths.should.be.an('array');
+        ignoredPaths.should.include('/libertyrepocache.zip');
     });
     it('returns array for spring projectType', () => {
         const ignoredPaths = projectTypeToIgnoredPaths['spring'];
         ignoredPaths.should.be.an('array');
+        ignoredPaths.should.include('/localm2cache.zip');
     });
 });
