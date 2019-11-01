@@ -97,25 +97,25 @@ let tree_root = new TreeNode('(root)', '', 0);
 // });
 
 function processProfilingSample(profilingSample) {
-    // console.log("Building tree...");
+  // console.log("Building tree...");
 
-    let profiling_row = JSON.parse(JSON.stringify(profilingSample)); // parses the data into a JSON array
-    // console.log("Adding sample: " + profiling_row.time);
-    // console.dir(profiling_row);
-    let indexed_nodes = {};
-    // Index this so we can find parents faster.
-    profiling_row.functions.map((node) => { indexed_nodes[node.self] = node; });
-    for (let fn_details of profiling_row.functions) {
-      if (fn_details.name == '(program)') {
-        continue;
-      }
+  let profiling_row = JSON.parse(JSON.stringify(profilingSample)); // parses the data into a JSON array
+  // console.log("Adding sample: " + profiling_row.time);
+  // console.dir(profiling_row);
+  let indexed_nodes = {};
+  // Index this so we can find parents faster.
+  profiling_row.functions.map((node) => { indexed_nodes[node.self] = node; });
+  for (let fn_details of profiling_row.functions) {
+    if (fn_details.name == '(program)') {
+      continue;
+    }
     //   console.log("Inserting node into tree...");
     //   console.dir(tree_root);
-      addOrUpdateTreeNode(tree_root, indexed_nodes, fn_details);
-    }
-    // console.log("Tree is:");
-    // console.dir(tree_root);
-    refreshFlameGraph();
+    addOrUpdateTreeNode(tree_root, indexed_nodes, fn_details);
+  }
+  // console.log("Tree is:");
+  // console.dir(tree_root);
+  refreshFlameGraph();
 };
 
 

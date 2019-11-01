@@ -1,0 +1,397 @@
+<!--
+******************************************************************************
+ * Copyright 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ ******************************************************************************
+-->
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="graphmetrics/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="graphmetrics/css/themes.css" title="Themes">
+
+<head>
+  <title>Codewind Application Metrics Dashboard for Java</title>
+</head>
+
+<body>
+  <!-- load the d3.js library -->
+  <script src="graphmetrics/d3/d3.v3.min.js"></script>
+  <script src="graphmetrics/jquery/jquery-3.1.1.min.js"></script>
+  <script src="graphmetrics/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+  <script>
+    const queryStringValues = new URLSearchParams(window.location.search)
+    if (queryStringValues.get('theme') === 'dark') {
+      $('body').addClass("darkmode")
+    } else {
+      $('body').addClass("lightmode")
+    }
+  </script>
+
+  <div class="headerDiv">
+    <span class="leftHeader">Codewind Application Metrics Dashboard for Java</span>
+    <span class="rightHeader">
+      <a class="docLink" href="https://github.com/RuntimeTools/javametrics" target="_blank">
+        Go To Documentation
+      </a>
+    </span>
+  </div>
+
+  <div id="tabs" class="container">
+
+    <ul class="nav nav-tabs">
+      <li class="active">
+        <a href="#dashboard" id="dashboard-tab" data-toggle="tab">Dashboard</a>
+      </li>
+      <li>
+        <a href="#summary" id="summary-tab" data-toggle="tab">Summary</a>
+      </li>
+    </ul>
+
+    <div class="tab-content ">
+      <div class="tab-pane active" id="dashboard">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-6 hideable" id="cpuDiv1"></div>
+            <div class="col-md-6 hideable" id="httpDiv1"></div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 hideable" id="memPoolsDiv"></div>
+            <div class="col-md-6 hideable" id="httpDiv2"></div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 hideable" id="gcDiv1"></div>
+            <div class="col-md-6 hideable" id="httpDiv3"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="summary">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="graph-container col-md-7">
+              <div class="col-md-12 height-fill hideable" id="httpSummaryDiv"></div>
+            </div>
+            <div class="graph-container col-md-5">
+              <div class="col-md-12 hideable" id="envDiv"></div>
+              <div class="col-md-12 hideable" id="summaryDiv"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Global variables
+    var monitoringStartTime = new Date();
+    var maxTimeWindow = 900000; // 15 minutes
+    let localizedStrings = {};
+
+    // Initialise graph and canvas dimensions
+    var margin = {
+      top: 50,
+      right: 20,
+      bottom: 50,
+      shortBottom: 30,
+      left: 60
+    },
+      canvasWidth = $("#cpuDiv1").width() - 8; // -8 for margins and borders
+    httpCanvasWidth = $("#httpDiv1").width() - 8;
+    memPoolsCanvasWidth = $("#memPoolsDiv").width() - 8;
+    graphWidth = canvasWidth - margin.left - margin.right;
+    httpGraphWidth = httpCanvasWidth - margin.left - margin.right;
+    memPoolsGraphWidth = memPoolsCanvasWidth - margin.left - margin.right;
+    canvasHeight = 250;
+    tallerGraphHeight = canvasHeight - margin.top - margin.shortBottom;
+    graphHeight = canvasHeight - margin.top - margin.bottom;
+
+    let myurl = location.host;
+
+    // set up http variables to hold data for top 5 and averages.
+    var httpRate = [];
+    var httpAverages = new Object;
+
+    function getTimeFormat() {
+      var currentTime = new Date()
+      if (currentTime.getMinutes() - monitoringStartTime.getMinutes() >= 3
+        || currentTime.getHours() > monitoringStartTime.getHours()) {
+        return d3.time.format("%H:%M");
+      } else {
+        return d3.time.format("%H:%M:%S");
+      }
+    }
+  </script>
+
+  <script type="text/javascript" src="graphmetrics/js/i18n.js"></script>
+  <script>
+    populateLocalizedStrings();
+  </script>
+
+  <script type="text/javascript" src="graphmetrics/js/header.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/textTable.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/cpuChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/httpThroughPutChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/httpRequestsChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/httpSummary.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/top5.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/gcTimeChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/memPoolsChart.js"></script>
+  <script type="module" src="parse-prometheus-text-format/dist/parse-prometheus-text-format.umd.js"></script>
+  <script src="scripts/pfeRequester.js"></script>
+  <script>
+    let hostname = location.host;
+    let pathname = location.pathname;
+    let dashboardRoot = "/" + pathname.split('/')[1];
+
+    // CPU Summary data
+    let totalProcessCPULoad = 0.0;
+    let totalSystemCPULoad = 0.0;
+    let numCPULoadSamples = 0;
+
+    let summary = {
+      cpu: {},
+      gc: {},
+      memoryPools: {},
+    };
+
+    let envTable = new TextTable('#envDiv', '#summary', localizedStrings.envTitle);
+    let summaryTable = new TextTable('#summaryDiv', '#summary', localizedStrings.summaryTitle);
+    let httpSummary = new HttpSummary('#httpSummaryDiv', '#summary', localizedStrings.httpSummaryTitle);
+    httpSummary.setHttpSummaryOptions({ host: hostname, filteredPath: dashboardRoot });
+
+    getEnvDataAndUpdateEnvSummary();
+    pollMetricsAndUpdateDash(maxPolls, updateDash);
+
+    function updateDash(projectData) {
+      console.log('projectData');
+      console.log(projectData);
+      if (projectData.metrics) {
+        const combinedMetrics = combineMetrics(projectData.metrics);
+        updateGraphs(combinedMetrics);
+      }
+    }
+
+    function combineMetrics(metrics) {
+      // console.log('metrics');
+      // console.log(metrics);
+      let metricsFromUser = [];
+      let metricsFromCodewind = [];
+
+      if (metrics.fromUser) {
+        metricsFromUser = parsePrometheusTextFormat(metrics.fromUser);
+        // console.log('metricsFromUser');
+        // console.log(metricsFromUser);
+      }
+
+      if (metrics.fromCodewind) {
+        metricsFromCodewind = parsePrometheusTextFormat(metrics.fromCodewind);
+        // console.log('metricsFromCodewind');
+        // console.log(metricsFromCodewind);
+      }
+
+      const metricsFromUserNotProvidedByCodewind = metricsFromUser.filter(userMetric =>
+        !metricsFromCodewind.some(cwMetric => cwMetric.name === userMetric.name)
+      );
+      console.log('metricsFromUserNotProvidedByCodewind');
+      console.log(metricsFromUserNotProvidedByCodewind);
+
+      const combinedMetrics = metricsFromCodewind.concat(metricsFromUserNotProvidedByCodewind);
+      console.log('combinedMetrics');
+      console.log(combinedMetrics);
+      return combinedMetrics;
+    }
+
+    function updateGraphs(metrics) {
+      const time = Date.now();
+      const cpuData = { time };
+      const gcData = { time };
+      const memPoolsData = { time };
+      for (const metric of metrics) {
+        const metricsObj = metric.metrics[0];
+        const metricValue = metricsObj.value;
+        if (metric.name === 'base_cpu_processCpuLoad_percent') {
+          cpuData.process = metricValue;
+        } else if (metric.name === 'base_cpu_systemLoadAverage') { // ignored if -1 (not available)
+          cpuData.system = metricValue;
+
+        } else if (metric.name === 'base_gc_time_seconds') {
+          const correctMetricsObj = metric.metrics.find(obj => obj.labels.name === 'global');
+          gcData.gcTime = correctMetricsObj.value;
+
+        } else if (metric.name === 'base_memory_usedHeap_bytes') {
+          memPoolsData.usedHeap = metricValue;
+        }
+      }
+
+      if (Object.keys(cpuData).length > 1) {
+        processCPUData(
+          cpuData,
+          totalProcessCPULoad,
+          totalSystemCPULoad,
+          numCPULoadSamples,
+        );
+      }
+      if (Object.keys(gcData).length > 1) {
+        processGCData(gcData);
+      }
+      if (Object.keys(memPoolsData).length > 1) {
+        processMemPoolsData(memPoolsData);
+      }
+    }
+
+    // Original code to update graphs:
+    // They expect the following objects:
+      //  {
+      //   time: 1572617286795,
+      //   system: 0.022906090659757385,  // base_cpu_systemLoadAverage
+      //   process: 0.0037501107295195104, // base_cpu_processCpuLoad_percent
+      //   processMean: 0.003553777086287611,
+      //   systemMean: 0.01992974160373655
+      // },
+      // {
+      //   time: 1572617286795,
+      //   gcTime: 0, // base_gc_time_seconds (actually milliseconds) (TODO add the scavenge and global handlers together)?
+      //   gcTimeSummary: 0.00022953932836541658
+      // },
+      // {
+      //   time: 1572617288774,
+      //   usedHeapAfterGC: 31790744,
+      //   usedHeap: 33916696, // base_memory_usedHeap_bytes
+      //   usedNative: 78404548,
+      //   usedHeapAfterGCMax: 41781688,
+      //   usedNativeMax: 207693020
+      // }
+    // Code:
+    // client.onmessage = function (message) {
+    //   received = JSON.parse(message.data);
+    //   topic = received.topic;
+    //   payload = JSON.stringify(received.payload);
+
+    //   switch (topic) {
+    //     case 'cpu':
+    //       updateCPUData(payload);
+    //       summary.cpu.systemMean = received.payload.systemMean;
+    //       summary.cpu.processMean = received.payload.processMean;
+    //       break;
+    //     case 'gc':
+    //       updateGCData(payload);
+    //       summary.gc.time = received.payload.gcTimeSummary;
+    //       break;
+    //     case 'env':
+    //       envTable.populateTableJSON(payload);
+    //       break;
+    //     case 'http':
+    //       updateHttpData(payload);
+    //       break;
+    //     case 'httpURLs':
+    //       httpSummary.updateURLData(payload);
+    //       break;
+    //     case 'title':
+    //       updateHeader(payload);
+    //       break;
+    //     case 'memoryPools':
+    //       updateMemPoolsData(payload);
+    //       summary.memoryPools = {
+    //         usedHeapAfterGCAverage: received.payload.usedHeapAfterGCAverage,
+    //         usedHeapAfterGCMax: received.payload.usedHeapAfterGCMax,
+    //         usedNativeMax: received.payload.usedNativeMax
+    //       };
+    //       break;
+    //   }
+    function processCPUData(data, totalProcessCPULoad, totalSystemCPULoad, numCPULoadSamples) {
+      updateCPUData(JSON.stringify(data));
+      totalProcessCPULoad += data.process;
+      totalSystemCPULoad += data.system;
+      numCPULoadSamples++;
+      const processMean = (totalProcessCPULoad / numCPULoadSamples);
+      const systemMean = (totalSystemCPULoad / numCPULoadSamples);
+
+      summary.cpu.processMean = processMean;
+      summary.cpu.systemMean = systemMean;
+    }
+    function processGCData(data) {
+      updateGCData(JSON.stringify(data));
+      // Commented out as `data` doesn't currently get a `gcTimeSummary` property.
+      // Could we calculate it using ((data.durationTotal / 1000) / data.processUptime)?
+      // summary.gc.time = data.gcTimeSummary;
+    }
+    function processMemPoolsData(data) {
+      updateMemPoolsData(JSON.stringify(data));
+      // Commented out as `data` doesn't currently get any of these properties
+      // summary.memoryPools = {
+      //   usedHeapAfterGCAverage: data.usedHeapAfterGCAverage,
+      //   usedHeapAfterGCMax: data.usedHeapAfterGCMax,
+      //   usedNativeMax: data.usedNativeMax,
+      // };
+    }
+
+    let summaryData = [];
+    if (summary.cpu.processMean) {
+      let value = new Number(summary.cpu.processMean);
+      let valueStr = value.toLocaleString([], { style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
+      summaryData.push({ Parameter: 'Average Process CPU', Value: valueStr });
+    }
+    if (summary.cpu.systemMean) {
+      let value = new Number(summary.cpu.systemMean);
+      let valueStr = value.toLocaleString([], { style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
+      summaryData.push({ Parameter: 'Average System CPU', Value: valueStr });
+    }
+    if (summary.gc.time) {
+      let value = new Number(summary.gc.time);
+      let valueStr = value.toLocaleString([], { style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
+      summaryData.push({ Parameter: 'Time Spent in GC', Value: `${valueStr}` });
+    }
+    if (summary.memoryPools.usedHeapAfterGCMax) {
+      summaryData.push({ Parameter: 'Max Heap Used After GC', Value: `${summary.memoryPools.usedHeapAfterGCMax} bytes` });
+      summaryData.push({ Parameter: 'Max Native Heap Used', Value: `${summary.memoryPools.usedNativeMax} bytes` });
+    }
+    summaryTable.populateTable(summaryData);
+  </script>
+  <script>
+
+    let selected_tab = "dashboard-tab"
+    window.addEventListener('resize', resize);
+
+    // Also re-size when we change tabs in case we re-sized
+    // while the new tab wasn't visible.
+    $('.nav-tabs a').on('shown.bs.tab', function (event) {
+      selected_tab = event.target.id;
+      resize();
+    });
+
+    function resize() {
+      if (selected_tab == "dashboard-tab") {
+        canvasWidth = $("#cpuDiv1").width() - 8,
+          httpCanvasWidth = $("#httpDiv1").width() - 8,
+          memPoolsCanvasWidth = $("#memPoolsDiv").width() - 8,
+          graphWidth = canvasWidth - margin.left - margin.right,
+          httpGraphWidth = httpCanvasWidth - margin.left - margin.right,
+          memPoolsGraphWidth = memPoolsCanvasWidth - margin.left - margin.right,
+          resizeCPUChart();
+        resizeHttpChart();
+        resizeHttpThroughputChart();
+        resizeGCChart();
+        resizeMemPoolsChart();
+      } else if (selected_tab == "summary-tab") {
+        envTable.resizeTable();
+        summaryTable.resizeTable();
+        httpSummary.resizeTable();
+      }
+    }
+
+  </script>
+
+</body>
+
+</html>
