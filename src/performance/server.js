@@ -11,6 +11,8 @@
 'use strict';
 
 const express = require('express');
+require('express-async-errors');
+const axios = require('axios');
 const bodyParser = require('body-parser');
 const childProcess = require('child_process');
 const app = express();
@@ -18,7 +20,9 @@ const serverPort = 9095;
 const server = app.listen(serverPort, () => console.log(`Performance server listening on port ${serverPort}!`))
 const io = require('socket.io').listen(server);
 const path = require('path');
+const { promisify } = require('util');
 
+const wait = promisify(setTimeout);
 var loadProcess;
 let projectURL;
 
@@ -137,17 +141,119 @@ app.use('/performance/fonts', express.static(path.join(__dirname, 'dashboard', '
 /** React Performance main.js */
 app.use('/performance/main.js', express.static(path.join(__dirname, 'dashboard', 'build', 'main.js')));
 
+const getResData = async (origin, path) => {
+    const res = await axios.get(`${origin}${path}`)
+    console.log('Received res.data');
+    // console.log(res.data);
+    return res.data;
+};
+
+// TODO when finished dev, move out to another file
+const latestProjectData = {};
+
+const repeatPoll = async (func, numPollsRemaining) => {
+    await func();
+    numPollsRemaining--;
+    if (numPollsRemaining > 0) {
+        await wait(2000);
+        await repeatPoll(func, numPollsRemaining);
+        return;
+    }
+    console.log('Finished poll');
+}
+
+const getMetricsFromProject = async (appOrigin) => {
+    const projectData = latestProjectData[appOrigin];
+    if (!projectData.hasOwnProperty('metrics')) {
+        projectData.metrics = {};
+    }
+    const [
+        metricsFromUser,
+        metricsFromCodewind,
+    ] = await Promise.all([
+        getResData(appOrigin, '/metrics')
+            .catch(err => console.log(err.message)),
+        getResData(appOrigin, '/metrics/codewind')
+            .catch(err => console.log(err.message)),
+    ]);
+
+    projectData.metrics.fromUser = metricsFromUser;
+    projectData.metrics.fromCodewind = metricsFromCodewind;
+}
+
+const getProfilingDataFromProject = async (appOrigin) => {
+    const projectData = latestProjectData[appOrigin];
+    if (!projectData.hasOwnProperty('profiling')) {
+        projectData.profiling = {};
+    }
+    const profilingData = await getResData(appOrigin, '/metrics/codewind/profiling');
+    projectData.profiling = profilingData;
+}
+
+app.get('/performance/monitor', function (req, res) {
+    console.log('[GET /performance/monitor]');
+    res.send(latestProjectData[req.query.appOrigin]);
+});
+
+app.get('/performance/monitor/environment', async function (req, res) {
+    console.log('[GET /performance/monitor/environment]');
+    const { appOrigin } = req.query;
+    const envData = await getResData(appOrigin, '/metrics/codewind/environment');
+    res.send(envData);
+});
+
+async function scrapeProjectData(appOrigin, projectLanguage, numPolls) {
+    if (!latestProjectData.hasOwnProperty(appOrigin)) {
+        latestProjectData[appOrigin] = {};
+    }
+    const promises = [
+        repeatPoll(
+            () => getMetricsFromProject(appOrigin),
+            numPolls,
+        ),
+    ]
+    if (projectLanguage === 'nodejs') {
+        promises.push(
+            repeatPoll(
+                () => getProfilingDataFromProject(appOrigin),
+                numPolls,
+            )
+        );
+    }
+    await Promise.all(promises);
+}
+
+function resetProjectData(appOrigin) {
+    latestProjectData[appOrigin] = {};
+}
+
+app.post('/performance/monitor', async function (req, res) {
+    console.log('[POST /performance/monitor]');
+    const { appOrigin, projectLanguage } = req.query;
+    const numPolls = 4; // TODO set this from client?
+    res.send(`Polling ${appOrigin}`);
+    resetProjectData(appOrigin);
+    await scrapeProjectData(appOrigin, projectLanguage, numPolls);
+});
+
+app.use('/performance/codewind-metrics/dashboard', express.static('public'));
+
+
+app.get('/performance/codewind-metrics/dashboard/:projectLanguage', function (req, res, next) {
+    console.log('[GET /codewind-metrics/dashboard]');
+    console.log('req.params');
+    console.log(req.params);
+
+    const { projectLanguage } = req.params;
+    res.sendFile(path.join(__dirname, 'public', `${projectLanguage}-metrics.html`));
+});
+
+
+
 /**
 * Map everything else in the /dashboard/ directory to the
 * React Single-Page-Application root index.html
 */
 app.get('/performance/*', function (req, res) {
     res.sendFile(path.join(__dirname, 'dashboard', 'build', 'index.html'));
-});
-
-app.use('/', express.static('public'));
-
-app.get('/codewind-metrics', function (req, res, next) {
-    console.log('hit codewind-metrics');
-    res.sendFile(path.join(__dirname, 'public', 'metrics-dash.html'));
 });

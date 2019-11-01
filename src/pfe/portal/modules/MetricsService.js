@@ -15,7 +15,7 @@ const util = require('util');
 
 const Logger = require('./utils/Logger');
 
-const log = new Logger('MetricsCollector.js');
+const log = new Logger('MetricsService.js');
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const metricsCollectorInjectionFunctions = {
@@ -23,7 +23,7 @@ const metricsCollectorInjectionFunctions = {
 }
 
 async function injectMetricsCollectorIntoProject(projectDir) {
-  const projectType = 'nodejs';
+  const projectType = 'nodejs'; // TODO: pivot dynamically
   await metricsCollectorInjectionFunctions[projectType](projectDir);
 }
 
