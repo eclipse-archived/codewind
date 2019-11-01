@@ -68,7 +68,7 @@ module.exports = class User {
         logs: path.join(this.workspace, '/.logs/'),
         config: path.join(this.workspace, '/.config/'),
         extensions: path.join(this.workspace, '/.extensions/'),
-        temp: path.join(this.workspace, global.codewind.CODEWIND_TEMP_WORKSPACE),
+        temp: path.join(this.workspace, global.codewind.CODEWIND_TEMP_WORKSPACE),
       }
       await this.createDirectories();
       this.projectList = new ProjectList();

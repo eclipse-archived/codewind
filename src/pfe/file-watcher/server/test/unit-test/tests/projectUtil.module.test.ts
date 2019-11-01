@@ -24,6 +24,7 @@ import { projectConstants } from "../../../../server/src/projects/constants";
 
 export function projectUtilTestModule(): void {
     const extensionIDDir = path.join(process.env.CW_EXTENSION_DIR, "extensionProject");
+
     it("test of getLogName function", async () => {
         const projectID = "testID";
         const projectLocation = "directory/testproject";
@@ -215,7 +216,7 @@ export function projectUtilTestModule(): void {
             expect(fs.statSync(extensionIDDir)).to.exist;
 
             const filePath = path.resolve(extensionIDDir, ".sh-extension");
-            await writeAsync(filePath, '{"buildLogs": ["buildLog"], "appLogs": ["appLog"]}');
+            await writeAsync(filePath, '{"buildWorkspaceLogs": {"files": {"buildLog": null}}, "appWorkspaceLogs": {"files": {"appLog": null}}');
             const entryPoint = path.resolve(extensionIDDir, "entrypoint.sh");
             await writeAsync(entryPoint, "echo $(pwd)");
             fs.chmodSync(entryPoint, 0o777);
@@ -242,6 +243,7 @@ export function projectUtilTestModule(): void {
                 expect(err.code).to.equal("ENOENT");
             }
         });
+
         const combinations: any = {
             "combo1": {
                 "data": {
@@ -251,14 +253,9 @@ export function projectUtilTestModule(): void {
                     projectType: "liberty"
                 },
                 "result":  {
-                    "build": {
-                        "origin": "workspace",
-                        "files": []
-                    },
-                    "app": {
-                        "origin": "workspace",
-                        "files": []
-                    }}
+                    "build": [],
+                    "app": []
+                }
             },
             "combo2": {
                 "data": {
@@ -268,34 +265,14 @@ export function projectUtilTestModule(): void {
                     projectType: "liberty"
                 },
                 "result":  {
-                    "build": {
+                    "build": [{
                         "origin": "workspace",
-                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.mavenBuild + ".log", process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
-                    },
-                    "app": {
-                        "origin": "workspace",
-                        "files": []
-                    }}
+                        "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
+                    }],
+                    "app": []
+                }
             },
-            "combo3": {
-                "data": {
-                    projectID: testProjectId,
-                    location: projectFolder,
-                    logSuffixes: [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.mavenBuild],
-                    projectType: "liberty"
-                },
-                "appLogTest": true,
-                "result":  {
-                    "build": {
-                        "origin": "workspace",
-                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.mavenBuild + ".log", process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
-                    },
-                    "app": {
-                        "origin": "workspace",
-                        "dir": process.env.CW_WORKSPACE + "/" + testProjectName + "/mc-target/liberty/wlp/usr/servers/defaultServer/logs/ffdc",
-                        "files": [ process.env.CW_WORKSPACE + "/" + testProjectName + "/mc-target/liberty/wlp/usr/servers/defaultServer/logs/console.log",  process.env.CW_WORKSPACE + "/" + testProjectName + "/mc-target/liberty/wlp/usr/servers/defaultServer/logs/messages.log"]
-                    }}
-            },
+            // this is being removed because combo3 expected maven.build.log, console.log and messages.log to be in the workspace. now they are moved to the app container
             "combo4": {
                 "data": {
                     projectID: testProjectId,
@@ -305,14 +282,15 @@ export function projectUtilTestModule(): void {
                 },
                 "appLogTest": true,
                 "result":  {
-                    "build": {
+                    "build": [{
                         "origin": "workspace",
-                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.mavenBuild + ".log", process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
-                    },
-                    "app": {
+                        "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
+                    }],
+                    "app": [{
                         "origin": "workspace",
                         "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.appLogs.app + ".log"]
-                    }}
+                    }]
+                }
             },
             "combo5": {
                 "data": {
@@ -322,14 +300,9 @@ export function projectUtilTestModule(): void {
                     projectType: "invalidProjectType"
                 },
                 "result":  {
-                    "build": {
-                        "origin": "workspace",
-                        "files": []
-                    },
-                    "app": {
-                        "origin": "workspace",
-                        "files": []
-                    }}
+                    "build": [],
+                    "app": []
+                }
             },
             "combo6": {
                 "data": {
@@ -340,14 +313,15 @@ export function projectUtilTestModule(): void {
                 },
                 "appLogTest": true,
                 "result":  {
-                    "build": {
+                    "build": [{
                         "origin": "workspace",
                         "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
-                    },
-                    "app": {
+                    }],
+                    "app": [{
                         "origin": "workspace",
                         "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.appLogs.app + ".log"]
-                    }}
+                    }]
+                }
             },
             "combo7": {
                 "data": {
@@ -358,14 +332,19 @@ export function projectUtilTestModule(): void {
                 },
                 "appLogTest": true,
                 "result":  {
-                    "build": {
+                    "build": [{
                         "origin": "workspace",
-                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log",  process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerApp + ".log", process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.appCompilation + ".log"]
-                    },
-                    "app": {
+                        "files": [
+                            process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log",
+                            process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerApp + ".log",
+                            process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.appCompilation + ".log"
+                        ]
+                    }],
+                    "app": [{
                         "origin": "workspace",
                         "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.appLogs.app + ".log"]
-                    }}
+                    }]
+                }
             },
             "combo8": {
                 "data": {
@@ -376,34 +355,17 @@ export function projectUtilTestModule(): void {
                 },
                 "appLogTest": true,
                 "result":  {
-                    "build": {
+                    "build": [{
                         "origin": "workspace",
                         "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
-                    },
-                    "app": {
+                    }],
+                    "app": [{
                         "origin": "workspace",
                         "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.appLogs.app + ".log"]
-                    }}
-            },
-            "combo9": {
-                "data": {
-                    projectID: testProjectId,
-                    location: projectFolder,
-                    logSuffixes: ["buildLog", "appLog"],
-                    extensionID: extensionIDDir,
-                    projectType: "extensionProject"
+                    }]
                 },
-                "appLogTest": true,
-                "result":  {
-                    "build": {
-                        "origin": "workspace",
-                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/buildLog.log"]
-                    },
-                    "app": {
-                        "origin": "workspace",
-                        "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/appLog.log"]
-                    }}
             },
+            // combo9 is removed because appsody logs need to be loaded through the appsody init function which is beyond the scope of our testing
         };
         for (const combo of Object.keys(combinations)) {
 
@@ -429,12 +391,22 @@ export function projectUtilTestModule(): void {
                         await writeAsync(appLogPath, "some data");
                     }
                     const actualResult = await projectUtil.getProjectLogs(data);
-                    expect(actualResult.build.files.length).to.equal(expectedResult.build.files.length);
-                    expect(actualResult.build.files).to.have.all.members(expectedResult.build.files);
-                    expect(actualResult.app.files.length).to.equal(expectedResult.app.files.length);
-                    expect(actualResult.app.files).to.have.all.members(expectedResult.app.files);
-                    if (expectedResult.app.dir) {
-                        expect(actualResult.app.dir).to.equal(expectedResult.app.dir);
+                    expect(actualResult.build.length).to.equal(expectedResult.build.length);
+                    expect(actualResult.app.length).to.equal(expectedResult.app.length);
+                    if (expectedResult.build.length > 0) {
+                        for (let i = 0; i < expectedResult.build.length; i++) {
+                            expect(actualResult.build[i].files.length).to.equal(expectedResult.build[i].files.length);
+                            expect(actualResult.build[i].files).to.have.all.members(expectedResult.build[i].files);
+                        }
+                    }
+                    if (expectedResult.app.length > 0) {
+                        for (let i = 0; i < expectedResult.app.length; i++) {
+                            expect(actualResult.app[i].files.length).to.equal(expectedResult.app[i].files.length);
+                            expect(actualResult.app[i].files).to.have.all.members(expectedResult.app[i].files);
+                            if (expectedResult.app[i].dirs) {
+                                expect(actualResult.app[i].dirs).to.equal(expectedResult.app[i].dirs);
+                            }
+                        }
                     }
             });
         }
@@ -477,5 +449,4 @@ export function projectUtilTestModule(): void {
             });
         }
     });
-
 }

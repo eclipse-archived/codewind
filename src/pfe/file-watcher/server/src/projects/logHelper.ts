@@ -163,9 +163,9 @@ export async function getLogFiles(logDirectory: string, logSuffix: Array<string>
  */
 export async function getLogFilesFromContainer(projectID: string, containerName: string, logDirectory: string, logSuffix: Array<string>): Promise<Array<LogFiles>> {
     try {
-        const containerIsActive = await (process.env.IN_K8 ? kubeutil : dockerutil).isContainerActive(containerName);
+        const containerIsActive = await (process.env.IN_K8 === "true" ? kubeutil : dockerutil).isContainerActive(containerName);
         if (!containerName || containerIsActive.state === ContainerStates.containerNotFound) return [];
-        const logFiles =  await (process.env.IN_K8 ? kubeutil : dockerutil).getFilesOrFoldersInContainerWithTimestamp(projectID, containerName, logDirectory);
+        const logFiles =  await (process.env.IN_K8 === "true" ? kubeutil : dockerutil).getFilesOrFoldersInContainerWithTimestamp(projectID, containerName, logDirectory);
         logSuffix = logSuffix.map((value) => {
             return value + logExtension;
         });
@@ -347,7 +347,7 @@ async function getLogsFromOrigin(logsOrigin: ILogOrigins, logDirectory: string, 
         let logInst: ILogInstance;
         if (origin.toLowerCase() === "container") {
             logInst = await getLogsFromOriginTypes(origin, logsOrigin.container, logDirectory, projectID, containerName);
-            if (process.env.IN_K8)  {
+            if (process.env.IN_K8 === "true")  {
                 logInst.podName = await kubeutil.getPodName(projectID, "release=" + containerName);
             } else {
                 logInst.containerName = containerName;
@@ -457,7 +457,7 @@ export async function getLogFromDirs(logDirectory: string, folderName: string, p
         logs = await getLogFilesOrFoldersWithTimestamp(logDirectory, [], folderName);
     } else if (origin.toLowerCase() === "container") {
         if (!containerName) return;
-        logs = await (process.env.IN_K8 ? kubeutil : dockerutil).getFilesOrFoldersInContainerWithTimestamp(projectID, containerName, logDirectory, folderName);
+        logs = await (process.env.IN_K8 === "true" ? kubeutil : dockerutil).getFilesOrFoldersInContainerWithTimestamp(projectID, containerName, logDirectory, folderName);
     }
 
     if (logs.length === 0) return;
