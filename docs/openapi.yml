@@ -1189,7 +1189,7 @@ paths:
       summary: Get the ignoredPaths for a projectType
       responses:
        200:
-          description: list of ignoredPaths fot that projectType
+          description: A list of standard ignoredPaths for that projectType
           content:
             application/json:
                 schema:
