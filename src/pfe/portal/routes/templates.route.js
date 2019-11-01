@@ -69,7 +69,7 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
     );
   } catch (error) {
     log.error(error);
-    const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON'];
+    const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON', 'ADD_TO_PROVIDER_FAILURE'];
     if (error instanceof TemplateError && knownErrorCodes.includes(error.code)) {
       res.status(400).send(error.message);
       return;
