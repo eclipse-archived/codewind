@@ -57,7 +57,7 @@ export function logsTest(socket: SocketIO, projData: ProjectCreation): void {
                 expect(info.logs[logType].length).to.equal(log_configs.logFileMappings[projData.projectType][logType].length);
                 expect(_.isMatch(info.logs[logType], log_configs.logFileMappings[projData.projectType][logType]));
             }
-        });
+        }).timeout(timeoutConfigs.defaultTimeout);
     });
 
     describe("checkNewLogFile function", () => {
