@@ -1175,21 +1175,17 @@ paths:
 
   /api/v1/ignoredPaths:
     get:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - projectType
-              properties:
-                projectType:
-                  type: string
-                  example: 'swift'
       summary: Get the ignoredPaths for a projectType
+      parameters:
+        - name: projectType
+          in: query
+          schema:
+            $ref: '#/components/schemas/ProjectType'
+          required: true
+          description: Type of project
       responses:
        200:
-          description: A list of standard ignoredPaths for that projectType
+          description: The build type for the project. Built-in types are 'liberty', 'spring', 'swift', 'nodejs', and 'docker'.
           content:
             application/json:
                 schema:

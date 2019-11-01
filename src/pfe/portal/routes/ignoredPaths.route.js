@@ -22,7 +22,7 @@ const log = new Logger(__filename);
  */
 router.get('/api/v1/ignoredPaths', validateReq, function (req, res) {
   try {
-    const projectType = req.sanitizeBody('projectType')
+    const { projectType } = req.query;
     log.debug(`Getting ignoredPaths for project of type  ${projectType}`);
     // default to docker if project unknown
     const ignoredPaths = projectTypeToIgnoredPaths[projectType] || dockerIgnoredPaths
