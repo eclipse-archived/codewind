@@ -14,6 +14,8 @@ const fs = require('fs-extra');
 const path = require('path');
 const rewire = require('rewire');
 
+global.codewind = { RUNNING_IN_K8S: false };
+
 const Templates = rewire('../../../src/pfe/portal/modules/Templates');
 const {
     styledTemplates,
