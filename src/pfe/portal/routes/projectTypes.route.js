@@ -54,7 +54,7 @@ async function getProjectTypes(provider, sourceId) {
   if (provider && typeof provider.getProjectTypes == 'function') {
     // guard against bad providers
     try {
-      const types = await provider.getProjectTypes();
+      const types = await provider.getProjectTypes(sourceId);
       if (Array.isArray(types))
         types.reduce(sanitizeProjectType, projectTypes);
     }
