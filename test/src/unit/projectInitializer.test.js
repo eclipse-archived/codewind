@@ -13,7 +13,6 @@ const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const rewire = require('rewire');
 const git = require('simple-git/promise');
-const fs = require('fs-extra');
 chai.use(chaiAsPromised);
 
 // Mock the global variables.
