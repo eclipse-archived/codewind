@@ -14,6 +14,7 @@ const router = express.Router();
 [
   require('./projects'),
   require('./environment.route'),
+  require('./ignoredPaths.route'),
   require('./templates.route'),
   require('./locale.route'),
   require('./registry.route'),

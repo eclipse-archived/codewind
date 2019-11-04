@@ -17,8 +17,8 @@ pkill java
 # Run a maven build to generate the new jar
 cd /root/app
 echo "Running Maven build for $PROJECT_NAME"
-echo "mvn -Dmaven.repo.local=/root/app/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$FOLDER_NAME/$MAVEN_BUILD.log""
-mvn -Dmaven.repo.local=/root/app/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$FOLDER_NAME/$MAVEN_BUILD.log"
+echo "mvn -Dmaven.repo.local=/root/app/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$MAVEN_BUILD.log""
+mvn -Dmaven.repo.local=/root/app/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$MAVEN_BUILD.log"
 if [[ $? -ne 0 ]]; then
     # Exit if maven build failed
     echo "Maven build failed for $PROJECT_NAME"
@@ -31,7 +31,7 @@ chown -R 1001 .m2
 chown -R 1001 target
 
 # Determine the jar to copy over
-TARGET_JAR=$(sed -n -e 's/^.*Building jar: //p' /root/logs/$FOLDER_NAME/$MAVEN_BUILD.log)
+TARGET_JAR=$(sed -n -e 's/^.*Building jar: //p' /root/logs/$MAVEN_BUILD.log)
 
 # If we couldn't find the jar in the default location, see if there are any jars containing SNAPSHOT
 if [[ ! -f $TARGET_JAR ]]; then

@@ -38,8 +38,10 @@ interface PortMappings {
  */
 interface ShellExtensionProjectConfig {
     requiredFiles: string[];
-    buildLogs: string[];
-    appLogs: string[];
+    buildContainerLogs?: logHelper.ILogOriginTypes;
+    buildWorkspaceLogs?: logHelper.ILogOriginTypes;
+    appContainerLogs?: logHelper.ILogOriginTypes;
+    appWorkspaceLogs?: logHelper.ILogOriginTypes;
     appPort?: string[] | PortMappings; // string[] for backward compatibility
     debugPort?: PortMappings;
     capabilities?: ProjectCapabilities;
@@ -48,6 +50,30 @@ interface ShellExtensionProjectConfig {
         suffix: string;
     };
 }
+
+// skeleton for the logs originated from the extension script
+const logsOrigin: logHelper.ILogTypes = {
+    "build": {
+        "container": {
+            "files": {},
+            "dirs": {}
+        },
+        "workspace": {
+            "files": {},
+            "dirs": {}
+        },
+    },
+    "app": {
+        "container": {
+            "files": {},
+            "dirs": {}
+        },
+        "workspace": {
+            "files": {},
+            "dirs": {}
+        },
+    },
+};
 
 /**
  * @class
@@ -59,7 +85,7 @@ interface ShellExtensionProjectConfig {
 export class ShellExtensionProject implements IExtensionProject {
 
     supportedType: string;
-    defaultIgnoredPath: string[] = ["*/*"];
+    // defaultIgnoredPath: string[] = ["*/*"];
 
     private fullPath: string;
     private config: ShellExtensionProjectConfig;
@@ -130,6 +156,7 @@ export class ShellExtensionProject implements IExtensionProject {
     init = async (projectInfo: ProjectInfo): Promise<void> => {
         this.fullPath = projectInfo.extensionID;
         this.config = await fs.readJson(path.join(this.fullPath, ".sh-extension"));
+        this.setLogsOriginFromExtension();
         await this.setLanguage(projectInfo);
     }
 
@@ -208,26 +235,34 @@ export class ShellExtensionProject implements IExtensionProject {
 
     /**
      * @function
-     * @description Get the build log for the project.
+     * @description Get logs from files or directories.
      *
-     * @param logDirectory <Required | string> - The log location directory.
+     * @param type <Required | String> - The type of log ("build" or "app")
+     * @param logDirectory <Required | String> - The log location directory.
+     * @param projectID <Required | String> - An alphanumeric identifier for a project.
+     * @param containerName <Required | String> - The docker container name.
      *
-     * @returns Promise<BuildLog>
+     * @returns Promise<Array<AppLog | BuildLog>>
      */
-    getBuildLog = async (logDirectory: string): Promise<BuildLog> => {
-        return await logHelper.getBuildLogs(logDirectory, this.config.buildLogs);
+    getLogs = async (type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> => {
+        if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+        return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
     }
 
-    /**
-     * @function
-     * @description Get the app log for the project.
-     *
-     * @param logDirectory <Required | String> - The log location directory.
-     *
-     * @returns Promise<AppLog>
-     */
-    getAppLog = async (logDirectory: string): Promise<AppLog> => {
-        return await logHelper.getAppLogs(logDirectory, this.config.appLogs);
+    setLogsOriginFromExtension(): void {
+        if (this.config.buildContainerLogs && (this.config.buildContainerLogs.files || this.config.buildContainerLogs.dirs)) {
+            logsOrigin.build.container = this.config.buildContainerLogs;
+        }
+        if (this.config.buildWorkspaceLogs && (this.config.buildWorkspaceLogs.files || this.config.buildWorkspaceLogs.dirs)) {
+            logsOrigin.build.workspace = this.config.buildWorkspaceLogs;
+        }
+
+        if (this.config.appContainerLogs && (this.config.appContainerLogs.files || this.config.appContainerLogs.dirs)) {
+            logsOrigin.app.container = this.config.appContainerLogs;
+        }
+        if (this.config.appWorkspaceLogs && (this.config.appWorkspaceLogs.files || this.config.appWorkspaceLogs.dirs)) {
+            logsOrigin.app.workspace = this.config.appWorkspaceLogs;
+        }
     }
 
     /**

@@ -82,8 +82,8 @@ export interface ProjectEvent {
 }
 
 export interface ProjectLog {
-    app: AppLog;
-    build: BuildLog;
+    app: Array<AppLog>;
+    build: Array<BuildLog>;
 }
 
 const projectEventErrorMsgs = {
@@ -616,25 +616,24 @@ export async function getProjectLogs(projectInfo: ProjectInfo): Promise<ProjectL
     const projectType = projectInfo.projectType;
     const projectLogDir = await logHelper.getLogDir(projectID, projectName);
     const logDirectory = path.join(projectConstants.projectsLogDir, projectLogDir);
+    const containerName = await getContainerName(projectInfo);
 
-    let applogs: AppLog;
-    let buildlogs: BuildLog;
+    let applogs: Array<AppLog>;
+    let buildlogs: Array<BuildLog>;
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     const identifier = projectHandler.constructor.name === undefined ? projectType : projectHandler.constructor.name;
 
-    if (projectHandler.getBuildLog) {
-        buildlogs = await projectHandler.getBuildLog(logDirectory);
-    } else {
-        logger.logProjectInfo(identifier + " projects do not specify build logs.", projectID);
-    }
-    logger.logProjectInfo("buildlog path:\n " + JSON.stringify(buildlogs), projectID, projectName);
+    if (projectHandler.getLogs) {
+        // get the build logs
+        buildlogs = await projectHandler.getLogs("build", logDirectory, projectID, containerName);
+        logger.logProjectInfo("buildlog path:\n " + JSON.stringify(buildlogs), projectID, projectName);
 
-    if (projectHandler.getAppLog) {
-        applogs = await projectHandler.getAppLog(logDirectory, projectID, projectName, projectLocation);
+        // get the app logs
+        applogs = await projectHandler.getLogs("app", logDirectory, projectID, containerName);
+        logger.logProjectInfo("applog path:\n" + JSON.stringify(applogs), projectID, projectName);
     } else {
-        logger.logProjectInfo(identifier + " projects do not specify app logs.", projectID);
+        logger.logProjectInfo(identifier + " projects do not specify logs functionality.", projectID);
     }
-    logger.logProjectInfo("applog path:\n" + JSON.stringify(applogs), projectID, projectName);
 
     const logs: ProjectLog = {
         build: buildlogs,

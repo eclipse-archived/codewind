@@ -25,7 +25,9 @@ import { StartModes, ControlCommands } from "./constants";
 import * as locale from "../utils/locale";
 import * as logger from "../utils/logger";
 import * as logHelper from "./logHelper";
+import * as kubeutil from "../utils/kubeutil";
 import * as projectEventsController from "../controllers/projectEventsController";
+import { ProcessResult } from "../utils/processManager";
 
 
 const readFileAsync = promisify(fs.readFile);
@@ -36,6 +38,39 @@ export const requiredFiles = [ "/Dockerfile | /Dockerfile-lang", "/Dockerfile-bu
 const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debug], [ControlCommands.restart]);
 
 export const supportedType: string = "liberty";
+
+const inContainerAppLogsDirectory = path.join(process.env.HOST_OS === "windows" ? path.join(path.sep, "tmp", "liberty") : path.join(path.sep, "home", "default", "app", "mc-target"), "liberty", "wlp", "usr", "servers", "defaultServer", "logs");
+
+const logsOrigin: logHelper.ILogTypes = {
+    "build": {
+        "container": {
+            "files": {
+                [logHelper.buildLogs.mavenBuild]: path.join(path.sep, "home", "default", "logs")
+            }
+        },
+        "workspace": {
+            "files": {
+                [logHelper.buildLogs.dockerBuild]: undefined // set during runtime
+            }
+        }
+    },
+    "app": {
+        "container": {
+            "files": {
+                [logHelper.appLogs.console]: inContainerAppLogsDirectory,
+                [logHelper.appLogs.messages]: inContainerAppLogsDirectory
+            },
+            "dirs": {
+                "ffdc": inContainerAppLogsDirectory
+            }
+        },
+        "workspace": {
+            "files": {
+                [logHelper.appLogs.app]: undefined // set during runtime
+            },
+        }
+    }
+};
 
 /**
  * @description Relative path from project's root directory
@@ -131,7 +166,6 @@ export async function validate(operation: Operation): Promise<void> {
 
     if (!await utils.asyncFileExists(fullServerXmlPath)) {
         logger.logProjectError("server.xml not found at: " + fullServerXmlPath, operation.projectInfo.projectID);
-
         const missingServerXmlMsg = await getTranslation("buildApplicationTask.missingServerXml", { path: fullServerXmlPath });
         await logBuildEvent(operation.projectInfo, missingServerXmlMsg, true);
     }
@@ -198,100 +232,69 @@ export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isErr
     const msgLabel = isError ? "ERROR" : "INFO";
     const fullMsg = `\n[${msgLabel}] ${msg}`;
 
-    const buildLog = await projectUtil.getProjectLogs(projectInfo);
     let buildLogPath;
+    let buildLog: projectUtil.ProjectLog;
 
-    if (buildLog && buildLog.build && buildLog.build.files) {
-        // the log build event is only called from liberty project and the file info is dumped into maven build file
-        buildLogPath = buildLog.build.files.filter((value) => {
-            return value.indexOf(logHelper.buildLogs.mavenBuild) > -1;
-        })[0];
+    try {
+        buildLog = await projectUtil.getProjectLogs(projectInfo);
+    } catch (err) {
+        logger.logProjectError("Failed to get project logs during log build event", projectInfo.projectID);
+        return;
     }
-    else {
+
+    if (buildLog && buildLog.build) {
+        // the log build event is only called from liberty project and the file info is dumped into maven build file
+        buildLog.build.filter((logInstance) => {
+            if (logInstance && logInstance.files) {
+                logInstance.files.filter((value) => {
+                    if (value.indexOf(logHelper.buildLogs.mavenBuild) > -1) {
+                        buildLogPath = value;
+                        return;
+                    }
+                });
+            }
+        });
+    } else {
         logger.logProjectError("Could not get build log for project", projectInfo.projectID);
         return;
     }
 
-    logger.logProjectInfo(`Writing to build log at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
+    const containerName = await projectUtil.getContainerName(projectInfo);
+    const targetContainer = process.env.IN_K8 === "true" ? await kubeutil.getPodName(projectInfo.projectID, `release=${containerName}`) : containerName;
+
+    logger.logProjectInfo(`Writing to build log in container ${targetContainer} at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
 
     // if the build log path is defined, only then we write it
-    if (buildLogPath) {
-        fs.appendFile(buildLogPath, fullMsg, (err) => {
-            if (err) {
-                logger.logProjectError("File system error writing to build log: " + err, projectInfo.projectID);
-            }
-        });
+    if (buildLogPath && targetContainer) {
+        const cmd = `echo "${fullMsg}" >> ${buildLogPath}`;
+        const args = process.env.IN_K8 === "true" ? ["exec", "-i", targetContainer, "--", "sh", "-c", cmd] : ["exec", "-i", targetContainer, "sh", "-c", cmd];
+        let data: ProcessResult;
+        if (process.env.IN_K8 === "true") {
+            data = await kubeutil.runKubeCommand(projectInfo.projectID, args);
+        } else {
+            data = await dockerutil.runDockerCommand(projectInfo.projectID, args);
+        }
+        if (data && data.exitCode != 0) {
+            logger.logProjectError("File system error writing to build log: " + data.stderr, projectInfo.projectID);
+            return;
+        }
     }
 }
 
 /**
  * @function
- * @description Get the build log for a liberty project.
+ * @description Get logs from files or directories.
  *
- * @param projectLocation <Required | String> - The project location directory.
- * @param projectID <Required | String> - An alphanumeric identifier for a project.
- * @param logDirectory <Required | String> - The log location directory.
- * @param apiVersion <Required | String> - The filewatcher log api version.
- *
- * @returns Promise<BuildLog>
- */
-export async function getBuildLog(logDirectory: string): Promise<BuildLog> {
-    const logSuffixes = [logHelper.buildLogs.mavenBuild, logHelper.buildLogs.dockerBuild];
-    return await logHelper.getBuildLogs(logDirectory, logSuffixes);
-}
-
-/**
- * @function
- * @description Get the app log for a liberty project.
- *
+ * @param type <Required | String> - The type of log ("build" or "app")
  * @param logDirectory <Required | String> - The log location directory.
  * @param projectID <Required | String> - An alphanumeric identifier for a project.
- * @param projectName <Required | String> - The project name.
- * @param projectLocation <Required | String> - The project location directory.
+ * @param containerName <Required | String> - The docker container name.
  *
- * @returns Promise<AppLog>
+ * @returns Promise<Array<AppLog | BuildLog>>
  */
-export async function getAppLog(logDirectory: string, projectID: string, projectName: string, projectLocation: string): Promise<AppLog> {
-    const appLogOrigin = process.env.HOST_OS === "windows" ? "container" : "workspace";
-    const appLog: AppLog = {
-        origin: appLogOrigin,
-        files: []
-    };
-
-    const logDirs = [
-        path.resolve(projectLocation + "/mc-target/liberty/wlp/usr/servers/defaultServer/logs/"), // for console.log and messages.log
-        logDirectory, // for app.log
-    ];
-
-    const logSuffixes = [logHelper.libertyAppLogs.console, logHelper.libertyAppLogs.messages];
-    const ffdclogPath = path.join(logDirs[0], `ffdc`);
-    const inWorkspaceLogFiles = await logHelper.getLogFilesWithTimestamp(logDirs[1], [logHelper.appLogs.app]);
-
-    let allAppLogFiles: logHelper.LogFiles[] = [];
-
-    if (process.env.HOST_OS === "windows") {
-        logDirs[0] = "/tmp/liberty/liberty/wlp/usr/servers/defaultServer/logs/";
-
-        const containerName = projectUtil.getDefaultContainerName(projectID, projectLocation);
-        const inContainerLogFiles = await logHelper.getLogFilesFromContainer(projectID, containerName, logDirs[0], logSuffixes);
-        allAppLogFiles = inContainerLogFiles ? inContainerLogFiles.concat(inWorkspaceLogFiles) : allAppLogFiles;
-
-        if ((await dockerutil.fileExistInContainer(projectID, containerName, ffdclogPath, projectName))) {
-            appLog.dir = ffdclogPath;
-        }
-    } else {
-        const inAppLogFiles = await logHelper.getLogFilesWithTimestamp(logDirs[0], logSuffixes);
-        allAppLogFiles = inAppLogFiles ? inAppLogFiles.concat(inWorkspaceLogFiles) : allAppLogFiles;
-
-        if (await utils.asyncFileExists(ffdclogPath)) {
-            appLog.dir = ffdclogPath;
-        }
-    }
-
-    // sort the log files in the recent order
-    appLog.files = await logHelper.sortLogFiles(allAppLogFiles);
-
-    return appLog;
+export async function getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
+    if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+    return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
 }
 
 /**

@@ -22,6 +22,25 @@ export const requiredFiles = [ "/Dockerfile", "/Dockerfile-tools", "/Package.swi
 
 export const supportedType = "swift";
 
+const logsOrigin: logHelper.ILogTypes = {
+    "build": {
+        "workspace": {
+            "files": {
+                [logHelper.buildLogs.dockerBuild]: undefined, // set during runtime
+                [logHelper.buildLogs.dockerApp]: undefined,
+                [logHelper.buildLogs.appCompilation]: undefined,
+            }
+        }
+    },
+    "app": {
+        "workspace": {
+            "files": {
+                [logHelper.appLogs.app]: undefined // set during runtime
+            },
+        }
+    }
+};
+
 /**
  * @description Relative path from project's root directory
  *
@@ -112,28 +131,18 @@ export async function validate(operation: Operation): Promise<void> {
 
 /**
  * @function
- * @description Get the build log for a swift project.
+ * @description Get logs from files or directories.
  *
+ * @param type <Required | String> - The type of log ("build" or "app")
  * @param logDirectory <Required | String> - The log location directory.
+ * @param projectID <Required | String> - An alphanumeric identifier for a project.
+ * @param containerName <Required | String> - The docker container name.
  *
- * @returns Promise<BuildLog>
+ * @returns Promise<Array<AppLog | BuildLog>>
  */
-export async function getBuildLog(logDirectory: string): Promise<BuildLog> {
-    const logSuffixes = [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.dockerApp, logHelper.buildLogs.appCompilation];
-    return await logHelper.getBuildLogs(logDirectory, logSuffixes);
-}
-
-/**
- * @function
- * @description Get the app log for a swift project.
- *
- * @param logDirectory <Required | String> - The log location directory.
- *
- * @returns Promise<AppLog>
- */
-export async function getAppLog(logDirectory: string): Promise<AppLog> {
-    const logSuffixes = [logHelper.appLogs.app];
-    return await logHelper.getAppLogs(logDirectory, logSuffixes);
+export async function getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>> {
+    if (type.toLowerCase() != "build" && type.toLowerCase() != "app") return;
+    return await logHelper.getLogs(type, logsOrigin, logDirectory, projectID, containerName);
 }
 
 /**

@@ -114,7 +114,6 @@ async function bindStart(req, res) {
 
   try {
     let tempDirName = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE);
-    await fs.mkdir(tempDirName);
     let dirName = path.join(newProject.workspace, newProject.name);
     await fs.mkdir(dirName);
     let tempProjPath = path.join(tempDirName, newProject.name);
@@ -122,8 +121,6 @@ async function bindStart(req, res) {
 
     newProject.workspaceDir = dirName;
     log.debug(`Creating directory in ${dirName} and ${tempDirName}`);
-
-    user.uiSocket.emit('projectBind', { status: 'success', ...newProject });
     log.info(`Successfully created project - name: ${newProject.name}, ID: ${newProject.projectID}`);
 
   } catch (err) {
@@ -369,6 +366,7 @@ async function bindEnd(req, res) {
       state: Project.STATES.open,
       startMode: 'run' // always use 'run' mode for new or recently re-opened projects
     }
+    user.uiSocket.emit('projectStatusChanged', updatedProject);
     await user.projectList.updateProject(updatedProject);
     await user.buildAndRunProject(project);
     res.status(200).send(project);

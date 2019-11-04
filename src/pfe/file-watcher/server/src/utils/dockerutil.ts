@@ -263,7 +263,7 @@ export async function isContainerActive(containerName: string): Promise<any> {
 export async function fileExistInContainer(projectID: string, containerName: string, fileLocation: string, projectName: string): Promise<Boolean> {
   logger.logProjectInfo("Looking for file existency for " + fileLocation + " in container " + containerName, projectID, projectName);
   const container = docker.getContainer(containerName);
-  const cmd = "[ -e " + fileLocation + " ]&& echo 'true' || echo 'false'";
+  const cmd = `ls ${fileLocation}`;
   const options = {
     Cmd: ["sh", "-c", cmd],
     AttachStdout: true,
@@ -272,7 +272,7 @@ export async function fileExistInContainer(projectID: string, containerName: str
 
   try {
     const data: string = await containerExec(options, container, projectID);
-    const returnVal = Boolean(data.replace(/\W/g, "")); // remove nonalphanumeric Ascii chars
+    const returnVal = data.indexOf(`No such file or directory`) === -1;
     logger.logProjectInfo("File exists in container: " + data, projectID, projectName);
     return returnVal;
   } catch (err) {
@@ -284,48 +284,60 @@ export async function fileExistInContainer(projectID: string, containerName: str
 
 /**
  * @function
- * @description Check for files in a docker container directory.
+ * @description Get files of folders from a docker container with timestamps.
  *
  * @param projectID <Required | String> - An alphanumeric identifier for a project.
  * @param containerName <Required | String> - The docker container name.
- * @param fileLocation <Required | String> - The path to the files location.
+ * @param fileLocation <Required | String> - The file location inside the container.
+ * @param folderName <Optional | String> - Check for folder names if specified.
  *
  * @returns Promise<Array<logHelper.LogFiles>>
  */
-export async function getFilesInContainerWithTimestamp(projectID: string, containerName: string, fileLocation: string): Promise<Array<logHelper.LogFiles>> {
+export async function getFilesOrFoldersInContainerWithTimestamp(projectID: string, containerName: string, fileLocation: string, folderName?: string): Promise<Array<logHelper.LogFiles>> {
   logger.logProjectInfo("Looking for all log files in container " + containerName, projectID);
-  const container = docker.getContainer(containerName);
-  const cmd = "ls -lt " + fileLocation + " | tail -n +2";
-  const options = {
-    Cmd: ["sh", "-c", cmd],
-    AttachStdout: true,
-    AttachStderr: true
-  };
+  const containerIsActive = await isContainerActive(containerName);
+  if (!containerName || containerIsActive.state === ContainerStates.containerNotFound) return [];
+  else {
+    const container = docker.getContainer(containerName);
+    const cmd = "ls --full-time " + fileLocation + " | tail -n +2";
+    const options = {
+      Cmd: ["sh", "-c", cmd],
+      AttachStdout: true,
+      AttachStderr: true
+    };
 
-  try {
-    // get all data from the container exec
-    const data: string = await containerExec(options, container, projectID);
-    if (data.indexOf("No such file or directory") > -1) {
-      logger.logInfo("No files were found");
-      return [];
-    } else {
-      logger.logInfo("At least one file was found");
-      const files = data.replace(/\n/g, " ").replace(/[^ -~]+/g, "").split(" ").filter((entry: string) => { return entry.trim() != ""; });
-      const fileIndex = 8; // file is the 9th argument from the above command
-      const filesTimestamp: Array<logHelper.LogFiles> = [];
-      for (let index = fileIndex; index < files.length; index = index + fileIndex + 1) {
-        const file = files[index];
-        const dateString = files[index - 1] + " " + files[index - 2] + " " + files[index - 3];
-        filesTimestamp.push({file: path.join(fileLocation, file), time: moment(dateString).unix()});
+    try {
+      // get all data from the container exec
+      const data: string = await containerExec(options, container, projectID);
+      if (data.indexOf("No such file or directory") > -1) {
+        logger.logInfo("No files were found");
+        return [];
+      } else {
+        logger.logInfo("At least one file was found");
+        const files = data.replace(/\n/g, " ").replace(/[^ -~]+/g, "").split(" ").filter((entry: string) => { return entry.trim() != ""; });
+        const fileIndex = 8; // file is the 9th argument from the above command
+        const filesTimestamp: Array<logHelper.LogFiles> = [];
+        for (let index = fileIndex; index < files.length; index = index + fileIndex + 1) {
+          const file = files[index];
+          const dateString = files[index - 3] + " " + files[index - 2] + " " + files[index - 1];
+          if (!folderName) {
+            filesTimestamp.push({file: path.join(fileLocation, file), time: +new Date(dateString)});
+          } else {
+            if (file.toLowerCase() === folderName.toLowerCase()) {
+              filesTimestamp.push({file: path.join(fileLocation, folderName), time: +new Date(dateString)});
+              break;
+            }
+          }
+        }
+        return filesTimestamp;
       }
-      return filesTimestamp;
+    } catch (err) {
+      const errMsg = "Error checking existence for " + fileLocation + " in container " + containerName;
+      logger.logProjectError(errMsg, projectID);
+      logger.logProjectError(err, projectID);
     }
-  } catch (err) {
-    const errMsg = "Error checking existence for " + fileLocation + " in container " + containerName;
-    logger.logProjectError(errMsg, projectID);
-    logger.logProjectError(err, projectID);
+    return;
   }
-  return;
 }
 
 /**
@@ -599,7 +611,7 @@ export async function removeDanglingImages(): Promise<void> {
  *
  * @returns Promise<ProcessResult>
  */
-async function runDockerCommand(projectID: string, args: string[]): Promise<ProcessResult> {
+export async function runDockerCommand(projectID: string, args: string[]): Promise<ProcessResult> {
   try {
     logger.logProjectDebug("Run docker command: docker " + args, projectID);
     return await processManager.spawnDetachedAsync(projectID, "docker", args, {});

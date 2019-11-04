@@ -265,7 +265,7 @@ export function logHelperTestModule(): void {
             const actualResult = await logHelper.getLogFiles(logDirectory, logSuffixes);
             expect(actualResult).to.exist;
             for (let index = 0; index < actualResult.length; index++) {
-                const result = actualResult[index];
+                const result = actualResult[index].file;
                 const tokens = result.split("/");
                 const filename = tokens[tokens.length - 1].split(logHelperModule.logExtension)[0];
                 expect(logSuffixes.includes(filename));

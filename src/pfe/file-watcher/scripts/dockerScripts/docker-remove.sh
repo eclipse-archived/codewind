@@ -15,5 +15,5 @@ IN_K8=$2
 
 if [[ "$IN_K8" == "true" ]]; then
 	echo "Killing app log process"
-	pgrep -f "_kubectl logs -f $CONTAINER_NAME" | xargs kill -9
+	pgrep -f "kubectl logs -f $CONTAINER_NAME" | xargs kill -9
 fi
