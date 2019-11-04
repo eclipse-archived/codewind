@@ -12,6 +12,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const crypto = require('crypto');
+const btoa = require("btoa");
 const ProjectList = require('./ProjectList');
 const FileWatcher = require('./FileWatcher');
 const LoadRunner = require('./LoadRunner');
@@ -53,6 +54,7 @@ module.exports = class User {
       this.uiSocket = uiSocket;
     }
     this.secure = true;
+    this.dockerConfigFile = "/root/.docker/config.json";
   }
 
   /**
@@ -657,6 +659,88 @@ module.exports = class User {
       log.error(err);
     }
     return retval;
+  }
+
+  /**
+   * Function to set up the Docker config file, create Kubernetes Secret and patch the Service Account
+   */
+  async setupDockerRegistry(username, password, url) {
+
+    // Update the Docker Registry File
+    await this.updateDockerRegistry(username, password, url);
+
+    // Create the Kubernetes Secret and patch the Service Account
+
+  }
+
+  /**
+   * Function to update the Docker config file
+   */
+  async updateDockerRegistry(username, password, url) {
+    log.info(username);
+    log.info(password);
+    log.info(url);
+    const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
+    const encodedAuth = btoa(username + ":" + password);
+    let createKubeSecret = false;
+
+    if (isDockerConfigFilePresent) {
+      log.info("The Docker config file exists, reading contents");
+      const jsonObj = await fs.readJson(this.dockerConfigFile);
+      log.info("Docker config contents " + JSON.stringify(jsonObj));
+
+      for (let key in jsonObj.auths) {
+        log.info("the key is " + key);
+        if (key == url) {
+          log.info("Cannot have multiple docker registries with url " + url + ". Please delete the previous registry and try again.");
+          return;
+        }
+      }
+
+      jsonObj.auths[url] = {
+        "username":username,
+        "password":password,
+        "auth":encodedAuth
+      }
+
+      await fs.writeJson(this.dockerConfigFile, jsonObj);
+      createKubeSecret = true;
+    } else {
+      log.info("The Docker config file does not exist, writing contents");
+      const jsonObj = {"auths":{}}
+      jsonObj.auths[url] = {
+        "username":username,
+        "password":password,
+        "auth":encodedAuth
+      }
+
+      await fs.writeJson(this.dockerConfigFile, jsonObj);
+      createKubeSecret = true;
+    }
+
+    if (createKubeSecret) {
+      log.info("The Docker config file has been updated");
+      await this.updateServiceAccountWithDockerRegisrySecret(username, password, url)
+    }
+  }
+
+  /**
+   * Function to create the Kubernetes secret and patch the Service Account
+   */
+  async updateServiceAccountWithDockerRegisrySecret(username, password, url) {
+    log.info("The SA should be patched" + this.dockerConfigFile);
+    log.info(username);
+    log.info(password);
+    log.info(url);
+    const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
+    if (isDockerConfigFilePresent) {
+      log.info("The Docker config file exists, reading contents");
+      const jsonObj = await fs.readJson(this.dockerConfigFile);
+      const encodedDockerConfig = btoa(JSON.stringify(jsonObj));
+      log.info("The encoded  Docker Config: " + encodedDockerConfig);
+    } else {
+      log.info("No Docker Config file present, skipping creating Kube secret");
+    }
   }
 
   /**

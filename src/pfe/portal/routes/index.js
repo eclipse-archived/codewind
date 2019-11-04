@@ -18,6 +18,7 @@ const router = express.Router();
   require('./templates.route'),
   require('./locale.route'),
   require('./registry.route'),
+  require('./dockerRegistry.route'),
   require('./logging.route'),
   require('./projectTypes.route'),
   require('./extensions.route'),

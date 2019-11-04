@@ -1186,6 +1186,83 @@ paths:
           $ref: '#/components/responses/404'
         500:
           $ref: '#/components/responses/500'
+  /api/v1/dockerregistry:
+    post:
+      summary: Test or set the specified Deployment Registry
+      description: >
+        On test the API also emits a socket event `deploymentRegistryStatus` with data
+        `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
+        A set operation will set the registry without testing to allow the client to force save the
+        value.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+              properties:
+                username:
+                  type: string
+      responses:
+        200:
+          description: Successfully completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 200
+                  deploymentRegistryTest:
+                    type: boolean
+                    description: true if deployment registry is valid
+                    example: true
+                  msg:
+                    type: string
+                    description: Message related to the request
+                    example: Success message
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 400
+                  deploymentRegistryTest:
+                    type: boolean
+                    description: false because it is a bad request
+                    example: false
+                  msg:
+                    type: string
+                    description: Message related to the request
+                    example: Reason for failure
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 500
+                  deploymentRegistryTest:
+                    type: boolean
+                    description: false if deployment registry is invalid
+                    example: false
+                  msg:
+                    type: string
+                    description: Message related to the request
+                    example: Reason for failure
+
 
   /api/v1/registry:
     get:

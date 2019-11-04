@@ -82,6 +82,9 @@ mkdir -p $CONTAINER_WORKSPACE_DIRECTORY/.logs
 cache_liberty > /codewind-workspace/.logs/liberty-app-cache.log 2>&1 &
 cache_spring > /codewind-workspace/.logs/spring-app-cache.log 2>&1 &
 
+# Create dir for docker config
+mkdir -p /root/.docker/
+
 # If running in Kubernetes, initialize helm
 if [ "$IN_K8" == "true" ]; then
 
