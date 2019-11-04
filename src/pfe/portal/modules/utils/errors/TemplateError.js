@@ -39,6 +39,9 @@ function constructMessage(code, identifier, message) {
   case 'URL_DOES_NOT_POINT_TO_INDEX_JSON':
     output = `${identifier} does not point to a JSON file of the correct form`;
     break;
+  case 'ADD_TO_PROVIDER_FAILURE':
+    output = `A template provider failed to add the ${identifier} repository`;
+    break;
   default:
     output = 'Unknown template error';
   }
