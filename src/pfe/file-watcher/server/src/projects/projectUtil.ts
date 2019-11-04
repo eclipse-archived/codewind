@@ -440,7 +440,7 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         odoProjectInfo.compositeAppName = appName;
                         await projectsController.saveProjectInfo(projectID, odoProjectInfo, true);
                     }
-                    else if (operation.projectInfo.projectType != "appsody") {
+                    else {
                         const ingressDomain = projectName + "-" + process.env.CHE_INGRESS_HOST;
                         logger.logProjectInfo("*** Ingress: " + ingressDomain, projectID);
                         const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, ingressDomain, operation.projectInfo.isHttps);
