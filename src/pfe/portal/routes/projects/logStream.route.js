@@ -55,7 +55,7 @@ async function startStreamingAll(req, res, startStreams) {
             }
             logTypes[logType].push(logObject);
             let logFile = file;
-            let logOrigin = logEntry.origin;
+            let logOrigin = logs[logType].origin;
             if (startStreams) {
               project.startStreamingLog(user.uiSocket, logType, logOrigin, logName, logFile);
             }
@@ -100,6 +100,88 @@ router.delete('/api/v1/projects/:id/logs', validateReq, function stopStreamingAl
       res.sendStatus(200);
     } else {
       logger.error(`Logs stream stop for unknown project ${projectID}`);
+      res.sendStatus(404);
+    }
+  } catch (error) {
+    logger.error(error);
+    res.status(500).send(error);
+  }
+});
+
+/**
+ * API Function to start streaming a log for a given project
+ * @param id, the project id to stream a logs
+ * @param type, the type of the log (build or app)
+ * @param name, the name of the log
+ */
+router.post('/api/v1/projects/:id/logs/:type/:name', validateReq, async function startStreaming(req, res) {
+  let projectID = req.sanitizeParams('id');
+  let logType = req.sanitizeParams('type');
+  let logName = req.sanitizeParams('name');
+  try {
+    let logFile;
+    let logOrigin;
+    let user = req.cw_user;
+    let project = user.projectList.retrieveProject(projectID);
+    if (project) {
+      if (logName == CONTAINER_LOG_NAME && logType == CONTAINER_LOG_TYPE) {
+        let container = project.containerId || project.podName;
+        if (container && container !== '') {
+          logFile = CONTAINER_LOG_NAME;
+          logOrigin = 'container';
+        }
+      } else {
+        let logs = await user.getProjectLogs(project);
+        if (logs && logs[logType]) {
+          // Stream log depending on whether it's a file visible to portal or only
+          // in the container.
+          for (const logEntry of logs[logType]) {
+            for (let file of logEntry.files) {
+              if (logName === path.basename(file)) {
+                logFile = file;
+                logOrigin = logEntry.origin;
+              }
+            }
+          }
+        }
+      }
+      if (logFile) {
+        project.startStreamingLog(user.uiSocket, logType, logOrigin, logName, logFile);
+        res.sendStatus(200);
+      } else {
+        logger.error(`log stream could not be created, no ${logName} log file of type ${logType} for project ${project.name}`);
+        res.sendStatus(404);
+      }
+    } else {
+      logger.error("log stream could not be created, " + projectID + " does not exist");
+      res.sendStatus(404);
+    }
+  } catch (error) {
+    logger.error(error);
+    res.status(500).send(error);
+  }
+});
+
+/**
+ * API Function to stop streaming a log for a given project
+ * @param id, the project id to stream a logs
+ * @param type, the type of the log (build or app)
+ * @param name, the name of the log
+ */
+
+router.delete('/api/v1/projects/:id/logs/:type/:name', validateReq, function stopStreaming(req, res) {
+  let projectID = req.sanitizeParams('id');
+  let logType = req.sanitizeParams('type');
+  let logName = req.sanitizeParams('name');
+  try {
+    let user = req.cw_user;
+    let project = user.projectList.retrieveProject(projectID);
+    if (project) {
+      project.stopStreamingLog(logType, logName);
+      logger.info(`Stopped streaming log: ${logType} ${logName} for ${projectID}`);
+      res.sendStatus(200);
+    } else {
+      logger.error("log stream could not be deleted, " + projectID + " does not exist");
       res.sendStatus(404);
     }
   } catch (error) {
