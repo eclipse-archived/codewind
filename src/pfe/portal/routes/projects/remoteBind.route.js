@@ -121,8 +121,6 @@ async function bindStart(req, res) {
 
     newProject.workspaceDir = dirName;
     log.debug(`Creating directory in ${dirName} and ${tempDirName}`);
-
-    user.uiSocket.emit('projectBind', { status: 'success', ...newProject });
     log.info(`Successfully created project - name: ${newProject.name}, ID: ${newProject.projectID}`);
 
   } catch (err) {
