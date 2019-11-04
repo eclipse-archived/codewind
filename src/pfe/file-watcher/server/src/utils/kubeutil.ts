@@ -228,7 +228,7 @@ export async function getFilesOrFoldersInContainerWithTimestamp(projectID: strin
                 return [];
             } else {
                 logger.logInfo("At least one file was found");
-                const lines =  data.stdout.split("\n");
+                const lines = data.stdout.split("\n");
                 const fileIndex = 8; // file is the 9th argument from the above command
                 const filesTimestamp: Array<logHelper.LogFiles> = [];
                 for (let line of lines) {
