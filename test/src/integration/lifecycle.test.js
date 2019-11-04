@@ -12,9 +12,6 @@ const chai = require('chai');
 const chaiHttp = require('chai-http');
 const mlog = require('mocha-logger');
 
-const {promisify} = require('util');
-const execAsync = promisify(require('child_process').exec);
-
 const containerService = require('../../modules/container.service');
 const projectService = require('../../modules/project.service');
 const SocketService = require('../../modules/socket.service');
@@ -261,7 +258,7 @@ describe('Project Lifecycle Tests', function() {
     }
 
     function TestProject(language, testOptions) {
-        const { metricsEndpoint, needContextRoot, checkString, appEndpoint } = testOptions;
+        const { metricsEndpoint, needContextRoot, checkString } = testOptions;
         const projectName = templateOptions[language].name;
         let projectID;
         let contextRoot;
