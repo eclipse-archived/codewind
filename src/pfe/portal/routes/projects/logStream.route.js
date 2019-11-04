@@ -55,7 +55,7 @@ async function startStreamingAll(req, res, startStreams) {
             }
             logTypes[logType].push(logObject);
             let logFile = file;
-            let logOrigin = logs[logType].origin;
+            let logOrigin = logEntry.origin;
             if (startStreams) {
               project.startStreamingLog(user.uiSocket, logType, logOrigin, logName, logFile);
             }
