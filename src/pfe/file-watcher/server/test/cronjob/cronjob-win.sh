@@ -164,7 +164,7 @@ for i in "${PROJECT_CLONE[@]}"; do
 
     echo -e "${BLUE}>> Creating project $PROJECT_NAME from $PROJECT_URL in "$PROJECT_PATH/$PROJECT_NAME" ${RESET}"
     createProject $PROJECT_URL "$PROJECT_PATH/$PROJECT_NAME"
-	checkExitCode $? "Failed to download latest tests."
+	checkExitCode $? "Failed to created project $PROJECT_NAME."
 
 	echo -e "${BLUE}>> Copying $PROJECT_NAME to PFE container ${RESET}"
 	copyToPFE "$PROJECT_PATH/$PROJECT_NAME"
