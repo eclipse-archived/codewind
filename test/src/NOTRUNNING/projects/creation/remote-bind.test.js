@@ -9,10 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-// Skip this test if remote mode isn't enabled.
-if (process.env['REMOTE_MODE'] !== 'true') {
-    return;
-}
 
 const chai = require('chai');
 const path = require('path');

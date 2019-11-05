@@ -18,14 +18,12 @@ RESET='\033[0m'
 
 # Developer-mode option for running with appmetrics, see start.sh
 DEVMODE=''
-REMOTE_MODE=''
 
 printf "\n\n${BLUE}Running 'run.sh' to build and start codewind. $RESET\n";
 
 while [ "$#" -gt 0 ]; do
   case $1 in
     --dev) DEVMODE='--dev'; shift 1;;
-    --remoteOff) REMOTE_MODE='--remoteOff'; shift 1;;
     *) shift 1;;
   esac
 done
@@ -79,4 +77,4 @@ fi
 cd $DIR/
 
 # Start codewind
-./start.sh $REMOTE_MODE $DEVMODE --tag latest
+./start.sh $DEVMODE --tag latest
