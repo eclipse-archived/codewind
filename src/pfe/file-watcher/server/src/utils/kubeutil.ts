@@ -399,19 +399,20 @@ export async function exposeOverIngress(projectID: string, projectName: string, 
     let servicePort: number;
 
     try {
-        // Get the project's kubernetes service labeled with its unique project ID
-        const resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).services.get({ qs: { labelSelector: "projectID=" + projectID } });
+        let resp: any = undefined;
 
-        // Retrieve the owner reference name and uid to use for the ingress resource
+        // Get the deployment name and uid labaled with the unique project ID
+        resp = await k8sClient.apis.apps.v1.namespaces(KUBE_NAMESPACE).deployments.get({ qs: { labelSelector: "projectID=" + projectID } });
         ownerReferenceName = resp.body.items[0].metadata.name;
         ownerReferenceUID = resp.body.items[0].metadata.uid;
 
-        // Retrieve the service name and port
+        // Get the service name and port labeled with the unique project ID
+        resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).services.get({ qs: { labelSelector: "projectID=" + projectID } });
         serviceName = resp.body.items[0].metadata.name;
         servicePort = parseInt(resp.body.items[0].spec.ports[0].port, 10);
 
     } catch (err) {
-        logger.logProjectError("Unable to retrieve the project's service", projectID);
+        logger.logProjectError("Unable to retrieve project deployment or service", projectID);
         throw err;
     }
 
@@ -433,7 +434,7 @@ export async function exposeOverIngress(projectID: string, projectName: string, 
                         "apiVersion": "apps/v1",
                         "blockOwnerDeletion": true,
                         "controller": true,
-                        "kind": "Service",
+                        "kind": "ReplicaSet",
                         "name": `${ownerReferenceName}`,
                         "uid": `${ownerReferenceUID}`
                     }
