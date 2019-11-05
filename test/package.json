@@ -25,6 +25,7 @@
     "chai-files": "^1.4.0",
     "chai-http": "^4.0.0",
     "chai-openapi-response-validator": "^0.2.4",
+    "chai-subset": "^1.6.0",
     "child-process-promise": "^2.2.1",
     "dateformat": "^3.0.3",
     "dockerode": "^2.5.2",

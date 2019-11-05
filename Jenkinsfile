@@ -243,6 +243,7 @@ pipeline {
                         npm install
                         npm run eslint
                         npm run test
+                        npm run unittest
                         '''
                     }
                 }
