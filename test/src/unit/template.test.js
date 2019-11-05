@@ -158,6 +158,7 @@ describe('Templates.js', function() {
                 fs.removeSync(testWorkspaceDir);
             });
             it('returns the default templates and more', async function() {
+                this.timeout = 10000;
                 const output = await templateController.getAllTemplates();
                 output.should.include.deep.members(defaultCodewindTemplates);
                 (output.length).should.be.above(defaultCodewindTemplates.length);
