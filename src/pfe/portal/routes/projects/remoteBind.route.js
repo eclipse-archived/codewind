@@ -55,6 +55,15 @@ async function bindStart(req, res) {
       throw new ProjectInitializerError('INVALID_PROJECT_NAME', `invalid characters : ${JSON.stringify(illegalNameChars)}`);
     }
 
+    const projectList = user.projectList.getAsArray();
+    const nameUsed = projectList.some((project) => project.name == name);
+    if (nameUsed) {
+      const msg = `project name ${name} is already in use`;
+      res.status(409).send(msg);
+      log.warn(msg);
+      return;
+    }
+
     const validProjectTypes = await user.projectTypes();
 
     if (!validProjectTypes.includes(projectType)) {

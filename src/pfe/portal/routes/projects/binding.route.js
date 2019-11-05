@@ -42,6 +42,7 @@ router.post('/api/v1/projects/bind', validateReq, async function (req, res) {
     const language = req.sanitizeBody('language');
     const projectType = req.sanitizeBody('projectType');
     const autoBuildParam = req.sanitizeBody('autoBuild');
+    const projectList = user.projectList.getAsArray();
 
     const illegalNameChars = ILLEGAL_PROJECT_NAME_CHARS.filter(char => name.includes(char));
     if (illegalNameChars.length > 0) {
@@ -53,6 +54,23 @@ router.post('/api/v1/projects/bind', validateReq, async function (req, res) {
     if (!path.isAbsolute(projectPath)) {
       const msg = 'Path to project must be an absolute path';
       res.status(400).send(msg);
+      log.warn(msg);
+      return;
+    }
+
+    // Query all projects and make sure this is not already bound.
+    const projectAlreadyBound = projectList.some((project) => path.join(project.workspace, project.directory) == projectPath);
+    if (projectAlreadyBound) {
+      const msg = `a Codewind project already exists at ${projectPath}`;
+      res.status(409).send(msg);
+      log.warn(msg);
+      return;
+    }
+
+    const nameUsed = projectList.some((project) => project.name == name);
+    if (nameUsed) {
+      const msg = `project name ${name} is already in use`;
+      res.status(409).send(msg);
       log.warn(msg);
       return;
     }
