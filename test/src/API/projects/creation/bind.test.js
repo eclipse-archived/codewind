@@ -13,11 +13,11 @@ const {promisify} = require('util');
 const execAsync = promisify(require('child_process').exec);
 const path = require('path');
 
-const containerService = require('../../../modules/container.service');
-const projectService = require('../../../modules/project.service');
-const reqService = require('../../../modules/request.service');
+const containerService = require('../../../../modules/container.service');
+const projectService = require('../../../../modules/project.service');
+const reqService = require('../../../../modules/request.service');
 
-const { ADMIN_COOKIE, WORKSPACE_DIR, testTimeout, containerDir } = require('../../../config');
+const { ADMIN_COOKIE, WORKSPACE_DIR, testTimeout, containerDir } = require('../../../../config');
 chai.should();
 
 function setUpProjectBindOptions() {
@@ -202,7 +202,7 @@ function testBind(project) {
                 res.should.have.status(400);
             });
 
-            it('should fail with (status 409) when an bind is requested with the same project name', async function() {
+            it('should pass with when an bind is requested with the same project name', async function() {
                 this.timeout(testTimeout.med);
                 const res = await projectService.bindProject({
                     name: project.name,
@@ -210,11 +210,11 @@ function testBind(project) {
                     language: project.language,
                     projectType : project.projectType,
                     autoBuild: false,
-                }, 409);
-                res.should.have.status(409);
+                }, 202);
+                res.should.have.status(202);
             });
 
-            it('should fail with (status 409) when an bind is requested with the same project path', async function() {
+            it('should pass when an bind is requested with the same project path', async function() {
                 this.timeout(testTimeout.med);
                 const res = await projectService.bindProject({
                     name: `${project.name}2`,
@@ -222,8 +222,9 @@ function testBind(project) {
                     language: project.language,
                     projectType : project.projectType,
                     autoBuild: false,
-                }, 409);
-                res.should.have.status(409);
+                }, 202);
+                
+                res.should.have.status(202);
             });
 
             it('should unbind a project', async function() {
