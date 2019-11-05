@@ -112,9 +112,9 @@ async function bindStart(req, res) {
   }
 
   try {
-
+    await fs.ensureDir(newProject.projectPath());
     await fs.ensureDir(newProject.projectTempPath());
-    log.debug(`Creating directory in ${newProject.projectTempPath()}`);
+    log.debug(`Creating directory in ${newProject.projectPath()} and ${newProject.projectTempPath()}`);
 
     user.uiSocket.emit('projectBind', { status: 'success', ...newProject });
     log.info(`Successfully created project - name: ${newProject.name}, ID: ${newProject.projectID}`);
@@ -241,8 +241,8 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
       (!project.extension || !project.extension.config.needsMount)) {
       await Promise.all(filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file)));
       modifiedList.forEach((file) => {
-        log.info(`project is ${project.name} file is ${file} projectRoot is ${projectRoot}`);
-        cwUtils.copyFile(project, path.join(project.directory, file), projectRoot, file);
+        log.info(`syncToBuildContainer: project is ${project.name}. file being copied is ${file}. projectRoot is ${projectRoot}`);
+        cwUtils.copyFile(project, path.join(project.projectPath(), file), projectRoot, file);
       });
     }
     filesToDelete.forEach((f) => {
