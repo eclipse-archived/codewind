@@ -392,7 +392,7 @@ export async function installChart(projectID: string, deploymentName: string, ch
     return response;
 }
 
-export async function exposeOverIngress(projectID: string, projectName: string, ingressDomain: string, isHTTPS: boolean): Promise<string> {
+export async function exposeOverIngress(projectID: string, projectName: string, ingressDomain: string, isHTTPS: boolean, appPort?: number): Promise<string> {
     let ownerReferenceName: string;
     let ownerReferenceUID: string;
     let serviceName: string;
@@ -406,11 +406,15 @@ export async function exposeOverIngress(projectID: string, projectName: string, 
         ownerReferenceName = resp.body.items[0].metadata.name;
         ownerReferenceUID = resp.body.items[0].metadata.uid;
 
-        // Get the service name and port labeled with the unique project ID
+        // Get the service name labeled with the unique project ID
         resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).services.get({ qs: { labelSelector: "projectID=" + projectID } });
+        if (!appPort) {
+            // If the servicePort wasn't passed in, retrieve it from the service
+            servicePort = parseInt(resp.body.items[0].spec.ports[0].port, 10);
+        } else {
+            servicePort = appPort;
+        }
         serviceName = resp.body.items[0].metadata.name;
-        servicePort = parseInt(resp.body.items[0].spec.ports[0].port, 10);
-
     } catch (err) {
         logger.logProjectError("Unable to retrieve project deployment or service", projectID);
         throw err;

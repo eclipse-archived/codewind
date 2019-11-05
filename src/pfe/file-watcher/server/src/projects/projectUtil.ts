@@ -441,12 +441,16 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         await projectsController.saveProjectInfo(projectID, odoProjectInfo, true);
                     }
                     else {
+                        // Retrieve the internal port from the project
+                        const updatedProjectInfo: ProjectInfo = operation.projectInfo;
+                        const servicePort = parseInt(containerInfo.internalPort, 10);
+
+                        // Create the ingress
                         const ingressDomain = projectName + "-" + process.env.CHE_INGRESS_HOST;
                         logger.logProjectInfo("*** Ingress: " + ingressDomain, projectID);
-                        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, ingressDomain, operation.projectInfo.isHttps);
+                        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, ingressDomain, operation.projectInfo.isHttps, servicePort);
 
-                        // Set the appBaseURL to the ingress URL of the project
-                        const updatedProjectInfo: ProjectInfo = operation.projectInfo;
+                        // Set the appBaseURL to the ingress we exposed earlier
                         projectInfo.appBaseURL = baseURL;
                         updatedProjectInfo.appBaseURL = baseURL;
                         await projectsController.saveProjectInfo(projectID, updatedProjectInfo, true);
@@ -1354,7 +1358,6 @@ export async function buildAndRun(operation: Operation, command: string): Promis
 
             // Set the appBaseURL to the ingress URL of the project
             const updatedProjectInfo: ProjectInfo = operation.projectInfo;
-
             projectEvent.appBaseURL = baseURL;
             updatedProjectInfo.appBaseURL = baseURL;
             await projectsController.saveProjectInfo(projectID, updatedProjectInfo, true);
