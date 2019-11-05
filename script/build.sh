@@ -48,9 +48,9 @@ cp -r $DIR/LICENSE ${SRC_DIR}/pfe/portal/
 cp -r $DIR/NOTICE.md ${SRC_DIR}/pfe/portal/
 cp -r $DIR/LICENSE ${SRC_DIR}/performance/
 cp -r $DIR/NOTICE.md ${SRC_DIR}/performance/
-cp -r $DIR/LICENSE.md ${SRC_DIR}/keycloak/
+cp -r $DIR/LICENSE ${SRC_DIR}/keycloak/
 cp -r $DIR/NOTICE.md ${SRC_DIR}/keycloak/
-cp -r $DIR/LICENSE.md ${SRC_DIR}/gatekeeper/
+cp -r $DIR/LICENSE ${SRC_DIR}/gatekeeper/
 cp -r $DIR/NOTICE.md ${SRC_DIR}/gatekeeper/
 
 # Copy the docs into portal
