@@ -9,7 +9,8 @@
  *     IBM Corporation - initial API and implementation
 *******************************************************************************/
 
-global.codewind = { RUNNING_IN_K8S: false };
+defaultGlobals = { RUNNING_IN_K8S: false, CODEWIND_TEMP_WORKSPACE: 'tempdir' };
+global.codewind = defaultGlobals;
 
 const Project = require('../../../../src/pfe/portal/modules/Project');
 
@@ -117,7 +118,7 @@ describe('Project.js', () => {
             }
             const port = project.getPort();
             port.should.equal(10000);
-            global.codewind = { RUNNING_IN_K8S: false };
+            global.codewind = defaultGlobals;
         });
     })
     describe('projectPath', () => {
@@ -125,6 +126,13 @@ describe('Project.js', () => {
             const project = new Project({ name: 'dummy', directory: 'directory' }, '/codewind-workspace/');
             const projectPath = project.projectPath();
             projectPath.should.equal('/codewind-workspace/directory');
+        });
+    })
+    describe('projectTempPath', () => {
+        it('Checks that projectTempPath() is workspace+tempDir+directory', () => {
+            const project = new Project({ name: 'dummy', directory: 'directory' }, '/codewind-workspace/');
+            const projectPath = project.projectTempPath();            
+            projectPath.should.equal('/codewind-workspace/tempdir/directory');
         });
     })
     describe('isValidName', () => {
