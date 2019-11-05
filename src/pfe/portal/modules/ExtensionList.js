@@ -68,8 +68,9 @@ module.exports = class ExtensionList {
               await exec(`unzip ${source} -d ${targetDir}`);
               
               if (name == odoExtensionName) {
-                await exec(`mkdir -p ${targetWithVersion}/bin`);
-                await exec(`mv ${odoBinarySource} ${targetWithVersion}/bin/odo && chmod +x ${targetWithVersion}/bin/odo`);
+                await fs.ensureDir(`${targetWithVersion}/bin`);
+                await fs.move(odoBinarySource, `${targetWithVersion}/bin/odo`); 
+                await fs.chmod(`${targetWithVersion}/bin/odo`, '755');
               }
 
               // top-level directory in zip will have the version suffix
