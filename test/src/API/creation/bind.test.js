@@ -13,11 +13,11 @@ const {promisify} = require('util');
 const execAsync = promisify(require('child_process').exec);
 const path = require('path');
 
-const containerService = require('../../../../modules/container.service');
-const projectService = require('../../../../modules/project.service');
-const reqService = require('../../../../modules/request.service');
+const containerService = require('../../../modules/container.service');
+const projectService = require('../../../modules/project.service');
+const reqService = require('../../../modules/request.service');
 
-const { ADMIN_COOKIE, WORKSPACE_DIR, testTimeout, containerDir } = require('../../../../config');
+const { ADMIN_COOKIE, WORKSPACE_DIR, testTimeout, containerDir } = require('../../../config');
 chai.should();
 
 function setUpProjectBindOptions() {
