@@ -42,7 +42,6 @@ router.post('/api/v1/projects/bind', validateReq, async function (req, res) {
     const language = req.sanitizeBody('language');
     const projectType = req.sanitizeBody('projectType');
     const autoBuildParam = req.sanitizeBody('autoBuild');
-    const projectList = user.projectList.getAsArray();
 
     const illegalNameChars = ILLEGAL_PROJECT_NAME_CHARS.filter(char => name.includes(char));
     if (illegalNameChars.length > 0) {
