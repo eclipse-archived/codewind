@@ -158,7 +158,7 @@ function deployK8s() {
 	fi
 
 	# Add the necessary labels and serviceaccount to the chart
-	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project
+	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project $PROJECT_ID
 
 	# Push app container image to docker registry if one is set up
 	if [[ ! -z $DEPLOYMENT_REGISTRY ]]; then
