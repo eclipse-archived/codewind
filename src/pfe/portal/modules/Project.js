@@ -73,7 +73,7 @@ module.exports = class Project {
     // workspace is the parent directory of the project
     // NOT the global.codewind.CODEWIND_WORKSPACE we store
     // project.inf and log files in.
-    this.workspace = args.workspace || workspace;
+    this.workspace = workspace;
     this.directory = args.directory || `${this.name}-${this.projectID}`;
     this.infLockFlag = false;
 
@@ -191,6 +191,10 @@ module.exports = class Project {
     // Codewind workspace is hardcoded in filewatcherDeployment.js
     // return (inPortal ? this.workspace + this.directory :  `/codewind-workspace/${this.directory}` );
     return join(this.workspace, this.directory);
+  }
+
+  projectTempPath() {
+    return join(this.workspace, global.codewind.CODEWIND_TEMP_WORKSPACE, this.directory);
   }
 
   /**

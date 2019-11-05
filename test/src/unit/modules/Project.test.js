@@ -44,7 +44,7 @@ describe('Project.js', () => {
         it('Correctly initialises using a comprehensive list of arguments', () => {
             const args = {
                 projectID: '9318ab10-fef9-11e9-8761-9bf62d92b58b',
-                name: 'my-java-prject',
+                name: 'my-java-project',
                 codewindVersion: 'someversion',
                 language: 'java',
                 locOnDisk: 'location',
@@ -53,7 +53,7 @@ describe('Project.js', () => {
                 infLockFlag: false,
                 startMode: 'run',
                 projectType: 'docker',
-                buildLogPath: '/codewind-workspace/.logs/my-java-prject-9318ab10-fef9-11e9-8761-9bf62d92b58b-9318ab10-fef9-11e9-8761-9bf62d92b58b/docker.build.log',
+                buildLogPath: '/codewind-workspace/.logs/my-java-project-9318ab10-fef9-11e9-8761-9bf62d92b58b-9318ab10-fef9-11e9-8761-9bf62d92b58b/docker.build.log',
                 state: 'open',
                 autoBuild: false
                 
@@ -61,19 +61,17 @@ describe('Project.js', () => {
             const project = new Project(args, '/codewind-workspace/');
             project.should.be.an('object');
             project.should.containSubset(args);
-            const id = project.projectID;
-            const name = project.name;
-            project.directory.should.not.equal(`${name}-${id}`);
+            const { projectID, name } = project;
+            project.directory.should.not.equal(`${name}-${projectID}`);
         });
         it('Correctly sets directory to name-id', () => {
             const project = new Project({
                 name: 'newdummyproject'
             }, './someworkspace');
             project.should.be.an('object');
-            const id = project.projectID;
-            const name = project.name;
+            const { projectID, name } = project;
             project.should.have.property('directory');
-            project.directory.should.equal(`${name}-${id}`);
+            project.directory.should.equal(`${name}-${projectID}`);
         });
     })
     describe('toJSON', () => {
