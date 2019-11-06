@@ -33,12 +33,6 @@
     <script src="graphmetrics/jquery/jquery-3.1.1.min.js"></script>
     <script src="graphmetrics/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
     <div class="headerDiv">
-      <span class="sidenavButton" onclick="toggleMenu()">&#9776;</span>
-      <!-- TODO: remove -->
-      <span class="active" onclick="pollMetricsAndUpdateGraphs(maxPolls)">&#9776;</span>
-      <span class="active" onclick="getProfilingDataAndUpdateFlameGraph()">&#9776;</span>
-      <span class="active" onclick="getEnvDataAndUpdateEnvSummary()">&#9776;</span>
-      <!--  -->
       <span class="leftHeader">Codewind Application Metrics Dashboard for Node.js</span>
       <span class="rightHeader">
         <a class="docLink" href="https://developer.ibm.com/node/application-metrics-node-js/" target="_blank">Go
@@ -151,7 +145,7 @@
     <script type="text/javascript" src="graphmetrics/js/probeEventsChart.js"></script>
     <script type="text/javascript" src="graphmetrics/js/flamegraph.js"></script>
     <script src="scripts/profiling.js"></script>
-    <script type="module" src="parse-prometheus-text-format/dist/parse-prometheus-text-format.umd.js"></script>
+    <script type="module" src="parse-prometheus-text-format.js"></script>
     <script src="scripts/pfeRequester.js"></script>
     <script src="scripts/manageMetricsDash.js"></script>
   </div>

@@ -2,8 +2,8 @@ const projectID = queryStringValues.get('projectID');
 const pfeOrigin = document.location.origin;
 const pollInterval = 2000;
 
-// TODO remove when finished dev
-let maxPolls = 3;
+const maxPolls = 100;
+const maxFlameGraphUpdates = 50;
 
 function pollMetricsAndUpdateDash(numPolls, funcToUpdateDash) {
   tellPfeToScrapeMetricsFromProject();
