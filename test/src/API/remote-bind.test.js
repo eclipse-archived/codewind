@@ -129,7 +129,6 @@ async function testRemoteBindUpload(projectID, projectName, pathToDirToUpload) {
         res.should.have.status(200);
     }
     const fileToCheck = path.join('codewind-workspace', projectName, 'package.json');
-    console.log("package.json is " + fileToCheck);
     const fileExists = await containerService.fileExists(fileToCheck);
     fileExists.should.be.true;
 };
@@ -162,12 +161,10 @@ async function endRemoteBind(projectID) {
 };
 
 async function uploadFile(projectID, filePath) {
-    //console.log("filepath " + filePath);
     const fileContent = JSON.stringify(fs.readFileSync(filePath, 'utf-8'));
     const zippedContent = zlib.deflateSync(fileContent);
     const base64CompressedContent = zippedContent.toString('base64');
     const relativePathToFile = path.relative(pathToLocalRepo, filePath);
-    //console.log("relativePathToFile " + relativePathToFile);
     const options = {
         directory: false,
         path: relativePathToFile,
@@ -177,8 +174,7 @@ async function uploadFile(projectID, filePath) {
     return res;
 };
 
-async function uploadZippedFileUsingPfeApi(projectID, options) {
-    console.dir(options.path);
+async function uploadZippedFileUsingPfeApi(projectID, options) {git ad
     const res = await reqService.chai
         .put(`/api/v1/projects/${projectID}/upload`)
         .set('Cookie', ADMIN_COOKIE)

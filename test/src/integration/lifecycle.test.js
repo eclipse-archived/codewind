@@ -89,7 +89,7 @@ describe('Project Lifecycle Tests', function() {
 
     after(function() {
         socketService.close();
-        socketService = undefined;
+        socketService = null;
     });
 
     describe('Lagom', function() {
@@ -292,7 +292,7 @@ describe('Project Lifecycle Tests', function() {
 
         describe('.socketChecker', function() {
             before(function() {
-                ticker = setInterval(intervalFunction, 60*1000);
+                ticker = setInterval(intervalFunction, 60 * 1000);
                 ticking = false; // Initialise ticker
             });
 
@@ -303,7 +303,7 @@ describe('Project Lifecycle Tests', function() {
             });
 
             it(`should emit projectLogsListChanged for ${projectName} creating a build log`, async function() {
-                await socketService.checkForMsg({ projectID, msgType: 'projectLogsListChanged'});
+                await socketService.checkForMsg({ projectID, msgType: 'projectLogsListChanged' });
             });
 
             it(`should emit projectStatusChanged for ${projectName} building successfully`, async function() {
@@ -410,7 +410,7 @@ describe('Project Lifecycle Tests', function() {
             });
 
             it('should launch a metrics dashboard', async function() {
-                if(!metricsEndpoint) this.skip();
+                if (!metricsEndpoint) this.skip();
                 const url = `${CODEWIND_HOST}:${port}/${metricsEndpoint}`;
                 const receivedSuccessResponse = await awaitSuccessResponseFromEndpoint(url, contextRoot);
                 receivedSuccessResponse.should.be.true;
@@ -455,7 +455,7 @@ async function awaitSuccessResponseFromEndpoint(url, contextRoot = '') {
 
         wait(checkingInterval);
         timeAwaited += checkingInterval;
-        if (timeAwaited > 0 && timeAwaited % (20*1000) === 0) {
+        if (timeAwaited > 0 && timeAwaited % (20 * 1000) === 0) {
             mlog.log('[awaitSuccessResponseFromEndpoint] Received no response from endpoint yet');
         }
     }
