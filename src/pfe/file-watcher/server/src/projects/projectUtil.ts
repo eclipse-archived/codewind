@@ -51,12 +51,9 @@ if (process.env.IN_K8) {
 
 const KUBE_NAMESPACE = process.env.KUBE_NAMESPACE || "default";
 
-
 const containerInfoMap = new Map();
 
 export const containerInfoForceRefreshMap = new Map();
-
-
 
 export const LOCAL_WORKSPACE = "/codewind-workspace";
 
@@ -107,7 +104,6 @@ const projectEventErrorMsgs = {
 export async function containerCreate(operation: Operation, script: string, command: string): Promise<void> {
 
     const event = "projectCreation";
-
     const projectLocation = operation.projectInfo.location;
     const projectID = operation.projectInfo.projectID;
     const projectName = projectLocation.split("/").pop();
