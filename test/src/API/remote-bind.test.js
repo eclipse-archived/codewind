@@ -174,7 +174,7 @@ async function uploadFile(projectID, filePath) {
     return res;
 };
 
-async function uploadZippedFileUsingPfeApi(projectID, options) {git ad
+async function uploadZippedFileUsingPfeApi(projectID, options) {
     const res = await reqService.chai
         .put(`/api/v1/projects/${projectID}/upload`)
         .set('Cookie', ADMIN_COOKIE)
