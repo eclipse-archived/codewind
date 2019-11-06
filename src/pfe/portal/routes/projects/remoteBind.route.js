@@ -23,6 +23,7 @@ const ProjectInitializerError = require('../../modules/utils/errors/ProjectIniti
 const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
 const log = new Logger(__filename);
+const { validateReq } = require('../../middleware/reqValidator');
 
 /**
  * API Function to begin binding a given project that is not currently
@@ -375,5 +376,43 @@ async function bindEnd(req, res) {
     user.uiSocket.emit('projectBind', data);
   }
 }
+
+/**
+ * API Function to unbind a given project
+ * @param id, the id of the project to delete
+ * @return 202 if project deletion was accepted
+ * @return 404 if the project with id was not found
+ * @return 409 if unbind was already in progress
+ */
+router.post('/api/v1/projects/:id/unbind', validateReq, async function (req, res) {
+  const user = req.cw_user;
+  // Null checks on projectID done by validateReq.
+  const projectID = req.sanitizeParams('id');
+  try {
+    const project = user.projectList.retrieveProject(projectID);
+    if (!project) {
+      res.status(404).send(`Unable to find project ${projectID}`);
+    } else if (project.isDeleting()) {
+      res.status(409).send(`Delete for project ${projectID} already requested`);
+    } else {
+      // Set an action of deleting
+      await user.projectList.updateProject({
+        projectID: projectID,
+        action: Project.STATES.deleting,
+      });
+      res.status(202).send(`Project ${projectID} delete request accepted`);
+      log.debug(`Requesting deletion of project ${project.name} (${projectID})`);
+      await user.unbindProject(project);
+    }
+  } catch (err) {
+    const data = {
+      projectID,
+      status: 'failed',
+      error: err.message
+    }
+    user.uiSocket.emit('projectDeletion', data);
+    log.error(`Error deleting project: ${util.inspect(data)}`);
+  }
+});
 
 module.exports = router;
