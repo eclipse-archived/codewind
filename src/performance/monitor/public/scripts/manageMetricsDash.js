@@ -36,14 +36,17 @@ $('.nav-tabs a').on('shown.bs.tab', function (event) {
 getEnvDataAndUpdateEnvSummary();
 pollMetricsAndUpdateDash(maxPolls, updateDash);
 
+let numFlameGraphUpdates = 0;
+
 function updateDash(projectData) {
   if (projectData.metrics) {
     const combinedMetrics = combineMetrics(projectData.metrics);
     updateGraphs(combinedMetrics);
   }
-  // if (Array.isArray(projectData.profiling)) {
-  //   updateFlameGraph(projectData.profiling)
-  // }
+  if ((numFlameGraphUpdates < maxFlameGraphUpdates) && Array.isArray(projectData.profiling)) {
+    updateFlameGraph(projectData.profiling)
+    numFlameGraphUpdates++;
+  }
 }
 
 function combineMetrics(metrics) {
@@ -67,16 +70,15 @@ function combineMetrics(metrics) {
   const metricsFromUserNotProvidedByCodewind = metricsFromUser.filter(userMetric =>
     !metricsFromCodewind.some(cwMetric => cwMetric.name === userMetric.name)
   );
-  console.log('metricsFromUserNotProvidedByCodewind');
-  console.log(metricsFromUserNotProvidedByCodewind);
+  // console.log('metricsFromUserNotProvidedByCodewind');
+  // console.log(metricsFromUserNotProvidedByCodewind);
 
   const combinedMetrics = metricsFromCodewind.concat(metricsFromUserNotProvidedByCodewind);
-  console.log('combinedMetrics');
-  console.log(combinedMetrics);
+  // console.log('combinedMetrics');
+  // console.log(combinedMetrics);
   return combinedMetrics;
 }
 
-// TODO is this correct?
 let indexOfLastViewedSample = 0;
 function updateFlameGraph(profilingSamples) {
   const newProfilingSamples = profilingSamples.slice(indexOfLastViewedSample);

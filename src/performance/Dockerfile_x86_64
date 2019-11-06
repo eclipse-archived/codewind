@@ -57,7 +57,7 @@ COPY --from=build-performance-ui /usr/src/app/dashboard/build /usr/src/app/dashb
 
 
 # For codewind metrics dashboards
-COPY public /usr/src/app/public
+COPY monitor /usr/src/app/monitor
 
 # Install npm production packages
 COPY package.json /usr/src/app/
