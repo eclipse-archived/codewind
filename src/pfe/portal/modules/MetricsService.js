@@ -45,13 +45,14 @@ function getNewContentsOfPackageJson(oldContentsOfPackageJson) {
   const indexOfNodeCmd = oldStartScript.findIndex(word => ['node', 'nodemon'].includes(word));
 
   let newStartScript = deepClone(oldStartScript);
-  newStartScript.splice(indexOfNodeCmd + 1, 0, '-r codewind-node-metrics/attach');
+  newStartScript.splice(indexOfNodeCmd + 1, 0, '-r appmetrics-prometheus/attach');
   newStartScript = newStartScript.join(' ');
 
   const newContentsOfPackageJson = deepClone(oldContentsOfPackageJson);
 
   newContentsOfPackageJson.scripts.start = newStartScript;
-  newContentsOfPackageJson.dependencies['codewind-node-metrics'] = "git+https://git@github.com/rwalle61/codewind-node-metrics.git";
+  newContentsOfPackageJson.dependencies['appmetrics-prometheus'] = "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint";
+  newContentsOfPackageJson.dependencies['cors'] = "^2.8.5";
   return newContentsOfPackageJson;
 }
 
