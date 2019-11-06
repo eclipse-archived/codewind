@@ -55,6 +55,7 @@ const logsOrigin: logHelper.ILogTypes = {
 export class DockerProject implements ProjectExtension {
 
     supportedType: string;
+    builtByExtension: boolean = false;
 
     /**
      * @constructor
