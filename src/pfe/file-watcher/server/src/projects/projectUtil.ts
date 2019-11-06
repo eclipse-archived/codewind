@@ -1347,18 +1347,6 @@ export async function buildAndRun(operation: Operation, command: string): Promis
         try {
             logger.logProjectInfo("Beginning container build and run stage", projectID, projectName);
             await containerBuildAndRun(event, buildInfo, operation);
-
-            // Expose over ingress
-            const ingressDomain = projectName + "-" + process.env.CHE_INGRESS_HOST;
-            const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, ingressDomain, operation.projectInfo.isHttps);
-
-            // Set the appBaseURL to the ingress URL of the project
-            const updatedProjectInfo: ProjectInfo = operation.projectInfo;
-            projectEvent.appBaseURL = baseURL;
-            updatedProjectInfo.appBaseURL = baseURL;
-            await projectsController.saveProjectInfo(projectID, updatedProjectInfo, true);
-
-            io.emitOnListener(event, projectEvent);
         } catch (err) {
             const errorMsg = `The container failed to start for project ` + projectName;
             logger.logProjectError(errorMsg.concat("\n  Cause: " + err.message).concat("\n " + err.stack), projectID, projectName);
@@ -1959,10 +1947,30 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
 
         const logs = await getProjectLogs(projectInfo);
         projectEvent.logs = logs;
+
+        // As we rely on the project name to create the ingress, if given an undefined project name, retrieve it by the project ID instead
+        let appName: string;
+        if (projectName === undefined) {
+            appName = await logger.getProjectNameByProjectID(projectID);
+        } else {
+            appName = projectName;
+        }
+
+        // Expose the app over ingress
+        const ingressDomain = appName + "-" + process.env.CHE_INGRESS_HOST;
+        const servicePort = parseInt(containerInfo.internalPort, 10);
+        const baseURL = await kubeutil.exposeOverIngress(projectID, appName, ingressDomain, operation.projectInfo.isHttps, servicePort);
+
+        // Set the appBaseURL to the ingress URL of the project
+        const updatedProjectInfo: ProjectInfo = operation.projectInfo;
+        projectEvent.appBaseURL = baseURL;
+        updatedProjectInfo.appBaseURL = baseURL;
+        await projectsController.saveProjectInfo(projectID, updatedProjectInfo, true);
     } catch (err) {
         logger.logProjectError(err, projectID, projectName);
         projectEvent.error = err;
     }
+
     keyValuePair.key = "sentProjectInfo";
     keyValuePair.value = true;
     await projectsController.updateProjectInfo(projectID, keyValuePair);
