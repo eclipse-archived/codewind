@@ -392,6 +392,99 @@ export async function installChart(projectID: string, deploymentName: string, ch
     return response;
 }
 
+export async function exposeOverIngress(projectID: string, projectName: string, ingressDomain: string, isHTTPS: boolean, appPort?: number): Promise<string> {
+    let ownerReferenceName: string;
+    let ownerReferenceUID: string;
+    let serviceName: string;
+    let servicePort: number;
+
+    try {
+        let resp: any = undefined;
+
+        // Get the deployment name and uid labaled with the unique project ID
+        resp = await k8sClient.apis.apps.v1.namespaces(KUBE_NAMESPACE).deployments.get({ qs: { labelSelector: "projectID=" + projectID } });
+        ownerReferenceName = resp.body.items[0].metadata.name;
+        ownerReferenceUID = resp.body.items[0].metadata.uid;
+
+        // Get the service name labeled with the unique project ID
+        resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).services.get({ qs: { labelSelector: "projectID=" + projectID } });
+        if (!appPort) {
+            // If the servicePort wasn't passed in, retrieve it from the service
+            servicePort = parseInt(resp.body.items[0].spec.ports[0].port, 10);
+        } else {
+            servicePort = appPort;
+        }
+        serviceName = resp.body.items[0].metadata.name;
+    } catch (err) {
+        logger.logProjectError("Unable to retrieve project deployment or service", projectID);
+        throw err;
+    }
+
+    try {
+        // Ingress doesn't exist, so create one.
+        const ingressName = "cw-" + projectName + "-" + projectID;
+
+        // Create an ingress resource for the specified service name and port
+        const ingress = {
+            "apiVersion": "extensions/v1beta1",
+            "kind": "Ingress",
+            "metadata": {
+                "labels": {
+                    "projectID": `${projectID}`
+                },
+                "name": `${ingressName.substring(0, 62)}`,
+                "ownerReferences": [
+                    {
+                        "apiVersion": "apps/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "ReplicaSet",
+                        "name": `${ownerReferenceName}`,
+                        "uid": `${ownerReferenceUID}`
+                    }
+                ]
+            },
+            "spec": {
+                "rules": [
+                    {
+                        "host": `${ingressDomain}`,
+                        "http": {
+                            "paths": [
+                                {
+                                    "backend": {
+                                        "serviceName": `${serviceName}`,
+                                        "servicePort": servicePort
+                                    },
+                                    "path": "/"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        };
+
+        // If an old ingress already exists, delete it first (to ensure port updates are reflected)
+        // Then create the ingress resource for the application
+        const resp = await k8sClient.apis.extensions.v1beta1.namespaces(KUBE_NAMESPACE).ingresses.get({ qs: { labelSelector: "projectID=" + projectID } });
+        if (resp.body.items.length > 0) {
+            const ingressName = resp.body.items[0].metadata.name;
+            await k8sClient.apis.extensions.v1beta1.namespaces(KUBE_NAMESPACE).ingresses(ingressName).delete();
+        }
+        await k8sClient.apis.extensions.v1beta1.namespaces(KUBE_NAMESPACE).ingresses.post({body: ingress});
+    } catch (err) {
+        logger.logProjectError("Unable to deploy ingress for project", projectID);
+        throw err;
+    }
+
+    // Add the scheme to the ingress domain and return it as the URL
+    if (isHTTPS) {
+        return "https://" + ingressDomain;
+    } else {
+        return "http://" + ingressDomain;
+    }
+}
+
 /**
  * @function
  * @description Run a helm command.

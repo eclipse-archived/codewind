@@ -440,6 +440,21 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         odoProjectInfo.compositeAppName = appName;
                         await projectsController.saveProjectInfo(projectID, odoProjectInfo, true);
                     }
+                    else {
+                        // Retrieve the internal port from the project
+                        const updatedProjectInfo: ProjectInfo = operation.projectInfo;
+                        const servicePort = parseInt(containerInfo.internalPort, 10);
+
+                        // Create the ingress
+                        const ingressDomain = projectName + "-" + process.env.CHE_INGRESS_HOST;
+                        logger.logProjectInfo("*** Ingress: " + ingressDomain, projectID);
+                        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, ingressDomain, operation.projectInfo.isHttps, servicePort);
+
+                        // Set the appBaseURL to the ingress we exposed earlier
+                        projectInfo.appBaseURL = baseURL;
+                        updatedProjectInfo.appBaseURL = baseURL;
+                        await projectsController.saveProjectInfo(projectID, updatedProjectInfo, true);
+                    }
                 } catch (err) {
                     logger.logProjectError(err, projectID, projectName);
                     projectInfo.error = err;
@@ -1336,6 +1351,18 @@ export async function buildAndRun(operation: Operation, command: string): Promis
         try {
             logger.logProjectInfo("Beginning container build and run stage", projectID, projectName);
             await containerBuildAndRun(event, buildInfo, operation);
+
+            // Expose over ingress
+            const ingressDomain = projectName + "-" + process.env.CHE_INGRESS_HOST;
+            const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, ingressDomain, operation.projectInfo.isHttps);
+
+            // Set the appBaseURL to the ingress URL of the project
+            const updatedProjectInfo: ProjectInfo = operation.projectInfo;
+            projectEvent.appBaseURL = baseURL;
+            updatedProjectInfo.appBaseURL = baseURL;
+            await projectsController.saveProjectInfo(projectID, updatedProjectInfo, true);
+
+            io.emitOnListener(event, projectEvent);
         } catch (err) {
             const errorMsg = `The container failed to start for project ` + projectName;
             logger.logProjectError(errorMsg.concat("\n  Cause: " + err.message).concat("\n " + err.stack), projectID, projectName);
@@ -1514,7 +1541,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             }
 
             // Add the missing labels to the chart
-            await processManager.spawnDetachedAsync(buildInfo.projectID, "bash", ["/file-watcher/scripts/kubeScripts/modify-helm-chart.sh", deploymentFile, serviceFile, buildInfo.containerName], {});
+            await processManager.spawnDetachedAsync(buildInfo.projectID, "bash", ["/file-watcher/scripts/kubeScripts/modify-helm-chart.sh", deploymentFile, serviceFile, buildInfo.containerName, buildInfo.projectID], {});
         }
         catch (err) {
             logger.logProjectError("Error modifying the chart to add the necessary labels", buildInfo.projectID);

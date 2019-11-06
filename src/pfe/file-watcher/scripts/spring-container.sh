@@ -190,7 +190,7 @@ function deployK8() {
 	fi
 
 	# Add the necessary labels and serviceaccount to the chart
-	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project
+	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project $PROJECT_ID
 
 	# Add the iterative-dev functionality to the chart
 	/file-watcher/scripts/kubeScripts/add-iterdev-to-chart.sh $deploymentFile "$projectName" "/scripts/new_entrypoint.sh"

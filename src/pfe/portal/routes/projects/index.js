@@ -25,7 +25,6 @@ const router = express.Router();
   require('./loadtest.route'),
   require('./logStream.route'),
   require('./internal.route'),
-  require('./binding.route'),
   require('./fileChanges.route'),
   require('./remoteBind.route'),
 ]
