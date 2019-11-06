@@ -16,6 +16,8 @@ const K8S_NAME_SPACE = process.env.KUBE_NAMESPACE || 'default';
 const Logger = require('../utils/Logger');
 const log = new Logger('kubernetesFunctions.js');
 
+const { spawn } = require('child_process');
+
 /**
  * Exported function to get the Kubernetes container logs for a given project
  * @param project, the project to get the container logs for
@@ -36,5 +38,12 @@ module.exports.getContainerLogStream = function getContainerLogStream(project, o
     log.error(`getContainerLogStream: Error getting logs for ${project.podName}`);
     log.log(err);
   }
+}
+
+// Use spawn to run a given command inside the container and return the resulting
+// child process.
+module.exports.spawnContainerProcess = function spawnContainerProcess(project, commandArray) {
+  const cmdArray = ['exec', '-i', project.podName, '-n', K8S_NAME_SPACE, '--'].concat(commandArray);
+  return spawn('/usr/local/bin/kubectl', cmdArray);
 }
 
