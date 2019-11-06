@@ -20,6 +20,8 @@ CHE_NS="che"
 CLEAN_DEPLOY="n"
 OPERATOR_YAML="$CODEWIND_CHE/setup/install_che/che-operator/codewind-checluster.yaml"
 SERVICE_ACCOUNT="che-user"
+POD_READY_TO=600000
+POD_WAIT_TO=1200000
 
 CHE_USER="admin"
 CHE_PASS="admin"
@@ -41,6 +43,8 @@ Options:
     --clean-deploy      Deploy a clean che - default: n
     --operator-yaml     Absolute Path to che operator yaml - default: github.com/eclipse/codewind-che-plugin/master/setup/install_che/che-operator/codewind-checluster.yaml
     --service-account   Service account name - default: che-user
+    --podreadytimeout   Pod ready timeout - default: 600000
+    --podwaittimeout    Pod wait timeout - default: 1200000 
     -h | --help         Display the man page
 EOF
 }
@@ -62,7 +66,7 @@ function displayMsg() {
 
 function installChe() {
     if [ -f "$OPERATOR_YAML" ]; then
-        chectl server:start --platform=openshift --installer=operator --che-operator-cr-yaml=$OPERATOR_YAML -n $CHE_NS
+        chectl server:start --platform=openshift --installer=operator --che-operator-cr-yaml=$OPERATOR_YAML -n $CHE_NS --k8spodreadytimeout=$POD_READY_TO --k8spodwaittimeout=$POD_WAIT_TO
         displayMsg $? "Failed to clean deploy che." true
     else
         displayMsg 1 "Failed to find operator yaml file on disk." true
@@ -109,6 +113,12 @@ while [ "$#" -gt 0 ]; do
                                 ;;
         --service-account )     shift
                                 SERVICE_ACCOUNT=$1
+                                ;;
+        --podreadytimeout )     shift
+                                POD_READY_TO=$1
+                                ;;
+        --podwaittimeout )      shift
+                                POD_WAIT_TO=$1
                                 ;;
         -h | --help )           usage
                                 exit
