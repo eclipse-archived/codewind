@@ -9,16 +9,20 @@
  *     IBM Corporation - initial API and implementation
 *******************************************************************************/
 const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+const fs = require('fs-extra');
+const path = require('path');
 const rewire = require('rewire');
 
 const metricsService = rewire('../../../src/pfe/portal/modules/MetricsService');
 
+chai.use(chaiAsPromised);
 chai.should();
 
 describe('MetricsService.js', function() {
-    describe('getNewContentsOfPackageJson(oldContentsOfPackageJson)', function() {
-        it(`returns an object representing a package.json injected with metrics collector`, function() {
-            const oldContentsOfPackageJson = {
+    const projectDir = path.join('.', 'src', 'unit');
+    const pathToPackageJson = path.join(projectDir, 'package.json');
+    const contentsOfOriginalPackageJson = {
                 /* eslint-disable quote-props, quotes, comma-dangle */
                 "name": "node",
                 "version": "1.0.0",
@@ -31,11 +35,11 @@ describe('MetricsService.js', function() {
                     "body-parser": "^1.18.3",
                     "express": "^4.16.4"
                 }
+        /* eslint-enable quote-props, quotes, comma-dangle */
             };
 
-            const funcToTest = metricsService.__get__('getNewContentsOfPackageJson');
-            const output = funcToTest(oldContentsOfPackageJson);
-            output.should.deep.equal({
+    const contentsOfMetricsInjectedPackageJson = {
+        /* eslint-disable quote-props, quotes, comma-dangle */
                 "name": "node",
                 "version": "1.0.0",
                 "description": "A generated IBM Cloud application",
@@ -48,7 +52,49 @@ describe('MetricsService.js', function() {
                     "express": "^4.16.4",
                     "codewind-node-metrics": "git+https://git@github.com/rwalle61/codewind-node-metrics.git"
                 }
+        /* eslint-enable quote-props, quotes, comma-dangle */
+    };
+
+    describe('injectMetricsCollectorIntoProject(projectLanguage, projectDir)', function() {
+        beforeEach(() => {
+            fs.writeJSONSync(pathToPackageJson, contentsOfOriginalPackageJson);
+        });
+        afterEach(() => {
+            fs.unlinkSync(pathToPackageJson);
+        });
+        describe(`('nodejs', <goodProjectDir>)`, () => {
+            it(`injects metrics collector into the project's package.json`, async function() {
+                await metricsService.injectMetricsCollectorIntoProject('nodejs', projectDir);
+
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(contentsOfMetricsInjectedPackageJson);
             });
+        });
+        describe(`('unsupportedLanguage', <goodProjectDir>)`, () => {
+            it(`throws a useful error`, function() {
+                const func = () => metricsService.injectMetricsCollectorIntoProject('unsupportedLanguage', projectDir);
+                return func().should.be.rejectedWith(`'unsupportedLanguage' is not a supported language`);
+            });
+        });
+    });
+    describe('injectMetricsCollectorIntoNodeProject(projectDir)', function() {
+        before(() => {
+            fs.writeJSONSync(pathToPackageJson, contentsOfOriginalPackageJson);
+        });
+        after(() => {
+            fs.unlinkSync(pathToPackageJson);
+        });
+        it(`injects metrics collector into the project's package.json`, async function() {
+            const funcToTest = metricsService.__get__('injectMetricsCollectorIntoNodeProject');
+            await funcToTest(projectDir);
+
+            fs.readJSONSync(pathToPackageJson).should.deep.equal(contentsOfMetricsInjectedPackageJson);
+        });
+    });
+    describe('getNewContentsOfPackageJson(oldContentsOfPackageJson)', function() {
+        it(`returns an object representing a package.json injected with metrics collector`, function() {
+            const funcToTest = metricsService.__get__('getNewContentsOfPackageJson');
+            const output = funcToTest(contentsOfOriginalPackageJson);
+            output.should.deep.equal(contentsOfMetricsInjectedPackageJson);
         });
     });
 });

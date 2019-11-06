@@ -22,9 +22,12 @@ const metricsCollectorInjectionFunctions = {
   nodejs: injectMetricsCollectorIntoNodeProject,
 }
 
-async function injectMetricsCollectorIntoProject(projectDir) {
-  const projectType = 'nodejs'; // TODO: pivot dynamically
-  await metricsCollectorInjectionFunctions[projectType](projectDir);
+async function injectMetricsCollectorIntoProject(projectLanguage, projectDir) {
+  if (!metricsCollectorInjectionFunctions.hasOwnProperty(projectLanguage)) {
+    throw new Error(`'${projectLanguage}' is not a supported language`);
+  }
+  await metricsCollectorInjectionFunctions[projectLanguage](projectDir);
+  log.debug(`Successfully injected metrics collector into project's package.json`);
 }
 
 async function injectMetricsCollectorIntoNodeProject(projectDir) {
