@@ -69,6 +69,7 @@ interface OdoExtensionProjectConfig {
 export class OdoExtensionProject implements IExtensionProject {
 
     supportedType: string;
+    builtByExtension: boolean = true;
 
     private fullPath: string;
     private config: OdoExtensionProjectConfig;

@@ -78,6 +78,8 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
         let isSettingFileChanged = false;
         let isProjectBuildRequired = false;
 
+        const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+        const builtByExtension = projectHandler.builtByExtension;
         try {
             for (let i = 0; i < eventArrayLength; i++) {
                 if (isSettingFileChanged && isProjectBuildRequired) {
@@ -91,7 +93,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                     const data = await readFileAsync(settingsFilePath, "utf8");
                     const projectSettings = JSON.parse(data);
                     projectSpecifications.projectSpecificationHandler(projectID, projectSettings);
-                } else if (eventArray[i].path && !eventArray[i].path.includes(".cw-settings")) {
+                } else if (eventArray[i].path && !eventArray[i].path.includes(".cw-settings") && !builtByExtension) {
                     logger.logProjectInfo("Detected other file changes, Codewind will build the project", projectID);
                     isProjectBuildRequired = true;
                 }
@@ -105,8 +107,12 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
         }
 
         if (!isProjectBuildRequired) {
-            // .cw-settings file is the only changed file. return succeed status
-            logger.logProjectInfo("Only .cw-settings file change detected. Project will not re-build.", projectID);
+            if (builtByExtension) {
+                logger.logProjectInfo("This project file changes will be ignored by Turbine. The project extension will decide if it needs to be rebuilt.", projectID);
+            } else {
+                // .cw-settings file is the only changed file. return succeed status
+                logger.logProjectInfo("Only .cw-settings file change detected. Project will not re-build.", projectID);
+            }
             return { "statusCode": 202 };
         }
 
