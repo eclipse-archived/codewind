@@ -4,7 +4,7 @@
   "description": "Test material for Codewind",
   "main": "index.js",
   "scripts": {
-    "test": "scripts/mocha.sh src/API src/unit",
+    "test": "scripts/mocha.sh src/API",
     "integrationtest": "scripts/mocha.sh src/integration",
     "unittest": "scripts/mocha.sh src/unit",
     "eslint": "eslint src/**/*.js"
@@ -25,7 +25,6 @@
     "chai-files": "^1.4.0",
     "chai-http": "^4.0.0",
     "chai-openapi-response-validator": "^0.2.4",
-    "chai-subset": "^1.6.0",
     "child-process-promise": "^2.2.1",
     "dateformat": "^3.0.3",
     "dockerode": "^2.5.2",

@@ -16,7 +16,7 @@
 
 start=$(date +%F_%T)
 echo "Tests started at ${start}"
-node_modules/.bin/mocha ${@:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
+node_modules/.bin/mocha ${1:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
 rc=$?
 end=$(date +%F_%T)
 echo "Tests finished at ${end}"

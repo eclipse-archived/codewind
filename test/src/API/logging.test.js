@@ -32,13 +32,13 @@ describe('Logging API tests', function() {
 
     describe('PUT /logging', function(){
         after(`reset logging level to default ('${defaultLevel}')`, async function() {
-            const res = await setLoggingLevel({ level: 'info' });
+            const res = await setLoggingLevel({ level : 'info' });
             res.should.have.status(200);
         });
 
         describe('with body { level : \'unknownLoggingLevel\' }', function(){
             it('returns 400 and an informative error message', async function() {
-                const res = await setLoggingLevel({ level: 'unknownLoggingLevel' });
+                const res = await setLoggingLevel({ level : 'unknownLoggingLevel' });
                 res.should.have.status(400);
                 res.text.should.include('Invalid logging level requested');
             });
@@ -46,7 +46,7 @@ describe('Logging API tests', function() {
 
         describe('with body { level : \'debug\' }', function(){
             it('returns 200', async function() {
-                const res = await setLoggingLevel({ level: 'debug' });
+                const res = await setLoggingLevel({ level : 'debug' });
                 res.should.have.status(200);
             });
         });
@@ -54,7 +54,7 @@ describe('Logging API tests', function() {
 
     describe('GET /logging', function() {
         afterEach(`reset logging level to default ('${defaultLevel}')`, async function() {
-            const res = await setLoggingLevel({ level: 'info' });
+            const res = await setLoggingLevel({ level : 'info' });
             res.should.have.status(200);
         });
 
@@ -62,7 +62,7 @@ describe('Logging API tests', function() {
         describe(`when logging level is '${expectedLoggingLevel}'`, function(){
 
             before(`set logging level to '${expectedLoggingLevel}'`, async function() {
-                const res = await setLoggingLevel({ level: expectedLoggingLevel });
+                const res = await setLoggingLevel({ level : expectedLoggingLevel });
                 res.should.have.status(200);
             });
 

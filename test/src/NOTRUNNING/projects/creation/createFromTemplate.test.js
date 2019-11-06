@@ -12,8 +12,8 @@ const chai = require('chai');
 const path = require('path');
 const fs = require('fs-extra');
 
-const projService = require('../../../modules/project.service');
-const { testTimeout, templateOptions } = require('../../../config');
+const projService = require('../../../../modules/project.service');
+const { testTimeout, templateOptions } = require('../../../../config');
 
 const {
     defaultSpringSettings,
@@ -21,7 +21,7 @@ const {
     defaultNodeSettings,
     defaultSwiftSettings,
     defaultDockerSettings,
-} = require('../../../utils/default-cw-settings');
+} = require('../../../../utils/default-cw-settings');
 
 chai.should();
 

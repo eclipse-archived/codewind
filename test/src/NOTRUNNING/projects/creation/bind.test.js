@@ -223,7 +223,6 @@ function testBind(project) {
                     projectType : project.projectType,
                     autoBuild: false,
                 }, 409);
-                
                 res.should.have.status(409);
             });
 

@@ -10,7 +10,6 @@
 *******************************************************************************/
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
-const chaiSubset = require('chai-subset');
 const fs = require('fs-extra');
 const path = require('path');
 const rewire = require('rewire');
@@ -28,7 +27,6 @@ const {
 const { suppressLogOutput } = require('../../modules/log.service');
 
 chai.use(chaiAsPromised);
-chai.use(chaiSubset);
 chai.should();
 const testWorkspaceDir = './src/unit/temp/';
 const testWorkspaceConfigDir = path.join(testWorkspaceDir, '.config/');
@@ -158,7 +156,6 @@ describe('Templates.js', function() {
                 fs.removeSync(testWorkspaceDir);
             });
             it('returns the default templates and more', async function() {
-                this.timeout = 10000;
                 const output = await templateController.getAllTemplates();
                 output.should.include.deep.members(defaultCodewindTemplates);
                 (output.length).should.be.above(defaultCodewindTemplates.length);
@@ -356,7 +353,7 @@ describe('Templates.js', function() {
         });
     });
     describe('addRepository(repoUrl, repoDescription)', function() {
-        const mockRepoList = [{ id: 'notanid', url: 'https://made.up/url' }];
+        const mockRepoList = [{ url: 'https://made.up/url' }];
         let templateController;
         beforeEach(() => {
             fs.ensureDirSync(testWorkspaceConfigDir);
@@ -393,16 +390,12 @@ describe('Templates.js', function() {
                     const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
                     const func = () => templateController.addRepository(url, 'description', 'name');
                     await (func().should.not.be.rejected);
-                    templateController.repositoryList.should.containSubset([{
+                    templateController.repositoryList.should.deep.include({
                         url,
                         name: 'name',
                         description: 'description',
                         enabled: true,
                         projectStyles: ['Codewind'],
-                    }]);
-                    templateController.repositoryList.forEach(obj => {
-                        obj.should.have.property('id');
-                        obj.id.should.be.a('string');
                     });
                 });
             });
@@ -412,17 +405,13 @@ describe('Templates.js', function() {
                     const isRepoProtected = false;
                     const func = () => templateController.addRepository(url, 'description', 'name', isRepoProtected);
                     await (func().should.not.be.rejected);
-                    templateController.repositoryList.should.containSubset([{
+                    templateController.repositoryList.should.deep.include({
                         url,
                         name: 'name',
                         description: 'description',
                         enabled: true,
                         projectStyles: ['Codewind'],
                         protected: false,
-                    }]);
-                    templateController.repositoryList.forEach(obj => {
-                        obj.should.have.property('id');
-                        obj.id.should.be.a('string');
                     });
                 });
             });
@@ -433,11 +422,11 @@ describe('Templates.js', function() {
                     const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
                     const func = () => templateController.addRepository(url, 'description', 'name', false);
                     await (func().should.not.be.rejected);
-                    templateController.repositoryList.should.containSubset([{ ...sampleRepos.codewind,
+                    templateController.repositoryList.should.deep.include({ ...sampleRepos.codewind,
                         name: 'name',
                         description: 'description',
                         protected: false,
-                    }]);
+                    });
                 });
             });
             describe('(repo with templates.json, <validUrl>, <NoDesc>, <NoName>)', function() {
@@ -445,7 +434,7 @@ describe('Templates.js', function() {
                     const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
                     const func = () => templateController.addRepository(url, '', '', false);
                     await (func().should.not.be.rejected);
-                    templateController.repositoryList.should.containSubset([{ ...sampleRepos.codewind, protected: false }]);
+                    templateController.repositoryList.should.deep.include({ ...sampleRepos.codewind, protected: false });
                 });
             });
         });

@@ -18,7 +18,7 @@ chai.should();
 const getIgnoredPaths = (projectType) =>
     reqService.chai
         .get(`/api/v1/ignoredPaths?projectType=${projectType}`)
-        .set('Cookie', ADMIN_COOKIE);
+        .set('Cookie', ADMIN_COOKIE)
 
 describe('ignoredPaths API test', function() {
     describe('Swift', () => {
