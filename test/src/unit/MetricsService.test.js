@@ -23,35 +23,36 @@ describe('MetricsService.js', function() {
     const projectDir = path.join('.', 'src', 'unit');
     const pathToPackageJson = path.join(projectDir, 'package.json');
     const contentsOfOriginalPackageJson = {
-                /* eslint-disable quote-props, quotes, comma-dangle */
-                "name": "node",
-                "version": "1.0.0",
-                "description": "A generated IBM Cloud application",
-                "scripts": {
-                    "start": "node $npm_package_config_entrypoint",
-                    "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
-                },
-                "dependencies": {
-                    "body-parser": "^1.18.3",
-                    "express": "^4.16.4"
-                }
+        /* eslint-disable quote-props, quotes, comma-dangle */
+        "name": "node",
+        "version": "1.0.0",
+        "description": "A generated IBM Cloud application",
+        "scripts": {
+            "start": "node $npm_package_config_entrypoint",
+            "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
+        },
+        "dependencies": {
+            "body-parser": "^1.18.3",
+            "express": "^4.16.4"
+        }
         /* eslint-enable quote-props, quotes, comma-dangle */
-            };
+    };
 
     const contentsOfMetricsInjectedPackageJson = {
         /* eslint-disable quote-props, quotes, comma-dangle */
-                "name": "node",
-                "version": "1.0.0",
-                "description": "A generated IBM Cloud application",
-                "scripts": {
-                    "start": "node -r codewind-node-metrics/attach $npm_package_config_entrypoint",
-                    "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
-                },
-                "dependencies": {
-                    "body-parser": "^1.18.3",
-                    "express": "^4.16.4",
-                    "codewind-node-metrics": "git+https://git@github.com/rwalle61/codewind-node-metrics.git"
-                }
+        "name": "node",
+        "version": "1.0.0",
+        "description": "A generated IBM Cloud application",
+        "scripts": {
+            "start": "node -r appmetrics-prometheus/attach $npm_package_config_entrypoint",
+            "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
+        },
+        "dependencies": {
+            "body-parser": "^1.18.3",
+            "express": "^4.16.4",
+            "appmetrics-prometheus": "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint",
+            "cors": "^2.8.5"
+        }
         /* eslint-enable quote-props, quotes, comma-dangle */
     };
 
