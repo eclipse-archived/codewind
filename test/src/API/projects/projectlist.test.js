@@ -16,7 +16,7 @@ const { testTimeout } = require('../../../config');
 
 chai.should();
 
-describe('Project-list tests', function() {
+describe.skip('Project-list tests', function() {
     describe('GET /projects', function() {
         let originalProjectIDs;
         let projectID;
