@@ -13,10 +13,8 @@ const express = require('express');
 const router = express.Router();
 const Logger = require('../../modules/utils/Logger');
 const log = new Logger(__filename);
-const buffer = require('buffer');
 const zlib = require("zlib");
 const {promisify} = require('util');
-const inflateAsync = promisify(zlib.inflate);
 
 /**
  * API Function to put the watch status of a project with a particular projectWatchStateId
