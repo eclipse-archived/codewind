@@ -9,10 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-// Skip this test if remote mode isn't enabled.
-if (process.env['REMOTE_MODE'] !== 'true') {
-    return;
-}
 
 const chai = require('chai');
 const path = require('path');
@@ -20,16 +16,16 @@ const fs = require('fs-extra');
 const zlib = require('zlib');
 const klawSync = require('klaw-sync');
 
-const projectService = require('../../../../modules/project.service');
-const reqService = require('../../../../modules/request.service');
-const containerService = require('../../../../modules/container.service');
-const { testTimeout, ADMIN_COOKIE } = require('../../../../config');
+const projectService = require('../../modules/project.service');
+const reqService = require('../../modules/request.service');
+const containerService = require('../../modules/container.service');
+const { testTimeout, ADMIN_COOKIE } = require('../../config');
 
 chai.should();
 
 let pathToLocalRepo;
 
-describe('Remote Bind tests', () => {
+describe.skip('Remote Bind tests', () => {
     let projectID;
     let workspace_location;
     let localProjectName;
@@ -66,7 +62,7 @@ describe('Remote Bind tests', () => {
             });
         });
     });
-    describe('POST /remote-bind/start', () => {
+    describe('POST /bind/start', () => {
         describe('Failure Cases', () => {
             it('returns 400 if projectName is invalid', async function() {
                 this.timeout(testTimeout.short);
@@ -88,7 +84,7 @@ describe('Remote Bind tests', () => {
             });
         });
     });
-    describe('PUT /remote-bind/upload', () => {
+    describe('PUT /bind/upload', () => {
         describe('Failure Cases', () => {
             it('returns 400 for a project that does not exist', async function() {
                 this.timeout(testTimeout.short);
@@ -99,7 +95,7 @@ describe('Remote Bind tests', () => {
             });
         });
     });
-    describe('POST /remote-bind/end', () => {
+    describe('POST /bind/end', () => {
         describe('Failure Cases', () => {
             it('returns 400 for a project that does not exist', async function() {
                 this.timeout(testTimeout.short);
@@ -118,7 +114,8 @@ async function testRemoteBindStart(projectName){
         projectType: 'nodejs',
     });
     res.should.have.status(202);
-    const expectedFields = ['projectID', 'name', 'workspace', 'locOnDisk'];
+    console.dir(res.body);
+    const expectedFields = ['projectID', 'name', 'workspace'];
     expectedFields.forEach(field => {
         res.body[field].should.not.be.null;
     });
@@ -150,7 +147,7 @@ function recursivelyGetAllPaths(inputPath) {
 
 async function startRemoteBind(options) {
     const res = await reqService.chai
-        .post('/api/v1/projects/remote-bind/start')
+        .post('/api/v1/projects/bind/start')
         .set('Cookie', ADMIN_COOKIE)
         .send(options);
     return res;
@@ -158,7 +155,7 @@ async function startRemoteBind(options) {
 
 async function endRemoteBind(projectID) {
     const res = await reqService.chai
-        .post(`/api/v1/projects/${projectID}/remote-bind/end`)
+        .post(`/api/v1/projects/${projectID}/bind/end`)
         .set('Cookie', ADMIN_COOKIE);
     return res;
 };
@@ -171,7 +168,6 @@ async function uploadFile(projectID, filePath) {
     const options = {
         directory: false,
         path: relativePathToFile,
-        timestamp: Date.now(),
         msg: base64CompressedContent,
     };
     const res = await uploadZippedFileUsingPfeApi (projectID, options);
@@ -180,7 +176,7 @@ async function uploadFile(projectID, filePath) {
 
 async function uploadZippedFileUsingPfeApi(projectID, options) {
     const res = await reqService.chai
-        .put(`/api/v1/projects/${projectID}/remote-bind/upload`)
+        .put(`/api/v1/projects/${projectID}/upload`)
         .set('Cookie', ADMIN_COOKIE)
         .send(options);
     return res;

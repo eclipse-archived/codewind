@@ -185,7 +185,6 @@ pipeline {
                         export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
                         export WORKSPACE_VOLUME=cw-workspace;
                         export HOST_OS=$(uname);
-                        export REMOTE_MODE;
                         export HOST_HOME=$HOME
                         export ARCH=$(uname -m);
                         # Select the right images for this architecture.
@@ -202,7 +201,6 @@ pipeline {
                             # Reset so we don't get conflicts
                             unset REPOSITORY;
                             unset WORKSPACE_DIRECTORY;
-                            unset REMOTE_MODE;
                             printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
                             printf "\nCurrent running codewind containers\n";
                             docker ps --filter name=codewind

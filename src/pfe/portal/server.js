@@ -133,7 +133,6 @@ async function main() {
     // Volume is mounted from WORKSPACE_DIRECTORY in docker-compose.yaml.
     CODEWIND_WORKSPACE: '/codewind-workspace/',
     CODEWIND_TEMP_WORKSPACE: '/cw-temp/',
-    REMOTE_MODE: (process.env.REMOTE_MODE == 'true') || false,
     // temporary mounted workspace directory retained for projects that still require it
     MOUNTED_WORKSPACE: '/mounted-workspace'
   };

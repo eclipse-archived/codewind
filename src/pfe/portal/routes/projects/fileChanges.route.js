@@ -13,10 +13,7 @@ const express = require('express');
 const router = express.Router();
 const Logger = require('../../modules/utils/Logger');
 const log = new Logger(__filename);
-const buffer = require('buffer');
-const zlib = require("zlib");
-const {promisify} = require('util');
-const inflateAsync = promisify(zlib.inflate);
+
 
 /**
  * API Function to put the watch status of a project with a particular projectWatchStateId
@@ -75,41 +72,12 @@ router.put('/api/v1/projects/:id/file-changes/:projectWatchStateId/status', func
  * @return 500 if there was an error
  */
 router.post('/api/v1/projects/:id/file-changes', async function (req, res) {
-  if (global.codewind.REMOTE_MODE) {
-    res.sendStatus(200);
-    return;
-  }
-  
-  try {
-    const user = req.cw_user;
-    const projectID = req.sanitizeParams('id');
-    const msg = req.sanitizeBody('msg');
-    if (!projectID || !msg) {
-      res.status(400).send("Missing required parameter, projectID and msg are required to be provided. ");
-      return;
-    }
-    if (!req.query || !req.query.timestamp || !req.query.chunk || !req.query.chunk_total) {
-      res.status(400).send("Missing required query, timestamp, chunk and chunk_total are required to be provided. ");
-      return;
-    }
-    const timestamp = req.query.timestamp;
-    const chunkNum = req.query.chunk;
-    const chunk_total = req.query.chunk_total;
-    const compressed = buffer.Buffer.from(msg, "base64");
-    const output = await inflateAsync(compressed);
-    const eventArray = JSON.parse(output.toString());
 
-    const project = user.projectList.retrieveProject(projectID);
-    if (!project) {
-      res.status(404).send(`Unable to find project ${projectID}`);
-      return;
-    }
-    user.fileChanged(projectID, timestamp, chunkNum, chunk_total, eventArray);
-    res.sendStatus(200);
-  } catch (err) {
-    log.error(err);
-    res.status(500).send(err);
-  }
+  // This api no longer required to be called by the filewatcher-demon
+  // changing this code to do nothing until the filewacther-demon has been
+  // updated to no longer call this
+  res.sendStatus(200);
+  
 })
 
 module.exports = router;

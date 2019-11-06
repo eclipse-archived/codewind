@@ -35,7 +35,6 @@ public class IDC {
 	private static String LOG_NAME = System.getProperty(Constants.LOG_NAME, null);
 	private static String PROJECT_ID = System.getProperty(Constants.PROJECT_ID, null);
 	private static String LOCAL_WORKSPACE_ORIGIN = System.getProperty(Constants.LOCAL_WORKSPACE_ORIGIN, null);
-	private static String TURBINE_SYNC = System.getProperty(Constants.TURBINE_SYNC, null);
 	private static String DEPLOYMENT_REGISTRY = System.getProperty(Constants.DEPLOYMENT_REGISTRY, null);
 	private static String START_MODE = System.getProperty(Constants.START_MODE, null);
 	private static String DEBUG_PORT = System.getProperty(Constants.DEBUG_PORT, null);
@@ -113,11 +112,6 @@ public class IDC {
 							Logger.info("The debug port is set to " + DEBUG_PORT);
 						}
 
-						// Set the turbine sync value
-						if (args[i].startsWith(Constants.TURBINE_SYNC_KEY)) {
-							TURBINE_SYNC = args[i].replace(Constants.TURBINE_SYNC_KEY, "");
-							Logger.info("Turbine sync is set to " + TURBINE_SYNC);
-						}
 					}
 				}
 			}
@@ -165,7 +159,7 @@ public class IDC {
 			// }
 
 			// Create the application context object -- this object contains (mostly) immutable values which are commonly used to implement command functionality across IDC  
-			IDCContext context = new IDCContext(rootPassword, LOCAL_WORKSPACE_ORIGIN, CONTAINER_NAME, PROJECT_ID, LOG_NAME, DEPLOYMENT_REGISTRY, START_MODE, DEBUG_PORT, TURBINE_SYNC);
+			IDCContext context = new IDCContext(rootPassword, LOCAL_WORKSPACE_ORIGIN, CONTAINER_NAME, PROJECT_ID, LOG_NAME, DEPLOYMENT_REGISTRY, START_MODE, DEBUG_PORT);
 			
 			// Set up IDC options and exit. Should not attempt to build/run container.
 			if (cmd.equalsIgnoreCase(Constants.OPTION_SET)) {
@@ -547,18 +541,16 @@ public class IDC {
 		Logger.info("Starting server in start mode: " + context.getStartMode());
 		StatusTracker.updateProjectState(context, "app", "starting", null, null);
 		
-		if (context.getTurbineSync().equals("true")) {
-			Logger.info("Found turbine sync set to " + context.getTurbineSync() + ". Will need to copy the mc-target folder to PFE container");
-			String dockerCpCmd = "docker cp " + context.getContainerName() + ":/home/default/app/mc-target " + context.getAppDirectory();
-			Logger.info("Docker copy command to copy the mc-target folder: " + dockerCpCmd);
-			
-			ProcessRunner copyMcTarget = TaskUtils.runCmd(dockerCpCmd, context, true);
-			if (copyMcTarget.getErrorCode().orElse(0) != 0) {
-				Logger.error("Failed to copy mc-target folder to the PFE container");
-				appDb.put(Constants.DB_SERVER_START, "false");
-				StatusTracker.updateProjectState(context, "app", "stopped", "projectStatusController.serverNotStarted",  null);
-			}
+		String dockerCpCmd = "docker cp " + context.getContainerName() + ":/home/default/app/mc-target " + context.getAppDirectory();
+		Logger.info("Docker copy command to copy the mc-target folder: " + dockerCpCmd);
+		
+		ProcessRunner copyMcTarget = TaskUtils.runCmd(dockerCpCmd, context, true);
+		if (copyMcTarget.getErrorCode().orElse(0) != 0) {
+			Logger.error("Failed to copy mc-target folder to the PFE container");
+			appDb.put(Constants.DB_SERVER_START, "false");
+			StatusTracker.updateProjectState(context, "app", "stopped", "projectStatusController.serverNotStarted",  null);
 		}
+
 
 		String logPathPrefix = HOST_OS.contains("windows") ? "/tmp/liberty/" : "/home/default/app/mc-target/";
 		String messagesLog = logPathPrefix + "liberty/wlp/usr/servers/defaultServer/logs/messages.log";

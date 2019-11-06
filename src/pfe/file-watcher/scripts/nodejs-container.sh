@@ -22,7 +22,6 @@ DEBUG_PORT=$9
 FORCE_ACTION=${10}
 FOLDER_NAME=${11}
 DEPLOYMENT_REGISTRY=${12}
-TURBINE_SYNC=${13}
 
 WORKSPACE=/codewind-workspace
 
@@ -46,7 +45,6 @@ echo "*** FORCE_ACTION = $FORCE_ACTION"
 echo "*** LOG_FOLDER = $LOG_FOLDER"
 echo "*** DEPLOYMENT_REGISTRY = $DEPLOYMENT_REGISTRY"
 echo "*** HOST_OS = $HOST_OS"
-echo "*** TURBINE_SYNC = $TURBINE_SYNC"
 
 tag=microclimate-dev-nodejs
 projectName=$( basename "$ROOT" )
@@ -275,16 +273,12 @@ function dockerRun() {
 	workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
 	echo "Workspace path used for volume mounting is: "$workspace""
 
-	if [ "$TURBINE_SYNC" == "true" ]; then
-		echo -e "Turbine sync set to $TURBINE_SYNC. Running docker run command without volume mounts"
-		$IMAGE_COMMAND run --network=codewind_network -e $heapdump --name $project -p 127.0.0.1::$DEBUG_PORT -P -dt $project /bin/bash -c "$dockerCmd";
-		if [ $? -eq 0 ]; then
-			echo -e "Copying over source files"
-			docker cp "$WORKSPACE/$projectName" $project:/app
-		fi
-	else
-		$IMAGE_COMMAND run --network=codewind_network -e $heapdump --name $project -p 127.0.0.1::$DEBUG_PORT -P -dt -v "$workspace/$projectName":/app -v $project-nodemodules:/app/node_modules $project /bin/bash -c "$dockerCmd";
+	$IMAGE_COMMAND run --network=codewind_network -e $heapdump --name $project -p 127.0.0.1::$DEBUG_PORT -P -dt $project /bin/bash -c "$dockerCmd";
+	if [ $? -eq 0 ]; then
+		echo -e "Copying over source files"
+		docker cp "$WORKSPACE/$projectName" $project:/app
 	fi
+
 }
 
 function deployLocal() {
