@@ -22,7 +22,6 @@ DEBUG_PORT=$9
 FOLDER_NAME=${11}
 DEPLOYMENT_REGISTRY=${12}
 MAVEN_SETTINGS=${13}
-TURBINE_SYNC=${14}
 
 WORKSPACE=/codewind-workspace
 APP_LOG=app
@@ -40,7 +39,6 @@ echo "*** DEBUG_PORT = $DEBUG_PORT"
 echo "*** HOST_OS = $HOST_OS"
 echo "*** DEPLOYMENT_REGISTRY = $DEPLOYMENT_REGISTRY"
 echo "*** MAVEN_SETTINGS = $MAVEN_SETTINGS"
-echo "*** TURBINE_SYNC = $TURBINE_SYNC"
 
 # Import general constants
 source /file-watcher/scripts/constants.sh
@@ -201,9 +199,6 @@ function create() {
 		/file-watcher/idc/idc set --debugPort=$DEBUG_PORT
 	fi
 
-	if [ $TURBINE_SYNC ]; then
-		/file-watcher/idc/idc set --turbineSync=$TURBINE_SYNC
-	fi
 
 	# Build the application for the first time
 	echo "idc build started for $ROOT $(date)"

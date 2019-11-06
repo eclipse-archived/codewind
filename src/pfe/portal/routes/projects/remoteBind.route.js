@@ -36,7 +36,6 @@ const log = new Logger(__filename);
  * @return 409 if the project path or name are already in use
  * @return 500 if there was an error
  */
-router.post('/api/v1/projects/remote-bind/start', async function (req, res) {await bindStart(req, res)});
 router.post('/api/v1/projects/bind/start', async function (req, res) {await bindStart(req, res)});
 
 async function bindStart(req, res) {
@@ -143,7 +142,6 @@ async function bindStart(req, res) {
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
-router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {await uploadFile(req,res)});
 router.put('/api/v1/projects/:id/upload', async (req, res) => {await uploadFile(req,res)});
 
 async function uploadFile(req, res) {
@@ -182,11 +180,6 @@ async function uploadFile(req, res) {
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
-// TODO - This is very crude, we should replace it with a more sophisticated
-// mechanism to only delete files that don't exist on the local end.
-
-
-
 router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   const projectID = req.sanitizeParams('id');
   const keepFileList = req.sanitizeBody('fileList');
@@ -272,7 +265,7 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
   } else {
     // if a build is in progress, wait 5 seconds and try again
     await cwUtils.timeout(5000)
-     await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
+    await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
   }
 }
 
@@ -341,7 +334,6 @@ function getProjectSourceRoot(project) {
  * @return 404 if the project was not found
  * @return 500 if there was an error
  */
-router.post('/api/v1/projects/:id/remote-bind/end', async function (req, res) {await bindEnd(req, res)});
 router.post('/api/v1/projects/:id/bind/end', async function (req, res) {await bindEnd(req, res)});
 
 async function bindEnd(req, res) {
