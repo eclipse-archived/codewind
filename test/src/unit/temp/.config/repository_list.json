@@ -1,6 +1,6 @@
 [
   {
-    "url": "https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json",
+    "url": "https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json",
     "description": "Standard Codewind templates",
     "enabled": true,
     "protected": true,
