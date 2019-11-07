@@ -85,36 +85,13 @@ public class ContainerRemoveTask {
 				
 				String imageName = appDB.get(Constants.DB_CONTAINER_NAME);
 				if (imageName != null) {
-					ProcessRunner pr = TaskUtils.runCmd(imageCommand + " rmi " + imageName + " -f", context,
+					ProcessRunner pr = TaskUtils.runCmd(imageCommand + " rmi -f " + imageName, context,
 							false);
 					if(pr.getErrorCode().orElse(0) != 0) {
 						Logger.error("Error code: " + pr.getErrorCode() + ", Failed to remove the image " + imageName);
 						return false;
 					} else {
 						Logger.info("Successfully removed the application image " + imageName);
-					}
-
-					String deploymentRegistry = appDB.get(Constants.DB_DEPLOYMENT_REGISTRY);
-					if (deploymentRegistry != null) {
-						pr = TaskUtils.runCmd("imageCommand rmi -f " + deploymentRegistry + "/" + imageName, context,
-								false);
-						if(pr.getErrorCode().orElse(0) != 0) {
-							Logger.error("Error code: " + pr.getErrorCode() + ", Failed to remove the image " + imageName +
-							" from docker registry " + deploymentRegistry);
-							return false;
-						} else {
-							Logger.info("Successfully removed the application image " + imageName + " from docker registry " + deploymentRegistry);
-						}
-					}
-
-					// Delete the image from Kube
-					pr = TaskUtils.runCmd("kubectl delete image " + imageName + " --force --grace-period=0", context,
-							false);
-					if(pr.getErrorCode().orElse(0) != 0) {
-						Logger.error("Error code: " + pr.getErrorCode() + ", Failed to remove the image from Kubernetes " + imageName);
-						return false;
-					} else {
-						Logger.info("Successfully removed the application image from Kubernetes " + imageName);
 					}
 				}
 			}
