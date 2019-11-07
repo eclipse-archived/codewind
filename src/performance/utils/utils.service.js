@@ -11,18 +11,19 @@
 const { promisify } = require('util');
 
 const wait = promisify(setTimeout);
+const repetitionInterval = 2000;
 
 const repeatFunc = async (func, numRepetitionsRemaining) => {
-    await func();
-    numRepetitionsRemaining--;
-    if (numRepetitionsRemaining > 0) {
-        await wait(2000);
-        await repeatFunc(func, numRepetitionsRemaining);
-        return;
-    }
-    console.log('Finished poll');
+  await func();
+  numRepetitionsRemaining--;
+  if (numRepetitionsRemaining > 0) {
+    await wait(repetitionInterval);
+    await repeatFunc(func, numRepetitionsRemaining);
+    return;
+  }
+  console.log('Finished poll');
 }
 
 module.exports = {
-    repeatFunc,
+  repeatFunc,
 };
