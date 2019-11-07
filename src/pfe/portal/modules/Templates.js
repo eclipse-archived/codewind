@@ -35,7 +35,7 @@ const kabaneroDescription = 'Kabanero, an open source project, brings together o
 'Kabanero builds cloud native applications ready for deployment onto Kubernetes and Knative.'
 
 const KABANERO_REPO = {
-  url: 'Curated collections with end-to-end support, including Appsody stacks and Tekton pipelines, for deployment on OpenShift.',
+  url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
   name: 'Kabanero Collections',
   description: kabaneroDescription,
   enabled: false,
