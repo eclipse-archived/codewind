@@ -246,9 +246,33 @@ describe('ProjectList.js', () => {
             fs.existsSync(projectInfPath).should.be.true; 
         });
     });
-    // describe('deleteProjectKey(projectID, key)', () => {
-        
-    // });
+    describe('deleteProjectKey(projectID, key)', () => {
+        it('Errors as project is not a member of the ProjectList', () => {
+            const projectList = new ProjectList();
+            const func = () => projectList.deleteProjectKey('123', 'name');
+            return func().should.be.rejectedWith('NOT_FOUND', '123');
+        });
+        it('Deletes a property (key) from a Project and writes to the .inf file', async() => {
+            const projectList = new ProjectList();
+            const project = new Project({ name: 'dummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            project.should.haveOwnProperty('name').and.equal('dummyproject');
+            
+            // Create .inf file
+            const projectInfPath = path.join(global.codewind.CODEWIND_WORKSPACE, '.projects', `${project.projectID}.inf`);
+            await project.writeInformationFile();
+            projectList.addProject(project);
+            fs.existsSync(projectInfPath).should.be.true;
+            
+            // Delete key from project
+            const projectWithoutName = await projectList.deleteProjectKey(project.projectID, 'name');
+            projectWithoutName.should.not.haveOwnProperty('name');
+
+            // Verify key is deleted from .inf
+            fs.existsSync(projectInfPath).should.be.true;
+            const infContents = await fs.readJson(projectInfPath);
+            infContents.should.not.haveOwnProperty('name');
+        });
+    });
     describe('getAsArray()', () => {
         it('Gets the projectList as an array (empty)', () => {
             const projectList = new ProjectList();
