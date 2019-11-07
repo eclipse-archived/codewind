@@ -47,7 +47,7 @@ const timeout = (workspaceSettingsInfo && workspaceSettingsInfo.watcherChunkTime
  * @see [[Filewatcher.updateProjectForNewChange]]
  */
 export async function updateProjectForNewChange(projectID: string, timestamp: number,  chunkNum: number, chunk_total: number, eventArray: IFileChangeEvent[]): Promise<IUpdateProjectSuccess | IUpdateProjectFailure> {
-    if (!projectID || !timestamp || !eventArray || !chunkNum || !chunk_total) {
+    if (!projectID || (timestamp === null || isNaN(timestamp)) || !eventArray || !chunkNum || !chunk_total) {
         return { "statusCode": 400, "error": {"msg": "Bad request. projectID, timestamp, chunk, chunk_total and eventArray are required." }};
     }
 
