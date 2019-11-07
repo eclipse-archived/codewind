@@ -78,18 +78,18 @@ export default class ResultsCard extends Component {
         let responseTooltipText = '';
 
         if (cpuDelta == 0) { cpuTooltipText = "No change in performance" } else {
-            if (cpuDelta <= 0) { cpuTooltipText = "CPU usage reduced. Application performance has improved." } else {
-                cpuTooltipText = "CPU usage increased. Application performance is worse.";
+            if (cpuDelta <= 0) { cpuTooltipText = "CPU usage reduced" } else {
+                cpuTooltipText = "CPU usage increased";
             }
         }
         if (memoryDelta == 0) { memoryTooltipText = "No change in performance" } else {
-            if (memoryDelta <= 0) { memoryTooltipText = "Memory usage decreased. Application performance has improved" } else {
-                memoryTooltipText = "Memory usage increased, application performance is worse.";
+            if (memoryDelta <= 0) { memoryTooltipText = "Memory usage decreased" } else {
+                memoryTooltipText = "Memory usage increased";
             }
         }
         if (responseDelta == 0) { responseTooltipText = "No change in performance" } else {
-            if (responseDelta <= 0) { responseTooltipText = "Response time decreased. Application performance has improved" } else {
-                responseTooltipText = "Response time increased. Application responded slower than before";
+            if (responseDelta <= 0) { responseTooltipText = "Response time decreased" } else {
+                responseTooltipText = "Response time increased";
             }
         }
 
@@ -113,7 +113,7 @@ export default class ResultsCard extends Component {
                                     <div className='metrics-type'>
                                         <div className='metrics-label'>Response</div>
                                         <div className='metrics-delta'>
-                                            
+
                                             <TooltipIcon tooltipText={responseTooltipText} align="end" >
                                                 {responseDelta > 0 ? <IconUp aria-label='Icon up' className='bx--btn__icon' /> : <Fragment />}
                                                 {responseDelta === 0 ? <IconEven aria-label='Icon even' className='bx--btn__icon' /> : <Fragment />}
