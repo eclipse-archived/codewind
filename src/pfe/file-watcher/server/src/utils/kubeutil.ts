@@ -427,7 +427,7 @@ export async function exposeOverIngress(projectID: string, isHTTPS: boolean, app
     // Thanks to Kubernetes and Ingress, some ingress controllers impose a 63 character limitation on the host name, so:
     // If the ingress domain prefix is < 63 characters, trim the resultant app's ingress domain to fit within the limit
     // If the ingress domain prefix is > 63 characters, don't trim, as the 63 character limit doesn't apply here.
-    const ingressPrefix = process.env.CHE_INGRESS_PREFIX;
+    const ingressPrefix = process.env.INGRESS_PREFIX;
     const ingressPrefixLength = ingressPrefix.length;
     let ingressDomain: string;
     if (ingressPrefixLength < 63) {
