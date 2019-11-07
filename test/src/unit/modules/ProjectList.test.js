@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
 *******************************************************************************/
-global.codewind = { RUNNING_IN_K8S: false, CODEWIND_WORKSPACE: `${__dirname}/projectlist_temp` };
+global.codewind = { RUNNING_IN_K8S: false };
 
 const fs = require('fs-extra');
 const path = require('path');
@@ -27,6 +27,7 @@ chai.should();
 
 describe('ProjectList.js', () => {
     before(() => {
+        global.codewind = { CODEWIND_WORKSPACE: `${__dirname}/projectlist_temp` };
         fs.ensureDirSync(global.codewind.CODEWIND_WORKSPACE);
     });
     after(() => {
@@ -189,9 +190,62 @@ describe('ProjectList.js', () => {
             fs.existsSync(returnedProjectInfPath).should.be.true;
         });
     });
-    // describe('reloadSettingsFile(reloadProject)', () => {
-        
-    // });
+    describe('reloadSettingsFile(reloadProject)', () => {
+        it('Errors as project does not have a projectID', () => {
+            const projectList = new ProjectList();
+            const func = () => projectList.reloadSettingsFile({});
+            return func().should.be.rejectedWith('MALFORMED', null, 'Project does not have a project ID');
+        });
+        it('Errors as project is not a member of the ProjectList', () => {
+            const projectList = new ProjectList();
+            const func = () => projectList.reloadSettingsFile({ projectID: '123' });
+            return func().should.be.rejectedWith('NOT_FOUND', '123');
+        });
+        it('Reloads a project by reading from its .cw-settings file and picks up a new field', async() => {
+            const projectList = new ProjectList();
+            const project = new Project({ name: 'reloadNewField' }, global.codewind.CODEWIND_WORKSPACE);
+            
+            // Create .inf file
+            const projectInfPath = path.join(global.codewind.CODEWIND_WORKSPACE, '.projects', `${project.projectID}.inf`);
+            await project.writeInformationFile();
+            projectList.addProject(project);
+            fs.existsSync(projectInfPath).should.be.true;
+
+            // Create .cw-settings file
+            const settingsFilePath = project.getSettingsFilePath();
+            fs.existsSync(settingsFilePath).should.be.false;
+            await fs.ensureFile(settingsFilePath);
+            await fs.writeJSON(settingsFilePath, { newField: 'NEW' });
+            fs.existsSync(settingsFilePath).should.be.true;
+            
+            // Reload project to pick up new .cw-settings
+            const reloadedProject = await projectList.reloadSettingsFile(project);
+            reloadedProject.should.haveOwnProperty('newField').and.equal('NEW');
+            fs.existsSync(projectInfPath).should.be.true; 
+        });
+        it('Reloads a project by reading from its .cw-settings file and ignores a field name projectID (Don\'t overwrite projectID)', async() => {
+            const projectList = new ProjectList();
+            const project = new Project({ name: 'reloadProjectID' }, global.codewind.CODEWIND_WORKSPACE);
+            
+            // Create .inf file
+            const projectInfPath = path.join(global.codewind.CODEWIND_WORKSPACE, '.projects', `${project.projectID}.inf`);
+            await project.writeInformationFile();
+            projectList.addProject(project);
+            fs.existsSync(projectInfPath).should.be.true;
+
+            // Create .cw-settings file
+            const settingsFilePath = project.getSettingsFilePath();
+            fs.existsSync(settingsFilePath).should.be.false;
+            await fs.ensureFile(settingsFilePath);
+            await fs.writeJSON(settingsFilePath, { projectID: '123' });
+            fs.existsSync(settingsFilePath).should.be.true;
+            
+            // Reload project to pick up new .cw-settings
+            const reloadedProject = await projectList.reloadSettingsFile(project);
+            reloadedProject.should.haveOwnProperty('projectID').and.equal(project.projectID);
+            fs.existsSync(projectInfPath).should.be.true; 
+        });
+    });
     // describe('deleteProjectKey(projectID, key)', () => {
         
     // });
