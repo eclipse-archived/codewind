@@ -41,18 +41,25 @@ async function injectMetricsCollectorIntoNodeProject(projectDir) {
 }
 
 function getNewContentsOfPackageJson(oldContentsOfPackageJson) {
-  const oldStartScript = oldContentsOfPackageJson.scripts.start.split(' ');
-  const indexOfNodeCmd = oldStartScript.findIndex(word => ['node', 'nodemon'].includes(word));
+  const metricsCollectorScript = '-r appmetrics-prometheus/attach';
 
-  let newStartScript = deepClone(oldStartScript);
-  newStartScript.splice(indexOfNodeCmd + 1, 0, '-r appmetrics-prometheus/attach');
+  const oldStartScript = oldContentsOfPackageJson.scripts.start;
+  if (oldStartScript.includes(metricsCollectorScript)) {
+    return oldContentsOfPackageJson;
+  }
+
+  const splitOldStartScript = oldStartScript.split(' ');
+  const indexOfNodeCmd = splitOldStartScript.findIndex(word => ['node', 'nodemon'].includes(word));
+
+  let newStartScript = deepClone(splitOldStartScript);
+  newStartScript.splice(indexOfNodeCmd + 1, 0, metricsCollectorScript);
   newStartScript = newStartScript.join(' ');
 
   const newContentsOfPackageJson = deepClone(oldContentsOfPackageJson);
 
   newContentsOfPackageJson.scripts.start = newStartScript;
   newContentsOfPackageJson.dependencies['appmetrics-prometheus'] = "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint";
-  newContentsOfPackageJson.dependencies['cors'] = "^2.8.5";
+  newContentsOfPackageJson.dependencies['cors'] = "^2.8.5"; // Needed because appmetrics-prometheus depends on `cors`, and for some reason when the project runs `npm install`, it doesn't install `cors`
   return newContentsOfPackageJson;
 }
 

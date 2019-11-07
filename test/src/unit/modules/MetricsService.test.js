@@ -72,12 +72,13 @@ describe('MetricsService.js', function() {
         });
         describe(`('unsupportedLanguage', <goodProjectDir>)`, () => {
             it(`throws a useful error`, function() {
-                const func = () => metricsService.injectMetricsCollectorIntoProject('unsupportedLanguage', projectDir);
-                return func().should.be.rejectedWith(`'unsupportedLanguage' is not a supported language`);
+                const funcToTest = () => metricsService.injectMetricsCollectorIntoProject('unsupportedLanguage', projectDir);
+                return funcToTest().should.be.rejectedWith(`'unsupportedLanguage' is not a supported language`);
             });
         });
     });
     describe('injectMetricsCollectorIntoNodeProject(projectDir)', function() {
+        describe('package.json does not have metrics injection code', function() {
         before(() => {
             fs.writeJSONSync(pathToPackageJson, contentsOfOriginalPackageJson);
         });
@@ -89,6 +90,21 @@ describe('MetricsService.js', function() {
             await funcToTest(projectDir);
 
             fs.readJSONSync(pathToPackageJson).should.deep.equal(contentsOfMetricsInjectedPackageJson);
+        });
+    });
+        describe('package.json already has metrics injection code', function() {
+            before(() => {
+                fs.writeJSONSync(pathToPackageJson, contentsOfMetricsInjectedPackageJson);
+            });
+            after(() => {
+                fs.unlinkSync(pathToPackageJson);
+            });
+            it(`injects metrics collector into the project's package.json`, async function() {
+                const funcToTest = metricsService.__get__('injectMetricsCollectorIntoNodeProject');
+                await funcToTest(projectDir);
+
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(contentsOfMetricsInjectedPackageJson);
+            });
         });
     });
     describe('getNewContentsOfPackageJson(oldContentsOfPackageJson)', function() {
