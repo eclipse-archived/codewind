@@ -430,7 +430,7 @@ export async function exposeOverIngress(projectID: string, isHTTPS: boolean, app
     const ingressPrefix = process.env.INGRESS_PREFIX;
     const ingressPrefixLength = ingressPrefix.length;
     let ingressDomain: string;
-    if (ingressPrefixLength < 63) {
+    if (ingressPrefixLength < 62) {
         // Since we include a dash, calculate the difference between 62 chars and the prefix
         const spaceRemaining = 62 - ingressPrefixLength;
         ingressDomain = serviceName.substring(0, spaceRemaining) + "-" + ingressPrefix;
