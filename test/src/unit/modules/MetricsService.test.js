@@ -19,7 +19,7 @@ const metricsService = rewire('../../../../src/pfe/portal/modules/MetricsService
 chai.use(chaiAsPromised);
 chai.should();
 
-describe('MetricsService.js', function() {
+describe('MetricsService.js', () => {
     const projectDir = path.join('.', 'src', 'unit');
     const pathToPackageJson = path.join(projectDir, 'package.json');
     const contentsOfOriginalPackageJson = {
@@ -56,7 +56,7 @@ describe('MetricsService.js', function() {
         /* eslint-enable quote-props, quotes, comma-dangle */
     };
 
-    describe('injectMetricsCollectorIntoProject(projectLanguage, projectDir)', function() {
+    describe('injectMetricsCollectorIntoProject(projectLanguage, projectDir)', () => {
         beforeEach(() => {
             fs.writeJSONSync(pathToPackageJson, contentsOfOriginalPackageJson);
         });
@@ -64,42 +64,42 @@ describe('MetricsService.js', function() {
             fs.unlinkSync(pathToPackageJson);
         });
         describe(`('nodejs', <goodProjectDir>)`, () => {
-            it(`injects metrics collector into the project's package.json`, async function() {
+            it(`injects metrics collector into the project's package.json`, async() => {
                 await metricsService.injectMetricsCollectorIntoProject('nodejs', projectDir);
 
                 fs.readJSONSync(pathToPackageJson).should.deep.equal(contentsOfMetricsInjectedPackageJson);
             });
         });
         describe(`('unsupportedLanguage', <goodProjectDir>)`, () => {
-            it(`throws a useful error`, function() {
+            it(`throws a useful error`, () => {
                 const funcToTest = () => metricsService.injectMetricsCollectorIntoProject('unsupportedLanguage', projectDir);
                 return funcToTest().should.be.rejectedWith(`'unsupportedLanguage' is not a supported language`);
             });
         });
     });
-    describe('injectMetricsCollectorIntoNodeProject(projectDir)', function() {
-        describe('package.json does not have metrics injection code', function() {
-        before(() => {
-            fs.writeJSONSync(pathToPackageJson, contentsOfOriginalPackageJson);
-        });
-        after(() => {
-            fs.unlinkSync(pathToPackageJson);
-        });
-        it(`injects metrics collector into the project's package.json`, async function() {
-            const funcToTest = metricsService.__get__('injectMetricsCollectorIntoNodeProject');
-            await funcToTest(projectDir);
+    describe('injectMetricsCollectorIntoNodeProject(projectDir)', () => {
+        describe('package.json does not have metrics injection code', () => {
+            before(() => {
+                fs.writeJSONSync(pathToPackageJson, contentsOfOriginalPackageJson);
+            });
+            after(() => {
+                fs.unlinkSync(pathToPackageJson);
+            });
+            it(`injects metrics collector into the project's package.json`, async() => {
+                const funcToTest = metricsService.__get__('injectMetricsCollectorIntoNodeProject');
+                await funcToTest(projectDir);
 
-            fs.readJSONSync(pathToPackageJson).should.deep.equal(contentsOfMetricsInjectedPackageJson);
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(contentsOfMetricsInjectedPackageJson);
+            });
         });
-    });
-        describe('package.json already has metrics injection code', function() {
+        describe('package.json already has metrics injection code', () => {
             before(() => {
                 fs.writeJSONSync(pathToPackageJson, contentsOfMetricsInjectedPackageJson);
             });
             after(() => {
                 fs.unlinkSync(pathToPackageJson);
             });
-            it(`injects metrics collector into the project's package.json`, async function() {
+            it(`injects metrics collector into the project's package.json`, async() => {
                 const funcToTest = metricsService.__get__('injectMetricsCollectorIntoNodeProject');
                 await funcToTest(projectDir);
 
@@ -107,8 +107,8 @@ describe('MetricsService.js', function() {
             });
         });
     });
-    describe('getNewContentsOfPackageJson(oldContentsOfPackageJson)', function() {
-        it(`returns an object representing a package.json injected with metrics collector`, function() {
+    describe('getNewContentsOfPackageJson(oldContentsOfPackageJson)', () => {
+        it(`returns an object representing a package.json injected with metrics collector`, () => {
             const funcToTest = metricsService.__get__('getNewContentsOfPackageJson');
             const output = funcToTest(contentsOfOriginalPackageJson);
             output.should.deep.equal(contentsOfMetricsInjectedPackageJson);
