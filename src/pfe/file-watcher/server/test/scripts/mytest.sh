@@ -71,11 +71,6 @@ function installChe() {
     else
         displayMsg 1 "Failed to find operator yaml file on disk." true
     fi
-    oc adm policy add-scc-to-group privileged system:serviceaccounts:$CHE_NS
-    displayMsg $? "Failed to set admin policy: privileged." true
-
-    oc adm policy add-scc-to-group anyuid system:serviceaccounts:$CHE_NS
-    displayMsg $? "Failed to set admin policy: anyuid." true
 }
 
 
@@ -150,6 +145,7 @@ if [[ ! -z "$CHE_ROUTE" ]]; then
 fi
 KEYCLOAK_HOSTNAME="keycloak-$CHE_NS.$IP_TO_USE.nip.io"
 TOKEN_ENDPOINT="http://${KEYCLOAK_HOSTNAME}/auth/realms/che/protocol/openid-connect/token"
+CHE_ENDPOINT="http://che-$CHE_NS.$IP_TO_USE.nip.io"
 
 # check if OC is installed
 echo -e "${BLUE}> Checking if openshift cloud is installed${RESET}"
@@ -229,6 +225,14 @@ if [[ $CLEAN_DEPLOY == "y" ]]; then
     displayMsg $? "Failed to create service account." true
 fi
 
+echo -e "${BLUE}> Setting openshift admin policy: privileged ${RESET}"
+oc adm policy add-scc-to-group privileged system:serviceaccounts:$CHE_NS
+displayMsg $? "Failed to set admin policy: privileged." true
+
+echo -e "${BLUE}> Setting openshift admin policy: anyuid ${RESET}"
+oc adm policy add-scc-to-group anyuid system:serviceaccounts:$CHE_NS
+displayMsg $? "Failed to set admin policy: anyuid." true
+
 echo -e "${BLUE}> Adding role image-builder to service account ${RESET}"
 oc policy add-role-to-user system:image-builder system:serviceaccount:"$CHE_NS":"$SERVICE_ACCOUNT"
 displayMsg $? "Failed to add role image-builder to service account." true
@@ -246,23 +250,17 @@ elif [[ "$HOST_OS" =~ "Linux" ]]; then
     displayMsg $? "Failed to find appropriate base64 converter." true
 fi
 
+echo -e "${BLUE}> Setting docker registry in che ${RESET}"
 ENCODED_TOKEN=$(oc get secret $(oc describe sa $SERVICE_ACCOUNT | tail -n 2 | head -n 1 | awk '{$1=$1};1') -o json | jq ".data.token")
 DECODED_TOKEN=$(echo "$ENCODED_TOKEN" | $base64Name -di)
-echo "Registry is: $DEFAULT_REGISTRY"
-echo -e "Token is: $DECODED_TOKEN \n"
+CHE_ACCESS_TOKEN=$(curl -sSL --data "grant_type=password&client_id=che-public&username=${CHE_USER}&password=${CHE_PASS}" ${TOKEN_ENDPOINT} | jq -r '.access_token')
+REGISTRY_CREDS={\""$DEFAULT_REGISTRY"\":{\"username\":\""$SERVICE_ACCOUNT"\",\"password\":\""$DECODED_TOKEN"\"}}
+DOCKER_CREDS=$(echo -n "$REGISTRY_CREDS" | $base64Name -w 0)
+TIMESTAMP=$(date +"%s")
 
-export CHE_ACCESS_TOKEN=$(curl -sSL --data "grant_type=password&client_id=che-public&username=${CHE_USER}&password=${CHE_PASS}" ${TOKEN_ENDPOINT} | jq -r '.access_token')
-echo -e "CHE Access Token is: $CHE_ACCESS_TOKEN \n"
+curl "$CHE_ENDPOINT/api/preferences" --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' -H 'Sec-Fetch-Site: same-origin' -H "Content-Type: application/json" --data-binary '{"codenvy:created":'"$TIMESTAMP"',"temporary":"false","git.contribute.activate.projectSelection":"false","dockerCredentials":'"$DOCKER_CREDS"'}'
+displayMsg $? "Failed to set docker registry using default docker registry: $DEFAULT_REGISTRY." false
 
-PING_URL="http://$SERVICE_ACCOUNT:$DECODED_TOKEN@$DEFAULT_REGISTRY"
-echo -e "Ping url: $PING_URL \n"
-
-DOCKER_CREDS=$(echo -n "$PING_URL" | $base64Name)
-TIME_STAMP=$(date +"%s")
-echo -e "Docker creds: $DOCKER_CREDS"
-
-# curl -X POST --header 'Content-Type: application/json' --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' -d '{"codenvy:created": '"$TIME_STAMP"',"temporary": "false", "git.contribute.activate.projectSelection":"false", "dockerCredentials": '"$DOCKER_CREDS"'}' http://che-$CHE_NS.$IP_TO_USE.nip.io/api/preferences
-
-echo -e "${GREEN}✔ Che is up and running at che-$CHE_NS.$IP_TO_USE.nip.io\n"
+echo -e "${GREEN}✔ Che is up and running at $CHE_ENDPOINT\n"
 echo -e "${GREEN}✔ Username: $CHE_USER${RESET}\n"
 echo -e "${GREEN}✔ Password: $CHE_PASS${RESET}\n"
