@@ -23,7 +23,7 @@ const log = new Logger('Templates.js');
 const DEFAULT_REPOSITORY_LIST = [
   {
     url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
-    description: 'Extension to develop in containers with an IDE or language of your choice.',
+    description: 'Codewind is an extension to develop in containers with an IDE or language of your choice.',
     enabled: true,
     protected: true,
     projectStyles: ['Codewind'],
