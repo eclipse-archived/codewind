@@ -28,9 +28,11 @@ IMAGE_TAG=""
 TEST_REPO="https://github.com/eclipse/codewind.git"
 TEST_BRANCH="master"
 CW_DIR="$TEST_WD/codewind"
+PROJECT_PATH="$TEST_WD/projects"
 CLEAN_UP=""
 
 TEST_DIR="$CW_DIR/src/pfe/file-watcher/server/test"
+PROJECTS_CLONE_DATA_FILE="$TEST_DIR/resources/projects-clone-data"
 
 DATE_NOW=$(date +"%d-%m-%Y")
 TIME_NOW=$(date +"%H.%M.%S")
@@ -95,16 +97,33 @@ function checkExitCode() {
 	fi
 }
 
+function createProject() {
+   ./$EXECUTABLE_NAME project create --url $1 $2
+}
+
+function copyToPFE() {
+   docker cp $1 $CW_CONTAINER:"/codewind-workspace"
+}
+
+echo -e "${BLUE}>> Downloading latest installer ... ${RESET}"
+EXECUTABLE_NAME="cwctl"
+curl -X GET http://download.eclipse.org/codewind/codewind-installer/master/latest/cwctl-win.exe --output $EXECUTABLE_NAME
+checkExitCode $? "Failed to download latest installer."
+
+echo -e "${BLUE}>> Giving executable permission to installer ... ${RESET}"
+chmod +x $EXECUTABLE_NAME
+checkExitCode $? "Failed to give correct permission to run installer."
+
 echo -e "${BLUE}>> Cleaning up docker system ... ${RESET}"
 docker system prune -af
 checkExitCode $? "Failed to clean up docker system."
 
 echo -e "${BLUE}>> Stopping existing codewind ... ${RESET}"
-./codewind-installer-win.exe stop-all
+./cwctl stop-all
 checkExitCode $? "Failed to stop existing codewind."
 
 echo -e "${BLUE}>> Installing latest codewind ... ${RESET}"
-./codewind-installer-win.exe install -t latest
+./cwctl install -t latest
 checkExitCode $? "Failed to install latest codewind."
 
 if [[ ! -z "$IMAGE_TAG" ]]; then
@@ -118,7 +137,7 @@ if [[ ! -z "$IMAGE_TAG" ]]; then
 fi
 
 echo -e "${BLUE}>> Starting codewind ... ${RESET}"
-./codewind-installer-win.exe start
+./cwctl start
 checkExitCode $? "Failed to start codewind."
 
 if [[ ! -d $CW_DIR ]]; then
@@ -126,6 +145,31 @@ if [[ ! -d $CW_DIR ]]; then
 	git clone $TEST_REPO -b $TEST_BRANCH
 	checkExitCode $? "Failed to download latest tests."
 fi
+
+echo -e "${BLUE}>> Creating test projects directory ... ${RESET}"
+mkdir -p $PROJECT_PATH
+checkExitCode $? "Failed to create test projects directory."
+
+CTR=0
+# Read project git config
+while IFS='\n' read -r LINE; do
+    PROJECT_CLONE[$CTR]=$LINE
+    let CTR++
+done < "$PROJECTS_CLONE_DATA_FILE"
+    
+# Clone projects to workspace
+for i in "${PROJECT_CLONE[@]}"; do
+    PROJECT_NAME=$(echo $i | cut -d "=" -f 1)
+    PROJECT_URL=$(echo $i | cut -d "=" -f 2)
+
+    echo -e "${BLUE}>> Creating project $PROJECT_NAME from $PROJECT_URL in "$PROJECT_PATH/$PROJECT_NAME" ${RESET}"
+    createProject $PROJECT_URL "$PROJECT_PATH/$PROJECT_NAME"
+	checkExitCode $? "Failed to created project $PROJECT_NAME."
+
+	echo -e "${BLUE}>> Copying $PROJECT_NAME to PFE container ${RESET}"
+	copyToPFE "$PROJECT_PATH/$PROJECT_NAME"
+	checkExitCode $? "Failed to copy project to PFE container."
+done
 
 echo -e "${BLUE}>> Copying test files over to container ... ${RESET}"
 docker cp $TEST_DIR $CW_CONTAINER:$IN_CONTAINER_PATH
@@ -152,6 +196,7 @@ checkExitCode $? "Failed to copy test results from container."
 if [[ ! -z "$CLEAN_UP" ]]; then
 	echo -e "${BLUE}>> Cleaning up test directory ... ${RESET}"
 	rm -rf $CW_DIR
+	rm -rf $PROJECT_PATH
 	checkExitCode $? "Failed to clean up test directory."
 fi
 

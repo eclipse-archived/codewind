@@ -14,13 +14,69 @@
  * maven.build -> maven build log file
  * app.compile -> app compilation log file
  */
-export const log_names = ["docker.build.log", "maven.build.log", "app.compile.log", "app.log", "docker.app.log"];
+export const log_names = ["docker.build.log", "maven.build.log", "app.compile.log", "app.log", "docker.app.log", "messages.log", "console.log"];
 
 export const logTypes = ["build", "app"];
+const logOrigins = ["container", "workspace"];
 
 export const logFileMappings: any = {
     "docker": {
-        [logTypes[0]]: [log_names[0]],
-        [logTypes[1]]: [log_names[3]],
-    }
+        [logTypes[0]]: [{
+            "origin": logOrigins[1],
+            "files": [log_names[0]]
+        }],
+        [logTypes[1]]: [{
+            "origin": logOrigins[1],
+            "files": [log_names[3]]
+        }]
+    },
+    "liberty": {
+        [logTypes[0]]: [{
+            "origin": logOrigins[0],
+            "files": [log_names[1]]
+        }, {
+            "origin": logOrigins[1],
+            "files": [log_names[0]]
+        }],
+        [logTypes[1]]: [{
+            "origin": logOrigins[1],
+            "files": [log_names[3]]
+        }, {
+            "origin": logOrigins[0],
+            "files": [log_names[6], log_names[5]]
+        }]
+    },
+    "nodejs": {
+        [logTypes[0]]: [{
+            "origin": logOrigins[1],
+            "files": [log_names[0]]
+        }],
+        [logTypes[1]]: [{
+            "origin": logOrigins[1],
+            "files": [log_names[3]]
+        }]
+    },
+    "spring": {
+        [logTypes[0]]: [{
+            "origin": logOrigins[0],
+            "files": [log_names[1]]
+        }, {
+            "origin": logOrigins[1],
+            "files": [log_names[0]]
+        }],
+        [logTypes[1]]: [{
+            "origin": logOrigins[1],
+            "files": [log_names[3]]
+        }]
+    },
+    "swift": {
+        [logTypes[0]]: [{
+            "origin": logOrigins[1],
+            "files": process.env.IN_K8 ? [log_names[2], log_names[4]] : [log_names[4], log_names[2], log_names[0]]
+        }],
+        [logTypes[1]]: [{
+            "origin": logOrigins[1],
+            "files": [log_names[3]]
+        }]
+    },
 };
