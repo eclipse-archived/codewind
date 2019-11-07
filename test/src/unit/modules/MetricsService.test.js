@@ -14,7 +14,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const rewire = require('rewire');
 
-const metricsService = rewire('../../../src/pfe/portal/modules/MetricsService');
+const metricsService = rewire('../../../../src/pfe/portal/modules/MetricsService');
 
 chai.use(chaiAsPromised);
 chai.should();
