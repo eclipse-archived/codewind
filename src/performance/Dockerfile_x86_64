@@ -52,16 +52,13 @@ COPY package*.json server.js ./
 RUN npm ci --only=production
 
 # Install performance UIs by copying over the built applications
-
 COPY --from=build-performance-ui /usr/src/app/dashboard/build /usr/src/app/dashboard/build
-
 
 # For codewind metrics dashboards
 COPY monitor /usr/src/app/monitor
 
 # Install npm production packages
-COPY package.json /usr/src/app/
-COPY loadrunner/runload.js /usr/src/app/
+COPY package.json loadrunner/runload.js /usr/src/app/
 RUN npm ci --production
 
 ENV NODE_ENV production
