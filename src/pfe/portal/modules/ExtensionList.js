@@ -21,10 +21,9 @@ const exec = promisify(require('child_process').exec);
 const log = new Logger(__filename);
 
 const extensionsDir = '/extensions';
-const extensionsPattern = /^(\S+)-(\d+\.\d+\.\d+)\.zip$/; // e.g. extension-name-0.0.1.zip
+const extensionsPattern = /^(\S+)-(\d+\.\d+\.\d+|latest)\.zip$/; // e.g. extension-name-0.0.1.zip
 const suffixOld = '__old';
 const odoExtensionName = "codewind-odo-extension";
-const odoBinarySource = "/extensions/odo"
 
 /**
  * The ExtensionList class
@@ -66,12 +65,6 @@ module.exports = class ExtensionList {
         try {
           if (await prepForUnzip(target, version)) {
             await exec(`unzip ${source} -d ${targetDir}`);
-              
-            if (name == odoExtensionName) {
-              await fs.ensureDir(`${targetWithVersion}/bin`);
-              await fs.move(odoBinarySource, `${targetWithVersion}/bin/odo`); 
-              await fs.chmod(`${targetWithVersion}/bin/odo`, '755');
-            }
 
             // top-level directory in zip will have the version suffix
             // rename to remove the version
