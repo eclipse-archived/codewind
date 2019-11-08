@@ -67,13 +67,16 @@ pipeline {
                         cp -r $DIR/docs ${SRC_DIR}/pfe/portal/
 
                         echo -e "\n+++   DOWNLOADING EXTENSIONS   +++\n";
+                        if [ $GIT_BRANCH == "master" ]; then
+                            VERSION="latest"
+                        else
+                            VERSION="$GIT_BRANCH"
+                        fi
                         mkdir -p ${SRC_DIR}/pfe/extensions
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
-                        rm -f ${SRC_DIR}/pfe/extensions/odo
                         curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.6.0.zip http://download.eclipse.org/codewind/codewind-appsody-extension/0.6.0/latest/codewind-appsody-extension-0.6.0.zip
-                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-0.6.0.zip https://github.com/eclipse/codewind-odo-extension/archive/v0.6.0.zip
-                        curl -Lo ${SRC_DIR}/pfe/extensions/odo https://mirror.openshift.com/pub/openshift-v4/clients/odo/latest/odo-linux-amd64
+                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-$VERSION.zip http://download.eclipse.org/codewind/codewind-odo-extension/$GIT_BRANCH/latest/codewind-odo-extension-$VERSION.zip
 
                         # BUILD IMAGES
                         # Uses a build file in each of the directories that we want to use
