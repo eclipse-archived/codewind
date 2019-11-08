@@ -318,7 +318,7 @@ function deployLocal() {
 		RUN_CMD_EC=$?
 		if [ $RUN_CMD_EC -eq 0 ]; then
 			echo -e "Copying over source files back to PFE container from build container"
-			docker cp $project-build:/swift-project/.build-ubuntu "$workspace/$projectName/.build-ubuntu" 
+			docker cp $project-build:/swift-project/.build-ubuntu/. "$workspace/$projectName/.build-ubuntu"
 		fi
 
 		
