@@ -1368,7 +1368,7 @@ components:
           example: "python"
         url:
           type: string
-          example: "https://github.com/microclimate-dev2ops/SVTPythonTemplate"
+          example: "https://github.com/codewind-resources/pythonTemplate"
         projectType:
           type: string
           example: "docker"

@@ -238,7 +238,7 @@ const styledTemplates = {
         label: 'Codewind template',
         description: 'Codewind template',
         language: 'go',
-        url: 'https://github.com/microclimate-dev2ops/microclimateGoTemplate',
+        url: 'https://github.com/codewind-resources/goTemplate',
         projectType: 'docker',
         source: 'Default templates',
         // defaults to projectStyle 'Codewind'

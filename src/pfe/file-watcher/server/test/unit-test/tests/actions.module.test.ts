@@ -297,7 +297,7 @@ export function actionsTestModule(): void {
         const testswiftPackageswift = path.join(swiftProjectPath, "Package.swift");
         const swiftPackageswiftbackup = path.join(swiftProjectPath, "Package.swift_backup");
 
-        const pythonProjectPath = path.join(process.env.CW_WORKSPACE, "SVTPythonTemplate");
+        const pythonProjectPath = path.join(process.env.CW_WORKSPACE, "pythonTemplate");
         const testpythonDockerfile = path.join(pythonProjectPath, "Dockerfile");
         const pythonDockerfilebackup = path.join(pythonProjectPath, "Dockerfile_backup");
 
@@ -546,8 +546,8 @@ export function actionsTestModule(): void {
                 "description": "good python project",
                 "args": {
                     projectType: "docker",
-                    projectID: "SVTPythonTemplate",
-                    location: path.join(process.env.CW_WORKSPACE, "SVTPythonTemplate")
+                    projectID: "pythonTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "pythonTemplate")
                 },
                 "result": "success"
             },
@@ -555,8 +555,8 @@ export function actionsTestModule(): void {
                 "description": "python project with missing Dockerfile",
                 "args": {
                     projectType: "docker",
-                    projectID: "SVTPythonTemplate",
-                    location: path.join(process.env.CW_WORKSPACE, "SVTPythonTemplate")
+                    projectID: "pythonTemplate",
+                    location: path.join(process.env.CW_WORKSPACE, "pythonTemplate")
                 },
                 "result": "failed",
                 "error": "Missing required file",
