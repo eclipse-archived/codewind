@@ -58,7 +58,7 @@ function getNewContentsOfPackageJson(oldContentsOfPackageJson) {
   const newContentsOfPackageJson = deepClone(oldContentsOfPackageJson);
 
   newContentsOfPackageJson.scripts.start = newStartScript;
-  newContentsOfPackageJson.dependencies['appmetrics-prometheus'] = "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint";
+  newContentsOfPackageJson.dependencies['appmetrics-prometheus'] = "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#appmetrics-codewind";
   newContentsOfPackageJson.dependencies['cors'] = "^2.8.5"; // Needed because appmetrics-prometheus depends on `cors`, and for some reason when the project runs `npm install`, it doesn't install `cors`
   return newContentsOfPackageJson;
 }
