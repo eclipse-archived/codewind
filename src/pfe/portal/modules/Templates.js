@@ -23,7 +23,7 @@ const log = new Logger('Templates.js');
 const DEFAULT_REPOSITORY_LIST = [
   {
     url: 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json',
-    description: 'Standard Codewind templates',
+    description: 'Codewind project templates help you create containerized projects for various runtimes.',
     enabled: true,
     protected: true,
     projectStyles: ['Codewind'],
@@ -31,10 +31,13 @@ const DEFAULT_REPOSITORY_LIST = [
   },
 ];
 
+const kabaneroDescription = 'Kabanero, an open source project, brings together open source technologies into a microservices-based framework.' +
+'Kabanero builds cloud native applications ready for deployment onto Kubernetes and Knative.'
+
 const KABANERO_REPO = {
   url: 'https://github.com/kabanero-io/collections/releases/download/v0.1.2/kabanero-index.json',
   name: 'Kabanero Collections',
-  description: 'The default set of templates from Kabanero Collections',
+  description: kabaneroDescription,
   enabled: false,
   protected: true,
 };
