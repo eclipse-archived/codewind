@@ -170,15 +170,6 @@ module.exports = class Project {
   }
 
   /**
-   * Function to check a string is a valid project name.
-   * @param {string} name the name to check.
-   * @return true if the name is valid, false otherwise.
-   */
-  static isValidName(name) {
-    return (/^[a-z0-9]*$/.test(name));
-  }
-
-  /**
    * Function to read the project .cw-settings file
    * @return the contents of the file as an object containing key-value pairs
    */

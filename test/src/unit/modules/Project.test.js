@@ -230,5 +230,49 @@ describe('Project.js', () => {
             projectPath.should.equal(path.join(global.codewind.CODEWIND_WORKSPACE, 'directory'));
         });
     });
-    
+    describe('readSettingsFile()', () => {
+        it('Returns a blank object is returned if the settings file does not exist', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const settings = await project.readSettingsFile();
+            settings.should.deep.equal({});
+        });
+        it('Returns the contents of a created .cw-settings file', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const settingsPath = path.join(project.projectPath(), '.cw-settings');
+            await fs.ensureFile(settingsPath);
+            await fs.writeJson(settingsPath, { property: 'string' });
+            const settings = await project.readSettingsFile();
+            settings.should.have.property('property').and.equal('string');
+        });
+    });
+    describe('writeInformationFile()', () => {
+        it('Checks that the information file is created', async() => {
+            const project = new Project({ name: 'dummy', directory: 'directory' }, global.codewind.CODEWIND_WORKSPACE);
+            const infPath = path.join(global.codewind.CODEWIND_WORKSPACE, '/.projects', `${project.projectID}.inf`);
+            fs.existsSync(infPath).should.be.false;
+            await project.writeInformationFile();
+            fs.existsSync(infPath).should.be.true;
+        });
+        it('Checks that the information file is correct for a generic Project', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const infPath = path.join(global.codewind.CODEWIND_WORKSPACE, '/.projects', `${project.projectID}.inf`);
+            await project.writeInformationFile();
+            fs.existsSync(infPath).should.be.true;
+
+            const infJson = await fs.readJson(infPath);
+            infJson.should.have.property('projectID').and.equal(project.projectID);
+        });
+        it('Checks that an information file can be used to create a project', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const infPath = path.join(global.codewind.CODEWIND_WORKSPACE, '/.projects', `${project.projectID}.inf`);
+            await project.writeInformationFile();
+            fs.existsSync(infPath).should.be.true;
+
+            const infJson = await fs.readJson(infPath);
+            infJson.should.have.property('projectID').and.equal(project.projectID);
+
+            // const projectFromInf = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            // projectFromInf.should.deep.equal(project);
+        });
+    });
 });
