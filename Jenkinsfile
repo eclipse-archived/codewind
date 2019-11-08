@@ -71,8 +71,8 @@ pipeline {
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
                         rm -f ${SRC_DIR}/pfe/extensions/odo
-                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.6.0.zip http://download.eclipse.org/codewind/codewind-appsody-extension/master/latest/codewind-appsody-extension-0.6.0.zip
-                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-0.5.0.zip https://github.com/eclipse/codewind-odo-extension/archive/0.5.0.zip
+                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.6.0.zip http://download.eclipse.org/codewind/codewind-appsody-extension/0.6.0/latest/codewind-appsody-extension-0.6.0.zip
+                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-0.6.0.zip https://github.com/eclipse/codewind-odo-extension/archive/v0.6.0.zip
                         curl -Lo ${SRC_DIR}/pfe/extensions/odo https://mirror.openshift.com/pub/openshift-v4/clients/odo/latest/odo-linux-amd64
 
                         # BUILD IMAGES
@@ -131,6 +131,12 @@ pipeline {
                         # Run the unit test suite
                         echo "Started running Turbine Unit Test Suite"
                         npm run unit:test
+                        if [ $? -eq 0 ]; then
+                            echo "+++   TURBINE UNIT TESTS COMPLETED SUCCESSFULLY   +++";
+                        else
+                            echo "+++   TURBINE UNIT TESTS FAILED   +++";
+                            exit 1;
+                        fi
                         '''
                     }
                 }
@@ -179,7 +185,6 @@ pipeline {
                         export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
                         export WORKSPACE_VOLUME=cw-workspace;
                         export HOST_OS=$(uname);
-                        export REMOTE_MODE;
                         export HOST_HOME=$HOME
                         export ARCH=$(uname -m);
                         # Select the right images for this architecture.
@@ -196,7 +201,6 @@ pipeline {
                             # Reset so we don't get conflicts
                             unset REPOSITORY;
                             unset WORKSPACE_DIRECTORY;
-                            unset REMOTE_MODE;
                             printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
                             printf "\nCurrent running codewind containers\n";
                             docker ps --filter name=codewind

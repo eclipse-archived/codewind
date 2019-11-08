@@ -61,10 +61,8 @@ public class IDCContext {
 	private final String imageCommand;
 
 	private final String imagesFormatString;
-
-	private String turbineSync;
 	
-	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String deploymentRegistry, String startMode, String debugPort, String turbineSync) throws IOException {
+	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String deploymentRegistry, String startMode, String debugPort) throws IOException {
 
 		this.rootPassword = rootPassword;
 
@@ -123,11 +121,6 @@ public class IDCContext {
 		this.debugPort = debugPort;
 		if (this.debugPort != null) {
 			appDb.put(Constants.DB_DEBUG_PORT, this.debugPort);
-		}
-
-		this.turbineSync = turbineSync;
-		if (this.turbineSync != null) {
-			appDb.put(Constants.DB_TURBINE_SYNC, this.turbineSync);
 		}
 
 		this.artifactsDirectory = getArtifactsFromInstallDir();
@@ -193,14 +186,6 @@ public class IDCContext {
 
 	public DBMap getGlobalDb() {
 		return globalDb;
-	}
-
-	public String getTurbineSync() {
-		if (appDb.get(Constants.DB_TURBINE_SYNC) != null) {
-			return appDb.get(Constants.DB_TURBINE_SYNC);
-		} else {
-			return "false";
-		}
 	}
 
 	public String getContainerName() {

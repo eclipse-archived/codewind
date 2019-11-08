@@ -314,20 +314,23 @@ export async function getFilesOrFoldersInContainerWithTimestamp(projectID: strin
         return [];
       } else {
         logger.logInfo("At least one file was found");
-        const files = data.replace(/\n/g, " ").replace(/[^ -~]+/g, "").split(" ").filter((entry: string) => { return entry.trim() != ""; });
+        const lines = data.split("\n");
         const fileIndex = 8; // file is the 9th argument from the above command
         const filesTimestamp: Array<logHelper.LogFiles> = [];
-        for (let index = fileIndex; index < files.length; index = index + fileIndex + 1) {
-          const file = files[index];
-          const dateString = files[index - 3] + " " + files[index - 2] + " " + files[index - 1];
-          if (!folderName) {
-            filesTimestamp.push({file: path.join(fileLocation, file), time: +new Date(dateString)});
-          } else {
-            if (file.toLowerCase() === folderName.toLowerCase()) {
-              filesTimestamp.push({file: path.join(fileLocation, folderName), time: +new Date(dateString)});
-              break;
+        for (let line of lines) {
+            line = line.replace(/[^ -~]+/g, "").replace(/\s+/g, " ").trim();
+            if (line != "") {
+                const file = line.split(" ")[fileIndex];
+                const dateString = line.split(" ")[fileIndex - 3] + " " + line.split(" ")[fileIndex - 2] + " " + line.split(" ")[fileIndex - 1];
+                if (!folderName) {
+                    filesTimestamp.push({file: path.join(fileLocation, file), time: +new Date(dateString)});
+                } else {
+                    if (file.toLowerCase() === folderName.toLowerCase()) {
+                        filesTimestamp.push({file: path.join(fileLocation, folderName), time: +new Date(dateString)});
+                        break;
+                    }
+                }
             }
-          }
         }
         return filesTimestamp;
       }

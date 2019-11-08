@@ -232,8 +232,15 @@ export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isErr
     const msgLabel = isError ? "ERROR" : "INFO";
     const fullMsg = `\n[${msgLabel}] ${msg}`;
 
-    const buildLog = await projectUtil.getProjectLogs(projectInfo);
     let buildLogPath;
+    let buildLog: projectUtil.ProjectLog;
+
+    try {
+        buildLog = await projectUtil.getProjectLogs(projectInfo);
+    } catch (err) {
+        logger.logProjectError("Failed to get project logs during log build event", projectInfo.projectID);
+        return;
+    }
 
     if (buildLog && buildLog.build) {
         // the log build event is only called from liberty project and the file info is dumped into maven build file
@@ -253,16 +260,16 @@ export async function logBuildEvent(projectInfo: ProjectInfo, msg: String, isErr
     }
 
     const containerName = await projectUtil.getContainerName(projectInfo);
-    const targetContainer = process.env.IN_K8 ? await kubeutil.getPodName(projectInfo.projectID, `release=${containerName}`) : containerName;
+    const targetContainer = process.env.IN_K8 === "true" ? await kubeutil.getPodName(projectInfo.projectID, `release=${containerName}`) : containerName;
 
     logger.logProjectInfo(`Writing to build log in container ${targetContainer} at ${buildLog} :\n\t${fullMsg}`, projectInfo.projectID);
 
     // if the build log path is defined, only then we write it
     if (buildLogPath && targetContainer) {
         const cmd = `echo "${fullMsg}" >> ${buildLogPath}`;
-        const args = process.env.IN_K8 ? ["exec", "-i", targetContainer, "--", "sh", "-c", cmd] : ["exec", "-i", targetContainer, "sh", "-c", cmd];
+        const args = process.env.IN_K8 === "true" ? ["exec", "-i", targetContainer, "--", "sh", "-c", cmd] : ["exec", "-i", targetContainer, "sh", "-c", cmd];
         let data: ProcessResult;
-        if (process.env.IN_K8) {
+        if (process.env.IN_K8 === "true") {
             data = await kubeutil.runKubeCommand(projectInfo.projectID, args);
         } else {
             data = await dockerutil.runDockerCommand(projectInfo.projectID, args);

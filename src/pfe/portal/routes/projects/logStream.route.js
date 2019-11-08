@@ -44,19 +44,21 @@ async function startStreamingAll(req, res, startStreams) {
       let logTypes = {};
       for (let logType of Object.keys(logs)) {
         logTypes[logType] = [];
-        for (let file of logs[logType].files) {
-          let logName = path.basename(file);
-          let logObject = {logName: logName}
-          if (logs[logType].origin == 'workspace') {
-            logObject.workspaceLogPath = path.dirname(file);
-          } else if (logs[logType].origin == 'container') {
-            logObject.containerLogPath = path.dirname(file);
-          }
-          logTypes[logType].push(logObject);
-          let logFile = file;
-          let logOrigin = logs[logType].origin;
-          if (startStreams) {
-            project.startStreamingLog(user.uiSocket, logType, logOrigin, logName, logFile);
+        for (const logEntry of logs[logType]) {
+          for (let file of logEntry.files) {
+            let logName = path.basename(file);
+            let logObject = { logName: logName }
+            if (logEntry.origin == 'workspace') {
+              logObject.workspaceLogPath = path.dirname(file);
+            } else if (logEntry.origin == 'container') {
+              logObject.containerLogPath = path.dirname(file);
+            }
+            logTypes[logType].push(logObject);
+            let logFile = file;
+            let logOrigin = logEntry.origin;
+            if (startStreams) {
+              project.startStreamingLog(user.uiSocket, logType, logOrigin, logName, logFile);
+            }
           }
         }
       }
@@ -133,10 +135,12 @@ router.post('/api/v1/projects/:id/logs/:type/:name', validateReq, async function
         if (logs && logs[logType]) {
           // Stream log depending on whether it's a file visible to portal or only
           // in the container.
-          for (let file of logs[logType].files) {
-            if (logName === path.basename(file)) {
-              logFile = file;
-              logOrigin = logs[logType].origin;
+          for (const logEntry of logs[logType]) {
+            for (let file of logEntry.files) {
+              if (logName === path.basename(file)) {
+                logFile = file;
+                logOrigin = logEntry.origin;
+              }
             }
           }
         }

@@ -22,7 +22,7 @@ const log = new Logger('Templates.js');
 
 const DEFAULT_REPOSITORY_LIST = [
   {
-    url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
+    url: 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json',
     description: 'Codewind is an extension to develop in containers with an IDE or language of your choice.',
     enabled: true,
     protected: true,
@@ -266,20 +266,93 @@ module.exports = class Templates {
       newRepo.protected = isRepoProtected;
     }
 
+    try {
+      await this.addRepositoryToProviders(newRepo);
+    }
+    catch (err) {
+      throw new TemplateError('ADD_TO_PROVIDER_FAILURE', url, err.message);
+    }
     this.repositoryList.push(newRepo);
-    this.needsRefresh = true;
-    await this.writeRepositoryList();
+    try {
+      await this.writeRepositoryList();
+      this.needsRefresh = true;
+    }
+    catch (err) {
+      // rollback
+      this.repositoryList = this.repositoryList.filter(repo => repo.url !== url);
+      this.removeRepositoryFromProviders(newRepo).catch(error => log.warn(error.message));
+      throw err;
+    }
   }
 
   async deleteRepository(repoUrl) {
-    this.repositoryList = this.repositoryList.filter((repo) => repo.url !== repoUrl);
-    this.needsRefresh = true;
-    await this.writeRepositoryList();
+    let deleted;
+    const repositoryList = this.repositoryList.filter((repo) => {
+      if (repo.url === repoUrl) {
+        deleted = repo;
+        return false;
+      }
+      return true;
+    });
+    if (deleted) {
+      await this.removeRepositoryFromProviders(deleted);
+      this.repositoryList = repositoryList;
+      try {
+        await this.writeRepositoryList();
+        this.needsRefresh = true;
+      }
+      catch (err) {
+        // rollback
+        this.repositoryList.push(deleted);
+        this.addRepositoryToProviders(deleted).catch(error => log.warn(error.message));
+        throw err;
+      }
+    }
   }
 
   addProvider(name, provider) {
-    if (provider && typeof provider.getRepositories == 'function')
+    if (provider && typeof provider.getRepositories === 'function')
       this.providers[name] = provider;
+  }
+
+  async addRepositoryToProviders(repo) {
+
+    const promises = [];
+
+    for (const provider of Object.values(this.providers)) {
+      
+      if (typeof provider.canHandle === 'function') {
+
+        // make a new copy to for each provider to be invoked with
+        // in case any provider modifies it (which they shouldn't do)
+        const copy = Object.assign({}, repo);
+
+        if (provider.canHandle(copy) && typeof provider.addRepository === 'function')
+          promises.push(provider.addRepository(copy));
+      }
+    }
+
+    return Promise.all(promises);
+  }
+
+  async removeRepositoryFromProviders(repo) {
+
+    const promises = [];
+
+    for (const provider of Object.values(this.providers)) {
+
+      if (typeof provider.canHandle === 'function') {
+
+        // make a new copy to for each provider to be invoked with
+        // in case any provider modifies it (which they shouldn't do)
+        const copy = Object.assign({}, repo);
+        
+        if (provider.canHandle(copy) && typeof provider.removeRepository === 'function')
+          promises.push(provider.removeRepository(copy));
+      }
+    }
+
+    return Promise.all(promises);
   }
 
   async getAllTemplateStyles() {

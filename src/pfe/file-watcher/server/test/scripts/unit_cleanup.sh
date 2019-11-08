@@ -7,7 +7,7 @@ BLUE='\033[0;36m'
 RESET='\033[0m'
 
 echo -e "${BLUE}Removing test projects... ${RESET}\n"
-rm -rf ./test/resources/SVTPythonTemplate ./test/resources/nodeExpressTemplate ./test/resources/springJavaTemplate ./test/resources/swiftTemplate ./test/resources/javaMicroProfileTemplate
+rm -rf ./test/resources/pythonTemplate ./test/resources/nodeExpressTemplate ./test/resources/springJavaTemplate ./test/resources/swiftTemplate ./test/resources/javaMicroProfileTemplate
 
 echo -e "${BLUE}Removing test log directory... ${RESET}\n"
 rm -rf  ./test/resources/.logs/

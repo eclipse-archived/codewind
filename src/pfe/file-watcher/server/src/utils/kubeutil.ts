@@ -227,23 +227,26 @@ export async function getFilesOrFoldersInContainerWithTimestamp(projectID: strin
                 logger.logInfo("No files were found");
                 return [];
             } else {
-            logger.logInfo("At least one file was found");
-            const files = data.stdout.replace(/\n/g, " ").replace(/[^ -~]+/g, "").split(" ").filter((entry: string) => { return entry.trim() != ""; });
-            const fileIndex = 8; // file is the 9th argument from the above command
-            const filesTimestamp: Array<logHelper.LogFiles> = [];
-            for (let index = fileIndex; index < files.length; index = index + fileIndex + 1) {
-                const file = files[index];
-                const dateString = files[index - 3] + " " + files[index - 2] + " " + files[index - 1];
-                if (!folderName) {
-                filesTimestamp.push({file: path.join(fileLocation, file), time: +new Date(dateString)});
-                } else {
-                if (file.toLowerCase() === folderName.toLowerCase()) {
-                    filesTimestamp.push({file: path.join(fileLocation, folderName), time: +new Date(dateString)});
-                    break;
+                logger.logInfo("At least one file was found");
+                const lines = data.stdout.split("\n");
+                const fileIndex = 8; // file is the 9th argument from the above command
+                const filesTimestamp: Array<logHelper.LogFiles> = [];
+                for (let line of lines) {
+                    line = line.replace(/[^ -~]+/g, "").replace(/\s+/g, " ").trim();
+                    if (line != "") {
+                        const file = line.split(" ")[fileIndex];
+                        const dateString = line.split(" ")[fileIndex - 3] + " " + line.split(" ")[fileIndex - 2] + " " + line.split(" ")[fileIndex - 1];
+                        if (!folderName) {
+                            filesTimestamp.push({file: path.join(fileLocation, file), time: +new Date(dateString)});
+                        } else {
+                            if (file.toLowerCase() === folderName.toLowerCase()) {
+                                filesTimestamp.push({file: path.join(fileLocation, folderName), time: +new Date(dateString)});
+                                break;
+                            }
+                        }
+                    }
                 }
-                }
-            }
-            return filesTimestamp;
+                return filesTimestamp;
             }
         } catch (err) {
             const errMsg = "Error checking existence for " + fileLocation + " in container " + containerName;
@@ -390,6 +393,116 @@ export async function installChart(projectID: string, deploymentName: string, ch
     }
 
     return response;
+}
+
+export async function exposeOverIngress(projectID: string, isHTTPS: boolean, appPort?: number): Promise<string> {
+    let ownerReferenceName: string;
+    let ownerReferenceUID: string;
+    let serviceName: string;
+    let servicePort: number;
+
+    try {
+        let resp: any = undefined;
+
+        // Get the deployment name and uid labaled with the unique project ID
+        resp = await k8sClient.apis.apps.v1.namespaces(KUBE_NAMESPACE).deployments.get({ qs: { labelSelector: "projectID=" + projectID } });
+        ownerReferenceName = resp.body.items[0].metadata.name;
+        ownerReferenceUID = resp.body.items[0].metadata.uid;
+
+        // Get the service name labeled with the unique project ID
+        resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).services.get({ qs: { labelSelector: "projectID=" + projectID } });
+        if (!appPort) {
+            // If the servicePort wasn't passed in, retrieve it from the service
+            servicePort = parseInt(resp.body.items[0].spec.ports[0].port, 10);
+        } else {
+            servicePort = appPort;
+        }
+        serviceName = resp.body.items[0].metadata.name;
+    } catch (err) {
+        logger.logProjectError("Unable to retrieve project deployment or service", projectID);
+        throw err;
+    }
+
+    // Calculate the ingress domain
+    // Thanks to Kubernetes and Ingress, some ingress controllers impose a character limitation on the host name, so:
+    // If the ingress domain prefix is < 62 characters, trim the resultant app's ingress domain to fit within the limit
+    // If the ingress domain prefix is >= 62 characters, don't trim, as the character limit likely doesn't apply here.
+    const ingressPrefix = process.env.INGRESS_PREFIX;
+    const ingressPrefixLength = ingressPrefix.length;
+    let ingressDomain: string;
+    if (ingressPrefixLength < 62) {
+        // Since we include a dash, calculate the difference between 62 chars and the prefix
+        const spaceRemaining = 62 - ingressPrefixLength;
+        ingressDomain = serviceName.substring(0, spaceRemaining) + "-" + ingressPrefix;
+    } else {
+        ingressDomain = serviceName + "-" + ingressPrefix;
+    }
+
+    logger.logProjectInfo("*** Ingress: " + ingressDomain, projectID);
+
+    try {
+        // Re-use the unique service name as the ingress name
+        const ingressName = serviceName;
+
+        // Create an ingress resource for the specified service name and port
+        const ingress = {
+            "apiVersion": "extensions/v1beta1",
+            "kind": "Ingress",
+            "metadata": {
+                "labels": {
+                    "projectID": `${projectID}`
+                },
+                "name": `${ingressName.substring(0, 62)}`,
+                "ownerReferences": [
+                    {
+                        "apiVersion": "apps/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "ReplicaSet",
+                        "name": `${ownerReferenceName}`,
+                        "uid": `${ownerReferenceUID}`
+                    }
+                ]
+            },
+            "spec": {
+                "rules": [
+                    {
+                        "host": `${ingressDomain}`,
+                        "http": {
+                            "paths": [
+                                {
+                                    "backend": {
+                                        "serviceName": `${serviceName}`,
+                                        "servicePort": servicePort
+                                    },
+                                    "path": "/"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        };
+
+        // If an old ingress already exists, delete it first (to ensure port updates are reflected)
+        // Then create the ingress resource for the application
+        const resp = await k8sClient.apis.extensions.v1beta1.namespaces(KUBE_NAMESPACE).ingresses.get({ qs: { labelSelector: "projectID=" + projectID } });
+        if (resp.body.items.length > 0) {
+            const ingressName = resp.body.items[0].metadata.name;
+            await k8sClient.apis.extensions.v1beta1.namespaces(KUBE_NAMESPACE).ingresses(ingressName).delete();
+        }
+        await k8sClient.apis.extensions.v1beta1.namespaces(KUBE_NAMESPACE).ingresses.post({body: ingress});
+    } catch (err) {
+        logger.logProjectError("Unable to deploy ingress for project", projectID);
+        throw err;
+    }
+
+    // Add the scheme to the ingress domain and return it as the URL
+    if (isHTTPS) {
+        return "https://" + ingressDomain;
+    } else {
+        return "http://" + ingressDomain;
+    }
 }
 
 /**

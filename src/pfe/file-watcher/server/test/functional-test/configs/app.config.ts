@@ -32,9 +32,9 @@ export const projectTypes = ["docker", "liberty", "nodejs", "spring", "swift"];
 export const supportedDockerProjects = ["go", "lagom", "python"];
 
 export const templateNames: any = {
-    "go": "microclimategotemplate",
+    "go": "gotemplate",
     "lagom": "lagomjavatemplate",
-    "python": "svtpythontemplate",
+    "python": "pythontemplate",
     "liberty": "javamicroprofiletemplate",
     "nodejs": "node",
     "spring": "springjavatemplate",

@@ -50,13 +50,12 @@ if (process.env.IN_K8) {
 }
 
 const KUBE_NAMESPACE = process.env.KUBE_NAMESPACE || "default";
-const REMOTE_MODE = (process.env.REMOTE_MODE) || false;
 
 const containerInfoMap = new Map();
 
 export const containerInfoForceRefreshMap = new Map();
 
-export const LOCAL_WORKSPACE = REMOTE_MODE === "true" ? "/codewind-workspace" : (process.env.NODE_ENV === "test" ? process.env.HOST_WORKSPACE_DIRECTORY : (process.argv[2] ? process.argv[2] : process.env.HOST_WORKSPACE_DIRECTORY));
+export const LOCAL_WORKSPACE = "/codewind-workspace";
 
 const projectList: Array<string> = [];
 
@@ -105,7 +104,6 @@ const projectEventErrorMsgs = {
 export async function containerCreate(operation: Operation, script: string, command: string): Promise<void> {
 
     const event = "projectCreation";
-
     const projectLocation = operation.projectInfo.location;
     const projectID = operation.projectInfo.projectID;
     const projectName = projectLocation.split("/").pop();
@@ -165,11 +163,9 @@ export async function containerCreate(operation: Operation, script: string, comm
     const projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
     logger.logTrace("The projectInfo has been updated for deploymentRegistry: " + JSON.stringify(projectInfo));
 
-    logger.logTrace("Running with --remote=" + REMOTE_MODE);
-
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command,
         operation.containerName, String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode,
-        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, String(REMOTE_MODE)];
+        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry];
 
         if (projectType == "liberty" || projectType == "spring") {
 
@@ -189,7 +185,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
             args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
                 String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings, String(REMOTE_MODE)];
+                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings];
         } else if (projectType == "odo") {
             const componentName: string = await getComponentName(projectName);
 
@@ -282,7 +278,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
 
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
         String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-        (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, String(REMOTE_MODE)];
+        (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry];
 
     if (projectType == "liberty" || projectType == "spring") {
 
@@ -302,7 +298,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
 
         args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
             String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-            (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings, String(REMOTE_MODE)];
+            (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings];
     } else if (projectType == "odo") {
         const componentName: string = await getComponentName(projectName);
 
@@ -439,6 +435,19 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         odoProjectInfo.appBaseURL = appBaseURL;
                         odoProjectInfo.compositeAppName = appName;
                         await projectsController.saveProjectInfo(projectID, odoProjectInfo, true);
+                    }
+                    else {
+                        // Retrieve the internal port from the project
+                        const updatedProjectInfo: ProjectInfo = operation.projectInfo;
+                        const servicePort = parseInt(containerInfo.internalPort, 10);
+
+                        // Expose an ingress for the project
+                        const baseURL = await kubeutil.exposeOverIngress(projectID, operation.projectInfo.isHttps, servicePort);
+
+                        // Set the appBaseURL to the ingress we exposed earlier
+                        projectInfo.appBaseURL = baseURL;
+                        updatedProjectInfo.appBaseURL = baseURL;
+                        await projectsController.saveProjectInfo(projectID, updatedProjectInfo, true);
                     }
                 } catch (err) {
                     logger.logProjectError(err, projectID, projectName);
@@ -1514,7 +1523,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             }
 
             // Add the missing labels to the chart
-            await processManager.spawnDetachedAsync(buildInfo.projectID, "bash", ["/file-watcher/scripts/kubeScripts/modify-helm-chart.sh", deploymentFile, serviceFile, buildInfo.containerName], {});
+            await processManager.spawnDetachedAsync(buildInfo.projectID, "bash", ["/file-watcher/scripts/kubeScripts/modify-helm-chart.sh", deploymentFile, serviceFile, buildInfo.containerName, buildInfo.projectID], {});
         }
         catch (err) {
             logger.logProjectError("Error modifying the chart to add the necessary labels", buildInfo.projectID);
@@ -1936,10 +1945,21 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
 
         const logs = await getProjectLogs(projectInfo);
         projectEvent.logs = logs;
+
+        // Expose an ingress for the project
+        const servicePort = parseInt(containerInfo.internalPort, 10);
+        const baseURL = await kubeutil.exposeOverIngress(projectID, operation.projectInfo.isHttps, servicePort);
+
+        // Set the appBaseURL to the ingress URL of the project
+        const updatedProjectInfo: ProjectInfo = operation.projectInfo;
+        projectEvent.appBaseURL = baseURL;
+        updatedProjectInfo.appBaseURL = baseURL;
+        await projectsController.saveProjectInfo(projectID, updatedProjectInfo, true);
     } catch (err) {
         logger.logProjectError(err, projectID, projectName);
         projectEvent.error = err;
     }
+
     keyValuePair.key = "sentProjectInfo";
     keyValuePair.value = true;
     await projectsController.updateProjectInfo(projectID, keyValuePair);

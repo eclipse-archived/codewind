@@ -16,6 +16,7 @@ source /file-watcher/scripts/kubeScripts/kube-utils.sh
 deploymentFile=$1
 serviceFile=$2
 releaseName=$3
+projectID=$4
 
 function addOwnerReference() {
     local filename="$1"
@@ -24,9 +25,12 @@ function addOwnerReference() {
     yq w -i $filename -- metadata.ownerReferences[$index].blockOwnerDeletion true
     yq w -i $filename -- metadata.ownerReferences[$index].controller true
     yq w -i $filename -- metadata.ownerReferences[$index].kind ReplicaSet
-    yq w -i $filename -- metadata.ownerReferences[$index].name $OWNER_REF_NAME
-    yq w -i $filename -- metadata.ownerReferences[$index].uid $OWNER_REF_UID
+    yq w -i $filename -- metadata.ownerReferences[$index].name $PFE_NAME
+    yq w -i $filename -- metadata.ownerReferences[$index].uid $PFE_UID
 }
+
+export PFE_NAME=$( kubectl get rs --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath='{.items[0].metadata.name}' )
+export PFE_UID=$( kubectl get rs --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath='{.items[0].metadata.uid}' )
 
 # Set the name of the deployment and service to the release name
 concatenatedReleaseName=$(echo $releaseName | head -c 62 | sed 's/\-$//')
@@ -36,6 +40,11 @@ yq w -i $serviceFile -- metadata.name $concatenatedReleaseName
 # Add the missing labels to the deployment
 yq w -i $deploymentFile -- metadata.labels.release $releaseName
 yq w -i $deploymentFile -- spec.template.metadata.labels.release $releaseName
+
+# Add the project ID label to the service and deployment
+yq w -i $serviceFile -- metadata.labels.projectID $projectID
+yq w -i $deploymentFile -- metadata.labels.projectID $projectID
+yq w -i $deploymentFile -- spec.template.metadata.labels.projectID $projectID
 
 # Add owner reference for deletion when workspace is deleted
 addOwnerReference $deploymentFile

@@ -22,7 +22,6 @@ MAVEN_M2_CACHE=.m2/repository
 FOLDER_NAME=${11}
 DEPLOYMENT_REGISTRY=${12}
 MAVEN_SETTINGS=${13}
-TURBINE_SYNC=${14}
 
 WORKSPACE=/codewind-workspace
 LOG_FOLDER=$WORKSPACE/.logs/"$FOLDER_NAME"
@@ -44,7 +43,7 @@ echo "*** FOLDER_NAME = $FOLDER_NAME"
 echo "*** LOG_FOLDER = $LOG_FOLDER"
 echo "*** DEPLOYMENT_REGISTRY = $DEPLOYMENT_REGISTRY"
 echo "*** MAVEN_SETTINGS = $MAVEN_SETTINGS"
-echo "*** TURBINE_SYNC = $TURBINE_SYNC"
+
 
 # Import general constants
 source /file-watcher/scripts/constants.sh
@@ -191,7 +190,7 @@ function deployK8() {
 	fi
 
 	# Add the necessary labels and serviceaccount to the chart
-	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project
+	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project $PROJECT_ID
 
 	# Add the iterative-dev functionality to the chart
 	/file-watcher/scripts/kubeScripts/add-iterdev-to-chart.sh $deploymentFile "$projectName" "/scripts/new_entrypoint.sh"
@@ -294,25 +293,16 @@ function dockerRun() {
 		$IMAGE_COMMAND rm -f $project
 	fi
 
-	if [ "$TURBINE_SYNC" == "true" ]; then
-		echo -e "Turbine sync set to $TURBINE_SYNC. Running docker run command without volume mounts"
-		$IMAGE_COMMAND run --network=codewind_network \
-			--entrypoint "/scripts/new_entrypoint.sh" \
-			--name $project \
-			-v "$workspace/.logs":/root/logs \
-			--expose 8080 -p 127.0.0.1::$DEBUG_PORT -P -dt $project
-		if [ $? -eq 0 ]; then
-			echo -e "Copying over source files"
-			docker cp "$WORKSPACE/$projectName" $project:/root/app
-		fi
-	else
-		$IMAGE_COMMAND run --network=codewind_network \
-			--entrypoint "/scripts/new_entrypoint.sh" \
-			--name $project \
-			-v "$workspace/$projectName":/root/app \
-			-v "$workspace/.logs":/root/logs \
-			--expose 8080 -p 127.0.0.1::$DEBUG_PORT -P -dt $project
+	$IMAGE_COMMAND run --network=codewind_network \
+		--entrypoint "/scripts/new_entrypoint.sh" \
+		--name $project \
+		-v "$workspace/.logs":/root/logs \
+		--expose 8080 -p 127.0.0.1::$DEBUG_PORT -P -dt $project
+	if [ $? -eq 0 ]; then
+		echo -e "Copying over source files"
+		docker cp "$WORKSPACE/$projectName" $project:/root/app
 	fi
+
 }
 
 function deployLocal() {

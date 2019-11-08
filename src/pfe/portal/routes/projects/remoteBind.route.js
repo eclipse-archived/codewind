@@ -16,7 +16,6 @@ const buffer = require('buffer');
 const zlib = require("zlib");
 const { promisify } = require('util');
 const inflateAsync = promisify(zlib.inflate);
-const exec = promisify(require('child_process').exec);
 const cwUtils = require('../../modules/utils/sharedFunctions');
 const Logger = require('../../modules/utils/Logger');
 const Project = require('../../modules/Project');
@@ -24,6 +23,7 @@ const ProjectInitializerError = require('../../modules/utils/errors/ProjectIniti
 const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
 const log = new Logger(__filename);
+const { validateReq } = require('../../middleware/reqValidator');
 
 /**
  * API Function to begin binding a given project that is not currently
@@ -37,7 +37,6 @@ const log = new Logger(__filename);
  * @return 409 if the project path or name are already in use
  * @return 500 if there was an error
  */
-router.post('/api/v1/projects/remote-bind/start', async function (req, res) {await bindStart(req, res)});
 router.post('/api/v1/projects/bind/start', async function (req, res) {await bindStart(req, res)});
 
 async function bindStart(req, res) {
@@ -114,7 +113,6 @@ async function bindStart(req, res) {
 
   try {
     let tempDirName = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE);
-    await fs.mkdir(tempDirName);
     let dirName = path.join(newProject.workspace, newProject.name);
     await fs.mkdir(dirName);
     let tempProjPath = path.join(tempDirName, newProject.name);
@@ -122,8 +120,6 @@ async function bindStart(req, res) {
 
     newProject.workspaceDir = dirName;
     log.debug(`Creating directory in ${dirName} and ${tempDirName}`);
-
-    user.uiSocket.emit('projectBind', { status: 'success', ...newProject });
     log.info(`Successfully created project - name: ${newProject.name}, ID: ${newProject.projectID}`);
 
   } catch (err) {
@@ -147,7 +143,6 @@ async function bindStart(req, res) {
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
-router.put('/api/v1/projects/:id/remote-bind/upload', async (req, res) => {await uploadFile(req,res)});
 router.put('/api/v1/projects/:id/upload', async (req, res) => {await uploadFile(req,res)});
 
 async function uploadFile(req, res) {
@@ -186,11 +181,6 @@ async function uploadFile(req, res) {
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
-// TODO - This is very crude, we should replace it with a more sophisticated
-// mechanism to only delete files that don't exist on the local end.
-
-
-
 router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   const projectID = req.sanitizeParams('id');
   const keepFileList = req.sanitizeBody('fileList');
@@ -219,7 +209,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
           `${filesToDelete.join(', ')}`);
         // remove the file from pfe container
         await Promise.all(
-          filesToDelete.map(oldFile => exec(`rm -rf ${path.join(pathToTempProj, oldFile)}`))
+          filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(pathToTempProj, oldFile)))
         );
         res.sendStatus(200);
 
@@ -241,9 +231,9 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
   if (project.buildStatus != "inProgress") {
     const globalProjectPath = path.join(project.workspace, project.name);
     // We now need to remove any files that have been deleted from the global workspace
-    await Promise.all(filesToDelete.map(oldFile => exec(`rm -rf ${path.join(globalProjectPath, oldFile)}`)));
+    await Promise.all(filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(globalProjectPath, oldFile))));
     // now move temp project to real project
-    await cwUtils.copyProject(pathToTempProj, project.workspace);
+    await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory));
     let projectRoot = getProjectSourceRoot(project);
     // need to delete from the build container as well
     if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
@@ -276,7 +266,7 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
   } else {
     // if a build is in progress, wait 5 seconds and try again
     await cwUtils.timeout(5000)
-     await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
+    await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
   }
 }
 
@@ -345,7 +335,6 @@ function getProjectSourceRoot(project) {
  * @return 404 if the project was not found
  * @return 500 if there was an error
  */
-router.post('/api/v1/projects/:id/remote-bind/end', async function (req, res) {await bindEnd(req, res)});
 router.post('/api/v1/projects/:id/bind/end', async function (req, res) {await bindEnd(req, res)});
 
 async function bindEnd(req, res) {
@@ -362,13 +351,14 @@ async function bindEnd(req, res) {
 
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     // now move temp project to real project
-    await cwUtils.copyProject(pathToCopy, project.workspace);
+    await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory));
 
     let updatedProject = {
       projectID,
       state: Project.STATES.open,
       startMode: 'run' // always use 'run' mode for new or recently re-opened projects
     }
+    user.uiSocket.emit('projectStatusChanged', updatedProject);
     await user.projectList.updateProject(updatedProject);
     await user.buildAndRunProject(project);
     res.status(200).send(project);
@@ -386,5 +376,43 @@ async function bindEnd(req, res) {
     user.uiSocket.emit('projectBind', data);
   }
 }
+
+/**
+ * API Function to unbind a given project
+ * @param id, the id of the project to delete
+ * @return 202 if project deletion was accepted
+ * @return 404 if the project with id was not found
+ * @return 409 if unbind was already in progress
+ */
+router.post('/api/v1/projects/:id/unbind', validateReq, async function (req, res) {
+  const user = req.cw_user;
+  // Null checks on projectID done by validateReq.
+  const projectID = req.sanitizeParams('id');
+  try {
+    const project = user.projectList.retrieveProject(projectID);
+    if (!project) {
+      res.status(404).send(`Unable to find project ${projectID}`);
+    } else if (project.isDeleting()) {
+      res.status(409).send(`Delete for project ${projectID} already requested`);
+    } else {
+      // Set an action of deleting
+      await user.projectList.updateProject({
+        projectID: projectID,
+        action: Project.STATES.deleting,
+      });
+      res.status(202).send(`Project ${projectID} delete request accepted`);
+      log.debug(`Requesting deletion of project ${project.name} (${projectID})`);
+      await user.unbindProject(project);
+    }
+  } catch (err) {
+    const data = {
+      projectID,
+      status: 'failed',
+      error: err.message
+    }
+    user.uiSocket.emit('projectDeletion', data);
+    log.error(`Error deleting project: ${util.inspect(data)}`);
+  }
+});
 
 module.exports = router;

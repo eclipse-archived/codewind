@@ -23,6 +23,15 @@ After you build Codewind with the build scripts, you can build one of the IDEs f
 - For Eclipse, see "Building" in the [`codewind-eclipse` repository](https://github.com/eclipse/codewind-eclipse/blob/master/README.md).
 - For VS Code, see "Building Codewind from the source" in the [`codewind-vscode` repository](https://github.com/eclipse/codewind-vscode/blob/master/README.md).
 
+## Developing - Attaching a Node.js debugger in VSCode
+Codewind contains two debugging tools for VSCode in the `.vscode/launch.json` file.
+To use these you should:
+1. Clone the `codewind` repository.
+2. Copy the `src/pfe/devbuild-example.env` file to `src/pfe/devbuild.env` to turn on the Node.js inspect (See `src/pfe/package.json`).
+3. Run the `./run.sh` script to build and start Codewind.
+4. Open the Codewind directory in VSCode (Something like `code github/codewind`).
+5. Open the debugging tab and select one of the debugging options.
+
 ## Contributing
 We welcome submitting issues and contributions.
 1. [Submitting bugs](https://github.com/eclipse/codewind/issues)

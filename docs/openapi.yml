@@ -90,7 +90,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Project'
- 
+
   /api/v1/projects/{id}/build:
     post:
       summary: Build a given project
@@ -563,6 +563,7 @@ paths:
                       enum: ['&', '/', '?', '%', '*', ':', '|', '<', '>', ' ']
         500:
           description: if error occurred
+
   /api/v1/projects/{id}/logs/{type}/{name}:
     post:
       summary: Start streaming one log for a given project
@@ -630,7 +631,7 @@ paths:
         404:
           description: if the project with id was not found
         500:
-          description: if an error occurred
+          description: if an error occurred        
 
   /api/v1/projects/{id}/metrics:
     get:
@@ -1241,6 +1242,29 @@ paths:
         500:
           description: if an error occurred
 
+  /api/v1/ignoredPaths:
+    get:
+      summary: Get the ignoredPaths for a projectType
+      parameters:
+        - name: projectType
+          in: query
+          schema:
+            $ref: '#/components/schemas/ProjectType'
+          required: true
+          description: Type of project
+      responses:
+       200:
+          description: The build type for the project. Built-in types are 'liberty', 'spring', 'swift', 'nodejs', and 'docker'.
+          content:
+            application/json:
+                schema:
+                  type: array
+                  items:
+                    type: string
+                    example: "/Dockerfile-tools"
+       500:
+          description: Internal Server Error
+
 components:
   schemas:
     Project:
@@ -1344,7 +1368,7 @@ components:
           example: "python"
         url:
           type: string
-          example: "https://github.com/microclimate-dev2ops/SVTPythonTemplate"
+          example: "https://github.com/codewind-resources/pythonTemplate"
         projectType:
           type: string
           example: "docker"
@@ -1388,7 +1412,7 @@ components:
         url:
           description: url of the modified template repository
           type: string
-          example: https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json
+          example: https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json
         value:
           type: string
           example: 'true'

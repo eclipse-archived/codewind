@@ -47,45 +47,46 @@ module.exports = class ExtensionList {
     
     for (let entry of entries) {
       
-        let match;
+      let match;
   
-        // look for files with names matching the expected pattern
-        if (entry.isFile() && (match = extensionsPattern.exec(entry.name))) {
+      // look for files with names matching the expected pattern
+      if (entry.isFile() && (match = extensionsPattern.exec(entry.name))) {
           
-          const name = match[1];
-          const version = match[2];
+        const name = match[1];
+        const version = match[2];
 
-          if ((name == odoExtensionName) && (process.env.ON_OPENSHIFT != 'true')) {
-            continue;
-          }
+        if ((name == odoExtensionName) && (process.env.ON_OPENSHIFT != 'true')) {
+          continue;
+        }
 
-          const source = path.join(extensionsDir, entry.name);
-          const target = path.join(targetDir, name);
-          const targetWithVersion = target + '-' + version;
+        const source = path.join(extensionsDir, entry.name);
+        const target = path.join(targetDir, name);
+        const targetWithVersion = target + '-' + version;
 
-          try {
-            if (await prepForUnzip(target, version)) {
-              await exec(`unzip ${source} -d ${targetDir}`);
+        try {
+          if (await prepForUnzip(target, version)) {
+            await exec(`unzip ${source} -d ${targetDir}`);
               
-              if (name == odoExtensionName) {
-                await exec(`mkdir -p ${targetWithVersion}/bin`);
-                await exec(`mv ${odoBinarySource} ${targetWithVersion}/bin/odo && chmod +x ${targetWithVersion}/bin/odo`);
-              }
-
-              // top-level directory in zip will have the version suffix
-              // rename to remove the version
-              await fs.rename(targetWithVersion, target);
+            if (name == odoExtensionName) {
+              await fs.ensureDir(`${targetWithVersion}/bin`);
+              await fs.move(odoBinarySource, `${targetWithVersion}/bin/odo`); 
+              await fs.chmod(`${targetWithVersion}/bin/odo`, '755');
             }
-          }
-          catch (err) {
-            log.warn(`Failed to install ${entry.name}`);
-            log.warn(err);
-          }
-          finally {
-            // to be safe, try to remove directory with version name if it still exist
-            await utils.forceRemove(targetWithVersion);
+
+            // top-level directory in zip will have the version suffix
+            // rename to remove the version
+            await fs.rename(targetWithVersion, target);
           }
         }
+        catch (err) {
+          log.warn(`Failed to install ${entry.name}`);
+          log.warn(err);
+        }
+        finally {
+          // to be safe, try to remove directory with version name if it still exist
+          await utils.forceRemove(targetWithVersion);
+        }
+      }
     }
   }
 

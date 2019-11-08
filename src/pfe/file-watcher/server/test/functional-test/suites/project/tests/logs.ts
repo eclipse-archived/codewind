@@ -50,34 +50,14 @@ export function logsTest(socket: SocketIO, projData: ProjectCreation): void {
             expect(info.statusCode);
             expect(info.statusCode).to.equal(200);
             expect(info.logs);
-            expect(info.logs).to.haveOwnProperty("build");
-            expect(info.logs.build).to.haveOwnProperty("origin");
-            expect(info.logs.build).to.haveOwnProperty("files");
-            expect(info.logs.build.files[0].indexOf(projData.projectID) > -1);
-            expect(info.logs).to.haveOwnProperty("app");
-            expect(info.logs.app).to.haveOwnProperty("origin");
-            expect(info.logs.app).to.haveOwnProperty("files");
-            expect(info.logs.app.files[0].indexOf(projData.projectID) > -1);
 
-            if (log_configs.logFileMappings[projData.projectType]) {
-                const actualBuildLogFiles = log_configs.logFileMappings[projData.projectType].build;
-                const actualAppLogFiles = log_configs.logFileMappings[projData.projectType].app;
-
-                const expectedBuildLogFiles = info.logs.build.files;
-                for (const logFile of expectedBuildLogFiles) {
-                    const tokens = logFile.split("/");
-                    const fileName = tokens[tokens.length - 1];
-                    expect(_.includes(actualBuildLogFiles, fileName));
-                }
-
-                const expectedAppLogFiles = info.logs.app.files;
-                for (const logFile of expectedAppLogFiles) {
-                    const tokens = logFile.split("/");
-                    const fileName = tokens[tokens.length - 1];
-                    expect(_.includes(actualAppLogFiles, fileName));
-                }
+            for (const logType of log_configs.logTypes) {
+                expect(info.logs).to.haveOwnProperty(logType);
+                expect(info.logs[logType]).to.be.an.instanceof(Array);
+                expect(info.logs[logType].length).to.equal(log_configs.logFileMappings[projData.projectType][logType].length);
+                expect(_.isMatch(info.logs[logType], log_configs.logFileMappings[projData.projectType][logType]));
             }
-        });
+        }).timeout(timeoutConfigs.defaultTimeout);
     });
 
     describe("checkNewLogFile function", () => {
@@ -123,19 +103,9 @@ export function logsTest(socket: SocketIO, projData: ProjectCreation): void {
                 expect(info.logs.type).to.equal(logType);
                 expect(info.logs).to.haveOwnProperty(logType);
                 expect(info.logs[logType]);
-                expect(info.logs[logType]).to.haveOwnProperty("origin");
-                expect(info.logs[logType]).to.haveOwnProperty("files");
-                expect(info.logs[logType].files[0].indexOf(projData.projectID) > -1);
-
-                if (log_configs.logFileMappings[projData.projectType]) {
-                    const actualFiles = log_configs.logFileMappings[projData.projectType][logType];
-                    const expectedFiles = info.logs[logType].files;
-                    for (const logFile of expectedFiles) {
-                        const tokens = logFile.split("/");
-                        const fileName = tokens[tokens.length - 1];
-                        expect(_.includes(actualFiles, fileName));
-                    }
-                }
+                expect(info.logs[logType]).to.be.an.instanceof(Array);
+                expect(info.logs[logType].length).to.equal(log_configs.logFileMappings[projData.projectType][logType].length);
+                expect(_.isMatch(info.logs[logType], log_configs.logFileMappings[projData.projectType][logType]));
 
                 const targetEvent = eventConfigs.events.logsListChanged;
                 const returnData = info.logs;
