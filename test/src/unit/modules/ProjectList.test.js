@@ -12,20 +12,24 @@ global.codewind = { RUNNING_IN_K8S: false };
 
 const fs = require('fs-extra');
 const path = require('path');
-const Project = require('../../../../src/pfe/portal/modules/Project');
-const ProjectList = require('../../../../src/pfe/portal/modules/ProjectList');
-const ProjectListError = require('../../../../src/pfe/portal/modules/utils/errors/ProjectListError');
-
+const rewire = require('rewire');
 const assert = require('assert');
 const chai = require('chai');
 const chaiSubset = require('chai-subset');
 const chaiAsPromised = require('chai-as-promised');
+
+const Project = rewire('../../../../src/pfe/portal/modules/Project');
+const ProjectList = rewire('../../../../src/pfe/portal/modules/ProjectList');
+const ProjectListError = require('../../../../src/pfe/portal/modules/utils/errors/ProjectListError');
+const { suppressLogOutput } = require('../../../modules/log.service');
+
 chai.use(chaiSubset);
 chai.use(chaiAsPromised);
 chai.should();
 
-
 describe('ProjectList.js', () => {
+    suppressLogOutput(Project);
+    suppressLogOutput(ProjectList);
     before(() => {
         global.codewind = { CODEWIND_WORKSPACE: `${__dirname}/projectlist_temp` };
         fs.ensureDirSync(global.codewind.CODEWIND_WORKSPACE);
@@ -33,7 +37,7 @@ describe('ProjectList.js', () => {
     after(() => {
         fs.removeSync(global.codewind.CODEWIND_WORKSPACE);
     });
-    describe('new ProjectList', () => {
+    describe('new ProjectList()', () => {
         it('Initialises a new, empty ProjectList', () => {
             const projectList = new ProjectList();
             projectList.should.be.an('object');
@@ -45,17 +49,16 @@ describe('ProjectList.js', () => {
             const projectList = new ProjectList();
             const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
             projectList.addProject(project);
-            const list = projectList.list;
+            const { list } = projectList;
             list.should.not.eql({});
             Object.keys(list).length.should.equal(1);
             list.should.have.property(project.projectID);
-            
         });
         it('Throws an error as the project already exists', () => {
             const projectList = new ProjectList();
             const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
             projectList.addProject(project);
-            const list = projectList.list;
+            const { list } = projectList;
             list.should.not.eql({});
             Object.keys(list).length.should.equal(1);
             list.should.have.property(project.projectID);
@@ -77,7 +80,7 @@ describe('ProjectList.js', () => {
             const exists = projectList.projectNameExists('random');
             exists.should.be.false;
         });
-        it('Returns false as project name does not exist', () => {
+        it('Returns false as a project with the name "random" is not in the ProjectList', () => {
             const projectList = new ProjectList();
             const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
             projectList.addProject(project);
@@ -86,11 +89,11 @@ describe('ProjectList.js', () => {
         });
     });
     describe('removeProject(id)', () => {
-        it('Creates a new Project and removes it from the ProjectList', () => {
+        it('Removes a project from the ProjectList', () => {
             const projectList = new ProjectList();
             const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
             projectList.addProject(project);
-            const list = projectList.list;
+            const { list } = projectList;
             list.should.have.property(project.projectID);
 
             projectList.removeProject(project.projectID);
@@ -98,7 +101,7 @@ describe('ProjectList.js', () => {
             Object.keys(list).length.should.equal(0);
             list.should.not.have.property(project.projectID);
         });
-        it('Throws an error as the project does not exist', () => {
+        it('Throws an error as a project with the projectID "123" is not in the ProjectList', () => {
             const projectList = new ProjectList();
             const id = '123';
             const error = new ProjectListError('NOT_FOUND', id);
@@ -110,17 +113,16 @@ describe('ProjectList.js', () => {
             const projectList = new ProjectList();
             const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
             projectList.addProject(project);
-            const list = projectList.list;
+            const { list } = projectList;
             list.should.have.property(project.projectID);
 
             const retrievedProject = projectList.retrieveProject(project.projectID);
             retrievedProject.should.deep.equal(project);
         });
-        it('Receives undefined as project does not exist', () => {
+        it('Receives undefined as project with the projectID "123" is not in the ProjectList', () => {
             const projectList = new ProjectList();
             const id = '123';
             const retrievedProject = projectList.retrieveProject(id);
-            /*eslint no-undef: "error"*/
             // eslint-disable-next-line no-undefined
             assert.equal(retrievedProject, undefined);
         });
@@ -201,7 +203,7 @@ describe('ProjectList.js', () => {
             const func = () => projectList.reloadSettingsFile({ projectID: '123' });
             return func().should.be.rejectedWith('NOT_FOUND', '123');
         });
-        it('Reloads a project by reading from its .cw-settings file and picks up a new field', async() => {
+        it('Reloads a project by reading from its .cw-settings file. A field found in .cw-settings is added to the project object', async() => {
             const projectList = new ProjectList();
             const project = new Project({ name: 'reloadNewField' }, global.codewind.CODEWIND_WORKSPACE);
             
@@ -223,7 +225,7 @@ describe('ProjectList.js', () => {
             reloadedProject.should.haveOwnProperty('newField').and.equal('NEW');
             fs.existsSync(projectInfPath).should.be.true; 
         });
-        it('Reloads a project by reading from its .cw-settings file and ignores a field name projectID (Don\'t overwrite projectID)', async() => {
+        it('Reloads a project by reading from its .cw-settings file and ignores the projectID property (Don\'t overwrite projectID)', async() => {
             const projectList = new ProjectList();
             const project = new Project({ name: 'reloadProjectID' }, global.codewind.CODEWIND_WORKSPACE);
             
