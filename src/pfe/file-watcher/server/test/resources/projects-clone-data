@@ -1,7 +1,7 @@
-codewindtestpython=https://github.com/microclimate-dev2ops/SVTPythonTemplate
-codewindtestgo=https://github.com/microclimate-dev2ops/microclimateGoTemplate
-codewindtestlagom=https://github.com/microclimate-dev2ops/lagomJavaTemplate
-codewindtestspring=https://github.com/microclimate-dev2ops/springJavaTemplate
-codewindtestliberty=https://github.com/microclimate-dev2ops/javaMicroProfileTemplate
-codewindtestnodejs=https://github.com/microclimate-dev2ops/nodeExpressTemplate
-codewindtestswift=https://github.com/microclimate-dev2ops/swiftTemplate
+codewindtestpython=https://github.com/codewind-resources/pythonTemplate
+codewindtestgo=https://github.com/codewind-resources/goTemplate
+codewindtestlagom=https://github.com/codewind-resources/lagomJavaTemplate
+codewindtestspring=https://github.com/codewind-resources/springJavaTemplate
+codewindtestliberty=https://github.com/codewind-resources/javaMicroProfileTemplate
+codewindtestnodejs=https://github.com/codewind-resources/nodeExpressTemplate
+codewindtestswift=https://github.com/codewind-resources/swiftTemplate
