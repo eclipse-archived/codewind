@@ -395,7 +395,7 @@ export async function installChart(projectID: string, deploymentName: string, ch
     return response;
 }
 
-export async function exposeOverIngress(projectID: string, projectName: string, ingressDomain: string, isHTTPS: boolean, appPort?: number): Promise<string> {
+export async function exposeOverIngress(projectID: string, isHTTPS: boolean, appPort?: number): Promise<string> {
     let ownerReferenceName: string;
     let ownerReferenceUID: string;
     let serviceName: string;
@@ -423,9 +423,26 @@ export async function exposeOverIngress(projectID: string, projectName: string, 
         throw err;
     }
 
+    // Calculate the ingress domain
+    // Thanks to Kubernetes and Ingress, some ingress controllers impose a character limitation on the host name, so:
+    // If the ingress domain prefix is < 62 characters, trim the resultant app's ingress domain to fit within the limit
+    // If the ingress domain prefix is >= 62 characters, don't trim, as the character limit likely doesn't apply here.
+    const ingressPrefix = process.env.INGRESS_PREFIX;
+    const ingressPrefixLength = ingressPrefix.length;
+    let ingressDomain: string;
+    if (ingressPrefixLength < 62) {
+        // Since we include a dash, calculate the difference between 62 chars and the prefix
+        const spaceRemaining = 62 - ingressPrefixLength;
+        ingressDomain = serviceName.substring(0, spaceRemaining) + "-" + ingressPrefix;
+    } else {
+        ingressDomain = serviceName + "-" + ingressPrefix;
+    }
+
+    logger.logProjectInfo("*** Ingress: " + ingressDomain, projectID);
+
     try {
-        // Ingress doesn't exist, so create one.
-        const ingressName = "cw-" + projectName + "-" + projectID;
+        // Re-use the unique service name as the ingress name
+        const ingressName = serviceName;
 
         // Create an ingress resource for the specified service name and port
         const ingress = {
