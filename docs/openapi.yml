@@ -1412,7 +1412,7 @@ components:
         url:
           description: url of the modified template repository
           type: string
-          example: https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json
+          example: https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json
         value:
           type: string
           example: 'true'
