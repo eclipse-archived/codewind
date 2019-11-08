@@ -33,7 +33,7 @@ describe('watchList and file-changes route tests', function() {
         workspace_location = await projectService.findWorkspaceLocation();
         const createOption = {
             projectName,
-            url: 'https://github.com/microclimate-dev2ops/SVTPythonTemplate',
+            url: 'https://github.com/codewind-resourcess/pythonTemplate',
             parentPath: workspace_location,
         };
         const res = await projectService.createProjectFromTemplate(createOption);

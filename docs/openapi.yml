@@ -1368,7 +1368,7 @@ components:
           example: "python"
         url:
           type: string
-          example: "https://github.com/microclimate-dev2ops/SVTPythonTemplate"
+          example: "https://github.com/codewind-resources/pythonTemplate"
         projectType:
           type: string
           example: "docker"
@@ -1412,7 +1412,7 @@ components:
         url:
           description: url of the modified template repository
           type: string
-          example: https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json
+          example: https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json
         value:
           type: string
           example: 'true'

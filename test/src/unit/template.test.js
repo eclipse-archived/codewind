@@ -230,7 +230,7 @@ describe('Templates.js', function() {
         describe('when providers list valid repos', function() {
             let templateController;
             const validCodewindRepo = {
-                url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
+                url: 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
                 description: 'valid Codewind repo',
             };
             before(() => {
@@ -390,7 +390,7 @@ describe('Templates.js', function() {
             });
             describe('(<validUrlPointingToIndexJson>, <validDesc>, <validName>)', function() {
                 it('succeeds', async function() {
-                    const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
+                    const url = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/1d3b31a32ecbc05a0a0e85950cccde368d532964/devfiles/index.json';
                     const func = () => templateController.addRepository(url, 'description', 'name');
                     await (func().should.not.be.rejected);
                     templateController.repositoryList.should.containSubset([{
@@ -408,7 +408,7 @@ describe('Templates.js', function() {
             });
             describe('(<validUrlUnprotected>, <validDesc>, <validName>)', function() {
                 it('succeeds', async function() {
-                    const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json';
+                    const url = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/1d3b31a32ecbc05a0a0e85950cccde368d532964/devfiles/index.json';
                     const isRepoProtected = false;
                     const func = () => templateController.addRepository(url, 'description', 'name', isRepoProtected);
                     await (func().should.not.be.rejected);
@@ -430,7 +430,7 @@ describe('Templates.js', function() {
         describe('repo with name and description in templates.json', () => {
             describe('(<validUrl>, <ValidDesc>, <ValidName>)', function() {
                 it('succeeds, and allows the user to set the name and description', async function() {
-                    const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
+                    const url = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json';
                     const func = () => templateController.addRepository(url, 'description', 'name', false);
                     await (func().should.not.be.rejected);
                     templateController.repositoryList.should.containSubset([{ ...sampleRepos.codewind,
@@ -442,7 +442,7 @@ describe('Templates.js', function() {
             });
             describe('(repo with templates.json, <validUrl>, <NoDesc>, <NoName>)', function() {
                 it('succeeds, and gets the name and description from templates.json', async function() {
-                    const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json';
+                    const url = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json';
                     const func = () => templateController.addRepository(url, '', '', false);
                     await (func().should.not.be.rejected);
                     templateController.repositoryList.should.containSubset([{ ...sampleRepos.codewind, protected: false }]);
