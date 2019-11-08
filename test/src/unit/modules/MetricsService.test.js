@@ -50,7 +50,7 @@ describe('MetricsService.js', () => {
         "dependencies": {
             "body-parser": "^1.18.3",
             "express": "^4.16.4",
-            "appmetrics-prometheus": "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint",
+            "appmetrics-prometheus": "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#appmetrics-codewind",
             "cors": "^2.8.5"
         }
         /* eslint-enable quote-props, quotes, comma-dangle */
