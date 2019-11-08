@@ -72,7 +72,7 @@ const defaultCodewindTemplates = [
         label: 'WebSphere Liberty MicroProfile®',
         description: 'Eclipse MicroProfile® on Websphere Liberty',
         language: 'java',
-        url: 'https://github.com/microclimate-dev2ops/javaMicroProfileTemplate',
+        url: 'https://github.com/codewind-resources/javaMicroProfileTemplate',
         projectType: 'liberty',
         source: 'Default templates',
     },
@@ -255,7 +255,7 @@ const styledTemplates = {
 
 const sampleRepos = {
     codewind: {
-        url: 'https://raw.githubusercontent.com/kabanero-io/codewind-templates/master/devfiles/index.json',
+        url: 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json',
         description: 'The default set of templates for new projects in Codewind.',
         enabled: true,
         protected: true,

@@ -49,47 +49,47 @@ const pathToApiSpec = path.resolve(__dirname, '../../docs/openapi.yml');
 const templateOptions = {
     nodejs: {
         name: 'nodeExpressTemplate',
-        url: 'https://github.com/microclimate-dev2ops/nodeExpressTemplate',
+        url: 'https://github.com/codewind-resources/nodeExpressTemplate',
         language: 'nodejs',
         metricsAvailable: true,
     },
     liberty: {
         name: 'javaMicroProfileTemplate',
-        url: 'https://github.com/microclimate-dev2ops/javaMicroProfileTemplate',
+        url: 'https://github.com/codewind-resources/javaMicroProfileTemplate',
         language: 'java',
         metricsAvailable: true,
     },
     spring: {
         name: 'springJavaTemplate',
-        url: 'https://github.com/microclimate-dev2ops/springJavaTemplate',
+        url: 'https://github.com/codewind-resources/springJavaTemplate',
         language: 'java',
         metricsAvailable: true,
     },
     docker: {
         name: 'pythonTemplate',
-        url: 'https://github.com/microclimate-dev2ops/SVTPythonTemplate',
+        url: 'https://github.com/codewind-resources/pythonTemplate',
         language: 'unknown',
     },
     swift: {
         name: 'swiftTemplate',
-        url: 'https://github.com/microclimate-dev2ops/swiftTemplate',
+        url: 'https://github.com/codewind-resources/swiftTemplate',
         language: 'swift',
         metricsAvailable: true,
     },
     go: {
         name: 'goTemplate',
-        url: 'https://github.com/microclimate-dev2ops/microclimateGoTemplate',
+        url: 'https://github.com/codewind-resources/goTemplate',
         language: 'go',
         metricsAvailable: false,
     },
     lagom: {
         name: 'javaLagomTemplate',
-        url: 'https://github.com/microclimate-dev2ops/lagomJavaTemplate',
+        url: 'https://github.com/codewind-resources/lagomJavaTemplate',
         language: 'java',
     },
     openliberty: {
         name: 'openLibertyTenplate',
-        url: 'https://github.com/microclimate-dev2ops/openLibertyTemplate',
+        url: 'https://github.com/codewind-resources/openLibertyTemplate',
         language: 'java',
     },
 };
