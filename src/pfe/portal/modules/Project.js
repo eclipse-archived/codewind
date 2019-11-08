@@ -92,28 +92,6 @@ module.exports = class Project {
     this.buildLogPath = args.buildLogPath || null;
     this.logStreams = {};
 
-    this.toJSON = function() {
-      // Exclude properties that we don't want to write to the .info file on disk. The
-      // ... spread syntax means that cloneObj gets all the rest of the properties
-      const { logStreams, loadInProgress, loadConfig, ...cloneObj } = this;
-      return cloneObj;
-    }
-
-    this.toSettings = function() {
-      // clone object to prevent accidental modification
-      let obj = {};
-      CW_SETTINGS_PROPERTIES.forEach(function addSettingsProperty(propertyName) {
-        if (propertyName === 'internalPort') {
-          obj.internalPort = this.ports.internalPort || "";
-        } else if (this.hasOwnProperty(propertyName)) {
-          obj[propertyName] = this[propertyName];
-        } else if (this.isValidSettingType(propertyName)) {
-          obj[propertyName] = setDefaultSettingValue(propertyName)
-        }
-      }, this);
-      return obj;
-    }
-
     // Default to open for old projects
     this.state = args.state || STATES.open;
     // Default auto building to true
@@ -123,13 +101,11 @@ module.exports = class Project {
     }
   }
 
-  // for any non-java project, or for a java project built with docker, we do not include "maven properties or "maven profiles" in the
-  // CW Settings file defaults.
-  isValidSettingType(property){
-    if ((this.language !== 'java' || this.projectType === "docker") && property.includes("maven")) {
-      return false;
-    }
-    return true;
+  toJSON() {
+    // Exclude properties that we don't want to write to the .info file on disk. The
+    // ... spread syntax means that cloneObj gets all the rest of the properties
+    const { logStreams, loadInProgress, loadConfig, ...cloneObj } = this;
+    return cloneObj;
   }
 
   async checkIfMetricsAvailable() {
@@ -202,16 +178,12 @@ module.exports = class Project {
     return (/^[a-z0-9]*$/.test(name));
   }
 
-  getSettingsFilePath() {
-    return join(this.projectPath(true), '.cw-settings');
-  }
-
   /**
    * Function to read the project .cw-settings file
    * @return the contents of the file as an object containing key-value pairs
    */
   async readSettingsFile() {
-    const settingsFile = this.getSettingsFilePath();
+    const settingsFile = join(this.projectPath(), '.cw-settings');
     let currentSettings = {};
     if (await fs.pathExists(settingsFile)) {
       currentSettings = await fs.readJson(settingsFile);
@@ -225,8 +197,8 @@ module.exports = class Project {
    */
   async writeInformationFile() {
     let infFileDirectory = join(global.codewind.CODEWIND_WORKSPACE, '/.projects');
+    
     let infFile = join(infFileDirectory, `${this.projectID}.inf`);
-
     await fs.ensureDir(infFileDirectory);
 
     // Write to the file under this projects lock.
@@ -257,29 +229,14 @@ module.exports = class Project {
       //   if (this.ports) this.ports.internalPort = currentSettings.internalPort;
       // }
       await fs.writeJson(infFile, this, { spaces: '  ' });
-      // await this.updateSettingsFileIfNeeded(currentSettings);
+    } catch(err) {
+      console.error(err);
+      
     } finally {
       this.infLockFlag = false;
     }
     // May return before we've finished writing.
     return this;
-  }
-
-  async updateSettingsFileIfNeeded(currentSettings) {
-    // don't write to cw-settings unless the file contents have actually changed
-    let settingsFileNeedsUpdating = false;
-    if (Object.entries(currentSettings).length === 0 && currentSettings.constructor === Object) {
-      settingsFileNeedsUpdating = true;
-    } else {
-      const newSettings = this.toSettings();
-      if (!deepEqual(currentSettings, newSettings)) {
-        settingsFileNeedsUpdating = true;
-      }
-    }
-    if (settingsFileNeedsUpdating) {
-      log.debug(`writeInformationFile: updating ${this.getSettingsFilePath()}`);
-      await fs.writeJson(this.getSettingsFilePath(), this.toSettings(), { spaces: '  ' });
-    }
   }
 
   /**
