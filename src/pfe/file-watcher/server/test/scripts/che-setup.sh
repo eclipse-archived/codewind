@@ -1,4 +1,14 @@
 #!/usr/bin/env bash
+#*******************************************************************************
+# Copyright (c) 2019 IBM Corporation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v2.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v20.html
+#
+# Contributors:
+#     IBM Corporation - initial API and implementation
+#*******************************************************************************
 
 # Colors for success and error messages
 GREEN='\033[0;32m'
@@ -26,6 +36,7 @@ POD_WAIT_TO=1200000
 CHE_USER="admin"
 CHE_PASS="admin"
 DEFAULT_REGISTRY="docker-registry.default.svc:5000"
+ADD_DEFAULT_REGISTRY="n"
 
 function usage {
     me=$(basename $0)
@@ -44,7 +55,8 @@ Options:
     --operator-yaml     Absolute Path to che operator yaml - default: github.com/eclipse/codewind-che-plugin/master/setup/install_che/che-operator/codewind-checluster.yaml
     --service-account   Service account name - default: che-user
     --podreadytimeout   Pod ready timeout - default: 600000
-    --podwaittimeout    Pod wait timeout - default: 1200000 
+    --podwaittimeout    Pod wait timeout - default: 1200000
+    --default-registry  Enable this flag to add the default docker registry - default: n
     -h | --help         Display the man page
 EOF
 }
@@ -102,6 +114,9 @@ while [ "$#" -gt 0 ]; do
                                 ;;
         --clean-deploy )        shift
                                 CLEAN_DEPLOY=$1
+                                ;;
+        --default-registry )    shift
+                                ADD_DEFAULT_REGISTRY=$1
                                 ;;
         --operator-yaml )       shift
                                 OPERATOR_YAML=$1
@@ -192,19 +207,19 @@ git clone https://github.com/eclipse/codewind-odo-extension > /dev/null 2>&1
 displayMsg $? "Failed to install codewind ODO resource." true
 
 echo -e "${BLUE}> Applying kubectl cluster role${RESET}"
-kubectl apply -f "$CODEWIND_CHE/setup/install_che/codewind-clusterrole.yaml"
+kubectl apply -f "$CODEWIND_CHE/setup/install_che/codewind-clusterrole.yaml" > /dev/null 2>&1
 displayMsg $? "Failed to apply kubectl cluster role." true
 
 echo -e "${BLUE}> Applying kubectl role binding${RESET}"
-kubectl apply -f "$CODEWIND_CHE/setup/install_che/codewind-rolebinding.yaml"
+kubectl apply -f "$CODEWIND_CHE/setup/install_che/codewind-rolebinding.yaml" > /dev/null 2>&1
 displayMsg $? "Failed to apply kubectl role binding." true
 
 echo -e "${BLUE}> Applying kubectl ODO cluster role${RESET}"
-kubectl apply -f "$CODEWIND_ODO_EXTENSION/odo-RBAC/codewind-odoclusterrole.yaml"
+kubectl apply -f "$CODEWIND_ODO_EXTENSION/odo-RBAC/codewind-odoclusterrole.yaml" > /dev/null 2>&1
 displayMsg $? "Failed to apply kubectl ODO cluster role." true
 
 echo -e "${BLUE}> Applying kubectl ODO role binding${RESET}"
-kubectl apply -f "$CODEWIND_ODO_EXTENSION/odo-RBAC/codewind-odoclusterrolebinding.yaml"
+kubectl apply -f "$CODEWIND_ODO_EXTENSION/odo-RBAC/codewind-odoclusterrolebinding.yaml" > /dev/null 2>&1
 displayMsg $? "Failed to apply kubectl ODO role binding." true
 
 # if clean deploy is selected
@@ -221,23 +236,24 @@ if [[ $CLEAN_DEPLOY == "y" ]]; then
     installChe
 
     echo -e "${BLUE}> Creating a service account ${RESET}"
-    oc create serviceaccount "$SERVICE_ACCOUNT"
+    oc create serviceaccount "$SERVICE_ACCOUNT" > /dev/null 2>&1
     displayMsg $? "Failed to create service account." true
 fi
 
 echo -e "${BLUE}> Setting openshift admin policy: privileged ${RESET}"
-oc adm policy add-scc-to-group privileged system:serviceaccounts:$CHE_NS
+oc adm policy add-scc-to-group privileged system:serviceaccounts:$CHE_NS > /dev/null 2>&1
 displayMsg $? "Failed to set admin policy: privileged." true
 
 echo -e "${BLUE}> Setting openshift admin policy: anyuid ${RESET}"
-oc adm policy add-scc-to-group anyuid system:serviceaccounts:$CHE_NS
+oc adm policy add-scc-to-group anyuid system:serviceaccounts:$CHE_NS > /dev/null 2>&1
 displayMsg $? "Failed to set admin policy: anyuid." true
 
 echo -e "${BLUE}> Adding role image-builder to service account ${RESET}"
-oc policy add-role-to-user system:image-builder system:serviceaccount:"$CHE_NS":"$SERVICE_ACCOUNT"
+oc policy add-role-to-user system:image-builder system:serviceaccount:"$CHE_NS":"$SERVICE_ACCOUNT" > /dev/null 2>&1
 displayMsg $? "Failed to add role image-builder to service account." true
 
 HOST_OS=$(uname -a)
+echo -e "${BLUE}> Setting os specific base64 encoder ${RESET}"
 if [[ "$HOST_OS" =~ "Darwin" ]]; then
     # for macos we need gbase64 - can be downloaded via homebrew - brew install coreutils
     base64Name="gbase64"
@@ -250,17 +266,18 @@ elif [[ "$HOST_OS" =~ "Linux" ]]; then
     displayMsg $? "Failed to find appropriate base64 converter." true
 fi
 
-echo -e "${BLUE}> Setting docker registry in che ${RESET}"
-ENCODED_TOKEN=$(oc get secret $(oc describe sa $SERVICE_ACCOUNT | tail -n 2 | head -n 1 | awk '{$1=$1};1') -o json | jq ".data.token")
-DECODED_TOKEN=$(echo "$ENCODED_TOKEN" | $base64Name -di)
-CHE_ACCESS_TOKEN=$(curl -sSL --data "grant_type=password&client_id=che-public&username=${CHE_USER}&password=${CHE_PASS}" ${TOKEN_ENDPOINT} | jq -r '.access_token')
-REGISTRY_CREDS={\""$DEFAULT_REGISTRY"\":{\"username\":\""$SERVICE_ACCOUNT"\",\"password\":\""$DECODED_TOKEN"\"}}
-DOCKER_CREDS=$(echo -n "$REGISTRY_CREDS" | $base64Name -w 0)
-TIMESTAMP=$(date +"%s")
+if [[ "$ADD_DEFAULT_REGISTRY" == "y" ]]; then
+    echo -e "${BLUE}> Setting docker registry in che ${RESET}"
+    ENCODED_TOKEN=$(oc get secret $(oc describe sa $SERVICE_ACCOUNT | tail -n 2 | head -n 1 | awk '{$1=$1};1') -o json | jq ".data.token")
+    DECODED_TOKEN=$(echo "$ENCODED_TOKEN" | $base64Name -di)
+    CHE_ACCESS_TOKEN=$(curl -sSL --data "grant_type=password&client_id=che-public&username=${CHE_USER}&password=${CHE_PASS}" ${TOKEN_ENDPOINT} | jq -r '.access_token')
+    REGISTRY_CREDS={\""$DEFAULT_REGISTRY"\":{\"username\":\""$SERVICE_ACCOUNT"\",\"password\":\""$DECODED_TOKEN"\"}}
+    DOCKER_CREDS=$(echo -n "$REGISTRY_CREDS" | $base64Name -w 0)
+    TIMESTAMP=$(date +"%s")
 
-curl "$CHE_ENDPOINT/api/preferences" --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' -H 'Sec-Fetch-Site: same-origin' -H "Content-Type: application/json" --data-binary '{"codenvy:created":'"$TIMESTAMP"',"temporary":"false","git.contribute.activate.projectSelection":"false","dockerCredentials":'"$DOCKER_CREDS"'}'
-displayMsg $? "Failed to set docker registry using default docker registry: $DEFAULT_REGISTRY." false
+    curl "$CHE_ENDPOINT/api/preferences" --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' -H 'Sec-Fetch-Site: same-origin' -H "Content-Type: application/json" --data-binary '{"codenvy:created":'"$TIMESTAMP"',"temporary":"false","git.contribute.activate.projectSelection":"false","dockerCredentials":'"$DOCKER_CREDS"'}'
+    displayMsg $? "Failed to set docker registry using default docker registry: $DEFAULT_REGISTRY." false
+fi
 
 echo -e "${GREEN}✔ Che is up and running at $CHE_ENDPOINT\n"
-echo -e "${GREEN}✔ Username: $CHE_USER${RESET}\n"
-echo -e "${GREEN}✔ Password: $CHE_PASS${RESET}\n"
+echo -e "${GREEN}✔ Login with (user/pass): $CHE_USER/$CHE_PASS${RESET}\n"
