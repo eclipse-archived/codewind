@@ -26,9 +26,8 @@ function pipePerfProxyReqsToPerfContainer(req, res) {
 }
 
 function getOptionsForReqToPerfContainer(req, performance_host, performance_port) {
-  log.debug(`req.originalUrl = ${req.originalUrl}`);
   const newUrl = `http://${performance_host}${performance_port}${req.originalUrl}`;
-  log.debug(`newUrl = ${newUrl}`);
+  log.debug(`Forward req to Perf container: forwarding ${req.originalUrl} to ${newUrl}`);
   const options = { url: newUrl };
 
   if (req.query.projectID) {
