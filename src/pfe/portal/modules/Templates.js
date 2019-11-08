@@ -23,7 +23,7 @@ const log = new Logger('Templates.js');
 const DEFAULT_REPOSITORY_LIST = [
   {
     url: 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json',
-    description: 'Codewind is an extension to develop in containers with an IDE or language of your choice.',
+    description: 'Codewind project templates help you create containerized projects for various runtimes.',
     enabled: true,
     protected: true,
     projectStyles: ['Codewind'],
