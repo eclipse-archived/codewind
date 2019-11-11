@@ -34,7 +34,8 @@ describe('ProjectList.js', () => {
         global.codewind = { CODEWIND_WORKSPACE: `${__dirname}/projectlist_temp` };
         fs.ensureDirSync(global.codewind.CODEWIND_WORKSPACE);
     });
-    after(() => {
+    after(function() {
+        this.timeout(5000);
         fs.removeSync(global.codewind.CODEWIND_WORKSPACE);
     });
     describe('new ProjectList()', () => {
