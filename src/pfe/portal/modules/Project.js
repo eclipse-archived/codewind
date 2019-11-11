@@ -222,7 +222,6 @@ module.exports = class Project {
       await fs.writeJson(infFile, this, { spaces: '  ' });
     } catch(err) {
       console.error(err);
-      
     } finally {
       this.infLockFlag = false;
     }

@@ -14,11 +14,14 @@ const path = require('path');
 const rewire = require('rewire');
 const chai = require('chai');
 const chaiSubset = require('chai-subset');
+const chaiAsPromised = require('chai-as-promised');
 
 const Project = rewire('../../../../src/pfe/portal/modules/Project');
+const ProjectError = require('../../../../src/pfe/portal/modules/utils/errors/ProjectError');
 const { suppressLogOutput } = require('../../../modules/log.service');
 
 chai.use(chaiSubset);
+chai.use(chaiAsPromised);
 chai.should();
 
 describe('Project.js', () => {
@@ -267,12 +270,20 @@ describe('Project.js', () => {
             const infPath = path.join(global.codewind.CODEWIND_WORKSPACE, '/.projects', `${project.projectID}.inf`);
             await project.writeInformationFile();
             fs.existsSync(infPath).should.be.true;
-
             const infJson = await fs.readJson(infPath);
             infJson.should.have.property('projectID').and.equal(project.projectID);
 
-            // const projectFromInf = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
-            // projectFromInf.should.deep.equal(project);
+            const projectFromInf = new Project(infJson, global.codewind.CODEWIND_WORKSPACE);
+            projectFromInf.should.deep.equal(project);
+        });
+        it('Checks the Project cannot be written when it is locked', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.infLockFlag = true;
+            return project.writeInformationFile()
+                .should.be.eventually.rejectedWith(`Unable to obtain lock for project in file for project ${project.name}.`)
+                .and.be.an.instanceOf(ProjectError)
+                .and.have.property('code', 'LOCK_FAILURE');
+
         });
     });
 });
