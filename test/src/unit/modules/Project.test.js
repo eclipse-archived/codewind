@@ -23,14 +23,15 @@ const { suppressLogOutput } = require('../../../modules/log.service');
 chai.use(chaiSubset);
 chai.use(chaiAsPromised);
 chai.should();
+const { expect } = chai;
 
 describe('Project.js', () => {
     suppressLogOutput(Project);
     beforeEach(() => {
         global.codewind = { 
             RUNNING_IN_K8S: false,  
-            CODEWIND_WORKSPACE: `${__dirname}/project_temp`, 
-            CODEWIND_TEMP_WORKSPACE: '${__dirname}/project_temp/temp',
+            CODEWIND_WORKSPACE: `${__dirname}/project_temp/`, 
+            CODEWIND_TEMP_WORKSPACE: '${__dirname}/project_temp/temp/',
         };
         fs.ensureDirSync(global.codewind.CODEWIND_WORKSPACE);
     });
@@ -284,6 +285,26 @@ describe('Project.js', () => {
                 .and.be.an.instanceOf(ProjectError)
                 .and.have.property('code', 'LOCK_FAILURE');
 
+        });
+    });
+    describe('getBuildLogPath()', () => {
+        it('Checks that null is returned when a buildLogPath does not exist', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.should.have.property('buildLogPath').and.be.null;
+            const logPath = project.getBuildLogPath();
+            expect(logPath).to.be.null;
+        });
+        it('Checks that the buildLogPath is returned', () => {
+            const project = new Project({ name: 'dummy', buildLogPath: 'somepath' }, global.codewind.CODEWIND_WORKSPACE);
+            project.should.have.property('buildLogPath').and.equal('somepath');
+            const logPath = project.getBuildLogPath();
+            logPath.should.equal('somepath');
+        });
+        it('Checks that the buildLogPath has codewind-workspace substituted with global workspace', () => {
+            const project = new Project({ name: 'dummy', buildLogPath: '/codewind-workspace/somelogfile' }, global.codewind.CODEWIND_WORKSPACE);
+            project.should.have.property('buildLogPath').and.equal('/codewind-workspace/somelogfile');
+            const logPath = project.getBuildLogPath();
+            logPath.should.equal(path.join(global.codewind.CODEWIND_WORKSPACE, 'somelogfile'));
         });
     });
 });
