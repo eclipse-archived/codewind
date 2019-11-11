@@ -525,4 +525,18 @@ describe('Project.js', () => {
             descPostChange.should.equal(description);
         });
     });
+    describe('getComparison()', () => {
+        it('gets comparison', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.loadTestPath = loadTestResources;
+            const comparision = await project.getComparison();
+            comparision.should.have.length(4);
+            comparision.should.containSubset([
+                { type: 'cpu', delta: {} },
+                { type: 'gc', delta: {} },
+                { type: 'memory', delta: {} },
+                { type: 'http', delta: {} },
+            ]);
+        });
+    });
 });
