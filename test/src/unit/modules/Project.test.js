@@ -475,4 +475,54 @@ describe('Project.js', () => {
             fs.existsSync(metricsFilePath).should.be.true;
         });
     });
+    describe('getPathToMetricsFile(timeOfTestRun)', () => {
+        it('Fails to get a LoadTestDir using an invalid time stamp', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.loadTestPath = loadTestResources;
+            return project.getPathToMetricsFile('123')
+                .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
+                .and.be.an.instanceOf(ProjectMetricsError)
+                .and.have.property('code', 'NOT_FOUND');
+        });
+        it('Gets a LoadTestDir using a valid time stamp which is an existing filename', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.loadTestPath = loadTestResources;
+            const metricsFilePath = await project.getPathToMetricsFile('20190326154749');
+            fs.existsSync(metricsFilePath).should.be.true;
+        });
+        it('Gets a LoadTestDir using a valid time stamp which larger than an existing filename', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.loadTestPath = loadTestResources;
+            const metricsFilePath = await project.getPathToMetricsFile('30000000000000');
+            fs.existsSync(metricsFilePath).should.be.true;
+        });
+    });
+    describe('updateMetricsDescription(timeOfTestRun, newDescription)', () => {
+        it('Fails to get a LoadTestDir using an invalid time stamp', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.loadTestPath = loadTestResources;
+            return project.updateMetricsDescription('123', 'newdesc')
+                .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
+                .and.be.an.instanceOf(ProjectMetricsError)
+                .and.have.property('code', 'NOT_FOUND');
+        });
+        it('Gets a LoadTestDir using a valid time stamp which is an existing filename', async() => {
+            const testRun = '20190326154749';
+            const description = 'a new description';
+            const tempMetricsDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'metrics');
+            const tempMetricsPath = path.join(tempMetricsDir, testRun);
+            const tempMetricsFile = path.join(tempMetricsPath, 'metrics.json');
+
+            await fs.copy(path.join(loadTestResources, testRun), tempMetricsPath);
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.loadTestPath = tempMetricsDir;
+
+            const { desc: descPreChange } = await fs.readJSON(tempMetricsFile);
+            descPreChange.should.equal('Test run 1');
+
+            await project.updateMetricsDescription(testRun, description);
+            const { desc: descPostChange } = await fs.readJSON(tempMetricsFile);
+            descPostChange.should.equal(description);
+        });
+    });
 });
