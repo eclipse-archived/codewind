@@ -34,7 +34,6 @@ pipeline {
                         DIR=`pwd`;
                         SRC_DIR=$DIR/src;
                         PFE=pfe
-                        INITIALIZE=initialize
                         PERFORMANCE=performance;
                         ARCH=`uname -m`;
                         TAG=latest;
@@ -47,7 +46,7 @@ pipeline {
                             IMAGE_ARCH=$ARCH
                         fi
 
-                        ALL_IMAGES="$PFE $PERFORMANCE $INITIALIZE";
+                        ALL_IMAGES="$PFE $PERFORMANCE";
 
                         # Copy .env over to file-watcher
                         if [ -f $DIR/.env ]; then
@@ -55,11 +54,9 @@ pipeline {
                             cp $DIR/.env ${SRC_DIR}/${PFE}/file-watcher/scripts/.env
                         fi
 
-                        # Copy the license files to the portal, performance, initialize
+                        # Copy the license files to the portal, performance
                         cp -r $DIR/LICENSE ${SRC_DIR}/pfe/portal/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/pfe/portal/
-                        cp -r $DIR/LICENSE ${SRC_DIR}/initialize/
-                        cp -r $DIR/NOTICE.md ${SRC_DIR}/initialize/
                         cp -r $DIR/LICENSE ${SRC_DIR}/performance/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/performance/
 
@@ -277,8 +274,7 @@ pipeline {
                         # Acceptable branch names: master, start with '<number>.<number>'
                         if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
 
-                            declare -a DOCKER_IMAGE_ARRAY=("codewind-initialize-amd64" 
-                                                        "codewind-performance-amd64" 
+                            declare -a DOCKER_IMAGE_ARRAY=("codewind-performance-amd64" 
                                                         "codewind-pfe-amd64")
 
                             chmod u+x ./script/publish.sh
