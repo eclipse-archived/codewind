@@ -14,6 +14,7 @@
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 BLUE='\033[0;36m'
+YELLOW='\033[1;33m'
 RESET='\033[0m'
 DEVMODE=false
 
@@ -87,8 +88,8 @@ else
   printf "\n${GREEN}No existing processes found $RESET\n";
 fi
 
-export CW_CLI_BRANCH=master
 printf "\n${GREEN}Downloading cwctl to start Codewind containers $RESET\n";
+printf "${YELLOW}Set CW_CLI_BRANCH={branch} to override the branch used to pull cwctl $RESET\n";
 curl -o ./script/cli-pull.sh -sS https://raw.githubusercontent.com/eclipse/codewind-vscode/master/dev/bin/cli-pull.sh
 chmod +x ./script/cli-pull.sh
 
