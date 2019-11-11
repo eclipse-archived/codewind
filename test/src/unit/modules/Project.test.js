@@ -25,6 +25,8 @@ chai.use(chaiAsPromised);
 chai.should();
 const { expect } = chai;
 
+const loadTestResources = path.join(__dirname, '../../../resources/load-test-data/');
+
 describe('Project.js', () => {
     suppressLogOutput(Project);
     beforeEach(() => {
@@ -277,7 +279,9 @@ describe('Project.js', () => {
             const projectFromInf = new Project(infJson, global.codewind.CODEWIND_WORKSPACE);
             projectFromInf.should.deep.equal(project);
         });
-        it('Checks the Project cannot be written when it is locked', () => {
+        it('Checks the Project cannot be written when it is locked', function() {
+            // The lock check waits for 1000
+            this.slow(1500);
             const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
             project.infLockFlag = true;
             return project.writeInformationFile()
@@ -306,5 +310,54 @@ describe('Project.js', () => {
             const logPath = project.getBuildLogPath();
             logPath.should.equal(path.join(global.codewind.CODEWIND_WORKSPACE, 'somelogfile'));
         });
+    });
+    describe('getMetricTypes()', () => {
+        it('Returns the metrics types', () => {
+            const metricsTypes = Project.getMetricTypes();
+            metricsTypes.should.be.an('array');
+            metricsTypes.should.deep.equal(['cpu', 'gc', 'memory', 'http']);
+        });
+    });
+    describe('getMetrics()', () => {
+        it('Fails to get the metrics as the loadTestDirectory does not exist', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            return project.getMetrics('invalidType')
+                .should.be.eventually.rejectedWith('Failed to read load-test directories')
+                .and.be.an.instanceOf(ProjectError)
+                .and.have.property('code', 'LOAD_TEST_DIR_ERROR');
+        });
+        it('Fails to get the metrics of an invalid type', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.loadTestPath = global.codewind.CODEWIND_WORKSPACE;
+            return project.getMetrics('invalidType')
+                .should.be.eventually.rejectedWith('invalidType is not a valid metric type. Valid metric types are\n[cpu,gc,memory,http]')
+                .and.be.an.instanceOf(ProjectError)
+                .and.have.property('code', 'INVALID_METRIC_TYPE');
+        });
+        it('Gets an empty array of metrics as none exist in the loadTestPath', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.loadTestPath = global.codewind.CODEWIND_WORKSPACE;
+            const cpuMetrics = await project.getMetrics('cpu');
+            cpuMetrics.should.be.an('array');
+            cpuMetrics.should.be.empty;
+        });
+        describe('Gets metrics using the load tests in the resources directory', async() => {
+            const metrics = ['cpu', 'gc', 'memory', 'http'];
+            metrics.forEach(function(type) {
+                it(type, async() => {
+                    const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+                    const files = await fs.readdir(loadTestResources);
+                    const noLoadTests = files.length; 
+                    project.loadTestPath = loadTestResources;
+                    const cpuMetrics = await project.getMetrics(type);
+                    cpuMetrics.should.have.length(noLoadTests);
+                    cpuMetrics.forEach(function(results) {
+                        results.should.have.property('value');
+                        results.value.should.have.property('data');
+                    });
+                });
+            });
+        });
+        
     });
 });
