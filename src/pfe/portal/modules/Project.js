@@ -320,6 +320,7 @@ module.exports = class Project {
   /**
    * Get the folder name closest to the supplied timeOfTestRun. Required since there may be a delay
    * between when the collection folder was created and the start timestamp of the metrics.
+   * Throws not found if the timeOfTestRun is lower than the earliest time
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
    */
   async getClosestPathToLoadTestDir(timeOfTestRun) {
@@ -342,10 +343,11 @@ module.exports = class Project {
   /**
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
    */
-  async getPathToLoadTestDir(timeOfTestRun) {
+  async getPathToLoadTestDir(time) {
+    const timeOfTestRun = String(time);
     log.trace(`[getPathToLoadTestDir] timeOfTestRun=${timeOfTestRun}`);
     const loadTestDirs = await getLoadTestDirs(this.loadTestPath);
-    const loadTestDir = loadTestDirs.find(dirname => dirname === timeOfTestRun);
+    const loadTestDir = loadTestDirs.find(dirname => dirname === timeOfTestRun);    
     if (!loadTestDir) {
       throw new ProjectMetricsError('NOT_FOUND', this.projectID, `found no exact match load-test metrics from time ${timeOfTestRun}`)
     }
@@ -645,19 +647,6 @@ function getOverallAvgResTime(metricsFile) {
     avgResTime += urlEntry.averageResponseTime;
   }
   return avgResTime / metricsFile['httpUrls'].data.length;
-}
-
-function setDefaultSettingValue(property) {
-  switch(property) {
-  case "mavenProfiles":
-    return [""];
-  case "mavenProperties":
-    return [""];
-  case "ignoredPaths":
-    return [""];
-  default:
-    return "";
-  }
 }
 
 // Make the states enum accessible from the Projects class.
