@@ -87,9 +87,14 @@ else
   printf "\n${GREEN}No existing processes found $RESET\n";
 fi
 
+export CW_CLI_BRANCH=master
 printf "\n${GREEN}Downloading cwctl to start Codewind containers $RESET\n";
 curl -o ./script/cli-pull.sh -sS https://raw.githubusercontent.com/eclipse/codewind-vscode/master/dev/bin/cli-pull.sh
 chmod +x ./script/cli-pull.sh
+
+cd script
+./cli-pull.sh
+cd - 
 
 OS=$(uname -a | awk '{print $1;}')
 CWCTL=./script/linux/cwctl
