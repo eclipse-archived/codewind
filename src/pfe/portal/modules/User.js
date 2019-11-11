@@ -662,76 +662,69 @@ module.exports = class User {
   }
 
   /**
-   * Function to set up the Docker config file, create Kubernetes Secret and patch the Service Account
+   * Function to setup the Docker config file and Kube secret
    */
   async setupDockerRegistry(username, password, url) {
-
-    // Update the Docker Registry File
-    await this.updateDockerRegistry(username, password, url);
-
-    // Create the Kubernetes Secret and patch the Service Account
-
-  }
-
-  /**
-   * Function to update the Docker config file
-   */
-  async updateDockerRegistry(username, password, url) {
     log.info(username);
     log.info(password);
     log.info(url);
-    const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
-    const encodedAuth = btoa(username + ":" + password);
     let createKubeSecret = false;
+    
+    try {
+      const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
+      const encodedAuth = btoa(username + ":" + password);
 
-    if (isDockerConfigFilePresent) {
-      log.info("The Docker config file exists, reading contents");
-      const jsonObj = await fs.readJson(this.dockerConfigFile);
-      log.info("Docker config contents " + JSON.stringify(jsonObj));
+      if (isDockerConfigFilePresent) {
+        log.info("The Docker config file exists, reading contents");
+        const jsonObj = await fs.readJson(this.dockerConfigFile);
+        log.info("Docker config contents " + JSON.stringify(jsonObj));
 
-      for (let key in jsonObj.auths) {
-        log.info("the key is " + key);
-        if (key == url) {
-          log.info("Cannot have multiple docker registries with url " + url + ". Please delete the previous registry and try again.");
-          return;
+        for (let key in jsonObj.auths) {
+          log.info("the key is " + key);
+          if (key == url) {
+            log.info("Cannot have multiple docker registries with url " + url + ". Please delete the previous registry and try again.");
+            return;
+          }
         }
-      }
 
-      jsonObj.auths[url] = {
-        "username":username,
-        "password":password,
-        "auth":encodedAuth
-      }
+        jsonObj.auths[url] = {
+          "username":username,
+          "password":password,
+          "auth":encodedAuth
+        }
 
-      await fs.writeJson(this.dockerConfigFile, jsonObj);
-      createKubeSecret = true;
-    } else {
-      log.info("The Docker config file does not exist, writing contents");
-      const jsonObj = {"auths":{}}
-      jsonObj.auths[url] = {
-        "username":username,
-        "password":password,
-        "auth":encodedAuth
-      }
+        await fs.writeJson(this.dockerConfigFile, jsonObj);
+        createKubeSecret = true;
+      } else {
+        log.info("The Docker config file does not exist, writing contents");
+        const jsonObj = {"auths":{}}
+        jsonObj.auths[url] = {
+          "username":username,
+          "password":password,
+          "auth":encodedAuth
+        }
 
-      await fs.writeJson(this.dockerConfigFile, jsonObj);
-      createKubeSecret = true;
+        await fs.writeJson(this.dockerConfigFile, jsonObj);
+        createKubeSecret = true;
+      }
+    } catch (err) {
+      log.error(err);
+      log.error("The Docker config file has not been updated");
+
     }
 
     if (createKubeSecret) {
-      log.info("The Docker config file has been updated");
-      await this.updateServiceAccountWithDockerRegisrySecret(username, password, url)
+      log.info("The Docker config file has been updated for " + url);
+      await this.updateServiceAccountWithDockerRegisrySecret();
+      log.info("The Service Account has been patched for " + url);
     }
   }
 
   /**
    * Function to create the Kubernetes secret and patch the Service Account
    */
-  async updateServiceAccountWithDockerRegisrySecret(username, password, url) {
+  async updateServiceAccountWithDockerRegisrySecret() {
     log.info("The SA should be patched" + this.dockerConfigFile);
-    log.info(username);
-    log.info(password);
-    log.info(url);
     const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
     if (isDockerConfigFilePresent) {
       log.info("The Docker config file exists, reading contents");
@@ -740,6 +733,59 @@ module.exports = class User {
       log.info("The encoded  Docker Config: " + encodedDockerConfig);
     } else {
       log.info("No Docker Config file present, skipping creating Kube secret");
+    }
+  }
+
+  /**
+   * Function to get the docker registries in PFE
+   */
+  async getDockerRegistryList() {
+    const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
+    const dockerRegistryList = {};
+    if (isDockerConfigFilePresent) {
+      log.info("Docker Config file present, returning the Docker Registry List");
+      const jsonObj = await fs.readJson(this.dockerConfigFile);
+
+      for (let key in jsonObj.auths) {
+        dockerRegistryList[key] = jsonObj.auths[key].username;
+      }
+    } else {
+      log.info("No Docker Config file present, no Docker Registry List to return");
+    }
+    
+    log.info("PFE Docker Registry List: " + JSON.stringify(dockerRegistryList));
+
+    return dockerRegistryList;
+  }
+
+  /**
+   * Function to remove the docker registries from PFE
+   */
+  async removeDockerRegistry(url) {
+    const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
+    let createKubeSecret = false;
+    if (isDockerConfigFilePresent) {
+      log.info("Docker Config file present, removing the specified Docker Registry from the list");
+      const jsonObj = await fs.readJson(this.dockerConfigFile);
+
+      for (let key in jsonObj.auths) {
+        log.info("the key is " + key);
+        if (key == url) {
+          delete jsonObj.auths[key];
+          break;
+        }
+      }
+
+      await fs.writeJson(this.dockerConfigFile, jsonObj);
+      createKubeSecret = true;
+    } else {
+      log.info("No Docker Config file present, no Docker Registry to remove from the list");
+    }
+
+    if (createKubeSecret) {
+      log.info("The Docker config file has been updated for removal of " + url);
+      await this.updateServiceAccountWithDockerRegisrySecret();
+      log.info("The Service Account has been patched for removal of " + url);
     }
   }
 
