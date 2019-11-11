@@ -1,7 +1,7 @@
 openapi: 3.0.0
-servers:
-  - description: Production
-    url: http://localhost:9090
+# servers:
+#   - description: Production
+#     url: http://localhost:9090
 info:
   description: Codewind API
   version: 0.1.0
@@ -631,7 +631,7 @@ paths:
         404:
           description: if the project with id was not found
         500:
-          description: if an error occurred        
+          description: if an error occurred
 
   /api/v1/projects/{id}/metrics:
     get:
