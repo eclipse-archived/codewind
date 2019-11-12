@@ -539,4 +539,199 @@ describe('Project.js', () => {
             ]);
         });
     });
+    describe('Project States', () => {
+        it('isOpen() Checks if a project is open', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.isOpen().should.be.true;
+        });
+        it('isClosed() Checks if a Project is closed', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.state = Project.STATES.closed;
+            project.isClosed().should.be.true;
+        });
+        it('isValidating() Checks if a Project is validating', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.state = Project.STATES.validating;
+            project.isValidating().should.be.true;
+        });
+    });
+    describe('Project Action', () => {
+        it('isClosing() Checks if a project is closing', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.action = Project.STATES.closing;
+            project.isClosing().should.be.true;
+        });
+        it('isDeleting() Checks if a Project is deleting', () => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            project.action = Project.STATES.deleting;
+            project.isDeleting().should.be.true;
+        });
+    });
+    describe('getLoadTestConfig()', () => {
+        it('Gets test config when it does not exist (creates a new config)', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'getLoadTestConfig');
+            await fs.ensureDir(tempLoadDir);
+            project.loadTestPath = tempLoadDir;
+            fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.false;
+            const config = await project.getLoadTestConfig();
+
+            const expectedConfig = {
+                path: '/',
+                requestsPerSecond: '100',
+                concurrency: '20',
+                maxSeconds: '20',
+            };
+            config.should.deep.equal(expectedConfig);
+            fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.true;
+        });
+        it('Gets test config when it does exist (reads existing config)', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'getLoadTestConfig');
+            await fs.ensureDir(tempLoadDir);
+            project.loadTestPath = tempLoadDir;
+
+            const expectedConfig = {
+                path: '/randompath',
+                requestsPerSecond: '14',
+                concurrency: '333333',
+                maxSeconds: '234234',
+            };
+            await project.writeNewLoadTestConfigFile(expectedConfig);
+            fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.true;
+
+            const config = await project.getLoadTestConfig();
+            config.should.deep.equal(expectedConfig);
+            fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.true;
+        });
+    });
+    describe('writeNewLoadTestConfigFile()', () => {
+        it('Gets test config when it does not exist (creates a new config)', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'writeNewLoadTestConfigFile');
+            await fs.ensureDir(tempLoadDir);
+            project.loadTestPath = tempLoadDir;
+            fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.false;
+            await project.writeNewLoadTestConfigFile({
+                path: 'rando',
+            });
+
+            fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.true;
+        });
+        it('Gets test config when it does exist (reads existing config)', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'getLoadTestConfig');
+            await fs.ensureDir(tempLoadDir);
+            project.loadTestPath = tempLoadDir;
+
+            const expectedConfig = {
+                path: '/randompath',
+                requestsPerSecond: '14',
+                concurrency: '333333',
+                maxSeconds: '234234',
+            };
+            await project.writeNewLoadTestConfigFile(expectedConfig);
+            fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.true;
+
+            const config = await project.getLoadTestConfig();
+            config.should.deep.equal(expectedConfig);
+            fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.true;
+        });
+    });
+    describe('createLoadTestConfigFile()', () => {
+        it('Creates a new config file', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'createLoadTestConfigFileTest1');
+            await fs.ensureDir(tempLoadDir);
+            project.loadTestPath = tempLoadDir;
+            const configPath = path.join(tempLoadDir, 'config.json');
+            fs.existsSync(configPath).should.be.false;
+            await project.createLoadTestConfigFile();
+
+            fs.existsSync(configPath).should.be.true;
+            const config = await fs.readJson(configPath);
+            const expectedConfig = {
+                path: '/',
+                requestsPerSecond: '100',
+                concurrency: '20',
+                maxSeconds: '20',
+            };
+            config.should.deep.equal(expectedConfig);
+        });
+        it('Creates a new config file with a custom path', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'createLoadTestConfigFileTest2');
+            await fs.ensureDir(tempLoadDir);
+            project.loadTestPath = tempLoadDir;
+            project.contextRoot = 'custompath';
+            const configPath = path.join(tempLoadDir, 'config.json');
+            fs.existsSync(configPath).should.be.false;
+            await project.createLoadTestConfigFile();
+
+            fs.existsSync(configPath).should.be.true;
+            const { path: newPath } = await fs.readJson(configPath);
+            newPath.should.equal('/custompath');
+        });
+        it('Overwrites an existing config file', async() => {
+            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'createLoadTestConfigFileTest3');
+            await fs.ensureDir(tempLoadDir);
+            project.loadTestPath = tempLoadDir;
+            const configPath = path.join(tempLoadDir, 'config.json');
+            fs.existsSync(configPath).should.be.false;
+
+            await project.writeNewLoadTestConfigFile({
+                path: 'rando',
+            });
+            fs.existsSync(configPath).should.be.true;
+            const { path: prechangedPath } = await fs.readJson(configPath);
+            prechangedPath.should.equal('rando');
+
+            fs.existsSync(configPath).should.be.true;
+            await project.createLoadTestConfigFile();
+            const { path: newPath } = await fs.readJson(configPath);
+            newPath.should.equal('/');
+        });
+    });
+    describe('Private functions using rewire', () => {
+        describe('getLoadTestDirs(loadTestPath) ', () => {
+            const getLoadTestDirs = Project.__get__('getLoadTestDirs');
+            it('Should get all load test dirs in the resources directory', async() => {
+                const resourceLoadTests = await fs.readdir(loadTestResources);
+                const loadTestDirs = await getLoadTestDirs(loadTestResources);
+                loadTestDirs.should.deep.equal(resourceLoadTests);
+            });
+            it('Should get an empty array as there are no load tests in the directory', async() => {
+                const getLoadTestDirs = Project.__get__('getLoadTestDirs');
+                const loadTestDirs = await getLoadTestDirs(__dirname);
+                loadTestDirs.length.should.equal(0);
+            });
+            it('Should error as the directory does not exist', () => {
+                const getLoadTestDirs = Project.__get__('getLoadTestDirs');
+                return getLoadTestDirs('nonexistant')
+                    .should.be.eventually.rejectedWith('Failed to read load-test directories')
+                    .and.be.an.instanceOf(ProjectError)
+                    .and.have.property('code', 'LOAD_TEST_DIR_ERROR');
+            });
+        });
+        describe('getOverallAvgResTime(metricsFile)', () => {
+            const getOverallAvgResTime = Project.__get__('getOverallAvgResTime');
+            it('Should get the average response times for the given metrics.json', () => {
+                const metricsFile = path.join(loadTestResources,'20190326154749', 'metrics.json');
+                const averages = getOverallAvgResTime(fs.readJsonSync(metricsFile));
+                averages.should.not.equal(0);
+                averages.should.equal(3.0987205098728188);
+            });
+            it('Should error as null is given', () => {
+                expect(() => {
+                    getOverallAvgResTime({ httpUrls: null });
+                }).to.throw('httpUrls data not found in metrics file');
+            });
+            it('Should error as JSON object given does not contain httpUrls', () => {
+                expect(() => {
+                    getOverallAvgResTime({ httpUrls: null });
+                }).to.throw('httpUrls data not found in metrics file');
+            });
+        });
+    });
 });

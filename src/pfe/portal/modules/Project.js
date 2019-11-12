@@ -540,6 +540,13 @@ module.exports = class Project {
   }
 
   /**
+   * @returns {Boolean} is the project validating
+   */
+  isValidating() {
+    return (this.state === STATES.validating);
+  }
+
+  /**
    * @returns {Boolean} is the project in the closing process
    */
   isClosing() {
@@ -551,13 +558,6 @@ module.exports = class Project {
    */
   isDeleting() {
     return (this.action === STATES.deleting);
-  }
-
-  /**
-   * @returns {Boolean} is the project validating
-   */
-  isValidating() {
-    return (this.state === STATES.validating);
   }
 
   async getLoadTestConfig() {
@@ -639,7 +639,8 @@ async function getLoadTestDirs(loadTestPath){
  */
 function getOverallAvgResTime(metricsFile) {
   // If we don't have httpUrl data, throw an error
-  if (!metricsFile.hasOwnProperty('httpUrls')) {
+  if (!metricsFile || !metricsFile.hasOwnProperty('httpUrls') 
+    || !metricsFile.httpUrls || !metricsFile['httpUrls'].data) {
     throw new ProjectError('NOT_FOUND', null)
   }
   let avgResTime = 0;
