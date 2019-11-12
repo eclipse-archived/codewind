@@ -19,7 +19,7 @@ echo "Tests started at ${start}"
 node_modules/.bin/nyc node_modules/.bin/mocha ${@:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
 rc=$?
 end=$(date +%F_%T)
-echo -e "\nTests finished at ${end}"
+echo "\nTests finished at ${end}"
 echo "\nView coverage report in browser at ${PWD}/coverage/index.html\n"
 
 exit $rc
