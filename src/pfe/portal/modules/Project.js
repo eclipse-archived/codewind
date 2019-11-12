@@ -12,7 +12,6 @@
 const fs = require('fs-extra');
 const { join } = require('path');
 const uuidv1 = require('uuid/v1');
-const deepEqual = require('deep-equal');
 
 const cwUtils = require('./utils/sharedFunctions');
 const metricsStatusChecker = require('./utils/metricsStatusChecker');
