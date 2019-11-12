@@ -22,6 +22,8 @@ DIR=`pwd`;
 SRC_DIR=$DIR/src;
 PFE=pfe
 PERFORMANCE=performance;
+KEYCLOAK=keycloak;
+GATEKEEPER=gatekeeper;
 ARCH=`uname -m`;
 TAG=latest;
 REGISTRY=eclipse
@@ -33,7 +35,7 @@ else
   IMAGE_ARCH=$ARCH
 fi
 
-ALL_IMAGES="$PFE $PERFORMANCE";
+ALL_IMAGES="$PFE $PERFORMANCE $KEYCLOAK $GATEKEEPER";
 
 # Copy .env over to file-watcher
 if [ -f $DIR/.env ]; then
@@ -46,6 +48,10 @@ cp -r $DIR/LICENSE ${SRC_DIR}/pfe/portal/
 cp -r $DIR/NOTICE.md ${SRC_DIR}/pfe/portal/
 cp -r $DIR/LICENSE ${SRC_DIR}/performance/
 cp -r $DIR/NOTICE.md ${SRC_DIR}/performance/
+cp -r $DIR/LICENSE ${SRC_DIR}/keycloak/
+cp -r $DIR/NOTICE.md ${SRC_DIR}/keycloak/
+cp -r $DIR/LICENSE ${SRC_DIR}/gatekeeper/
+cp -r $DIR/NOTICE.md ${SRC_DIR}/gatekeeper/
 
 # Copy the docs into portal
 cp -r $DIR/docs ${SRC_DIR}/pfe/portal/
