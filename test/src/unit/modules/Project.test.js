@@ -143,25 +143,25 @@ describe('Project.js', () => {
             });
         });
         describe('Checks if metrics are available for Appsody projects', () => {
-            it('Node.js', async() => {
+            it('Checks metrics for Appsody: Node.js', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'nodejs' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
-            it('Java', async() => {
+            it('Checks metrics for Appsody: Java', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'java' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
-            it('Swift', async() => {
+            it('Checks metrics for Appsody: Swift', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'swift' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
-            it('Invalid Language', async() => {
+            it('Checks metrics for Appsody: Invalid Language', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'invalid' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
