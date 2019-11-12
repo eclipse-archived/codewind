@@ -24,7 +24,7 @@
             "request": "attach",
             "name": "Attach to Codewind",
             "address": "127.0.0.1",
-            "port": 9777,
+            "port": 34000,
             "localRoot": "${workspaceFolder}/src/pfe/portal",
             "remoteRoot": "/portal"
         },
