@@ -9,7 +9,7 @@
 #     IBM Corporation - initial API and implementation
 ################################################################################
 
-FROM node:10-alpine
+FROM node:12-alpine
 
 EXPOSE 9096 9496
 
