@@ -55,10 +55,9 @@ describe('Project.js', () => {
             project.workspace.should.equal('./someworkspace');
         });
         it('Sets directory to name', () => {
-            const project = new Project({
+            const project = createProjectAndCheckIsAnObject({
                 name: 'newdummyproject',
             }, './someworkspace');
-            project.should.be.an('object');
             const name = project.name;
             project.should.have.property('directory');
             project.directory.should.equal(name);
@@ -79,8 +78,7 @@ describe('Project.js', () => {
                 state: 'open',
                 autoBuild: false,  
             };
-            const project = new Project(args, 'global.codewind.CODEWIND_WORKSPACE');
-            project.should.be.an('object');
+            const project = createProjectAndCheckIsAnObject(args, global.codewind.CODEWIND_WORKSPACE);
             project.should.containSubset(args);
             const { projectID, name } = project;
             project.directory.should.not.equal(`${name}-${projectID}`);
@@ -93,8 +91,7 @@ describe('Project.js', () => {
                 loadInProgress: true,
                 loadConfig: 'someconfig',
             };
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
-            project.should.be.an('object');
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.should.containSubset({ name: 'dummy' });
             project.should.not.containSubset(obj);
     
@@ -109,16 +106,14 @@ describe('Project.js', () => {
         });
     });
     describe('checkIfMetricsAvailable()', () => {
-        describe('Checks if metrics are available for Normal projects', () => {
+        describe('Checks if metrics are available for normal projects', () => {
             it('Generic project with no language', async() => {
-                const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
-                project.should.be.an('object');
+                const project = createDefaultProjectAndCheckIsAnObject();
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.false;
             });
-            it('Node.js', async() => {
-                const project = new Project({ name: 'dummy', language: 'nodejs' }, global.codewind.CODEWIND_WORKSPACE);
-                project.should.be.an('object');
+            it('Checks metrics for Node.js', async() => {
+                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'nodejs' }, global.codewind.CODEWIND_WORKSPACE);
                 const packageJSONContents = {
                     dependencies: {
                         'appmetrics-dash': true,
@@ -130,18 +125,16 @@ describe('Project.js', () => {
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
-            it('Java', async() => {
-                const project = new Project({ name: 'dummy', language: 'java' }, global.codewind.CODEWIND_WORKSPACE);
-                project.should.be.an('object');
+            it('Checks metrics for Java', async() => {
+                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'java' }, global.codewind.CODEWIND_WORKSPACE);
                 const pomXmlPath = path.join(project.projectPath(), 'pom.xml');
                 await fs.ensureFile(pomXmlPath);
                 await fs.writeFile(pomXmlPath, 'javametrics');
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
-            it('Swift', async() => {
-                const project = new Project({ name: 'dummy', language: 'swift' }, global.codewind.CODEWIND_WORKSPACE);
-                project.should.be.an('object');
+            it('Checks metrics for Swift', async() => {
+                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'swift' }, global.codewind.CODEWIND_WORKSPACE);
                 const packageSwiftPath = path.join(project.projectPath(), 'Package.swift');
                 await fs.ensureFile(packageSwiftPath);
                 await fs.writeFile(packageSwiftPath, 'SwiftMetrics.git');
@@ -152,29 +145,25 @@ describe('Project.js', () => {
         describe('Checks if metrics are available for Appsody projects', () => {
             it('Node.js', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'nodejs' };
-                const project = new Project(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                project.should.be.an('object');
+                const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Java', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'java' };
-                const project = new Project(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                project.should.be.an('object');
+                const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Swift', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'swift' };
-                const project = new Project(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                project.should.be.an('object');
+                const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Invalid Language', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'invalid' };
-                const project = new Project(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                project.should.be.an('object');
+                const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.false;
             });
@@ -183,8 +172,7 @@ describe('Project.js', () => {
     });
     describe('getPort()', () => {
         it('Checks that the port returned is internal as RUNNING_IN_K8S is false', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
-            project.should.be.an('object');
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.ports = {
                 internalPort: 5000,
                 exposedPort: 10000,
@@ -193,9 +181,8 @@ describe('Project.js', () => {
             port.should.equal(5000);
         });
         it('Checks that the port returned is exposed as RUNNING_IN_K8S is true', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             global.codewind = { RUNNING_IN_K8S: true };
-            project.should.be.an('object');
             project.ports = {
                 internalPort: 5000,
                 exposedPort: 10000,
@@ -206,46 +193,46 @@ describe('Project.js', () => {
     });
     describe('getMetricsContextRoot()', () => {
         it('Gets metrics root for a Node.js project', () => {
-            const project = new Project({ name: 'dummy', language: 'nodejs' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'nodejs' }, global.codewind.CODEWIND_WORKSPACE);
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('appmetrics');
         });
         it('Gets metrics root for a Java project', () => {
-            const project = new Project({ name: 'dummy', language: 'java' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'java' }, global.codewind.CODEWIND_WORKSPACE);
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('javametrics');
         });
         it('Gets metrics root for a Swift project', () => {
-            const project = new Project({ name: 'dummy', language: 'swift' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'swift' }, global.codewind.CODEWIND_WORKSPACE);
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('swiftmetrics');
         });
         it('Gets a blank string root for an invalid Project', () => {
-            const project = new Project({ name: 'dummy', language: 'invalid' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'invalid' }, global.codewind.CODEWIND_WORKSPACE);
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('');
         });
         it('Gets a blank string root for a Project with no language', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('');
         });
     });
     describe('projectPath(_)', () => {
         it('Checks that projectPath() is workspace+directory', () => {
-            const project = new Project({ name: 'dummy', directory: 'directory' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', directory: 'directory' }, global.codewind.CODEWIND_WORKSPACE);
             const projectPath = project.projectPath();
             projectPath.should.equal(path.join(global.codewind.CODEWIND_WORKSPACE, 'directory'));
         });
     });
     describe('readSettingsFile()', () => {
         it('Returns a blank object is returned if the settings file does not exist', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const settings = await project.readSettingsFile();
             settings.should.deep.equal({});
         });
         it('Returns the contents of a created .cw-settings file', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const settingsPath = path.join(project.projectPath(), '.cw-settings');
             await fs.ensureFile(settingsPath);
             await fs.writeJson(settingsPath, { property: 'string' });
@@ -255,14 +242,14 @@ describe('Project.js', () => {
     });
     describe('writeInformationFile()', () => {
         it('Checks that the information file is created', async() => {
-            const project = new Project({ name: 'dummy', directory: 'directory' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', directory: 'directory' }, global.codewind.CODEWIND_WORKSPACE);
             const infPath = path.join(global.codewind.CODEWIND_WORKSPACE, '/.projects', `${project.projectID}.inf`);
             fs.existsSync(infPath).should.be.false;
             await project.writeInformationFile();
             fs.existsSync(infPath).should.be.true;
         });
         it('Checks that the information file is correct for a generic Project', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const infPath = path.join(global.codewind.CODEWIND_WORKSPACE, '/.projects', `${project.projectID}.inf`);
             await project.writeInformationFile();
             fs.existsSync(infPath).should.be.true;
@@ -271,20 +258,20 @@ describe('Project.js', () => {
             infJson.should.have.property('projectID').and.equal(project.projectID);
         });
         it('Checks that an information file can be used to create a project', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const infPath = path.join(global.codewind.CODEWIND_WORKSPACE, '/.projects', `${project.projectID}.inf`);
             await project.writeInformationFile();
             fs.existsSync(infPath).should.be.true;
             const infJson = await fs.readJson(infPath);
             infJson.should.have.property('projectID').and.equal(project.projectID);
 
-            const projectFromInf = new Project(infJson, global.codewind.CODEWIND_WORKSPACE);
+            const projectFromInf = createProjectAndCheckIsAnObject(infJson, global.codewind.CODEWIND_WORKSPACE);
             projectFromInf.should.deep.equal(project);
         });
         it('Checks the Project cannot be written when it is locked', function() {
             // The lock check waits for 1000
             this.slow(1500);
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.infLockFlag = true;
             return project.writeInformationFile()
                 .should.be.eventually.rejectedWith(`Unable to obtain lock for project in file for project ${project.name}.`)
@@ -295,19 +282,19 @@ describe('Project.js', () => {
     });
     describe('getBuildLogPath()', () => {
         it('Checks that null is returned when a buildLogPath does not exist', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.should.have.property('buildLogPath').and.be.null;
             const logPath = project.getBuildLogPath();
             expect(logPath).to.be.null;
         });
         it('Checks that the buildLogPath is returned', () => {
-            const project = new Project({ name: 'dummy', buildLogPath: 'somepath' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', buildLogPath: 'somepath' }, global.codewind.CODEWIND_WORKSPACE);
             project.should.have.property('buildLogPath').and.equal('somepath');
             const logPath = project.getBuildLogPath();
             logPath.should.equal('somepath');
         });
         it('Checks that the buildLogPath has codewind-workspace substituted with global workspace', () => {
-            const project = new Project({ name: 'dummy', buildLogPath: '/codewind-workspace/somelogfile' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', buildLogPath: '/codewind-workspace/somelogfile' }, global.codewind.CODEWIND_WORKSPACE);
             project.should.have.property('buildLogPath').and.equal('/codewind-workspace/somelogfile');
             const logPath = project.getBuildLogPath();
             logPath.should.equal(path.join(global.codewind.CODEWIND_WORKSPACE, 'somelogfile'));
@@ -322,14 +309,14 @@ describe('Project.js', () => {
     });
     describe('getMetrics()', () => {
         it('Fails to get the metrics as the loadTestDirectory does not exist', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             return project.getMetrics('invalidType')
                 .should.be.eventually.rejectedWith('Failed to read load-test directories')
                 .and.be.an.instanceOf(ProjectError)
                 .and.have.property('code', 'LOAD_TEST_DIR_ERROR');
         });
         it('Fails to get the metrics of an invalid type', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = global.codewind.CODEWIND_WORKSPACE;
             return project.getMetrics('invalidType')
                 .should.be.eventually.rejectedWith('invalidType is not a valid metric type. Valid metric types are\n[cpu,gc,memory,http]')
@@ -337,7 +324,7 @@ describe('Project.js', () => {
                 .and.have.property('code', 'INVALID_METRIC_TYPE');
         });
         it('Gets an empty array of metrics as none exist in the loadTestPath', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = global.codewind.CODEWIND_WORKSPACE;
             const cpuMetrics = await project.getMetrics('cpu');
             cpuMetrics.should.be.an('array');
@@ -349,7 +336,7 @@ describe('Project.js', () => {
                 it(type, async() => {
                     const files = await fs.readdir(loadTestResources);
                     const noLoadTests = files.length;
-                    const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+                    const project = createDefaultProjectAndCheckIsAnObject();
                     project.loadTestPath = loadTestResources;
                     const cpuMetrics = await project.getMetrics(type);
                     cpuMetrics.should.have.length(noLoadTests);
@@ -363,7 +350,7 @@ describe('Project.js', () => {
     });
     describe('getMetricsByTime(timeOfTestRun)', () => {
         it('Fails to get a metrics file using an invalid time stamp', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             return project.getMetricsByTime('123')
                 .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
@@ -371,7 +358,7 @@ describe('Project.js', () => {
                 .and.have.property('code', 'NOT_FOUND');
         });
         it('Gets a metrics file using a valid time stamp (String)', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             const metricsFile = '20190326154749';
             const metricsTypes = await project.getMetricsByTime(metricsFile);
@@ -386,7 +373,7 @@ describe('Project.js', () => {
             metricsTypes.should.deep.equal(actualMetricsFromFile);
         });
         it('Gets a metrics file using a valid time stamp (Int)', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             const metricsFile = 20190326154749;
             const metricsTypes = await project.getMetricsByTime(metricsFile);
@@ -403,7 +390,7 @@ describe('Project.js', () => {
     });
     describe('deleteMetrics(timeOfTestRun)', () => {
         it('Fails to delete a metrics file using an invalid time stamp', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             return project.deleteMetrics('123')
                 .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
@@ -414,7 +401,7 @@ describe('Project.js', () => {
             const tempMetricsDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'metrics');
             const tempMetricsPath = path.join(tempMetricsDir, '123');
             await fs.copy(path.join(loadTestResources,'20190326154749'), tempMetricsPath);
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = tempMetricsDir;
             fs.existsSync(tempMetricsPath).should.be.true;
             await project.deleteMetrics('123');
@@ -424,7 +411,7 @@ describe('Project.js', () => {
             const tempMetricsDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'metrics');
             const tempMetricsPath = path.join(tempMetricsDir, '123');
             await fs.copy(path.join(loadTestResources,'20190326154749'), tempMetricsPath);
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = tempMetricsDir;
             fs.existsSync(tempMetricsPath).should.be.true;
             await project.deleteMetrics(123);
@@ -433,7 +420,7 @@ describe('Project.js', () => {
     });
     describe('getClosestPathToLoadTestDir(timeOfTestRun)', () => {
         it('Fails to get a LoadTestDir using an invalid time stamp (time given is too low)', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             return project.getClosestPathToLoadTestDir('123')
                 .should.be.eventually.rejectedWith(`found no load-test metrics from time 123`)
@@ -441,13 +428,13 @@ describe('Project.js', () => {
                 .and.have.property('code', 'NOT_FOUND');
         });
         it('Gets a LoadTestDir using a valid time stamp (String)', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             const metricsFilePath = await project.getClosestPathToLoadTestDir('30000000000000');
             fs.existsSync(metricsFilePath).should.be.true;
         });
         it('Gets a LoadTestDir using a valid time stamp (Int)', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             const metricsFilePath = await project.getClosestPathToLoadTestDir(30000000000000);
             fs.existsSync(metricsFilePath).should.be.true;
@@ -455,7 +442,7 @@ describe('Project.js', () => {
     });
     describe('getPathToLoadTestDir(timeOfTestRun)', () => {
         it('Fails to get a LoadTestDir using an invalid time stamp', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             return project.getPathToLoadTestDir('123')
                 .should.be.eventually.rejectedWith(`found no exact match load-test metrics from time 123`)
@@ -463,13 +450,13 @@ describe('Project.js', () => {
                 .and.have.property('code', 'NOT_FOUND');
         });
         it('Gets a LoadTestDir using a valid time stamp (String)', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             const metricsFilePath = await project.getPathToLoadTestDir('20190326154749');
             fs.existsSync(metricsFilePath).should.be.true;
         });
         it('Gets a LoadTestDir using a valid time stamp (Int)', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             const metricsFilePath = await project.getPathToLoadTestDir(20190326154749);
             fs.existsSync(metricsFilePath).should.be.true;
@@ -477,7 +464,7 @@ describe('Project.js', () => {
     });
     describe('getPathToMetricsFile(timeOfTestRun)', () => {
         it('Fails to get a LoadTestDir using an invalid time stamp', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             return project.getPathToMetricsFile('123')
                 .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
@@ -485,13 +472,13 @@ describe('Project.js', () => {
                 .and.have.property('code', 'NOT_FOUND');
         });
         it('Gets a LoadTestDir using a valid time stamp which is an existing filename', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             const metricsFilePath = await project.getPathToMetricsFile('20190326154749');
             fs.existsSync(metricsFilePath).should.be.true;
         });
         it('Gets a LoadTestDir using a valid time stamp which larger than an existing filename', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             const metricsFilePath = await project.getPathToMetricsFile('30000000000000');
             fs.existsSync(metricsFilePath).should.be.true;
@@ -499,7 +486,7 @@ describe('Project.js', () => {
     });
     describe('updateMetricsDescription(timeOfTestRun, newDescription)', () => {
         it('Fails to get a LoadTestDir using an invalid time stamp', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             return project.updateMetricsDescription('123', 'newdesc')
                 .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
@@ -514,7 +501,7 @@ describe('Project.js', () => {
             const tempMetricsFile = path.join(tempMetricsPath, 'metrics.json');
 
             await fs.copy(path.join(loadTestResources, testRun), tempMetricsPath);
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = tempMetricsDir;
 
             const { desc: descPreChange } = await fs.readJSON(tempMetricsFile);
@@ -527,7 +514,7 @@ describe('Project.js', () => {
     });
     describe('getComparison()', () => {
         it('gets comparison', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             const comparision = await project.getComparison();
             comparision.should.have.length(4);
@@ -541,35 +528,35 @@ describe('Project.js', () => {
     });
     describe('Project States', () => {
         it('isOpen() Checks if a project is open', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.isOpen().should.be.true;
         });
         it('isClosed() Checks if a Project is closed', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.state = Project.STATES.closed;
             project.isClosed().should.be.true;
         });
         it('isValidating() Checks if a Project is validating', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.state = Project.STATES.validating;
             project.isValidating().should.be.true;
         });
     });
     describe('Project Action', () => {
         it('isClosing() Checks if a project is closing', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.action = Project.STATES.closing;
             project.isClosing().should.be.true;
         });
         it('isDeleting() Checks if a Project is deleting', () => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             project.action = Project.STATES.deleting;
             project.isDeleting().should.be.true;
         });
     });
     describe('getLoadTestConfig()', () => {
         it('Gets test config when it does not exist (creates a new config)', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'getLoadTestConfig');
             await fs.ensureDir(tempLoadDir);
             project.loadTestPath = tempLoadDir;
@@ -586,7 +573,7 @@ describe('Project.js', () => {
             fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.true;
         });
         it('Gets test config when it does exist (reads existing config)', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'getLoadTestConfig');
             await fs.ensureDir(tempLoadDir);
             project.loadTestPath = tempLoadDir;
@@ -607,19 +594,19 @@ describe('Project.js', () => {
     });
     describe('writeNewLoadTestConfigFile()', () => {
         it('Gets test config when it does not exist (creates a new config)', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'writeNewLoadTestConfigFile');
             await fs.ensureDir(tempLoadDir);
             project.loadTestPath = tempLoadDir;
             fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.false;
             await project.writeNewLoadTestConfigFile({
-                path: 'rando',
+                path: 'randompath',
             });
 
             fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.true;
         });
         it('Gets test config when it does exist (reads existing config)', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'getLoadTestConfig');
             await fs.ensureDir(tempLoadDir);
             project.loadTestPath = tempLoadDir;
@@ -640,7 +627,7 @@ describe('Project.js', () => {
     });
     describe('createLoadTestConfigFile()', () => {
         it('Creates a new config file', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'createLoadTestConfigFileTest1');
             await fs.ensureDir(tempLoadDir);
             project.loadTestPath = tempLoadDir;
@@ -659,7 +646,7 @@ describe('Project.js', () => {
             config.should.deep.equal(expectedConfig);
         });
         it('Creates a new config file with a custom path', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'createLoadTestConfigFileTest2');
             await fs.ensureDir(tempLoadDir);
             project.loadTestPath = tempLoadDir;
@@ -673,7 +660,7 @@ describe('Project.js', () => {
             newPath.should.equal('/custompath');
         });
         it('Overwrites an existing config file', async() => {
-            const project = new Project({ name: 'dummy' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createDefaultProjectAndCheckIsAnObject();
             const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'createLoadTestConfigFileTest3');
             await fs.ensureDir(tempLoadDir);
             project.loadTestPath = tempLoadDir;
@@ -681,11 +668,11 @@ describe('Project.js', () => {
             fs.existsSync(configPath).should.be.false;
 
             await project.writeNewLoadTestConfigFile({
-                path: 'rando',
+                path: 'randompath',
             });
             fs.existsSync(configPath).should.be.true;
             const { path: prechangedPath } = await fs.readJson(configPath);
-            prechangedPath.should.equal('rando');
+            prechangedPath.should.equal('randompath');
 
             fs.existsSync(configPath).should.be.true;
             await project.createLoadTestConfigFile();
@@ -708,7 +695,7 @@ describe('Project.js', () => {
             });
             it('Should error as the directory does not exist', () => {
                 const getLoadTestDirs = Project.__get__('getLoadTestDirs');
-                return getLoadTestDirs('nonexistant')
+                return getLoadTestDirs('invaliddirectory')
                     .should.be.eventually.rejectedWith('Failed to read load-test directories')
                     .and.be.an.instanceOf(ProjectError)
                     .and.have.property('code', 'LOAD_TEST_DIR_ERROR');
@@ -735,3 +722,15 @@ describe('Project.js', () => {
         });
     });
 });
+
+function createProjectAndCheckIsAnObject(options, workspace) {
+    const project = new Project(options, workspace);
+    project.should.be.an('object');
+    return project;
+}
+
+function createDefaultProjectAndCheckIsAnObject() {
+    const options = { name: 'dummy' };
+    const workspace = global.codewind.CODEWIND_WORKSPACE;
+    return createProjectAndCheckIsAnObject(options, workspace);
+}
