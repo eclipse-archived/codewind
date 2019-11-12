@@ -262,7 +262,7 @@ export async function updateProjectStatus(type: string, projectID: string, statu
             if (buildImageLastBuild) {
                 data.buildImageLastBuild = buildImageLastBuild;
             }
-            buildStateMap.set(projectID, new ProjectState(newState, newDetailedState, timestamp, appImageLastBuild, buildImageLastBuild));
+            buildStateMap.set(projectID, new ProjectState(newState, data.detailedBuildStatus, timestamp, appImageLastBuild, buildImageLastBuild));
             io.emitOnListener("projectStatusChanged", data);
 
             // Trigger project validation after every build
