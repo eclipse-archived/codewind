@@ -207,7 +207,7 @@ describe('Project.js', () => {
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('swiftmetrics');
         });
-        it('Gets a blank string root for an invalid Project', () => {
+        it('Gets a blank string metrics root for an invalid project', () => {
             const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'invalid' }, global.codewind.CODEWIND_WORKSPACE);
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('');
@@ -349,6 +349,7 @@ describe('Project.js', () => {
         });
     });
     describe('getMetricsByTime(timeOfTestRun)', () => {
+        const metricList = ['id', 'time', 'desc', 'cpu', 'gc', 'memory', 'httpUrls'];
         it('Fails to get a metrics file using an invalid time stamp', () => {
             const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
@@ -362,13 +363,11 @@ describe('Project.js', () => {
             project.loadTestPath = loadTestResources;
             const metricsFile = '20190326154749';
             const metricsTypes = await project.getMetricsByTime(metricsFile);
-            metricsTypes.should.have.property('id').and.equal(0);
-            metricsTypes.should.have.property('time');
-            metricsTypes.should.have.property('desc');
-            metricsTypes.should.have.property('cpu');
-            metricsTypes.should.have.property('gc');
-            metricsTypes.should.have.property('memory');
-            metricsTypes.should.have.property('httpUrls');
+            for (let i = 0; i < metricList.length; i++) {
+                const metric = metricList[i];
+                metricsTypes.should.have.property(metric);
+            }
+            metricsTypes.id.should.equal(0);
             const actualMetricsFromFile = await fs.readJSON(path.join(loadTestResources, metricsFile, 'metrics.json'));
             metricsTypes.should.deep.equal(actualMetricsFromFile);
         });
@@ -377,13 +376,11 @@ describe('Project.js', () => {
             project.loadTestPath = loadTestResources;
             const metricsFile = 20190326154749;
             const metricsTypes = await project.getMetricsByTime(metricsFile);
-            metricsTypes.should.have.property('id').and.equal(0);
-            metricsTypes.should.have.property('time');
-            metricsTypes.should.have.property('desc');
-            metricsTypes.should.have.property('cpu');
-            metricsTypes.should.have.property('gc');
-            metricsTypes.should.have.property('memory');
-            metricsTypes.should.have.property('httpUrls');
+            for (let i = 0; i < metricList.length; i++) {
+                const metric = metricList[i];
+                metricsTypes.should.have.property(metric);
+            }
+            metricsTypes.id.should.equal(0);
             const actualMetricsFromFile = await fs.readJSON(path.join(loadTestResources, String(metricsFile), 'metrics.json'));
             metricsTypes.should.deep.equal(actualMetricsFromFile);
         });
