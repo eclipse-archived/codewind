@@ -404,7 +404,7 @@ export async function exposeOverIngress(projectID: string, isHTTPS: boolean, app
     try {
         let resp: any = undefined;
 
-        // Get the deployment name and uid labaled with the unique project ID
+        // Get the deployment name and uid labeled with the unique project ID
         resp = await k8sClient.apis.apps.v1.namespaces(KUBE_NAMESPACE).deployments.get({ qs: { labelSelector: "projectID=" + projectID } });
         ownerReferenceName = resp.body.items[0].metadata.name;
         ownerReferenceUID = resp.body.items[0].metadata.uid;

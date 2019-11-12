@@ -53,7 +53,7 @@ router.post('/api/v1/dockerregistry', async function (req, res) {
     }
 
     await user.setupDockerRegistry(username, password, url);
-    const msg = "POST /api/v1/dockerregistry has updated the Docker config and patched the Service Account";
+    const msg = "POST /api/v1/dockerregistry call has finished";
     res.status(200).send(msg);
   } catch (error) {
     log.error(error);
