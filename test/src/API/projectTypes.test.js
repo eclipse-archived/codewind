@@ -25,12 +25,11 @@ describe('Project Types API tests', function() {
             .get('/api/v1/project-types')
             .set('Cookie', ADMIN_COOKIE);
 
-        // res.should.have.status(200).and.satisfyApiSpec;
+        res.should.have.status(200).and.satisfyApiSpec;
         res.should.have.ownProperty('body');
         res.body.should.be.an('array');
-        res.body.map((item) => {
-            return item.projectType;
-        }).should.include.members([
+        const projectTypes = res.body.map(typeObj => typeObj.projectType);
+        projectTypes.should.include.members([
             'liberty',
             'nodejs',
             'spring',
