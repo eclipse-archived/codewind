@@ -12,6 +12,7 @@ codewind-workspace/
 node_modules/
 package-lock.json
 src/performance/webclient/build/
+test/coverage
 test/test-results.xml
 test/tmp.json
 src/performance/LICENSE
