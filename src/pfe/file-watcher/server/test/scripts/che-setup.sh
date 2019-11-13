@@ -42,6 +42,7 @@ ADD_DEFAULT_REGISTRY="n"
 INSTALL_CW="n"
 DEFAULT_DEVFILE="https://raw.githubusercontent.com/eclipse/codewind-che-plugin/master/devfiles/latest/devfile.yaml"
 USER_DEVFILE=
+DEFAULT_OPERATOR=
 
 function usage {
     me=$(basename $0)
@@ -83,19 +84,19 @@ function displayMsg() {
 }
 
 function installChe() {
-    if [ -f "$OPERATOR_YAML" ]; then
+    if [[ ! -z "$OPERATOR_USE" ]]; then
         chectl server:start --platform=openshift --installer=operator --che-operator-cr-yaml=$OPERATOR_YAML -n $CHE_NS --k8spodreadytimeout=$POD_READY_TO --k8spodwaittimeout=$POD_WAIT_TO
-        displayMsg $? "Failed to clean deploy che." true
     else
-        displayMsg 1 "Failed to find operator yaml file on disk." true
+        chectl server:start --platform=openshift --installer=operator -n $CHE_NS --k8spodreadytimeout=$POD_READY_TO --k8spodwaittimeout=$POD_WAIT_TO
     fi
+    displayMsg $? "Failed to clean deploy che." true
 }
 
 function removeCodewindWorkspace() {
     echo -e "${YELLOW}>> Cleaning up existing codewind workspace ${RESET}"
 
     # Get the Codewind Workspace ID
-    CW_POD="$( kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 2>/dev/null )"
+    CW_POD="$( kubectl get po --selector=app=codewind-pfe --show-labels -n $CHE_NS | tail -n 1 2>/dev/null )"
     if [[ $CW_POD =~ codewindWorkspace=.*, ]]; then
         echo""
         RE_RESULT=${BASH_REMATCH}
@@ -167,7 +168,11 @@ while :; do
         INSTALL_CW="y"
         USER_DEVFILE=${1#*=}
         ;;
+        --operator-yaml)
+        OPERATOR_USE="y"
+        ;;
         --operator-yaml=?*)
+        OPERATOR_USE="y"
         OPERATOR_YAML=${1#*=}
         ;;
         --service-account=?*)
@@ -245,33 +250,6 @@ else
     displayMsg $? "Failed to switch chectl channel." true
 fi
 
-# install resources
-echo -e "${CYAN}> Installing codewind che resources${RESET}"
-rm -rf $CODEWIND_CHE
-git clone git@github.com:eclipse/codewind-che-plugin.git > /dev/null 2>&1
-displayMsg $? "Failed to install codewind che resource." true
-
-echo -e "${CYAN}> Installing codewind ODO resources${RESET}"
-rm -rf $CODEWIND_ODO_EXTENSION
-git clone https://github.com/eclipse/codewind-odo-extension > /dev/null 2>&1
-displayMsg $? "Failed to install codewind ODO resource." true
-
-echo -e "${CYAN}> Applying kubectl cluster role${RESET}"
-kubectl apply -f "$CODEWIND_CHE/setup/install_che/codewind-clusterrole.yaml" > /dev/null 2>&1
-displayMsg $? "Failed to apply kubectl cluster role." true
-
-echo -e "${CYAN}> Applying kubectl role binding${RESET}"
-kubectl apply -f "$CODEWIND_CHE/setup/install_che/codewind-rolebinding.yaml" > /dev/null 2>&1
-displayMsg $? "Failed to apply kubectl role binding." true
-
-echo -e "${CYAN}> Applying kubectl ODO cluster role${RESET}"
-kubectl apply -f "$CODEWIND_ODO_EXTENSION/odo-RBAC/codewind-odoclusterrole.yaml" > /dev/null 2>&1
-displayMsg $? "Failed to apply kubectl ODO cluster role." true
-
-echo -e "${CYAN}> Applying kubectl ODO role binding${RESET}"
-kubectl apply -f "$CODEWIND_ODO_EXTENSION/odo-RBAC/codewind-odoclusterrolebinding.yaml" > /dev/null 2>&1
-displayMsg $? "Failed to apply kubectl ODO role binding." true
-
 # if clean deploy is selected
 if [[ $CLEAN_DEPLOY == "y" ]]; then
     echo -e "${CYAN}> Clean deploying che${RESET}\n"
@@ -299,6 +277,33 @@ if [[ $CLEAN_DEPLOY == "y" ]]; then
     oc create serviceaccount "$SERVICE_ACCOUNT" > /dev/null 2>&1
     displayMsg $? "Failed to create service account." true
 fi
+
+# install resources
+echo -e "${CYAN}> Installing codewind che resources${RESET}"
+rm -rf $CODEWIND_CHE
+git clone git@github.com:eclipse/codewind-che-plugin.git > /dev/null 2>&1
+displayMsg $? "Failed to install codewind che resource." true
+
+echo -e "${CYAN}> Installing codewind ODO resources${RESET}"
+rm -rf $CODEWIND_ODO_EXTENSION
+git clone https://github.com/eclipse/codewind-odo-extension > /dev/null 2>&1
+displayMsg $? "Failed to install codewind ODO resource." true
+
+echo -e "${CYAN}> Applying kubectl cluster roles${RESET}"
+kubectl apply -f "$CODEWIND_CHE/setup/install_che/codewind-clusterrole.yaml" -n $CHE_NS > /dev/null 2>&1
+displayMsg $? "Failed to apply kubectl cluster role." true
+
+echo -e "${CYAN}> Applying kubectl role binding${RESET}"
+kubectl apply -f "$CODEWIND_CHE/setup/install_che/codewind-rolebinding.yaml" -n $CHE_NS > /dev/null 2>&1
+displayMsg $? "Failed to apply kubectl role binding." true
+
+echo -e "${CYAN}> Applying kubectl ODO cluster role${RESET}"
+kubectl apply -f "$CODEWIND_ODO_EXTENSION/odo-RBAC/codewind-odoclusterrole.yaml" -n $CHE_NS > /dev/null 2>&1
+displayMsg $? "Failed to apply kubectl ODO cluster role." true
+
+echo -e "${CYAN}> Applying kubectl ODO role binding${RESET}"
+kubectl apply -f "$CODEWIND_ODO_EXTENSION/odo-RBAC/codewind-odoclusterrolebinding.yaml" -n $CHE_NS > /dev/null 2>&1
+displayMsg $? "Failed to apply kubectl ODO role binding." true
 
 echo -e "${CYAN}> Setting openshift admin policy: privileged ${RESET}"
 oc adm policy add-scc-to-group privileged system:serviceaccounts:$CHE_NS > /dev/null 2>&1
@@ -361,7 +366,7 @@ if [[ "$INSTALL_CW" == "y" ]]; then
     POD_RUNNING=0
     echo -e -n "${YELLOW}>> Waiting for Codewind pod to be created .${RESET}"
     while [ $POD_RUNNING -eq 0 ]; do
-	    RESULT="$( kubectl get po --selector=app=codewind-pfe 2>&1 )"
+	    RESULT="$( kubectl get po --selector=app=codewind-pfe -n $CHE_NS 2>&1 )"
 	    if [[ $RESULT = *"Running"* ]]; then
 		    POD_RUNNING=1
             echo ""
