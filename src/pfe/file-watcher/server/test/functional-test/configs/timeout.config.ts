@@ -14,6 +14,6 @@ import ms from "ms";
 export const defaultTimeout = ms("5m");
 export const defaultInterval = ms("5s");
 
-export const createTestTimeout = ms("20m");
+export const createTestTimeout = ms("60m");
 export const deleteTestTimeout = ms("1m");
 export const testDeploymentRegistryTimeout = ms("60s");
