@@ -541,16 +541,6 @@ public class IDC {
 		Logger.info("Starting server in start mode: " + context.getStartMode());
 		StatusTracker.updateProjectState(context, "app", "starting", null, null);
 		
-		String dockerCpCmd = "docker cp " + context.getContainerName() + ":/home/default/app/mc-target " + context.getAppDirectory();
-		Logger.info("Docker copy command to copy the mc-target folder: " + dockerCpCmd);
-		
-		ProcessRunner copyMcTarget = TaskUtils.runCmd(dockerCpCmd, context, true);
-		if (copyMcTarget.getErrorCode().orElse(0) != 0) {
-			Logger.error("Failed to copy mc-target folder to the PFE container");
-			appDb.put(Constants.DB_SERVER_START, "false");
-			StatusTracker.updateProjectState(context, "app", "stopped", "projectStatusController.serverNotStarted",  null);
-		}
-
 
 		String logPathPrefix = HOST_OS.contains("windows") ? "/tmp/liberty/" : "/home/default/app/mc-target/";
 		String messagesLog = logPathPrefix + "liberty/wlp/usr/servers/defaultServer/logs/messages.log";
