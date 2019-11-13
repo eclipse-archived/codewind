@@ -262,7 +262,7 @@ if [[ $CLEAN_DEPLOY == "y" ]]; then
 
     PROJECTS_LIST=$(oc projects 2>&1)
     echo -e -n "${MAGENTA}>>> Waiting for cleaning up old che resources .${RESET}"
-    while [[ ! "$PROJECTS_LIST" =~ "$CHE_NS" ]]; do
+    while [[ "$PROJECTS_LIST" == *"$CHE_NS"* ]]; do
         PROJECTS_LIST=$(oc projects 2>&1)
         sleep 2s
         echo -e -n "${MAGENTA}.${RESET}"
