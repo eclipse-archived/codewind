@@ -114,9 +114,9 @@ module.exports.copyProjectContents = async function copyProjectContents(
   projectRoot
 ) {
   // docker cp requires a trailing . to copy the contents of a directory
-  const srcContents = `${pathToPFEProject}/.`;
+  const projectContents = `${pathToPFEProject}/.`;
   //  const dockerCommand = `docker exec ${project.containerId} cp ${fileToCopy} ${projectRoot}/${relativePathOfFile}`;
-  const dockerCommand = `docker cp ${srcContents} ${project.containerId}:${projectRoot}`;
+  const dockerCommand = `docker cp ${projectContents} ${project.containerId}:${projectRoot}`;
   log.debug(`[docker cp command] ${dockerCommand}`);
   await exec(dockerCommand);
 };
