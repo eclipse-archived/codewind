@@ -109,6 +109,7 @@ module.exports.updateObject = function updateObject(objectToUpdate, fieldsToAddT
 module.exports.copyProject = async function copyFile(fromProjectPath, toProjectPath) {
   log.debug(`copyProject fromPath: ${fromProjectPath}, toPath: ${toProjectPath}`);
   await fs.copy(fromProjectPath, toProjectPath);
+  await fs.chmod(toProjectPath, "777");
   // now clean up old directory
   await module.exports.forceRemove(fromProjectPath)
 }
