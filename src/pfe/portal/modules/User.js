@@ -19,6 +19,7 @@ const Project = require('./Project');
 const ExtensionList = require('./ExtensionList');
 const Templates = require('./Templates');
 const cwUtils = require('./utils/sharedFunctions');
+const socketAuthFunctions = require('./utils/socketAuth');
 const Logger = require('./utils/Logger');
 const LoadRunError = require('./utils/errors/LoadRunError.js');
 const FilewatcherError = require('./utils/errors/FilewatcherError');
@@ -53,7 +54,7 @@ module.exports = class User {
     }
     this.secure = true;
   }
-  
+
   /**
    * Function to initialise a user
    * Runs functions to create the user directories, start existing projects
@@ -72,7 +73,6 @@ module.exports = class User {
       }
       await this.createDirectories();
       this.projectList = new ProjectList();
-      
       // Add the projectList to args
       await this.initialiseExistingProjects();
 
@@ -93,6 +93,15 @@ module.exports = class User {
         await this.extensionList.initialise(this.directories.extensions, this.templates);
       } catch (error) {
         log.error(`Codewind extensions failed to load. Error ${util.inspect(error)}`);
+      }
+
+      // Connect up the UI Socket Authentication handler
+      if (process.env.CODEWIND_AUTH_HOST) {
+        try {
+          socketAuthFunctions.addAuthenticationToUISocket(this.uiSocket)
+        } catch (error) {
+          log.error(`UISocket : Adding authentication error - ${util.inspect(error)}`);
+        }
       }
 
       // Create the FileWatcher and LoadRunner classes for this user
@@ -124,7 +133,7 @@ module.exports = class User {
       log.debug(`Running load for project: ${project.projectID} config: ${JSON.stringify(config)}`);
       const runLoadResp = await this.loadRunner.runLoad(config, project, description);
       return runLoadResp;
-    } catch(err) {
+    } catch (err) {
       // Reset run load flag and config in the project, and re-throw the error
       project.loadInProgress = false;
       project.loadConfig = null;
@@ -135,15 +144,15 @@ module.exports = class User {
   /**
    * Function to cancel load on project
    */
-  async cancelLoad(project){
+  async cancelLoad(project) {
     log.debug("cancelLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
 
     if (project.loadInProgress) {
       project.loadInProgress = false;
       log.debug("Cancelling load for config: " + JSON.stringify(project.loadConfig));
-      this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID,  status: 'cancelling' });
+      this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelling' });
       let cancelLoadResp = await this.loadRunner.cancelRunLoad(project.loadConfig);
-      this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID,  status: 'cancelled' });
+      this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
       return cancelLoadResp;
     }
     throw new LoadRunError("NO_RUN_IN_PROGRESS", `For project ${project.projectID}`);
@@ -189,7 +198,7 @@ module.exports = class User {
           }
         }
       }
-    } ))
+    }))
     return this.projectList.list;
   }
 
@@ -199,7 +208,7 @@ module.exports = class User {
   async getWatchList() {
     let fileNameList = await fs.readdir(this.directories.projects);
     let watchList = {
-      projects:[]
+      projects: []
     };
     await Promise.all(fileNameList.map(async (fileName) => {
       let file = path.join(this.directories.projects, fileName);
@@ -207,7 +216,7 @@ module.exports = class User {
         try {
           const projFile = await fs.readJson(file);
           // do not add closed project in the list
-          if(projFile.state == Project.STATES.closed){
+          if (projFile.state == Project.STATES.closed) {
             return;
           }
           const project = {};
@@ -219,7 +228,7 @@ module.exports = class User {
           }
           project.projectID = projFile.projectID;
           project.ignoredPaths = projFile.ignoredPaths;
-          if( projFile.projectWatchStateId == undefined) {
+          if (projFile.projectWatchStateId == undefined) {
             project.projectWatchStateId = crypto.randomBytes(16).toString("hex");
             let projectUpdate = { projectID: projFile.projectID, projectWatchStateId: project.projectWatchStateId };
             await this.projectList.updateProject(projectUpdate);
@@ -237,8 +246,8 @@ module.exports = class User {
           }
         }
       }
-    } ));
-    
+    }));
+
     log.debug("The watch list: " + JSON.stringify(watchList));
     return watchList;
   }
@@ -466,7 +475,7 @@ module.exports = class User {
     let projectID = project.projectID;
     // Stop streaming the logs files.
     project.stopStreamingAllLogs();
-    
+
     try {
       await this.fw.closeProject(project);
     } catch (err) {
@@ -483,7 +492,7 @@ module.exports = class User {
         const containerKey = (global.codewind.RUNNING_IN_K8S ? 'podName' : 'containerId');
         projectUpdate[containerKey] = '';
         let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-        this.user.uiSocket.emit('projectClosed', {...updatedProject, status: 'success'});
+        this.user.uiSocket.emit('projectClosed', { ...updatedProject, status: 'success' });
         log.debug('project ' + projectID + ' successfully closed');
       } else throw err;
     }
@@ -611,7 +620,7 @@ module.exports = class User {
    * Function to read workspace settings
    */
   async readWorkspaceSettings() {
-    try{
+    try {
       log.info(`Reading workspace settings file.`);
       await this.fw.readWorkspaceSettings();
     } catch (err) {
@@ -625,7 +634,7 @@ module.exports = class User {
    */
   async writeWorkspaceSettings(workspaceSettings) {
     let retval;
-    try{
+    try {
       log.info(`Writing workspace settings file.`);
       retval = await this.fw.writeWorkspaceSettings(workspaceSettings);
     } catch (err) {
@@ -641,7 +650,7 @@ module.exports = class User {
    */
   async testDeploymentRegistry(deploymentRegistry) {
     let retval;
-    try{
+    try {
       retval = await this.fw.testDeploymentRegistry(deploymentRegistry);
     } catch (err) {
       log.error(`Error in testDeploymentRegistry`);
@@ -663,7 +672,7 @@ module.exports = class User {
   async setLoggingLevel(level) {
     try {
       await this.fw.setLoggingLevel(level);
-    } catch (err){
+    } catch (err) {
       log.error(`Error setting log level on filewatcher module`);
       log.error(err);
     }
