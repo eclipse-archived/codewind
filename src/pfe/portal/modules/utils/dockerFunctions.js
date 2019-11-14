@@ -108,6 +108,19 @@ module.exports.readFile = function readFile(project, path) {
   });
 }
 
+module.exports.copyProjectContents = async function copyProjectContents(
+  project,
+  pathToPFEProject,
+  projectRoot
+) {
+  // docker cp requires a trailing . to copy the contents of a directory
+  const srcContents = `${pathToPFEProject}/.`;
+  //  const dockerCommand = `docker exec ${project.containerId} cp ${fileToCopy} ${projectRoot}/${relativePathOfFile}`;
+  const dockerCommand = `docker cp ${srcContents} ${project.containerId}:${projectRoot}`;
+  log.debug(`[docker cp command] ${dockerCommand}`);
+  await exec(dockerCommand);
+};
+
 module.exports.copyFile = async function copyFile(project, fileToCopy, projectRoot, relativePathOfFile) {
 //  const dockerCommand = `docker exec ${project.containerId} cp ${fileToCopy} ${projectRoot}/${relativePathOfFile}`;
   const dockerCommand = `docker cp ${fileToCopy} ${project.containerId}:${projectRoot}/${relativePathOfFile}`;
