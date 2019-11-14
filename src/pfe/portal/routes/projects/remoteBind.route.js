@@ -74,7 +74,7 @@ async function bindStart(req, res) {
     }
 
     const codewindWorkspace = global.codewind.CODEWIND_WORKSPACE
-   
+
     const projectDetails = {
       name: name,
       directory: name,
@@ -98,7 +98,7 @@ async function bindStart(req, res) {
 
     newProject = await user.createProject(projectDetails);
     let msg = `Project ${newProject.name} (${newProject.projectID}) opened.`;
-    
+
     res.status(202).send(newProject);
     log.info(msg);
   } catch (err) {
@@ -198,7 +198,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         log.info("Temporary project directory doesn't exist, not syncing any files");
         res.status(404).send("No files have been synced");
       } else {
-      
+
         const currentFileList = await listFiles(pathToTempProj, '');
 
         const filesToDeleteSet = new Set(currentFileList);
@@ -239,10 +239,14 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
     if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
       (!project.extension || !project.extension.config.needsMount)) {
       await Promise.all(filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file)));
-      modifiedList.forEach((file) => {
-        log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
-        cwUtils.copyFile(project, path.join(globalProjectPath, file), projectRoot, file);
-      });
+      log.info(
+        `project ${project.name} syncing with build container, projectRoot is ${projectRoot}`
+      );
+      await cwUtils.copyProjectContents(
+        project,
+        globalProjectPath,
+        projectRoot
+      );
     }
     filesToDelete.forEach((f) => {
       const data = {
