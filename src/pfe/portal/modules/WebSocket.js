@@ -33,6 +33,7 @@ function watchListChanged(data) {
     wss.clients.forEach(function each(client) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(watchChangedData));
+        log.debug("Sending message to clients: " + JSON.stringify(watchChangedData));
       }
     });
   }
