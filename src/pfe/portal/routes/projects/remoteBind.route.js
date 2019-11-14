@@ -245,7 +245,7 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
       (!project.extension || !project.extension.config.needsMount)) {
       await Promise.all(filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file)));
       log.info(
-        `project ${project.name} syncing with build container, projectRoot is ${projectRoot}`
+        `Project ${project.name} syncing with build container, projectRoot is ${projectRoot}`
       );
       await cwUtils.copyProjectContents(
         project,
