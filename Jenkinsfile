@@ -35,6 +35,8 @@ pipeline {
                         SRC_DIR=$DIR/src;
                         PFE=pfe
                         PERFORMANCE=performance;
+                        KEYCLOAK=keycloak;
+                        GATEKEEPER=gatekeeper;
                         ARCH=`uname -m`;
                         TAG=latest;
                         REGISTRY=eclipse
@@ -46,7 +48,7 @@ pipeline {
                             IMAGE_ARCH=$ARCH
                         fi
 
-                        ALL_IMAGES="$PFE $PERFORMANCE";
+                        ALL_IMAGES="$PFE $PERFORMANCE $KEYCLOAK $GATEKEEPER";
 
                         # Copy .env over to file-watcher
                         if [ -f $DIR/.env ]; then
@@ -54,12 +56,16 @@ pipeline {
                             cp $DIR/.env ${SRC_DIR}/${PFE}/file-watcher/scripts/.env
                         fi
 
-                        # Copy the license files to the portal, performance
+                        # Copy the license files to the portal, performance, keycloak and gatekeeper 
                         cp -r $DIR/LICENSE ${SRC_DIR}/pfe/portal/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/pfe/portal/
                         cp -r $DIR/LICENSE ${SRC_DIR}/performance/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/performance/
-
+                        cp -r $DIR/LICENSE ${SRC_DIR}/keycloak/
+                        cp -r $DIR/NOTICE.md ${SRC_DIR}/keycloak/
+                        cp -r $DIR/LICENSE ${SRC_DIR}/gatekeeper/
+                        cp -r $DIR/NOTICE.md ${SRC_DIR}/gatekeeper/
+                        
                         # Copy the docs into portal
                         cp -r $DIR/docs ${SRC_DIR}/pfe/portal/
 
@@ -209,8 +215,8 @@ pipeline {
                             exit;
                         fi
 
-                        printf "\n\nPausing for 20 seconds to allow containers to start\n";
-                        sleep 20;
+                        printf "\n\nPausing for 30 seconds to allow containers to start\n";
+                        sleep 30;
 
                         # Check to see if any containers exited straight away
                         printf "\n\n${BLUE}CHECKING FOR codewind CONTAINERS THAT EXITED STRAIGHT AFTER BEING RUN $RESET\n";
@@ -275,7 +281,9 @@ pipeline {
                         if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
 
                             declare -a DOCKER_IMAGE_ARRAY=("codewind-performance-amd64" 
-                                                        "codewind-pfe-amd64")
+                                                        "codewind-pfe-amd64" 
+                                                        "codewind-keycloak-amd64"
+                                                        "codewind-gatekeeper-amd64")
 
                             chmod u+x ./script/publish.sh
 
