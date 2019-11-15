@@ -94,14 +94,15 @@ if [ "$IN_K8" == "true" ]; then
 	echo "Initializing a custom helm tiller"
 	helm init --upgrade --service-account $SERVICE_ACCOUNT_NAME
 
+	# TO BE REMOVED AS PART OF CODEWIND ISSUE https://github.com/eclipse/codewind/issues/665 WHEN APIS ARE READY TO BE CONSUMED
 	# Copy the secret's config json file over
-	echo "Copying the docker registry secrets over"
-	if [ -e /tmp/secret/.dockerconfigjson ]; then
-		mkdir -p /root/.docker/
-		cp /tmp/secret/.dockerconfigjson /root/.docker/config.json
-	elif [ -e /tmp/secret/.dockercfg ]; then
-		cp /tmp/secret/.dockercfg /root/.dockercfg
-	fi
+	# echo "Copying the docker registry secrets over"
+	# if [ -e /tmp/secret/.dockerconfigjson ]; then
+	# 	mkdir -p /root/.docker/
+	# 	cp /tmp/secret/.dockerconfigjson /root/.docker/config.json
+	# elif [ -e /tmp/secret/.dockercfg ]; then
+	# 	cp /tmp/secret/.dockercfg /root/.dockercfg
+	# fi
 
 	# Use a helm wrapper if TLS selected for helm
 	if [[ "$USE_HELM_TLS" == "true" ]]; then

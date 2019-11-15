@@ -18,31 +18,28 @@ const log = new Logger(__filename);
 /**
  * API Function to get the Docker Registry
  */
-router.get('/api/v1/dockerregistry', async function (req, res) {
-  let retval;
+router.get('/api/v1/registrysecrets', async function (req, res) {
   try {
     let user = req.cw_user;
-    log.debug(`GET /api/v1/dockerregistry called`);
-    retval = await user.getDockerRegistryList();
-    res.status(200).send(retval);
+    log.debug(`GET /api/v1/registrysecrets called`);
+    const retval = await user.getRegistrySecretList();
+    res.status(retval.statusCode).send(retval.body);
   } catch (error) {
+    const msg = "Failed to get the Codewind Docker Config Registries";
     log.error(error);
-    const workspaceSettings = {
-      statusCode: 500,
-      deploymentRegistry: false
-    }
-    res.status(500).send(workspaceSettings);
+    log.error(msg);
+    res.status(500).send(msg);
   }
 });
 
 /**
  * API Function to set the Docker Registry
  */
-router.post('/api/v1/dockerregistry', async function (req, res) {
+router.post('/api/v1/registrysecrets', async function (req, res) {
   try {
     log.info("new api");
     let user = req.cw_user;
-    log.info(`POST /api/v1/dockerregistry called`);
+    log.info(`POST /api/v1/registrysecrets called`);
     const username = req.sanitizeBody('username');
     const password = req.sanitizeBody('password');
     const url = req.sanitizeBody('url');
@@ -52,22 +49,23 @@ router.post('/api/v1/dockerregistry', async function (req, res) {
       res.status(400).send(msg);
     }
 
-    await user.setupDockerRegistry(username, password, url);
-    const msg = "POST /api/v1/dockerregistry call has finished";
-    res.status(200).send(msg);
+    const retval = await user.setupRegistrySecret(username, password, url);
+    res.status(retval.statusCode).send(retval.body);
   } catch (error) {
+    const msg = "Failed to set up the Codewind Registry Secret";
     log.error(error);
+    log.error(msg);
+    res.status(500).send(msg);
   }
 });
 
 /**
  * API Function to delete the Docker Registry
  */
-router.delete('/api/v1/dockerregistry', async function (req, res) {
-  let retval = {};
+router.delete('/api/v1/registrysecrets', async function (req, res) {
   try {
     let user = req.cw_user;
-    log.debug(`DELETE /api/v1/dockerregistry called`);
+    log.debug(`DELETE /api/v1/registrysecrets called`);
     const url = req.sanitizeBody('url');
 
     if (!url) {
@@ -76,12 +74,13 @@ router.delete('/api/v1/dockerregistry', async function (req, res) {
       res.status(400).send(data);
     }
 
-    retval = await user.removeDockerRegistry(url);
-    res.status(200).send(retval);
+    const retval = await user.removeRegistrySecret(url);
+    res.status(retval.statusCode).send(retval.body);
   } catch (error) {
+    const msg = "Failed to delete the Codewind Registry Secret";
     log.error(error);
-    retval = {};
-    res.status(500).send(retval);
+    log.error(msg);
+    res.status(500).send(msg);
   }
 });
   
