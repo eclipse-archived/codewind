@@ -10,6 +10,11 @@
  *******************************************************************************/
 'use strict';
 
+const Logger = require('./modules/utils/Logger');
+const { pipePerfProxyReqsToPerfContainer } = require('./modules/PerformanceController');
+
+const log = new Logger('server.js');
+
 // Because main is async it can swallow exceptions (like syntax errors in
 // required files unless we handle them.
 main().catch(err => console.dir(err));
@@ -27,12 +32,11 @@ async function main() {
   }
   const express = require('express');
   require('express-async-errors');
-  const request = require('request');
   const { promisify } = require('util');
-  const Logger = require('./modules/utils/Logger');
+
   const WebSocket = require('./modules/WebSocket');
-  const log = new Logger('server.js');
   const app = express();
+
   const serverPort = (process.env.PORTAL_HTTPS == 'true') ? 9191 : 9090;
   let server;
 
@@ -219,13 +223,6 @@ async function main() {
    * be set up first, before this function is run.
    */
   function setRoutes() {
-
-    // if we are running in Che use the workspace codewind performance service,  else use the codewind container name of "codewind-performance"
-    const performance_host = process.env.CODEWIND_PERFORMANCE_SERVICE ? process.env.CODEWIND_PERFORMANCE_SERVICE : "codewind-performance";
-    const performance_port = ':9095';
-
-    log.info(`PerformanceHost: ${performance_host}`);
-
     // Add the user object into the request
     app.all('*', function (req, res, next) {
       if (req.user == undefined) req.user = "default"
@@ -257,25 +254,11 @@ async function main() {
       extensions: ['eot', 'woff', 'woff2']
     }));
     app.use('/', express.static(bash, {
-      extensions: ['sh']
+      extensions: ['sh'],
     }));
 
     /* Proxy Performance container routes */
-    app.use('/performance/*', function (req, res) {
-      try {
-        log.info(`req.originalUrl = ${req.originalUrl}`);
-        let url = `http://${performance_host}${performance_port}${req.originalUrl}`;
-        log.info(`url = ${url}`);
-
-        let r = request(url);
-        req.pipe(r).on('error', function(err) {
-          log.error(err);
-          res.status(502).send({ error: err.code});
-        }).pipe(res);
-      } catch (err) {
-        log.error(err);
-      }
-    });
+    app.use('/performance/*', pipePerfProxyReqsToPerfContainer);
 
     app.use(bodyParser.json({limit: '1mb'}));
     app.use(bodyParser.urlencoded({

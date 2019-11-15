@@ -1,0 +1,41 @@
+{
+  "extends": "strongloop",
+  "env": {
+    "browser": true
+  },
+  "parserOptions": { "ecmaVersion": 6 },
+  "rules": {
+    "eqeqeq": "off",
+    "no-unused-vars": ["error", { "varsIgnorePattern": "update\\w*Data|updateHeader|TextTable|TreeNode|(?:clear|refresh|resize)FlameGraph|populateLocalizedStrings|formatTemplate|clearProfilingData|Top5|HttpSummary",
+                                   "argsIgnorePattern": "^_" }],
+    "max-len": ["error", 120, 8, {"ignoreComments": true}],
+    "comma-dangle": "off",
+    "spaced-comment": ["error", "always", { "exceptions": ["*"] }],
+    "strict": "off",
+  },
+  "globals": {
+    "d3": false,
+    "getTimeFormat": false,
+    "canvasWidth": true,
+    "canvasHeight": true,
+    "margin": true,
+    "graphWidth": true,
+    "graphHeight": true,
+    "monitoringStartTime": false,
+    "maxTimeWindow": false,
+    "httpCanvasWidth": true,
+    "httpGraphWidth": true,
+    "tallerGraphHeight": true,
+    "setHttpTop5Options": false,
+    "socket": false,
+    "$": false,
+    "resize": false,
+    "memPoolsCanvasWidth": true,
+    "memPoolsGraphWidth": true,
+    "localizedStrings": false,
+    "formatTemplate": false,
+    "TreeNode": false,
+    "clearFlameGraph": false,
+    "refreshFlameGraph": false
+  }
+}
