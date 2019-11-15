@@ -220,16 +220,18 @@
       for (const metric of metrics) {
         const metricsObj = metric.metrics[0];
         const metricValue = metricsObj.value;
-        if (metric.name === 'base_cpu_processCpuLoad_percent') {
+        if (['base:cpu_process_cpu_load_percent', 'base_cpu_processCpuLoad_percent'].includes(metric.name)) {
           cpuData.process = metricValue;
-        } else if (metric.name === 'base_cpu_systemLoadAverage') { // ignored if -1 (not available)
+        } else if (['base:cpu_system_load_average', 'base_cpu_systemLoadAverage'].includes(metric.name)) { // ignored if -1 (not available)
           cpuData.system = metricValue;
 
-        } else if (metric.name === 'base_gc_time_seconds') {
+        } else if (['base:gc_global_time_seconds'].includes(metric.name)) {
+          gcData.gcTime = metricValue;
+        } else if (['base_gc_time_seconds'].includes(metric.name)) {
           const correctMetricsObj = metric.metrics.find(obj => obj.labels.name === 'global');
           gcData.gcTime = correctMetricsObj.value;
 
-        } else if (metric.name === 'base_memory_usedHeap_bytes') {
+        } else if (['base:memory_used_heap_bytes', 'base_memory_usedHeap_bytes'].includes(metric.name)) {
           memPoolsData.usedHeap = metricValue;
         }
       }
