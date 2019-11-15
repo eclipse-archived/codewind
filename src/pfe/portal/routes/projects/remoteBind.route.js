@@ -230,6 +230,9 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   }
 });
 
+function getMode(project) {
+  return (project.extension && project.extension.config.needsMount) ? "777" : "";
+}
 
 async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID) {
   // If the current project is being built, we do not want to copy the files as this will
@@ -239,16 +242,20 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
     // We now need to remove any files that have been deleted from the global workspace
     await Promise.all(filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(globalProjectPath, oldFile))));
     // now move temp project to real project
-    await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory));
+    await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
     let projectRoot = getProjectSourceRoot(project);
     // need to delete from the build container as well
     if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
       (!project.extension || !project.extension.config.needsMount)) {
       await Promise.all(filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file)));
-      modifiedList.forEach((file) => {
-        log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
-        cwUtils.copyFile(project, path.join(globalProjectPath, file), projectRoot, file);
-      });
+      log.info(
+        `Project ${project.name} syncing with build container, projectRoot is ${projectRoot}`
+      );
+      await cwUtils.copyProjectContents(
+        project,
+        globalProjectPath,
+        projectRoot
+      );
     }
     filesToDelete.forEach((f) => {
       const data = {
@@ -364,7 +371,7 @@ async function bindEnd(req, res) {
     }
 
     // now move temp project to real project
-    await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory));
+    await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory), getMode(project));
 
     let updatedProject = {
       projectID,
