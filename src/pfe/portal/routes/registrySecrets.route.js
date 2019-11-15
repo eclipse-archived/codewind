@@ -44,6 +44,7 @@ router.post('/api/v1/registrysecrets', async function (req, res) {
     if (!username || !password || !url) {
       const msg = "Missing required parameters. username, password and url are required to be provided.";
       res.status(400).send(msg);
+      return;
     }
 
     const retval = await user.setupRegistrySecret(username, password, url);
@@ -67,8 +68,8 @@ router.delete('/api/v1/registrysecrets', async function (req, res) {
 
     if (!url) {
       const msg = "Missing required parameters. url is required to be provided.";
-      const data = { "statusCode": 400, "msg": msg}
-      res.status(400).send(data);
+      res.status(400).send(msg);
+      return;
     }
 
     const retval = await user.removeRegistrySecret(url);

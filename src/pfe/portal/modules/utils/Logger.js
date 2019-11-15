@@ -71,8 +71,15 @@ class Logger {
 
   logRequest(req) {
     const route = `${req.method} ${req.path}`;
+    let isRegistrySecretRoute = false;
+    const postRegistrySecretRoute = "POST /api/v1/registrysecrets";
+    // We handle route POST /api/v1/registrysecrets as a special condition
+    // because the API takes password in its body, so never log it on trace
+    if(route === postRegistrySecretRoute) {
+      isRegistrySecretRoute = true;
+    }
     let msg = `${route} called`;
-    if (!this.log.isTraceEnabled()) {
+    if (!this.log.isTraceEnabled() || isRegistrySecretRoute) {
       this.log.debug(msg);
     } else {
       msg += ` with \n req.body ${util.inspect(req.body)}`;
@@ -91,7 +98,19 @@ class Logger {
     res.on('finish', () => {
       const route = `${req.method} ${req.path}`;
       const reqBody = util.inspect(res.req.body);
-      this.log.trace(`responded to ${route} with status ${res.statusCode} and body ${reqBody}`);
+      let isRegistrySecretRoute = false;
+      const postRegistrySecretRoute = "POST /api/v1/registrysecrets";
+      // We handle route POST /api/v1/registrysecrets as a special condition
+      // because the API takes password in its body, so never log it on trace
+      if(route === postRegistrySecretRoute) {
+        isRegistrySecretRoute = true;
+      }
+
+      if (!isRegistrySecretRoute) {
+        this.log.trace(`responded to ${route} with status ${res.statusCode} and body ${reqBody}`);
+      } else {
+        this.log.trace(`responded to ${route} with status ${res.statusCode}`);
+      }
     });
   }
 }
