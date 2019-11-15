@@ -1,0 +1,320 @@
+<!--
+******************************************************************************
+ * Copyright 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ ******************************************************************************
+-->
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="graphmetrics/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="graphmetrics/css/themes.css" title="Themes">
+
+<head>
+  <title>Application Metrics Dashboard for Node.js</title>
+</head>
+
+<body>
+  <div>
+  <!--<h1>Application Metrics Dashboard for Node.js</h1>-->
+  <!-- load the d3.js library -->
+  <script src="socket.io/socket.io.js"></script>
+  <script src="graphmetrics/d3/d3.v3.min.js"></script>
+  <script src="graphmetrics/jquery/jquery-3.1.1.min.js"></script>
+  <script src="graphmetrics/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+  <script>
+    function toggleMenu() {
+      $('#sideMenu').toggleClass( "expanded" );
+    }
+
+    function toggleProfiling() {
+      if (profiling_enabled) {
+        socket.emit('disableprofiling');
+      } else {
+        socket.emit('enableprofiling');
+      }
+    }
+
+    const queryStringValues = new URLSearchParams(window.location.search)
+    if (queryStringValues.get('theme')==='dark') {
+        $('body').addClass( "darkmode" )
+    } else {
+        $('body').addClass( "lightmode" )
+    }
+  </script>
+
+  <div class="headerDiv">
+    <span class="sidenavButton" onclick="toggleMenu()">&#9776;</span>
+    <span class="leftHeader"></span>
+    <span class="rightHeader"></span>
+  </div>
+
+  <div id="sideMenu" class="sidenav">
+    <a class="sidenavEntry" onclick="socket.emit('heapdump'); toggleMenu()">Trigger Heap Dump</a>
+    <a class="sidenavEntry" onclick="socket.emit('nodereport'); toggleMenu()">Trigger Node Report</a>
+    <a class="sidenavEntry" id="toggle-profiling" onclick="toggleProfiling(); toggleMenu()"></a>
+    <a class="sidenavEntry" id="clear-profiling" onclick="clearProfilingData(); toggleMenu()">Clear Profiling Data</a>
+  </div>
+
+  <div id="tabs" class="container">
+
+    <ul class="nav nav-tabs">
+      <li class="active">
+        <a href="#dashboard" id="main-tab" data-toggle="tab">Dashboard</a>
+      </li>
+      <li>
+        <a href="#profiling" id="profiing-tab" data-toggle="tab">Profiling</a>
+      </li>
+      <li>
+        <a href="#summary" id="summary-tab" data-toggle="tab">Summary</a>
+      </li>
+    </ul>
+
+    <div class="tab-content ">
+      <div class="tab-pane active" id="dashboard">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-5 hideable" id="cpuDiv1"></div>
+            <div class="col-md-7 hideable" id="httpDiv1"></div>
+          </div>
+          <div class="row">
+            <div class="col-md-5 hideable" id="memDiv1"></div>
+            <div class="col-md-7 hideable" id="httpDiv2"></div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-5 hideable" id="gcDiv"></div>
+            <div class="col-md-7 hideable" id="httpOBDiv"></div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-5 hideable" id="loopDiv"></div>
+            <div class="col-md-7 hideable" id="probeEventsDiv"></div>
+          </div>
+          <div class="row">
+            <div class="col-md-7 hideable" id="httpDiv3"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="profiling">
+        <div id="flameDiv"></div>
+      </div>
+      <div class="tab-pane" id="summary">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="graph-container col-md-7">
+              <div class="col-md-12 height-fill hideable" id="httpSummaryDiv"></div>
+            </div>
+            <div class="graph-container col-md-5">
+              <div class="col-md-12 hideable" id="envDiv"></div>
+              <div class="col-md-12 hideable" id="summaryDiv"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal fade" id="heapdumpModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" font-color=black>Heap Snapshot</h4>
+        </div>
+        <div class="modal-body"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="graphmetrics/js/i18n.js"></script>
+  <script>
+    // Global variables
+    var localizedStrings = {};
+    var monitoringStartTime = new Date();
+    var maxTimeWindow = 900000; // 15 minutes
+
+    // Initialise graph and canvas dimensions
+    var margin = {
+        top: 50,
+        right: 20,
+        bottom: 50,
+        shortBottom: 30,
+        left: 60
+      },
+      canvasWidth = $("#cpuDiv1").width() - 8, // -8 for margins and borders
+      httpCanvasWidth = $("#httpDiv1").width() - 8,
+      graphWidth = canvasWidth - margin.left - margin.right,
+      httpGraphWidth = httpCanvasWidth - margin.left - margin.right,
+      canvasHeight = 250,
+      tallerGraphHeight = canvasHeight - margin.top - margin.shortBottom,
+      graphHeight = canvasHeight - margin.top - margin.bottom;
+
+    // User may have requested appmetrics-dash/index.html
+    let dashboardRoot = location.pathname.split('index.html')[0] || '/';
+
+    var socket = io.connect(location.host, { path: dashboardRoot + 'socket.io' });
+
+    function getTimeFormat() {
+      var currentTime = new Date()
+      if (currentTime.getMinutes() - monitoringStartTime.getMinutes() >= 3 ||
+        currentTime.getHours() > monitoringStartTime.getHours()) {
+        return d3.time.format("%H:%M");
+      } else {
+        return d3.time.format("%H:%M:%S");
+      }
+    }
+
+    populateLocalizedStrings();
+  </script>
+
+  <script type="text/javascript" src="graphmetrics/js/header.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/textTable.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/nodeReport.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/cpuChart.js"></script>
+
+  <script type="text/javascript" src="graphmetrics/js/httpHttpsRequestsChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/httpThroughPutChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/top5.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/httpSummary.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/httpHttpsOutboundRequestsChart.js"></script>
+
+  <script type="text/javascript" src="graphmetrics/js/memChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/gcChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/loopChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/probeEventsChart.js"></script>
+  <script type="text/javascript" src="graphmetrics/js/flamegraph.js"></script>
+  <script type="text/javascript" src="profiling.js"></script>
+
+  <script>
+
+    let summary = {cpu:{}, gc:{}, memoryPools:{}};
+    let hostname = location.host.split(':')[0];
+    let envTable = new TextTable('#envDiv', '#summary', localizedStrings.envTitle);
+    let summaryTable = new TextTable('#summaryDiv', '#summary', localizedStrings.summaryTitle);
+    let httpSummary = new HttpSummary('#httpSummaryDiv', '#summary', localizedStrings.httpSummaryTitle);
+    httpSummary.setHttpSummaryOptions({host: hostname, filteredPath: dashboardRoot});
+
+    socket.emit('connected');
+    socket.on('cpu', function(data) {
+      updateCPUData(data);
+      let json = JSON.parse(data);
+      summary.cpu.processMean = json.processMean;
+      summary.cpu.systemMean = json.systemMean;
+      updateSummaryTable();
+    });
+    socket.on('environment', function(data) {
+      envTable.populateTableJSON(data);
+    });
+    socket.on('loop', function(data) {
+      updateLoopData(data);
+    });
+    socket.on('gc', function(data) {
+      updateGCData(data);
+      let json = JSON.parse(data);
+      summary.gc.time = json.timeSummary;
+      summary.gc.usedHeapAfterGCMax = json.usedHeapAfterGCMax;
+      updateSummaryTable();
+    });
+    socket.on('http-outbound', function(data) {
+      updateHttpOBData(data);
+    });
+    socket.on('http', function(data) {
+      updateHttpData(data);
+    });
+    socket.on('https-outbound', function(data) {
+      updateHttpsOBData(data);
+    });
+    socket.on('https', function(data) {
+      updateHttpsData(data);
+    });
+    socket.on('http-urls', function(data) {
+      httpSummary.updateURLData(data);
+    });
+    socket.on('memory', function(data) {
+      updateMemData(data);
+    });
+    socket.on('probe-events', function(data) {
+      updateProbesData(data);
+    });
+    socket.on('title', function(data) {
+      updateHeader(data);
+    });
+
+    function updateSummaryTable() {
+      let summaryData = [];
+      if (summary.cpu.processMean) {
+         let value = new Number(summary.cpu.processMean);
+         let valueStr = value.toLocaleString([],{style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4});
+         summaryData.push({Parameter: 'Average Process CPU', Value: valueStr});
+      }
+      if (summary.cpu.systemMean) {
+          let value = new Number(summary.cpu.systemMean);
+          let valueStr = value.toLocaleString([],{style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4});
+          summaryData.push({Parameter: 'Average System CPU', Value: valueStr});
+       }
+      if (summary.gc.time) {
+          let value = new Number(summary.gc.time);
+          let valueStr = value.toLocaleString([],{style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4});
+          summaryData.push({Parameter: 'Time Spent in GC', Value: `${valueStr}`});
+      }
+      if (summary.gc.usedHeapAfterGCMax) {
+          summaryData.push({Parameter: 'Max Heap Used After GC', Value: `${summary.gc.usedHeapAfterGCMax} bytes`});
+      }
+      summaryTable.populateTable(summaryData);
+    }
+
+    let selected_tab = "main-tab"
+
+    window.addEventListener('resize', resize);
+
+    // Also re-size when we change tabs in case we re-sized
+    // while the new tab wasn't visible.
+    $('.nav-tabs a').on('shown.bs.tab', function(event) {
+      selected_tab = event.target.id;
+      resize();
+    });
+
+    function resize() {
+      if (selected_tab == "main-tab") {
+        canvasWidth = $("#cpuDiv1").width() - 8,
+          httpCanvasWidth = $("#httpDiv1").width() - 8,
+          graphWidth = canvasWidth - margin.left - margin.right,
+          httpGraphWidth = httpCanvasWidth - margin.left - margin.right;
+        resizeCPUChart();
+        resizeHttpChart();
+        resizeHttpOBChart();
+        resizeGCChart();
+        resizeLoopChart();
+        resizeHttpThroughputChart();
+        resizeMemChart();
+        resizeProbesChart();
+      } else if(selected_tab == "summary-tab") {
+          envTable.resizeTable();
+          summaryTable.resizeTable();
+          httpSummary.resizeTable();
+      } else {
+        refreshFlameGraph();
+      }
+    }
+  </script>
+</div>
+</body>
+
+</html>
