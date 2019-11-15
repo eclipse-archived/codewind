@@ -215,8 +215,8 @@ pipeline {
                             exit;
                         fi
 
-                        printf "\n\nPausing for 20 seconds to allow containers to start\n";
-                        sleep 20;
+                        printf "\n\nPausing for 30 seconds to allow containers to start\n";
+                        sleep 30;
 
                         # Check to see if any containers exited straight away
                         printf "\n\n${BLUE}CHECKING FOR codewind CONTAINERS THAT EXITED STRAIGHT AFTER BEING RUN $RESET\n";
