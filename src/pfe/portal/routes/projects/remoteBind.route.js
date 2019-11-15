@@ -229,6 +229,9 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   }
 });
 
+function getMode(project) {
+  return (project.extension && project.extension.config.needsMount) ? "777" : "";
+}
 
 async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID) {
   // If the current project is being built, we do not want to copy the files as this will
@@ -238,7 +241,7 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
     // We now need to remove any files that have been deleted from the global workspace
     await Promise.all(filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(globalProjectPath, oldFile))));
     // now move temp project to real project
-    await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory));
+    await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
     let projectRoot = getProjectSourceRoot(project);
     // need to delete from the build container as well
     if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
@@ -356,7 +359,7 @@ async function bindEnd(req, res) {
 
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     // now move temp project to real project
-    await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory));
+    await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory), getMode(project));
 
     let updatedProject = {
       projectID,
