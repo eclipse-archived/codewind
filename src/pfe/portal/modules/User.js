@@ -674,9 +674,7 @@ module.exports = class User {
    * Function to setup the Docker config file and Kube secret
    */
   async setupRegistrySecret(username, password, url) {
-    log.info("username: " + username);
-    log.info(password);
-    log.info(url);
+    log.info("Setting up the Docker Registry secret for url: " + url + " and username: " + username);
     let createKubeSecret = false;
     const registrySecretList = [];
     
@@ -685,12 +683,10 @@ module.exports = class User {
       const encodedAuth = btoa(username + ":" + password);
 
       if (isDockerConfigFilePresent) {
-        log.info("The Docker config file exists, reading contents");
+        log.debug("The Docker config file exists, reading the contents");
         const jsonObj = await fs.readJson(this.dockerConfigFile);
-        log.info("Docker config contents " + JSON.stringify(jsonObj));
 
         for (let key in jsonObj.auths) {
-          log.info("the key is " + key);
           const registrySecret = {
             url: key,
             username: jsonObj.auths[key].username
@@ -716,7 +712,7 @@ module.exports = class User {
         await fs.writeJson(this.dockerConfigFile, jsonObj);
         createKubeSecret = true;
       } else {
-        log.info("The Docker config file does not exist, writing contents");
+        log.info("The Docker config file does not exist, writing the contents");
         const jsonObj = {"auths":{}}
         jsonObj.auths[url] = {
           "username":username,
@@ -752,6 +748,7 @@ module.exports = class User {
     }
 
     if (isServiceAccountPatched) {
+      log.debug("Codewind Docker Registry List: " + JSON.stringify(registrySecretList));
       const retval = {
         statusCode: 201,
         body: registrySecretList
@@ -759,7 +756,7 @@ module.exports = class User {
       return retval;
     }
 
-    const msg = "Failed to create the Codewind Registry Kubernetes Secret and/or patch the Service Account";
+    const msg = "Failed to create the Codewind Registry Secret and/or patch the Service Account";
     log.error(msg);
     const retval = {
       statusCode: 500,
@@ -773,17 +770,15 @@ module.exports = class User {
    */
   async updateServiceAccountWithDockerRegisrySecret() {
     try {
-      log.info("The SA should be patched" + this.dockerConfigFile);
+      log.info("Creating a Secret and patching the Service Account");
       const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
       if (isDockerConfigFilePresent) {
         log.info("The Docker config file exists, reading contents");
         const jsonObj = await fs.readJson(this.dockerConfigFile);
         const encodedDockerConfig = btoa(JSON.stringify(jsonObj));
-        log.info("The encoded  Docker Config: " + encodedDockerConfig);
 
         // Get the Kube Secret and delete if it exists
         let resp = await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secret.get({ qs: { labelSelector: "app=codewind-pfe" } });
-        log.info('PFE Docker Registry Get secret: ' + JSON.stringify(resp));
         if (resp.body.items.length > 0) {
           const secretName = resp.body.items[0].metadata.name;
           await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secrets(secretName).delete();
@@ -820,7 +815,6 @@ module.exports = class User {
           }
         };
         resp = await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secret.post({body: secret});
-        log.info('PFE Docker Registry Create secret: ' + JSON.stringify(resp));
 
         // Patch the Service Account with the new secret
         const patch = {
@@ -831,15 +825,13 @@ module.exports = class User {
           ]
         };
         resp = await await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).serviceaccounts(process.env.SERVICE_ACCOUNT_NAME).patch({body: patch});
-        log.info('PFE Docker Registry Patch SA: ' + JSON.stringify(resp));
-
-        log.info("The Service Account has been patched");
+        log.info("The Service Account has been patched with the created Secret");
       } else {
-        log.info("No Docker Config file present, skipping creating Kube secret");
+        log.info("No Docker Config file present, skipping creating Secret");
       }
     } catch (err) {
       log.error(err);
-      log.error("Failed to create the Kube Secret and patch the Service Account");
+      log.error("Failed to create the Secret and patch the Service Account");
       return false;
     }
 
@@ -868,7 +860,7 @@ module.exports = class User {
         log.info("No Docker Config file present, no Docker Registry List to return");
       }
     
-      log.info("PFE Docker Registry List: " + JSON.stringify(registrySecretList));
+      log.debug("Codewind Docker Registry List: " + JSON.stringify(registrySecretList));
     } catch (err) {
       const msg = "Failed to get the Codewind Docker Config Registries";
       log.error(err);
@@ -901,7 +893,6 @@ module.exports = class User {
         const jsonObj = await fs.readJson(this.dockerConfigFile);
 
         for (let key in jsonObj.auths) {
-          log.info("the key is " + key);
           if (key == url) {
             delete jsonObj.auths[key];
           } else {
@@ -944,7 +935,7 @@ module.exports = class User {
     }
 
     if (isServiceAccountPatched) {
-      log.info("The Service Account has been patched for removal of " + url);
+      log.debug("Codewind Docker Registry List: " + JSON.stringify(registrySecretList));
       const retval = {
         statusCode: 200,
         body: registrySecretList

@@ -1186,82 +1186,139 @@ paths:
           $ref: '#/components/responses/404'
         500:
           $ref: '#/components/responses/500'
-  /api/v1/dockerregistry:
+  /api/v1/registrysecrets:
     post:
-      summary: Test or set the specified Deployment Registry
+      summary: Create a Docker registry secret in Codewind PFE
       description: >
-        On test the API also emits a socket event `deploymentRegistryStatus` with data
-        `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
-        A set operation will set the registry without testing to allow the client to force save the
-        value.
+        This will create or update the Codewind PFE Docker config registry `/root/.docker/config.json`. A Kubernetes secret is then created with the base64 encoded value of the Docker config file and the Service Account is then patched with the created Kubernetes secret.
       requestBody:
         content:
           application/json:
             schema:
               type: object
               required:
+                - url
                 - username
+                - password
               properties:
+                url:
+                  type: string
                 username:
                   type: string
+                password:
+                  type: string
       responses:
-        200:
-          description: Successfully completed
+        201:
+          description: Successfully created. Returns an updated list of the registry secrets in Codewind PFE.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  statusCode:
-                    type: integer
-                    description: The response status code
-                    example: 200
-                  deploymentRegistryTest:
-                    type: boolean
-                    description: true if deployment registry is valid
-                    example: true
-                  msg:
-                    type: string
-                    description: Message related to the request
-                    example: Success message
+                type: array
+                items:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                      description: Registry url
+                      example: docker.io
+                    username:
+                      type: string
+                      description: Registry username
+                      example: username
         400:
           description: Bad Request
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  statusCode:
-                    type: integer
-                    description: The response status code
-                    example: 400
-                  deploymentRegistryTest:
-                    type: boolean
-                    description: false because it is a bad request
-                    example: false
-                  msg:
-                    type: string
-                    description: Message related to the request
-                    example: Reason for failure
+                type: string
+                description: Reason for the bad request
+                example: Cannot have multiple docker registries with url <url>. Please delete the previous registry and try again.
         500:
           description: Internal Server Error
           content:
+            text/plain:
+              schema:
+                type: string
+                description: Reason for the internal error
+                example: Failed to create the Codewind Registry Kubernetes Secret and/or patch the Service Account.
+    get:
+      summary: Get all the Docker registry secrets in Codewind PFE
+      description: >
+        This will get the Docker registry secrets in Codewind PFE. The API returns a list of the available registries in the PFE container.
+      responses:
+        200:
+          description: OK
+          content:
             application/json:
               schema:
-                type: object
-                properties:
-                  statusCode:
-                    type: integer
-                    description: The response status code
-                    example: 500
-                  deploymentRegistryTest:
-                    type: boolean
-                    description: false if deployment registry is invalid
-                    example: false
-                  msg:
-                    type: string
-                    description: Message related to the request
-                    example: Reason for failure
+                type: array
+                items:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                      description: Registry url
+                      example: docker.io
+                    username:
+                      type: string
+                      description: Registry username
+                      example: username
+        500:
+          description: Internal Server Error
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Reason for the internal error
+                example: Failed to get the Codewind Docker Config Registries
+    delete:
+      summary: Delete a Docker registry secret from Codewind PFE
+      description: >
+        This will update the Codewind PFE Docker config registry `/root/.docker/config.json` and remove the specified secret. A new Kubernetes secret is then created with the base64 encoded value of the Docker config file and the Service Account is then patched with the created Kubernetes secret.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+      responses:
+        200:
+          description: OK. Returns an updated list of the registry secrets in Codewind PFE.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                      description: Registry url
+                      example: docker.io
+                    username:
+                      type: string
+                      description: Registry username
+                      example: username
+        400:
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Reason for the bad request
+                example: No Docker Config file present, no Docker Registry to remove from the list.
+        500:
+          description: Internal Server Error
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Reason for the internal error
+                example: Failed to create the Codewind Registry Kubernetes Secret and/or patch the Service Account.
 
 
   /api/v1/registry:

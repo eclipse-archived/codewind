@@ -11,8 +11,6 @@
 const express = require('express');
 const router = express.Router();
 const Logger = require('../modules/utils/Logger');
-// const { validateReq } = require('../middleware/reqValidator');
-
 const log = new Logger(__filename);
 
 /**
@@ -37,9 +35,8 @@ router.get('/api/v1/registrysecrets', async function (req, res) {
  */
 router.post('/api/v1/registrysecrets', async function (req, res) {
   try {
-    log.info("new api");
     let user = req.cw_user;
-    log.info(`POST /api/v1/registrysecrets called`);
+    log.debug(`POST /api/v1/registrysecrets called`);
     const username = req.sanitizeBody('username');
     const password = req.sanitizeBody('password');
     const url = req.sanitizeBody('url');

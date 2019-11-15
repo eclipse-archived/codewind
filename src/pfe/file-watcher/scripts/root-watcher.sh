@@ -83,6 +83,7 @@ cache_liberty > /codewind-workspace/.logs/liberty-app-cache.log 2>&1 &
 cache_spring > /codewind-workspace/.logs/spring-app-cache.log 2>&1 &
 
 # Create dir for docker config
+echo "Creating /root/.docker/ for docker config"
 mkdir -p /root/.docker/
 
 # If running in Kubernetes, initialize helm
@@ -96,13 +97,13 @@ if [ "$IN_K8" == "true" ]; then
 
 	# TO BE REMOVED AS PART OF CODEWIND ISSUE https://github.com/eclipse/codewind/issues/665 WHEN APIS ARE READY TO BE CONSUMED
 	# Copy the secret's config json file over
-	# echo "Copying the docker registry secrets over"
-	# if [ -e /tmp/secret/.dockerconfigjson ]; then
-	# 	mkdir -p /root/.docker/
-	# 	cp /tmp/secret/.dockerconfigjson /root/.docker/config.json
-	# elif [ -e /tmp/secret/.dockercfg ]; then
-	# 	cp /tmp/secret/.dockercfg /root/.dockercfg
-	# fi
+	echo "Copying the docker registry secrets over"
+	if [ -e /tmp/secret/.dockerconfigjson ]; then
+		mkdir -p /root/.docker/
+		cp /tmp/secret/.dockerconfigjson /root/.docker/config.json
+	elif [ -e /tmp/secret/.dockercfg ]; then
+		cp /tmp/secret/.dockercfg /root/.dockercfg
+	fi
 
 	# Use a helm wrapper if TLS selected for helm
 	if [[ "$USE_HELM_TLS" == "true" ]]; then
