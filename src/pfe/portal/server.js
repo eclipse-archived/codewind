@@ -35,7 +35,6 @@ async function main() {
   const app = express();
   const serverPort = (process.env.PORTAL_HTTPS == 'true') ? 9191 : 9090;
   let server;
-
   if (process.env.PORTAL_HTTPS == 'true') {
     const pem = require('pem');
     const createCertificateAsync = promisify(pem.createCertificate);
@@ -211,7 +210,6 @@ async function main() {
   setRoutes();
   // We have finished initialising the user, any projects and routes so we are ready now
   ready = true;
-
 
   /**
    * Function to set up express routes for codewind portal. All external APIs

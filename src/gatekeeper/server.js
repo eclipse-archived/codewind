@@ -41,6 +41,8 @@ async function main() {
         }
     }
 
+    console.log("Gatekeeper with route authentication and UI Socket pass-through")
+
     console.log("Gatekeeper configuration:")
     console.log(`** PFE Service: ${pfe_protocol}://${pfe_host}:${pfe_port}`);
 
@@ -142,6 +144,26 @@ async function main() {
             console.log(`req.originalUrl = ${req.originalUrl}`);
             const options = {
                 url: `${pfe_protocol}://${pfe_host}:${pfe_port}/health`,
+                headers: {
+                    "x-forwarded-host": gatekeeper_host
+                }
+            }
+            let r = request(options);
+            req.pipe(r).on('error', function (err) {
+                console.log(err);
+                res.status(502).send({ error: err.code });
+            }).pipe(res);
+        } catch (err) {
+            console.log(err);
+        }
+    });
+
+    /* PFE handles socket IO authentication*/
+    app.use('/socket.io/*', function (req, res) {
+        try {
+            console.log(`req.originalUrl = ${req.originalUrl}`);
+            const options = {
+                url: `${pfe_protocol}://${pfe_host}:${pfe_port}${req.originalUrl}`,
                 headers: {
                     "x-forwarded-host": gatekeeper_host
                 }
