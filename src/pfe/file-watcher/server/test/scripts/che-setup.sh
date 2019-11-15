@@ -235,19 +235,21 @@ fi
 oc login $CLUSTER_IP:$CLUSTER_PORT ${LOGIN_FLAGS}
 displayMsg $? "Failed to login. Please check your credentials and try again." true
 
-# check if chectl is installed
-echo -e "${CYAN}> Checking if chectl is installed${RESET}"
-chectl > /dev/null 2>&1
-CHECTL_EC=$?
-displayMsg $CHECTL_EC "Missing chectl. Will install for you." false
+# check if chectl is installed and switch chectl channel only if user didn't provide operator
+if [[ -z "$OPERATOR_USE" ]]; then
+    echo -e "${CYAN}> Checking if chectl is installed${RESET}"
+    chectl > /dev/null 2>&1
+    CHECTL_EC=$?
+    displayMsg $CHECTL_EC "Missing chectl. Will install for you." false
 
-if [[ $CHECTL_EC != 0 ]]; then
-    bash <(curl -sL  https://www.eclipse.org/che/chectl/) --channel=$CHE_VERSION
-else
-    # switch the chectl channel depending on che version
-    echo -e "${CYAN}> Switching to chectl channel: $CHE_VERSION${RESET}"
-    chectl update $CHE_VERSION
-    displayMsg $? "Failed to switch chectl channel." true
+    if [[ $CHECTL_EC != 0 ]]; then
+        bash <(curl -sL  https://www.eclipse.org/che/chectl/) --channel=$CHE_VERSION
+    else
+        # switch the chectl channel depending on che version
+        echo -e "${CYAN}> Switching to chectl channel: $CHE_VERSION${RESET}"
+        chectl update $CHE_VERSION
+        displayMsg $? "Failed to switch chectl channel." true
+    fi
 fi
 
 # if clean deploy is selected
@@ -259,17 +261,6 @@ if [[ $CLEAN_DEPLOY == "y" ]]; then
 
     echo -e "${YELLOW}>> Removing existing namespace ${RESET}"
     oc delete project $CHE_NS --force --grace-period=0 > /dev/null 2>&1
-
-    PROJECTS_LIST=$(oc projects 2>&1)
-    echo -e -n "${MAGENTA}>>> Waiting for cleaning up old che resources .${RESET}"
-    while [[ "$PROJECTS_LIST" == *"$CHE_NS"* ]]; do
-        PROJECTS_LIST=$(oc projects 2>&1)
-        sleep 2s
-        echo -e -n "${MAGENTA}.${RESET}"
-    done
-
-    echo ""
-    displayMsg $? "Failed to remove existing namespace." true
 
     installChe
 
