@@ -22,23 +22,48 @@ export const projectDataDir = process.env.CW_PROJECTDATA_DIR || path.join(fwData
 export const workspaceSettingsDir = process.env.CW_WORKSPACESETTINGS_DIR || path.join(codewindWorkspaceDir, ".config");
 export const extensionDir = process.env.CW_EXTENSION_DIR || path.join(codewindWorkspaceDir, ".extensions") + path.sep;
 
-export const projectPrefix = "codewindtest";
+export const projectPrefix = "turbinetest";
 export const projectConfigs = {
     "appSuffix": Date.now(),
     "appDirectory": path.join(codewindWorkspaceDir, projectPrefix)
 };
 
-export const projectTypes = ["docker", "liberty", "nodejs", "spring", "swift"];
-export const supportedDockerProjects = ["go", "lagom", "python"];
+export enum codewindTemplates {
+    default = "default",
+    docker = "docker",
+    odo = "odo"
+}
+
+export enum projecLanguges {
+    go = "go",
+    lagom = "lagom",
+    liberty = "liberty",
+    nodejs = "nodejs",
+    python = "python",
+    spring = "spring",
+    swift = "swift"
+}
+
+export const projectTypes: any = {
+    // [codewindTemplates.default]: [projecLanguges.liberty, projecLanguges.nodejs, projecLanguges.spring, projecLanguges.swift],
+    [codewindTemplates.docker]: [projecLanguges.go, projecLanguges.lagom, projecLanguges.python],
+    // [codewindTemplates.odo]: []
+};
 
 export const templateNames: any = {
-    "go": "gotemplate",
-    "lagom": "lagomjavatemplate",
-    "python": "pythontemplate",
-    "liberty": "javamicroprofiletemplate",
-    "nodejs": "node",
-    "spring": "springjavatemplate",
-    "swift": "swifttemplate",
+    [codewindTemplates.default] : {
+        [projecLanguges.liberty]: "javamicroprofiletemplate",
+        [projecLanguges.nodejs]: "node",
+        [projecLanguges.spring]: "springjavatemplate",
+        [projecLanguges.swift]: "swifttemplate",
+    },
+    [codewindTemplates.docker]: {
+        [projecLanguges.go]: "gotemplate",
+        [projecLanguges.lagom]: "lagomjavatemplate",
+        [projecLanguges.python]: "pythontemplate",
+    },
+    [codewindTemplates.odo]: {
+    }
 };
 
 export const DEFAULT_LOG_LEVEL = "trace";

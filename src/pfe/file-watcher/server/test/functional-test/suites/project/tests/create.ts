@@ -27,22 +27,22 @@ export default class CreateTest {
         this.testName = testName;
     }
 
-    run(socket: SocketIO, projData: ProjectCreation, runOnly?: boolean): void {
+    run(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
             this.runCreateWithoutProjectID(projData);
             this.runCreateWithoutProjectType(projData);
             this.runCreateWithValidData(socket, projData);
-            this.afterAllHook(socket, projData);
+            this.afterAllHook(socket, projData, projectTemplate, projectLang);
         });
     }
 
-    private afterAllHook(socket: SocketIO, projData: ProjectCreation): void {
+    private afterAllHook(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
         after("clear socket events for create test", () => {
             socket.clearEvents();
         });
 
         after("remove build from running queue", async () => {
-            await utils.setBuildStatus(projData);
+            await utils.setBuildStatus(projData, projectTemplate, projectLang);
         });
     }
 
