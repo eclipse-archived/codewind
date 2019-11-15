@@ -26,6 +26,7 @@ export const requiredFiles = [ "/Dockerfile", "/package.json"];
 const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debugNoInit], [ControlCommands.restart]);
 
 export const supportedType = "nodejs";
+export const builtByExtension: boolean = false;
 
 const logsOrigin: logHelper.ILogTypes = {
     "build": {

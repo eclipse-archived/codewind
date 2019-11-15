@@ -12,7 +12,6 @@
 const fs = require('fs-extra');
 const { join } = require('path');
 const uuidv1 = require('uuid/v1');
-const deepEqual = require('deep-equal');
 
 const cwUtils = require('./utils/sharedFunctions');
 const metricsStatusChecker = require('./utils/metricsStatusChecker');
@@ -92,28 +91,6 @@ module.exports = class Project {
     this.buildLogPath = args.buildLogPath || null;
     this.logStreams = {};
 
-    this.toJSON = function() {
-      // Exclude properties that we don't want to write to the .info file on disk. The
-      // ... spread syntax means that cloneObj gets all the rest of the properties
-      const { logStreams, loadInProgress, loadConfig, ...cloneObj } = this;
-      return cloneObj;
-    }
-
-    this.toSettings = function() {
-      // clone object to prevent accidental modification
-      let obj = {};
-      CW_SETTINGS_PROPERTIES.forEach(function addSettingsProperty(propertyName) {
-        if (propertyName === 'internalPort') {
-          obj.internalPort = this.ports.internalPort || "";
-        } else if (this.hasOwnProperty(propertyName)) {
-          obj[propertyName] = this[propertyName];
-        } else if (this.isValidSettingType(propertyName)) {
-          obj[propertyName] = setDefaultSettingValue(propertyName)
-        }
-      }, this);
-      return obj;
-    }
-
     // Default to open for old projects
     this.state = args.state || STATES.open;
     // Default auto building to true
@@ -123,13 +100,11 @@ module.exports = class Project {
     }
   }
 
-  // for any non-java project, or for a java project built with docker, we do not include "maven properties or "maven profiles" in the
-  // CW Settings file defaults.
-  isValidSettingType(property){
-    if ((this.language !== 'java' || this.projectType === "docker") && property.includes("maven")) {
-      return false;
-    }
-    return true;
+  toJSON() {
+    // Exclude properties that we don't want to write to the .info file on disk. The
+    // ... spread syntax means that cloneObj gets all the rest of the properties
+    const { logStreams, loadInProgress, loadConfig, ...cloneObj } = this;
+    return cloneObj;
   }
 
   async checkIfMetricsAvailable() {
@@ -194,24 +169,11 @@ module.exports = class Project {
   }
 
   /**
-   * Function to check a string is a valid project name.
-   * @param {string} name the name to check.
-   * @return true if the name is valid, false otherwise.
-   */
-  static isValidName(name) {
-    return (/^[a-z0-9]*$/.test(name));
-  }
-
-  getSettingsFilePath() {
-    return join(this.projectPath(true), '.cw-settings');
-  }
-
-  /**
    * Function to read the project .cw-settings file
    * @return the contents of the file as an object containing key-value pairs
    */
   async readSettingsFile() {
-    const settingsFile = this.getSettingsFilePath();
+    const settingsFile = join(this.projectPath(), '.cw-settings');
     let currentSettings = {};
     if (await fs.pathExists(settingsFile)) {
       currentSettings = await fs.readJson(settingsFile);
@@ -225,8 +187,8 @@ module.exports = class Project {
    */
   async writeInformationFile() {
     let infFileDirectory = join(global.codewind.CODEWIND_WORKSPACE, '/.projects');
+    
     let infFile = join(infFileDirectory, `${this.projectID}.inf`);
-
     await fs.ensureDir(infFileDirectory);
 
     // Write to the file under this projects lock.
@@ -257,29 +219,13 @@ module.exports = class Project {
       //   if (this.ports) this.ports.internalPort = currentSettings.internalPort;
       // }
       await fs.writeJson(infFile, this, { spaces: '  ' });
-      // await this.updateSettingsFileIfNeeded(currentSettings);
+    } catch(err) {
+      log.error(err);
     } finally {
       this.infLockFlag = false;
     }
     // May return before we've finished writing.
     return this;
-  }
-
-  async updateSettingsFileIfNeeded(currentSettings) {
-    // don't write to cw-settings unless the file contents have actually changed
-    let settingsFileNeedsUpdating = false;
-    if (Object.entries(currentSettings).length === 0 && currentSettings.constructor === Object) {
-      settingsFileNeedsUpdating = true;
-    } else {
-      const newSettings = this.toSettings();
-      if (!deepEqual(currentSettings, newSettings)) {
-        settingsFileNeedsUpdating = true;
-      }
-    }
-    if (settingsFileNeedsUpdating) {
-      log.debug(`writeInformationFile: updating ${this.getSettingsFilePath()}`);
-      await fs.writeJson(this.getSettingsFilePath(), this.toSettings(), { spaces: '  ' });
-    }
   }
 
   /**
@@ -373,6 +319,7 @@ module.exports = class Project {
   /**
    * Get the folder name closest to the supplied timeOfTestRun. Required since there may be a delay
    * between when the collection folder was created and the start timestamp of the metrics.
+   * Throws not found if the timeOfTestRun is lower than the earliest time
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
    */
   async getClosestPathToLoadTestDir(timeOfTestRun) {
@@ -395,10 +342,11 @@ module.exports = class Project {
   /**
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
    */
-  async getPathToLoadTestDir(timeOfTestRun) {
+  async getPathToLoadTestDir(time) {
+    const timeOfTestRun = String(time);
     log.trace(`[getPathToLoadTestDir] timeOfTestRun=${timeOfTestRun}`);
     const loadTestDirs = await getLoadTestDirs(this.loadTestPath);
-    const loadTestDir = loadTestDirs.find(dirname => dirname === timeOfTestRun);
+    const loadTestDir = loadTestDirs.find(dirname => dirname === timeOfTestRun);    
     if (!loadTestDir) {
       throw new ProjectMetricsError('NOT_FOUND', this.projectID, `found no exact match load-test metrics from time ${timeOfTestRun}`)
     }
@@ -591,6 +539,13 @@ module.exports = class Project {
   }
 
   /**
+   * @returns {Boolean} is the project validating
+   */
+  isValidating() {
+    return (this.state === STATES.validating);
+  }
+
+  /**
    * @returns {Boolean} is the project in the closing process
    */
   isClosing() {
@@ -602,13 +557,6 @@ module.exports = class Project {
    */
   isDeleting() {
     return (this.action === STATES.deleting);
-  }
-
-  /**
-   * @returns {Boolean} is the project validating
-   */
-  isValidating() {
-    return (this.state === STATES.validating);
   }
 
   async getLoadTestConfig() {
@@ -690,7 +638,8 @@ async function getLoadTestDirs(loadTestPath){
  */
 function getOverallAvgResTime(metricsFile) {
   // If we don't have httpUrl data, throw an error
-  if (!metricsFile.hasOwnProperty('httpUrls')) {
+  if (!metricsFile || !metricsFile.hasOwnProperty('httpUrls') 
+    || !metricsFile.httpUrls || !metricsFile['httpUrls'].data) {
     throw new ProjectError('NOT_FOUND', null)
   }
   let avgResTime = 0;
@@ -698,19 +647,6 @@ function getOverallAvgResTime(metricsFile) {
     avgResTime += urlEntry.averageResponseTime;
   }
   return avgResTime / metricsFile['httpUrls'].data.length;
-}
-
-function setDefaultSettingValue(property) {
-  switch(property) {
-  case "mavenProfiles":
-    return [""];
-  case "mavenProperties":
-    return [""];
-  case "ignoredPaths":
-    return [""];
-  default:
-    return "";
-  }
 }
 
 // Make the states enum accessible from the Projects class.

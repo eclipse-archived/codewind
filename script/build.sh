@@ -22,6 +22,8 @@ DIR=`pwd`;
 SRC_DIR=$DIR/src;
 PFE=pfe
 PERFORMANCE=performance;
+KEYCLOAK=keycloak;
+GATEKEEPER=gatekeeper;
 ARCH=`uname -m`;
 TAG=latest;
 REGISTRY=eclipse
@@ -33,7 +35,7 @@ else
   IMAGE_ARCH=$ARCH
 fi
 
-ALL_IMAGES="$PFE $PERFORMANCE";
+ALL_IMAGES="$PFE $PERFORMANCE $KEYCLOAK $GATEKEEPER";
 
 # Copy .env over to file-watcher
 if [ -f $DIR/.env ]; then
@@ -46,6 +48,10 @@ cp -r $DIR/LICENSE ${SRC_DIR}/pfe/portal/
 cp -r $DIR/NOTICE.md ${SRC_DIR}/pfe/portal/
 cp -r $DIR/LICENSE ${SRC_DIR}/performance/
 cp -r $DIR/NOTICE.md ${SRC_DIR}/performance/
+cp -r $DIR/LICENSE ${SRC_DIR}/keycloak/
+cp -r $DIR/NOTICE.md ${SRC_DIR}/keycloak/
+cp -r $DIR/LICENSE ${SRC_DIR}/gatekeeper/
+cp -r $DIR/NOTICE.md ${SRC_DIR}/gatekeeper/
 
 # Copy the docs into portal
 cp -r $DIR/docs ${SRC_DIR}/pfe/portal/
@@ -56,8 +62,8 @@ echo -e "\n+++   DOWNLOADING EXTENSIONS   +++\n";
 mkdir -p ${SRC_DIR}/pfe/extensions
 rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
 rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
-curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.6.0.zip http://download.eclipse.org/codewind/codewind-appsody-extension/0.6.0/latest/codewind-appsody-extension-0.6.0.zip
-curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-latest.zip http://download.eclipse.org/codewind/codewind-odo-extension/master/latest/codewind-odo-extension-latest.zip
+curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-9.9.9999.zip http://download.eclipse.org/codewind/codewind-appsody-extension/master/latest/codewind-appsody-extension-9.9.9999.zip
+curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-9.9.9999.zip http://download.eclipse.org/codewind/codewind-odo-extension/master/latest/codewind-odo-extension-9.9.9999.zip
 
 # BUILD IMAGES
 # Uses a build file in each of the directories that we want to use

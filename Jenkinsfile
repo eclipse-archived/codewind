@@ -65,14 +65,14 @@ pipeline {
 
                         echo -e "\n+++   DOWNLOADING EXTENSIONS   +++\n";
                         if [ $GIT_BRANCH == "master" ]; then
-                            VERSION="latest"
+                            VERSION="9.9.9999"
                         else
                             VERSION="$GIT_BRANCH"
                         fi
                         mkdir -p ${SRC_DIR}/pfe/extensions
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
-                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.6.0.zip http://download.eclipse.org/codewind/codewind-appsody-extension/0.6.0/latest/codewind-appsody-extension-0.6.0.zip
+                        curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-$VERSION.zip http://download.eclipse.org/codewind/codewind-appsody-extension/$GIT_BRANCH/latest/codewind-appsody-extension-$VERSION.zip
                         curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-$VERSION.zip http://download.eclipse.org/codewind/codewind-odo-extension/$GIT_BRANCH/latest/codewind-odo-extension-$VERSION.zip
 
                         # BUILD IMAGES

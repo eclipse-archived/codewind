@@ -14,6 +14,7 @@
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 BLUE='\033[0;36m'
+YELLOW='\033[1;33m'
 RESET='\033[0m'
 DEVMODE=false
 
@@ -87,70 +88,29 @@ else
   printf "\n${GREEN}No existing processes found $RESET\n";
 fi
 
+printf "\n${GREEN}Downloading cwctl to start Codewind containers $RESET\n";
+printf "${YELLOW}Set CW_CLI_BRANCH={branch} to override the branch used to pull cwctl $RESET\n";
+curl -o ./script/cli-pull.sh -sS https://raw.githubusercontent.com/eclipse/codewind-vscode/master/dev/bin/cli-pull.sh
+chmod +x ./script/cli-pull.sh
+
+cd script
+./cli-pull.sh
+cd - 
+
+OS=$(uname -a | awk '{print $1;}')
+CWCTL=./script/linux/cwctl
+if [ $OS == "Darwin" ]; then
+  CWCTL=./script/darwin/cwctl
+fi
+
 # REMOVE PREVIOUS DOCKER PROCESSES FOR CODEWIND
 printf "\n\n${BLUE}CHECKING FOR EXISTING CODEWIND APPS $RESET\n";
 # Check for existing processes (stopped or running)
-if [ $(docker ps -q -a --filter name=mc- | wc -l) -gt 0 ]; then
-  printf "\n${RED}Existing applications found $RESET\n";
-  # Check for running processes only
-  if [ $(docker ps -q --filter name=mc- | wc -l) -gt 0 ]; then
-    printf "\nStopping existing applications\n";
-    # Stop running processes
-    docker stop $(docker ps -q --filter name=mc-)
-    # Check stop command ran properly or exit
-    if [ $? -ne 0 ]; then
-        printf "\n${RED}Something went wrong while stopping existing applications.\n";
-        printf "Exiting $RESET\n";
-        exit;
-    fi
-  fi
-  printf "\nRemoving stopped applications";
-  # Remove all processes (if running now stopped)
-  docker rm $(docker ps -a -q --filter name=mc-)
-  # Check remove command ran properly or exit
-  if [ $? -ne 0 ]; then
-      printf "\n${RED}Something went wrong while removing existing applications.\n";
-      printf "Exiting $RESET\n";
-      exit;
-  else
-    printf "\n${GREEN}Existing applications stopped and removed $RESET\n";
-  fi
-else
-  printf "\n${GREEN}No existing applications found $RESET\n";
-fi
+$CWCTL stop-all
 
-# RUN DOCKER COMPOSE
-# Docker-compose will use the built images and turn them into containers
-printf "\n\n${BLUE}RUNNING DOCKER-COMPOSE IN: $PWD $RESET\n";
-# Export variables for docker-compose substitution
-# Export to overwrite .env file
-export REPOSITORY='';
-export TAG
-export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
-export WORKSPACE_VOLUME=cw-workspace
+$CWCTL start --debug
 
-# Export HOST_OS for fix to Maven failing on Windows only as host
-export HOST_OS=$(uname);
-export HOST_HOME=$HOME
-
-export ARCH=$(uname -m);
-# Select the right images for this architecture.
-if [ "$ARCH" = "x86_64" ]; then
-  export PLATFORM="-amd64"
-else
-  export PLATFORM="-$ARCH"
-fi
-
-# If using Mingw64/Msys2 (a faux-Linux build environment on Windows), replace mingw with windows
-if [[ $HOST_OS == *"MINGW"* ]]; then
-  export HOST_OS=windows
-fi
-
-docker-compose -f $DOCKER_COMPOSE_FILE up -d;
 if [ $? -eq 0 ]; then
-    # Reset so we don't get conflicts
-    unset REPOSITORY;
-    unset WORKSPACE_DIRECTORY;
     printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
     printf "\nCurrent running codewind containers\n";
     docker ps --filter name=codewind
@@ -184,4 +144,4 @@ else
   printf "\n${GREEN}No containers exited $RESET\n";
 fi
 
-printf "\n\n${BLUE}codewind CONTAINERS NOW AVAILABLE. PORTAL API ACCESSIBLE AT localhost:9090, PERFORMANCE UI at localhost:9095 $RESET\n";
+printf "\n\n${BLUE}CODEWIND CONTAINERS NOW AVAILABLE. PORTAL API ACCESSIBLE AT localhost:10000, PERFORMANCE UI at localhost:9095 $RESET\n";

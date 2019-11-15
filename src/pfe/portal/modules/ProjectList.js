@@ -139,12 +139,15 @@ module.exports = class ProjectList {
    * @param {key} key, the key to delete
    * @return the updated project
    */
-  deleteProjectKey(projectID, key) {
+  async deleteProjectKey(projectID, key) {
+    if (!this._list.hasOwnProperty(projectID)) {
+      throw new ProjectListError('NOT_FOUND', projectID);
+    }
     let currentProject = this._list[projectID];
     if (currentProject.hasOwnProperty(key)) {
       delete currentProject[key];
       this._list[projectID] = currentProject;
-      this._list[projectID].writeInformationFile();
+      await this._list[projectID].writeInformationFile();
     }
     return this._list[projectID];
   }

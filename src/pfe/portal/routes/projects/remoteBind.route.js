@@ -74,7 +74,7 @@ async function bindStart(req, res) {
     }
 
     const codewindWorkspace = global.codewind.CODEWIND_WORKSPACE
-   
+
     const projectDetails = {
       name: name,
       directory: name,
@@ -98,7 +98,7 @@ async function bindStart(req, res) {
 
     newProject = await user.createProject(projectDetails);
     let msg = `Project ${newProject.name} (${newProject.projectID}) opened.`;
-    
+
     res.status(202).send(newProject);
     log.info(msg);
   } catch (err) {
@@ -203,7 +203,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         log.info("Temporary project directory doesn't exist, not syncing any files");
         res.status(404).send("No files have been synced");
       } else {
-      
+
         const currentFileList = await listFiles(pathToTempProj, '');
 
         const filesToDeleteSet = new Set(currentFileList);
@@ -229,6 +229,9 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   }
 });
 
+function getMode(project) {
+  return (project.extension && project.extension.config.needsMount) ? "777" : "";
+}
 
 async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID) {
   // If the current project is being built, we do not want to copy the files as this will
@@ -238,16 +241,20 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
     // We now need to remove any files that have been deleted from the global workspace
     await Promise.all(filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(globalProjectPath, oldFile))));
     // now move temp project to real project
-    await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory));
+    await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
     let projectRoot = getProjectSourceRoot(project);
     // need to delete from the build container as well
     if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
       (!project.extension || !project.extension.config.needsMount)) {
       await Promise.all(filesToDelete.map(file => cwUtils.deleteFile(project, projectRoot, file)));
-      modifiedList.forEach((file) => {
-        log.info(`project is ${project} file is ${file} projectRoot is ${projectRoot}`);
-        cwUtils.copyFile(project, path.join(globalProjectPath, file), projectRoot, file);
-      });
+      log.info(
+        `Project ${project.name} syncing with build container, projectRoot is ${projectRoot}`
+      );
+      await cwUtils.copyProjectContents(
+        project,
+        globalProjectPath,
+        projectRoot
+      );
     }
     filesToDelete.forEach((f) => {
       const data = {
@@ -356,7 +363,7 @@ async function bindEnd(req, res) {
 
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     // now move temp project to real project
-    await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory));
+    await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory), getMode(project));
 
     let updatedProject = {
       projectID,

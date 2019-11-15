@@ -24,7 +24,7 @@ describe('Environment API tests', function() {
             .get('/api/v1/environment')
             .set('Cookie', ADMIN_COOKIE);
 
-        // res.should.have.status(200).and.satisfyApiSpec;
+        res.should.have.status(200).and.satisfyApiSpec;
         res.body.running_in_k8s.should.equal(USING_K8S);
         res.body.socket_namespace.should.equal(SOCKET_NAMESPACE);
         if (!USING_K8S) res.body.should.have.ownProperty('workspace_location');

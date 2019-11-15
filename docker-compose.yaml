@@ -34,6 +34,38 @@ services:
     networks:
       - network
 
+  codewind-keycloak:
+      build: ./src/keycloak/.
+      image: codewind-keycloak${PLATFORM}:${TAG}
+      environment:
+        KEYCLOAK_USER: admin
+        KEYCLOAK_PASSWORD: admin
+      ports:
+        - "0.0.0.0:8080:8080"
+        - "0.0.0.0:8443:8443"
+      container_name: codewind-keycloak
+      networks:
+        - network
+
+  codewind-gatekeeper:
+      build: ./src/gatekeeper/.
+      image: codewind-gatekeeper${PLATFORM}:${TAG}
+      environment:
+        AUTH_URL: "https://add_keycloak_url_here"
+        CLIENT_ID: "codewind"
+        CLIENT_SECRET: "add_client_secret_here"
+        ENABLE_AUTH: 1
+        REALM: "codewind"
+        SESSION_SECRET: "add_your_session_secret_here"
+        GATEKEEPER_HOST: "add_ingress_host_here_eg: 127.0.0.1:9096"
+        WORKSPACE_SERVICE: ""
+      ports:
+        - "0.0.0.0:9096:9096"
+        - "0.0.0.0:9496:9496"
+      container_name: codewind-gatekeeper
+      networks:
+        - network
+
 networks:
   network:
     driver_opts:
