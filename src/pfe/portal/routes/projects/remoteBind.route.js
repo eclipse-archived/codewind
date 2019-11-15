@@ -139,6 +139,7 @@ async function bindStart(req, res) {
  * @param id the id of the project
  * @param path the path of the file, relative to the project directory
  * @param msg the gzipped file content
+ * @param mode the permissions for the uploaded file
  * @return 200 if file upload is successful
  * @return 404 if project doesn't exist
  * @return 500 if internal error
@@ -150,6 +151,7 @@ async function uploadFile(req, res) {
   const user = req.cw_user;
   try {
     const relativePathOfFile = req.sanitizeBody('path');
+    const mode = req.sanitizeBody('mode');
     const project = user.projectList.retrieveProject(projectID);
     if (project) {
       // req.body.msg is gzipped, therefore sanitization is not required and may modify a users files
@@ -157,7 +159,10 @@ async function uploadFile(req, res) {
       const unzippedFile = await inflateAsync(zippedFile);
       const fileToWrite = JSON.parse(unzippedFile.toString());
       const pathToWriteTo = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name, relativePathOfFile)
-      await fs.outputFileSync(pathToWriteTo, fileToWrite);
+      await fs.outputFile(pathToWriteTo, fileToWrite);
+      if( mode !== undefined ) {
+        await fs.chmod(pathToWriteTo, mode);
+      }
 
       // if the project container has started, send the uploaded file to it
       res.sendStatus(200);
