@@ -1,7 +1,7 @@
-codewindtestpython=https://github.com/codewind-resources/pythonTemplate
-codewindtestgo=https://github.com/codewind-resources/goTemplate
-codewindtestlagom=https://github.com/codewind-resources/lagomJavaTemplate
-codewindtestspring=https://github.com/codewind-resources/springJavaTemplate
-codewindtestliberty=https://github.com/codewind-resources/javaMicroProfileTemplate
-codewindtestnodejs=https://github.com/codewind-resources/nodeExpressTemplate
-codewindtestswift=https://github.com/codewind-resources/swiftTemplate
+turbinetestdockerpython=https://github.com/codewind-resources/pythonTemplate
+turbinetestdockergo=https://github.com/codewind-resources/goTemplate
+turbinetestdockerlagom=https://github.com/codewind-resources/lagomJavaTemplate
+turbinetestdefaultspring=https://github.com/codewind-resources/springJavaTemplate
+turbinetestdefaultliberty=https://github.com/codewind-resources/javaMicroProfileTemplate
+turbinetestdefaultnodejs=https://github.com/codewind-resources/nodeExpressTemplate
+turbinetestdefaultswift=https://github.com/codewind-resources/swiftTemplate

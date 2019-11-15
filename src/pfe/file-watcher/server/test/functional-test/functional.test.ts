@@ -27,8 +27,8 @@ import * as genericLib from "./lib/generic";
 import { ProjectCreation } from "./lib/project";
 import { SocketIO } from "./lib/socket-io";
 
+const codewindTemplates = app_configs.codewindTemplates;
 const projectTypes = app_configs.projectTypes;
-const dockerProjects = app_configs.supportedDockerProjects;
 const projectConfigs = app_configs.projectConfigs;
 
 const socket = new SocketIO();
@@ -75,23 +75,18 @@ describe("PFE - functional test", () => {
 
 function runAllTests(): void {
   genericSuite.runTest();
-  for (const chosenType of projectTypes) {
-    if (chosenType === "docker") {
-      for (const chosenDocker of dockerProjects) {
-        runProjectSpecificTest(chosenType, chosenDocker);
-      }
-    } else {
-      runProjectSpecificTest(chosenType);
+  for (const chosenTemplate of Object.keys(projectTypes)) {
+    for (const chosenProject of projectTypes[chosenTemplate]) {
+      runProjectSpecificTest(chosenTemplate, chosenProject);
     }
   }
 }
 
-function runProjectSpecificTest(projType: string, dockerType?: string): void {
-  const projectType = dockerType ? dockerType : projType;
+function runProjectSpecificTest(chosenTemplate: string, chosenProject: string): void {
   const projData: ProjectCreation = {
-    projectID: projectType + projectConfigs.appSuffix,
-    projectType: projType,
-    location: projectConfigs.appDirectory + projectType
+    projectID: `${chosenTemplate}-${chosenProject}-${projectConfigs.appSuffix}`,
+    projectType: chosenTemplate === codewindTemplates.default ? chosenProject : chosenTemplate,
+    location: `${projectConfigs.appDirectory}${chosenTemplate}${chosenProject}`
   };
-  projectSuite.runTest(projData, projectType);
+  projectSuite.runTest(projData, chosenTemplate, chosenProject);
 }

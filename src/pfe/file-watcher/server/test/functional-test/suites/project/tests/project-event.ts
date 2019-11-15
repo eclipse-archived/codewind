@@ -22,7 +22,7 @@ import * as project_configs from "../../../configs/project.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
-export function projectEventTest(socket: SocketIO, projData: ProjectCreation, projectLang: string): void {
+export function projectEventTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
     describe("updateProjectForNewChange function", () => {
         afterEach("clear socket events", () => {
             socket.clearEvents();
@@ -62,7 +62,7 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
 
         function updateProject(type: string): void {
             let filesList = ["file1"];
-            if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectLang] || [];
+            if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectTemplate][projectLang] || [];
             for (const file of filesList) {
                 it(`${type.toLowerCase()} file: ${file}`, async () => {
                     const fileToChange = file;

@@ -30,18 +30,18 @@ export default class ProjectTest {
         this.testName = testName;
     }
 
-    run(socket: SocketIO, projData: ProjectCreation, projectLang: string, runOnly?: boolean): void {
+    run(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
-            this.runProjectActionTest(socket, projData);
-            this.runProjectCapabilityTest(projData.projectType, projData.projectID);
-            this.runProjectEventTest(socket, projData, projectLang);
+            this.runProjectActionTest(socket, projData, projectTemplate, projectLang);
+            this.runProjectCapabilityTest(projData.projectID, projectTemplate, projectLang);
+            this.runProjectEventTest(socket, projData, projectTemplate, projectLang);
             this.runProjectLogsTest(socket, projData);
-            this.runProjectSpecificationTest(socket, projData, projectLang);
-            this.runUpdateStatusTest(socket, projData);
+            this.runProjectSpecificationTest(socket, projData, projectTemplate, projectLang);
+            this.runUpdateStatusTest(socket, projData, projectTemplate, projectLang);
         });
     }
 
-    private runProjectCapabilityTest(projectType: string, projectID: string): void {
+    private runProjectCapabilityTest(projectID: string, projectTemplate: string, projectLang: string): void {
         describe("getProjectCapabilities function", () => {
             it("get project capability with undefined project id", async () => {
                 const info: any = await getProjectCapabilities(undefined);
@@ -59,28 +59,28 @@ export default class ProjectTest {
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(200);
                 expect(info.capabilities);
-                expect(info.capabilities).to.deep.equal(project_configs.projectCapabilities[projectType][process.env.TEST_TYPE]);
+                expect(info.capabilities).to.deep.equal(project_configs.projectCapabilities[projectTemplate][projectLang][process.env.TEST_TYPE]);
             });
         });
     }
 
-    private runProjectActionTest(socket: SocketIO, projData: ProjectCreation): void {
-        projectActionTest(socket, projData);
+    private runProjectActionTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+        projectActionTest(socket, projData, projectTemplate, projectLang);
     }
 
-    private runProjectSpecificationTest(socket: SocketIO, projData: ProjectCreation, projectLang: string): void {
-        projectSpecificationTest(socket, projData, projectLang);
+    private runProjectSpecificationTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+        projectSpecificationTest(socket, projData, projectTemplate, projectLang);
     }
 
     private runProjectLogsTest(socket: SocketIO, projData: ProjectCreation): void {
         logsTest(socket, projData);
     }
 
-    private runUpdateStatusTest(socket: SocketIO, projData: ProjectCreation): void {
-        updateStatusTest(socket, projData);
+    private runUpdateStatusTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+        updateStatusTest(socket, projData, projectTemplate, projectLang);
     }
 
-    private runProjectEventTest(socket: SocketIO, projData: ProjectCreation, projectLang: string): void {
-        projectEventTest(socket, projData, projectLang);
+    private runProjectEventTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+        projectEventTest(socket, projData, projectTemplate, projectLang);
     }
 }

@@ -22,7 +22,7 @@ import { fail } from "assert";
 
 import * as utils from "../../../lib/utils";
 
-export function projectActionTest(socket: SocketIO, projData: ProjectCreation): void {
+export function projectActionTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
     const data: any = {
         action: "restart",
         projectType: projData.projectType,
@@ -35,9 +35,9 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "disableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 200,
-            "socketEvent": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [eventConfigs.events.projectChanged],
-            "eventKeys": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
-            "result": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [{
+            "socketEvent": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projectTemplate][projectLang] ? [] : [eventConfigs.events.projectChanged],
+            "eventKeys": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projectTemplate][projectLang] ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
+            "result": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projectTemplate][projectLang] ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }]
@@ -46,9 +46,9 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "action": "enableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 202,
-            "socketEvent": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
-            "eventKeys": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
-            "result": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projData.projectType] ? [] : [{
+            "socketEvent": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projectTemplate][projectLang] ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
+            "eventKeys": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projectTemplate][projectLang] ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
+            "result": process.env.IN_K8  || !project_configs.autoBuildEventCapabailities[projectTemplate][projectLang] ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }, {
@@ -84,7 +84,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         },
     };
 
-    _.forEach(project_configs.restartCapabilities[projData.projectType], (restartCapability) => {
+    _.forEach(project_configs.restartCapabilities[projectTemplate][projectLang], (restartCapability) => {
         combinations[`restart_${restartCapability}`] = {
             "action": "restart",
             "mode": restartCapability,
@@ -99,14 +99,14 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             "beforeHook": [
                 async function(hook: any): Promise<void> {
                     hook.timeout(timeoutConfigs.defaultTimeout);
-                    await utils.setAppStatus(projData);
+                    await utils.setAppStatus(projData, projectTemplate, projectLang);
                     socket.clearEvents();
                 }
             ],
             "afterHook": [
                 async function(hook: any): Promise<void> {
                     hook.timeout(timeoutConfigs.createTestTimeout);
-                    await utils.setAppStatus(projData);
+                    await utils.setAppStatus(projData, projectTemplate, projectLang);
                     socket.clearEvents();
 
                     const comboInUse = _.cloneDeep(combinations[`restart_${restartCapability}`]);
@@ -128,21 +128,21 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
             socket.clearEvents();
         });
 
-        const action = project_configs.restartCapabilities[projData.projectType].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+        const action = project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && !process.env.IN_K8 ? "restart" : "build";
         const mode = action === "restart" ? "run" : undefined;
         const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-        if (process.env.IN_K8 && project_configs.restartCapabilities[projData.projectType].includes("run") && projData.projectType != "spring") {
+        if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
             targetEvents.pop();
             targetEventDatas.pop();
         }
 
         after("set app status to running", async function (): Promise<void> {
             this.timeout(timeoutConfigs.defaultTimeout);
-            if (project_configs.needManualReset[projData.projectType]["appStatus"] && action === "restart") {
-                await utils.setAppStatus(projData);
+            if (project_configs.needManualReset[projectTemplate][projectLang]["appStatus"] && action === "restart") {
+                await utils.setAppStatus(projData, projectTemplate, projectLang);
                 await utils.waitForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
                 socket.clearEvents();
             }
@@ -154,7 +154,7 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
         });
 
         after("remove build from running queue", async () => {
-            await utils.setBuildStatus(projData);
+            await utils.setBuildStatus(projData, projectTemplate, projectLang);
         });
 
         it("set project action with undefined action type", async () => {
@@ -291,6 +291,6 @@ export function projectActionTest(socket: SocketIO, projData: ProjectCreation): 
 
     async function afterHookRemoveProjectFromRunningBuild(hook: any): Promise<void> {
         hook.timeout(timeoutConfigs.defaultTimeout);
-        await utils.setBuildStatus(projData);
+        await utils.setBuildStatus(projData, projectTemplate, projectLang);
     }
 }
