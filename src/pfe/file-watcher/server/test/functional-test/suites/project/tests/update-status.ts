@@ -93,20 +93,20 @@ export function updateStatusTest(socket: SocketIO, projData: ProjectCreation, pr
 
                 after("set app status to running", async function (): Promise<void> {
                     this.timeout(timeoutConfigs.defaultTimeout);
-                    if (project_configs.needManualReset[projectTemplate][projectLang]["appStatus"]) {
+                    if (project_configs.needManualReset[projectTemplate] && project_configs.needManualReset[projectTemplate][projectLang] && project_configs.needManualReset[projectTemplate][projectLang]["appStatus"]) {
                         await utils.setAppStatus(projData, projectTemplate, projectLang);
                         await utils.waitForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
                         socket.clearEvents();
                     }
                 });
 
-                const action = project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+                const action = project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && !process.env.IN_K8 ? "restart" : "build";
                 const mode = action === "restart" ? "run" : undefined;
                 const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
                     [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
                 const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-                if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
+                if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
                     targetEvents.pop();
                     targetEventDatas.pop();
                 }

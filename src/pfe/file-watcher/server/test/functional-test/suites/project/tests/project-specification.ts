@@ -82,7 +82,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     "title": "Internal debug port test - Before hook - Get default internal debug port",
                     "function": async function(hook: any): Promise<void> {
                         hook.timeout(timeoutConfigs.defaultTimeout);
-                        if (!project_configs.debugCapabilities[projectTemplate][projectLang]) return;
+                        if (!(project_configs.debugCapabilities[projectTemplate] && project_configs.debugCapabilities[projectTemplate][projectLang])) return;
                         defaultInternalDebugPort = project_configs.defaultInternalDebugPorts[projectTemplate][projectLang];
                     }
                 }],
@@ -90,17 +90,17 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                     "title": "Internal debug port test - After hook - Reset internal debug port",
                     "function": async function(hook: any): Promise<void> {
                         hook.timeout(timeoutConfigs.createTestTimeout);
-                        if (!project_configs.debugCapabilities[projectTemplate][projectLang]) return;
+                        if (!(project_configs.debugCapabilities[projectTemplate] &&  project_configs.debugCapabilities[projectTemplate][projectLang])) return;
 
                         await runProjectSpecificationSettingTest(combinations["combo2"], defaultInternalDebugPort);
 
-                        const action = project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+                        const action = project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && !process.env.IN_K8 ? "restart" : "build";
                         const mode = action === "restart" ? "run" : undefined;
                         const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
                             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
                         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-                        if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
+                        if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
                             targetEvents.pop();
                             targetEventDatas.pop();
                         }
@@ -202,20 +202,20 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
         after("set app status to running", async function (): Promise<void> {
             this.timeout(timeoutConfigs.defaultTimeout);
-            if (project_configs.needManualReset[projectTemplate][projectLang]["appStatus"]) {
+            if (project_configs.needManualReset[projectTemplate] && project_configs.needManualReset[projectTemplate][projectLang] && project_configs.needManualReset[projectTemplate][projectLang]["appStatus"]) {
                 await utils.setAppStatus(projData, projectTemplate, projectLang);
                 await utils.waitForEvent(socket, eventConfigs.events.statusChanged, {"projectID": projData.projectID, "appStatus": "started"});
                 socket.clearEvents();
             }
         });
 
-        const action = project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+        const action = project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && !process.env.IN_K8 ? "restart" : "build";
         const mode = action === "restart" ? "run" : undefined;
         const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-        if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
+        if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
             targetEvents.pop();
             targetEventDatas.pop();
         }
@@ -392,7 +392,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 const containerInfo: any = process.env.IN_K8 ? await getApplicationContainerInfoInK8(projectInfo, operation) : await getApplicationContainerInfo(projectInfo, containerName);
                 const currentInternalPort = containerInfo.internalPort;
                 const portKey = process.env.IN_K8 ? "podPorts" : "containerPorts";
-                const ports = project_configs.oneExposedPortOnly[projectTemplate][projectLang][process.env.TEST_TYPE] ? containerInfo[portKey] : containerInfo[portKey].filter((val: any) => {
+                const ports = project_configs.oneExposedPortOnly[projectTemplate] && project_configs.oneExposedPortOnly[projectTemplate][projectLang] && project_configs.oneExposedPortOnly[projectTemplate][projectLang][process.env.TEST_TYPE] ? containerInfo[portKey] : containerInfo[portKey].filter((val: any) => {
                     return val != currentInternalPort;
                 });
                 value = value || ports[Math.floor(Math.random() * ports.length)];
@@ -402,7 +402,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                 value = value || project_configs.randomDebugPort;
             }
             if (setting === "mavenProfiles" || setting === "mavenProperties") {
-                if (!project_configs.mavenProfileCapabilities[projData.projectType]) {
+                if (!(project_configs.mavenProfileCapabilities[projectTemplate] && project_configs.mavenProfileCapabilities[projectTemplate][projectLang])) {
                     value = [];
                     comboInUse["result"]["status"] = "failed";
                     comboInUse["eventKeys"].push("error");
@@ -429,7 +429,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             expect(info.operationId);
 
             if (comboInUse["socketEvent"] && comboInUse["eventKeys"] && comboInUse["result"]) {
-                if (setting === "internalDebugPort" && !project_configs.debugCapabilities[projectTemplate][projectLang]) {
+                if (setting === "internalDebugPort" && !(project_configs.debugCapabilities[projectTemplate] && project_configs.debugCapabilities[projectTemplate][projectLang])) {
                     comboInUse["result"]["status"] = "failed";
                     comboInUse["eventKeys"].push("error");
                 }
@@ -456,7 +456,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                             expect(event.eventData[eventKey]).to.equal(value);
                         }
 
-                        if (setting === "internalDebugPort" && !project_configs.debugCapabilities[projectTemplate][projectLang]) {
+                        if (setting === "internalDebugPort" && !(project_configs.debugCapabilities[projectTemplate] && project_configs.debugCapabilities[projectTemplate][projectLang])) {
                             expect(event.eventData.error);
                             expect(event.eventData.error).to.equal(`BAD_REQUEST: The project does not support debug mode.`);
                         }
@@ -464,11 +464,11 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
                             expect(event.eventData.error);
                             expect(event.eventData.error).to.equal(`BAD_REQUEST: debug mode is not supported on Kubernetes.`);
                         }
-                        if (setting === "mavenProfiles" && !project_configs.mavenProfileCapabilities[projData.projectType]) {
+                        if (setting === "mavenProfiles" && !(project_configs.mavenProfileCapabilities[projectTemplate] && project_configs.mavenProfileCapabilities[projectTemplate][projectLang])) {
                             expect(event.eventData.error);
                             expect(event.eventData.error).to.equal(`Maven settings cannot be set for a non-Maven project: ${projData.projectType}`);
                         }
-                        if (setting === "mavenProperties" && !project_configs.mavenProfileCapabilities[projData.projectType]) {
+                        if (setting === "mavenProperties" && !(project_configs.mavenProfileCapabilities[projectTemplate] && project_configs.mavenProfileCapabilities[projectTemplate][projectLang])) {
                             expect(event.eventData.error);
                             expect(event.eventData.error).to.equal(`The maven properties list cannot be set for a non-Maven project: ${projData.projectType}`);
                         }
@@ -481,7 +481,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
         async function beforeHookInternalPortTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.createTestTimeout);
-            if (! project_configs.oneExposedPortOnly[projectTemplate][projectLang][process.env.TEST_TYPE]) return;
+            if (! (project_configs.oneExposedPortOnly[projectTemplate] && project_configs.oneExposedPortOnly[projectTemplate][projectLang] && project_configs.oneExposedPortOnly[projectTemplate][projectLang][process.env.TEST_TYPE])) return;
 
             const projectInfo = await projectUtil.getProjectInfo(projData.projectID);
             const containerName = await projectUtil.getContainerName(projectInfo);
@@ -515,7 +515,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
         async function afterHookInternalPortTestSinglePort(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.createTestTimeout);
-            if (! project_configs.oneExposedPortOnly[projectTemplate][projectLang][process.env.TEST_TYPE]) return;
+            if (! (project_configs.oneExposedPortOnly[projectTemplate] && project_configs.oneExposedPortOnly[projectTemplate][projectLang] && project_configs.oneExposedPortOnly[projectTemplate][projectLang][process.env.TEST_TYPE])) return;
 
             const dockerfile = path.join(projData.location, "Dockerfile");
             const fileOutput = await fs.readFileSync(dockerfile, {encoding: "utf-8"});
@@ -545,13 +545,13 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
             hook.timeout(timeoutConfigs.createTestTimeout);
             await runProjectSpecificationSettingTest(combinations["combo1"], project_configs.defaultInternalPorts[projectTemplate][projectLang]);
 
-            const action = project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && !process.env.IN_K8 ? "restart" : "build";
+            const action = project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && !process.env.IN_K8 ? "restart" : "build";
             const mode = action === "restart" ? "run" : undefined;
             const targetEvents = action === "build" ? [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged] :
                 [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
             const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-            if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
+            if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
                 targetEvents.pop();
                 targetEventDatas.pop();
             }
@@ -568,7 +568,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: ProjectCrea
 
         async function afterHookHealthCheckTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
-            await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultContextRoot[projectTemplate][projectLang]  || project_configs.defaultHealthCheckEndPoint);
+            await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultContextRoot[projectTemplate][projectLang] || project_configs.defaultHealthCheckEndPoint);
         }
 
         async function afterHookMavenProfileTest(hook: any): Promise<void> {
