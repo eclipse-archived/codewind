@@ -276,7 +276,7 @@ function dockerRun() {
 	$IMAGE_COMMAND run --network=codewind_network -e $heapdump --name $project -p 127.0.0.1::$DEBUG_PORT -P -dt $project /bin/bash -c "$dockerCmd";
 	if [ $? -eq 0 ]; then
 		echo -e "Copying over source files"
-		docker cp "$WORKSPACE/$projectName" $project:/app
+		docker cp "$WORKSPACE/$projectName/." $project:/app
 	fi
 
 }

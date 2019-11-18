@@ -456,7 +456,7 @@ module.exports = class FileWatcher {
         projectID: projectID,
         pathToMonitor: pathToMonitor,
         ignoredPaths: ignoredPaths,
-        timestamp: Date.now()
+        projectCreationTime: Date.now()
       }
       let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
       await this.handleFWProjectEvent(event, projectUpdate);
