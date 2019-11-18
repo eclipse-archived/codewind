@@ -48,6 +48,7 @@ async function bindStart(req, res) {
     const language = req.sanitizeBody('language');
     const projectType = req.sanitizeBody('projectType');
     const locOnDisk = req.sanitizeBody('path');
+    const creationTime = req.sanitizeBody('creationTime');
 
     const illegalNameChars = ILLEGAL_PROJECT_NAME_CHARS.filter(char => name.includes(char));
     if (illegalNameChars.length > 0) {
@@ -84,6 +85,10 @@ async function bindStart(req, res) {
       locOnDisk: locOnDisk,
       state: Project.STATES.closed,
     };
+
+    if (creationTime) {
+      projectDetails.creationTime = creationTime;
+    }
 
     if (projectType) {
       projectDetails.projectType = projectType

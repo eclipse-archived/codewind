@@ -54,7 +54,7 @@ module.exports = class FileWatcher {
           logEvent("projectSettingsChanged", fwProject);
           // Handle the projectSettingsChanged event only when we get a success
           if(fwProject.status === 'success') {
-            await this.handleNewOrUpdatedProject("projectSettingsChanged", fwProject);
+            await this.handleUpdatedProject("projectSettingsChanged", fwProject);
           }
           this.user.uiSocket.emit("projectSettingsChanged", fwProject);
           break;
@@ -163,7 +163,7 @@ module.exports = class FileWatcher {
         }
 
         case "newProjectAdded": {
-          await this.handleNewOrUpdatedProject('newProjectAdded', fwProject);
+          await this.handleNewProjectAdded('newProjectAdded', fwProject);
           break;
         }
 
@@ -403,20 +403,13 @@ module.exports = class FileWatcher {
    * Function to specifically handle fw newProjectAdded and
    * projectSettingsChanged events
    */
-  async handleNewOrUpdatedProject(event, fwProject) {
+  async handleUpdatedProject(event, fwProject) {
     try {
       const projectID = fwProject.projectID;
       const project = this.user.projectList.retrieveProject(projectID);
 
       if (fwProject.ignoredPaths || event == "newProjectAdded") {
         // Send all file watcher clients project related data when a new project is added or ignored paths has changed
-        let changeType;
-        if (event == "newProjectAdded") {
-          changeType = "add";
-        }
-        if (event == 'projectSettingsChanged') {
-          changeType = "update";
-        }
         const ignoredPaths = fwProject.ignoredPaths;
         let pathToMonitor = project.locOnDisk;
         if (process.env.HOST_OS === "windows") {
@@ -424,7 +417,7 @@ module.exports = class FileWatcher {
         }
         const projectWatchStateId = crypto.randomBytes(16).toString("hex");
         const data = {
-          changeType: changeType,
+          changeType: "update",
           projectWatchStateId: projectWatchStateId,
           projectID: projectID,
           pathToMonitor: pathToMonitor,
@@ -441,6 +434,46 @@ module.exports = class FileWatcher {
       log.error(err);
     }
   }
+
+  /**
+   * Function to specifically handle fw newProjectAdded and
+   * projectSettingsChanged events
+   */
+  async handleNewProjectAdded(event, fwProject) {
+    try {
+      const projectID = fwProject.projectID;
+      const project = this.user.projectList.retrieveProject(projectID);
+      // Send all file watcher clients project related data when a new project is added or ignored paths has changed
+      const ignoredPaths = fwProject.ignoredPaths;
+      let pathToMonitor = project.locOnDisk;
+      if (process.env.HOST_OS === "windows") {
+        pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
+      }
+      const projectWatchStateId = crypto.randomBytes(16).toString("hex");
+      let time = Date.now()
+
+      if (project.creationTime) {
+        time = project.creationTime
+      } 
+
+      const data = {
+        changeType: "add",
+        projectWatchStateId: projectWatchStateId,
+        projectID: projectID,
+        pathToMonitor: pathToMonitor,
+        ignoredPaths: ignoredPaths,
+        projectCreationTime: time
+      }
+      let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
+      await this.handleFWProjectEvent(event, projectUpdate);
+      WebSocket.watchListChanged(data);      
+    } catch (err) {
+      log.error(err);
+    }
+  }
+
+
+
 
 
   /**

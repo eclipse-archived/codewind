@@ -55,6 +55,7 @@ module.exports = class Project {
     this.codewindVersion = args.codewindVersion || process.env.CODEWIND_VERSION;
     this.language = args.language;
     this.validate = args.validate;
+    this.creationTime = args.creationTime;
 
     if (args.contextRoot) this.contextRoot = args.contextRoot;
     if (args.framework) this.framework = args.framework;
