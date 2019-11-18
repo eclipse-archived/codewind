@@ -18,6 +18,7 @@ RUN apk add --no-cache --update openssl
 # Create UI app directory and install source code
 WORKDIR /usr/src/app
 COPY . .
+RUN [ "npm", "i" ]
 
 # Run as the default node user from the image rather than root.
 USER 1000
