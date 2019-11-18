@@ -238,30 +238,35 @@ describe('MetricsService.js', () => {
         });
 
         describe('getNewPomXmlDependencies(originalDependencies)', () => {
+            const metricsCollectorDependency = {
+                groupId: [ 'com.ibm.runtimetools' ],
+                artifactId: [ 'javametrics-dash' ],
+                version: [ '[1.2,2.0)' ],
+                scope: [ 'provided' ],
+                type: [ 'war' ],
+            };
+            describe(`<originalDependencies> don't include javametrics-dash`, () => {
             it(`returns an object representing pom.xml dependencies injected with metrics collector`, () => {
                 const funcToTest = metricsService.__get__('getNewPomXmlDependencies');
                 const originalDependencies = [];
                 const output = funcToTest(originalDependencies);
                 output.should.have.deep.members([
                     ...originalDependencies,
-                    {
-                        groupId: [ 'com.ibm.runtimetools' ],
-                        artifactId: [ 'javametrics-dash' ],
-                        version: [ '[1.2,2.0)' ],
-                        scope: [ 'provided' ],
-                        type: [ 'war' ],
-                    },
+                        metricsCollectorDependency,
                 ]);
             });
         });
+            describe(`<originalDependencies> already include javametrics-dash`, () => {
+                it(`returns an object representing the original pom.xml dependencies`, () => {
+                    const funcToTest = metricsService.__get__('getNewPomXmlDependencies');
+                    const originalDependencies = [metricsCollectorDependency];
+                    const output = funcToTest(originalDependencies);
+                    output.should.have.deep.members(originalDependencies);
+                });
+            });
+        });
         describe('getNewPomXmlBuildPluginExecutions(originalBuildPluginExecutions)', () => {
-            it(`returns an object representing pom.xml build plugin executions that are injected with metrics collector`, () => {
-                const funcToTest = metricsService.__get__('getNewPomXmlBuildPluginExecutions');
-                const originalBuildPluginExecutions = [];
-                const output = funcToTest(originalBuildPluginExecutions);
-                output.should.have.deep.members([
-                    ...originalBuildPluginExecutions,
-                    {
+            const metricsCollectorBuildPluginExecution = {
                         id: [ 'copy-javametrics-dash' ],
                         phase: [ 'package' ],
                         goals: [ { goal: [ 'copy-dependencies' ] } ],
@@ -274,8 +279,25 @@ describe('MetricsService.js', () => {
                                 includeArtifactIds: [ 'javametrics-dash' ],
                             },
                         ],
-                    },
+            };
+            describe(`<originalBuildPluginExecutions> don't include javametrics-dash`, () => {
+                it(`returns an object representing pom.xml build plugin executions injected with metrics collector`, () => {
+                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPluginExecutions');
+                    const originalBuildPluginExecutions = [];
+                    const output = funcToTest(originalBuildPluginExecutions);
+                    output.should.have.deep.members([
+                        ...originalBuildPluginExecutions,
+                        metricsCollectorBuildPluginExecution,
                 ]);
+            });
+        });
+            describe(`<originalBuildPluginExecutions> already include javametrics-dash`, () => {
+                it(`returns an object representing the original pom.xml build plugin executions`, () => {
+                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPluginExecutions');
+                    const originalBuildPluginExecutions = [metricsCollectorBuildPluginExecution];
+                    const output = funcToTest(originalBuildPluginExecutions);
+                    output.should.have.deep.members(originalBuildPluginExecutions);
+                });
             });
         });
     });
