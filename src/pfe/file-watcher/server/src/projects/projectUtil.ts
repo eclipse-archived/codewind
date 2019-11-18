@@ -820,7 +820,7 @@ export async function getContainerName(projectInfo: ProjectInfo): Promise<string
  *
  * @returns Promise<string>
  */
-async function getComponentName(projectName: string): Promise<string> {
+export async function getComponentName(projectName: string): Promise<string> {
     return "cw-" + projectName;
 }
 
