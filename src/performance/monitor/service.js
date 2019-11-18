@@ -9,9 +9,10 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const { getResData } = require('../utils/request.service');
-const { repeatFunc } = require('../utils/utils.service');
+const { repeatFunc, allPromisesSettled } = require('../utils/utils.service');
 
-const numPolls = 100;
+// TODO: reset
+const numPolls = 10;
 const latestProjectData = {};
 
 const getEnvData = (appOrigin) => getResData(appOrigin, '/metrics/codewind/environment');
@@ -24,11 +25,9 @@ const getMetricsFromProject = async (appOrigin) => {
   const [
     metricsFromUser,
     metricsFromCodewind,
-  ] = await Promise.all([
-    getResData(appOrigin, '/metrics')
-      .catch(err => console.log(err.message)),
-    getResData(appOrigin, '/metrics/codewind')
-      .catch(err => console.log(err.message)),
+  ] = await allPromisesSettled([
+      getResData(appOrigin, '/metrics'),
+      getResData(appOrigin, '/metrics/codewind'),
   ]);
 
   projectData.metrics.fromUser = metricsFromUser;

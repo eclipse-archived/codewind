@@ -13,6 +13,14 @@ const { promisify } = require('util');
 const wait = promisify(setTimeout);
 const repetitionInterval = 2000;
 
+// returns a promise that resolves after all of the given promises have either resolved or rejected
+// similar to https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled
+const allPromisesSettled = (promises) => Promise.all(
+  promises.map(promise =>
+    promise.catch(err => console.log(err.message))
+  )
+);
+
 const repeatFunc = async (func, numRepetitionsRemaining) => {
   await func();
   numRepetitionsRemaining--;
@@ -25,5 +33,6 @@ const repeatFunc = async (func, numRepetitionsRemaining) => {
 }
 
 module.exports = {
+  allPromisesSettled,
   repeatFunc,
 };
