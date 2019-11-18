@@ -30,7 +30,7 @@ async function getTektonAPIService() {
     const client = new Client({ config: config.getInCluster(), version: '1.9' });
     const tktNamespaceName = process.env.TEKTON_PIPELINE;
     log.info(`Looking for services in Tekton namespace '${tktNamespaceName}'`);
-    const services = await client.api.v1.namespaces(tktNamespaceName).services.get({ qs: { labelSelector: 'app=tekton-dashboard' } });
+    const services = await client.api.v1.namespaces(tktNamespaceName).services.get({ qs: { labelSelector: 'app=tekton-dashboard-internal' } });
     if (services && services.body &&
       services.body.items[0] &&
       services.body.items[0].spec &&
