@@ -24,12 +24,12 @@ const metricsCollectorInjectionFunctions = {
   liberty: injectMetricsCollectorIntoLibertyProject,
 }
 
-async function injectMetricsCollectorIntoProject(projectLanguage, projectDir) {
-  if (!metricsCollectorInjectionFunctions.hasOwnProperty(projectLanguage)) {
-    throw new Error(`'${projectLanguage}' is not a supported language`);
+async function injectMetricsCollectorIntoProject(projectType, projectDir) {
+  if (!metricsCollectorInjectionFunctions.hasOwnProperty(projectType)) {
+    throw new Error(`Injection of metrics collector is not supported for projects of type '${projectType}'`);
   }
-  await metricsCollectorInjectionFunctions[projectLanguage](projectDir);
-  log.debug(`Successfully injected metrics collector into ${projectLanguage} project`);
+  await metricsCollectorInjectionFunctions[projectType](projectDir);
+  log.debug(`Successfully injected metrics collector into ${projectType} project`);
 }
 
 async function injectMetricsCollectorIntoNodeProject(projectDir) {
