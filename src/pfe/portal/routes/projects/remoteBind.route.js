@@ -19,6 +19,7 @@ const inflateAsync = promisify(zlib.inflate);
 const cwUtils = require('../../modules/utils/sharedFunctions');
 const Logger = require('../../modules/utils/Logger');
 const Project = require('../../modules/Project');
+const metricsService = require('../../modules/MetricsService');
 const ProjectInitializerError = require('../../modules/utils/errors/ProjectInitializerError');
 const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
@@ -362,6 +363,13 @@ async function bindEnd(req, res) {
     }
 
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
+
+    try {
+      await metricsService.injectMetricsCollectorIntoProject(project.language, pathToCopy);
+    } catch (error) {
+      log.warn(error);
+    }
+
     // now move temp project to real project
     await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory), getMode(project));
 

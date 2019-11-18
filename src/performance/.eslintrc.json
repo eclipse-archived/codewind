@@ -1,0 +1,53 @@
+{
+  "parserOptions": {
+    "ecmaVersion": 2018
+  },
+  "env": {
+      "es6": true,
+      "node": true
+  },
+  "rules": {
+    "no-unused-vars": "error",
+    "class-methods-use-this":"warn",
+    "no-undef":"error",
+    "object-shorthand":"warn",
+    "no-loop-func": "warn",
+    "no-async-promise-executor": "warn",
+    "no-await-in-loop": "off",
+    "require-atomic-updates": "warn",
+    "array-callback-return": "warn",
+    "block-scoped-var": "error",
+    "consistent-return": "warn",
+    "default-case": "warn",
+    "no-else-return": "warn",
+    "no-fallthrough": "warn",
+    "no-implicit-globals": "warn",
+    "no-lone-blocks": "warn",
+    "no-param-reassign": "warn",
+    "no-return-assign": "warn",
+    "no-return-await": "warn",
+    "no-self-compare": "warn",
+    "no-unmodified-loop-condition": "warn",
+    "no-useless-return": "warn",
+    "require-await": "warn",
+    "vars-on-top": "warn",
+    "prefer-const": "error",
+    "semi": ["error", "always"],
+    "no-undef-init":"warn",
+    "semi-spacing": ["warn", {"before": false, "after": true}],
+    "quote-props":["warn", "as-needed"],
+    "prefer-template":"warn",
+    "quotes":["warn", "single", { "avoidEscape": true, "allowTemplateLiterals": true }],
+    "no-irregular-whitespace":"warn",
+    "object-curly-spacing":["warn", "always"],
+    "comma-dangle":["warn", "always-multiline"],
+    "space-before-function-paren":["warn", "never"],
+    "indent": ["error", 2, { "ignoreComments": true, "SwitchCase": 1} ],
+    "no-const-assign":"error",
+    "no-var":"error",
+    "no-undefined":"warn",
+    "space-infix-ops":"warn",
+    "keyword-spacing":"warn",
+    "key-spacing":"warn"
+  }
+}
