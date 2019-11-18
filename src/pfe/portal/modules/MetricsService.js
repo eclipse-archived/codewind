@@ -110,6 +110,12 @@ function getNewContentsOfJvmOptions(originalContents) {
 }
 
 function getNewPomXmlDependencies(originalDependencies) {
+  const metricsCollectorDependencyAlreadyExists = originalDependencies.some(dependency =>
+    dependency.artifactId[0] === 'javametrics-dash'
+  );
+  if (metricsCollectorDependencyAlreadyExists) {
+    return originalDependencies;
+  }
   const newDependencies = originalDependencies.concat({
     groupId: [ 'com.ibm.runtimetools' ],
     artifactId: [ 'javametrics-dash' ],
@@ -121,6 +127,12 @@ function getNewPomXmlDependencies(originalDependencies) {
 }
 
 function getNewPomXmlBuildPluginExecutions(originalBuildPluginExecutions) {
+  const metricsCollectorBuildPluginExecutionAlreadyExists = originalBuildPluginExecutions.some(execution =>
+    execution.id[0] === 'copy-javametrics-dash'
+  );
+  if (metricsCollectorBuildPluginExecutionAlreadyExists) {
+    return originalBuildPluginExecutions;
+  }
   const newBuildPluginExecutions = originalBuildPluginExecutions.concat({
     id: [ 'copy-javametrics-dash' ],
     phase: [ 'package' ],
