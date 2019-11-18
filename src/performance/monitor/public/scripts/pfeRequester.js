@@ -2,7 +2,8 @@ const projectID = queryStringValues.get('projectID');
 const pfeOrigin = document.location.origin;
 const pollInterval = 2000;
 
-const maxPolls = 100;
+// TODO: reset
+const maxPolls = 10;
 const maxFlameGraphUpdates = 50;
 
 function pollMetricsAndUpdateDash(numPolls, funcToUpdateDash) {
