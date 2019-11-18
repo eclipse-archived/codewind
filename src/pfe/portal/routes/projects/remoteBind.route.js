@@ -387,7 +387,7 @@ async function bindEnd(req, res) {
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
 
     try {
-      await metricsService.injectMetricsCollectorIntoProject(project.language, pathToCopy);
+      await metricsService.injectMetricsCollectorIntoProject(project.projectType, pathToCopy);
     } catch (error) {
       log.warn(error);
     }

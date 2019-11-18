@@ -79,7 +79,7 @@ describe('MetricsService.js', () => {
         expectedPomXml = await readXml(pathToExpectedPomXml);
     });
 
-    describe('injectMetricsCollectorIntoProject(projectLanguage, projectDir)', () => {
+    describe('injectMetricsCollectorIntoProject(projectType, projectDir)', () => {
         describe(`('nodejs', <goodProjectDir>)`, () => {
             beforeEach(() => {
                 fs.writeJSONSync(pathToPackageJson, originalPackageJson);
@@ -113,7 +113,7 @@ describe('MetricsService.js', () => {
                 outputJvmOptions.should.equal(expectedJvmOptions);
             });
         });
-        describe(`('unsupportedLanguage', <goodProjectDir>)`, () => {
+        describe(`('unsupportedProjectType', <goodProjectDir>)`, () => {
             beforeEach(() => {
                 fs.writeJSONSync(pathToPackageJson, originalPackageJson);
             });
@@ -121,8 +121,8 @@ describe('MetricsService.js', () => {
                 fs.unlinkSync(pathToPackageJson);
             });
             it(`throws a useful error`, () => {
-                const funcToTest = () => metricsService.injectMetricsCollectorIntoProject('unsupportedLanguage', projectDir);
-                return funcToTest().should.be.rejectedWith(`'unsupportedLanguage' is not a supported language`);
+                const funcToTest = () => metricsService.injectMetricsCollectorIntoProject('unsupportedProjectType', projectDir);
+                return funcToTest().should.be.rejectedWith(`Injection of metrics collector is not supported for projects of type 'unsupportedProjectType'`);
             });
         });
     });
