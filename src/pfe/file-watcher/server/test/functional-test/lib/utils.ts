@@ -192,7 +192,7 @@ export async function waitForEvent(socket: SocketIO, targetEvent: string, eventD
  * @returns Promise<void>
  */
 export async function setBuildStatus(projData: ProjectCreation, projectTemplate: string, projectLang: string, status?: string): Promise<void> {
-    if (project_configs.needManualReset[projectTemplate][projectLang]["buildStatus"]) {
+    if (project_configs.needManualReset[projectTemplate] && project_configs.needManualReset[projectTemplate][projectLang] && project_configs.needManualReset[projectTemplate][projectLang]["buildStatus"]) {
         const info = await updateStatus({
             "projectID": projData.projectID,
             "type": "buildState",
@@ -204,7 +204,7 @@ export async function setBuildStatus(projData: ProjectCreation, projectTemplate:
 }
 
 export async function setAppStatus(projData: ProjectCreation, projectTemplate: string, projectLang: string, status?: string, msg?: string): Promise<void> {
-    if (project_configs.needManualReset[projectTemplate][projectLang]["appStatus"]) {
+    if (project_configs.needManualReset[projectTemplate] && project_configs.needManualReset[projectTemplate][projectLang] && project_configs.needManualReset[projectTemplate][projectLang]["appStatus"]) {
         const info = await updateStatus({
             "projectID": projData.projectID,
             "type": "appState",
