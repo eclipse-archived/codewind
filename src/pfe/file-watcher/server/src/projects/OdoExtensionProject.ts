@@ -206,7 +206,8 @@ export class OdoExtensionProject implements IExtensionProject {
      */
     getContainerName = async (projectID: string, projectLocation: string): Promise<string> => {
         let podName: string = undefined;
-        const componentName: string = path.basename(projectLocation);
+        const projectName: string = path.basename(projectLocation);
+        const componentName: string = await projectUtil.getComponentName(projectName);
         const args: string[] = [
             projectLocation,
             "",
@@ -221,12 +222,12 @@ export class OdoExtensionProject implements IExtensionProject {
             const result = await processManager.spawnDetachedAsync(projectID, path.join(this.fullPath, "odo-extension-entrypoint.sh"), args, {});
 
             if (result.exitCode != 0) {
-                logger.logProjectError(result.stderr, projectID, componentName);
+                logger.logProjectError(result.stderr, projectID, projectName);
             } else {
                 podName = path.basename(result.stdout);
             }
         } catch (err) {
-            logger.logProjectError(err, projectID, componentName);
+            logger.logProjectError(err, projectID, projectName);
         }
 
         return podName;
