@@ -78,7 +78,7 @@ function setup {
     PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
     TURBINE_NPM_INSTALL_CMD="cd /file-watcher/server; npm install --only=dev"
-    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml npm run $TEST_SUITE:test:xml"
+    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml DEPLOYMENT_REGISTRY=${DEPLOYMENT_REGISTRY} npm run $TEST_SUITE:test:xml"
 
     mkdir -p $TEST_OUTPUT_DIR
 

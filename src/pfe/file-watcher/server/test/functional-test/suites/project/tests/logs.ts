@@ -12,7 +12,8 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 
-import { getProjectLogs, checkNewLogFile, ProjectCreation } from "../../../lib/project";
+import * as projectsController from "../../../../../src/controllers/projectsController";
+import { getProjectLogs, checkNewLogFile } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 import * as utils from "../../../lib/utils";
 
@@ -21,7 +22,7 @@ import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
-export function logsTest(socket: SocketIO, projData: ProjectCreation): void {
+export function logsTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
     describe("getProjectLogs function", () => {
         it("get project logs with missing id", async () => {
             const info: any = await getProjectLogs(undefined);
@@ -51,11 +52,11 @@ export function logsTest(socket: SocketIO, projData: ProjectCreation): void {
             expect(info.statusCode).to.equal(200);
             expect(info.logs);
 
-            for (const logType of log_configs.logTypes) {
+            for (const logType of Object.keys(log_configs.logTypes)) {
                 expect(info.logs).to.haveOwnProperty(logType);
                 expect(info.logs[logType]).to.be.an.instanceof(Array);
-                expect(info.logs[logType].length).to.equal(log_configs.logFileMappings[projData.projectType][logType].length);
-                expect(_.isMatch(info.logs[logType], log_configs.logFileMappings[projData.projectType][logType]));
+                expect(info.logs[logType].length).to.equal(log_configs.logFileMappings[projectTemplate][projectLang][logType].length);
+                expect(_.isMatch(info.logs[logType], log_configs.logFileMappings[projectTemplate][projectLang][logType]));
             }
         }).timeout(timeoutConfigs.defaultTimeout);
     });
@@ -90,7 +91,7 @@ export function logsTest(socket: SocketIO, projData: ProjectCreation): void {
             });
         }
 
-        for (const logType of log_configs.logTypes) {
+        for (const logType of Object.keys(log_configs.logTypes)) {
             it(`checking for new ${logType} log file`, async () => {
                 const info: any = await checkNewLogFile(projData.projectID, logType);
                 expect(info);
@@ -104,8 +105,8 @@ export function logsTest(socket: SocketIO, projData: ProjectCreation): void {
                 expect(info.logs).to.haveOwnProperty(logType);
                 expect(info.logs[logType]);
                 expect(info.logs[logType]).to.be.an.instanceof(Array);
-                expect(info.logs[logType].length).to.equal(log_configs.logFileMappings[projData.projectType][logType].length);
-                expect(_.isMatch(info.logs[logType], log_configs.logFileMappings[projData.projectType][logType]));
+                expect(info.logs[logType].length).to.equal(log_configs.logFileMappings[projectTemplate][projectLang][logType].length);
+                expect(_.isMatch(info.logs[logType], log_configs.logFileMappings[projectTemplate][projectLang][logType]));
 
                 const targetEvent = eventConfigs.events.logsListChanged;
                 const returnData = info.logs;

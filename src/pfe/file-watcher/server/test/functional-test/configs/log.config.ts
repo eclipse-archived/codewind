@@ -14,69 +14,112 @@
  * maven.build -> maven build log file
  * app.compile -> app compilation log file
  */
-export const log_names = ["docker.build.log", "maven.build.log", "app.compile.log", "app.log", "docker.app.log", "messages.log", "console.log"];
+import { codewindTemplates, projecLanguges } from "./app.config";
 
-export const logTypes = ["build", "app"];
-const logOrigins = ["container", "workspace"];
+export enum log_names {
+    dockerBuild = "docker.build.log",
+    mavenBuild = "maven.build.log",
+    appCompile = "app.compile.log",
+    dockerApp = "docker.app.log",
+    application = "app.log",
+    libertyMessages = "messages.log",
+    libertyConsole = "console.log",
+    odoBuild = "odo.build.log",
+    odoApp = "odo.app.log"
+}
+
+export enum logTypes {
+    build = "build",
+    app = "app"
+}
+
+enum logOrigins {
+    container = "container",
+    workspace = "workspace"
+}
+
+const defaultDockerLogs = {
+    [logTypes.build]: [{
+        "origin": logOrigins.workspace,
+        "files": [log_names.dockerBuild]
+    }],
+    [logTypes.app]: [{
+        "origin": logOrigins.workspace,
+        "files": [log_names.application]
+    }]
+};
+
+const defaultODOLogs = {
+    [logTypes.build]: [{
+        "origin": logOrigins.workspace,
+        "files": [log_names.odoBuild]
+    }],
+    [logTypes.app]: [{
+        "origin": logOrigins.workspace,
+        "files": [log_names.odoApp]
+    }]
+};
 
 export const logFileMappings: any = {
-    "docker": {
-        [logTypes[0]]: [{
-            "origin": logOrigins[1],
-            "files": [log_names[0]]
-        }],
-        [logTypes[1]]: [{
-            "origin": logOrigins[1],
-            "files": [log_names[3]]
-        }]
+    [codewindTemplates.default]: {
+        [projecLanguges.liberty]: {
+            [logTypes.build]: [{
+                "origin": logOrigins.container,
+                "files": [log_names.mavenBuild]
+            }, {
+                "origin": logOrigins.workspace,
+                "files": [log_names.dockerBuild]
+            }],
+            [logTypes.app]: [{
+                "origin": logOrigins.workspace,
+                "files": [log_names.application]
+            }, {
+                "origin": logOrigins.container,
+                "files": [log_names.libertyConsole, log_names.libertyMessages]
+            }]
+        },
+        [projecLanguges.nodejs]: {
+            [logTypes.build]: [{
+                "origin": logOrigins.workspace,
+                "files": [log_names.dockerBuild]
+            }],
+            [logTypes.app]: [{
+                "origin": logOrigins.workspace,
+                "files": [log_names.application]
+            }]
+        },
+        [projecLanguges.spring]: {
+            [logTypes.build]: [{
+                "origin": logOrigins.container,
+                "files": [log_names.mavenBuild]
+            }, {
+                "origin": logOrigins.workspace,
+                "files": [log_names.dockerBuild]
+            }],
+            [logTypes.app]: [{
+                "origin": logOrigins.workspace,
+                "files": [log_names.application]
+            }]
+        },
+        [projecLanguges.swift]: {
+            [logTypes.build]: [{
+                "origin": logOrigins.workspace,
+                "files": process.env.IN_K8 ? [log_names.appCompile, log_names.dockerApp] : [log_names.dockerApp, log_names.appCompile, log_names.dockerBuild]
+            }],
+            [logTypes.app]: [{
+                "origin": logOrigins.workspace,
+                "files": [log_names.application]
+            }]
+        }
     },
-    "liberty": {
-        [logTypes[0]]: [{
-            "origin": logOrigins[0],
-            "files": [log_names[1]]
-        }, {
-            "origin": logOrigins[1],
-            "files": [log_names[0]]
-        }],
-        [logTypes[1]]: [{
-            "origin": logOrigins[1],
-            "files": [log_names[3]]
-        }, {
-            "origin": logOrigins[0],
-            "files": [log_names[6], log_names[5]]
-        }]
+    [codewindTemplates.docker]: {
+        [projecLanguges.go]:  defaultDockerLogs,
+        [projecLanguges.lagom]: defaultDockerLogs,
+        [projecLanguges.python]: defaultDockerLogs
     },
-    "nodejs": {
-        [logTypes[0]]: [{
-            "origin": logOrigins[1],
-            "files": [log_names[0]]
-        }],
-        [logTypes[1]]: [{
-            "origin": logOrigins[1],
-            "files": [log_names[3]]
-        }]
-    },
-    "spring": {
-        [logTypes[0]]: [{
-            "origin": logOrigins[0],
-            "files": [log_names[1]]
-        }, {
-            "origin": logOrigins[1],
-            "files": [log_names[0]]
-        }],
-        [logTypes[1]]: [{
-            "origin": logOrigins[1],
-            "files": [log_names[3]]
-        }]
-    },
-    "swift": {
-        [logTypes[0]]: [{
-            "origin": logOrigins[1],
-            "files": process.env.IN_K8 ? [log_names[2], log_names[4]] : [log_names[4], log_names[2], log_names[0]]
-        }],
-        [logTypes[1]]: [{
-            "origin": logOrigins[1],
-            "files": [log_names[3]]
-        }]
+    [codewindTemplates.odo]: {
+        [projecLanguges.nodejs]: defaultODOLogs,
+        [projecLanguges.perl]: defaultODOLogs,
+        [projecLanguges.python]: defaultODOLogs
     },
 };

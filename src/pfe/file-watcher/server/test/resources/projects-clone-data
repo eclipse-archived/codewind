@@ -1,7 +1,10 @@
-turbinetestdockerpython=https://github.com/codewind-resources/pythonTemplate
-turbinetestdockergo=https://github.com/codewind-resources/goTemplate
-turbinetestdockerlagom=https://github.com/codewind-resources/lagomJavaTemplate
-turbinetestdefaultspring=https://github.com/codewind-resources/springJavaTemplate
-turbinetestdefaultliberty=https://github.com/codewind-resources/javaMicroProfileTemplate
-turbinetestdefaultnodejs=https://github.com/codewind-resources/nodeExpressTemplate
-turbinetestdefaultswift=https://github.com/codewind-resources/swiftTemplate
+turbinetest-docker-python=https://github.com/codewind-resources/pythonTemplate
+turbinetest-docker-go=https://github.com/codewind-resources/goTemplate
+turbinetest-docker-lagom=https://github.com/codewind-resources/lagomJavaTemplate
+turbinetest-default-spring=https://github.com/codewind-resources/springJavaTemplate
+turbinetest-default-liberty=https://github.com/codewind-resources/javaMicroProfileTemplate
+turbinetest-default-nodejs=https://github.com/codewind-resources/nodeExpressTemplate
+turbinetest-default-swift=https://github.com/codewind-resources/swiftTemplate
+turbinetest-odo-nodejs=https://github.com/sclorg/nodejs-ex
+turbinetest-odo-python=https://github.com/sclorg/django-ex
+turbinetest-odo-perl=https://github.com/sclorg/dancer-ex

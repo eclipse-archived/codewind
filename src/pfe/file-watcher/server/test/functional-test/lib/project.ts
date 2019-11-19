@@ -8,26 +8,20 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+import * as project from "../../../src/projects/Project";
 import * as projectsController from "../../../src/controllers/projectsController";
 import * as projectStatusController from "../../../src/controllers/projectStatusController";
 import * as projectEventsController from "../../../src/controllers/projectEventsController";
 
 import * as dockerUtil from "../../../src/utils/dockerutil";
 import * as kubeUtil from "../../../src/utils/kubeutil";
-import * as project from "../../../src/projects/Project";
 import * as operation from "../../../src/projects/operation";
 
 import Filewatcher from "../../../src/index";
 
 const filewatcher = new Filewatcher();
 
-export interface ProjectCreation {
-  projectID: string;
-  projectType: string;
-  location: string;
-}
-
-export async function createProject(projectInfo: ProjectCreation): Promise<any> {
+export async function createProject(projectInfo: projectsController.ICreateProjectParams): Promise<any> {
   return await filewatcher.createProject(projectInfo);
 }
 

@@ -12,7 +12,8 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 
-import { updateStatus, ProjectCreation } from "../../../lib/project";
+import * as projectsController from "../../../../../src/controllers/projectsController";
+import { updateStatus } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
 import * as eventConfigs from "../../../configs/event.config";
@@ -22,7 +23,7 @@ import { fail } from "assert";
 
 import * as utils from "../../../lib/utils";
 
-export function updateStatusTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+export function updateStatusTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
     describe("updateStatus function", () => {
         const projectID = projData.projectID;
         const data: any = {

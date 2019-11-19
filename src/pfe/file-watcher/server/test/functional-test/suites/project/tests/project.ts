@@ -12,7 +12,8 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 
-import { ProjectCreation, getProjectCapabilities } from "../../../lib/project";
+import * as projectsController from "../../../../../src/controllers/projectsController";
+import { getProjectCapabilities } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
 import { projectActionTest } from "./project-action";
@@ -30,12 +31,12 @@ export default class ProjectTest {
         this.testName = testName;
     }
 
-    run(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+    run(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
             this.runProjectActionTest(socket, projData, projectTemplate, projectLang);
             this.runProjectCapabilityTest(projData.projectID, projectTemplate, projectLang);
             this.runProjectEventTest(socket, projData, projectTemplate, projectLang);
-            this.runProjectLogsTest(socket, projData);
+            this.runProjectLogsTest(socket, projData, projectTemplate, projectLang);
             this.runProjectSpecificationTest(socket, projData, projectTemplate, projectLang);
             this.runUpdateStatusTest(socket, projData, projectTemplate, projectLang);
         });
@@ -64,23 +65,23 @@ export default class ProjectTest {
         });
     }
 
-    private runProjectActionTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+    private runProjectActionTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         projectActionTest(socket, projData, projectTemplate, projectLang);
     }
 
-    private runProjectSpecificationTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+    private runProjectSpecificationTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         projectSpecificationTest(socket, projData, projectTemplate, projectLang);
     }
 
-    private runProjectLogsTest(socket: SocketIO, projData: ProjectCreation): void {
-        logsTest(socket, projData);
+    private runProjectLogsTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
+        logsTest(socket, projData, projectTemplate, projectLang);
     }
 
-    private runUpdateStatusTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+    private runUpdateStatusTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         updateStatusTest(socket, projData, projectTemplate, projectLang);
     }
 
-    private runProjectEventTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+    private runProjectEventTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         projectEventTest(socket, projData, projectTemplate, projectLang);
     }
 }

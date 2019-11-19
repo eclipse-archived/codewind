@@ -18,7 +18,8 @@ import * as _ from "lodash";
 import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
 import { SocketIO } from "./socket-io";
-import { ProjectCreation, projectAction, updateStatus } from "./project";
+import * as projectsController from "../../../src/controllers/projectsController";
+import { projectAction, updateStatus } from "./project";
 import { expect } from "chai";
 import * as project_configs from "../configs/project.config";
 import * as eventConfigs from "../configs/event.config";
@@ -121,7 +122,7 @@ export function writeToFile(path: string, content: string, callback: (err: Error
     });
 }
 
-export async function callProjectAction(action: string, startMode: string, socket: SocketIO, projData: ProjectCreation, checkEvent?: Array<string>, checkEventData?: Array<any>): Promise<void> {
+export async function callProjectAction(action: string, startMode: string, socket: SocketIO, projData: projectsController.ICreateProjectParams, checkEvent?: Array<string>, checkEventData?: Array<any>): Promise<void> {
     const testData: any = {
         action: action,
         projectType: projData.projectType,
@@ -186,12 +187,12 @@ export async function waitForEvent(socket: SocketIO, targetEvent: string, eventD
  * @function
  * @description Util function to set the build status of a project. We need to do it for project that relies on script or IDC code and brute set the build status of a project.
  *
- * @param projData <Required | ProjectCreation> - The project creation data.
+ * @param projData <Required | projectsController.ICreateProjectParams> - The project creation data.
  * @param status <Optional | String> - The status to update to.
  *
  * @returns Promise<void>
  */
-export async function setBuildStatus(projData: ProjectCreation, projectTemplate: string, projectLang: string, status?: string): Promise<void> {
+export async function setBuildStatus(projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, status?: string): Promise<void> {
     if (project_configs.needManualReset[projectTemplate] && project_configs.needManualReset[projectTemplate][projectLang] && project_configs.needManualReset[projectTemplate][projectLang]["buildStatus"]) {
         const info = await updateStatus({
             "projectID": projData.projectID,
@@ -203,7 +204,7 @@ export async function setBuildStatus(projData: ProjectCreation, projectTemplate:
     }
 }
 
-export async function setAppStatus(projData: ProjectCreation, projectTemplate: string, projectLang: string, status?: string, msg?: string): Promise<void> {
+export async function setAppStatus(projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, status?: string, msg?: string): Promise<void> {
     if (project_configs.needManualReset[projectTemplate] && project_configs.needManualReset[projectTemplate][projectLang] && project_configs.needManualReset[projectTemplate][projectLang]["appStatus"]) {
         const info = await updateStatus({
             "projectID": projData.projectID,
