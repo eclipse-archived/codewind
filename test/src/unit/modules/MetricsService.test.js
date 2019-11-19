@@ -55,7 +55,8 @@ describe('MetricsService.js', () => {
         "dependencies": {
             "body-parser": "^1.18.3",
             "express": "^4.16.4",
-            "appmetrics-prometheus": "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#appmetrics-codewind",
+            // TODO: change back to "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#appmetrics-codewind"
+            "appmetrics-prometheus": "git+https://git@github.com/rwalle61/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint",
             "cors": "^2.8.5"
         }
         /* eslint-enable quote-props, quotes, comma-dangle */
@@ -246,16 +247,16 @@ describe('MetricsService.js', () => {
                 type: [ 'war' ],
             };
             describe(`<originalDependencies> don't include javametrics-dash`, () => {
-            it(`returns an object representing pom.xml dependencies injected with metrics collector`, () => {
-                const funcToTest = metricsService.__get__('getNewPomXmlDependencies');
-                const originalDependencies = [];
-                const output = funcToTest(originalDependencies);
-                output.should.have.deep.members([
-                    ...originalDependencies,
+                it(`returns an object representing pom.xml dependencies injected with metrics collector`, () => {
+                    const funcToTest = metricsService.__get__('getNewPomXmlDependencies');
+                    const originalDependencies = [];
+                    const output = funcToTest(originalDependencies);
+                    output.should.have.deep.members([
+                        ...originalDependencies,
                         metricsCollectorDependency,
-                ]);
+                    ]);
+                });
             });
-        });
             describe(`<originalDependencies> already include javametrics-dash`, () => {
                 it(`returns an object representing the original pom.xml dependencies`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlDependencies');
@@ -267,18 +268,18 @@ describe('MetricsService.js', () => {
         });
         describe('getNewPomXmlBuildPluginExecutions(originalBuildPluginExecutions)', () => {
             const metricsCollectorBuildPluginExecution = {
-                        id: [ 'copy-javametrics-dash' ],
-                        phase: [ 'package' ],
-                        goals: [ { goal: [ 'copy-dependencies' ] } ],
-                        configuration: [
-                            {
-                                stripVersion: [ 'true' ],
-                                outputDirectory: [
-                                    '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
-                                ],
-                                includeArtifactIds: [ 'javametrics-dash' ],
-                            },
+                id: [ 'copy-javametrics-dash' ],
+                phase: [ 'package' ],
+                goals: [ { goal: [ 'copy-dependencies' ] } ],
+                configuration: [
+                    {
+                        stripVersion: [ 'true' ],
+                        outputDirectory: [
+                            '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
                         ],
+                        includeArtifactIds: [ 'javametrics-dash' ],
+                    },
+                ],
             };
             describe(`<originalBuildPluginExecutions> don't include javametrics-dash`, () => {
                 it(`returns an object representing pom.xml build plugin executions injected with metrics collector`, () => {
@@ -288,9 +289,9 @@ describe('MetricsService.js', () => {
                     output.should.have.deep.members([
                         ...originalBuildPluginExecutions,
                         metricsCollectorBuildPluginExecution,
-                ]);
+                    ]);
+                });
             });
-        });
             describe(`<originalBuildPluginExecutions> already include javametrics-dash`, () => {
                 it(`returns an object representing the original pom.xml build plugin executions`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlBuildPluginExecutions');
