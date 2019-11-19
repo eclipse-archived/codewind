@@ -31,7 +31,7 @@ module.exports.verifySocketUser = function verifySocketUser (token, keycloakPubl
       }
       return false
     });
-    return reject('TOKEN_NOT_VALID');
+    return reject('TOKEN_REJECTED');
   });
 };
 
