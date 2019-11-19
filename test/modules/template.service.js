@@ -182,11 +182,7 @@ const defaultKabaneroTemplates = [
         source: 'Kabanero Collections',
     },
     {
-<<<<<<< HEAD
         label: 'Kabanero Node.js Express skaffold template',
-=======
-        label: 'Kabanero Node.js Express simple template',
->>>>>>> c0d07802aa246c37074e291c30e0bcabaf763e6e
         description: 'Express web framework for Node.js',
         language: 'nodejs',
         url: 'https://github.com/kabanero-io/collections/releases/download/0.2.1/incubator.nodejs-express.v0.2.7.templates.scaffold.tar.gz',
@@ -195,17 +191,10 @@ const defaultKabaneroTemplates = [
         source: 'Kabanero Collections',
     },
     {
-<<<<<<< HEAD
         label: 'Kabanero Node.js Express simple template',
         description: 'Express web framework for Node.js',
         language: 'nodejs',
         url: 'https://github.com/kabanero-io/collections/releases/download/0.2.1/incubator.nodejs-express.v0.2.5.templates.simple.tar.gz',
-=======
-        label: 'Kabanero Node.js Express skaffold template',
-        description: 'Express web framework for Node.js',
-        language: 'nodejs',
-        url: 'https://github.com/kabanero-io/collections/releases/download/0.2.1/incubator.nodejs-express.v0.2.7.templates.scaffold.tar.gz',
->>>>>>> c0d07802aa246c37074e291c30e0bcabaf763e6e
         projectType: 'appsodyExtension',
         projectStyle: 'Appsody',
         source: 'Kabanero Collections',
