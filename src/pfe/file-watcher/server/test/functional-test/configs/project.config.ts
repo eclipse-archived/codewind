@@ -43,6 +43,20 @@ export const needManualReset: any = {
             "appStatus": false,
             "buildStatus": true
         }
+    },
+    [codewindTemplates.odo]: {
+        [projecLanguges.nodejs]: {
+            "appStatus": false,
+            "buildStatus": true
+        },
+        [projecLanguges.perl]: {
+            "appStatus": false,
+            "buildStatus": true
+        },
+        [projecLanguges.python]: {
+            "appStatus": false,
+            "buildStatus": true
+        }
     }
 };
 
@@ -226,5 +240,10 @@ export const filesToUpdate: any = {
             "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloModule.java",
             "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloServiceImpl.java"],
         [projecLanguges.python]: ["Dockerfile", "app.py"],
+    },
+    [codewindTemplates.odo]: {
+        [projecLanguges.nodejs]: ["server.js"],
+        [projecLanguges.perl]: ["index.pl"],
+        [projecLanguges.python]: ["wsgi.py"]
     }
 };

@@ -35,7 +35,7 @@ export default class ProjectTest {
         (runOnly ? describe.only : describe)(this.testName, () => {
             // this.runProjectActionTest(socket, projData, projectTemplate, projectLang);
             this.runProjectCapabilityTest(projData.projectID, projectTemplate, projectLang);
-            // this.runProjectEventTest(socket, projData, projectTemplate, projectLang);
+            this.runProjectEventTest(socket, projData, projectTemplate, projectLang);
             this.runProjectLogsTest(socket, projData, projectTemplate, projectLang);
             // this.runProjectSpecificationTest(socket, projData, projectTemplate, projectLang);
             // this.runUpdateStatusTest(socket, projData, projectTemplate, projectLang);
