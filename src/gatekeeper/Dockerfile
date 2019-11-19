@@ -15,6 +15,9 @@ EXPOSE 9096 9496
 
 RUN apk add --no-cache --update openssl
 
+# Copy our license files into the new image
+COPY LICENSE NOTICE.md ./
+
 # Create UI app directory and install source code
 WORKDIR /usr/src/app
 COPY . .
