@@ -22,6 +22,7 @@ Options:
     -s # Test suite, currently supports 'functional' - Mandatory
     -p # Post cleanup, post test automation cleanup for cronjob, currently supports 'y' or 'n' - Mandatory
     -c # Clean run - currently supports y' or 'n' - Mandatory
+    -b # Branch to run the test on - Optional, default: master
     -h # Display the man page
 EOF
 }
@@ -64,6 +65,9 @@ while getopts "t:s:p:c:h" OPTION; do
                 exit 1
             fi
             ;;
+        b) 
+            TEST_BRANCH=$OPTARG
+            ;;
         *)
             usage
             exit 0
@@ -79,7 +83,7 @@ if [[ (-z $TEST_TYPE) || (-z $TEST_SUITE) || (-z $POST_CLEANUP) || (-z $CLEAN_RU
 fi
 
 rm -rf $CW_DIR \
-&& git clone $CODEWIND_REPO -b $TEST_BRANCH \
+&& git clone $CODEWIND_REPO -b "$TEST_BRANCH" \
 && cd $CW_TEST_DIR
 
 if [[ ($TEST_TYPE == "both") ]]; then
