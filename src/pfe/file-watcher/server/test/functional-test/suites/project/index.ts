@@ -10,7 +10,7 @@
  *******************************************************************************/
 import mocha from "mocha";
 import { SocketIO } from "../../lib/socket-io";
-import { ProjectCreation } from "../../lib/project";
+import * as projectsController from "../../../../src/controllers/projectsController";
 
 import CreateTest from "./tests/create";
 import DeleteTest from "./tests/delete";
@@ -52,12 +52,12 @@ export default class ProjectTestSuite {
      * @description The run test function that triggers all project specific test classes.
      *
      */
-    runTest(projectData: ProjectCreation, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+    runTest(projectData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(`${this.suite}: ${projectTemplate}-${projectLang}`, () => {
-            this.createTest.run(this.socket, projectData, projectTemplate, projectLang);
+            this.createTest.run(this.socket, projectData, projectTemplate, projectLang, true);
             this.projectTest.run(this.socket, projectData, projectTemplate, projectLang);
-            this.deleteTest.run(this.socket, projectData.projectID);
-            this.shutdownTest.run(this.socket, projectData, projectLang);
+            this.deleteTest.run(this.socket, projectData.projectID, true);
+            this.shutdownTest.run(this.socket, projectData, projectTemplate, projectLang, true);
         });
     }
 }

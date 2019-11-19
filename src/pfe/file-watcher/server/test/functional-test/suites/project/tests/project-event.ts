@@ -13,7 +13,8 @@ import { expect } from "chai";
 import * as _ from "lodash";
 import path from "path";
 
-import { ProjectCreation, updateProjectForNewChange } from "../../../lib/project";
+import * as projectsController from "../../../../../src/controllers/projectsController";
+import { updateProjectForNewChange } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 import * as utils from "../../../lib/utils";
 
@@ -22,7 +23,7 @@ import * as project_configs from "../../../configs/project.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
-export function projectEventTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+export function projectEventTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
     describe("updateProjectForNewChange function", () => {
         afterEach("clear socket events", () => {
             socket.clearEvents();
@@ -62,7 +63,7 @@ export function projectEventTest(socket: SocketIO, projData: ProjectCreation, pr
 
         function updateProject(type: string): void {
             let filesList = ["file1"];
-            if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectTemplate][projectLang] || [];
+            if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectTemplate] && project_configs.filesToUpdate[projectTemplate][projectLang] || [];
             for (const file of filesList) {
                 it(`${type.toLowerCase()} file: ${file}`, async () => {
                     const fileToChange = file;

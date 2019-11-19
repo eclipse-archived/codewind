@@ -15,7 +15,8 @@ import path from "path";
 import fs from "fs";
 import ms from "ms";
 
-import { ProjectCreation, projectSpecification, getApplicationContainerInfoInK8, getApplicationContainerInfo } from "../../../lib/project";
+import * as projectsController from "../../../../../src/controllers/projectsController";
+import { projectSpecification, getApplicationContainerInfoInK8, getApplicationContainerInfo } from "../../../lib/project";
 
 import * as app_configs from "../../../configs/app.config";
 import * as project_configs from "../../../configs/project.config";
@@ -28,7 +29,7 @@ import * as projectUtil from "../../../../../src/projects/projectUtil";
 
 import * as utils from "../../../lib/utils";
 
-export function projectSpecificationTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+export function projectSpecificationTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
     describe("projectSpecification function", () => {
         const data: any = {
             "projectID": projData.projectID

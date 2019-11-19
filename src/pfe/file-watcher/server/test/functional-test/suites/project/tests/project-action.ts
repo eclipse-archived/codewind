@@ -12,7 +12,8 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 
-import { ProjectCreation, projectAction } from "../../../lib/project";
+import * as projectsController from "../../../../../src/controllers/projectsController";
+import { projectAction } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
 import * as project_configs from "../../../configs/project.config";
@@ -22,7 +23,7 @@ import { fail } from "assert";
 
 import * as utils from "../../../lib/utils";
 
-export function projectActionTest(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+export function projectActionTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
     const data: any = {
         action: "restart",
         projectType: projData.projectType,

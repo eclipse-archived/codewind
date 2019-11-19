@@ -12,9 +12,11 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 
-import { ProjectCreation, createProject } from "../../../lib/project";
+import * as projectsController from "../../../../../src/controllers/projectsController";
+import { createProject } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 import * as utils from "../../../lib/utils";
+import * as appConfigs from "../../../configs/app.config";
 import * as eventConfigs from "../../../configs/event.config";
 import * as logConfigs from "../../../configs/log.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
@@ -27,16 +29,16 @@ export default class CreateTest {
         this.testName = testName;
     }
 
-    run(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+    run(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
             this.runCreateWithoutProjectID(projData);
             this.runCreateWithoutProjectType(projData);
-            this.runCreateWithValidData(socket, projData);
+            this.runCreateWithValidData(socket, projData, projectTemplate, projectLang);
             this.afterAllHook(socket, projData, projectTemplate, projectLang);
         });
     }
 
-    private afterAllHook(socket: SocketIO, projData: ProjectCreation, projectTemplate: string, projectLang: string): void {
+    private afterAllHook(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         after("clear socket events for create test", () => {
             socket.clearEvents();
         });
@@ -46,7 +48,7 @@ export default class CreateTest {
         });
     }
 
-    private runCreateWithoutProjectID(projData: ProjectCreation): void {
+    private runCreateWithoutProjectID(projData: projectsController.ICreateProjectParams): void {
         it("create a project without projectID", async () => {
             const invalidData = _.cloneDeep(projData);
             delete invalidData.projectID;
@@ -60,7 +62,7 @@ export default class CreateTest {
         });
     }
 
-    private runCreateWithoutProjectType(projData: ProjectCreation): void {
+    private runCreateWithoutProjectType(projData: projectsController.ICreateProjectParams): void {
         it("create a project without projectType", async () => {
             const invalidData = _.cloneDeep(projData);
             delete invalidData.projectType;
@@ -74,7 +76,7 @@ export default class CreateTest {
         });
     }
 
-    runCreateWithValidData(socket: SocketIO, projData: ProjectCreation): void {
+    runCreateWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         it("create project", async () => {
             const info: any = await createProject(projData);
             expect(info).to.exist;
@@ -84,11 +86,11 @@ export default class CreateTest {
             expect(info.logs).to.exist;
             expect(info.logs.build).to.exist;
 
-            await waitForCreationEvent(projData.projectType);
+            await waitForCreationEvent(projData.projectType, projectTemplate);
             await waitForProjectStartedEvent();
         }).timeout(timeoutConfigs.createTestTimeout);
 
-        async function waitForCreationEvent(projectType: string): Promise<void> {
+        async function waitForCreationEvent(projectType: string, projectTemplate: string): Promise<void> {
             const targetEvent = eventConfigs.events.creation;
             const event = await utils.waitForEvent(socket, targetEvent);
             if (event) {
@@ -103,19 +105,25 @@ export default class CreateTest {
                 expect(event.eventData["status"]).to.equal("success");
                 if (!process.env.IN_K8) expect(event.eventData).to.haveOwnProperty("ignoredPaths");
                 if (!process.env.IN_K8) expect(event.eventData).to.haveOwnProperty("host");
-                if (process.env.IN_K8) expect(event.eventData).to.haveOwnProperty("podName");
-                expect(event.eventData).to.haveOwnProperty("ports");
-                expect(event.eventData["ports"]).to.haveOwnProperty("exposedPort");
-                expect(event.eventData["ports"]).to.haveOwnProperty("internalPort");
+                if (process.env.IN_K8 && projectTemplate != appConfigs.codewindTemplates.odo) expect(event.eventData).to.haveOwnProperty("podName");
+                if (projectTemplate != appConfigs.codewindTemplates.odo) {
+                    expect(event.eventData).to.haveOwnProperty("ports");
+                    expect(event.eventData["ports"]).to.haveOwnProperty("exposedPort");
+                    expect(event.eventData["ports"]).to.haveOwnProperty("internalPort");
+                }
                 if (!process.env.IN_K8) expect(event.eventData).to.haveOwnProperty("containerId");
+                if (projectTemplate === appConfigs.codewindTemplates.odo) {
+                    expect(event.eventData).to.haveOwnProperty("appBaseURL");
+                    expect(event.eventData).to.haveOwnProperty("compositeAppName");
+                }
                 expect(event.eventData).to.haveOwnProperty("logs");
-                for (const logType of logConfigs.logTypes) {
+                for (const logType of Object.keys(logConfigs.logTypes)) {
                     expect(event.eventData["logs"]).to.haveOwnProperty(logType);
                     expect(event.eventData["logs"][logType]).to.be.an.instanceof(Array);
-                    expect(event.eventData["logs"][logType].length).to.equal(logConfigs.logFileMappings[projectType][logType].length);
+                    expect(event.eventData["logs"][logType].length).to.equal(logConfigs.logFileMappings[projectTemplate][projectLang][logType].length);
                     for (let i = 0; i < event.eventData["logs"][logType].length; i++) {
                         expect(event.eventData["logs"][logType][i]).to.haveOwnProperty("origin");
-                        expect(event.eventData["logs"][logType][i]["origin"]).to.equal(logConfigs.logFileMappings[projectType][logType][i]["origin"]);
+                        expect(event.eventData["logs"][logType][i]["origin"]).to.equal(logConfigs.logFileMappings[projectTemplate][projectLang][logType][i]["origin"]);
                         if (event.eventData["logs"][logType][i]["origin"].toLowerCase() === "container") {
                             if (process.env.IN_K8) {
                                 expect(event.eventData["logs"][logType][i]).to.haveOwnProperty("podName");
@@ -128,7 +136,7 @@ export default class CreateTest {
                         for (const file of event.eventData["logs"][logType][i]["files"]) {
                             const tokens = file.split("/");
                             const fileName = tokens[tokens.length - 1];
-                            expect(_.includes(logConfigs.logFileMappings[projectType][logType][i]["files"], fileName));
+                            expect(_.includes(logConfigs.logFileMappings[projectTemplate][projectLang][logType][i]["files"], fileName));
                         }
                     }
                 }

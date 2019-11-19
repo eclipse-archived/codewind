@@ -17,7 +17,7 @@ const pfe = {
 
 export const baseURL = pfe.PROTOCOL + "://" + pfe.HOST + ":" + pfe.PORT;
 
-export const deploymentRegistry = "docker-registry.default.svc:5000/eclipse-che";
+export const deploymentRegistry = process.env.DEPLOYMENT_REGISTRY || "docker-registry.default.svc:5000/eclipse-che";
 
 const apiv1 = "/api/v1/";
 

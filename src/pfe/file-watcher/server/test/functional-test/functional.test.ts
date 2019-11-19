@@ -24,7 +24,7 @@ import GenericTestSuite from "./suites/generic/index";
 import ProjectTestSuite from "./suites/project/index";
 
 import * as genericLib from "./lib/generic";
-import { ProjectCreation } from "./lib/project";
+import * as projectsController from "../../src/controllers/projectsController";
 import { SocketIO } from "./lib/socket-io";
 
 const codewindTemplates = app_configs.codewindTemplates;
@@ -69,12 +69,11 @@ describe("PFE - functional test", () => {
       });
     });
   }
-
   runAllTests();
 });
 
 function runAllTests(): void {
-  genericSuite.runTest();
+  genericSuite.runTest(true);
   for (const chosenTemplate of Object.keys(projectTypes)) {
     for (const chosenProject of projectTypes[chosenTemplate]) {
       runProjectSpecificTest(chosenTemplate, chosenProject);
@@ -83,10 +82,15 @@ function runAllTests(): void {
 }
 
 function runProjectSpecificTest(chosenTemplate: string, chosenProject: string): void {
-  const projData: ProjectCreation = {
+  const projData: projectsController.ICreateProjectParams = {
     projectID: `${chosenTemplate}-${chosenProject}-${projectConfigs.appSuffix}`,
     projectType: chosenTemplate === codewindTemplates.default ? chosenProject : chosenTemplate,
-    location: `${projectConfigs.appDirectory}${chosenTemplate}${chosenProject}`
+    location: `${projectConfigs.appDirectory}${chosenTemplate}-${chosenProject}`,
+    extension: {
+      name: chosenTemplate,
+      path: app_configs.extensionPaths[chosenTemplate]
+    },
+    language: chosenProject
   };
   projectSuite.runTest(projData, chosenTemplate, chosenProject);
 }

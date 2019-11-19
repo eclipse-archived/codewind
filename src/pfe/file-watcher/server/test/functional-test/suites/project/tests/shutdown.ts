@@ -11,7 +11,8 @@
 import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
-import { shutdown, ProjectCreation } from "../../../lib/project";
+import * as projectsController from "../../../../../src/controllers/projectsController";
+import { shutdown } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 import * as utils from "../../../lib/utils";
 
@@ -27,9 +28,9 @@ export default class ShutdownTest {
         this.testName = testName;
     }
 
-    run(socket: SocketIO, projData: ProjectCreation, projectLang: string, runOnly?: boolean): void {
+    run(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
-            this.beforeAllHook(socket, projData);
+            this.beforeAllHook(socket, projData, projectTemplate, projectLang);
             this.afterAllHook(socket);
 
             it(`shutdown turbine gracefully with ${projectLang} project`, async () => {
@@ -55,10 +56,10 @@ export default class ShutdownTest {
         });
     }
 
-    private beforeAllHook(socket: SocketIO, projData: ProjectCreation): void {
+    private beforeAllHook(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         before(("create a project"), async () => {
             const createTest = new CreateTest("create test");
-            createTest.runCreateWithValidData(socket, projData);
+            createTest.runCreateWithValidData(socket, projData, projectTemplate, projectLang);
         });
     }
 

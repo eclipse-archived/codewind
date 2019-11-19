@@ -43,7 +43,7 @@ export default class ProjectTest {
 
             it("get project type with a defined project location", async () => {
                 const projectType = "spring";
-                const info: any = await genericLib.getProjectTypes(path.join(app_configs.codewindWorkspaceDir, app_configs.projectPrefix + projectType));
+                const info: any = await genericLib.getProjectTypes(path.join(app_configs.codewindWorkspaceDir, app_configs.projectPrefix + `${app_configs.codewindTemplates.default}-${projectType}`));
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(200);
