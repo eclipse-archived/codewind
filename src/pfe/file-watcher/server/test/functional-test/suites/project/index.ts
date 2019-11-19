@@ -54,10 +54,10 @@ export default class ProjectTestSuite {
      */
     runTest(projectData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(`${this.suite}: ${projectTemplate}-${projectLang}`, () => {
-            this.createTest.run(this.socket, projectData, projectTemplate, projectLang, true);
+            this.createTest.run(this.socket, projectData, projectTemplate, projectLang);
             this.projectTest.run(this.socket, projectData, projectTemplate, projectLang);
-            this.deleteTest.run(this.socket, projectData.projectID, true);
-            this.shutdownTest.run(this.socket, projectData, projectTemplate, projectLang, true);
+            this.deleteTest.run(this.socket, projectData.projectID);
+            this.shutdownTest.run(this.socket, projectData, projectTemplate, projectLang);
         });
     }
 }
