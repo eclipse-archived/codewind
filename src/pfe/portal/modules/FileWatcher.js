@@ -449,6 +449,11 @@ module.exports = class FileWatcher {
       if (process.env.HOST_OS === "windows") {
         pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
       }
+
+      let time = Date.now()
+      if (project.creationTime) {
+        time = project.creationTime
+      }
       const projectWatchStateId = crypto.randomBytes(16).toString("hex");
       const data = {
         changeType: "add",
@@ -456,7 +461,7 @@ module.exports = class FileWatcher {
         projectID: projectID,
         pathToMonitor: pathToMonitor,
         ignoredPaths: ignoredPaths,
-        projectCreationTime: Date.now()
+        projectCreationTime: time
       }
       let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
       await this.handleFWProjectEvent(event, projectUpdate);
