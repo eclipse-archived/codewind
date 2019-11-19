@@ -31,7 +31,7 @@ export const requiredFiles = [ "/Dockerfile", "/pom.xml" ];
 const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debug, StartModes.debugNoInit], [ControlCommands.restart]);
 
 export const supportedType = "spring";
-export const builtByExtension: boolean = false;
+export const detectBuildByExtension: boolean = false;
 
 const logsOrigin: logHelper.ILogTypes = {
     "build": {
