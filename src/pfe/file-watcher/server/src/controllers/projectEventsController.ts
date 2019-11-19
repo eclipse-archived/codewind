@@ -79,7 +79,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
         let isProjectBuildRequired = false;
 
         const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
-        const builtByExtension = projectHandler.builtByExtension;
+        const detectBuildByExtension = projectHandler.detectBuildByExtension;
         try {
             for (let i = 0; i < eventArrayLength; i++) {
                 if (isSettingFileChanged && isProjectBuildRequired) {
@@ -93,7 +93,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                     const data = await readFileAsync(settingsFilePath, "utf8");
                     const projectSettings = JSON.parse(data);
                     projectSpecifications.projectSpecificationHandler(projectID, projectSettings);
-                } else if (eventArray[i].path && !eventArray[i].path.includes(".cw-settings") && !builtByExtension) {
+                } else if (eventArray[i].path && !eventArray[i].path.includes(".cw-settings") && !detectBuildByExtension) {
                     logger.logProjectInfo("Detected other file changes, Codewind will build the project", projectID);
                     isProjectBuildRequired = true;
                 }
@@ -107,7 +107,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
         }
 
         if (!isProjectBuildRequired) {
-            if (builtByExtension) {
+            if (detectBuildByExtension) {
                 logger.logProjectInfo("This project file changes will be ignored by Turbine. The project extension will decide if it needs to be rebuilt.", projectID);
             } else {
                 // .cw-settings file is the only changed file. return succeed status

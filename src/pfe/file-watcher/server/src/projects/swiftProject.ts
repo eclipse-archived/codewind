@@ -21,7 +21,7 @@ import * as projectEventsController from "../controllers/projectEventsController
 export const requiredFiles = [ "/Dockerfile", "/Dockerfile-tools", "/Package.swift" ];
 
 export const supportedType = "swift";
-export const builtByExtension: boolean = false;
+export const detectBuildByExtension: boolean = false;
 
 const logsOrigin: logHelper.ILogTypes = {
     "build": {
