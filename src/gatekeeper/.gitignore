@@ -1,0 +1,4 @@
+/LICENSE/
+/docs/
+# This is the top level package-lock for the pfe container.
+!package-lock.json
