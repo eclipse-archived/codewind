@@ -88,6 +88,17 @@ export const projectCapabilities: any = {
             "local": project.defaultProjectCapabilities,
             "kube": project.defaultProjectCapabilities
         }
+    },
+    [codewindTemplates.odo]: {
+        [projecLanguges.nodejs]: {
+            "kube": project.defaultProjectCapabilities
+        },
+        [projecLanguges.perl]: {
+            "kube": project.defaultProjectCapabilities
+        },
+        [projecLanguges.python]: {
+            "kube": project.defaultProjectCapabilities
+        }
     }
 };
 
