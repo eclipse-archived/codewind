@@ -43,6 +43,7 @@ INSTALL_CW="n"
 DEFAULT_DEVFILE="https://raw.githubusercontent.com/eclipse/codewind-che-plugin/master/devfiles/latest/devfile.yaml"
 USER_DEVFILE=
 DEFAULT_OPERATOR=
+OPERATOR_IMAGE=
 
 function usage {
     me=$(basename $0)
@@ -59,6 +60,7 @@ Options:
     --che-version       Che version to install - default: next
     --clean-deploy      Deploy a clean che - default: n
     --operator-yaml     Absolute Path to che operator yaml - default: github.com/eclipse/codewind-che-plugin/master/setup/install_che/che-operator/codewind-checluster.yaml
+    --operator-image    The container image of the operator - default: uses the default operator container image
     --service-account   Service account name - default: che-user
     --podreadytimeout   Pod ready timeout - default: 600000
     --podwaittimeout    Pod wait timeout - default: 1200000
@@ -85,7 +87,11 @@ function displayMsg() {
 
 function installChe() {
     if [[ ! -z "$OPERATOR_USE" ]]; then
-        chectl server:start --platform=openshift --installer=operator --che-operator-cr-yaml=$OPERATOR_YAML -n $CHE_NS --k8spodreadytimeout=$POD_READY_TO --k8spodwaittimeout=$POD_WAIT_TO
+        if [[ ! -z "$OPERATOR_IMAGE" ]]; then
+            chectl server:start --platform=openshift --installer=operator --che-operator-cr-yaml=$OPERATOR_YAML --che-operator-image=$OPERATOR_IMAGE -n $CHE_NS --k8spodreadytimeout=$POD_READY_TO --k8spodwaittimeout=$POD_WAIT_TO
+        else
+            chectl server:start --platform=openshift --installer=operator --che-operator-cr-yaml=$OPERATOR_YAML -n $CHE_NS --k8spodreadytimeout=$POD_READY_TO --k8spodwaittimeout=$POD_WAIT_TO
+        fi
     else
         chectl server:start --platform=openshift --installer=operator -n $CHE_NS --k8spodreadytimeout=$POD_READY_TO --k8spodwaittimeout=$POD_WAIT_TO
     fi
@@ -174,6 +180,9 @@ while :; do
         --operator-yaml=?*)
         OPERATOR_USE="y"
         OPERATOR_YAML=${1#*=}
+        ;;
+        --operator-image=?*)
+        OPERATOR_IMAGE=${1#*=}
         ;;
         --service-account=?*)
         SERVICE_ACCOUNT=${1#*=}
