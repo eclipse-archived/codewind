@@ -19,6 +19,9 @@ RUN apk add --no-cache --update openssl
 WORKDIR /usr/src/app
 COPY . .
 
+# Install dependancies
+RUN npm ci --production
+
 # Run as the default node user from the image rather than root.
 USER 1000
 CMD [ "npm", "start" ]
