@@ -100,7 +100,7 @@ describe('Templates.js', function() {
             });
         });
     });
-    describe('getAllTemplates()', function() {
+    describe.skip('getAllTemplates()', function() {
         describe('', function() {
             it('returns the default templates', async function() {
                 this.timeout(30000);
