@@ -54,6 +54,7 @@ yq w -i $deploymentFile -- spec.template.spec.serviceAccountName $SERVICE_ACCOUN
 
 # Add the labels to the service
 yq w -i $serviceFile -- metadata.labels.release $releaseName
+yq w -i $serviceFile -- spec.selector.release $releaseName
 
 # Add owner reference for deletion when workspace is deleted
 addOwnerReference $serviceFile
