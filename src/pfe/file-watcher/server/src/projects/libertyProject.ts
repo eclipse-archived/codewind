@@ -38,7 +38,7 @@ export const requiredFiles = [ "/Dockerfile | /Dockerfile-lang", "/Dockerfile-bu
 const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debug], [ControlCommands.restart]);
 
 export const supportedType: string = "liberty";
-export const detectBuildByExtension: boolean = false;
+export const detectChangeByExtension: boolean = false;
 
 const inContainerAppLogsDirectory = path.join(process.env.HOST_OS === "windows" ? path.join(path.sep, "tmp", "liberty") : path.join(path.sep, "home", "default", "app", "mc-target"), "liberty", "wlp", "usr", "servers", "defaultServer", "logs");
 

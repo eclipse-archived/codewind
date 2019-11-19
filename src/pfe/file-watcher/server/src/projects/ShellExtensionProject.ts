@@ -85,7 +85,7 @@ const logsOrigin: logHelper.ILogTypes = {
 export class ShellExtensionProject implements IExtensionProject {
 
     supportedType: string;
-    detectBuildByExtension: boolean = true;
+    detectChangeByExtension: boolean = true;
 
     private fullPath: string;
     private config: ShellExtensionProjectConfig;
