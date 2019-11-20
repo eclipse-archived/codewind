@@ -246,7 +246,7 @@ paths:
         500:
           description: Any other error
 
-  /api/v1/projects/{id}:/bind/end:
+  /api/v1/projects/{id}/bind/end:
     post:
       summary: Complete binding the project to Codewind
       description: >
@@ -292,7 +292,7 @@ paths:
         500:
           description: Any other error  
 
-  /api/v1/projects/{id}:/upload/end:
+  /api/v1/projects/{id}/upload/end:
     post:
       summary: Mark the completion of a number of upload events for this project.
       description: >
