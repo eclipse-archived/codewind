@@ -22,6 +22,7 @@ const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 const metricsCollectorInjectionFunctions = {
   nodejs: injectMetricsCollectorIntoNodeProject,
   liberty: injectMetricsCollectorIntoLibertyProject,
+  spring: injectMetricsCollectorIntoSpringProject,
 }
 
 async function injectMetricsCollectorIntoProject(projectType, projectDir) {
@@ -37,6 +38,7 @@ async function injectMetricsCollectorIntoNodeProject(projectDir) {
   const originalContentsOfPackageJson = await fs.readJSON(pathToPackageJson);
 
   const newContentsOfPackageJson = getNewContentsOfPackageJson(originalContentsOfPackageJson);
+  // TODO: change to trace
   log.debug(`Injecting metrics collector into project's package.json, which is now ${util.inspect(newContentsOfPackageJson)}`);
 
   await fs.writeJSON(pathToPackageJson, newContentsOfPackageJson, { spaces: 2 });
@@ -74,6 +76,74 @@ async function injectMetricsCollectorIntoLibertyProject(projectDir) {
   await injectMetricsCollectorIntoJvmOptions(pathToJvmOptions);
 }
 
+async function injectMetricsCollectorIntoSpringProject(projectDir) {
+  const pathToPomXml = path.join(projectDir, 'pom.xml');
+  await injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml);
+
+  const pathToApplicationJava = path.join(projectDir, 'src', 'main', 'java', 'application', 'SBApplication.java');
+  await injectMetricsCollectorIntoApplicationJava(pathToApplicationJava);
+}
+
+async function injectMetricsCollectorIntoApplicationJava(pathToApplicationJava) {
+  const originalApplicationJava = await fs.readFile(pathToApplicationJava, 'utf8');
+  const newApplicationJava = getNewContentsOfApplicationJava(originalApplicationJava);
+  log.debug(`Injecting metrics collector into project's Application.java, which is now ${util.inspect(newApplicationJava)}`);
+  await fs.writeFile(pathToApplicationJava, newApplicationJava);
+}
+
+function getNewContentsOfApplicationJava(originalContents) {
+  const splitOriginalContents = originalContents.split('\n');
+
+  const packageString = splitOriginalContents.find(line => line.includes('package'));
+  const packageName = packageString // 'package NAME'
+    .split(' ')[1] // 'NAME;'
+    .slice(0, -1); // 'NAME'
+
+  const indexOfSpringBootApplication = splitOriginalContents.findIndex(line => line === '@SpringBootApplication');
+  const metricsCollectorAnnotation = `@ComponentScan(basePackages = {"${packageName}", "com.ibm.javametrics.spring"})`;
+
+  let newApplicationJava = deepClone(splitOriginalContents);
+  newApplicationJava.splice(indexOfSpringBootApplication + 1, 0, metricsCollectorAnnotation);
+  newApplicationJava = newApplicationJava.join('\n');
+
+  return newApplicationJava;
+}
+
+async function injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml) {
+  const originalPomXmlFileData = await fs.readFile(pathToPomXml);
+  const originalPomXml = await xml2js.parseStringPromise(originalPomXmlFileData);
+  const newPomXmlInJsonFormat = getNewContentsOfPomXmlForSpring(originalPomXml);
+  const xmlBuilder = new xml2js.Builder();
+  const newPomXml = xmlBuilder.buildObject(newPomXmlInJsonFormat);
+  log.debug(`Injecting metrics collector into project's pom.xml, which is now ${util.inspect(newPomXml)}`);
+  await fs.writeFile(pathToPomXml, newPomXml);
+}
+
+function getNewContentsOfPomXmlForSpring(originalContents) {
+  const newPomXml = deepClone(originalContents);
+  // console.log('newPomXml');
+  // console.log(util.inspect(newPomXml, { showHidden: false, depth: null }));
+  const newDependencies = newPomXml.project.dependencies[0];
+  newDependencies.dependency = getNewPomXmlDependenciesForSpring(newDependencies.dependency);
+
+  return newPomXml;
+}
+
+function getNewPomXmlDependenciesForSpring(originalDependencies) {
+  const metricsCollectorDependencyAlreadyExists = originalDependencies.some(dependency =>
+    dependency.artifactId[0] === 'javametrics-spring'
+  );
+  if (metricsCollectorDependencyAlreadyExists) {
+    return originalDependencies;
+  }
+  const newDependencies = originalDependencies.concat({
+    groupId: [ 'com.ibm.runtimetools' ],
+    artifactId: [ 'javametrics-spring' ],
+    version: [ '[1.1,2.0)' ],
+  });
+  return newDependencies;
+}
+
 async function injectMetricsCollectorIntoPomXml(pathToPomXml) {
   const originalPomXmlFileData = await fs.readFile(pathToPomXml);
   const originalPomXml = await xml2js.parseStringPromise(originalPomXmlFileData);
@@ -90,7 +160,6 @@ async function injectMetricsCollectorIntoJvmOptions(pathToJvmOptions) {
   log.debug(`Injecting metrics collector into project's jvm.options, which is now ${util.inspect(newJvmOptions)}`);
   await fs.writeFile(pathToJvmOptions, newJvmOptions);
 }
-
 
 function getNewContentsOfPomXml(originalContents) {
   const newPomXml = deepClone(originalContents);
@@ -149,7 +218,6 @@ function getNewPomXmlBuildPluginExecutions(originalBuildPluginExecutions) {
   });
   return newBuildPluginExecutions;
 }
-
 
 module.exports = {
   injectMetricsCollectorIntoProject,
