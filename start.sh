@@ -101,6 +101,9 @@ OS=$(uname -a | awk '{print $1;}')
 CWCTL=./script/linux/cwctl
 if [ $OS == "Darwin" ]; then
   CWCTL=./script/darwin/cwctl
+else if [ `echo $OS | grep "_NT-10"` ]; then
+    CWCTL=./script/windows/cwctl.exe
+  fi
 fi
 
 # REMOVE PREVIOUS DOCKER PROCESSES FOR CODEWIND
