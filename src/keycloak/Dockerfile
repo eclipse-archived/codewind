@@ -11,5 +11,8 @@
 
 FROM jboss/keycloak:latest
 
+# Copy our license files into the new image
+COPY LICENSE NOTICE.md ./
+
 COPY ./theme/  /opt/jboss/keycloak/themes/
 EXPOSE 8080 8443
