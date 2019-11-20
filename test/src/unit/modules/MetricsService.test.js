@@ -22,7 +22,8 @@ chai.use(chaiAsPromised);
 chai.use(deepEqualInAnyOrder);
 chai.should();
 
-describe('MetricsService.js', () => {
+const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+
     const projectDir = path.join('.', 'src', 'unit', 'modules');
 
     // nodejs
@@ -78,13 +79,13 @@ describe('MetricsService.js', () => {
     let expectedPomXmlForLiberty;
 
     // spring
-    const pathToApplicationJava = path.join(projectDir, 'src', 'main', 'java', 'application', 'SBApplication.java');
+    const pathToApplicationJava = path.join(projectDir, 'src', 'main', 'java', 'application', 'Application.java');
 
     const pathToTestResourcesForSpring = path.join(pathToTestResourcesDir, 'spring');
 
-    const pathToApplicationJavas = path.join(pathToTestResourcesForSpring, 'SBApplication.java');
-    const pathToOriginalApplicationJava = path.join(pathToApplicationJavas, 'packageApplication', 'without collector.java');
-    const pathToExpectedApplicationJava = path.join(pathToApplicationJavas, 'packageApplication', 'with collector.java');
+    const pathToApplicationJavas = path.join(pathToTestResourcesForSpring, 'Application.java');
+    const pathToOriginalApplicationJava = path.join(pathToApplicationJavas, 'package1', 'without collector.java');
+    const pathToExpectedApplicationJava = path.join(pathToApplicationJavas, 'package1', 'with collector.java');
     const originalApplicationJava = fs.readFileSync(pathToOriginalApplicationJava, 'utf8');
     const expectedApplicationJava = fs.readFileSync(pathToExpectedApplicationJava, 'utf8');
 
@@ -344,31 +345,41 @@ describe('MetricsService.js', () => {
     });
     describe('spring', () => {
         describe('injectMetricsCollectorIntoSpringProject(projectDir)', () => {
-            beforeEach(() => {
+            const tests = {
+                'Application.java in a dir with a name': {
+                    pathToApplicationJava: path.join(projectDir, 'src', 'main', 'java', 'application', 'Application.java'),
+                },
+                'Application.java with different name': {
+                    pathToApplicationJava: path.join(projectDir, 'src', 'main', 'java', 'application', 'Application2.java'),
+                },
+                'Application.java in a different dir': {
+                    pathToApplicationJava: path.join(projectDir, 'src', 'main', 'java', 'Application.java'),
+                },
+            };
+            for (const [testName, test] of Object.entries(tests)) {
+                describe(testName, () => { // eslint-disable-line no-loop-func
+                    before(() => {
                 fs.writeFileSync(pathToTestPomXml, fs.readFileSync(pathToOriginalPomXmlForSpring));
-                fs.outputFileSync(pathToApplicationJava, originalApplicationJava);
+                        fs.outputFileSync(test.pathToApplicationJava, originalApplicationJava);
             });
-            afterEach(() => {
+                    after(() => {
                 fs.unlinkSync(pathToTestPomXml);
-                fs.unlinkSync(pathToApplicationJava);
+                        fs.unlinkSync(test.pathToApplicationJava);
             });
-            it(`injects metrics collector into the project's jvm.options and pom.xml`, async() => {
+                    it(`injects metrics collector into the project's Application.java and pom.xml`, async() => {
                 const funcToTest = metricsService.__get__('injectMetricsCollectorIntoSpringProject');
                 await funcToTest(projectDir);
 
                 const outputPomXml = await readXml(pathToTestPomXml);
                 outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForSpring);
 
-                const outputApplicationJava = fs.readFileSync(pathToApplicationJava, 'utf8');
+                        const outputApplicationJava = fs.readFileSync(test.pathToApplicationJava, 'utf8');
                 outputApplicationJava.should.equal(expectedApplicationJava);
             });
         });
+            }
+        });
 
-        const pathToApplicationJavas = path.join(pathToTestResourcesForSpring, 'SBApplication.java');
-        const pathToOriginalApplicationJava = path.join(pathToApplicationJavas, 'packageApplication', 'without collector.java');
-        const pathToExpectedApplicationJava = path.join(pathToApplicationJavas, 'packageApplication', 'with collector.java');
-        const originalApplicationJava = fs.readFileSync(pathToOriginalApplicationJava, 'utf8');
-        const expectedApplicationJava = fs.readFileSync(pathToExpectedApplicationJava, 'utf8');
 
         describe('getNewContentsOfApplicationJava(originalContents)', () => {
             const tests = {
@@ -377,8 +388,8 @@ describe('MetricsService.js', () => {
                     expectedApplicationJava,
                 },
                 'package application2': {
-                    originalApplicationJava: fs.readFileSync(path.join(pathToApplicationJavas, 'packageApplication2', 'without collector.java'), 'utf8'),
-                    expectedApplicationJava: fs.readFileSync(path.join(pathToApplicationJavas, 'packageApplication2', 'with collector.java'), 'utf8'),
+                    originalApplicationJava: fs.readFileSync(path.join(pathToApplicationJavas, 'package2', 'without collector.java'), 'utf8'),
+                    expectedApplicationJava: fs.readFileSync(path.join(pathToApplicationJavas, 'package2', 'with collector.java'), 'utf8'),
                 },
             };
             for (const [testName, test] of Object.entries(tests)) {
@@ -401,11 +412,23 @@ describe('MetricsService.js', () => {
         });
 
         describe('getNewPomXmlDependenciesForSpring(originalDependencies)', () => {
-            const metricsCollectorDependency = {
+            const metricsCollectorDependencies = [
+                {
                 groupId: [ 'com.ibm.runtimetools' ],
                 artifactId: [ 'javametrics-spring' ],
                 version: [ '[1.1,2.0)' ],
-            };
+                },
+                {
+                    groupId: [ 'com.ibm.runtimetools' ],
+                    artifactId: [ 'javametrics-agent' ],
+                    version: [ '[1.1,2.0)' ],
+                },
+                {
+                    groupId: [ 'org.glassfish' ],
+                    artifactId: [ 'javax.json' ],
+                    version: [ '1.0.4' ],
+                },
+            ];
             describe(`<originalDependencies> don't include javametrics-spring`, () => {
                 it(`returns an object representing pom.xml dependencies injected with metrics collector`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlDependenciesForSpring');
@@ -413,14 +436,14 @@ describe('MetricsService.js', () => {
                     const output = funcToTest(originalDependencies);
                     output.should.have.deep.members([
                         ...originalDependencies,
-                        metricsCollectorDependency,
+                        ...metricsCollectorDependencies,
                     ]);
                 });
             });
             describe(`<originalDependencies> already include javametrics-spring`, () => {
                 it(`returns an object representing the original pom.xml dependencies`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlDependenciesForSpring');
-                    const originalDependencies = [metricsCollectorDependency];
+                    const originalDependencies = deepClone(metricsCollectorDependencies);
                     const output = funcToTest(originalDependencies);
                     output.should.have.deep.members(originalDependencies);
                 });

@@ -13,6 +13,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const util = require('util');
 const xml2js = require('xml2js');
+const dir = require('node-dir');
 
 const Logger = require('./utils/Logger');
 
@@ -80,8 +81,29 @@ async function injectMetricsCollectorIntoSpringProject(projectDir) {
   const pathToPomXml = path.join(projectDir, 'pom.xml');
   await injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml);
 
-  const pathToApplicationJava = path.join(projectDir, 'src', 'main', 'java', 'application', 'SBApplication.java');
+  const pathToApplicationJava = await getPathToApplicationJava(projectDir);
   await injectMetricsCollectorIntoApplicationJava(pathToApplicationJava);
+}
+
+const springAppAnnotation = '@SpringBootApplication';
+
+async function getPathToApplicationJava(projectDir) {
+  const pathToSrcMainJavaDir = path.join(projectDir, 'src', 'main', 'java');
+
+  const files = await dir.promiseFiles(pathToSrcMainJavaDir);
+  // console.log('files');
+  // console.log(files);
+  // TODO: async
+  const file = files.find(file => {
+    // console.log(`fs.readFileSync(file, 'utf8')`);
+    // console.log(fs.readFileSync(file, 'utf8'));
+    return fs.readFileSync(file, 'utf8').includes(springAppAnnotation);
+
+  })
+  // console.log('file');
+  // console.log(file);
+
+  return file;
 }
 
 async function injectMetricsCollectorIntoApplicationJava(pathToApplicationJava) {
@@ -99,7 +121,7 @@ function getNewContentsOfApplicationJava(originalContents) {
     .split(' ')[1] // 'NAME;'
     .slice(0, -1); // 'NAME'
 
-  const indexOfSpringBootApplication = splitOriginalContents.findIndex(line => line === '@SpringBootApplication');
+  const indexOfSpringBootApplication = splitOriginalContents.findIndex(line => line === springAppAnnotation);
   const metricsCollectorAnnotation = `@ComponentScan(basePackages = {"${packageName}", "com.ibm.javametrics.spring"})`;
 
   let newApplicationJava = deepClone(splitOriginalContents);
@@ -136,11 +158,24 @@ function getNewPomXmlDependenciesForSpring(originalDependencies) {
   if (metricsCollectorDependencyAlreadyExists) {
     return originalDependencies;
   }
-  const newDependencies = originalDependencies.concat({
-    groupId: [ 'com.ibm.runtimetools' ],
-    artifactId: [ 'javametrics-spring' ],
-    version: [ '[1.1,2.0)' ],
-  });
+  const metricsCollectorDependencies = [
+    {
+      groupId: [ 'com.ibm.runtimetools' ],
+      artifactId: [ 'javametrics-spring' ],
+      version: [ '[1.1,2.0)' ],
+    },
+    {
+      groupId: [ 'com.ibm.runtimetools' ],
+      artifactId: [ 'javametrics-agent' ],
+      version: [ '[1.1,2.0)' ],
+    },
+    {
+      groupId: [ 'org.glassfish' ],
+      artifactId: [ 'javax.json' ],
+      version: [ '1.0.4' ],
+    },
+  ];
+  const newDependencies = originalDependencies.concat(metricsCollectorDependencies);
   return newDependencies;
 }
 
