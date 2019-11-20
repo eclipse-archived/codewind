@@ -84,25 +84,6 @@
             <version>3.1.11</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>javax.json</artifactId>
-            <version>1.0.4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.ibm.runtimetools</groupId>
-            <artifactId>javametrics-agent</artifactId>
-            <version>[1.2,2.0)</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.ibm.runtimetools</groupId>
-            <artifactId>javametrics-rest</artifactId>
-            <version>[1.2,2.0)</version>
-            <scope>provided</scope>
-            <type>war</type>
-        </dependency>
     </dependencies>
 
     <build>
@@ -135,49 +116,6 @@
                 </executions>
             </plugin>
             <!-- Configure javametrics monitoring -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.0.1</version>
-                <executions>
-                    <execution>
-                        <id>copy-javametrics-rest</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <stripVersion>true</stripVersion>
-                            <outputDirectory>${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins</outputDirectory>
-                            <includeArtifactIds>javametrics-rest</includeArtifactIds>
-                      </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-javametrics-agent</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                          <stripVersion>true</stripVersion>
-                          <outputDirectory>${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/</outputDirectory>
-                          <includeArtifactIds>javametrics-agent</includeArtifactIds>
-                      </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-javametrics-asm</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                          <outputDirectory>${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/asm</outputDirectory>
-                          <includeGroupIds>org.ow2.asm</includeGroupIds>
-                          <includeArtifactIds>asm,asm-commons</includeArtifactIds>
-                      </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <!-- Enable liberty-maven plugin -->
             <plugin>
                 <groupId>net.wasdev.wlp.maven.plugins</groupId>
