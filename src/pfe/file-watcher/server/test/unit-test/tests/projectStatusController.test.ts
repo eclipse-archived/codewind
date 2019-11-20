@@ -128,7 +128,7 @@ export function projectStatusControllerTestModule(): void {
                     } else if (data.type === projectStatusController.STATE_TYPES.buildState) {
                         const buildStateResult = await projectStatusController.getBuildState(projectID);
                         expect(buildStateResult).to.equal(data.buildStatus);
-                        const isBuildInProgress = await projectStatusController.isBuildInProgress(projectID);
+                        const isBuildInProgress = await projectStatusController.isBuildInProgressOrQueued(projectID);
                         expect(isBuildInProgress).to.equal(true);
                     }
                 }
@@ -170,7 +170,7 @@ export function projectStatusControllerTestModule(): void {
                 expect(buildRequired).to.equal(true);
                 const getBuildRequired = await projectStatusController.isBuildRequired(projectID);
                 expect(getBuildRequired).to.equal(true);
-                const getIsBuildInProgress = await projectStatusController.isBuildInProgress(projectID);
+                const getIsBuildInProgress = await projectStatusController.isBuildInProgressOrQueued(projectID);
                 expect(getIsBuildInProgress).to.equal(false);
             });
     });
