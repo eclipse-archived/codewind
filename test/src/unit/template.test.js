@@ -21,7 +21,6 @@ const Templates = rewire('../../../src/pfe/portal/modules/Templates');
 const {
     styledTemplates,
     defaultCodewindTemplates,
-    defaultKabaneroTemplates,
     sampleRepos,
     validUrlNotPointingToIndexJson,
 } = require('../../modules/template.service');
@@ -100,16 +99,18 @@ describe('Templates.js', function() {
             });
         });
     });
-    describe.skip('getAllTemplates()', function() {
-        describe('', function() {
+    describe('getAllTemplates()', function() {
+        describe('Verifys the Codewind default templates are there and all others contain the required keys', function() {
             it('returns the default templates', async function() {
                 this.timeout(30000);
                 const templateController = new Templates('');
                 const output = await templateController.getAllTemplates();
-                output.should.have.deep.members([
-                    ...defaultCodewindTemplates,
-                    ...defaultKabaneroTemplates,
-                ]);
+                output.should.contain.deep.members(defaultCodewindTemplates);
+                for (let i = 0; i < output.length; i++) {
+                    const element = output[i];
+                    // List of keys required are generated from the API docs
+                    element.should.contain.keys('label', 'description', 'language', 'url', 'projectType');
+                }
             });
         });
         describe('and add an extra template repo', function() {
