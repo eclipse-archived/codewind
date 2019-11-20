@@ -22,6 +22,7 @@ import * as project_configs from "../../../configs/project.config";
 import { fail } from "assert";
 
 import * as utils from "../../../lib/utils";
+import { codewindTemplates } from "../../../configs/app.config";
 
 export function updateStatusTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
     describe("updateStatus function", () => {
@@ -107,7 +108,7 @@ export function updateStatusTest(socket: SocketIO, projData: projectsController.
                     [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
                 const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-                if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
+                if (process.env.IN_K8 && (project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") || projectTemplate === codewindTemplates.odo) {
                     targetEvents.pop();
                     targetEventDatas.pop();
                 }
