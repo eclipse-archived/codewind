@@ -202,8 +202,8 @@ function getNewContentsOfPomXml(originalContents) {
   const newDependencies = newPomXml.project.dependencies[0];
   newDependencies.dependency = getNewPomXmlDependencies(newDependencies.dependency);
 
-  const newBuildPluginExecutions = newPomXml.project.build[0].plugins[0].plugin[2].executions[0];
-  newBuildPluginExecutions.execution = getNewPomXmlBuildPluginExecutions(newBuildPluginExecutions.execution);
+  const newBuildPlugins = newPomXml.project.build[0].plugins[0];
+  newBuildPlugins.plugin = getNewPomXmlBuildPlugins(newBuildPlugins.plugin);
 
   return newPomXml;
 }
@@ -220,37 +220,113 @@ function getNewPomXmlDependencies(originalDependencies) {
   if (metricsCollectorDependencyAlreadyExists) {
     return originalDependencies;
   }
-  const newDependencies = originalDependencies.concat({
-    groupId: [ 'com.ibm.runtimetools' ],
-    artifactId: [ 'javametrics-dash' ],
-    version: [ '[1.2,2.0)' ],
-    scope: [ 'provided' ],
-    type: [ 'war' ],
-  });
+  const metricsCollectorDependencies = [
+    {
+      groupId: [ 'org.glassfish' ],
+      artifactId: [ 'javax.json' ],
+      version: [ '1.0.4' ],
+      scope: [ 'test' ],
+    },
+    {
+      groupId: [ 'com.ibm.runtimetools' ],
+      artifactId: [ 'javametrics-agent' ],
+      version: [ '[1.2,2.0)' ],
+      scope: [ 'provided' ],
+    },
+    {
+      groupId: [ 'com.ibm.runtimetools' ],
+      artifactId: [ 'javametrics-dash' ],
+      version: [ '[1.2,2.0)' ],
+      scope: [ 'provided' ],
+      type: [ 'war' ],
+    },
+    {
+      groupId: [ 'com.ibm.runtimetools' ],
+      artifactId: [ 'javametrics-rest' ],
+      version: [ '[1.2,2.0)' ],
+      scope: [ 'provided' ],
+      type: [ 'war' ],
+    },
+  ];
+  const newDependencies = originalDependencies.concat(metricsCollectorDependencies);
   return newDependencies;
 }
 
-function getNewPomXmlBuildPluginExecutions(originalBuildPluginExecutions) {
-  const metricsCollectorBuildPluginExecutionAlreadyExists = originalBuildPluginExecutions.some(execution =>
-    execution.id[0] === 'copy-javametrics-dash'
+function getNewPomXmlBuildPlugins(originalBuildPlugins) {
+  const metricsCollectorBuildPluginAlreadyExists = originalBuildPlugins.some(plugin =>
+    plugin.artifactId[0] === 'maven-dependency-plugin'
   );
-  if (metricsCollectorBuildPluginExecutionAlreadyExists) {
-    return originalBuildPluginExecutions;
+  if (metricsCollectorBuildPluginAlreadyExists) {
+    return originalBuildPlugins;
   }
-  const newBuildPluginExecutions = originalBuildPluginExecutions.concat({
-    id: [ 'copy-javametrics-dash' ],
-    phase: [ 'package' ],
-    goals: [ { goal: [ 'copy-dependencies' ] } ],
-    configuration: [
+  const metricsCollectorBuildPlugin = {
+    groupId: [ 'org.apache.maven.plugins' ],
+    artifactId: [ 'maven-dependency-plugin' ],
+    version: [ '3.0.1' ],
+    executions: [
       {
-        stripVersion: [ 'true' ],
-        outputDirectory: [
-          '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
-        ],
-        includeArtifactIds: [ 'javametrics-dash' ],
-      },
-    ],
-  });
+        execution: [
+          {
+            id: [ 'copy-javametrics-dash' ],
+            phase: [ 'package' ],
+            goals: [ { goal: [ 'copy-dependencies' ] } ],
+            configuration: [
+              {
+                stripVersion: [ 'true' ],
+                outputDirectory: [
+                  '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins'
+                ],
+                includeArtifactIds: [ 'javametrics-dash' ]
+              }
+            ]
+          },
+          {
+            id: [ 'copy-javametrics-rest' ],
+            phase: [ 'package' ],
+            goals: [ { goal: [ 'copy-dependencies' ] } ],
+            configuration: [
+              {
+                stripVersion: [ 'true' ],
+                outputDirectory: [
+                  '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins'
+                ],
+                includeArtifactIds: [ 'javametrics-rest' ]
+              }
+            ]
+          },
+          {
+            id: [ 'copy-javametrics-agent' ],
+            phase: [ 'package' ],
+            goals: [ { goal: [ 'copy-dependencies' ] } ],
+            configuration: [
+              {
+                stripVersion: [ 'true' ],
+                outputDirectory: [
+                  '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/'
+                ],
+                includeArtifactIds: [ 'javametrics-agent' ]
+              }
+            ]
+          },
+          {
+            id: [ 'copy-javametrics-asm' ],
+            phase: [ 'package' ],
+            goals: [ { goal: [ 'copy-dependencies' ] } ],
+            configuration: [
+              {
+                outputDirectory: [
+                  '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/asm'
+                ],
+                includeGroupIds: [ 'org.ow2.asm' ],
+                includeArtifactIds: [ 'asm,asm-commons' ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  };
+  const newBuildPluginExecutions = originalBuildPlugins.concat(metricsCollectorBuildPlugin);
   return newBuildPluginExecutions;
 }
 

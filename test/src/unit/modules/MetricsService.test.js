@@ -24,6 +24,7 @@ chai.should();
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
+describe('MetricsService.js', () => {
     const projectDir = path.join('.', 'src', 'unit', 'modules');
 
     // nodejs
@@ -101,6 +102,11 @@ const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
         originalPomXmlForSpring = await readXml(pathToOriginalPomXmlForSpring);
         expectedPomXmlForSpring = await readXml(pathToExpectedPomXmlForSpring);
+
+        // To debug these parsed PomXmls
+        // const util = require('util');
+        // console.log('expectedPomXmlForLiberty');
+        // console.log(util.inspect(expectedPomXmlForLiberty, { showHidden: false, depth: null }));
     });
 
     describe('injectMetricsCollectorIntoProject(projectType, projectDir)', () => {
@@ -280,13 +286,34 @@ const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
         });
 
         describe('getNewPomXmlDependencies(originalDependencies)', () => {
-            const metricsCollectorDependency = {
-                groupId: [ 'com.ibm.runtimetools' ],
-                artifactId: [ 'javametrics-dash' ],
-                version: [ '[1.2,2.0)' ],
-                scope: [ 'provided' ],
-                type: [ 'war' ],
-            };
+            const metricsCollectorDependencies = [
+                {
+                    groupId: [ 'org.glassfish' ],
+                    artifactId: [ 'javax.json' ],
+                    version: [ '1.0.4' ],
+                    scope: [ 'test' ],
+                },
+                {
+                    groupId: [ 'com.ibm.runtimetools' ],
+                    artifactId: [ 'javametrics-agent' ],
+                    version: [ '[1.2,2.0)' ],
+                    scope: [ 'provided' ],
+                },
+                {
+                    groupId: [ 'com.ibm.runtimetools' ],
+                    artifactId: [ 'javametrics-dash' ],
+                    version: [ '[1.2,2.0)' ],
+                    scope: [ 'provided' ],
+                    type: [ 'war' ],
+                },
+                {
+                    groupId: [ 'com.ibm.runtimetools' ],
+                    artifactId: [ 'javametrics-rest' ],
+                    version: [ '[1.2,2.0)' ],
+                    scope: [ 'provided' ],
+                    type: [ 'war' ],
+                },
+            ];
             describe(`<originalDependencies> don't include javametrics-dash`, () => {
                 it(`returns an object representing pom.xml dependencies injected with metrics collector`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlDependencies');
@@ -294,51 +321,104 @@ const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
                     const output = funcToTest(originalDependencies);
                     output.should.have.deep.members([
                         ...originalDependencies,
-                        metricsCollectorDependency,
+                        ...metricsCollectorDependencies,
                     ]);
                 });
             });
             describe(`<originalDependencies> already include javametrics-dash`, () => {
                 it(`returns an object representing the original pom.xml dependencies`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlDependencies');
-                    const originalDependencies = [metricsCollectorDependency];
+                    const originalDependencies = deepClone(metricsCollectorDependencies);
                     const output = funcToTest(originalDependencies);
                     output.should.have.deep.members(originalDependencies);
                 });
             });
         });
-        describe('getNewPomXmlBuildPluginExecutions(originalBuildPluginExecutions)', () => {
-            const metricsCollectorBuildPluginExecution = {
-                id: [ 'copy-javametrics-dash' ],
-                phase: [ 'package' ],
-                goals: [ { goal: [ 'copy-dependencies' ] } ],
-                configuration: [
+        describe('getNewPomXmlBuildPlugins(originalBuildPlugins)', () => {
+            const metricsCollectorBuildPlugin = {
+                groupId: [ 'org.apache.maven.plugins' ],
+                artifactId: [ 'maven-dependency-plugin' ],
+                version: [ '3.0.1' ],
+                executions: [
                     {
-                        stripVersion: [ 'true' ],
-                        outputDirectory: [
-                            '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
+                        execution: [
+                            {
+                                id: [ 'copy-javametrics-dash' ],
+                                phase: [ 'package' ],
+                                goals: [ { goal: [ 'copy-dependencies' ] } ],
+                                configuration: [
+                                    {
+                                        stripVersion: [ 'true' ],
+                                        outputDirectory: [
+                                            '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
+                                        ],
+                                        includeArtifactIds: [ 'javametrics-dash' ],
+                                    },
+                                ],
+                            },
+                            {
+                                id: [ 'copy-javametrics-rest' ],
+                                phase: [ 'package' ],
+                                goals: [ { goal: [ 'copy-dependencies' ] } ],
+                                configuration: [
+                                    {
+                                        stripVersion: [ 'true' ],
+                                        outputDirectory: [
+                                            '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
+                                        ],
+                                        includeArtifactIds: [ 'javametrics-rest' ],
+                                    },
+                                ],
+                            },
+                            {
+                                id: [ 'copy-javametrics-agent' ],
+                                phase: [ 'package' ],
+                                goals: [ { goal: [ 'copy-dependencies' ] } ],
+                                configuration: [
+                                    {
+                                        stripVersion: [ 'true' ],
+                                        outputDirectory: [
+                                            '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/',
+                                        ],
+                                        includeArtifactIds: [ 'javametrics-agent' ],
+                                    },
+                                ],
+                            },
+                            {
+                                id: [ 'copy-javametrics-asm' ],
+                                phase: [ 'package' ],
+                                goals: [ { goal: [ 'copy-dependencies' ] } ],
+                                configuration: [
+                                    {
+                                        outputDirectory: [
+                                            '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/asm',
+                                        ],
+                                        includeGroupIds: [ 'org.ow2.asm' ],
+                                        includeArtifactIds: [ 'asm,asm-commons' ],
+                                    },
+                                ],
+                            },
                         ],
-                        includeArtifactIds: [ 'javametrics-dash' ],
                     },
                 ],
             };
-            describe(`<originalBuildPluginExecutions> don't include javametrics-dash`, () => {
-                it(`returns an object representing pom.xml build plugin executions injected with metrics collector`, () => {
-                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPluginExecutions');
-                    const originalBuildPluginExecutions = [];
-                    const output = funcToTest(originalBuildPluginExecutions);
+            describe(`<originalBuildPlugins> don't include javametrics-dash`, () => {
+                it(`returns an object representing pom.xml build plugins injected with metrics collector`, () => {
+                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
+                    const originalBuildPlugins = [];
+                    const output = funcToTest(originalBuildPlugins);
                     output.should.have.deep.members([
-                        ...originalBuildPluginExecutions,
-                        metricsCollectorBuildPluginExecution,
+                        ...originalBuildPlugins,
+                        metricsCollectorBuildPlugin,
                     ]);
                 });
             });
-            describe(`<originalBuildPluginExecutions> already include javametrics-dash`, () => {
-                it(`returns an object representing the original pom.xml build plugin executions`, () => {
-                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPluginExecutions');
-                    const originalBuildPluginExecutions = [metricsCollectorBuildPluginExecution];
-                    const output = funcToTest(originalBuildPluginExecutions);
-                    output.should.have.deep.members(originalBuildPluginExecutions);
+            describe(`<originalBuildPlugins> already include javametrics-dash`, () => {
+                it(`returns an object representing the original pom.xml build plugins`, () => {
+                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
+                    const originalBuildPlugins = [metricsCollectorBuildPlugin];
+                    const output = funcToTest(originalBuildPlugins);
+                    output.should.have.deep.members(originalBuildPlugins);
                 });
             });
         });
@@ -359,24 +439,24 @@ const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
             for (const [testName, test] of Object.entries(tests)) {
                 describe(testName, () => { // eslint-disable-line no-loop-func
                     before(() => {
-                fs.writeFileSync(pathToTestPomXml, fs.readFileSync(pathToOriginalPomXmlForSpring));
+                        fs.writeFileSync(pathToTestPomXml, fs.readFileSync(pathToOriginalPomXmlForSpring));
                         fs.outputFileSync(test.pathToApplicationJava, originalApplicationJava);
-            });
+                    });
                     after(() => {
-                fs.unlinkSync(pathToTestPomXml);
+                        fs.unlinkSync(pathToTestPomXml);
                         fs.unlinkSync(test.pathToApplicationJava);
-            });
+                    });
                     it(`injects metrics collector into the project's Application.java and pom.xml`, async() => {
-                const funcToTest = metricsService.__get__('injectMetricsCollectorIntoSpringProject');
-                await funcToTest(projectDir);
+                        const funcToTest = metricsService.__get__('injectMetricsCollectorIntoSpringProject');
+                        await funcToTest(projectDir);
 
-                const outputPomXml = await readXml(pathToTestPomXml);
-                outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForSpring);
+                        const outputPomXml = await readXml(pathToTestPomXml);
+                        outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForSpring);
 
                         const outputApplicationJava = fs.readFileSync(test.pathToApplicationJava, 'utf8');
-                outputApplicationJava.should.equal(expectedApplicationJava);
-            });
-        });
+                        outputApplicationJava.should.equal(expectedApplicationJava);
+                    });
+                });
             }
         });
 
@@ -414,9 +494,9 @@ const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
         describe('getNewPomXmlDependenciesForSpring(originalDependencies)', () => {
             const metricsCollectorDependencies = [
                 {
-                groupId: [ 'com.ibm.runtimetools' ],
-                artifactId: [ 'javametrics-spring' ],
-                version: [ '[1.1,2.0)' ],
+                    groupId: [ 'com.ibm.runtimetools' ],
+                    artifactId: [ 'javametrics-spring' ],
+                    version: [ '[1.1,2.0)' ],
                 },
                 {
                     groupId: [ 'com.ibm.runtimetools' ],
