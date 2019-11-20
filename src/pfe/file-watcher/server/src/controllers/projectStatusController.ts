@@ -568,8 +568,8 @@ function pingInTransitApplications(): void {
  *
  * @returns boolean
  */
-export function isBuildInProgress(projectID: string): boolean {
-    if (buildStateMap.has(projectID) && buildStateMap.get(projectID).state == BuildState.inProgress)
+export function isBuildInProgressOrQueued(projectID: string): boolean {
+    if (buildStateMap.has(projectID) && (buildStateMap.get(projectID).state == BuildState.inProgress || buildStateMap.get(projectID).state == BuildState.queued))
         return true;
     else
         return false;
