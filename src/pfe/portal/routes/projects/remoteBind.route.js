@@ -225,12 +225,18 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         const filesToDelete = Array.from(filesToDeleteSet);
 
         log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
-          `${filesToDelete.join(', ')}`);
+      `${filesToDelete.join(', ')}`);
         // remove the file from pfe container
         await Promise.all(
           filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(pathToTempProj, oldFile)))
         );
         res.sendStatus(200);
+
+        try {
+          await metricsService.injectMetricsCollectorIntoProject(project.projectType, pathToTempProj);
+        } catch (error) {
+          log.warn(error);
+        }
 
         await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
 
