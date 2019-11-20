@@ -33,6 +33,7 @@
     "lock": "^1.1.0",
     "log4js": "^3.0.6",
     "moment-timezone": "^0.5.17",
+    "node-dir": "^0.1.17",
     "pem": "^1.14.1",
     "query-string": "^6.5.0",
     "replace-in-file": "^3.4.0",
