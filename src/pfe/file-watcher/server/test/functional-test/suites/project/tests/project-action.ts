@@ -16,6 +16,7 @@ import * as projectsController from "../../../../../src/controllers/projectsCont
 import { projectAction } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
+import { codewindTemplates } from "../../../configs/app.config";
 import * as project_configs from "../../../configs/project.config";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
@@ -36,9 +37,9 @@ export function projectActionTest(socket: SocketIO, projData: projectsController
             "action": "disableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 200,
-            "socketEvent": process.env.IN_K8  || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang]) ? [] : [eventConfigs.events.projectChanged],
-            "eventKeys": process.env.IN_K8  || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
-            "result": process.env.IN_K8  || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [{
+            "socketEvent": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang]) ? [] : [eventConfigs.events.projectChanged],
+            "eventKeys": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
+            "result": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }]
@@ -47,9 +48,9 @@ export function projectActionTest(socket: SocketIO, projData: projectsController
             "action": "enableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 202,
-            "socketEvent": process.env.IN_K8  || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
-            "eventKeys": process.env.IN_K8  || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
-            "result": process.env.IN_K8  || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [{
+            "socketEvent": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
+            "eventKeys": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
+            "result": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }, {
@@ -137,7 +138,7 @@ export function projectActionTest(socket: SocketIO, projData: projectsController
             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-        if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
+        if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring" || projectTemplate === codewindTemplates.odo) {
             targetEvents.pop();
             targetEventDatas.pop();
         }
