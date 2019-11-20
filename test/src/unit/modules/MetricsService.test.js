@@ -142,7 +142,7 @@ describe('MetricsService.js', () => {
             });
             afterEach(() => {
                 fs.unlinkSync(pathToTestPomXml);
-                // fs.unlinkSync(pathToApplicationJava);
+                fs.unlinkSync(pathToApplicationJava);
             });
             it(`injects metrics collector into the project's Application.java and pom.xml`, async() => {
                 await metricsService.injectMetricsCollectorIntoProject('spring', projectDir);
