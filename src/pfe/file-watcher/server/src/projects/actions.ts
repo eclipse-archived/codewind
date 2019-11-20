@@ -140,7 +140,7 @@ async function enableAndBuild(projectInfo: ProjectInfo): Promise<void> {
         logger.logProjectInfo("Build required is true on switch to auto build enabled so start or queue build", projectID, projectName);
         statusController.buildRequired(projectInfo.projectID, false);
         try {
-            if (!statusController.isBuildInProgress(projectInfo.projectID)) {
+            if (!statusController.isBuildInProgressOrQueued(projectInfo.projectID)) {
                 logger.logProjectInfo("Start build on switch to auto build enabled", projectID, projectName);
                 const operation = new Operation("update", projectInfo);
                 await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, projectID, statusController.BuildState.inProgress, "action.calculateDifference");
@@ -226,7 +226,7 @@ export const build = async function (args: IProjectActionParams): Promise<{ oper
         error.name = "FILE_NOT_EXIST";
         throw error;
     }
-    if (!statusController.isBuildInProgress(args.projectID)) {
+    if (!statusController.isBuildInProgressOrQueued(args.projectID)) {
         await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, args.projectID, statusController.BuildState.inProgress, "action.calculateDifference");
         const operation = new Operation("update", projectInfo);
         const intervaltimer = setInterval(() => {
@@ -315,7 +315,7 @@ export const restart = async function(args: IProjectActionParams): Promise<{ ope
         error.name = "BAD_REQUEST";
         throw error;
     }
-    if (statusController.isBuildInProgress(args.projectID)) {
+    if (statusController.isBuildInProgressOrQueued(args.projectID)) {
         const error = new Error("Restart is invalid when the project is building.");
         error.name = "BAD_REQUEST";
         throw error;

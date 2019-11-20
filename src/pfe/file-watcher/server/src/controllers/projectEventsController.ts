@@ -191,7 +191,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                 }
                 if (shouldTriggerBuild) {
                     if (projectInfo.autoBuildEnabled) {
-                        if (!statusController.isBuildInProgress(projectID)) {
+                        if (!statusController.isBuildInProgressOrQueued(projectID)) {
                             const operation = new projectOperation.Operation("update", projectInfo);
                             projectHandler.update(operation, changedFilesMap.get(projectInfo.projectID));
                         } else {
@@ -216,7 +216,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
             const timer = setTimeout(async () => {
                 try {
                     if (projectInfo.autoBuildEnabled) {
-                        if (!statusController.isBuildInProgress(projectID)) {
+                        if (!statusController.isBuildInProgressOrQueued(projectID)) {
                             const operation = new projectOperation.Operation("update", projectInfo);
                             projectHandler.update(operation, changedFilesMap.get(projectInfo.projectID));
                         } else {

@@ -48,8 +48,6 @@ const fileStatAsync = promisify(fs.stat);
 
 const projectInfoCache = {} as ProjectInfoCache;
 
-const projectList = new Map();
-
 let buildQueue: Array<BuildQueueType> = [];
 let runningBuilds: Array<BuildQueueType> = [];
 const MAX_BUILDS = parseInt(process.env.MC_MAX_BUILDS) || 3;
