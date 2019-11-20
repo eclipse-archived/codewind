@@ -10,6 +10,7 @@
 *******************************************************************************/
 global.codewind = { RUNNING_IN_K8S: false };
 const fs = require('fs-extra');
+const { execSync } = require('child_process');
 const path = require('path');
 const rewire = require('rewire');
 const chai = require('chai');
@@ -39,8 +40,9 @@ describe('Project.js', () => {
         };
         fs.ensureDirSync(global.codewind.CODEWIND_TEMP_WORKSPACE);
     });
-    after(() => {
-        fs.removeSync(global.codewind.CODEWIND_WORKSPACE);
+    after(function() {
+        this.timeout(5000);
+        execSync(`rm -rf ${global.codewind.CODEWIND_WORKSPACE}`);
     });
     describe('new Project()', () => {
         it('Initialises a new Project with minimal arguments', () => {
@@ -589,8 +591,9 @@ describe('Project.js', () => {
             fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.true;
         });
     });
-    describe('writeNewLoadTestConfigFile()', () => {
+    describe('writeNewLoadTestConfigFile()', function() {
         it('Gets test config when it does not exist (creates a new config)', async() => {
+            this.timeout(5000);
             const project = createDefaultProjectAndCheckIsAnObject();
             const tempLoadDir = path.join(global.codewind.CODEWIND_TEMP_WORKSPACE, 'writeNewLoadTestConfigFile');
             await fs.ensureDir(tempLoadDir);

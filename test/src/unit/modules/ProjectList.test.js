@@ -11,6 +11,7 @@
 global.codewind = { RUNNING_IN_K8S: false };
 
 const fs = require('fs-extra');
+const { execSync } = require('child_process');
 const path = require('path');
 const rewire = require('rewire');
 const assert = require('assert');
@@ -36,7 +37,7 @@ describe('ProjectList.js', () => {
     });
     after(function() {
         this.timeout(5000);
-        fs.removeSync(global.codewind.CODEWIND_WORKSPACE);
+        execSync(`rm -rf ${global.codewind.CODEWIND_WORKSPACE}`);
     });
     describe('new ProjectList()', () => {
         it('Initialises a new, empty ProjectList', () => {
