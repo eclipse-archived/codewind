@@ -38,7 +38,7 @@ export default class ProjectTest {
             this.runProjectEventTest(socket, projData, projectTemplate, projectLang);
             this.runProjectLogsTest(socket, projData, projectTemplate, projectLang);
             // this.runProjectSpecificationTest(socket, projData, projectTemplate, projectLang);
-            // this.runUpdateStatusTest(socket, projData, projectTemplate, projectLang);
+            this.runUpdateStatusTest(socket, projData, projectTemplate, projectLang);
         });
     }
 
