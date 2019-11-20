@@ -14,6 +14,7 @@ const path = require('path');
 const util = require('util');
 const xml2js = require('xml2js');
 const dir = require('node-dir');
+const promiseAny = require('promise.any');
 
 const Logger = require('./utils/Logger');
 
@@ -87,23 +88,29 @@ async function injectMetricsCollectorIntoSpringProject(projectDir) {
 
 const springAppAnnotation = '@SpringBootApplication';
 
+// Resolves as soon as an element in `array` satisfies `asyncCallback`,
+// Or rejects if no elements in `array` satisfy `asyncCallback`
+const findAsync = (array, asyncCallback) => promiseAny(
+  array.map(element => asyncCallback(element))
+)
+
 async function getPathToApplicationJava(projectDir) {
   const pathToSrcMainJavaDir = path.join(projectDir, 'src', 'main', 'java');
 
-  const files = await dir.promiseFiles(pathToSrcMainJavaDir);
-  // console.log('files');
-  // console.log(files);
-  // TODO: async
-  const file = files.find(file => {
-    // console.log(`fs.readFileSync(file, 'utf8')`);
-    // console.log(fs.readFileSync(file, 'utf8'));
-    return fs.readFileSync(file, 'utf8').includes(springAppAnnotation);
+  const applicationJavaFiles = await dir.promiseFiles(pathToSrcMainJavaDir);
 
-  })
-  // console.log('file');
-  // console.log(file);
-
-  return file;
+  const applicationJavaFile = await findAsync(
+    applicationJavaFiles,
+    async(file) => {
+      const fileData = await fs.readFile(file, 'utf8');
+      const fileIsApplicationJavaFile = fileData.includes(springAppAnnotation);
+      if (fileIsApplicationJavaFile) {
+        return file;
+      }
+      throw new Error();
+    },
+  );
+  return applicationJavaFile;
 }
 
 async function injectMetricsCollectorIntoApplicationJava(pathToApplicationJava) {
@@ -143,8 +150,6 @@ async function injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml) {
 
 function getNewContentsOfPomXmlForSpring(originalContents) {
   const newPomXml = deepClone(originalContents);
-  // console.log('newPomXml');
-  // console.log(util.inspect(newPomXml, { showHidden: false, depth: null }));
   const newDependencies = newPomXml.project.dependencies[0];
   newDependencies.dependency = getNewPomXmlDependenciesForSpring(newDependencies.dependency);
 

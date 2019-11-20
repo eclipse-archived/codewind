@@ -35,6 +35,7 @@
     "moment-timezone": "^0.5.17",
     "node-dir": "^0.1.17",
     "pem": "^1.14.1",
+    "promise.any": "^2.0.0",
     "query-string": "^6.5.0",
     "replace-in-file": "^3.4.0",
     "request": "^2.88.0",
