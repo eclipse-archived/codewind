@@ -212,6 +212,31 @@ describe('MetricsService.js', () => {
                 output.should.deep.equal(expectedPackageJson);
             });
         });
+        describe('getNewStartScript(originalStartScript)', () => {
+            const tests = [
+                {
+                    input: 'node server.js',
+                    expectedOutput: 'node -r appmetrics-prometheus/attach server.js',
+                },
+                {
+                    input: 'nodemon server.js',
+                    expectedOutput: 'nodemon -r appmetrics-prometheus/attach server.js',
+                },
+                {
+                    input: 'node -r appmetrics-prometheus/attach server.js',
+                    expectedOutput: 'node -r appmetrics-prometheus/attach server.js',
+                },
+            ];
+            for (const test of tests) {
+                describe(test.input, () => { // eslint-disable-line no-loop-func
+                    it(`returns ${test.expectedOutput}`, () => {
+                        const funcToTest = metricsService.__get__('getNewStartScript');
+                        const output = funcToTest(test.input);
+                        output.should.deep.equal(test.expectedOutput);
+                    });
+    });
+            }
+        });
     });
 
     describe('liberty', () => {
