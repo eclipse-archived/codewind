@@ -47,11 +47,20 @@ async function injectMetricsCollectorIntoNodeProject(projectDir) {
 }
 
 function getNewContentsOfPackageJson(originalContentsOfPackageJson) {
+  const newContentsOfPackageJson = deepClone(originalContentsOfPackageJson);
+
+  newContentsOfPackageJson.scripts.start = getNewStartScript(originalContentsOfPackageJson.scripts.start);
+  // TODO: change to production repo when ready
+  newContentsOfPackageJson.dependencies['appmetrics-prometheus'] = "git+https://git@github.com/rwalle61/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint";
+  newContentsOfPackageJson.dependencies['cors'] = "^2.8.5"; // Needed because appmetrics-prometheus depends on `cors`, and for some reason when the project runs `npm install`, it doesn't install `cors`
+  return newContentsOfPackageJson;
+}
+
+function getNewStartScript(originalStartScript) {
   const metricsCollectorScript = '-r appmetrics-prometheus/attach';
 
-  const originalStartScript = originalContentsOfPackageJson.scripts.start;
   if (originalStartScript.includes(metricsCollectorScript)) {
-    return originalContentsOfPackageJson;
+    return originalStartScript;
   }
 
   const splitOriginalStartScript = originalStartScript.split(' ');
@@ -61,13 +70,7 @@ function getNewContentsOfPackageJson(originalContentsOfPackageJson) {
   newStartScript.splice(indexOfNodeCmd + 1, 0, metricsCollectorScript);
   newStartScript = newStartScript.join(' ');
 
-  const newContentsOfPackageJson = deepClone(originalContentsOfPackageJson);
-
-  newContentsOfPackageJson.scripts.start = newStartScript;
-  // TODO: change to production repo when ready
-  newContentsOfPackageJson.dependencies['appmetrics-prometheus'] = "git+https://git@github.com/rwalle61/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint";
-  newContentsOfPackageJson.dependencies['cors'] = "^2.8.5"; // Needed because appmetrics-prometheus depends on `cors`, and for some reason when the project runs `npm install`, it doesn't install `cors`
-  return newContentsOfPackageJson;
+  return newStartScript;
 }
 
 async function injectMetricsCollectorIntoLibertyProject(projectDir) {
