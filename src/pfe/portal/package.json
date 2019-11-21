@@ -16,7 +16,6 @@
   "dependencies": {
     "async-lock": "^1.2.0",
     "body-parser": "^1.18.2",
-    "btoa": "^1.2.1",
     "dateformat": "^3.0.3",
     "deep-equal": "^1.0.1",
     "dockerode": "^2.5.2",

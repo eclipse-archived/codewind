@@ -71,18 +71,15 @@ class Logger {
 
   logRequest(req) {
     const route = `${req.method} ${req.path}`;
-    let isRegistrySecretRoute = false;
-    const postRegistrySecretRoute = "POST /api/v1/registrysecrets";
-    // We handle route POST /api/v1/registrysecrets as a special condition
-    // because the API takes password in its body, so never log it on trace
-    if(route === postRegistrySecretRoute) {
-      isRegistrySecretRoute = true;
-    }
+    // We are removing credentials from req body because
+    // POST /api/v1/registrysecrets takes credentials in its body
+    // and we do not want to log this information to the PFE log
+    const {credentials, ...reqBodyWithoutCredentials} = req.body;
     let msg = `${route} called`;
-    if (!this.log.isTraceEnabled() || isRegistrySecretRoute) {
+    if (!this.log.isTraceEnabled()) {
       this.log.debug(msg);
     } else {
-      msg += ` with \n req.body ${util.inspect(req.body)}`;
+      msg += ` with \n req.body ${util.inspect(reqBodyWithoutCredentials)}`;
       if (!isEmpty(req.query)) {
         msg += `, and \n req.query ${util.inspect(req.query)}`;
       }
@@ -97,20 +94,13 @@ class Logger {
   logResponse(req, res) {
     res.on('finish', () => {
       const route = `${req.method} ${req.path}`;
-      const reqBody = util.inspect(res.req.body);
-      let isRegistrySecretRoute = false;
-      const postRegistrySecretRoute = "POST /api/v1/registrysecrets";
-      // We handle route POST /api/v1/registrysecrets as a special condition
-      // because the API takes password in its body, so never log it on trace
-      if(route === postRegistrySecretRoute) {
-        isRegistrySecretRoute = true;
-      }
+      // We are removing credentials from req body because
+      // POST /api/v1/registrysecrets takes credentials in its body
+      // and we do not want to log this information to the PFE log
+      const {credentials, ...reqBodyWithoutCredentials} = res.req.body;
+      const reqBody = util.inspect(reqBodyWithoutCredentials);
 
-      if (!isRegistrySecretRoute) {
-        this.log.trace(`responded to ${route} with status ${res.statusCode} and body ${reqBody}`);
-      } else {
-        this.log.trace(`responded to ${route} with status ${res.statusCode}`);
-      }
+      this.log.trace(`responded to ${route} with status ${res.statusCode} and body ${reqBody}`);
     });
   }
 }

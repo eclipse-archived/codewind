@@ -1198,14 +1198,11 @@ paths:
               type: object
               required:
                 - url
-                - username
-                - password
+                - credentials
               properties:
                 url:
                   type: string
-                username:
-                  type: string
-                password:
+                credentials:
                   type: string
       responses:
         201:

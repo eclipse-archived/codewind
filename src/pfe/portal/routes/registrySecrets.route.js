@@ -12,6 +12,7 @@ const express = require('express');
 const router = express.Router();
 const Logger = require('../modules/utils/Logger');
 const log = new Logger(__filename);
+const { validateReq } = require('../middleware/reqValidator');
 
 /**
  * API Function to get the Docker Registry
@@ -33,21 +34,14 @@ router.get('/api/v1/registrysecrets', async function (req, res) {
 /**
  * API Function to set the Docker Registry
  */
-router.post('/api/v1/registrysecrets', async function (req, res) {
+router.post('/api/v1/registrysecrets', validateReq, async function (req, res) {
   try {
     let user = req.cw_user;
     log.debug(`POST /api/v1/registrysecrets called`);
-    const username = req.sanitizeBody('username');
-    const password = req.sanitizeBody('password');
+    const credentials = req.sanitizeBody('credentials');
     const url = req.sanitizeBody('url');
 
-    if (!username || !password || !url) {
-      const msg = "Missing required parameters. username, password and url are required to be provided.";
-      res.status(400).send(msg);
-      return;
-    }
-
-    const retval = await user.setupRegistrySecret(username, password, url);
+    const retval = await user.setupRegistrySecret(credentials, url);
     res.status(retval.statusCode).send(retval.body);
   } catch (error) {
     const msg = "Failed to set up the Codewind Registry Secret";
@@ -60,17 +54,11 @@ router.post('/api/v1/registrysecrets', async function (req, res) {
 /**
  * API Function to delete the Docker Registry
  */
-router.delete('/api/v1/registrysecrets', async function (req, res) {
+router.delete('/api/v1/registrysecrets', validateReq, async function (req, res) {
   try {
     let user = req.cw_user;
     log.debug(`DELETE /api/v1/registrysecrets called`);
     const url = req.sanitizeBody('url');
-
-    if (!url) {
-      const msg = "Missing required parameters. url is required to be provided.";
-      res.status(400).send(msg);
-      return;
-    }
 
     const retval = await user.removeRegistrySecret(url);
     res.status(retval.statusCode).send(retval.body);

@@ -12,7 +12,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const crypto = require('crypto');
-const btoa = require("btoa");
 const ProjectList = require('./ProjectList');
 const FileWatcher = require('./FileWatcher');
 const LoadRunner = require('./LoadRunner');
@@ -673,17 +672,29 @@ module.exports = class User {
   /**
    * Function to setup the Docker config file and Kube secret
    */
-  async setupRegistrySecret(username, password, url) {
-    log.info("Setting up the Docker Registry secret for url: " + url + " and username: " + username);
+  async setupRegistrySecret(credentials, url) {
+    const credentialsJSON = JSON.parse(Buffer.from(credentials, "base64").toString());
+    if (credentialsJSON.username == undefined || credentialsJSON.password == undefined) {
+      const msg = "POST /api/v1/registrysecrets encoded credentials obj did not have either username or password";
+      log.error(msg);
+      const retval = {
+        statusCode: 400,
+        body: msg
+      };
+      return retval;
+    }
+    const username = credentialsJSON.username;
+    const password = credentialsJSON.password;
+    log.info("Setting up the Docker Registry secret for url: " + url);
     let createKubeSecret = false;
     const registrySecretList = [];
     
     try {
       const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
-      const encodedAuth = btoa(username + ":" + password);
+      const encodedAuth = Buffer.from(username + ":" + password).toString("base64");
 
       if (isDockerConfigFilePresent) {
-        log.debug("The Docker config file exists, reading the contents");
+        log.info("The Docker config file exists, reading the contents");
         const jsonObj = await fs.readJson(this.dockerConfigFile);
 
         for (let key in jsonObj.auths) {
@@ -775,7 +786,7 @@ module.exports = class User {
       if (isDockerConfigFilePresent) {
         log.info("The Docker config file exists, reading contents");
         const jsonObj = await fs.readJson(this.dockerConfigFile);
-        const encodedDockerConfig = btoa(JSON.stringify(jsonObj));
+        const encodedDockerConfig = Buffer.from(JSON.stringify(jsonObj)).toString("base64");
 
         // Get the Kube Secret and delete if it exists
         let resp = await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secret.get({ qs: { labelSelector: "app=codewind-pfe" } });
