@@ -37,9 +37,9 @@ export function projectActionTest(socket: SocketIO, projData: projectsController
             "action": "disableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 200,
-            "socketEvent": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang]) ? [] : [eventConfigs.events.projectChanged],
-            "eventKeys": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
-            "result": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [{
+            "socketEvent": process.env.IN_K8 || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang]) ? [] : [eventConfigs.events.projectChanged],
+            "eventKeys": process.env.IN_K8 || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"]],
+            "result": process.env.IN_K8 || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }]
@@ -48,9 +48,9 @@ export function projectActionTest(socket: SocketIO, projData: projectsController
             "action": "enableautobuild",
             "returnKeys": ["statusCode", "status"],
             "statusCode": 202,
-            "socketEvent": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
-            "eventKeys": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
-            "result": !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [{
+            "socketEvent": process.env.IN_K8 || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [eventConfigs.events.projectChanged, eventConfigs.events.statusChanged],
+            "eventKeys": process.env.IN_K8 || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [["operationId", "projectID", "ignoredPaths", "status", "host", "ports", "containerId", "logs"], ["projectID", "appStatus"]],
+            "result": process.env.IN_K8 || !(project_configs.autoBuildEventCapabailities[projectTemplate] && project_configs.autoBuildEventCapabailities[projectTemplate][projectLang])  ? [] : [{
                 "projectID": projData.projectID,
                 "status": "success"
             }, {
