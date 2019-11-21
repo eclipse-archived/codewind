@@ -234,7 +234,7 @@ describe('MetricsService.js', () => {
                         const output = funcToTest(test.input);
                         output.should.deep.equal(test.expectedOutput);
                     });
-    });
+                });
             }
         });
     });
@@ -427,8 +427,8 @@ describe('MetricsService.js', () => {
                     },
                 ],
             };
-            describe(`<originalBuildPlugins> don't include javametrics-dash`, () => {
-                it(`returns an object representing pom.xml build plugins injected with metrics collector`, () => {
+            describe(`<originalBuildPlugins> don't include our metrics collector plugin`, () => {
+                it(`returns an object representing pom.xml build plugins including the metrics collector plugin`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
                     const originalBuildPlugins = [];
                     const output = funcToTest(originalBuildPlugins);
@@ -438,7 +438,7 @@ describe('MetricsService.js', () => {
                     ]);
                 });
             });
-            describe(`<originalBuildPlugins> already include javametrics-dash`, () => {
+            describe(`<originalBuildPlugins> already include our metrics collector plugin`, () => {
                 it(`returns an object representing the original pom.xml build plugins`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
                     const originalBuildPlugins = [metricsCollectorBuildPlugin];
