@@ -498,8 +498,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                 await fs.writeFileSync(dockerfile, fileOutput.replace(new RegExp(`EXPOSE ${defaultInternalPort}`, "g"), `EXPOSE ${testExposedPort}`), {encoding: "utf-8"});
             }
 
-            if (process.env.IN_K8 && app_configs.templateNames[projectLang]) {
-                const projectTemplateDir = path.join(projData.location, "chart", app_configs.templateNames[projectLang]);
+            if (process.env.IN_K8 && app_configs.templateNames[projectTemplate] && app_configs.templateNames[projectTemplate][projectLang]) {
+                const projectTemplateDir = path.join(projData.location, "chart", app_configs.templateNames[projectTemplate][projectLang]);
                 const files = ["values.yaml"];
                 for (const file of files) {
                     const fileOutput = await fs.readFileSync(path.join(projectTemplateDir, file), {encoding: "utf-8"});
@@ -525,8 +525,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                 await fs.writeFileSync(dockerfile, fileOutput.replace(new RegExp(`EXPOSE ${testExposedPort}`, "g"), `EXPOSE ${defaultInternalPort}`), {encoding: "utf-8"});
             }
 
-            if (process.env.IN_K8 && app_configs.templateNames[projectLang]) {
-                const projectTemplateDir = path.join(projData.location, "chart", app_configs.templateNames[projectLang]);
+            if (process.env.IN_K8 && app_configs.templateNames[projectTemplate] && app_configs.templateNames[projectTemplate][projectLang]) {
+                const projectTemplateDir = path.join(projData.location, "chart", app_configs.templateNames[projectTemplate][projectLang]);
                 const files = ["values.yaml"];
                 for (const file of files) {
                     const fileOutput = await fs.readFileSync(path.join(projectTemplateDir, file), {encoding: "utf-8"});
