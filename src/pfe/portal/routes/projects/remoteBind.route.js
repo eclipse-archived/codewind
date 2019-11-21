@@ -24,6 +24,10 @@ const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
 const log = new Logger(__filename);
 const { validateReq } = require('../../middleware/reqValidator');
+let timerbindstart = 0;
+let timerbindend = 0;
+let timersyncstart = 0;
+let timersyncend = 0;
 
 /**
  * API Function to begin binding a given project that is not currently
@@ -40,6 +44,7 @@ const { validateReq } = require('../../middleware/reqValidator');
 router.post('/api/v1/projects/bind/start', async function (req, res) {await bindStart(req, res)});
 
 async function bindStart(req, res) {
+  timerbindstart = Date.now();
   let newProject;
   const user = req.cw_user;
   try {
@@ -152,6 +157,9 @@ async function bindStart(req, res) {
 router.put('/api/v1/projects/:id/upload', async (req, res) => {await uploadFile(req,res)});
 
 async function uploadFile(req, res) {
+  if (timersyncstart == 0) {
+    timersyncstart = Date.now();
+  }
   const projectID = req.sanitizeParams('id');
   const user = req.cw_user;
   try {
@@ -224,6 +232,12 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         res.sendStatus(200);
 
         await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
+
+        timersyncend = Date.now();
+        let timersynctime = (timersyncend - timersyncstart) / 1000;
+        log.info(`Total time to sync project ${project.name} to build container is ${timersynctime} seconds`);
+        timersyncstart = 0;
+
       }
     } else {
       res.sendStatus(404);
@@ -232,6 +246,9 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
     log.error(err);
     res.status(500).send(err);
   }
+
+
+
 });
 
 function getMode(project) {
@@ -369,6 +386,12 @@ async function bindEnd(req, res) {
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     // now move temp project to real project
     await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory), getMode(project));
+
+    // debug logic to identify bind time
+    timerbindend = Date.now();
+    let totalbindtime = (timerbindend - timerbindstart) / 1000;
+    log.info(`Total time to bind project ${project.name} is ${totalbindtime} seconds`);
+    timersyncstart = 0;
 
     let updatedProject = {
       projectID,
