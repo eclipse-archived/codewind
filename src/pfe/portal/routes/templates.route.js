@@ -9,7 +9,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const express = require('express');
-
 const { validateReq } = require('../middleware/reqValidator');
 const Logger = require('../modules/utils/Logger');
 const TemplateError = require('../modules/utils/errors/TemplateError');
@@ -23,16 +22,13 @@ let updatePromise = null;
  * @return the set of language extensions as a JSON array of strings
  */
 router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
-  const user = req.cw_user;
-  const { projectStyle, showEnabledOnly } = req.query;
-  const templateController = user.templates;
+  const { templates: templateController } = req.cw_user;
+  const { showEnabledOnly, projectStyle } = req.query;
   try {
-    const templates = await templateController.getTemplates({ projectStyle, showEnabledOnly });
-
+    const templates = await templateController.getTemplates(showEnabledOnly, projectStyle);
     if (templates.length == 0) {
       log.warn('No templates found');
-      res.sendStatus(204);
-      return;
+      return res.sendStatus(204);
     }
     res.status(200).json(templates);
   } catch (error) {
@@ -46,27 +42,28 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
  * @return the set of language extensions as a JSON array of strings
  */
 router.get('/api/v1/templates/repositories', async (req, res, _next) => {
-  const user = req.cw_user;
+  const { templates } = req.cw_user;
   if (!updatePromise)
-    updatePromise = user.templates.updateRepoListWithReposFromProviders();
+    updatePromise = templates.updateRepoListWithReposFromProviders();
   await updatePromise;
   await sendRepositories(req, res, _next);
 });
 
 router.post('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
-  const user = req.cw_user;
+  const { templates: templatesController } = req.cw_user;
   const repositoryName = req.sanitizeBody('name')
   const repositoryUrl = req.sanitizeBody('url');
   const repositoryDescription = req.sanitizeBody('description');
   const isRepoProtected = req.sanitizeBody('protected');
 
   try {
-    await user.templates.addRepository(
+    await templatesController.addRepository(
       repositoryUrl,
       repositoryDescription,
       repositoryName,
       isRepoProtected
     );
+    await sendRepositories(req, res, _next);
   } catch (error) {
     log.error(error);
     const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON', 'ADD_TO_PROVIDER_FAILURE'];
@@ -74,30 +71,27 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
       res.status(400).send(error.message);
       return;
     }
-    throw error;
+    res.status(500).send(error.message);
   }
-  await sendRepositories(req, res, _next);
 });
 
 router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
-  const user = req.cw_user;
+  const { templates } = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
-  await user.templates.deleteRepository(repositoryUrl);
+  await templates.deleteRepository(repositoryUrl);
   await sendRepositories(req, res, _next);
 });
 
 function sendRepositories(req, res, _next) {
-  const user = req.cw_user;
-  const templatesController = user.templates;
-  const repositoryList = templatesController.getRepositories();
+  const { templates } = req.cw_user;
+  const repositoryList = templates.getRepositories();
   res.status(200).json(repositoryList);
 }
 
 router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, res) => {
-  const user = req.cw_user;
-  const templateController = user.templates;
+  const { templates } = req.cw_user;
   const requestedOperations = req.body;
-  const operationResults = await templateController.batchUpdate(requestedOperations);
+  const operationResults = await templates.batchUpdate(requestedOperations);
   res.status(207).json(operationResults);
 });
 
@@ -105,9 +99,8 @@ router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, re
  * @return {[String]} the list of template styles
  */
 router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
-  const user = req.cw_user;
-  const templateController = user.templates;
-  const styles = await templateController.getAllTemplateStyles();
+  const { templates } = req.cw_user;
+  const styles = await templates.getAllTemplateStyles();
   res.status(200).json(styles);
 });
 

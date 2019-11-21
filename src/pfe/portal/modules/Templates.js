@@ -52,7 +52,8 @@ module.exports = class Templates {
   constructor(workspace) {
     // If this exists it overrides the contents of DEFAULT_REPOSITORY_LIST
     this.projectTemplates = [];
-    this.needsRefresh = true;
+    // If a repository is added or removed then update the template list on the next GetTemplates
+    this.projectTemplatesNeedsRefresh = true;
     this.repositoryFile = path.join(workspace, '.config/repository_list.json');
     this.repositoryList = DEFAULT_REPOSITORY_LIST;
     this.providers = {};
@@ -60,42 +61,30 @@ module.exports = class Templates {
 
   async initializeRepositoryList() {
     try {
+      let { repositories } = this;
       if (await cwUtils.fileExists(this.repositoryFile)) {
-        this.repositoryList = await fs.readJson(this.repositoryFile); // eslint-disable-line require-atomic-updates
-        await this.updateRepoListWithReposFromProviders();
-        this.repositoryList = await fetchAllRepositoryDetails(this.repositoryList); // eslint-disable-line require-atomic-updates
-        this.needsRefresh = true;
-      } else {
-        await this.updateRepoListWithReposFromProviders();
-        this.repositoryList = await fetchAllRepositoryDetails(this.repositoryList); // eslint-disable-line require-atomic-updates
-        await this.writeRepositoryList();
+        repositories = await fs.readJson(this.repositoryFile); // eslint-disable-line require-atomic-updates
+        this.projectTemplatesNeedsRefresh = true;
       }
+      await this.updateRepoListWithReposFromProviders();
+      repositories = await fetchAllRepositoryDetails(this.repositoryList); // eslint-disable-line require-atomic-updates
+      this.repositories = repositories;
+      await this.writeRepositoryList();
     } catch (err) {
-      log.error(`Error reading repository list from ${this.repositoryFile}: ${err}`)
+      log.error(`Error initalizing repository list: ${err}`);
     }
   }
-  async getTemplates({ projectStyle, showEnabledOnly }) {
-    let templates = (showEnabledOnly === 'true')
-      ? await this.getEnabledTemplates()
-      : await this.getAllTemplates();
 
-    if (projectStyle) {
-      templates = filterTemplatesByStyle(templates, projectStyle);
+  getTemplates(showEnabledOnly, projectStyle) {
+    let templates = this.projectTemplates;
+    if (this.projectTemplatesNeedsRefresh) {
+      const repositories = (String(showEnabledOnly) === 'true')
+        ? this.getEnabledRepositories()
+        : this.repositoryList;
+      templates = this.getTemplatesFromRepos(repositories);
     }
+    if (projectStyle) return filterTemplatesByStyle(templates, projectStyle);
     return templates;
-  }
-
-  async getEnabledTemplates() {
-    await this.updateRepoListWithReposFromProviders();
-    return this.getTemplatesFromRepos(this.getEnabledRepositories());
-  }
-
-  async getAllTemplates() {
-    if (!this.needsRefresh) {
-      return this.projectTemplates;
-    }
-    await this.updateRepoListWithReposFromProviders();
-    return this.getTemplatesFromRepos(this.repositoryList);
   }
 
   async updateRepoListWithReposFromProviders() {
@@ -178,16 +167,6 @@ module.exports = class Templates {
     return repo;
   }
 
-  enableRepository(url) {
-    const repo = this.getRepository(url);
-    repo.enabled = true;
-  }
-
-  disableRepository(url) {
-    const repo = this.getRepository(url);
-    repo.enabled = false;
-  }
-
   async batchUpdate(requestedOperations) {
     const operationResults = requestedOperations.map(operation => this.performOperation(operation));
     await this.writeRepositoryList();
@@ -198,7 +177,7 @@ module.exports = class Templates {
     const { op, url, value } = operation;
     let operationResult = {};
     if (op === 'enable') {
-      operationResult = this.performEnableOrDisableOperation({ url, value });
+      operationResult = this.enableOrDisableRepository({ url, value });
     }
     operationResult.requestedOperation = operation;
     return operationResult;
@@ -208,7 +187,7 @@ module.exports = class Templates {
    * @param {JSON} { url (URL of template repo to enable or disable), value (true|false)}
    * @returns {JSON} { status, error (optional) }
    */
-  performEnableOrDisableOperation({ url, value }) {
+  enableOrDisableRepository({ url, value }) {
     if (!this.doesRepositoryExist(url)) {
       return {
         status: 404,
@@ -216,11 +195,8 @@ module.exports = class Templates {
       };
     }
     try {
-      if (value === 'true') {
-        this.enableRepository(url);
-      } else {
-        this.disableRepository(url);
-      }
+      const repo = this.getRepository(url);
+      repo.enabled = value;
       return {
         status: 200
       };
@@ -275,7 +251,7 @@ module.exports = class Templates {
     this.repositoryList.push(newRepo);
     try {
       await this.writeRepositoryList();
-      this.needsRefresh = true;
+      this.projectTemplatesNeedsRefresh = true;
     }
     catch (err) {
       // rollback
@@ -299,7 +275,7 @@ module.exports = class Templates {
       this.repositoryList = repositoryList;
       try {
         await this.writeRepositoryList();
-        this.needsRefresh = true;
+        this.projectTemplatesNeedsRefresh = true;
       }
       catch (err) {
         // rollback
@@ -315,7 +291,7 @@ module.exports = class Templates {
       this.providers[name] = provider;
   }
 
-  async addRepositoryToProviders(repo) {
+  addRepositoryToProviders(repo) {
 
     const promises = [];
 
@@ -335,7 +311,7 @@ module.exports = class Templates {
     return Promise.all(promises);
   }
 
-  async removeRepositoryFromProviders(repo) {
+  removeRepositoryFromProviders(repo) {
 
     const promises = [];
 
@@ -356,7 +332,7 @@ module.exports = class Templates {
   }
 
   async getAllTemplateStyles() {
-    const templates = await this.getAllTemplates();
+    const templates = await this.getTemplates(false, false);
     return getTemplateStyles(templates);
   }
 }

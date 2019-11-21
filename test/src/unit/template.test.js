@@ -52,8 +52,99 @@ const mockRepos = {
     },
 };
 const mockRepoList = Object.values(mockRepos);
-
 describe('Templates.js', function() {
+    suppressLogOutput(Templates);
+    describe('getTemplates(showEnabledOnly, projectStyle)', function() {
+        it('Gets all templates', async function() {
+            this.timeout(10000);
+            const templateController = new Templates('');
+            const templateList = await templateController.getTemplates(false, false);
+            templateList.length.should.be.at.least(defaultCodewindTemplates.length);
+        });
+        it('Gets only enabled templates', async function() {
+            this.timeout(10000);
+            const templateController = new Templates('');
+            const { repositoryList } = templateController;
+            for (let i = 0; i < repositoryList.length; i++) {
+                const repository = repositoryList[i];
+                repository.enabled = false;
+                repository.enabled.should.be.false;
+            }
+            const templateList = await templateController.getTemplates(true, false);
+            templateList.length.should.equal(0);
+        });
+        it('Gets only templates of a specific style', async function() {
+            this.timeout(10000);
+            const templateController = new Templates('');
+            templateController.projectTemplatesNeedsRefresh = false;
+            templateController.projectTemplates = [
+                {
+                    name: 'project1',
+                    projectStyle: 'otherprojectstyle',
+                },
+                {
+                    name: 'project2',
+                    projectStyle: 'projectstyle',
+                },
+            ];
+            const templateList = await templateController.getTemplates(false, 'projectstyle');
+            templateList[0].name.should.equal('project2');
+            templateList.length.should.equal(1);
+        });
+        describe('Verifys the Codewind default templates are there and all others contain the required keys', function() {
+            it('returns the default templates', async function() {
+                this.timeout(30000);
+                const templateController = new Templates('');
+                const output = await templateController.getTemplates(false, false);
+                output.should.contain.deep.members(defaultCodewindTemplates);
+                for (let i = 0; i < output.length; i++) {
+                    const element = output[i];
+                    // List of keys required are generated from the API docs
+                    element.should.contain.keys('label', 'description', 'language', 'url', 'projectType');
+                }
+            });
+        });
+        describe('and add an extra bad template repo', function() {
+            let templateController;
+            before(() => {
+                templateController = new Templates('');
+                templateController.repositoryList = [
+                    sampleRepos.codewind,
+                    { url: 'https://www.google.com/' },
+                ];
+            });
+            it('returns only the default templates', async function() {
+                const output = await templateController.getTemplates(false, false);
+                output.should.deep.equal(defaultCodewindTemplates);
+            });
+        });
+        describe('and add a provider providing a valid template repo', function() {
+            let templateController;
+            before(async() => {
+                fs.ensureDirSync(testWorkspaceConfigDir);
+                templateController = new Templates(testWorkspaceDir);
+                await templateController.writeRepositoryList();
+                templateController.addProvider('valid repo', {
+                    getRepositories() {
+                        return [sampleRepos.appsody];
+                    },
+                });
+            });
+            after(() => {
+                fs.removeSync(testWorkspaceDir);
+            });
+            it('returns the default templates and more', async function() {
+                this.timeout = 10000;
+                const output = await templateController.getTemplates(false, false);
+                output.should.include.deep.members(defaultCodewindTemplates);
+                (output.length).should.be.above(defaultCodewindTemplates.length);
+            });
+        });
+    });
+});
+
+
+describe.skip('Templates.js', function() {
     suppressLogOutput(Templates);
     describe('getAllTemplateStyles() when Codewind is aware of:', function() {
         describe('Codewind and Appsody templates', function() {
@@ -96,73 +187,6 @@ describe('Templates.js', function() {
             it(`returns ['Appsody']`, async function() {
                 const output = await templateController.getAllTemplateStyles();
                 output.should.deep.equal(['Appsody']);
-            });
-        });
-    });
-    describe('getAllTemplates()', function() {
-        describe('Verifys the Codewind default templates are there and all others contain the required keys', function() {
-            it('returns the default templates', async function() {
-                this.timeout(30000);
-                const templateController = new Templates('');
-                const output = await templateController.getAllTemplates();
-                output.should.contain.deep.members(defaultCodewindTemplates);
-                for (let i = 0; i < output.length; i++) {
-                    const element = output[i];
-                    // List of keys required are generated from the API docs
-                    element.should.contain.keys('label', 'description', 'language', 'url', 'projectType');
-                }
-            });
-        });
-        describe('and add an extra template repo', function() {
-            let templateController;
-            before(() => {
-                templateController = new Templates('');
-                templateController.repositoryList = [
-                    sampleRepos.codewind,
-                    sampleRepos.appsody,
-                ];
-            });
-            it('returns more templates', async function() {
-                this.timeout(30000);
-                const output = await templateController.getAllTemplates();
-                output.should.include.deep.members(defaultCodewindTemplates);
-                (output.length).should.be.above(defaultCodewindTemplates.length);
-            });
-        });
-        describe('and add an extra bad template repo', function() {
-            let templateController;
-            before(() => {
-                templateController = new Templates('');
-                templateController.repositoryList = [
-                    sampleRepos.codewind,
-                    { url: 'https://www.google.com/' },
-                ];
-            });
-            it('returns only the default templates', async function() {
-                const output = await templateController.getAllTemplates();
-                output.should.deep.equal(defaultCodewindTemplates);
-            });
-        });
-        describe('and add a provider providing a valid template repo', function() {
-            let templateController;
-            before(async() => {
-                fs.ensureDirSync(testWorkspaceConfigDir);
-                templateController = new Templates(testWorkspaceDir);
-                await templateController.writeRepositoryList();
-                templateController.addProvider('valid repo', {
-                    getRepositories() {
-                        return [sampleRepos.appsody];
-                    },
-                });
-            });
-            after(() => {
-                fs.removeSync(testWorkspaceDir);
-            });
-            it('returns the default templates and more', async function() {
-                this.timeout = 10000;
-                const output = await templateController.getAllTemplates();
-                output.should.include.deep.members(defaultCodewindTemplates);
-                (output.length).should.be.above(defaultCodewindTemplates.length);
             });
         });
     });

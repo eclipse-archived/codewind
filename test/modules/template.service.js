@@ -106,25 +106,8 @@ const sampleRepos = {
         protected: true,
         projectStyles: ['Codewind'],
         name: 'Default templates',
-    },
-    appsody: {
-        url: 'https://raw.githubusercontent.com/kabanero-io/codewind-appsody-templates/master/devfiles/index.json',
-        description: 'Appsody extension for Codewind',
-        enabled: true,
-        projectStyles: ['Appsody'],
-    },
-    fromAppsodyExtension: {
-        url: 'https://github.com/appsody/stacks/releases/latest/download/incubator-index.json',
-        description: 'Appsody Stacks - appsodyhub',
-        enabled: true,
-        protected: true,
-        projectStyles: ['Appsody'],
-    },
+    }
 };
-const defaultRepoList = [
-    sampleRepos.codewind,
-    sampleRepos.fromAppsodyExtension,
-];
 
 const validUrlNotPointingToIndexJson = 'https://support.oneskyapp.com/hc/en-us/article_attachments/202761627/example_1.json';
 
@@ -242,7 +225,6 @@ module.exports = {
     defaultCodewindTemplates,
     styledTemplates,
     sampleRepos,
-    defaultRepoList,
     validUrlNotPointingToIndexJson,
     getTemplateRepos,
     addTemplateRepo,
