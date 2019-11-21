@@ -21,6 +21,7 @@ const cwUtils = require('./utils/sharedFunctions');
 const fw = require('file-watcher');
 const log = new Logger('FileWatcher.js');
 const filewatcher = new fw();
+let updateTimerStart = 0;
 
 /**
  * The FileWatcher class
@@ -388,6 +389,8 @@ module.exports = class FileWatcher {
   }
 
   async projectFileChanged(projectID, timestamp, chunk, chunk_total, eventArray) {
+    updateTimerStart = Date.now();
+    log.info(`${projectID} update start time: ${ updateTimerStart }`)
     try {
       const retval = await filewatcher.updateProjectForNewChange(projectID, timestamp, chunk, chunk_total, eventArray);
       this.logFWReturnedMsg(retval);
@@ -661,4 +664,19 @@ function logEvent(event, projectData) {
   }
   log.debug(`${msg} ${projectData.projectID})`);
   log.trace(`${msg}: ${JSON.stringify(projectData, null, 2)})`);
+  
+  if(updateTimerStart > 0 && event == "projectStatusChanged" && projectData.buildStatus && status == 'success'){
+    let updateBuildTimerEnd = Date.now()
+    log.info(`${projectData.projectID} update->build end time: ${ updateBuildTimerEnd }`)
+    let totalUpdateTime = (updateBuildTimerEnd - updateTimerStart) / 1000;
+    log.info(`${msg} ${projectData.projectID}) total time for update->build: ${ totalUpdateTime } seconds`)
+  }
+  else if(updateTimerStart > 0 && event == "projectStatusChanged" && projectData.appStatus && status == 'started'){
+    let updateCompleteTimerEnd = Date.now()
+    log.info(`${projectData.projectID} update->run end time: ${ updateCompleteTimerEnd }`)
+    let totalUpdateTime = (updateCompleteTimerEnd - updateTimerStart) / 1000;
+    log.info(`${msg} ${projectData.projectID}) total time for update->run: ${ totalUpdateTime } seconds`)
+    updateTimerStart = 0;
+  }
+  
 }
