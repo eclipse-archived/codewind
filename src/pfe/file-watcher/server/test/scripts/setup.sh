@@ -6,6 +6,13 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
+CHE_USER="admin"
+CHE_PASS="admin"
+
+KEYCLOAK_HOSTNAME=keycloak-"$NAMESPACE"."$CLUSTER_IP".nip.io
+TOKEN_ENDPOINT="http://${KEYCLOAK_HOSTNAME}/auth/realms/che/protocol/openid-connect/token"
+CHE_ACCESS_TOKEN=$(curl -sSL --data "grant_type=password&client_id=che-public&username=${CHE_USER}&password=${CHE_PASS}" ${TOKEN_ENDPOINT} | jq -r '.access_token')
+
 # Set up variables
 cd ../../../../../
 CW_DIR=$(pwd)
