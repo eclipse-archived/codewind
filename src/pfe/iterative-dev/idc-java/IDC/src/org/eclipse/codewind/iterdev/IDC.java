@@ -542,7 +542,7 @@ public class IDC {
 		StatusTracker.updateProjectState(context, "app", "starting", null, null);
 		
 
-		String logPathPrefix = HOST_OS.contains("windows") ? "/tmp/liberty/" : "/home/default/app/mc-target/";
+		String logPathPrefix = context.isWin() ? "/tmp/liberty/" : "/home/default/app/mc-target/";
 		String messagesLog = logPathPrefix + "liberty/wlp/usr/servers/defaultServer/logs/messages.log";
 		Logger.info("Touching application messages log: " + messagesLog);
 		boolean logFileTouched = BuildApplicationTask.touchLogFile(curRunCmd, messagesLog, context);
