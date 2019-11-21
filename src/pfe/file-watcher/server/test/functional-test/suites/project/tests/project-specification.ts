@@ -101,7 +101,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
                         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-                        if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
+                        if (process.env.IN_K8 && (project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") || projectTemplate === app_configs.codewindTemplates.odo) {
                             targetEvents.pop();
                             targetEventDatas.pop();
                         }
@@ -216,7 +216,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-        if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
+        if (process.env.IN_K8 && (project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") || projectTemplate === app_configs.codewindTemplates.odo) {
             targetEvents.pop();
             targetEventDatas.pop();
         }
@@ -385,6 +385,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
             let value = valueCheck || comboInUse["value"];
 
             if (setting === "internalPort") {
+                if (projectTemplate === app_configs.codewindTemplates.odo) return; // internal port settings are not available for odo projects
                 const projectInfo = await projectUtil.getProjectInfo(projData.projectID);
                 await projectUtil.getContainerInfo(projectInfo, true);
                 const containerName = await projectUtil.getContainerName(projectInfo);
@@ -544,6 +545,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
 
         async function afterHookInternalPortTestResetPort(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.createTestTimeout);
+            if (!(project_configs.defaultInternalPorts[projectTemplate] && project_configs.defaultInternalPorts[projectTemplate][projectLang])) return;
             await runProjectSpecificationSettingTest(combinations["combo1"], project_configs.defaultInternalPorts[projectTemplate][projectLang]);
 
             const action = project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && !process.env.IN_K8 ? "restart" : "build";
@@ -564,12 +566,12 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
 
         async function afterHookContextRootTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
-            await runProjectSpecificationSettingTest(combinations["combo3"], project_configs.defaultContextRoot[projectTemplate][projectLang] || project_configs.defaultHealthCheckEndPoint);
+            await runProjectSpecificationSettingTest(combinations["combo3"], project_configs.defaultContextRoot[projectTemplate] && project_configs.defaultContextRoot[projectTemplate][projectLang] ? project_configs.defaultContextRoot[projectTemplate][projectLang] : project_configs.defaultHealthCheckEndPoint);
         }
 
         async function afterHookHealthCheckTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
-            await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultContextRoot[projectTemplate][projectLang] || project_configs.defaultHealthCheckEndPoint);
+            await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultContextRoot[projectTemplate] && project_configs.defaultContextRoot[projectTemplate][projectLang] ? project_configs.defaultContextRoot[projectTemplate][projectLang] : project_configs.defaultHealthCheckEndPoint);
         }
 
         async function afterHookMavenProfileTest(hook: any): Promise<void> {
