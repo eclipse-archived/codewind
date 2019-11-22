@@ -29,7 +29,6 @@ const repeatFunc = async (func, numRepetitionsRemaining) => {
     await repeatFunc(func, numRepetitionsRemaining);
     return;
   }
-  console.log('Finished poll');
 }
 
 module.exports = {
