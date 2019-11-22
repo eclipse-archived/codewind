@@ -40,7 +40,7 @@ async function injectMetricsCollectorIntoNodeProject(projectDir) {
   const originalContentsOfPackageJson = await fs.readJSON(pathToPackageJson);
 
   const newContentsOfPackageJson = getNewContentsOfPackageJson(originalContentsOfPackageJson);
-  // TODO: change to trace
+  // TODO: change this (and others below) to trace
   log.debug(`Injecting metrics collector into project's package.json, which is now ${util.inspect(newContentsOfPackageJson)}`);
 
   await fs.writeJSON(pathToPackageJson, newContentsOfPackageJson, { spaces: 2 });
@@ -52,7 +52,6 @@ function getNewContentsOfPackageJson(originalContentsOfPackageJson) {
   newContentsOfPackageJson.scripts.start = getNewStartScript(originalContentsOfPackageJson.scripts.start);
   // TODO: change to production repo when ready
   newContentsOfPackageJson.dependencies['appmetrics-prometheus'] = "git+https://git@github.com/rwalle61/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint";
-  newContentsOfPackageJson.dependencies['cors'] = "^2.8.5"; // Needed because appmetrics-prometheus depends on `cors`, and for some reason when the project runs `npm install`, it doesn't install `cors`
   return newContentsOfPackageJson;
 }
 
@@ -119,7 +118,7 @@ async function getPathToApplicationJava(projectDir) {
 async function injectMetricsCollectorIntoApplicationJava(pathToApplicationJava) {
   const originalApplicationJava = await fs.readFile(pathToApplicationJava, 'utf8');
   const newApplicationJava = getNewContentsOfApplicationJava(originalApplicationJava);
-  log.debug(`Injecting metrics collector into project's Application.java, which is now ${util.inspect(newApplicationJava)}`);
+  log.debug(`Injecting metrics collector into project's Application.java, which is now:\n${newApplicationJava}`);
   await fs.writeFile(pathToApplicationJava, newApplicationJava);
 }
 
@@ -147,7 +146,7 @@ async function injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml) {
   const newPomXmlInJsonFormat = getNewContentsOfPomXmlForSpring(originalPomXml);
   const xmlBuilder = new xml2js.Builder();
   const newPomXml = xmlBuilder.buildObject(newPomXmlInJsonFormat);
-  log.debug(`Injecting metrics collector into project's pom.xml, which is now ${util.inspect(newPomXml)}`);
+  log.debug(`Injecting metrics collector into project's pom.xml, which is now:\n${newPomXml}`);
   await fs.writeFile(pathToPomXml, newPomXml);
 }
 
