@@ -63,82 +63,58 @@ module.exports = class Templates {
     try {
       let { repositories } = this;
       if (await cwUtils.fileExists(this.repositoryFile)) {
-        repositories = await fs.readJson(this.repositoryFile); // eslint-disable-line require-atomic-updates
+        repositories = await fs.readJson(this.repositoryFile);
         this.projectTemplatesNeedsRefresh = true;
       }
-      await this.updateRepoListWithReposFromProviders();
-      repositories = await fetchAllRepositoryDetails(this.repositoryList); // eslint-disable-line require-atomic-updates
-      this.repositories = repositories;
-      await this.writeRepositoryList();
+      repositories = await updateRepoListWithReposFromProviders(this.providers, repositories, this.repositoryFile);
+      repositories = await fetchAllRepositoryDetails(this.repositoryList);
+      this.repositoriesList = repositories;
+      await writeRepositoryList(this.repositoryFile, this.repositoryList);
     } catch (err) {
       log.error(`Error initalizing repository list: ${err}`);
     }
   }
 
+  // TEMPLATES
+
   getTemplates(showEnabledOnly, projectStyle) {
+    // this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
     let templates = this.projectTemplates;
     if (this.projectTemplatesNeedsRefresh) {
       const repositories = (String(showEnabledOnly) === 'true')
         ? this.getEnabledRepositories()
         : this.repositoryList;
-      templates = this.getTemplatesFromRepos(repositories);
+      templates = getTemplatesFromRepos(repositories);
     }
     if (projectStyle) return filterTemplatesByStyle(templates, projectStyle);
     return templates;
   }
 
-  async updateRepoListWithReposFromProviders() {
-    const providers = Object.values(this.providers);
-    const providedRepos = await getReposFromProviders(providers);
-
-    const extraRepos = providedRepos.filter(repo =>
-      !this.repositoryList.find(repo2 => repo2.url === repo.url)
-    );
-
-    if (extraRepos.length > 0) {
-      const reposWithCodewindSettings = await Promise.all(
-        extraRepos.map(async repo => {
-          repo.enabled = true;
-          repo.protected = true;
-          const repoWithTemplateStyles = await fetchRepositoryDetails(repo);
-          return repoWithTemplateStyles;
-        })
-      );
-      this.repositoryList = this.repositoryList.concat(reposWithCodewindSettings);
-      await this.writeRepositoryList();
-    }
+  async getAllTemplateStyles() {
+    const templates = await this.getTemplates(false, false);
+    return getTemplateStyles(templates);
   }
 
-  async getTemplatesFromRepos(repos) {
-    let newProjectTemplates = [];
-    await Promise.all(repos.map(async(repo) => {
-      try {
-        const extraTemplates = await getTemplatesFromRepo(repo);
-        newProjectTemplates = newProjectTemplates.concat(extraTemplates);
-      } catch (err) {
-        log.warn(`Error accessing template repository '${repo.url}'. Error: ${util.inspect(err)}`);
-        // Ignore to keep trying other repositories
-      }
-    }));
-    newProjectTemplates.sort((a, b) => {
-      return a.label.localeCompare(b.label);
-    });
-    this.projectTemplates = newProjectTemplates;
-    return this.projectTemplates;
-  }
-
-  // Save the default list to disk so the user can potentially edit it (WHEN CODEWIND IS NOT RUNNING)
-  async writeRepositoryList() {
-    await fs.writeJson(this.repositoryFile, this.repositoryList, { spaces: '  ' });
-    log.info(`Repository list updated.`);
-  }
+  // REPOSITORIES
 
   getRepositories() {
+    // this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
     return this.repositoryList;
   }
 
   getEnabledRepositories() {
     return this.getRepositories().filter(repo => repo.enabled);
+  }
+
+  /**
+   * @param {String} url
+   * @return {JSON} reference to the repo object in this.repositoryList
+   */
+  getRepository(url) {
+    const index = this.getRepositoryIndex(url);
+    if (index < 0) throw new Error(`no repository found with URL '${url}'`);
+    const repo = this.getRepositories()[index];
+    return repo;
   }
 
   doesRepositoryExist(repoUrl) {
@@ -156,20 +132,9 @@ module.exports = class Templates {
     return index;
   }
 
-  /**
-   * @param {String} url
-   * @return {JSON} reference to the repo object in this.repositoryList
-   */
-  getRepository(url) {
-    const index = this.getRepositoryIndex(url);
-    if (index < 0) throw new Error(`no repository found with URL '${url}'`);
-    const repo = this.getRepositories()[index];
-    return repo;
-  }
-
   async batchUpdate(requestedOperations) {
     const operationResults = requestedOperations.map(operation => this.performOperation(operation));
-    await this.writeRepositoryList();
+    await writeRepositoryList(this.repositoryFile, this.repositoryList);
     return operationResults;
   }
 
@@ -226,7 +191,7 @@ module.exports = class Templates {
       throw new TemplateError('DUPLICATE_URL', repoUrl);
     }
 
-    if (!(await doesUrlPointToIndexJson(url))) {
+    if (!(await doesURLPointToIndexJSON(url))) {
       throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', url);
     }
 
@@ -250,7 +215,7 @@ module.exports = class Templates {
     }
     this.repositoryList.push(newRepo);
     try {
-      await this.writeRepositoryList();
+      await writeRepositoryList(this.repositoryFile, this.repositoryList);
       this.projectTemplatesNeedsRefresh = true;
     }
     catch (err) {
@@ -274,7 +239,7 @@ module.exports = class Templates {
       await this.removeRepositoryFromProviders(deleted);
       this.repositoryList = repositoryList;
       try {
-        await this.writeRepositoryList();
+        await writeRepositoryList(this.repositoryFile, this.repositoryList);
         this.projectTemplatesNeedsRefresh = true;
       }
       catch (err) {
@@ -286,55 +251,74 @@ module.exports = class Templates {
     }
   }
 
-  addProvider(name, provider) {
-    if (provider && typeof provider.getRepositories === 'function')
+  // PROVIDERS
+
+  async addProvider(name, provider) {
+    if (provider && typeof provider.getRepositories === 'function') {
       this.providers[name] = provider;
+      this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
+    }
   }
 
   addRepositoryToProviders(repo) {
-
     const promises = [];
-
     for (const provider of Object.values(this.providers)) {
-      
       if (typeof provider.canHandle === 'function') {
-
         // make a new copy to for each provider to be invoked with
         // in case any provider modifies it (which they shouldn't do)
         const copy = Object.assign({}, repo);
-
         if (provider.canHandle(copy) && typeof provider.addRepository === 'function')
           promises.push(provider.addRepository(copy));
       }
     }
-
     return Promise.all(promises);
   }
 
   removeRepositoryFromProviders(repo) {
-
     const promises = [];
-
     for (const provider of Object.values(this.providers)) {
-
       if (typeof provider.canHandle === 'function') {
-
         // make a new copy to for each provider to be invoked with
         // in case any provider modifies it (which they shouldn't do)
         const copy = Object.assign({}, repo);
-        
         if (provider.canHandle(copy) && typeof provider.removeRepository === 'function')
           promises.push(provider.removeRepository(copy));
       }
     }
-
     return Promise.all(promises);
   }
+}
 
-  async getAllTemplateStyles() {
-    const templates = await this.getTemplates(false, false);
-    return getTemplateStyles(templates);
+// FUNCTIONS
+
+// Save the default list to disk so the user can potentially edit it (WHEN CODEWIND IS NOT RUNNING)
+async function writeRepositoryList(repositoryFile, repositoryList) {
+  await fs.ensureFile(repositoryFile);
+  await fs.writeJson(repositoryFile, repositoryList, { spaces: '  ' });
+  log.info(`Repository list updated.`);
+}
+
+async function updateRepoListWithReposFromProviders(providers, repositoryList, repositoryFile) {
+  const providedRepos = await getReposFromProviders(Object.values(providers));
+  
+  const extraRepos = providedRepos.filter(repo =>
+    !repositoryList.find(repo2 => repo2.url === repo.url)
+  );
+  if (extraRepos.length > 0) {
+    
+    const reposWithCodewindSettings = await Promise.all(
+      extraRepos.map(async repo => {
+        repo.enabled = true;
+        repo.protected = true;
+        const repoWithTemplateStyles = await fetchRepositoryDetails(repo);
+        return repoWithTemplateStyles;
+      })
+    );
+    const updatedRepositoryList = repositoryList.concat(reposWithCodewindSettings);
+    await writeRepositoryList(repositoryFile, updatedRepositoryList);
+    return updatedRepositoryList;
   }
+  return repositoryList;
 }
 
 function fetchAllRepositoryDetails(repos) {
@@ -348,7 +332,7 @@ async function fetchRepositoryDetails(repo) {
 
   // Only set the name or description of the repo if not given by the user
   if (!(repo.name && repo.description)){
-    await readRepoTemplatesJSON(newRepo);
+    newRepo = await readRepoTemplatesJSON(newRepo);
   }
 
   if (repo.projectStyles) {
@@ -362,16 +346,14 @@ async function fetchRepositoryDetails(repo) {
 
 async function readRepoTemplatesJSON(repository) {
   if (!repository.url) {
-    throw new Error(`repo '${repository}' must have a URL`);
+    throw new Error(`repository must have a URL`);
   }
 
   const indexUrl = new URL(repository.url);
-
-  // return if repository url points to a local file
+  // return repository untouched if repository url points to a local file
   if ( indexUrl.protocol === 'file:' ) {
-    return;
+    return repository;
   }
-
   const indexPath = indexUrl.pathname;
   const templatesPath = path.dirname(indexPath) + '/' + 'templates.json';
 
@@ -386,61 +368,50 @@ async function readRepoTemplatesJSON(repository) {
 
   const res = await cwUtils.asyncHttpRequest(options, undefined, templatesUrl.protocol === 'https:');
   if (res.statusCode !== 200) {
-    // Return as templates.json may not exist.
-    return;
+    // Return repository untouched as templates.json may not exist.
+    return repository;
   }
 
   try {
     const templateDetails = JSON.parse(res.body);
+    const updatedRepository = repository;
     for (const prop of ['name', 'description']) {
       if (templateDetails.hasOwnProperty(prop)) {
         repository[prop] = templateDetails[prop];
       }
     }
+    return updatedRepository;
   } catch (error) {
     // Log an error but don't throw an exception as this is optional.
     log.error(`URL '${templatesUrl}' should return JSON`);
   }
+  return repository;
+}
+
+async function getTemplatesFromRepos(repos) {
+  let newProjectTemplates = [];
+  await Promise.all(repos.map(async(repo) => {
+    try {
+      const extraTemplates = await getTemplatesFromRepo(repo);
+      newProjectTemplates = newProjectTemplates.concat(extraTemplates);
+    } catch (err) {
+      log.warn(`Error accessing template repository '${repo.url}'. Error: ${util.inspect(err)}`);
+      // Ignore to keep trying other repositories
+    }
+  }));
+  newProjectTemplates.sort((a, b) => {
+    return a.label.localeCompare(b.label);
+  });
+  return newProjectTemplates;
 }
 
 async function getTemplatesFromRepo(repository) {
   if (!repository.url) {
     throw new Error(`repo '${repository}' must have a URL`);
   }
-  const repoUrl = new URL(repository.url);
 
-  let templateSummariesText = '[]';
-  // check if repository url points to a local file and read it accordingly
-  if ( repoUrl.protocol === 'file:' ) {
-    try {
-      if ( await fs.exists(repoUrl.pathname) ) {
-        let data = await fs.readFile(repoUrl.pathname, "utf-8");
-        templateSummariesText = data.toString();
-      }
-    }
-    catch (err) {
-      throw new Error(`repo file '${repoUrl.pathname}' cannot be read`);
-    }
-  }
-  else {
-    const options = {
-      host: repoUrl.host,
-      path: repoUrl.pathname,
-      method: 'GET',
-    }
-    const res = await cwUtils.asyncHttpRequest(options, undefined, repoUrl.protocol === 'https:');
-    if (res.statusCode !== 200) {
-      throw new Error(`Unexpected HTTP status for ${repository}: ${res.statusCode}`);
-    }
-    templateSummariesText = res.body;
-  }
+  const templateSummaries = await getJSONFromURL(repository.url);
 
-  let templateSummaries;
-  try {
-    templateSummaries = JSON.parse(templateSummariesText);
-  } catch (error) {
-    throw new Error(`URL '${repoUrl}' should return JSON`);
-  }
   const templates = templateSummaries.map(summary => {
     const template = {
       label: summary.displayName,
@@ -463,6 +434,37 @@ async function getTemplatesFromRepo(repository) {
     return template;
   });
   return templates;
+}
+
+async function getJSONFromURL(givenURL) {
+  const parsedURL = new URL(givenURL);
+  let templateSummaries;
+  // check if repository url points to a local file and read it accordingly
+  if (parsedURL.protocol === 'file:') {
+    try {
+      if (await fs.pathExists(parsedURL.pathname) ) {
+        templateSummaries = await fs.readJSON(parsedURL.pathname);
+      }
+    } catch (err) {
+      throw new Error(`repo file '${parsedURL}' should return json`);
+    }
+  } else {
+    const options = {
+      host: parsedURL.host,
+      path: parsedURL.pathname,
+      method: 'GET',
+    }
+    const res = await cwUtils.asyncHttpRequest(options, undefined, parsedURL.protocol === 'https:');
+    if (res.statusCode !== 200) {
+      throw new Error(`Unexpected HTTP status for ${givenURL}: ${res.statusCode}`);
+    }
+    try {
+      templateSummaries = JSON.parse(res.body);
+    } catch (error) {
+      throw new Error(`URL '${parsedURL}' should return JSON`);
+    }
+  }
+  return templateSummaries;
 }
 
 function filterTemplatesByStyle(templates, projectStyle) {
@@ -505,39 +507,12 @@ async function getReposFromProviders(providers) {
 }
 
 function isRepo(obj) {
-  return obj.hasOwnProperty('url');
+  return Boolean((obj && obj.hasOwnProperty('url')));
 }
 
-async function doesUrlPointToIndexJson(inputUrl) {
-  const url = new URL(inputUrl); // Throws error if `inputUrl` is not a valid url
-
-  let templateSummariesText = '[]';
-  if ( url.protocol === 'file:' ) {
-    try {
-      if ( await fs.exists(url.pathname) ) {
-        let data = await fs.readFile(url.pathname, "utf-8");
-        templateSummariesText = data.toString();
-      }
-    }
-    catch (err) {
-      throw new Error(`repo file '${url.pathname}' cannot be read`);
-    }
-  }
-  else {
-    const options = {
-      host: url.host,
-      path: url.pathname,
-      method: 'GET',
-    }
-    const res = await cwUtils.asyncHttpRequest(options, undefined, url.protocol === 'https:');
-    if (res.statusCode < 200 || res.statusCode > 299) {
-      return false;
-    }
-    templateSummariesText = res.body
-  }
-
+async function doesURLPointToIndexJSON(inputUrl) {
   try {
-    const templateSummaries = JSON.parse(templateSummariesText);
+    const templateSummaries = await getJSONFromURL(inputUrl);
     if (templateSummaries.some(summary => !isTemplateSummary(summary))) {
       return false;
     }
@@ -545,7 +520,6 @@ async function doesUrlPointToIndexJson(inputUrl) {
     log.warn(error);
     return false
   }
-
   return true;
 }
 
@@ -553,9 +527,3 @@ function isTemplateSummary(obj) {
   const expectedKeys = ['displayName', 'description', 'language', 'projectType', 'location', 'links'];
   return expectedKeys.every(key => obj.hasOwnProperty(key));
 }
-
-module.exports.fetchAllRepositoryDetails = fetchAllRepositoryDetails;
-module.exports.getTemplatesFromRepo = getTemplatesFromRepo;
-module.exports.filterTemplatesByStyle = filterTemplatesByStyle;
-module.exports.getReposFromProviders = getReposFromProviders;
-module.exports.getTemplateStyles = getTemplateStyles;

@@ -106,7 +106,7 @@ const sampleRepos = {
         protected: true,
         projectStyles: ['Codewind'],
         name: 'Default templates',
-    }
+    },
 };
 
 const validUrlNotPointingToIndexJson = 'https://support.oneskyapp.com/hc/en-us/article_attachments/202761627/example_1.json';
