@@ -1190,7 +1190,7 @@ paths:
     post:
       summary: Create a Docker registry secret in Codewind PFE
       description: >
-        This will create or update the Codewind PFE Docker config registry `/root/.docker/config.json`. A Kubernetes secret is then created with the base64 encoded value of the Docker config file and the Service Account is then patched with the created Kubernetes secret.
+        This will create or update the Codewind PFE Docker config registry `/root/.docker/config.json`. In Kubernetes environment, a secret is then created with the base64 encoded value of the Docker config file and the Service Account is then patched with the created Kubernetes secret.
       requestBody:
         content:
           application/json:
@@ -1204,6 +1204,7 @@ paths:
                   type: string
                 credentials:
                   type: string
+                  description: base64 encoded value of object { username:"username", password:"password" }
       responses:
         201:
           description: Successfully created. Returns an updated list of the registry secrets in Codewind PFE.
@@ -1271,7 +1272,7 @@ paths:
     delete:
       summary: Delete a Docker registry secret from Codewind PFE
       description: >
-        This will update the Codewind PFE Docker config registry `/root/.docker/config.json` and remove the specified secret. A new Kubernetes secret is then created with the base64 encoded value of the Docker config file and the Service Account is then patched with the created Kubernetes secret.
+        This will update the Codewind PFE Docker config registry `/root/.docker/config.json` and remove the specified secret. In Kubernetes environment, a secret is then created with the base64 encoded value of the Docker config file and the Service Account is then patched with the created Kubernetes secret.
       requestBody:
         content:
           application/json:

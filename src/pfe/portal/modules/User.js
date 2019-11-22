@@ -58,7 +58,7 @@ module.exports = class User {
     }
     this.secure = true;
     this.dockerConfigFile = "/root/.docker/config.json";
-    this.codewindPFESecretName = "codewind-pfe-docker-registries";
+    this.codewindPFESecretName = "codewind-" + process.env.CHE_WORKSPACE_ID + "-docker-registries";
     // Get the Kube Client context when running in K8s
     if (global.codewind.RUNNING_IN_K8S == true) {
       this.k8client = new K8Client({ config: k8config.getInCluster(), version: '1.9' });
@@ -685,8 +685,7 @@ module.exports = class User {
     }
     const username = credentialsJSON.username;
     const password = credentialsJSON.password;
-    log.info("Setting up the Docker Registry secret for url: " + url);
-    let createKubeSecret = false;
+    log.info("Setting up the Docker Registry secret for url: " + url + " and username: " + username);
     const registrySecretList = [];
     
     try {
@@ -721,7 +720,6 @@ module.exports = class User {
         }
 
         await fs.writeJson(this.dockerConfigFile, jsonObj);
-        createKubeSecret = true;
       } else {
         log.info("The Docker config file does not exist, writing the contents");
         const jsonObj = {"auths":{}}
@@ -732,7 +730,6 @@ module.exports = class User {
         }
 
         await fs.writeJson(this.dockerConfigFile, jsonObj);
-        createKubeSecret = true;
       }
       // Update the registrySecretList to send back to the caller
       const registrySecret = {
@@ -754,8 +751,16 @@ module.exports = class User {
 
     // Only update the Kube secret when running in K8s
     let isServiceAccountPatched = false;
-    if (createKubeSecret && global.codewind.RUNNING_IN_K8S) {
+    if (global.codewind.RUNNING_IN_K8S) {
       isServiceAccountPatched = await this.updateServiceAccountWithDockerRegisrySecret();
+    } else {
+      // we are in local Codewind and we just return
+      log.debug("Codewind Docker Registry List: " + JSON.stringify(registrySecretList));
+      const retval = {
+        statusCode: 201,
+        body: registrySecretList
+      };
+      return retval;
     }
 
     if (isServiceAccountPatched) {
@@ -788,15 +793,15 @@ module.exports = class User {
         const jsonObj = await fs.readJson(this.dockerConfigFile);
         const encodedDockerConfig = Buffer.from(JSON.stringify(jsonObj)).toString("base64");
 
-        // Get the Kube Secret and delete if it exists
-        let resp = await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secret.get({ qs: { labelSelector: "app=codewind-pfe" } });
+        // Get the Kube Secret labeled with app=codewind-pfe and codewindWorkspace=<workspace_id> and delete if it exists
+        let resp = await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secret.get({ qs: { labelSelector: "app=codewind-pfe,codewindWorkspace=" + process.env.CHE_WORKSPACE_ID } });
         if (resp.body.items.length > 0) {
           const secretName = resp.body.items[0].metadata.name;
           await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secrets(secretName).delete();
         }
 
-        // Get the Codewind PFE deployment name and uid labeled with app=codewind-pfe
-        resp = await this.k8client.apis.apps.v1.namespaces(process.env.KUBE_NAMESPACE).deployments.get({ qs: { labelSelector: "app=codewind-pfe" } });
+        // Get the Codewind PFE deployment name and uid labeled with app=codewind-pfe and codewindWorkspace=<workspace_id>
+        resp = await this.k8client.apis.apps.v1.namespaces(process.env.KUBE_NAMESPACE).deployments.get({ qs: { labelSelector: "app=codewind-pfe,codewindWorkspace=" + process.env.CHE_WORKSPACE_ID } });
         const ownerReferenceName = resp.body.items[0].metadata.name;
         const ownerReferenceUID = resp.body.items[0].metadata.uid;
 
@@ -806,9 +811,10 @@ module.exports = class User {
           "kind": "Secret",
           "metadata": {
             "labels": {
-              "app": "codewind-pfe"
+              "app": "codewind-pfe",
+              "codewindWorkspace": process.env.CHE_WORKSPACE_ID
             },
-            "name": `${this.codewindPFESecretName}`,
+            "name": `${this.codewindPFESecretName.substring(0, 62)}`,
             "ownerReferences": [
               {
                 "apiVersion": "apps/v1",
@@ -894,7 +900,6 @@ module.exports = class User {
    * Function to remove the docker registries from PFE
    */
   async removeRegistrySecret(url) {
-    let createKubeSecret = false;
     const registrySecretList = [];
 
     try {
@@ -916,7 +921,6 @@ module.exports = class User {
         }
 
         await fs.writeJson(this.dockerConfigFile, jsonObj);
-        createKubeSecret = true;
         log.info("The Docker config file has been updated for removal of " + url);
       } else {
         // return if there is no Docker Config file, no need to create new Kubernetes Secret or patch the Service Account
@@ -941,8 +945,16 @@ module.exports = class User {
 
     // Only update the Kube secret when running in K8s
     let isServiceAccountPatched = false;
-    if (createKubeSecret && global.codewind.RUNNING_IN_K8S) {
+    if (global.codewind.RUNNING_IN_K8S) {
       isServiceAccountPatched = await this.updateServiceAccountWithDockerRegisrySecret();
+    } else {
+      // we are in local Codewind and we just return
+      log.debug("Codewind Docker Registry List: " + JSON.stringify(registrySecretList));
+      const retval = {
+        statusCode: 200,
+        body: registrySecretList
+      };
+      return retval;
     }
 
     if (isServiceAccountPatched) {

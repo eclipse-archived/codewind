@@ -89,6 +89,18 @@ mkdir -p /root/.docker/
 # If running in Kubernetes, initialize helm
 if [ "$IN_K8" == "true" ]; then
 
+	# Check if there is a secret with labels app=codewind-pfe and codewindWorkspace=<workspace_id>
+	# Create docker config from the secret if it exists, this is done to handle Pod restarts
+	echo "Checking to see if a secret is present with labels app=codewind-pfe,codewindWorkspace="$CHE_WORKSPACE_ID
+	SECRET=$( kubectl get secret --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID )
+	if [[ $SECRET = *$CHE_WORKSPACE_ID* ]]; then
+		SECRET_NAME=$( kubectl get secret --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath="{.items[0].metadata.name}" )
+		echo "A secret with the matching label has been found: $SECRET_NAME"
+		# TO BE ENABLED AS PART OF CODEWIND ISSUE https://github.com/eclipse/codewind/issues/665 WHEN APIS ARE READY TO BE CONSUMED
+		# echo "Creating the Codewind PFE Docker Config with the secret .dockerconfigjson data"
+		# kubectl get secret $SECRET_NAME -o jsonpath="{.data.\.dockerconfigjson}" | base64 --decode > /root/.docker/config.json
+	fi
+
 	# We are going to use a custom tiller in the namespace
 	# because we do not have cluster role binding for our Che
 	# workspace namespace and cannot access the cluster-scoped tiller
