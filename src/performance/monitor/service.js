@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-const { getResData } = require('../utils/request.service');
+const { getResData, makePostRequest } = require('../utils/request.service');
 const { repeatFunc, allPromisesSettled } = require('../utils/utils.service');
 
 // TODO: reset
@@ -32,7 +32,7 @@ const getMetricsFromProject = async (appOrigin) => {
 
   projectData.metrics.fromUser = metricsFromUser;
   projectData.metrics.fromCodewind = metricsFromCodewind;
-}
+};
 
 const getProfilingDataFromProject = async (appOrigin) => {
   const projectData = latestProjectData[appOrigin];
@@ -41,28 +41,42 @@ const getProfilingDataFromProject = async (appOrigin) => {
   }
   const profilingData = await getResData(appOrigin, '/metrics/profiling');
   projectData.profiling = profilingData;
-}
+};
+
+const enableProfilingOnProject = async (appOrigin) => {
+  await makePostRequest(appOrigin, '/metrics/profiling/on');
+};
+
+const disableProfilingOnProject = async (appOrigin) => {
+  await makePostRequest(appOrigin, '/metrics/profiling/off');
+};
+
+const scrapeNodejsProjectData = async (appOrigin) => {
+  await enableProfilingOnProject(appOrigin);
+  await Promise.all([
+    repeatFunc(
+      () => getMetricsFromProject(appOrigin),
+      numPolls,
+    ),
+    repeatFunc(
+      () => getProfilingDataFromProject(appOrigin),
+      numPolls,
+    ),
+  ]);
+  await disableProfilingOnProject(appOrigin);
+};
 
 const scrapeProjectData = async (appOrigin, projectLanguage) => {
   if (!latestProjectData.hasOwnProperty(appOrigin)) {
     latestProjectData[appOrigin] = {};
   }
-  const promises = [
-    repeatFunc(
-      () => getMetricsFromProject(appOrigin),
-      numPolls,
-    ),
-  ]
   if (projectLanguage === 'nodejs') {
-    promises.push(
-      repeatFunc(
-        () => getProfilingDataFromProject(appOrigin),
-        numPolls,
-      )
-    );
+    return scrapeNodejsProjectData(appOrigin);
   }
-  await Promise.all(promises);
-  console.log(`Finished polling project at ${appOrigin}`);
+  await repeatFunc(
+    () => getMetricsFromProject(appOrigin),
+    numPolls,
+  );
 }
 
 const getLatestProjectData = (appOrigin) => latestProjectData[appOrigin];

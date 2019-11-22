@@ -26,6 +26,7 @@ router.post('/', async (req, res) => {
     res.send(`Polling ${appOrigin}`);
     monitorService.resetProjectData(appOrigin);
     await monitorService.scrapeProjectData(appOrigin, projectLanguage);
+    console.log(`Finished scraping ${projectLanguage} project at ${appOrigin}`);
 });
 
 router.get('/environment', async (req, res) => {
