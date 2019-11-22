@@ -370,6 +370,11 @@
 
       } else {
         // process sample lines
+        const indexOfLabelEnd = line.indexOf('}');
+        const lineContainsLabel = indexOfLabelEnd > -1;
+        if (lineContainsLabel) {
+          line = removeSpacesFromLabel(line);
+        }
         lineSample = parseSampleLine(line);
         lineMetric = lineSample.name;
       }
@@ -528,6 +533,14 @@
     }
 
     return result;
+  }
+
+  function removeSpacesFromLabel(line) {
+    const indexOfLabelEnd = line.indexOf('}');
+    let lineBeforeLabelEnd = line.substring(0, indexOfLabelEnd);
+    lineBeforeLabelEnd = lineBeforeLabelEnd.replace(/ /g, '');
+    line = lineBeforeLabelEnd + line.substring(indexOfLabelEnd, line.length -1);
+    return line;
   }
 
   return parsePrometheusTextFormat;

@@ -101,7 +101,10 @@ function updateGraphs(metrics) {
   const gcData = { time };
   for (const metric of metrics) {
     const metricsObj = metric.metrics[0];
-    const metricValue = metricsObj.value;
+    let metricValue;
+    if (metricsObj) {
+      metricValue = metricsObj.value;
+    }
     if (metric.name === 'os_cpu_used_ratio') {
       cpuData.system = metricValue;
     } else if (metric.name === 'process_cpu_used_ratio') {
@@ -114,7 +117,7 @@ function updateGraphs(metrics) {
     } else if (metric.name === 'process_virtual_memory_bytes') {
       memData.virtual = metricValue;
 
-    } else if (metric.name === 'http_requests_total') {
+    } else if (metric.name === 'http_requests_snapshot_total') {
       aggregateDataAboutHttpRequestsReceivedInSnapshot.total = metricsObj.value;
     } else if (metric.name === 'http_requests_duration_average_microseconds') {
       aggregateDataAboutHttpRequestsReceivedInSnapshot.average = metricsObj.value;

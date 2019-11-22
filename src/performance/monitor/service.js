@@ -15,7 +15,7 @@ const { repeatFunc, allPromisesSettled } = require('../utils/utils.service');
 const numPolls = 10;
 const latestProjectData = {};
 
-const getEnvData = (appOrigin) => getResData(appOrigin, '/metrics/codewind/environment');
+const getEnvData = (appOrigin) => getResData(appOrigin, '/metrics/environment');
 
 const getMetricsFromProject = async (appOrigin) => {
   const projectData = latestProjectData[appOrigin];
@@ -39,7 +39,7 @@ const getProfilingDataFromProject = async (appOrigin) => {
   if (!projectData.hasOwnProperty('profiling')) {
     projectData.profiling = {};
   }
-  const profilingData = await getResData(appOrigin, '/metrics/codewind/profiling');
+  const profilingData = await getResData(appOrigin, '/metrics/profiling');
   projectData.profiling = profilingData;
 }
 
@@ -62,6 +62,7 @@ const scrapeProjectData = async (appOrigin, projectLanguage) => {
     );
   }
   await Promise.all(promises);
+  console.log(`Finished polling project at ${appOrigin}`);
 }
 
 const getLatestProjectData = (appOrigin) => latestProjectData[appOrigin];
