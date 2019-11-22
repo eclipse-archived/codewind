@@ -59,7 +59,6 @@ describe('MetricsService.js', () => {
             "express": "^4.16.4",
             // TODO: change back to "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#appmetrics-codewind"
             "appmetrics-prometheus": "git+https://git@github.com/rwalle61/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint",
-            "cors": "^2.8.5"
         }
         /* eslint-enable quote-props, quotes, comma-dangle */
     };
