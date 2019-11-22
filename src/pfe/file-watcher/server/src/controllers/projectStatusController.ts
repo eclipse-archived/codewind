@@ -47,7 +47,6 @@ const buildRequiredMap = new Map();
 
 const pingInterval = 10000;
 const inTransitPingInterval = 2000;
-const pingCountMap = new Map();
 
 // Keep track of project status.  The type parameter is used to determine the type of the status
 // such as application state or build status.
@@ -443,29 +442,15 @@ function pingInTransitApplications(): void {
                                 const oldMsg = appStateMap.get(projectID).msg;
                                 let newState = oldState;
                                 let newMsg = stateInfo.error;
-                                let pingCount = pingCountMap.get(projectID);
                                 if (newMsg) { newMsg = newMsg.toString(); } // Convert from Error to string
                                 if (stateInfo.hasOwnProperty("isAppUp")) {
                                     if (oldState === AppState.starting && stateInfo.isAppUp) {
                                         newState = (stateInfo.isAppUp && projectInfo.sentProjectInfo) ? AppState.started : oldState;
                                     } else if (oldState === AppState.stopping && !stateInfo.isAppUp) {
                                         newState = AppState.stopped;
-                                    } else if ( oldState === AppState.starting ) {
-                                        // ping timeout, increment pingCount
-                                        if (pingCountMap.get(projectID)) {
-                                            pingCount++;
-                                            pingCountMap.set(projectID, pingCount);
-                                        } else {
-                                            pingCountMap.set(projectID, 1);
-                                            pingCount = 1;
-                                        }
                                     }
                                 } else if (oldState === AppState.stopping && newMsg) {
                                     newState = AppState.stopped;
-                                }
-                                if (pingCount >= 10) {
-                                    newState = AppState.stopped;
-                                    newMsg = "projectStatusController.pingTimeout";
                                 }
 
                                 if (newState === AppState.started) {
@@ -481,7 +466,7 @@ function pingInTransitApplications(): void {
                                 }
 
                                 // Update the state only if it has changed
-                                if (newState !== oldState || ((newState === AppState.starting) && pingCount >= 10)) {
+                                if (newState !== oldState) {
                                     logger.logProjectInfo("pingInTransitApplications: Application state for project " + projectID + " has changed from " + oldState + " to " + newState, projectID);
                                     const data: any = {
                                         projectID: projectID,
@@ -496,7 +481,6 @@ function pingInTransitApplications(): void {
                                     }
 
                                     io.emitOnListener("projectStatusChanged", data);
-                                    pingCountMap.delete(projectID);
                                 }
                             }
                         });
