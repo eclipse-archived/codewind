@@ -285,18 +285,20 @@ pipeline {
                                 ./script/publish.sh $i $REGISTRY $TAG
                             done
 
-                            if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
-                                IFS='.' # set '.' as delimiter
-                                read -ra TOKENS <<< "$GIT_BRANCH"    
-                                IFS=' ' # reset delimiter
-                                export TAG_CUMULATIVE=${TOKENS[0]}.${TOKENS[1]}
+                            # NOTE: commented out to disable publishing cumulative iFix image until ready
+                            
+                            #if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
+                            #    IFS='.' # set '.' as delimiter
+                            #    read -ra TOKENS <<< "$GIT_BRANCH"    
+                            #    IFS=' ' # reset delimiter
+                            #    export TAG_CUMULATIVE=${TOKENS[0]}.${TOKENS[1]}
 
-                                for i in "${DOCKER_IMAGE_ARRAY[@]}"
-                                do
-                                    echo "Publishing $REGISTRY/$i:$TAG_CUMULATIVE"
-                                    ./script/publish.sh $i $REGISTRY $TAG_CUMULATIVE
-                                done
-                            fi
+                            #    for i in "${DOCKER_IMAGE_ARRAY[@]}"
+                            #    do
+                            #        echo "Publishing $REGISTRY/$i:$TAG_CUMULATIVE"
+                            #        ./script/publish.sh $i $REGISTRY $TAG_CUMULATIVE
+                            #    done
+                            #fi
                         else
                             echo "Skip publishing docker images for $GIT_BRANCH branch"
                         fi
