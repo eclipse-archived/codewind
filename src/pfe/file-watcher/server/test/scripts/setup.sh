@@ -6,12 +6,7 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
-CHE_USER="admin"
-CHE_PASS="admin"
-
-KEYCLOAK_HOSTNAME=keycloak-"$NAMESPACE"."$CLUSTER_IP".nip.io
-TOKEN_ENDPOINT="http://${KEYCLOAK_HOSTNAME}/auth/realms/che/protocol/openid-connect/token"
-CHE_ACCESS_TOKEN=$(curl -sSL --data "grant_type=password&client_id=che-public&username=${CHE_USER}&password=${CHE_PASS}" ${TOKEN_ENDPOINT} | jq -r '.access_token')
+source ./scripts/utils.sh
 
 # Set up variables
 cd ../../../../../
@@ -42,6 +37,9 @@ function install {
             exit 1
         fi
     elif [ $TEST_TYPE == "kube" ]; then
+        # Generate the Che Access Token for Che User Authentication
+        generateCheAccessToken
+
         # Create Codewind workspace with Che API
         echo -e "${BLUE}Creating Che Codewind Workspace ${RESET}\n"
         DEFAULT_DEVFILE="https://raw.githubusercontent.com/eclipse/codewind-che-plugin/master/devfiles/latest/devfile.yaml"
@@ -51,7 +49,6 @@ function install {
         fi
         echo -e "${BLUE}Downloading devfile from:${GREEN} $DEFAULT_DEVFILE ${RESET}\n"
         
-        echo -e "Che access token set to $CHE_ACCESS_TOKEN"
         HTTPSTATUS=$(curl $DEFAULT_DEVFILE | curl -s --header "Content-Type: text/yaml" --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request POST --data-binary @- -D- -o/dev/null http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/devfile?start-after-create=true 2>/dev/null | sed -n 3p | cut -d ' ' -f2) 
         if [[ $HTTPSTATUS -ne 201 ]]; then
             echo -e "${RED}Codewind workspace setup has failed. ${RESET}\n"
@@ -87,6 +84,9 @@ function uninstall {
             exit 1
         fi
     elif [ $TEST_TYPE == "kube" ]; then
+        # Generate the Che Access Token for Che User Authentication
+        generateCheAccessToken
+
         # Get the Codewind Workspace ID
         CW_POD="$( kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 )"
         echo -e "${BLUE}Codewind Pod: $CW_POD ${RESET}\n"
