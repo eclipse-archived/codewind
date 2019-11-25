@@ -77,14 +77,14 @@ module.exports = class Templates {
 
   // TEMPLATES
 
-  getTemplates(showEnabledOnly, projectStyle) {
+  async getTemplates(showEnabledOnly, projectStyle) {
     // this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
     let templates = this.projectTemplates;
     if (this.projectTemplatesNeedsRefresh) {
       const repositories = (String(showEnabledOnly) === 'true')
         ? this.getEnabledRepositories()
         : this.repositoryList;
-      templates = getTemplatesFromRepos(repositories);
+      templates = await getTemplatesFromRepos(repositories);
     }
     if (projectStyle) return filterTemplatesByStyle(templates, projectStyle);
     return templates;
@@ -111,34 +111,28 @@ module.exports = class Templates {
    * @return {JSON} reference to the repo object in this.repositoryList
    */
   getRepository(url) {
-    const index = this.getRepositoryIndex(url);
+    const index = getRepositoryIndex(url, this.getRepositories());
     if (index < 0) throw new Error(`no repository found with URL '${url}'`);
     const repo = this.getRepositories()[index];
     return repo;
   }
 
-  doesRepositoryExist(repoUrl) {
+  doesRepositoryExist(url) {
     try {
-      this.getRepository(repoUrl);
+      this.getRepository(url);
       return true;
     } catch (error) {
       return false;
     }
   }
 
-  getRepositoryIndex(url) {
-    const repos = this.getRepositories();
-    const index = repos.findIndex(repo => repo.url === url);
-    return index;
-  }
-
-  async batchUpdate(requestedOperations) {
-    const operationResults = requestedOperations.map(operation => this.performOperation(operation));
+  async batchUpdate(requestedOperations) { 
+    const operationResults = requestedOperations.map(operation => this.performOperationOnRepository(operation));
     await writeRepositoryList(this.repositoryFile, this.repositoryList);
     return operationResults;
   }
 
-  performOperation(operation) {
+  performOperationOnRepository(operation) {
     const { op, url, value } = operation;
     let operationResult = {};
     if (op === 'enable') {
@@ -161,7 +155,7 @@ module.exports = class Templates {
     }
     try {
       const repo = this.getRepository(url);
-      repo.enabled = value;
+      repo.enabled = (value === 'true' || value === true);
       return {
         status: 200
       };
@@ -296,6 +290,11 @@ async function writeRepositoryList(repositoryFile, repositoryList) {
   await fs.ensureFile(repositoryFile);
   await fs.writeJson(repositoryFile, repositoryList, { spaces: '  ' });
   log.info(`Repository list updated.`);
+}
+
+function getRepositoryIndex(url, repositories) {
+  const index = repositories.findIndex(repo => repo.url === url);
+  return index;
 }
 
 async function updateRepoListWithReposFromProviders(providers, repositoryList, repositoryFile) {
