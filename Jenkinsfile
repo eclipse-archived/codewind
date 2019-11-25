@@ -284,7 +284,9 @@ pipeline {
                                 echo "Publishing $REGISTRY/$i:$TAG"
                                 ./script/publish.sh $i $REGISTRY $TAG
                             done
-                            # comment out to publish cumulative iFix image
+
+                            # NOTE: commented out to disable publishing cumulative iFix image until ready
+                            
                             #if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
                             #    IFS='.' # set '.' as delimiter
                             #    read -ra TOKENS <<< "$GIT_BRANCH"    
