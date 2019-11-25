@@ -56,7 +56,7 @@ echo -e "\n+++   DOWNLOADING EXTENSIONS   +++\n";
 mkdir -p ${SRC_DIR}/pfe/extensions
 rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
 rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
-curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.6.0.zip http://download.eclipse.org/codewind/codewind-appsody-extension/0.6.0/latest/codewind-appsody-extension-0.6.0.zip
+curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-0.6.1.zip http://download.eclipse.org/codewind/codewind-appsody-extension/0.6.1/latest/codewind-appsody-extension-0.6.1.zip
 curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-latest.zip http://download.eclipse.org/codewind/codewind-odo-extension/master/latest/codewind-odo-extension-latest.zip
 
 # BUILD IMAGES
