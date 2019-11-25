@@ -8,6 +8,7 @@ const https = require('https');
 const default_realm = "codewind";
 const default_clientID = "codewind";
 const default_sessionSecret = "codewind";
+const CONST_MISSING_ROLE = "codewind-role-not-defined";
 
 let pfe_host = "codewind-pfe";  // use container name
 let pfe_port = '9090';          // use internal port (we are on the same network)
@@ -31,6 +32,8 @@ async function main() {
     let gatekeeper_host = process.env.GATEKEEPER_HOST
     let workspace_service = process.env.WORKSPACE_SERVICE
     let portal_secure = process.env.PORTAL_HTTPS
+    let workspaceID = process.env.WORKSPACE_ID
+    let required_accessRole = process.env.ACCESS_ROLE
 
     if (workspace_service != "") {
         pfe_host = process.env[(workspace_service + "_SERVICE_HOST").toUpperCase()]
@@ -41,7 +44,7 @@ async function main() {
         }
     }
 
-    console.log("Gatekeeper with route authentication and UI Socket pass-through")
+    console.log(`Gatekeeper ${workspaceID} with route authentication and UI Socket pass-through`)
 
     console.log("Gatekeeper configuration:")
     console.log(`** PFE Service: ${pfe_protocol}://${pfe_host}:${pfe_port}`);
@@ -89,7 +92,13 @@ async function main() {
         gatekeeper_host = gatekeeper_host.toUpperCase();
         console.log(`** GATEKEEPER_HOST: ${gatekeeper_host}`)
     }
-
+    if (!required_accessRole) {
+        console.log(`** WARNING ACCESS_ROLE : Access role has not been set in environment`)
+        required_accessRole=CONST_MISSING_ROLE
+    } else {
+        console.log(`** Access role : ${required_accessRole}`)
+    }
+ 
     // Create a session-store for the express-session and keycloak middleware.
     let memoryStore = new session.MemoryStore();
     app.use(session({ secret: sessionSecret, resave: false, saveUninitialized: true, store: memoryStore }));
@@ -114,7 +123,7 @@ async function main() {
     // Activate / Disable authenticated routes features
     if (enable_auth == "1") {
         console.log(`** Gatekeeper: Authentication is enabled - ENABLE_AUTH=${enable_auth}`);
-        authMiddleware = keyCloak.protect();
+        authMiddleware = keyCloak.protect("realm:"+required_accessRole);
         app.use(keyCloak.middleware({ logout: '/logout', admin: '/' }));
     } else {
         console.log(`** Gatekeeper: Authentication is disabled - ENABLE_AUTH=${enable_auth}`);
