@@ -78,11 +78,12 @@ module.exports = class Templates {
   // TEMPLATES
 
   async getTemplates(showEnabledOnly, projectStyle) {
-    // this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
+    // eslint-disable-next-line require-atomic-updates
+    this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
     let templates = this.projectTemplates;
     if (this.projectTemplatesNeedsRefresh) {
       const repositories = (String(showEnabledOnly) === 'true')
-        ? this.getEnabledRepositories()
+        ? await this.getEnabledRepositories()
         : this.repositoryList;
       templates = await getTemplatesFromRepos(repositories);
     }
@@ -97,29 +98,31 @@ module.exports = class Templates {
 
   // REPOSITORIES
 
-  getRepositories() {
-    // this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
+  async getRepositories() {
+    // eslint-disable-next-line require-atomic-updates
+    this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
     return this.repositoryList;
   }
 
-  getEnabledRepositories() {
-    return this.getRepositories().filter(repo => repo.enabled);
+  async getEnabledRepositories() {
+    const repositories = await this.getRepositories();
+    return repositories.filter(repo => repo.enabled);
   }
 
   /**
    * @param {String} url
    * @return {JSON} reference to the repo object in this.repositoryList
    */
-  getRepository(url) {
-    const index = getRepositoryIndex(url, this.getRepositories());
+  async getRepository(url) {
+    const repositories = await this.getRepositories();
+    const index = getRepositoryIndex(url, repositories);
     if (index < 0) throw new Error(`no repository found with URL '${url}'`);
-    const repo = this.getRepositories()[index];
-    return repo;
+    return repositories[index];
   }
 
-  doesRepositoryExist(url) {
+  async doesRepositoryExist(url) {
     try {
-      this.getRepository(url);
+      await this.getRepository(url);
       return true;
     } catch (error) {
       return false;
@@ -127,16 +130,17 @@ module.exports = class Templates {
   }
 
   async batchUpdate(requestedOperations) { 
-    const operationResults = requestedOperations.map(operation => this.performOperationOnRepository(operation));
+    const pArray = requestedOperations.map(operation => this.performOperationOnRepository(operation));
+    const operationResults = await Promise.all(pArray);
     await writeRepositoryList(this.repositoryFile, this.repositoryList);
     return operationResults;
   }
 
-  performOperationOnRepository(operation) {
+  async performOperationOnRepository(operation) {
     const { op, url, value } = operation;
     let operationResult = {};
     if (op === 'enable') {
-      operationResult = this.enableOrDisableRepository({ url, value });
+      operationResult = await this.enableOrDisableRepository({ url, value });
     }
     operationResult.requestedOperation = operation;
     return operationResult;
@@ -146,15 +150,15 @@ module.exports = class Templates {
    * @param {JSON} { url (URL of template repo to enable or disable), value (true|false)}
    * @returns {JSON} { status, error (optional) }
    */
-  enableOrDisableRepository({ url, value }) {
-    if (!this.doesRepositoryExist(url)) {
+  async enableOrDisableRepository({ url, value }) {
+    if (!await this.doesRepositoryExist(url)) {
       return {
         status: 404,
         error: 'Unknown repository URL',
       };
     }
     try {
-      const repo = this.getRepository(url);
+      const repo = await this.getRepository(url);
       repo.enabled = (value === 'true' || value === true);
       return {
         status: 200
@@ -180,8 +184,8 @@ module.exports = class Templates {
       }
       throw error;
     }
-
-    if (this.getRepositories().find(repo => repo.url === repoUrl)) {
+    const repositories = await this.getRepositories();
+    if (repositories.find(repo => repo.url === repoUrl)) {
       throw new TemplateError('DUPLICATE_URL', repoUrl);
     }
 
@@ -247,10 +251,9 @@ module.exports = class Templates {
 
   // PROVIDERS
 
-  async addProvider(name, provider) {
+  addProvider(name, provider) {
     if (provider && typeof provider.getRepositories === 'function') {
       this.providers[name] = provider;
-      this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
     }
   }
 

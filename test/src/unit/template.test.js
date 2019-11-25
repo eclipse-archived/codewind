@@ -178,8 +178,8 @@ describe('Templates.js', function() {
                 templateController = new Templates('');
                 templateController.repositoryList = [...mockRepoList];
             });
-            it('returns all repos', function() {
-                const output = templateController.getRepositories();
+            it('returns all repos', async function() {
+                const output = await templateController.getRepositories();
                 output.should.deep.equal(mockRepoList);
             });
         });
@@ -189,8 +189,8 @@ describe('Templates.js', function() {
                 templateController = new Templates('');
                 templateController.repositoryList = [mockRepos.enabled, mockRepos.disabled];
             });
-            it('returns only enabled repos', function() {
-                const output = templateController.getEnabledRepositories();
+            it('returns only enabled repos', async function() {
+                const output = await templateController.getEnabledRepositories();
                 output.should.deep.equal([mockRepos.enabled]);
             });
         });
@@ -200,12 +200,12 @@ describe('Templates.js', function() {
                 templateController = new Templates('');
                 templateController.repositoryList = [...mockRepoList];
             });
-            it('Returns true as the repository exists', function() {
-                const repoExists = templateController.doesRepositoryExist('1');
+            it('Returns true as the repository exists', async function() {
+                const repoExists = await templateController.doesRepositoryExist('1');
                 repoExists.should.be.true;
             });
-            it('Returns false as the repository does not exist', function() {
-                const repoExists = templateController.doesRepositoryExist('http://badurl.com');
+            it('Returns false as the repository does not exist', async function() {
+                const repoExists = await templateController.doesRepositoryExist('http://badurl.com');
                 repoExists.should.be.false;
             });
         });
@@ -502,8 +502,8 @@ describe('Templates.js', function() {
                 };
                 for (const [testName, test] of Object.entries(tests)) {
                     describe(testName, function() { // eslint-disable-line no-loop-func
-                        it(`returns the expected operation info and correctly updates the repository file`, function() {
-                            const output = templateController.performOperationOnRepository(test.input);
+                        it(`returns the expected operation info and correctly updates the repository file`, async function() {
+                            const output = await templateController.performOperationOnRepository(test.input);
                             output.should.deep.equal(test.output);
                         });
                     });
@@ -546,8 +546,8 @@ describe('Templates.js', function() {
                 };
                 for (const [testName, test] of Object.entries(tests)) {
                     describe(testName, function() { // eslint-disable-line no-loop-func
-                        it(`returns the expected operation info`, function() {
-                            const output = templateController.performOperationOnRepository(test.input);
+                        it(`returns the expected operation info`, async function() {
+                            const output = await templateController.performOperationOnRepository(test.input);
                             output.should.deep.equal(test.output);
                         });
                     });
@@ -555,9 +555,9 @@ describe('Templates.js', function() {
             });
         });
         describe('enableOrDisableRepository({ url, value })', () => {
-            it('returns 404 as its status as the repository does not exist', () => {
+            it('returns 404 as its status as the repository does not exist', async() => {
                 const templateController = new Templates('');
-                const operationResponse = templateController.enableOrDisableRepository({ url: 'urlThatDoesNotExist' });
+                const operationResponse = await templateController.enableOrDisableRepository({ url: 'urlThatDoesNotExist' });
                 operationResponse.should.have.property('status', 404);
                 operationResponse.should.have.property('error', 'Unknown repository URL');
             });
@@ -570,16 +570,16 @@ describe('Templates.js', function() {
             for (const [title, test] of Object.entries(tests)) {
                 const { input, output } = test;
                 // eslint-disable-next-line no-loop-func
-                it(`returns 200 and ${title}`, () => {
+                it(`returns 200 and ${title}`, async() => {
                     const templateController = new Templates('');
                     const testRepo = (output) ? mockRepos.disabled : mockRepos.enabled;
                     templateController.repositoryList = [testRepo];
 
-                    const operationResponse = templateController.enableOrDisableRepository({ url: testRepo.url, value: input });
+                    const operationResponse = await templateController.enableOrDisableRepository({ url: testRepo.url, value: input });
                     operationResponse.should.have.property('status', 200);
                     operationResponse.should.not.have.property('error');
 
-                    const repoPostChange = templateController.getRepository(testRepo.url);
+                    const repoPostChange = await templateController.getRepository(testRepo.url);
                     repoPostChange.should.have.property('enabled', output);
                 });
             }
