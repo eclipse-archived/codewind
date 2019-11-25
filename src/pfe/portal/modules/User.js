@@ -26,10 +26,6 @@ const FilewatcherError = require('./utils/errors/FilewatcherError');
 const log = new Logger('User.js');
 const util = require('util');
 
-// Kubernetes-client v5
-const K8Client = require('kubernetes-client').Client
-const k8config = require('kubernetes-client').config;
-
 /**
  * The User class
  * @param {Object} args, contains:
@@ -38,13 +34,13 @@ const k8config = require('kubernetes-client').config;
  */
 module.exports = class User {
 
-  static async createUser(user_id, userString, workspace, uiSocket) {
-    let user = new User(user_id, userString, workspace, uiSocket);
+  static async createUser(user_id, userString, workspace, uiSocket, k8Client) {
+    let user = new User(user_id, userString, workspace, uiSocket, k8Client);
     await user.initialise();
     return user;
   }
 
-  constructor(user_id, userString, workspace, uiSocket ) {
+  constructor(user_id, userString, workspace, uiSocket, k8Client) {
     this.user_id = user_id || "default";
     this.userString = userString || null;
     this.workspace = workspace;
@@ -61,7 +57,7 @@ module.exports = class User {
     this.codewindPFESecretName = "codewind-" + process.env.CHE_WORKSPACE_ID + "-docker-registries";
     // Get the Kube Client context when running in K8s
     if (global.codewind.RUNNING_IN_K8S == true) {
-      this.k8client = new K8Client({ config: k8config.getInCluster(), version: '1.9' });
+      this.k8Client = k8Client;
     }
   }
 
@@ -794,14 +790,14 @@ module.exports = class User {
         const encodedDockerConfig = Buffer.from(JSON.stringify(jsonObj)).toString("base64");
 
         // Get the Kube Secret labeled with app=codewind-pfe and codewindWorkspace=<workspace_id> and delete if it exists
-        let resp = await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secret.get({ qs: { labelSelector: "app=codewind-pfe,codewindWorkspace=" + process.env.CHE_WORKSPACE_ID } });
+        let resp = await this.k8Client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secret.get({ qs: { labelSelector: "app=codewind-pfe,codewindWorkspace=" + process.env.CHE_WORKSPACE_ID } });
         if (resp.body.items.length > 0) {
           const secretName = resp.body.items[0].metadata.name;
-          await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secrets(secretName).delete();
+          await this.k8Client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secrets(secretName).delete();
         }
 
         // Get the Codewind PFE deployment name and uid labeled with app=codewind-pfe and codewindWorkspace=<workspace_id>
-        resp = await this.k8client.apis.apps.v1.namespaces(process.env.KUBE_NAMESPACE).deployments.get({ qs: { labelSelector: "app=codewind-pfe,codewindWorkspace=" + process.env.CHE_WORKSPACE_ID } });
+        resp = await this.k8Client.apis.apps.v1.namespaces(process.env.KUBE_NAMESPACE).deployments.get({ qs: { labelSelector: "app=codewind-pfe,codewindWorkspace=" + process.env.CHE_WORKSPACE_ID } });
         const ownerReferenceName = resp.body.items[0].metadata.name;
         const ownerReferenceUID = resp.body.items[0].metadata.uid;
 
@@ -831,7 +827,7 @@ module.exports = class User {
             ".dockerconfigjson": `${encodedDockerConfig}`
           }
         };
-        resp = await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secret.post({body: secret});
+        resp = await this.k8Client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secret.post({body: secret});
 
         // Patch the Service Account with the new secret
         const patch = {
@@ -841,7 +837,7 @@ module.exports = class User {
             }
           ]
         };
-        resp = await await this.k8client.api.v1.namespaces(process.env.KUBE_NAMESPACE).serviceaccounts(process.env.SERVICE_ACCOUNT_NAME).patch({body: patch});
+        resp = await await this.k8Client.api.v1.namespaces(process.env.KUBE_NAMESPACE).serviceaccounts(process.env.SERVICE_ACCOUNT_NAME).patch({body: patch});
         log.info("The Service Account has been patched with the created Secret");
       } else {
         log.info("No Docker Config file present, skipping creating Secret");

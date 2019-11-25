@@ -204,7 +204,8 @@ async function main() {
     null,
     null,
     global.codewind.CODEWIND_WORKSPACE,
-    io
+    io,
+    k8Client
   );
   userList.add(user);
   setRoutes();
