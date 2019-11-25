@@ -197,14 +197,14 @@ paths:
         500:
           description: Internal error
 
-  /api/v1/projects/bind:
+  /api/v1/projects/bind/start:
     post:
-      summary: Bind a project to Codewind
+      summary: Begin binding a project to Codewind
       description: >
-        The bind api will be passed the location on disk of an existing project so that Codewind
-        adds it to the list of projects it monitors.
+        Start binding a project to codewind. The bind api will be passed the location on disk of an existing project so that Codewind
+        adds it to the list of projects it monitors. The project will initially be created in disabled state.
       requestBody:
-        description: project bind options
+        description: project bind start options
         content:
           application/json:
             schema:
@@ -214,6 +214,7 @@ paths:
                 - path
                 - language
                 - projectType
+                - creationTime
               properties:
                 name:
                   $ref: '#/components/schemas/ProjectName'
@@ -225,15 +226,15 @@ paths:
                   $ref: '#/components/schemas/ProjectLanguage'
                 projectType:
                   $ref: '#/components/schemas/ProjectType'
-                autoBuild:
-                  description: whether the project should be built automatically (default true)
-                  type: boolean
+                creationTime:
+                  description: the time in milliseconds since epoch that the project was bound to Codewind
+                  type: number
+                  example: 1574256801163
+
       responses:
         202:
           description: >
-            Bind request accepted. Will attempt to bind the project directory as a Codewind project.
-            When binding is complete the projectBind socket event will be sent. If autoBuild was true
-            then this will be sent after the build is complete, otherwise it will be sent straight away.
+            Bind start request accepted. Will attempt to bind the provided path as a Codewind project.
           content:
             application/json:
               schema:
@@ -244,6 +245,80 @@ paths:
           description: The project path or name are already in use
         500:
           description: Any other error
+
+  /api/v1/projects/{id}/bind/end:
+    post:
+      summary: Complete binding the project to Codewind
+      description: >
+        Complete binding the project to codewind. The project will be enabled and built.
+      parameters:
+        - name: id
+          in: path
+          schema:
+            $ref: '#/components/schemas/ProjectID'
+          required: true
+          description: id of the project        
+      responses:
+        202:
+          description: >
+            Bind end request accepted. Will attempt to complete binding the Codewind project.
+        404:
+          description: Project with given projectiD was not found.
+        500:
+          description: Any other error
+  
+  /api/v1/projects/{id}/upload:
+    put:
+      summary: Receive gzipped content of a file for the project and write this to the codewind workspace 
+      parameters:
+        - name: id
+          in: path
+          schema:
+            $ref: '#/components/schemas/ProjectID'
+          required: true
+          description: id of project
+      requestBody:
+          description: JSON object containing file info and content 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Upload'
+    
+      responses:
+        200:
+          description: The file upload was successful
+        404:
+          description: Project with given projectID not found
+        500:
+          description: Any other error  
+
+  /api/v1/projects/{id}/upload/end:
+    post:
+      summary: Mark the completion of a number of upload events for this project.
+      description: >
+        Complete the upload process for this project. If enabled, the project will be built.
+      parameters:
+        - name: id
+          in: path
+          schema:
+            $ref: '#/components/schemas/ProjectID'
+          required: true
+          description: id of the project
+      requestBody:
+          description: JSON object containing project information  
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadEnd'
+      responses:
+        200:
+          description: >
+            The project uploads completed successfully and it will now be built.
+        404:
+          description: Project with given projectiD was not found.
+        500:
+          description: Any other error
+ 
 
   /api/v1/projects/{id}:
     get:
@@ -1445,43 +1520,45 @@ components:
                 processPeak:
                   type: number
                   example: 0.090362
-    BasicInitialize:
+    UploadEnd:
       type: object
       required:
-        - status
-        - projectPath
+        - timestamp
+        - fileList
+        - modifiedList
       properties:
-        projectPath:
+        timestamp:
+          description: time since epoch of last upload
+          type: number
+          example: 157139320301
+        fileList:
+          description: an array of all files the project contains
+          type: array
+          example: ["/project/file1", "/project/file2", "project/modifiedfile1"]
+        modifiedList:
+          description: an array of files that have been modified since the last project upload
+          type: array
+          example: ["/project/modifiedfile1"]
+      
+    Upload:
+      type: object
+      required:
+        - path
+        - msg
+      properties:
+        path:
+          description: the path of the file, relative to the project directory
           type: string
-          example: /Documents/projectDir/
-    InitializeSuccess:
-      allOf:
-        - $ref: '#/components/schemas/BasicInitialize'
-        - type: object
-          required:
-            - result
-            - status
-          properties:
-            result:
-              type: object
-              required:
-                - language
-                - buildType
-              properties:
-                language:
-                  type: string
-                  enum:
-                    - nodejs
-                    - java
-                    - swift
-                    - python
-                    - unknown
-                buildType:
-                  type: string
-            status:
-              type: string
-              enum:
-                - success
+          example: "/project1/src/file1"
+        msg:
+          description: the gzipped file content
+          type: string
+          example: "gzipped file content"
+        mode:
+          type: number
+          description: the permissions for the file https://nodejs.org/api/fs.html#fs_file_modes
+          example: 0o775
+     
     LoadrunnerConfig:
       type: object
       required:
@@ -1521,21 +1598,7 @@ components:
               example: { id: 1, message: 'codewind' }
             - type: string
               example: "{ id: 1, message: 'codewind'}"
-    InitializeError:
-      allOf:
-        - $ref: '#/components/schemas/BasicInitialize'
-        - type: object
-          required:
-            - status
-            - result
-          properties:
-            result:
-              type: string
-              example: Git clone failed - directory to clone into is not empty
-            status:
-              type: string
-              enum:
-                - failure
+    
     LogDetails:
       type: object
       required:
