@@ -26,7 +26,6 @@ CLUSTER_USER=
 CLUSTER_PASS=
 CLUSTER_PORT=8443
 CLUSTER_TOKEN=
-CHE_ROUTE=
 CHE_VERSION="next"
 CHE_NS="che"
 CLEAN_DEPLOY="n"
@@ -135,6 +134,12 @@ function getCheAccessToken() {
     CHE_ACCESS_TOKEN=$(curl -sSL --data "grant_type=password&client_id=che-public&username=${CHE_USER}&password=${CHE_PASS}" ${TOKEN_ENDPOINT} | jq -r '.access_token')
 }
 
+function getEndpoints() {
+    CHE_ENDPOINT=$(kubectl get routes --selector=component=che -o jsonpath="{.items[0].spec.host}" 2>&1)
+    KEYCLOAK_HOSTNAME=$(kubectl get routes --selector=component=keycloak -o jsonpath="{.items[0].spec.host}" 2>&1)
+    TOKEN_ENDPOINT="http://${KEYCLOAK_HOSTNAME}/auth/realms/che/protocol/openid-connect/token"
+}
+
 while :; do
     case $1 in
         --cluster-ip=?*)
@@ -151,9 +156,6 @@ while :; do
         ;;
         --cluster-token=?*)
         CLUSTER_TOKEN=${1#*=}
-        ;;
-        --che-route=?*)
-        CHE_ROUTE=${1#*=}
         ;;
         --che-version=?*)
         CHE_VERSION=${1#*=}
@@ -216,16 +218,6 @@ elif [[ -z "$CLUSTER_PASS" ]] && [[ -z "$CLUSTER_TOKEN" ]]; then
     exit 1
 fi
 
-# setup for keyclaok
-IP_TO_USE="$CLUSTER_IP"
-if [[ ! -z "$CHE_ROUTE" ]]; then
-    IP_TO_USE="$CHE_ROUTE"
-fi
-
-KEYCLOAK_HOSTNAME="keycloak-$CHE_NS.$IP_TO_USE.nip.io"
-TOKEN_ENDPOINT="http://${KEYCLOAK_HOSTNAME}/auth/realms/che/protocol/openid-connect/token"
-CHE_ENDPOINT="http://che-$CHE_NS.$IP_TO_USE.nip.io"
-
 # check if OC is installed
 echo -e "${CYAN}> Checking if openshift cloud is installed${RESET}"
 oc > /dev/null 2>&1
@@ -261,12 +253,16 @@ if [[ -z "$OPERATOR_USE" ]]; then
     fi
 fi
 
+getEndpoints
+
 # if clean deploy is selected
 if [[ $CLEAN_DEPLOY == "y" ]]; then
     echo -e "${CYAN}> Clean deploying che${RESET}\n"
 
-    removeCodewindWorkspace
-    displayMsg $? "Failed to remove existing codewind workspace." true
+    if [[ "$CHE_ENDPOINT" != *"error executing jsonpath"* ]]; then
+        removeCodewindWorkspace
+        displayMsg $? "Failed to remove existing codewind workspace." true
+    fi
 
     echo -e "${YELLOW}>> Removing existing namespace ${RESET}"
     oc delete project $CHE_NS --force --grace-period=0 > /dev/null 2>&1
@@ -331,6 +327,7 @@ elif [[ "$HOST_OS" =~ "Linux" ]]; then
     displayMsg $? "Failed to find appropriate base64 converter." true
 fi
 
+getEndpoints
 getCheAccessToken
 
 if [[ "$ADD_DEFAULT_REGISTRY" == "y" ]]; then
