@@ -99,6 +99,9 @@ module.exports = class Project {
     if (args.hasOwnProperty('autoBuild')) {
       this.autoBuild = args.autoBuild;
     }
+
+    // Default the injection of monitoring to be off
+    this.injectMetrics = false;
   }
 
   toJSON() {
