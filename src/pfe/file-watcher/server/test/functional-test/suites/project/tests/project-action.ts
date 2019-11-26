@@ -138,7 +138,7 @@ export function projectActionTest(socket: SocketIO, projData: projectsController
             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-        if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring" || projectTemplate === codewindTemplates.odo) {
+        if (process.env.IN_K8 && action === "build") {
             targetEvents.pop();
             targetEventDatas.pop();
         }

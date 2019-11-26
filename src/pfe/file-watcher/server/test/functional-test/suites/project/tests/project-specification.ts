@@ -83,7 +83,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                     "title": "Internal debug port test - Before hook - Get default internal debug port",
                     "function": async function(hook: any): Promise<void> {
                         hook.timeout(timeoutConfigs.defaultTimeout);
-                        if (!(project_configs.debugCapabilities[projectTemplate] && project_configs.debugCapabilities[projectTemplate][projectLang])) return;
+                        if (process.env.IN_K8 || !(project_configs.debugCapabilities[projectTemplate] && project_configs.debugCapabilities[projectTemplate][projectLang])) return;
                         defaultInternalDebugPort = project_configs.defaultInternalDebugPorts[projectTemplate][projectLang];
                     }
                 }],
@@ -91,7 +91,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                     "title": "Internal debug port test - After hook - Reset internal debug port",
                     "function": async function(hook: any): Promise<void> {
                         hook.timeout(timeoutConfigs.createTestTimeout);
-                        if (!(project_configs.debugCapabilities[projectTemplate] &&  project_configs.debugCapabilities[projectTemplate][projectLang])) return;
+                        if (process.env.IN_K8 || !(project_configs.debugCapabilities[projectTemplate] && project_configs.debugCapabilities[projectTemplate][projectLang])) return;
 
                         await runProjectSpecificationSettingTest(combinations["combo2"], defaultInternalDebugPort);
 
@@ -101,7 +101,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
                         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-                        if (process.env.IN_K8 && (project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") || projectTemplate === app_configs.codewindTemplates.odo) {
+                        if (process.env.IN_K8 && action === "build") {
                             targetEvents.pop();
                             targetEventDatas.pop();
                         }
@@ -122,6 +122,10 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                     "status": "success",
                     "contextRoot": testContextRoot
                 },
+                "beforeHook": [{
+                    "title": "Context Root Before Hook: Set project context root endpoint in .cw-settings",
+                    "function": beforeHookContextRootTest
+                }],
                 "afterHook": [{
                     "title": "Context Root After Hook: Reset project context root endpoint",
                     "function": afterHookContextRootTest
@@ -137,6 +141,10 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                     "status": "success",
                     "healthCheck": testHealthCheck
                 },
+                "beforeHook": [{
+                    "title": "Context Root Before Hook: Set project health check endpoint in .cw-settings",
+                    "function": beforeHookHealthCheckTest
+                }],
                 "afterHook": [{
                     "title": "Health Check After Hook: Reset project health check endpoint",
                     "function": afterHookHealthCheckTest
@@ -216,7 +224,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
             [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
         const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-        if (process.env.IN_K8 && (project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") || projectTemplate === app_configs.codewindTemplates.odo) {
+        if (process.env.IN_K8 && action === "build") {
             targetEvents.pop();
             targetEventDatas.pop();
         }
@@ -224,6 +232,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
         after(`${action} project ${projData.projectType}`, async function (): Promise<void> {
             this.timeout(timeoutConfigs.createTestTimeout);
             await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
+            socket.clearEvents();
         });
 
         afterEach("remove build from running queue", async () => {
@@ -513,6 +522,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
             await utils.callProjectAction("build", undefined, socket, projData, [eventConfigs.events.projectChanged],
                 [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": testExposedPort}}]);
             await utils.setBuildStatus(projData, projectTemplate, projectLang);
+            socket.clearEvents();
         }
 
         async function afterHookInternalPortTestSinglePort(hook: any): Promise<void> {
@@ -541,6 +551,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
             await utils.callProjectAction("build", undefined, socket, projData, [eventConfigs.events.projectChanged],
                 [{"projectID": projData.projectID, "status": "success", "ports": {"internalPort": defaultInternalPort}}]);
             await utils.setBuildStatus(projData, projectTemplate, projectLang);
+            socket.clearEvents();
         }
 
         async function afterHookInternalPortTestResetPort(hook: any): Promise<void> {
@@ -554,7 +565,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                 [eventConfigs.events.restartResult, eventConfigs.events.statusChanged];
             const targetEventDatas = [{"projectID": projData.projectID, "status": "success"}, {"projectID": projData.projectID, "appStatus": "started"}];
 
-            if (process.env.IN_K8 && project_configs.restartCapabilities[projectTemplate] && project_configs.restartCapabilities[projectTemplate][projectLang] && project_configs.restartCapabilities[projectTemplate][projectLang].includes("run") && projData.projectType != "spring") {
+            if (process.env.IN_K8 && action === "build") {
                 targetEvents.pop();
                 targetEventDatas.pop();
             }
@@ -562,16 +573,39 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
             await utils.setAppStatus(projData, projectTemplate, projectLang);
             await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
             await utils.setBuildStatus(projData, projectTemplate, projectLang);
+            socket.clearEvents();
+        }
+
+        async function beforeHookContextRootTest(hook: any): Promise<void> {
+            hook.timeout(timeoutConfigs.defaultTimeout);
+            const cwSettings = await readCwSettings();
+            cwSettings["contextRoot"] = testContextRoot;
+            await writeCwSettings(cwSettings);
         }
 
         async function afterHookContextRootTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
-            await runProjectSpecificationSettingTest(combinations["combo3"], project_configs.defaultContextRoot[projectTemplate] && project_configs.defaultContextRoot[projectTemplate][projectLang] ? project_configs.defaultContextRoot[projectTemplate][projectLang] : project_configs.defaultHealthCheckEndPoint);
+            const contextRootValue = project_configs.defaultContextRoot[projectTemplate] && project_configs.defaultContextRoot[projectTemplate][projectLang] ? project_configs.defaultContextRoot[projectTemplate][projectLang] : project_configs.defaultHealthCheckEndPoint;
+            const cwSettings = await readCwSettings();
+            cwSettings["contextRoot"] = contextRootValue;
+            await writeCwSettings(cwSettings);
+            await runProjectSpecificationSettingTest(combinations["combo3"], contextRootValue);
+        }
+
+        async function beforeHookHealthCheckTest(hook: any): Promise<void> {
+            hook.timeout(timeoutConfigs.defaultTimeout);
+            const cwSettings = await readCwSettings();
+            cwSettings["healthCheck"] = testHealthCheck;
+            await writeCwSettings(cwSettings);
         }
 
         async function afterHookHealthCheckTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
-            await runProjectSpecificationSettingTest(combinations["combo4"], project_configs.defaultContextRoot[projectTemplate] && project_configs.defaultContextRoot[projectTemplate][projectLang] ? project_configs.defaultContextRoot[projectTemplate][projectLang] : project_configs.defaultHealthCheckEndPoint);
+            const healthCheckValue = project_configs.defaultContextRoot[projectTemplate] && project_configs.defaultContextRoot[projectTemplate][projectLang] ? project_configs.defaultContextRoot[projectTemplate][projectLang] : project_configs.defaultHealthCheckEndPoint;
+            const cwSettings = await readCwSettings();
+            cwSettings["healthCheck"] = healthCheckValue;
+            await writeCwSettings(cwSettings);
+            await runProjectSpecificationSettingTest(combinations["combo4"], healthCheckValue);
         }
 
         async function afterHookMavenProfileTest(hook: any): Promise<void> {
@@ -582,6 +616,17 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
         async function afterHookMavenPropertyTest(hook: any): Promise<void> {
             hook.timeout(timeoutConfigs.defaultTimeout);
             await runProjectSpecificationSettingTest(combinations["combo6"], []);
+        }
+
+        async function readCwSettings(): Promise<any> {
+            const cwSettingsPath = path.join(projData.location, ".cw-settings");
+            const cwSettings = JSON.parse(await fs.readFileSync(cwSettingsPath, "utf-8"));
+            return cwSettings;
+        }
+
+        async function writeCwSettings(settings: any): Promise<void> {
+            const cwSettingsPath = path.join(projData.location, ".cw-settings");
+            return await fs.writeFileSync(cwSettingsPath, JSON.stringify(settings));
         }
     });
 }
