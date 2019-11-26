@@ -45,17 +45,6 @@ rm $GIT_CONFIG
 git config -f $GIT_CONFIG --add user.name "`git config --get user.name || echo 'codewind user'`"
 git config -f $GIT_CONFIG --add user.email "`git config --get user.email || echo 'codewind.user@localhost'`"
 
-
-# Set docker-compose file
-DOCKER_COMPOSE_FILE="docker-compose.yaml -f docker-compose-remote.yaml"
-
-
-if [ "$DEVMODE" = true ]; then
-  printf "\nDev mode is enabled\n";
-  DOCKER_COMPOSE_FILE="docker-compose.yaml -f docker-compose-dev.yaml"
-fi
-
-
 # REMOVE PREVIOUS DOCKER PROCESSES FOR CODEWIND
 printf "\n\n${BLUE}CHECKING FOR EXISTING CODEWIND PROCESSES $RESET\n";
 # Check for existing processes (stopped or running)
@@ -111,7 +100,13 @@ printf "\n\n${BLUE}CHECKING FOR EXISTING CODEWIND APPS $RESET\n";
 # Check for existing processes (stopped or running)
 $CWCTL stop-all
 
-$CWCTL start --debug
+if [ "$DEVMODE" = true ]; then
+  PORTAL=src/pfe/portal
+  npm install --prefix $PORTAL
+  $CWCTL start --debug --source `pwd`/$PORTAL
+else
+  $CWCTL start --debug
+fi
 
 if [ $? -eq 0 ]; then
     printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
