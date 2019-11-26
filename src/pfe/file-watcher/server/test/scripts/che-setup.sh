@@ -56,7 +56,6 @@ Options:
     --cluster-pass      Cluster password - Required
     --cluster-port      Cluster port - default: 8443
     --cluster-token     Cluster token - Optional (can be used instead of user/pass)
-    --che-route         Che version to install - default: uses the cluster-ip
     --che-ns            Namespace to install Che - default: che
     --che-version       Che version to install - default: next
     --clean-deploy      Deploy a clean che - default: n
@@ -267,7 +266,14 @@ if [[ $CLEAN_DEPLOY == "y" ]]; then
     fi
 
     echo -e "${YELLOW}>> Removing existing namespace ${RESET}"
-    oc delete project $CHE_NS --force --grace-period=0 > /dev/null 2>&1
+    OC_DELETE=$(oc delete project $CHE_NS --force --grace-period=0 2>&1)
+    echo -e -n "${YELLOW}>> Waiting for existing namespace to be removed .${RESET}"
+
+    while [[ ! "$OC_DELETE" =~ "namespaces \"$CHE_NS\" not found" ]]; do
+        OC_DELETE=$(oc delete project $CHE_NS --force --grace-period=0 2>&1)
+	    sleep 2s
+        echo -e -n "${YELLOW}.${RESET}"
+    done
 
     installChe
 
