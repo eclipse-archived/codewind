@@ -45,8 +45,8 @@ function run {
         # Generate the Che Access Token for Che User Authentication
         generateCheAccessToken
 
-        HTTPSTATUS=$(curl -si --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/ | head -n 1 | cut -d ' ' -f2)
-        HTTPRESPONSE=$(curl -si --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' http://che-$NAMESPACE.$CLUSTER_IP.nip.io/api/workspace/ | tail -n 1)
+        HTTPSTATUS=$(curl -si --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' $CHE_ENDPOINT/api/workspace/ | head -n 1 | cut -d ' ' -f2)
+        HTTPRESPONSE=$(curl -si --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' $CHE_ENDPOINT/api/workspace/ | tail -n 1)
 
         if [ $HTTPSTATUS -ne 200 ]; then
             echo -e "${RED}Failed to get the Codewind workspaces... ${RESET}\n"
@@ -169,32 +169,44 @@ done
 
 # Log in to the OKD cluster with default credentials
 if [[ $TEST_TYPE == "kube" ]]; then
+    CHECK_EX=0
+
     # Check if the mandatory arguments have been set up
     if [[ (-z $NAMESPACE) ]]; then
         echo -e "${RED}Mandatory argument NAMESPACE is not set up. ${RESET}\n"
         echo -e "${RED}Please export variable NAMESPACE to run the Kube tests. ${RESET}\n"
-        exit 1
+        CHECK_EX=1
     fi
 
     if [[ (-z $CLUSTER_IP) ]]; then
         echo -e "${RED}Mandatory argument CLUSTER_IP is not set up. ${RESET}\n"
         echo -e "${RED}Please export variable CLUSTER_IP to run the Kube tests. ${RESET}\n"
-        exit 1
+        CHECK_EX=1
+    fi
+
+    if [[ (-z $CLUSTER_PORT) ]]; then
+        echo -e "${RED}Mandatory argument CLUSTER_PORT is not set up. ${RESET}\n"
+        echo -e "${RED}Please export variable CLUSTER_PORT to run the Kube tests. ${RESET}\n"
+        CHECK_EX=1
     fi
 
     if [[ (-z $CLUSTER_USER) ]]; then
         echo -e "${RED}Mandatory argument CLUSTER_USER is not set up. ${RESET}\n"
         echo -e "${RED}Please export variable CLUSTER_USER to run the Kube tests. ${RESET}\n"
-        exit 1
+        CHECK_EX=1
     fi
 
     if [[ (-z $CLUSTER_PASSWORD) ]]; then
         echo -e "${RED}Mandatory argument CLUSTER_PASSWORD is not set up. ${RESET}\n"
         echo -e "${RED}Please export variable CLUSTER_PASSWORD to run the Kube tests. ${RESET}\n"
+        CHECK_EX=1
+    fi
+
+    if [[ $CHECK_EX -eq 1 ]]; then
         exit 1
     fi
 
-    oc login $CLUSTER_IP:8443 -u $CLUSTER_USER -p $CLUSTER_PASSWORD
+    oc login $CLUSTER_IP:$CLUSTER_PORT -u $CLUSTER_USER -p $CLUSTER_PASSWORD
     oc project $NAMESPACE
     if [[ $? -eq 0 ]]; then
         echo -e "${GREEN}Successfully logged into the OKD cluster ${RESET}\n"
