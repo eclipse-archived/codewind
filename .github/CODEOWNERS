@@ -1,0 +1,19 @@
+# Global owners
+* @elsony @tobespc
+
+# Docs
+docs/** @elsony @tobespc
+
+# Releng
+script/** @josephca @tetchel 
+
+# Iterative dev
+src/pfe/file-watcher/** @elsony @rajivnathan
+src/pfe/iterative-dev/** @elsony @rajivnathan
+
+# Portal
+src/pfe/portal/** @hhellyer @tobespc
+src/gatekeeper/** @markcor11 @tobespc 
+src/keycloak/** @markcor11 @tobespc 
+src/performance/** @markcor11 @tobespc 
+test/** @stalleyj @tobespc
