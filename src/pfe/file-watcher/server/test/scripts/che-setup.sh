@@ -21,6 +21,8 @@ RESET='\033[0m'
 CODEWIND_CHE="codewind-che-plugin"
 CODEWIND_ODO_EXTENSION="codewind-odo-extension"
 
+CURR_DIR=$(pwd)
+
 CLUSTER_IP=
 CLUSTER_USER=
 CLUSTER_PASS=
@@ -29,7 +31,7 @@ CLUSTER_TOKEN=
 CHE_VERSION="next"
 CHE_NS="che"
 CLEAN_DEPLOY="n"
-OPERATOR_YAML="$CODEWIND_CHE/setup/install_che/che-operator/codewind-checluster.yaml"
+OPERATOR_YAML="$CURR_DIR/$CODEWIND_CHE/setup/install_che/che-operator/codewind-checluster.yaml"
 SERVICE_ACCOUNT="che-user"
 POD_READY_TO=600000
 POD_WAIT_TO=1200000
