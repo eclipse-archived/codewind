@@ -71,11 +71,15 @@ class Logger {
 
   logRequest(req) {
     const route = `${req.method} ${req.path}`;
+    // We are removing credentials from req body because
+    // POST /api/v1/registrysecrets takes credentials in its body
+    // and we do not want to log this information to the PFE log
+    const {credentials, ...reqBodyWithoutCredentials} = req.body;
     let msg = `${route} called`;
     if (!this.log.isTraceEnabled()) {
       this.log.debug(msg);
     } else {
-      msg += ` with \n req.body ${util.inspect(req.body)}`;
+      msg += ` with \n req.body ${util.inspect(reqBodyWithoutCredentials)}`;
       if (!isEmpty(req.query)) {
         msg += `, and \n req.query ${util.inspect(req.query)}`;
       }
@@ -90,7 +94,12 @@ class Logger {
   logResponse(req, res) {
     res.on('finish', () => {
       const route = `${req.method} ${req.path}`;
-      const reqBody = util.inspect(res.req.body);
+      // We are removing credentials from req body because
+      // POST /api/v1/registrysecrets takes credentials in its body
+      // and we do not want to log this information to the PFE log
+      const {credentials, ...reqBodyWithoutCredentials} = res.req.body;
+      const reqBody = util.inspect(reqBodyWithoutCredentials);
+
       this.log.trace(`responded to ${route} with status ${res.statusCode} and body ${reqBody}`);
     });
   }
