@@ -54,6 +54,8 @@ module.exports = class Templates {
     this.projectTemplates = [];
     // If a repository is added or removed then update the template list on the next GetTemplates
     this.projectTemplatesNeedsRefresh = true;
+    // If a repository is added or removed update the repository list
+    this.projectRepositoriesNeedsRefresh = true;
     this.repositoryFile = path.join(workspace, '.config/repository_list.json');
     this.repositoryList = DEFAULT_REPOSITORY_LIST;
     this.providers = {};
@@ -62,7 +64,8 @@ module.exports = class Templates {
   async initializeRepositoryList() {
     try {
       let repositories = [...this.repositoryList];
-      if (await cwUtils.fileExists(this.repositoryFile)) {
+      const repositoryFileExists = await cwUtils.fileExists(this.repositoryFile);
+      if (repositoryFileExists) {
         repositories = await fs.readJson(this.repositoryFile);
         this.projectTemplatesNeedsRefresh = true;
       }
@@ -78,17 +81,26 @@ module.exports = class Templates {
   // TEMPLATES
 
   async getTemplates(showEnabledOnly, projectStyle) {
-    // eslint-disable-next-line require-atomic-updates
-    this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
-    let templates = this.projectTemplates;
+    if (this.projectRepositoriesNeedsRefresh) {
+      // eslint-disable-next-line require-atomic-updates
+      this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
+      this.projectRepositoriesNeedsRefresh = false;
+    }
+    let templates = [...this.projectTemplates];
     if (this.projectTemplatesNeedsRefresh) {
       const repositories = (String(showEnabledOnly) === 'true')
         ? await this.getEnabledRepositories()
         : this.repositoryList;
       templates = await getTemplatesFromRepos(repositories);
+      this.projectTemplates = templates;
+      this.projectTemplatesNeedsRefresh = false;
     }
     if (projectStyle) return filterTemplatesByStyle(templates, projectStyle);
     return templates;
+  }
+
+  getEnabledTemplates(projectStyle) {
+    return this.getTemplates(true, projectStyle);
   }
 
   async getAllTemplateStyles() {
@@ -99,8 +111,11 @@ module.exports = class Templates {
   // REPOSITORIES
 
   async getRepositories() {
-    // eslint-disable-next-line require-atomic-updates
-    this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
+    if (this.projectRepositoriesNeedsRefresh) {
+      // eslint-disable-next-line require-atomic-updates
+      this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
+      this.projectRepositoriesNeedsRefresh = false;
+    }
     return this.repositoryList;
   }
 
@@ -254,6 +269,7 @@ module.exports = class Templates {
   addProvider(name, provider) {
     if (provider && typeof provider.getRepositories === 'function') {
       this.providers[name] = provider;
+      this.projectRepositoriesNeedsRefresh = true;
     }
   }
 

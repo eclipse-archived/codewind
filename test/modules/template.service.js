@@ -180,9 +180,11 @@ async function getTemplates(queryParams) {
  */
 async function setTemplateReposTo(repoList) {
     const reposToDelete = (await getTemplateRepos()).body;
-    await Promise.all(reposToDelete.map(repo =>
-        deleteTemplateRepo(repo.url)
-    ));
+    if (reposToDelete.length > 0) {
+        await Promise.all(reposToDelete.map(repo =>
+            deleteTemplateRepo(repo.url)
+        ));
+    }
     await Promise.all(repoList.map(repo =>
         addTemplateRepo(repo)
     ));

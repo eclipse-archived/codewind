@@ -15,7 +15,6 @@ const TemplateError = require('../modules/utils/errors/TemplateError');
 
 const router = express.Router();
 const log = new Logger(__filename);
-let updatePromise = null;
 
 /**
  * API Function to return a list of available templates
@@ -28,9 +27,10 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
     const templates = await templateController.getTemplates(showEnabledOnly, projectStyle);
     if (templates.length == 0) {
       log.warn('No templates found');
-      return res.sendStatus(204);
+      res.sendStatus(204);
+    } else {
+      res.status(200).json(templates);
     }
-    res.status(200).json(templates);
   } catch (error) {
     log.error(error);
     res.status(500).json(error);
@@ -42,10 +42,6 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
  * @return the set of language extensions as a JSON array of strings
  */
 router.get('/api/v1/templates/repositories', async (req, res, _next) => {
-  const { templates } = req.cw_user;
-  if (!updatePromise)
-    updatePromise = templates.updateRepoListWithReposFromProviders();
-  await updatePromise;
   await sendRepositories(req, res, _next);
 });
 
