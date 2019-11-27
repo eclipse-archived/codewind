@@ -325,7 +325,7 @@ describe('MetricsService.js', () => {
                 },
                 {
                     groupId: [ 'com.ibm.runtimetools' ],
-                    artifactId: [ 'javametrics-dash' ],
+                    artifactId: [ 'javametrics-codewind' ],
                     version: [ '[1.2,2.0)' ],
                     scope: [ 'provided' ],
                     type: [ 'war' ],
@@ -338,7 +338,7 @@ describe('MetricsService.js', () => {
                     type: [ 'war' ],
                 },
             ];
-            describe(`<originalDependencies> don't include javametrics-dash`, () => {
+            describe(`<originalDependencies> don't include javametrics-codewind`, () => {
                 it(`returns an object representing pom.xml dependencies injected with metrics collector`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlDependencies');
                     const originalDependencies = [];
@@ -349,7 +349,7 @@ describe('MetricsService.js', () => {
                     ]);
                 });
             });
-            describe(`<originalDependencies> already include javametrics-dash`, () => {
+            describe(`<originalDependencies> already include javametrics-codewind`, () => {
                 it(`returns an object representing the original pom.xml dependencies`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlDependencies');
                     const originalDependencies = deepClone(metricsCollectorDependencies);
@@ -367,7 +367,7 @@ describe('MetricsService.js', () => {
                     {
                         execution: [
                             {
-                                id: [ 'copy-javametrics-dash' ],
+                                id: [ 'copy-javametrics-codewind' ],
                                 phase: [ 'package' ],
                                 goals: [ { goal: [ 'copy-dependencies' ] } ],
                                 configuration: [
@@ -376,7 +376,7 @@ describe('MetricsService.js', () => {
                                         outputDirectory: [
                                             '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
                                         ],
-                                        includeArtifactIds: [ 'javametrics-dash' ],
+                                        includeArtifactIds: [ 'javametrics-codewind' ],
                                     },
                                 ],
                             },
@@ -435,14 +435,6 @@ describe('MetricsService.js', () => {
                         ...originalBuildPlugins,
                         metricsCollectorBuildPlugin,
                     ]);
-                });
-            });
-            describe(`<originalBuildPlugins> already include our metrics collector plugin`, () => {
-                it(`returns an object representing the original pom.xml build plugins`, () => {
-                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
-                    const originalBuildPlugins = [metricsCollectorBuildPlugin];
-                    const output = funcToTest(originalBuildPlugins);
-                    output.should.have.deep.members(originalBuildPlugins);
                 });
             });
         });
