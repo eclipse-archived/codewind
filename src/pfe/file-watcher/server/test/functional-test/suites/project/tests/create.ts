@@ -22,6 +22,9 @@ import * as logConfigs from "../../../configs/log.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
+import path from "path";
+import fs from "fs";
+
 export default class CreateTest {
     testName: string;
 
@@ -78,6 +81,12 @@ export default class CreateTest {
 
     runCreateWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         it("create project", async () => {
+            const dataFile = path.resolve(__dirname, "..", "..", "..", `${process.env.IN_K8 ? "kube" : "local"}-performance-data.json`);
+            const fileContent = JSON.parse(await fs.readFileSync(dataFile, "utf-8"));
+            const chosenTimestamp = Object.keys(fileContent[projectTemplate][projectLang]).sort().pop();
+
+            const startTime = Date.now();
+
             const info: any = await createProject(projData);
             expect(info).to.exist;
             expect(info.statusCode).to.exist;
@@ -88,6 +97,15 @@ export default class CreateTest {
 
             await waitForCreationEvent(projData.projectType, projectTemplate);
             await waitForProjectStartedEvent();
+
+            const endTime = Date.now();
+
+            const totalTestTime = (endTime - startTime) / 1000;
+            console.log(">>>>> IT TOOK: %d seconds", totalTestTime);
+
+            fileContent[projectTemplate][projectLang][chosenTimestamp]["create"] = totalTestTime;
+            console.log("Wrote to file: %s %j", dataFile, fileContent);
+            await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
         }).timeout(timeoutConfigs.createTestTimeout);
 
         async function waitForCreationEvent(projectType: string, projectTemplate: string): Promise<void> {
