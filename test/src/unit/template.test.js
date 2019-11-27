@@ -58,6 +58,40 @@ const mockRepoList = Object.values(mockRepos);
 describe('Templates.js', function() {
     suppressLogOutput(Templates);
     describe('Class functions', function() {
+        describe('initializeRepositoryList()', function() {
+            const workspace = path.join(__dirname, 'initializeRepositoryList');
+            beforeEach(() => {
+                fs.ensureDirSync(workspace);
+            });
+            afterEach(() => {
+                fs.removeSync(workspace);
+            });
+            it('initialises a Templates Class and creates a repository file', async function() {
+                const templateController = new Templates(workspace);
+                fs.pathExistsSync(templateController.repositoryFile).should.be.false;
+                await templateController.initializeRepositoryList();
+                templateController.repositoryList.length.should.equal(2);
+                fs.pathExistsSync(templateController.repositoryFile).should.be.true;
+            });
+            it('reads an existing repository list file', async function() {
+                const templateController = new Templates(workspace);
+                templateController.projectTemplatesNeedsRefresh = false;
+                const { repositoryFile, repositoryList: oldRepositoryList } = templateController;
+                await fs.ensureFileSync(repositoryFile);
+                await fs.writeJSON(repositoryFile, [ sampleRepos.codewind ]);
+                fs.pathExistsSync(repositoryFile).should.be.true;
+                oldRepositoryList.should.have.length(2);
+
+                await templateController.initializeRepositoryList();
+
+                const { repositoryList: newRepositoryList } = templateController;
+                fs.pathExistsSync(repositoryFile).should.be.true;
+                fs.readJsonSync(repositoryFile).should.deep.equal([sampleRepos.codewind]);
+                newRepositoryList.length.should.equal(1);
+                newRepositoryList.should.deep.equal([sampleRepos.codewind]);
+                templateController.projectTemplatesNeedsRefresh.should.be.true;
+            });
+        });
         describe('getTemplates(showEnabledOnly, projectStyle)', function() {
             it('Gets all templates', async function() {
                 this.timeout(10000);
@@ -686,29 +720,85 @@ describe('Templates.js', function() {
             afterEach(() => {
                 fs.removeSync(testWorkspaceDir);
             });
-            describe('(<existingUrl>)', function() {
-                it('updates the repository_list.json correctly', async function() {
-                    const mockRepoList = [sampleRepos.codewind];
-                    const templateController = new Templates(testWorkspaceDir);
-                    templateController.repositoryList = [...mockRepoList];
-                    const url = mockRepoList[0].url;
-                    await templateController.deleteRepository(url);
-                    templateController.repositoryList.should.deep.equal([]);
-                });
+            it('deletes an existing URL and updates the repository_list.json correctly', async function() {
+                const mockRepoList = [sampleRepos.codewind];
+                const templateController = new Templates(testWorkspaceDir);
+                templateController.repositoryList = [...mockRepoList];
+                const url = mockRepoList[0].url;
+                await templateController.deleteRepository(url);
+                templateController.repositoryList.should.deep.equal([]);
+            });
+            it('attempts to delete a repo that does not exist', async function() {
+                const mockRepoList = [sampleRepos.codewind];
+                const templateController = new Templates(testWorkspaceDir);
+                templateController.repositoryList = [...mockRepoList];
+                await templateController.deleteRepository('http://urlthatdoesnotexist.com');
+                templateController.repositoryList.should.deep.equal([...mockRepoList]);
             });
         });
-        describe('addProvider(name, provider)', function() {
-            it('ignores the invalid provider', function() {
+        describe('addProvider(name, provider)', () => {
+            it('ignores the invalid provider', () => {
                 const templateController = new Templates('');
                 const originalProviders = { ...templateController.providers };
                 templateController.addProvider('empty obj', {});
                 templateController.providers.should.deep.equal(originalProviders);
             });
+            it('successfully adds a provider', () => {
+                const templateController = new Templates('');
+                const newProvider = {
+                    getRepositories: () => {
+                        return '';
+                    },
+                };
+                const { providers } = templateController;
+                templateController.addProvider('newProvider', newProvider);
+                providers.should.have.property('newProvider');
+                providers.newProvider.should.containSubset(newProvider);
+            });
+        });
+        describe('addRepositoryToProviders(repo)', () => {
+            it('adds a repository to a provider', async() => {
+                const templateController = new Templates('');
+                templateController.providers = {
+                    firstProvider: {
+                        repositories: [],
+                        canHandle() {
+                            return true;
+                        },
+                        addRepository(newRepo) {
+                            this.repositories.push(newRepo);
+                            return this.repositories;
+                        },
+                    },
+                };
+                const { firstProvider } = templateController.providers;
+                firstProvider.repositories.should.have.length(0);
+                await templateController.addRepositoryToProviders({ ...sampleRepos.codewind });
+                firstProvider.repositories.should.have.length(1);
+            });
+        });
+        describe('removeRepositoryFromProviders(repo)', () => {
+            it('removes a repository from a provider', async() => {
+                const templateController = new Templates('');
+                templateController.providers = {
+                    firstProvider: {
+                        repositories: [{ ...sampleRepos.codewind }],
+                        canHandle() {
+                            return true;
+                        },
+                        removeRepository(repoURLToDelete) {
+                            this.repositories.splice(this.repositories.findIndex(repo => repo.url === repoURLToDelete), 1);
+                            return this.repositories;
+                        },
+                    },
+                };
+                const { firstProvider } = templateController.providers;
+                firstProvider.repositories.should.have.length(1);
+                await templateController.removeRepositoryFromProviders(sampleRepos.codewind.url);
+                firstProvider.repositories.should.have.length(0);
+            });
         });
     });
-
-
-
 
     describe('Local functions', function() {
         describe('writeRepositoryList(repositoryFile, repositoryList)', () => {

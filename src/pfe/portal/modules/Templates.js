@@ -61,14 +61,14 @@ module.exports = class Templates {
 
   async initializeRepositoryList() {
     try {
-      let { repositories } = this;
+      let repositories = [...this.repositoryList];
       if (await cwUtils.fileExists(this.repositoryFile)) {
         repositories = await fs.readJson(this.repositoryFile);
         this.projectTemplatesNeedsRefresh = true;
       }
       repositories = await updateRepoListWithReposFromProviders(this.providers, repositories, this.repositoryFile);
-      repositories = await fetchAllRepositoryDetails(this.repositoryList);
-      this.repositoriesList = repositories;
+      repositories = await fetchAllRepositoryDetails(repositories);
+      this.repositoryList = repositories;
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
     } catch (err) {
       log.error(`Error initalizing repository list: ${err}`);
@@ -264,8 +264,9 @@ module.exports = class Templates {
         // make a new copy to for each provider to be invoked with
         // in case any provider modifies it (which they shouldn't do)
         const copy = Object.assign({}, repo);
-        if (provider.canHandle(copy) && typeof provider.addRepository === 'function')
+        if (provider.canHandle(copy) && typeof provider.addRepository === 'function') {
           promises.push(provider.addRepository(copy));
+        }
       }
     }
     return Promise.all(promises);

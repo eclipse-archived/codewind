@@ -82,9 +82,9 @@ router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _n
   await sendRepositories(req, res, _next);
 });
 
-function sendRepositories(req, res, _next) {
+async function sendRepositories(req, res, _next) {
   const { templates } = req.cw_user;
-  const repositoryList = templates.getRepositories();
+  const repositoryList = await templates.getRepositories();
   res.status(200).json(repositoryList);
 }
 
