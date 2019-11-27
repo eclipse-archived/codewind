@@ -10,7 +10,7 @@
     "coverage": "nyc node server.js",
     "local": "node server.js --local",
     "eslint": "eslint .",
-    "pushLocal": "./pushLocal.sh"
+    "pushLocal": "npm run eslint && ./pushLocal.sh"
   },
   "author": "",
   "license": "ISC",
