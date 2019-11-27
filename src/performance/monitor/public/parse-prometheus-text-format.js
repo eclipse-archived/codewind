@@ -539,7 +539,7 @@
     const indexOfLabelEnd = line.indexOf('}');
     let lineBeforeLabelEnd = line.substring(0, indexOfLabelEnd);
     lineBeforeLabelEnd = lineBeforeLabelEnd.replace(/ /g, '');
-    line = lineBeforeLabelEnd + line.substring(indexOfLabelEnd, line.length -1);
+    line = lineBeforeLabelEnd + line.substring(indexOfLabelEnd, line.length);
     return line;
   }
 

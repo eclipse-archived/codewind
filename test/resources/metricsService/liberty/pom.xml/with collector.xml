@@ -98,7 +98,7 @@
         </dependency>
         <dependency>
             <groupId>com.ibm.runtimetools</groupId>
-            <artifactId>javametrics-dash</artifactId>
+            <artifactId>javametrics-codewind</artifactId>
             <version>[1.2,2.0)</version>
             <scope>provided</scope>
             <type>war</type>
@@ -148,7 +148,7 @@
                 <version>3.0.1</version>
                 <executions>
                     <execution>
-                        <id>copy-javametrics-dash</id>
+                        <id>copy-javametrics-codewind</id>
                         <phase>package</phase>
                         <goals>
                             <goal>copy-dependencies</goal>

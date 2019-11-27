@@ -222,7 +222,7 @@ function getNewContentsOfJvmOptions(originalContents) {
 
 function getNewPomXmlDependencies(originalDependencies) {
   const metricsCollectorDependencyAlreadyExists = originalDependencies.some(dependency =>
-    dependency.artifactId[0] === 'javametrics-dash'
+    dependency.artifactId[0] === 'javametrics-codewind'
   );
   if (metricsCollectorDependencyAlreadyExists) {
     return originalDependencies;
@@ -242,7 +242,7 @@ function getNewPomXmlDependencies(originalDependencies) {
     },
     {
       groupId: [ 'com.ibm.runtimetools' ],
-      artifactId: [ 'javametrics-dash' ],
+      artifactId: [ 'javametrics-codewind' ],
       version: [ '[1.2,2.0)' ],
       scope: [ 'provided' ],
       type: [ 'war' ],
@@ -261,7 +261,9 @@ function getNewPomXmlDependencies(originalDependencies) {
 
 function getNewPomXmlBuildPlugins(originalBuildPlugins) {
   const metricsCollectorBuildPluginAlreadyExists = originalBuildPlugins.some(plugin =>
-    plugin.artifactId[0] === 'maven-dependency-plugin'
+    plugin.artifactId[0] === 'maven-dependency-plugin' && plugin.executions[0].execution.some(execution => 
+      execution.id[0] === 'copy-javametrics-codewind'
+    )
   );
   if (metricsCollectorBuildPluginAlreadyExists) {
     return originalBuildPlugins;
@@ -274,7 +276,7 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
       {
         execution: [
           {
-            id: [ 'copy-javametrics-dash' ],
+            id: [ 'copy-javametrics-codewind' ],
             phase: [ 'package' ],
             goals: [ { goal: [ 'copy-dependencies' ] } ],
             configuration: [
@@ -283,7 +285,7 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
                 outputDirectory: [
                   '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins'
                 ],
-                includeArtifactIds: [ 'javametrics-dash' ]
+                includeArtifactIds: [ 'javametrics-codewind' ]
               }
             ]
           },
