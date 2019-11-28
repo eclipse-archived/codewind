@@ -11,6 +11,7 @@
 const express = require('express');
 const router = express.Router();
 const Logger = require('../modules/utils/Logger');
+const RegistrySecretsError = require('../modules/utils/errors/RegistrySecretsError');
 const log = new Logger(__filename);
 const { validateReq } = require('../middleware/reqValidator');
 
@@ -23,11 +24,9 @@ router.get('/api/v1/registrysecrets', async function (req, res) {
     log.debug(`GET /api/v1/registrysecrets called`);
     const retval = await user.getRegistrySecretList();
     res.status(retval.statusCode).send(retval.body);
-  } catch (error) {
-    const msg = "Failed to get the Codewind Docker Config Registries";
-    log.error(error);
-    log.error(msg);
-    res.status(500).send(msg);
+  } catch (err) {
+    log.error(err);
+    res.status(500).send(err.message);
   }
 });
 
@@ -43,11 +42,13 @@ router.post('/api/v1/registrysecrets', validateReq, async function (req, res) {
 
     const retval = await user.setupRegistrySecret(credentials, url);
     res.status(retval.statusCode).send(retval.body);
-  } catch (error) {
-    const msg = "Failed to set up the Codewind Registry Secret";
-    log.error(error);
-    log.error(msg);
-    res.status(500).send(msg);
+  } catch (err) {
+    log.error(err);
+    if (err.code == RegistrySecretsError.INVALID_ENCODED_CREDENTIALS || err.code == RegistrySecretsError.REGISTRY_DUPLICATE_URL) {
+      res.status(400).send(err.info.message);
+    } else {
+      res.status(500).send(err.info.message || err.message);
+    }
   }
 });
 
@@ -62,11 +63,13 @@ router.delete('/api/v1/registrysecrets', validateReq, async function (req, res) 
 
     const retval = await user.removeRegistrySecret(url);
     res.status(retval.statusCode).send(retval.body);
-  } catch (error) {
-    const msg = "Failed to delete the Codewind Registry Secret";
-    log.error(error);
-    log.error(msg);
-    res.status(500).send(msg);
+  } catch (err) {
+    log.error(err);
+    if (err.code == RegistrySecretsError.SECRET_DELETE_MISSING || err.code == RegistrySecretsError.NO_DOCKER_CONFIG) {
+      res.status(400).send(err.info.message);
+    } else {
+      res.status(500).send(err.info.message || err.message);
+    }
   }
 });
   
