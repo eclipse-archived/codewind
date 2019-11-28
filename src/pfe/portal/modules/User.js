@@ -680,6 +680,14 @@ module.exports = class User {
     const registrySecretList = [];
     
     try {
+      // Handle dockerhub specifically on local since docker.io does not work
+      if (url === "docker.io" && !global.codewind.RUNNING_IN_K8S) {
+        // eslint-disable-next-line no-param-reassign
+        url = "https://index.docker.io/v1/";
+      } else if (!url.startsWith("https://") && !url.startsWith("http://")) {
+        // eslint-disable-next-line no-param-reassign
+        url = "https://" + url ;
+      }
       const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
       const encodedAuth = Buffer.from(username + ":" + password).toString("base64");
 
@@ -862,6 +870,14 @@ module.exports = class User {
     const registrySecretList = [];
 
     try {
+      // Handle dockerhub specifically on local since docker.io does not work
+      if (url === "docker.io" && !global.codewind.RUNNING_IN_K8S) {
+        // eslint-disable-next-line no-param-reassign
+        url = "https://index.docker.io/v1/";
+      } else if (!url.startsWith("https://") && !url.startsWith("http://")) {
+        // eslint-disable-next-line no-param-reassign
+        url = "https://" + url;
+      }
       const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
       if (isDockerConfigFilePresent) {
         log.info("Docker Config file present, removing the specified Docker Registry from the list");
