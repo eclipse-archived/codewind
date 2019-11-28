@@ -217,19 +217,17 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         log.info("Temporary project directory doesn't exist, not syncing any files");
         res.status(404).send("No files have been synced");
       } else {
-
-        const currentFileList = await listFiles(pathToTempProj, '');
-
-        const filesToDeleteSet = new Set(currentFileList);
-        keepFileList.forEach((f) => filesToDeleteSet.delete(f));
-        const filesToDelete = Array.from(filesToDeleteSet);
+        const pathToProj = path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
+        const currentFileList = await listFilesInDirectory(pathToProj);
+        // don't use pathToTempProj use the actual path ..... obv
+        const filesToDelete = await getFilesToDelete(currentFileList, keepFileList);
 
         log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
       `${filesToDelete.join(', ')}`);
         // remove the file from pfe container
-        await Promise.all(
-          filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(pathToTempProj, oldFile)))
-        );
+        // await Promise.all(
+        //   filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(pathToTempProj, oldFile)))
+        // );
         res.sendStatus(200);
 
         if (project.injectMetrics) {
@@ -253,10 +251,21 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
     log.error(err);
     res.status(500).send(err);
   }
-
-
-
 });
+
+function getFilesToDelete(existingFileArray, newFileArray) {
+  const filesToDeleteSet = new Set(existingFileArray);
+  newFileArray.forEach((f) => filesToDeleteSet.delete(f));
+  return Array.from(filesToDeleteSet);
+}
+
+function deleteFilesInArray(directory, arrayOfFiles) {
+  // const filePath = path.join(directory, )
+  const promiseArray = arrayOfFiles.map(file => {
+    return cwUtils.forceRemove(path.join(directory, file));
+  });
+  return Promise.all(promiseArray);
+}
 
 function getMode(project) {
   return (project.extension && project.extension.config.needsMount) ? "777" : "";
@@ -320,7 +329,6 @@ async function listFiles(absolutePath, relativePath) {
     const nextRelativePath = path.join(relativePath, f);
     const nextAbsolutePath = path.join(absolutePath, f);
 
-
     // eslint-disable-next-line no-await-in-loop
     const stats = await fs.stat(nextAbsolutePath);
     if (stats.isDirectory()) {
@@ -332,6 +340,10 @@ async function listFiles(absolutePath, relativePath) {
     }
   }
   return fileList;
+}
+
+function listFilesInDirectory(absolutePathToDirectory) {
+  return listFiles(absolutePathToDirectory, '');
 }
 
 
