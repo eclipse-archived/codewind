@@ -10,7 +10,6 @@
 *******************************************************************************/
 global.codewind = { RUNNING_IN_K8S: false };
 const fs = require('fs-extra');
-const assert = require('assert');
 const path = require('path');
 const rewire = require('rewire');
 const chai = require('chai');
@@ -24,8 +23,7 @@ const { suppressLogOutput } = require('../../../../modules/log.service');
 chai.should();
 chai.use(chaiFiles);
 chai.use(chaiPromise);
-const { expect } = chai;
-const { file: chaiFile, dir: chaiDir } = chaiFiles;
+const { file: chaiFile } = chaiFiles;
 
 const testDirectory = path.join(__dirname, 'remoteBindRouteTest');
 
@@ -131,24 +129,6 @@ describe('remoteBind.route.test.js', () => {
         });
     });
 });
-
-// // Function to check if an array of files exist
-// // Throws an assertion error if a file does not exist
-// function checkFilesExistInDirectory(directory, fileArray) {
-//     const arrayOfFilesThatDoNotExist = [];
-//     for (let i = 0; i < fileArray.length; i++) {
-//         const relativePath = fileArray[i];
-//         const absolutePath = path.join(directory, relativePath);
-//         if (!fs.pathExistsSync(absolutePath)) {
-//             arrayOfFilesThatDoNotExist.push(relativePath);
-//         }
-//     }
-//     if (arrayOfFilesThatDoNotExist.length > 0) {
-//         assert.fail(`expected files [${arrayOfFilesThatDoNotExist.join(', ')}] to exist in directory ${directory}`);
-//         return false;
-//     }
-//     return true;
-// }
 
 function assertFilesExist(directory, fileArray) {
     for (let i = 0; i < fileArray.length; i++) {

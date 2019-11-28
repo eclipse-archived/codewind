@@ -212,10 +212,11 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
     const project = user.projectList.retrieveProject(projectID);
     if (project) {
       const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
+      const tempProjectExists = await fs.pathExists(pathToTempProj);
       // eslint-disable-next-line no-sync
-      if (!fs.existsSync(pathToTempProj)) {
-        log.info("Temporary project directory doesn't exist, not syncing any files");
-        res.status(404).send("No files have been synced");
+      if (modifiedList.length === 0 && !tempProjectExists) {
+        log.info('Temporary project directory doesn\'t exist and modified list is empty, not syncing any files');
+        res.status(404).send('No files have been synced');
       } else {
         const pathToProj = path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
         const currentFileList = await listFilesInDirectory(pathToProj);
@@ -225,9 +226,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
       `${filesToDelete.join(', ')}`);
         // remove the file from pfe container
-        // await Promise.all(
-        //   filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(pathToTempProj, oldFile)))
-        // );
+        await deleteFilesInArray(pathToProj, filesToDelete);
         res.sendStatus(200);
 
         if (project.injectMetrics) {
@@ -260,9 +259,8 @@ function getFilesToDelete(existingFileArray, newFileArray) {
 }
 
 function deleteFilesInArray(directory, arrayOfFiles) {
-  // const filePath = path.join(directory, )
-  const promiseArray = arrayOfFiles.map(file => {
-    return cwUtils.forceRemove(path.join(directory, file));
+  const promiseArray = arrayOfFiles.map(filePath => {
+    return cwUtils.forceRemove(path.join(directory, filePath));
   });
   return Promise.all(promiseArray);
 }
