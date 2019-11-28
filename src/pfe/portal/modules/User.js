@@ -738,11 +738,7 @@ module.exports = class User {
     if (isServiceAccountPatched || !global.codewind.RUNNING_IN_K8S) {
       // when either the service account is patched successfully or we are in local Codewind, we can return
       log.debug("Codewind Docker Registry List: " + JSON.stringify(registrySecretList));
-      const retval = {
-        statusCode: 201,
-        body: registrySecretList
-      };
-      return retval;
+      return registrySecretList;
     }
 
     const msg = "Failed to patch the Service Account";
@@ -856,11 +852,7 @@ module.exports = class User {
       throw err;
     }
     
-    const retval = {
-      statusCode: 200,
-      body: registrySecretList
-    };
-    return retval;
+    return registrySecretList;
   }
 
   /**
@@ -917,11 +909,7 @@ module.exports = class User {
     if (isServiceAccountPatched || !global.codewind.RUNNING_IN_K8S) {
       // when either the service account is patched successfully or we are in local Codewind, we can return
       log.debug("Codewind Docker Registry List: " + JSON.stringify(registrySecretList));
-      const retval = {
-        statusCode: 200,
-        body: registrySecretList
-      };
-      return retval;
+      return registrySecretList;
     }
 
     const msg = "Failed to patch the Service Account";
