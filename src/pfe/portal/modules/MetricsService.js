@@ -50,13 +50,12 @@ function getNewContentsOfPackageJson(originalContentsOfPackageJson) {
   const newContentsOfPackageJson = deepClone(originalContentsOfPackageJson);
 
   newContentsOfPackageJson.scripts.start = getNewStartScript(originalContentsOfPackageJson.scripts.start);
-  // TODO: change to production repo when ready
-  newContentsOfPackageJson.dependencies['appmetrics-prometheus'] = "git+https://git@github.com/rwalle61/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint";
+  newContentsOfPackageJson.dependencies['appmetrics-codewind'] = "git+https://git@github.com/RuntimeTools/appmetrics-codewind.git";
   return newContentsOfPackageJson;
 }
 
 function getNewStartScript(originalStartScript) {
-  const metricsCollectorScript = '-r appmetrics-prometheus/attach';
+  const metricsCollectorScript = '-r appmetrics-codewind/attach';
 
   if (originalStartScript.includes(metricsCollectorScript)) {
     return originalStartScript;
