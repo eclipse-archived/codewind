@@ -226,7 +226,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
       `${filesToDelete.join(', ')}`);
         // remove the file from pfe container
-        await deleteFilesInArray(pathToProj, filesToDelete);
+        await deleteFilesAndCleanUpEmptyDirectories(pathToProj, filesToDelete);
         res.sendStatus(200);
 
         if (project.injectMetrics) {
@@ -263,6 +263,31 @@ function deleteFilesInArray(directory, arrayOfFiles) {
     return cwUtils.forceRemove(path.join(directory, filePath));
   });
   return Promise.all(promiseArray);
+}
+
+async function deleteEmptyDirectoryRecursively(directory) {
+  const stats = await fs.stat(directory);
+  const isDir = stats.isDirectory();
+  if (isDir) {
+    const dirContents = await fs.readdir(directory);
+    if (dirContents.length > 0) {
+      const promiseArray = [];
+      dirContents.forEach(filePath => {
+        const absolutePath = path.join(directory, filePath);
+        promiseArray.push(deleteEmptyDirectoryRecursively(absolutePath));
+      });
+      await Promise.all(promiseArray);
+    }
+    // Check if directory as empty subdirectories will have been deleted
+    if ((await fs.readdir(directory)).length === 0) {
+      await fs.remove(directory);
+    }
+  }
+}
+
+async function deleteFilesAndCleanUpEmptyDirectories(directory, arrayOfFiles) {
+  await deleteFilesInArray(directory, arrayOfFiles);
+  await deleteEmptyDirectoryRecursively(directory);
 }
 
 function getMode(project) {
