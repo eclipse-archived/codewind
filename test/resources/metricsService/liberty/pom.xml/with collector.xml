@@ -156,7 +156,7 @@
                         <configuration>
                           <stripVersion>true</stripVersion>
                           <outputDirectory>${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins</outputDirectory>
-                          <includeArtifactIds>javametrics-dash</includeArtifactIds>
+                          <includeArtifactIds>javametrics-codewind</includeArtifactIds>
                       </configuration>
                     </execution>
                     <execution>

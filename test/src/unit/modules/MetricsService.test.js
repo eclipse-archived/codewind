@@ -51,14 +51,13 @@ describe('MetricsService.js', () => {
         "version": "1.0.0",
         "description": "A generated IBM Cloud application",
         "scripts": {
-            "start": "node -r appmetrics-prometheus/attach $npm_package_config_entrypoint",
+            "start": "node -r appmetrics-codewind/attach $npm_package_config_entrypoint",
             "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
         },
         "dependencies": {
             "body-parser": "^1.18.3",
             "express": "^4.16.4",
-            // TODO: change back to "git+https://git@github.com/CloudNativeJS/appmetrics-prometheus.git#appmetrics-codewind"
-            "appmetrics-prometheus": "git+https://git@github.com/rwalle61/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint",
+            "appmetrics-codewind": "^0.1.0",
         }
         /* eslint-enable quote-props, quotes, comma-dangle */
     };
@@ -215,15 +214,15 @@ describe('MetricsService.js', () => {
             const tests = [
                 {
                     input: 'node server.js',
-                    expectedOutput: 'node -r appmetrics-prometheus/attach server.js',
+                    expectedOutput: 'node -r appmetrics-codewind/attach server.js',
                 },
                 {
                     input: 'nodemon server.js',
-                    expectedOutput: 'nodemon -r appmetrics-prometheus/attach server.js',
+                    expectedOutput: 'nodemon -r appmetrics-codewind/attach server.js',
                 },
                 {
-                    input: 'node -r appmetrics-prometheus/attach server.js',
-                    expectedOutput: 'node -r appmetrics-prometheus/attach server.js',
+                    input: 'node -r appmetrics-codewind/attach server.js',
+                    expectedOutput: 'node -r appmetrics-codewind/attach server.js',
                 },
             ];
             for (const test of tests) {

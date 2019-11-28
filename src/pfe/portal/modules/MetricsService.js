@@ -49,7 +49,7 @@ function getNewContentsOfPackageJson(originalContentsOfPackageJson) {
   const newContentsOfPackageJson = deepClone(originalContentsOfPackageJson);
 
   newContentsOfPackageJson.scripts.start = getNewStartScript(originalContentsOfPackageJson.scripts.start);
-  newContentsOfPackageJson.dependencies['appmetrics-codewind'] = "git+https://git@github.com/RuntimeTools/appmetrics-codewind.git";
+  newContentsOfPackageJson.dependencies['appmetrics-codewind'] = '^0.1.0';
   return newContentsOfPackageJson;
 }
 
@@ -116,7 +116,7 @@ async function getPathToApplicationJava(projectDir) {
 async function injectMetricsCollectorIntoApplicationJava(pathToApplicationJava) {
   const originalApplicationJava = await fs.readFile(pathToApplicationJava, 'utf8');
   const newApplicationJava = getNewContentsOfApplicationJava(originalApplicationJava);
-  log.debug(`Injecting metrics collector into project's Application.java, which is now:\n${newApplicationJava}`);
+  log.trace(`Injecting metrics collector into project's Application.java, which is now:\n${newApplicationJava}`);
   await fs.writeFile(pathToApplicationJava, newApplicationJava);
 }
 
@@ -144,7 +144,7 @@ async function injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml) {
   const newPomXmlInJsonFormat = getNewContentsOfPomXmlForSpring(originalPomXml);
   const xmlBuilder = new xml2js.Builder();
   const newPomXml = xmlBuilder.buildObject(newPomXmlInJsonFormat);
-  log.debug(`Injecting metrics collector into project's pom.xml, which is now:\n${newPomXml}`);
+  log.trace(`Injecting metrics collector into project's pom.xml, which is now:\n${newPomXml}`);
   await fs.writeFile(pathToPomXml, newPomXml);
 }
 
@@ -190,14 +190,14 @@ async function injectMetricsCollectorIntoPomXml(pathToPomXml) {
   const newPomXmlInJsonFormat = getNewContentsOfPomXml(originalPomXml);
   const xmlBuilder = new xml2js.Builder();
   const newPomXml = xmlBuilder.buildObject(newPomXmlInJsonFormat);
-  log.debug(`Injecting metrics collector into project's pom.xml, which is now ${util.inspect(newPomXml)}`);
+  log.trace(`Injecting metrics collector into project's pom.xml, which is now ${util.inspect(newPomXml)}`);
   await fs.writeFile(pathToPomXml, newPomXml);
 }
 
 async function injectMetricsCollectorIntoJvmOptions(pathToJvmOptions) {
   const originalJvmOptions = await fs.readFile(pathToJvmOptions, 'utf8');
   const newJvmOptions = getNewContentsOfJvmOptions(originalJvmOptions);
-  log.debug(`Injecting metrics collector into project's jvm.options, which is now ${util.inspect(newJvmOptions)}`);
+  log.trace(`Injecting metrics collector into project's jvm.options, which is now ${util.inspect(newJvmOptions)}`);
   await fs.writeFile(pathToJvmOptions, newJvmOptions);
 }
 
