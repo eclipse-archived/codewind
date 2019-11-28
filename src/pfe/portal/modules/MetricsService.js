@@ -40,8 +40,7 @@ async function injectMetricsCollectorIntoNodeProject(projectDir) {
   const originalContentsOfPackageJson = await fs.readJSON(pathToPackageJson);
 
   const newContentsOfPackageJson = getNewContentsOfPackageJson(originalContentsOfPackageJson);
-  // TODO: change this (and others below) to trace
-  log.debug(`Injecting metrics collector into project's package.json, which is now ${util.inspect(newContentsOfPackageJson)}`);
+  log.trace(`Injecting metrics collector into project's package.json, which is now ${util.inspect(newContentsOfPackageJson)}`);
 
   await fs.writeJSON(pathToPackageJson, newContentsOfPackageJson, { spaces: 2 });
 }

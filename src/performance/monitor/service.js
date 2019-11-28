@@ -11,8 +11,7 @@
 const { getResData, makePostRequest } = require('../utils/request.service');
 const { repeatFunc, allPromisesSettled } = require('../utils/utils.service');
 
-// TODO: reset
-const numPolls = 10;
+const numPolls = 1000; // maxPolls * pollInterval = 2000000ms of data ~= 33 mins
 const latestProjectData = {};
 
 const getEnvData = (appOrigin) => getResData(appOrigin, '/metrics/environment');
