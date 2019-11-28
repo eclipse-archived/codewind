@@ -261,7 +261,7 @@ function getNewPomXmlDependencies(originalDependencies) {
 
 function getNewPomXmlBuildPlugins(originalBuildPlugins) {
   const metricsCollectorBuildPluginAlreadyExists = originalBuildPlugins.some(plugin =>
-    plugin.artifactId[0] === 'maven-dependency-plugin' && plugin.executions[0].execution.some(execution => 
+    plugin.artifactId[0] === 'maven-dependency-plugin' && plugin.executions && plugin.executions[0].execution.some(execution =>
       execution.id[0] === 'copy-javametrics-codewind'
     )
   );
