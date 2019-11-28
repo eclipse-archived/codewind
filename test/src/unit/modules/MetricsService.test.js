@@ -358,72 +358,73 @@ describe('MetricsService.js', () => {
             });
         });
         describe('getNewPomXmlBuildPlugins(originalBuildPlugins)', () => {
+            const metricsCollectorExecutions = [
+                {
+                    execution: [
+                        {
+                            id: [ 'copy-javametrics-codewind' ],
+                            phase: [ 'package' ],
+                            goals: [ { goal: [ 'copy-dependencies' ] } ],
+                            configuration: [
+                                {
+                                    stripVersion: [ 'true' ],
+                                    outputDirectory: [
+                                        '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
+                                    ],
+                                    includeArtifactIds: [ 'javametrics-codewind' ],
+                                },
+                            ],
+                        },
+                        {
+                            id: [ 'copy-javametrics-rest' ],
+                            phase: [ 'package' ],
+                            goals: [ { goal: [ 'copy-dependencies' ] } ],
+                            configuration: [
+                                {
+                                    stripVersion: [ 'true' ],
+                                    outputDirectory: [
+                                        '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
+                                    ],
+                                    includeArtifactIds: [ 'javametrics-rest' ],
+                                },
+                            ],
+                        },
+                        {
+                            id: [ 'copy-javametrics-agent' ],
+                            phase: [ 'package' ],
+                            goals: [ { goal: [ 'copy-dependencies' ] } ],
+                            configuration: [
+                                {
+                                    stripVersion: [ 'true' ],
+                                    outputDirectory: [
+                                        '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/',
+                                    ],
+                                    includeArtifactIds: [ 'javametrics-agent' ],
+                                },
+                            ],
+                        },
+                        {
+                            id: [ 'copy-javametrics-asm' ],
+                            phase: [ 'package' ],
+                            goals: [ { goal: [ 'copy-dependencies' ] } ],
+                            configuration: [
+                                {
+                                    outputDirectory: [
+                                        '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/asm',
+                                    ],
+                                    includeGroupIds: [ 'org.ow2.asm' ],
+                                    includeArtifactIds: [ 'asm,asm-commons' ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ];
             const metricsCollectorBuildPlugin = {
                 groupId: [ 'org.apache.maven.plugins' ],
                 artifactId: [ 'maven-dependency-plugin' ],
                 version: [ '3.0.1' ],
-                executions: [
-                    {
-                        execution: [
-                            {
-                                id: [ 'copy-javametrics-codewind' ],
-                                phase: [ 'package' ],
-                                goals: [ { goal: [ 'copy-dependencies' ] } ],
-                                configuration: [
-                                    {
-                                        stripVersion: [ 'true' ],
-                                        outputDirectory: [
-                                            '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
-                                        ],
-                                        includeArtifactIds: [ 'javametrics-codewind' ],
-                                    },
-                                ],
-                            },
-                            {
-                                id: [ 'copy-javametrics-rest' ],
-                                phase: [ 'package' ],
-                                goals: [ { goal: [ 'copy-dependencies' ] } ],
-                                configuration: [
-                                    {
-                                        stripVersion: [ 'true' ],
-                                        outputDirectory: [
-                                            '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
-                                        ],
-                                        includeArtifactIds: [ 'javametrics-rest' ],
-                                    },
-                                ],
-                            },
-                            {
-                                id: [ 'copy-javametrics-agent' ],
-                                phase: [ 'package' ],
-                                goals: [ { goal: [ 'copy-dependencies' ] } ],
-                                configuration: [
-                                    {
-                                        stripVersion: [ 'true' ],
-                                        outputDirectory: [
-                                            '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/',
-                                        ],
-                                        includeArtifactIds: [ 'javametrics-agent' ],
-                                    },
-                                ],
-                            },
-                            {
-                                id: [ 'copy-javametrics-asm' ],
-                                phase: [ 'package' ],
-                                goals: [ { goal: [ 'copy-dependencies' ] } ],
-                                configuration: [
-                                    {
-                                        outputDirectory: [
-                                            '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/asm',
-                                        ],
-                                        includeGroupIds: [ 'org.ow2.asm' ],
-                                        includeArtifactIds: [ 'asm,asm-commons' ],
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
+                executions: metricsCollectorExecutions,
             };
             describe(`<originalBuildPlugins> don't include our metrics collector plugin`, () => {
                 it(`returns an object representing pom.xml build plugins including the metrics collector plugin`, () => {
@@ -442,6 +443,38 @@ describe('MetricsService.js', () => {
                     const originalBuildPlugins = [metricsCollectorBuildPlugin];
                     const output = funcToTest(originalBuildPlugins);
                     output.should.have.deep.members(originalBuildPlugins);
+                });
+            });
+            describe(`<originalBuildPlugins> include a plugin with the same name as ours but without build executions`, () => {
+                it(`returns an object representing pom.xml build plugins including the metrics collector plugin`, () => {
+                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
+                    const originalBuildPlugins = [{
+                        groupId: [ 'org.apache.maven.plugins' ],
+                        artifactId: [ 'maven-dependency-plugin' ],
+                        version: [ '3.0.1' ],
+                        // no executions
+                    }];
+                    const output = funcToTest(originalBuildPlugins);
+                    output.should.have.deep.members([
+                        ...originalBuildPlugins,
+                        metricsCollectorBuildPlugin,
+                    ]);
+                });
+            });
+            describe(`<originalBuildPlugins> include a plugin with the same name as ours but without the correct build executions`, () => {
+                it(`returns an object representing pom.xml build plugins including the metrics collector plugin`, () => {
+                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
+                    const originalBuildPlugins = [{
+                        groupId: [ 'org.apache.maven.plugins' ],
+                        artifactId: [ 'maven-dependency-plugin' ],
+                        version: [ '3.0.1' ],
+                        executions: [{ execution: [] }],
+                    }];
+                    const output = funcToTest(originalBuildPlugins);
+                    output.should.have.deep.members([
+                        ...originalBuildPlugins,
+                        metricsCollectorBuildPlugin,
+                    ]);
                 });
             });
         });
