@@ -102,6 +102,9 @@ module.exports = class Project {
 
     // Default the injection of monitoring to be off
     this.injectMetrics = false;
+    if (args.hasOwnProperty('injectMetrics')) {
+      this.injectMetrics = args.injectMetrics;
+    }
   }
 
   toJSON() {
