@@ -61,21 +61,15 @@ function updateDash(projectData) {
 }
 
 function combineMetrics(metrics) {
-  // console.log('metrics');
-  // console.log(metrics);
   let metricsFromUser = [];
   let metricsFromCodewind = [];
 
   if (metrics.fromUser) {
     metricsFromUser = parsePrometheusTextFormat(metrics.fromUser);
-    // console.log('metricsFromUser');
-    // console.log(metricsFromUser);
   }
 
   if (metrics.fromCodewind) {
     metricsFromCodewind = parsePrometheusTextFormat(metrics.fromCodewind);
-    // console.log('metricsFromCodewind');
-    // console.log(metricsFromCodewind);
   }
 
   const metricsFromUserNotProvidedByCodewind = metricsFromUser.filter(userMetric =>
