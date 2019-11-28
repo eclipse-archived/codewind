@@ -19,6 +19,7 @@ const inflateAsync = promisify(zlib.inflate);
 const cwUtils = require('../../modules/utils/sharedFunctions');
 const Logger = require('../../modules/utils/Logger');
 const Project = require('../../modules/Project');
+const metricsService = require('../../modules/MetricsService');
 const ProjectInitializerError = require('../../modules/utils/errors/ProjectInitializerError');
 const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
@@ -224,15 +225,21 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         const filesToDelete = Array.from(filesToDeleteSet);
 
         log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
-          `${filesToDelete.join(', ')}`);
+      `${filesToDelete.join(', ')}`);
         // remove the file from pfe container
         await Promise.all(
           filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(pathToTempProj, oldFile)))
         );
         res.sendStatus(200);
-
         await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
-
+        // add metrics if required
+        if (project.injectMetrics) {
+          try {
+            await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
+          } catch (error) {
+            log.warn(error);
+          }
+        }
         timersyncend = Date.now();
         let timersynctime = (timersyncend - timersyncstart) / 1000;
         log.info(`Total time to sync project ${project.name} to build container is ${timersynctime} seconds`);
@@ -382,11 +389,17 @@ async function bindEnd(req, res) {
       res.status(404).send(`Unable to find project ${projectID}`);
       return;
     }
-
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     // now move temp project to real project
     await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory), getMode(project));
-
+    // add metrics if required
+    if (project.injectMetrics) {
+      try {
+        await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
+      } catch (error) {
+        log.warn(error);
+      }
+    }
     // debug logic to identify bind time
     timerbindend = Date.now();
     let totalbindtime = (timerbindend - timerbindstart) / 1000;

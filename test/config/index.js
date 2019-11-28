@@ -15,8 +15,13 @@ const { execSync } = require('child_process');
 // via the env var.
 let CONTAINER_HOST_INFO = {};
 if (!process.env.CODEWIND_URL) {
-    const CONTAINER_HOST_STDOUT = execSync(`docker inspect --format='{{json (index (index .NetworkSettings.Ports "9090/tcp") 0)}}' codewind-pfe`);
-    CONTAINER_HOST_INFO = JSON.parse(CONTAINER_HOST_STDOUT);
+    try {
+        const CONTAINER_HOST_STDOUT = execSync(`docker inspect --format='{{json (index (index .NetworkSettings.Ports "9090/tcp") 0)}}' codewind-pfe`);
+        CONTAINER_HOST_INFO = JSON.parse(CONTAINER_HOST_STDOUT);
+    } catch (error) {
+        // So that unit tests can run even if codewind-pfe is not started
+        // console.log(error);
+    }
 }
 
 const CODEWIND_URL = process.env.CODEWIND_URL || `http://${CONTAINER_HOST_INFO.HostIp}:${CONTAINER_HOST_INFO.HostPort}`;
