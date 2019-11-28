@@ -436,6 +436,14 @@ describe('MetricsService.js', () => {
                     ]);
                 });
             });
+            describe(`<originalBuildPlugins> does include our metrics collector plugin`, () => {
+                it(`returns an object representing pom.xml build plugins including the metrics collector plugin`, () => {
+                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
+                    const originalBuildPlugins = [metricsCollectorBuildPlugin];
+                    const output = funcToTest(originalBuildPlugins);
+                    output.should.have.deep.members(originalBuildPlugins);
+                });
+            });
         });
     });
     describe('spring', () => {
