@@ -15,7 +15,7 @@ const ProjectListError = require('../../modules/utils/errors/ProjectListError');
 const ProjectError = require('../../modules/utils/errors/ProjectError');
 const ProjectMetricsError = require('../../modules/utils/errors/ProjectMetricsError');
 const Project = require('../../modules/Project');
-
+const { validateReq } = require('../../middleware/reqValidator');
 const router = express.Router();
 const log = new Logger(__filename);
 
@@ -161,6 +161,86 @@ router.get('/api/v1/projects/:id/metrics/:type', async function (req, res) {
     }
   }
 });
+
+/**
+ * Returns metrics data for a project (given a list of metrics types in req.body.types)
+ * @param id, the id of the project
+ * @return {[JSON]} metricsData for the project specified (in format { type, metrics })
+ */
+router.post('/api/v1/projects/:id/metrics/types', async function(req, res) {
+  const projectID = req.sanitizeParams('id');
+  try {
+    const user = req.cw_user;
+    const project = user.projectList.retrieveProject(projectID);
+
+    if (!project) {
+      const message = `Unable to find project ${projectID}`;
+      log.error(message);
+      res.status(404).send({ message });
+      return;
+    }
+
+    const metricsTypes = req.sanitizeBody('types');
+    if (!metricsTypes) {
+      res.status(400).send(`No metrics found`);
+      return;
+    }
+
+    const metricsData = await Promise.all(metricsTypes.map(async (type) => {
+      const metrics = await project.getMetrics(type);
+      return { type, metrics };
+    }));
+
+    res.set('count', metricsData.length);
+    res.status(200).send(metricsData);
+
+  } catch (err) {
+    log.error(err);
+    if (err instanceof ProjectError && err.code === 'INVALID_METRIC_TYPE') {
+      res.status(404).send(err.info);
+    } else if (err instanceof ProjectError && err.code === 'LOAD_TEST_DIR_ERROR') {
+      res.status(422).send(err.info);
+    } else {
+      res.status(500).send(err.info || err);
+    }
+  }
+});
+
+/**
+ * API Function to enable or disable the auto injection of metrics
+ * @param project, the project
+ * @return 202 if the specified setting was applied and build requested
+ * @return 404 if the specified project does not exist
+ * @return 500 if internal error
+ */
+router.post('/api/v1/projects/:id/metrics/inject', validateReq, async function (req, res) {
+  const projectID = req.sanitizeParams('id');
+  const injectMetrics = req.sanitizeBody('enable');
+  try {
+    const user = req.cw_user;
+    const project = user.projectList.retrieveProject(projectID);
+    if (!project) {
+      const message = `Unable to find project ${projectID}`;
+      log.error(message);
+      res.status(404).send({ message });
+      return;
+    }
+
+    await user.projectList.updateProject({
+      projectID: projectID,
+      injectMetrics: injectMetrics
+    });
+
+    user.buildProject(project, "build");
+
+    res.sendStatus(202);
+
+  } catch (err) {
+      log.error(err);
+      res.status(500).send(err.info || err);
+  }
+});
+
 
 /**
 * Updates the description of a specific load-test run on a specified project
