@@ -15,7 +15,7 @@ const ProjectListError = require('../../modules/utils/errors/ProjectListError');
 const ProjectError = require('../../modules/utils/errors/ProjectError');
 const ProjectMetricsError = require('../../modules/utils/errors/ProjectMetricsError');
 const Project = require('../../modules/Project');
-
+const { validateReq } = require('../../middleware/reqValidator');
 const router = express.Router();
 const log = new Logger(__filename);
 
@@ -161,6 +161,42 @@ router.get('/api/v1/projects/:id/metrics/:type', async function (req, res) {
     }
   }
 });
+
+/**
+ * API Function to enable or disable the auto injection of metrics
+ * @param project, the project
+ * @return 202 if the specified setting was applied and build requested
+ * @return 404 if the specified project does not exist
+ * @return 500 if internal error
+ */
+router.post('/api/v1/projects/:id/metrics/inject', validateReq, async function (req, res) {
+  const projectID = req.sanitizeParams('id');
+  const injectMetrics = req.sanitizeBody('enable');
+  try {
+    const user = req.cw_user;
+    const project = user.projectList.retrieveProject(projectID);
+    if (!project) {
+      const message = `Unable to find project ${projectID}`;
+      log.error(message);
+      res.status(404).send({ message });
+      return;
+    }
+
+    await user.projectList.updateProject({
+      projectID: projectID,
+      injectMetrics: injectMetrics
+    });
+
+    user.buildProject(project, "build");
+
+    res.sendStatus(202);
+
+  } catch (err) {
+      log.error(err);
+      res.status(500).send(err.info || err);
+  }
+});
+
 
 /**
 * Updates the description of a specific load-test run on a specified project

@@ -813,6 +813,46 @@ paths:
         500:
           description: Internal error
 
+  /api/v1/projects/{id}/metrics/inject:
+    post:
+      summary: Enable auto injection of metrics
+      description: >
+        Get all metrics for a certain type or types of metric, for a specific
+        project as specified by the project ID.
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: id of project
+      requestBody:
+        description: Value indicating whether metrics should be injected
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - enable
+              properties:
+                types:
+                  description: Boolean
+                  type: boolean
+                  example: true
+      responses:
+        202:
+          description: >
+            Successful update of project information and build triggered
+          content:
+            application/json:
+              schema:
+                type: object
+        404:
+          description: Project not found
+        500:
+          description: Internal error has occured
+ 
+
   /api/v1/projects/{id}/metrics/types:
     post:
       summary: Get project metrics of a certain type
