@@ -155,6 +155,7 @@ async function main() {
     if (k8Client) {
       log.info('Codewind is running in k8s');
       global.codewind.RUNNING_IN_K8S = true;
+      global.codewind.k8Client = k8Client;
 
       // get current ingress path - it is passed in an env var
       // https://github.com/eclipse/codewind-che-plugin/blob/master/codewind-che-sidecar/scripts/kube/codewind_template.yaml#L135
@@ -208,8 +209,7 @@ async function main() {
     null,
     null,
     global.codewind.CODEWIND_WORKSPACE,
-    io,
-    k8Client
+    io
   );
   userList.add(user);
   setRoutes();
