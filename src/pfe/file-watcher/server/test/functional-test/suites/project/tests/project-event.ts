@@ -12,6 +12,7 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 import path from "path";
+import fs from "fs";
 
 import * as projectsController from "../../../../../src/controllers/projectsController";
 import { updateProjectForNewChange } from "../../../lib/project";
@@ -66,6 +67,11 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
             if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectTemplate] && project_configs.filesToUpdate[projectTemplate][projectLang] || [];
             for (const file of filesList) {
                 it(`${type.toLowerCase()} file: ${file}`, async () => {
+                    const dataFile = path.resolve(__dirname, "..", "..", "..", `${process.env.IN_K8 ? "kube" : "local"}-performance-data.json`);
+                    const fileContent = JSON.parse(await fs.readFileSync(dataFile, "utf-8"));
+                    const chosenTimestamp = Object.keys(fileContent[projectTemplate][projectLang]).sort().pop();
+                    const startTime = Date.now();
+
                     const fileToChange = file;
                     const pathFileToChange = path.join(projData.location, fileToChange);
 
@@ -110,6 +116,11 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
                     } else {
                         fail(`failed to find ${targetEvent} for updating docker file`);
                     }
+
+                    const endTime = Date.now();
+                    const totalTestTime = (endTime - startTime) / 1000;
+                    fileContent[projectTemplate][projectLang][chosenTimestamp][`update-${file}`] = totalTestTime;
+                    await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
                 }).timeout(timeoutConfigs.createTestTimeout);
             }
         }

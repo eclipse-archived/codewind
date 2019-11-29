@@ -64,8 +64,12 @@ echo -e "${CYAN}> Switching to release directory ${RESET}"
 cd $RELEASE_DIR
 displayMsg $? "Failed to switch release directory." true
 
+echo -e "${CYAN}> Running docker system prune ${RESET}"
+docker system prune -af
+displayMsg $? "Failed to perform docker system prune." false
+
 echo -e "${CYAN}> Starting codewind ${RESET}"
-./run.sh
+./stop.sh && ./run.sh
 displayMsg $? "Failed to start codewind." true
 
 cd $CURR_DIR
