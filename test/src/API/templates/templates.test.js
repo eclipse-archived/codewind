@@ -44,7 +44,7 @@ describe('Template API tests', function() {
             ]);
         });
         describe('?projectStyle=', function() {
-            it('should return a at least the default Codewind templates as no projectStyle is given', async function() {
+            it('should return at least the default Codewind templates as no projectStyle is given', async function() {
                 this.timeout(testTimeout.short);
                 const res = await getTemplates();
                 res.should.have.status(200).and.satisfyApiSpec;

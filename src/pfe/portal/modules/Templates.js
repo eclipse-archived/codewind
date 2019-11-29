@@ -74,7 +74,7 @@ module.exports = class Templates {
       this.repositoryList = repositories;
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
     } catch (err) {
-      log.error(`Error initalizing repository list: ${err}`);
+      log.error(`Error initializing repository list: ${err}`);
     }
   }
 
@@ -145,8 +145,8 @@ module.exports = class Templates {
   }
 
   async batchUpdate(requestedOperations) { 
-    const pArray = requestedOperations.map(operation => this.performOperationOnRepository(operation));
-    const operationResults = await Promise.all(pArray);
+    const promiseArray = requestedOperations.map(operation => this.performOperationOnRepository(operation));
+    const operationResults = await Promise.all(promiseArray);
     await writeRepositoryList(this.repositoryFile, this.repositoryList);
     return operationResults;
   }
@@ -418,9 +418,7 @@ async function getTemplatesFromRepos(repos) {
       // Ignore to keep trying other repositories
     }
   }));
-  newProjectTemplates.sort((a, b) => {
-    return a.label.localeCompare(b.label);
-  });
+  newProjectTemplates.sort((a, b) => a.label.localeCompare(b.label));
   return newProjectTemplates;
 }
 
@@ -429,7 +427,7 @@ async function getTemplatesFromRepo(repository) {
     throw new Error(`repo '${repository}' must have a URL`);
   }
 
-  const templateSummaries = await getJSONFromURL(repository.url);
+  const templateSummaries = await getTemplatesJSONFromURL(repository.url);
 
   const templates = templateSummaries.map(summary => {
     const template = {
@@ -455,7 +453,7 @@ async function getTemplatesFromRepo(repository) {
   return templates;
 }
 
-async function getJSONFromURL(givenURL) {
+async function getTemplatesJSONFromURL(givenURL) {
   const parsedURL = new URL(givenURL);
   let templateSummaries;
   // check if repository url points to a local file and read it accordingly
@@ -465,7 +463,7 @@ async function getJSONFromURL(givenURL) {
         templateSummaries = await fs.readJSON(parsedURL.pathname);
       }
     } catch (err) {
-      throw new Error(`repo file '${parsedURL}' should return json`);
+      throw new Error(`repo file '${parsedURL}' did not return JSON`);
     }
   } else {
     const options = {
@@ -480,7 +478,7 @@ async function getJSONFromURL(givenURL) {
     try {
       templateSummaries = JSON.parse(res.body);
     } catch (error) {
-      throw new Error(`URL '${parsedURL}' should return JSON`);
+      throw new Error(`URL '${parsedURL}' did not return JSON`);
     }
   }
   return templateSummaries;
@@ -531,7 +529,7 @@ function isRepo(obj) {
 
 async function doesURLPointToIndexJSON(inputUrl) {
   try {
-    const templateSummaries = await getJSONFromURL(inputUrl);
+    const templateSummaries = await getTemplatesJSONFromURL(inputUrl);
     if (templateSummaries.some(summary => !isTemplateSummary(summary))) {
       return false;
     }

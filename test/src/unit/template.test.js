@@ -66,7 +66,7 @@ describe('Templates.js', function() {
             afterEach(() => {
                 fs.removeSync(workspace);
             });
-            it('initialises a Templates Class and creates a repository file', async function() {
+            it('initializes a Templates Class and creates a repository file', async function() {
                 const templateController = new Templates(workspace);
                 fs.pathExistsSync(templateController.repositoryFile).should.be.false;
                 await templateController.initializeRepositoryList();
@@ -99,7 +99,7 @@ describe('Templates.js', function() {
                 const templateList = await templateController.getTemplates(false, false);
                 templateList.length.should.be.at.least(defaultCodewindTemplates.length);
             });
-            it('Gets only enabled templates', async function() {
+            it('gets only enabled templates', async function() {
                 this.timeout(10000);
                 const templateController = new Templates('');
                 const { repositoryList } = templateController;
@@ -111,7 +111,7 @@ describe('Templates.js', function() {
                 const templateList = await templateController.getTemplates(true, false);
                 templateList.length.should.equal(0);
             });
-            it('Gets only templates of a specific style', async function() {
+            it('gets only templates of a specific style', async function() {
                 this.timeout(10000);
                 const templateController = new Templates('');
                 templateController.projectTemplatesNeedsRefresh = false;
@@ -129,7 +129,7 @@ describe('Templates.js', function() {
                 templateList[0].name.should.equal('project2');
                 templateList.length.should.equal(1);
             });
-            describe('Verifys the Codewind default templates are there and all others contain the required keys', function() {
+            describe('verifies the Codewind default templates are there and all others contain the required keys', function() {
                 it('returns the default templates', async function() {
                     this.timeout(30000);
                     const templateController = new Templates('');
@@ -142,7 +142,7 @@ describe('Templates.js', function() {
                     }
                 });
             });
-            describe('and add an extra bad template repo', function() {
+            describe('add an invalid template repo', function() {
                 let templateController;
                 before(() => {
                     templateController = new Templates('');
@@ -170,7 +170,7 @@ describe('Templates.js', function() {
                 after(() => {
                     fs.removeSync(testWorkspaceDir);
                 });
-                it('returns the default templates and more', async function() {
+                it('returns more templates than just the default ones', async function() {
                     this.timeout = 10000;
                     const output = await templateController.getTemplates(false, false);
                     output.should.include.deep.members(defaultCodewindTemplates);
@@ -234,11 +234,11 @@ describe('Templates.js', function() {
                 templateController = new Templates('');
                 templateController.repositoryList = [...mockRepoList];
             });
-            it('Returns true as the repository exists', async function() {
+            it('returns true as the repository exists', async function() {
                 const repoExists = await templateController.doesRepositoryExist('1');
                 repoExists.should.be.true;
             });
-            it('Returns false as the repository does not exist', async function() {
+            it('returns false as the repository does not exist', async function() {
                 const repoExists = await templateController.doesRepositoryExist('http://badurl.com');
                 repoExists.should.be.false;
             });
@@ -809,12 +809,12 @@ describe('Templates.js', function() {
             after(() => {
                 fs.removeSync(testWorkspaceConfigDir);
             });
-            it('Creates a new repository file if one doesn\'t exist', async() => {
+            it('creates a new repository file if one doesn\'t exist', async() => {
                 fs.pathExistsSync(testRepositoryFile).should.be.false;
                 await writeRepositoryList(testRepositoryFile, []);
                 fs.pathExistsSync(testRepositoryFile).should.be.true;
             });
-            it('Overwrites an existing repository file', async() => {
+            it('overwrites an existing repository file', async() => {
                 fs.pathExistsSync(testRepositoryFile).should.be.false;
                 await writeRepositoryList(testRepositoryFile, [{ field: 'string' }]);
                 fs.pathExistsSync(testRepositoryFile).should.be.true;
@@ -967,12 +967,12 @@ describe('Templates.js', function() {
         });
         describe('fetchRepositoryDetails(repo)', function() {
             const fetchRepositoryDetails = Templates.__get__('fetchRepositoryDetails');
-            it('Returns the details for a repository', async() => {
+            it('returns the details for a repository', async() => {
                 const details = await fetchRepositoryDetails(sampleRepos.codewind);
                 details.should.have.keys(['url', 'description', 'enabled', 'protected', 'projectStyles', 'name']);
                 details.should.deep.equal(sampleRepos.codewind);
             });
-            it('Returns the correct name and description for a repository from its url (json file)', async() => {
+            it('returns the correct name and description for a repository from its url (json file)', async() => {
                 const repo = { ...sampleRepos.codewind };
                 delete repo.name;
                 delete repo.description;
@@ -981,7 +981,7 @@ describe('Templates.js', function() {
                 details.should.have.keys(['url', 'description', 'enabled', 'protected', 'projectStyles', 'name']);
                 details.should.deep.equal(sampleRepos.codewind);
             });
-            it('Returns the default "Codewind" projectStyles when it is doesn\'t exist', async() => {
+            it('returns the default "Codewind" projectStyles when it is doesn\'t exist', async() => {
                 const repo = { ...sampleRepos.codewind };
                 delete repo.projectStyles;
                 repo.should.not.have.key('projectStyles');
@@ -991,28 +991,28 @@ describe('Templates.js', function() {
         });
         describe('readRepoTemplatesJSON(repository)', function() {
             const readRepoTemplatesJSON = Templates.__get__('readRepoTemplatesJSON');
-            it('Throws an error as no url is given', () => {
+            it('throws an error as no url is given', () => {
                 return readRepoTemplatesJSON({})
                     .should.be.eventually.rejectedWith('repository must have a URL')
                     .and.be.an.instanceOf(Error);
             });
-            it('Returns the given object without changes as the URL given is a file', async() => {
+            it('returns the given object without changes as the URL given is a file', async() => {
                 const obj = { url: 'file://something/something' };
                 const repo = await readRepoTemplatesJSON(obj);
                 repo.should.deep.equal(obj);
             });
-            it('Returns with as the URL is valid', async() => {
+            it('returns with as the URL is valid', async() => {
                 const { url } = sampleRepos.codewind;
                 const repo = await readRepoTemplatesJSON({ url });
                 repo.should.contain.keys(['url', 'name', 'description']);
             });
-            it('Overwrites the name if a description is not given', async() => {
+            it('overwrites the name if a description is not given', async() => {
                 const { url } = sampleRepos.codewind;
                 const repo = await readRepoTemplatesJSON({ url, name: 'string' });
                 repo.should.contain.keys(['url', 'name', 'description']);
                 repo.name.should.equal(sampleRepos.codewind.name);
             });
-            it('Overwrites the description if a name is not given', async() => {
+            it('overwrites the description if a name is not given', async() => {
                 const { url } = sampleRepos.codewind;
                 const repo = await readRepoTemplatesJSON({ url, description: 'string' });
                 repo.should.contain.keys(['url', 'name', 'description']);
@@ -1050,11 +1050,29 @@ describe('Templates.js', function() {
             });
             it('throws a useful error when a valid URL is given but it does not point to JSON', function() {
                 const func = () => getTemplatesFromRepo({ url: 'https://www.google.com/' });
-                return func().should.be.rejectedWith(`URL 'https://www.google.com/' should return JSON`);
+                return func().should.be.rejectedWith(`URL 'https://www.google.com/' did not return JSON`);
             });
             it('throws a useful error when an invalid file path is given', function() {
-                const func = () => getTemplatesFromRepo({ url: 'file://someting.json' });
-                return func().should.be.rejectedWith(`repo file 'file://someting.json/' should return json`);
+                const func = () => getTemplatesFromRepo({ url: 'file://something.json' });
+                return func().should.be.rejectedWith(`repo file 'file://something.json/' did not return JSON`);
+            });
+        });
+        describe('getTemplatesJSONFromURL(givenURL)', () => {
+            const getTemplatesJSONFromURL = Templates.__get__('getTemplatesJSONFromURL');
+            it('gets templates JSON back from a valid URL', async() => {
+                const templatesJSON = await getTemplatesJSONFromURL(sampleRepos.codewind.url);
+                templatesJSON.should.be.an('array');
+                templatesJSON.forEach(templateObject => {
+                    templateObject.should.have.keys('displayName', 'description', 'language', 'projectType', 'location', 'links');
+                });
+            });
+            it('should be rejected as URL does not point to JSON', () => {
+                const func = () => getTemplatesJSONFromURL('https://www.google.com/');
+                return func().should.be.rejectedWith(`URL 'https://www.google.com/' did not return JSON`);
+            });
+            it('should be rejected as filepath does not exist', function() {
+                const func = () => getTemplatesJSONFromURL('file://something.json');
+                return func().should.be.rejectedWith(`repo file 'file://something.json/' did not return JSON`);
             });
         });
         describe('filterTemplatesByStyle(templates, projectStyle)', function() {
@@ -1083,7 +1101,7 @@ describe('Templates.js', function() {
                 const output = getTemplateStyles([mockRepos.enabled]);
                 output.should.deep.equal(['Codewind']);
             });
-            it('returns Codewind as the templates are Codewind ones', function() {
+            it('returns Codewind', function() {
                 const output = getTemplateStyles([sampleCodewindTemplate]);
                 output.should.deep.equal(['Codewind']);
             });
@@ -1152,30 +1170,30 @@ describe('Templates.js', function() {
         });
         describe('isRepo(obj)', () => {
             const isRepo = Templates.__get__('isRepo');
-            it('Returns true as obj with a url field is a repo', () => {
+            it('returns true as obj with a url field is a repo', () => {
                 isRepo({ url: 'something' }).should.be.true;
             });
-            it('Returns false as obj is undefined', () => {
+            it('returns false as obj is undefined', () => {
                 expect(isRepo()).to.be.false;
             });
-            it('Returns false as obj has no url field', () => {
+            it('returns false as obj has no url field', () => {
                 expect(isRepo({})).to.be.false;
             });
         });
         describe('doesURLPointToIndexJSON(obj)', () => {
             const doesURLPointToIndexJSON = Templates.__get__('doesURLPointToIndexJSON');
-            it('Returns true a valid URL is given', () => {
+            it('returns true a valid URL is given', () => {
                 const { url } = sampleRepos.codewind;
                 return doesURLPointToIndexJSON(url).should.eventually.be.true;
             });
-            it('Returns false as the URL does not point to JSON', function() {
+            it('returns false as the URL does not point to JSON', function() {
                 this.timeout(5000);
                 return doesURLPointToIndexJSON('http://google.com').should.eventually.be.false;
             });
-            it('Returns false as the file URL does not point to JSON', () => {
+            it('returns false as the file URL does not point to JSON', () => {
                 return doesURLPointToIndexJSON('file://doesNotExist').should.eventually.be.false;
             });
-            it('Returns true as the file URL does point to JSON', () => {
+            it('returns true as the file URL does point to JSON', () => {
                 const testFile = path.join(__dirname, 'doesURLPointToIndexJSON.json');
                 fs.ensureFileSync(testFile);
                 const template = {
