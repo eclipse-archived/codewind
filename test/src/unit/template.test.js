@@ -29,7 +29,6 @@ const { suppressLogOutput } = require('../../modules/log.service');
 chai.use(chaiAsPromised);
 chai.use(chaiSubset);
 chai.should();
-const { expect } = chai;
 
 const testWorkspaceDir = './src/unit/temp/';
 const testWorkspaceConfigDir = path.join(testWorkspaceDir, '.config/');
@@ -69,7 +68,9 @@ describe('Templates.js', function() {
             it('initializes a Templates Class and creates a repository file', async function() {
                 const templateController = new Templates(workspace);
                 fs.pathExistsSync(templateController.repositoryFile).should.be.false;
+
                 await templateController.initializeRepositoryList();
+
                 templateController.repositoryList.length.should.equal(2);
                 fs.pathExistsSync(templateController.repositoryFile).should.be.true;
             });
@@ -92,7 +93,7 @@ describe('Templates.js', function() {
                 templateController.projectTemplatesNeedsRefresh.should.be.true;
             });
         });
-        describe('getTemplates(showEnabledOnly, projectStyle)', function() {
+        describe('getTemplates(showEnabledOnly)', function() {
             it('Gets all templates', async function() {
                 this.timeout(10000);
                 const templateController = new Templates('');
@@ -103,31 +104,12 @@ describe('Templates.js', function() {
                 this.timeout(10000);
                 const templateController = new Templates('');
                 const { repositoryList } = templateController;
-                for (let i = 0; i < repositoryList.length; i++) {
-                    const repository = repositoryList[i];
+                for (const repository of repositoryList) {
                     repository.enabled = false;
                     repository.enabled.should.be.false;
                 }
                 const templateList = await templateController.getTemplates(true, false);
                 templateList.length.should.equal(0);
-            });
-            it('gets only templates of a specific style', async function() {
-                this.timeout(10000);
-                const templateController = new Templates('');
-                templateController.projectTemplatesNeedsRefresh = false;
-                templateController.projectTemplates = [
-                    {
-                        name: 'project1',
-                        projectStyle: 'otherprojectstyle',
-                    },
-                    {
-                        name: 'project2',
-                        projectStyle: 'projectstyle',
-                    },
-                ];
-                const templateList = await templateController.getTemplates(false, 'projectstyle');
-                templateList[0].name.should.equal('project2');
-                templateList.length.should.equal(1);
             });
             describe('verifies the Codewind default templates are there and all others contain the required keys', function() {
                 it('returns the default templates', async function() {
@@ -135,8 +117,7 @@ describe('Templates.js', function() {
                     const templateController = new Templates('');
                     const output = await templateController.getTemplates(false, false);
                     output.should.contain.deep.members(defaultCodewindTemplates);
-                    for (let i = 0; i < output.length; i++) {
-                        const element = output[i];
+                    for (const element of output) {
                         // List of keys required are generated from the API docs
                         element.should.contain.keys('label', 'description', 'language', 'url', 'projectType');
                     }
@@ -176,6 +157,26 @@ describe('Templates.js', function() {
                     output.should.include.deep.members(defaultCodewindTemplates);
                     (output.length).should.be.above(defaultCodewindTemplates.length);
                 });
+            });
+        });
+        describe('getTemplatesByStyle(projectStyle, showEnabledOnly = false)', function() {
+            it('gets only templates of a specific style', async function() {
+                this.timeout(10000);
+                const templateController = new Templates('');
+                templateController.projectTemplatesNeedsRefresh = false;
+                templateController.projectTemplates = [
+                    {
+                        name: 'project1',
+                        projectStyle: 'otherprojectstyle',
+                    },
+                    {
+                        name: 'project2',
+                        projectStyle: 'projectstyle',
+                    },
+                ];
+                const templateList = await templateController.getTemplatesByStyle('projectstyle');
+                templateList[0].name.should.equal('project2');
+                templateList.length.should.equal(1);
             });
         });
         describe('getAllTemplateStyles()', function() {
@@ -473,12 +474,8 @@ describe('Templates.js', function() {
                     it(`${testName}`, async function() {
                         const output = await templateController.batchUpdate(test.input);
                         output.should.deep.equal(test.output);
-                        // console.log(testName, output);
-                        
                         if (test.expectedRepoDetails) {
                             const repoFile = fs.readJsonSync(templateController.repositoryFile);
-                            // console.log(testName, repoFile);
-                            
                             repoFile.should.include.deep.members(test.expectedRepoDetails);
                         }
                     });
@@ -596,17 +593,16 @@ describe('Templates.js', function() {
                 operationResponse.should.have.property('error', 'Unknown repository URL');
             });
             const tests = {
-                'enables a project (Boolean)': { input: true, output: true },
-                'enables a project (String)': { input: 'true', output: true },
-                'disables a project (Boolean)': { input: false, output: false },
-                'disables a project (String)': { input: 'false', output: false },
+                'enables a project (Boolean)': { input: true, output: true, testRepo: mockRepos.disabled },
+                'enables a project (String)': { input: 'true', output: true, testRepo: mockRepos.disabled },
+                'disables a project (Boolean)': { input: false, output: false, testRepo: mockRepos.enabled },
+                'disables a project (String)': { input: 'false', output: false, testRepo: mockRepos.enabled },
             };
-            for (const [title, test] of Object.entries(tests)) {
-                const { input, output } = test;
+            for (const [testName, test] of Object.entries(tests)) {
+                const { input, output, testRepo } = test;
                 // eslint-disable-next-line no-loop-func
-                it(`returns 200 and ${title}`, async() => {
+                it(`returns 200 and ${testName}`, async() => {
                     const templateController = new Templates('');
-                    const testRepo = (output) ? mockRepos.disabled : mockRepos.enabled;
                     templateController.repositoryList = [testRepo];
 
                     const operationResponse = await templateController.enableOrDisableRepository({ url: testRepo.url, value: input });
@@ -618,7 +614,7 @@ describe('Templates.js', function() {
                 });
             }
         });
-        describe('addRepository(repoUrl, repoDescription)', function() {
+        describe('addRepository(repoUrl, repoDescription, repoName, isRepoProtected)', function() {
             const mockRepoList = [{ id: 'notanid', url: 'https://made.up/url' }];
             let templateController;
             beforeEach(() => {
@@ -733,7 +729,7 @@ describe('Templates.js', function() {
                 const templateController = new Templates(testWorkspaceDir);
                 templateController.repositoryList = [...mockRepoList];
                 await templateController.deleteRepository('http://urlthatdoesnotexist.com');
-                templateController.repositoryList.should.deep.equal([...mockRepoList]);
+                templateController.repositoryList.should.deep.equal(mockRepoList);
             });
         });
         describe('addProvider(name, provider)', () => {
@@ -930,6 +926,24 @@ describe('Templates.js', function() {
                 });
             });
         });
+        describe('fetchAllRepositoryDetails(repos)', () => {
+            const addCodewindSettingsToRepository = Templates.__get__('addCodewindSettingsToRepository');
+            const url = 'https://raw.githubusercontent.com/kabanero-io/codewind-appsody-templates/master/devfiles/index.json';
+            it('should update a repository to have the enabled and protected fields when they don\'t exist', async() => {
+                const testRepositoryList = [{ name: 'test', url }];
+                const updatedList = await addCodewindSettingsToRepository(testRepositoryList);
+                updatedList.length.should.equal(1);
+                updatedList[0].should.have.property('enabled', true);
+                updatedList[0].should.have.property('protected', true);
+            });
+            it('should overwrite a repository\s enabled and protected fields when they do exist', async() => {
+                const testRepositoryList = [{ name: 'test', url, enabled: false, protected: false }];
+                const updatedList = await addCodewindSettingsToRepository(testRepositoryList);
+                updatedList.length.should.equal(1);
+                updatedList[0].should.have.property('enabled', true);
+                updatedList[0].should.have.property('protected', true);
+            });
+        });
         describe('fetchAllRepositoryDetails(repos)', function() {
             const fetchAllRepositoryDetails = Templates.__get__('fetchAllRepositoryDetails');
             const tests = {
@@ -989,34 +1003,24 @@ describe('Templates.js', function() {
                 details.should.have.deep.property('projectStyles', ['Codewind']);
             });
         });
-        describe('readRepoTemplatesJSON(repository)', function() {
-            const readRepoTemplatesJSON = Templates.__get__('readRepoTemplatesJSON');
+        describe('getNameAndDescriptionFromRepoTemplatesJSON(repository)', function() {
+            const getNameAndDescriptionFromRepoTemplatesJSON = Templates.__get__('getNameAndDescriptionFromRepoTemplatesJSON');
             it('throws an error as no url is given', () => {
-                return readRepoTemplatesJSON({})
-                    .should.be.eventually.rejectedWith('repository must have a URL')
-                    .and.be.an.instanceOf(Error);
+                return getNameAndDescriptionFromRepoTemplatesJSON('')
+                    .should.be.eventually.rejectedWith('must supply a URL');
             });
-            it('returns the given object without changes as the URL given is a file', async() => {
-                const obj = { url: 'file://something/something' };
-                const repo = await readRepoTemplatesJSON(obj);
-                repo.should.deep.equal(obj);
+            it('returns an empty object as the URL given is a file', async() => {
+                const repo = await getNameAndDescriptionFromRepoTemplatesJSON('file://something/something');
+                repo.should.deep.equal({});
             });
-            it('returns with as the URL is valid', async() => {
+            it('returns an empty object as the url does not point to correct JSON', async() => {
+                const repo = await getNameAndDescriptionFromRepoTemplatesJSON('https://google.com');
+                repo.should.deep.equal({});
+            });
+            it('returns a name and description as the URL is valid', async() => {
                 const { url } = sampleRepos.codewind;
-                const repo = await readRepoTemplatesJSON({ url });
-                repo.should.contain.keys(['url', 'name', 'description']);
-            });
-            it('overwrites the name if a description is not given', async() => {
-                const { url } = sampleRepos.codewind;
-                const repo = await readRepoTemplatesJSON({ url, name: 'string' });
-                repo.should.contain.keys(['url', 'name', 'description']);
-                repo.name.should.equal(sampleRepos.codewind.name);
-            });
-            it('overwrites the description if a name is not given', async() => {
-                const { url } = sampleRepos.codewind;
-                const repo = await readRepoTemplatesJSON({ url, description: 'string' });
-                repo.should.contain.keys(['url', 'name', 'description']);
-                repo.description.should.equal(sampleRepos.codewind.description);
+                const repo = await getNameAndDescriptionFromRepoTemplatesJSON(url);
+                repo.should.contain.keys('name', 'description');
             });
         });
         describe('getTemplatesFromRepos(repositoryList)', function() {
@@ -1174,10 +1178,12 @@ describe('Templates.js', function() {
                 isRepo({ url: 'something' }).should.be.true;
             });
             it('returns false as obj is undefined', () => {
-                expect(isRepo()).to.be.false;
+                const output = isRepo();
+                output.should.be.false;
             });
             it('returns false as obj has no url field', () => {
-                expect(isRepo({})).to.be.false;
+                const output = isRepo({});
+                output.should.be.false;
             });
         });
         describe('doesURLPointToIndexJSON(obj)', () => {

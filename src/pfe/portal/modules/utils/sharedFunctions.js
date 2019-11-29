@@ -117,7 +117,6 @@ module.exports.copyProject = async function copyFile(fromProjectPath, toProjectP
 
 /** C:\helloThere -> /c/helloThere */
 module.exports.convertFromWindowsDriveLetter = function convertFromWindowsDriveLetter(absolutePath) {
-
   if (!isWindowsAbsolutePath(absolutePath)) {
     return absolutePath;
   }

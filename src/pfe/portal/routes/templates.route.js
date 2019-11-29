@@ -9,6 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const express = require('express');
+
 const { validateReq } = require('../middleware/reqValidator');
 const Logger = require('../modules/utils/Logger');
 const TemplateError = require('../modules/utils/errors/TemplateError');
@@ -24,7 +25,9 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
   const { templates: templateController } = req.cw_user;
   const { showEnabledOnly, projectStyle } = req.query;
   try {
-    const templates = await templateController.getTemplates(showEnabledOnly, projectStyle);
+    const templates = (projectStyle) 
+      ? await templateController.getTemplatesByStyle(projectStyle, showEnabledOnly)
+      : await templateController.getTemplates(showEnabledOnly);
     if (templates.length == 0) {
       log.warn('No templates found');
       res.sendStatus(204);
@@ -72,22 +75,22 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
 });
 
 router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
-  const { templates } = req.cw_user;
+  const { templates: templatesController } = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
-  await templates.deleteRepository(repositoryUrl);
+  await templatesController.deleteRepository(repositoryUrl);
   await sendRepositories(req, res, _next);
 });
 
 async function sendRepositories(req, res, _next) {
-  const { templates } = req.cw_user;
-  const repositoryList = await templates.getRepositories();
+  const { templates: templatesController } = req.cw_user;
+  const repositoryList = await templatesController.getRepositories();
   res.status(200).json(repositoryList);
 }
 
 router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, res) => {
-  const { templates } = req.cw_user;
+  const { templates: templatesController } = req.cw_user;
   const requestedOperations = req.body;
-  const operationResults = await templates.batchUpdate(requestedOperations);
+  const operationResults = await templatesController.batchUpdate(requestedOperations);
   res.status(207).json(operationResults);
 });
 
@@ -95,8 +98,8 @@ router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, re
  * @return {[String]} the list of template styles
  */
 router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
-  const { templates } = req.cw_user;
-  const styles = await templates.getAllTemplateStyles();
+  const { templates: templatesController } = req.cw_user;
+  const styles = await templatesController.getAllTemplateStyles();
   res.status(200).json(styles);
 });
 
