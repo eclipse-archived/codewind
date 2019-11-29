@@ -192,7 +192,7 @@ router.post('/api/v1/projects/:id/metrics/inject', validateReq, async function (
 
     await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
     // We now need to synch files in to the build container
-    await copyProjectToBuild(project);
+    copyProjectToBuild(project);
 
     user.buildProject(project, "build");
 
