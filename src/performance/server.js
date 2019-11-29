@@ -10,9 +10,8 @@
 *******************************************************************************/
 'use strict';
 
-
-
 const express = require('express');
+require('express-async-errors');
 const bodyParser = require('body-parser');
 const childProcess = require('child_process');
 const app = express();
@@ -20,6 +19,8 @@ const serverPort = 9095;
 const server = app.listen(serverPort, () => console.log(`Performance server listening on port ${serverPort}!`))
 const io = require('socket.io').listen(server);
 const path = require('path');
+
+const monitor = require('./monitor/route');
 
 var loadProcess;
 let projectURL;
@@ -139,11 +140,12 @@ app.use('/performance/fonts', express.static(path.join(__dirname, 'dashboard', '
 /** React Performance main.js */
 app.use('/performance/main.js', express.static(path.join(__dirname, 'dashboard', 'build', 'main.js')));
 
-/** 
-* Map everything else in the /dashboard/ directory to the 
+app.use('/performance/monitor', monitor);
+
+/**
+* Map everything else in the /dashboard/ directory to the
 * React Single-Page-Application root index.html
 */
 app.get('/performance/*', function (req, res) {
     res.sendFile(path.join(__dirname, 'dashboard', 'build', 'index.html'));
 });
-

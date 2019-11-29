@@ -1,0 +1,150 @@
+<!--
+/*******************************************************************************
+ * Copyright (c) 2019 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v2.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v20.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+-->
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="graphmetrics/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="graphmetrics/css/themes.css" title="Themes">
+
+<head>
+  <title>Codewind Application Metrics</title>
+</head>
+
+<body>
+  <div>
+    <!--<h1>Application Metrics Dashboard for Node.js</h1>-->
+    <!-- load the d3.js library -->
+    <script src="graphmetrics/d3/d3.v3.min.js"></script>
+    <script src="graphmetrics/jquery/jquery-3.1.1.min.js"></script>
+    <script src="graphmetrics/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <div class="headerDiv">
+      <span class="leftHeader">Codewind Application Metrics</span>
+      <span class="rightHeader">
+        <a class="docLink" href="https://www.eclipse.org/codewind/" target="_blank">
+          Go To Documentation
+        </a>
+      </span>
+    </div>
+
+    <div id="sideMenu" class="sidenav">
+      <!-- <a class="sidenavEntry" onclick="socket.emit('heapdump'); toggleMenu()">Trigger Heap Dump</a>
+    <a class="sidenavEntry" onclick="socket.emit('nodereport'); toggleMenu()">Trigger Node Report</a> -->
+      <!-- <a class="sidenavEntry" id="toggle-profiling" onclick="toggleProfiling(); toggleMenu()"></a> -->
+      <a class="sidenavEntry" id="clear-profiling" onclick="clearProfilingData(); toggleMenu()">Clear Profiling
+        Data</a>
+    </div>
+
+    <div id="tabs" class="container">
+
+      <ul class="nav nav-tabs">
+        <li class="active">
+          <a href="#dashboard" id="main-tab" data-toggle="tab">Dashboard</a>
+        </li>
+        <li>
+          <a href="#profiling" id="profiing-tab" data-toggle="tab">Profiling</a>
+        </li>
+        <li>
+          <a href="#summary" id="summary-tab" data-toggle="tab">Summary</a>
+        </li>
+      </ul>
+
+      <div class="tab-content ">
+        <div class="tab-pane active" id="dashboard">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-5 hideable" id="cpuDiv1"></div>
+              <div class="col-md-7 hideable" id="httpDiv1"></div>
+            </div>
+            <div class="row">
+              <div class="col-md-5 hideable" id="memDiv1"></div>
+              <div class="col-md-7 hideable" id="httpDiv2"></div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-5 hideable" id="gcDiv"></div>
+              <div class="col-md-7 hideable" id="httpOBDiv"></div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-5 hideable" id="loopDiv"></div>
+              <div class="col-md-7 hideable" id="probeEventsDiv"></div>
+            </div>
+            <div class="row">
+              <div class="col-md-7 hideable" id="httpDiv3"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane" id="profiling">
+          <div id="flameDiv"></div>
+        </div>
+        <div class="tab-pane" id="summary">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="graph-container col-md-7">
+                <div class="col-md-12 height-fill hideable" id="httpSummaryDiv"></div>
+              </div>
+              <div class="graph-container col-md-5">
+                <div class="col-md-12 hideable" id="envDiv"></div>
+                <div class="col-md-12 hideable" id="summaryDiv"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal fade" id="heapdumpModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" font-color=black>Heap Snapshot</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript" src="graphmetrics/js/i18n.js"></script>
+    <script src="scripts/initialiseMetricsDash.js"></script>
+    <!-- has to be below import of 'graphmetrics/js/i18n.js'  -->
+    <!-- <script type="text/javascript" src="graphmetrics/js/header.js"></script> -->
+    <script type="text/javascript" src="graphmetrics/js/textTable.js"></script>
+    <script type="text/javascript" src="graphmetrics/js/nodeReport.js"></script>
+    <script type="text/javascript" src="graphmetrics/js/cpuChart.js"></script>
+
+    <script type="text/javascript" src="graphmetrics/js/httpHttpsRequestsChart.js"></script>
+    <script type="text/javascript" src="graphmetrics/js/httpThroughPutChart.js"></script>
+    <script type="text/javascript" src="graphmetrics/js/top5.js"></script>
+    <script type="text/javascript" src="graphmetrics/js/httpSummary.js"></script>
+    <script type="text/javascript" src="graphmetrics/js/httpHttpsOutboundRequestsChart.js"></script>
+
+    <script type="text/javascript" src="graphmetrics/js/memChart.js"></script>
+    <script type="text/javascript" src="graphmetrics/js/gcChart.js"></script>
+    <script type="text/javascript" src="graphmetrics/js/loopChart.js"></script>
+    <script type="text/javascript" src="graphmetrics/js/probeEventsChart.js"></script>
+    <script type="text/javascript" src="graphmetrics/js/flamegraph.js"></script>
+    <script src="scripts/profiling.js"></script>
+    <script type="module" src="parse-prometheus-text-format.js"></script>
+    <script src="scripts/pfeRequester.js"></script>
+    <script src="scripts/manageMetricsDash.js"></script>
+  </div>
+</body>
+
+</html>
