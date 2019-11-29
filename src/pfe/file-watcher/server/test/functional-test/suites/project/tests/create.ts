@@ -84,7 +84,6 @@ export default class CreateTest {
             const dataFile = path.resolve(__dirname, "..", "..", "..", `${process.env.IN_K8 ? "kube" : "local"}-performance-data.json`);
             const fileContent = JSON.parse(await fs.readFileSync(dataFile, "utf-8"));
             const chosenTimestamp = Object.keys(fileContent[projectTemplate][projectLang]).sort().pop();
-
             const startTime = Date.now();
 
             const info: any = await createProject(projData);
@@ -99,12 +98,8 @@ export default class CreateTest {
             await waitForProjectStartedEvent();
 
             const endTime = Date.now();
-
             const totalTestTime = (endTime - startTime) / 1000;
-            console.log(">>>>> IT TOOK: %d seconds", totalTestTime);
-
             fileContent[projectTemplate][projectLang][chosenTimestamp]["create"] = totalTestTime;
-            console.log("Wrote to file: %s %j", dataFile, fileContent);
             await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
         }).timeout(timeoutConfigs.createTestTimeout);
 
