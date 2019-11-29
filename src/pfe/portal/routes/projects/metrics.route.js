@@ -16,6 +16,9 @@ const ProjectError = require('../../modules/utils/errors/ProjectError');
 const ProjectMetricsError = require('../../modules/utils/errors/ProjectMetricsError');
 const Project = require('../../modules/Project');
 const { validateReq } = require('../../middleware/reqValidator');
+const metricsService = require('../../modules/MetricsService');
+const cwUtils = require('../../modules/utils/sharedFunctions');
+const path = require('path');
 const router = express.Router();
 const log = new Logger(__filename);
 
@@ -187,16 +190,35 @@ router.post('/api/v1/projects/:id/metrics/inject', validateReq, async function (
       injectMetrics: injectMetrics
     });
 
+    await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
+    // We now need to synch files in to the build container
+    await copyProjectToBuild(project);
+
     user.buildProject(project, "build");
 
     res.sendStatus(202);
 
   } catch (err) {
-      log.error(err);
-      res.status(500).send(err.info || err);
+    log.error(err);
+    res.status(500).send(err.info || err);
   }
 });
 
+async function copyProjectToBuild(project){
+  const globalProjectPath = path.join(project.workspace, project.name);
+  const projectRoot = cwUtils.getProjectSourceRoot(project);
+  if (project.buildStatus != "inProgress") {
+    await cwUtils.copyProjectContents(
+      project,
+      globalProjectPath,
+      projectRoot
+    );
+  } else {
+    // if a build is in progress, wait 5 seconds and try again
+    await cwUtils.timeout(5000)
+    await copyProjectToBuild(project);
+  }
+}
 
 /**
 * Updates the description of a specific load-test run on a specified project

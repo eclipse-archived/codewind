@@ -51,12 +51,12 @@ function getNewContentsOfPackageJson(originalContentsOfPackageJson) {
 
   newContentsOfPackageJson.scripts.start = getNewStartScript(originalContentsOfPackageJson.scripts.start);
   // TODO: change to production repo when ready
-  newContentsOfPackageJson.dependencies['appmetrics-prometheus'] = "git+https://git@github.com/rwalle61/appmetrics-prometheus.git#host-metrics-on-codewind-endpoint";
+  newContentsOfPackageJson.dependencies['appmetrics-codewind'] = "^0.1.0";
   return newContentsOfPackageJson;
 }
 
 function getNewStartScript(originalStartScript) {
-  const metricsCollectorScript = '-r appmetrics-prometheus/attach';
+  const metricsCollectorScript = '-r appmetrics-codewind/attach';
 
   if (originalStartScript.includes(metricsCollectorScript)) {
     return originalStartScript;
@@ -261,7 +261,7 @@ function getNewPomXmlDependencies(originalDependencies) {
 
 function getNewPomXmlBuildPlugins(originalBuildPlugins) {
   const metricsCollectorBuildPluginAlreadyExists = originalBuildPlugins.some(plugin =>
-    plugin.artifactId[0] === 'maven-dependency-plugin' && plugin.executions[0].execution.some(execution => 
+    plugin.artifactId[0] === 'maven-dependency-plugin' && (plugin.executions) && plugin.executions[0].execution.some(execution => 
       execution.id[0] === 'copy-javametrics-codewind'
     )
   );

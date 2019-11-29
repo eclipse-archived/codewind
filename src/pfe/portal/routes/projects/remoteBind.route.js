@@ -231,7 +231,8 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
           filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(pathToTempProj, oldFile)))
         );
         res.sendStatus(200);
-        await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
+
+        await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
         // add metrics if required
         if (project.injectMetrics) {
           try {
@@ -240,6 +241,8 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
             log.warn(error);
           }
         }
+        await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
+ 
         timersyncend = Date.now();
         let timersynctime = (timersyncend - timersyncstart) / 1000;
         log.info(`Total time to sync project ${project.name} to build container is ${timersynctime} seconds`);
@@ -262,16 +265,13 @@ function getMode(project) {
   return (project.extension && project.extension.config.needsMount) ? "777" : "";
 }
 
-async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID) {
+async function syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID) {
   // If the current project is being built, we do not want to copy the files as this will
   // interfere with the current build
   if (project.buildStatus != "inProgress") {
     const globalProjectPath = path.join(project.workspace, project.name);
-    // We now need to remove any files that have been deleted from the global workspace
-    await Promise.all(filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(globalProjectPath, oldFile))));
     // now move temp project to real project
-    await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
-    let projectRoot = getProjectSourceRoot(project);
+    let projectRoot = cwUtils.getProjectSourceRoot(project);
     // need to delete from the build container as well
     if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
       (!project.extension || !project.extension.config.needsMount)) {
@@ -307,7 +307,7 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
   } else {
     // if a build is in progress, wait 5 seconds and try again
     await cwUtils.timeout(5000)
-    await syncToBuildContainer(project, filesToDelete, pathToTempProj, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
+    await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
   }
 }
 
@@ -335,36 +335,7 @@ async function listFiles(absolutePath, relativePath) {
 }
 
 
-function getProjectSourceRoot(project) {
-  let projectRoot = "";
-  switch (project.projectType) {
-  case 'nodejs': {
-    projectRoot = "/app";
-    break
-  }
-  case 'liberty': {
-    projectRoot = "/home/default/app";
-    break
-  }
-  case 'swift': {
-    projectRoot = "/swift-project";
-    break
-  }
-  case 'spring': {
-    projectRoot = "/root/app";
-    break
-  }
-  case 'docker': {
-    projectRoot = "/code";
-    break
-  }
-  default: {
-    projectRoot = "/";
-    break
-  }
-  }
-  return projectRoot;
-}
+
 
 
 
