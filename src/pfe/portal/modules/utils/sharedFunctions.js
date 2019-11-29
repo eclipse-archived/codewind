@@ -169,3 +169,34 @@ function isLetter(currentChar) {
   return ("a" <= currentChar && currentChar <= "z")
       || ("A" <= currentChar && currentChar <= "Z");
 }
+
+module.exports.getProjectSourceRoot = function getProjectSourceRoot(project) {
+  let projectRoot = "";
+  switch (project.projectType) {
+  case 'nodejs': {
+    projectRoot = "/app";
+    break
+  }
+  case 'liberty': {
+    projectRoot = "/home/default/app";
+    break
+  }
+  case 'swift': {
+    projectRoot = "/swift-project";
+    break
+  }
+  case 'spring': {
+    projectRoot = "/root/app";
+    break
+  }
+  case 'docker': {
+    projectRoot = "/code";
+    break
+  }
+  default: {
+    projectRoot = "/";
+    break
+  }
+  }
+  return projectRoot;
+}
