@@ -140,7 +140,7 @@ module.exports.convertFromWindowsDriveLetter = function convertFromWindowsDriveL
  */
 module.exports.forceRemove = async function forceRemove(path) {
   try {
-    await exec(`rm -rf ${path}`);
+    await exec(`rm -rf "${path}"`);
   }
   catch (err) {
     log.warn(err.message);

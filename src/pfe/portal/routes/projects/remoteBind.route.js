@@ -212,24 +212,21 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
     const project = user.projectList.retrieveProject(projectID);
     if (project) {
       const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
-      // eslint-disable-next-line no-sync
-      if (!fs.existsSync(pathToTempProj)) {
-        log.info("Temporary project directory doesn't exist, not syncing any files");
-        res.status(404).send("No files have been synced");
+      const tempProjectExists = await fs.pathExists(pathToTempProj);
+      if (modifiedList.length === 0 && !tempProjectExists) {
+        log.info('Temporary project directory doesn\'t exist and modified list is empty, not syncing any files');
+        res.status(404).send('No files have been synced');
       } else {
-
-        const currentFileList = await listFiles(pathToTempProj, '');
-
-        const filesToDeleteSet = new Set(currentFileList);
-        keepFileList.forEach((f) => filesToDeleteSet.delete(f));
-        const filesToDelete = Array.from(filesToDeleteSet);
+        const pathToProj = project.projectPath();
+        const currentFileList = await listFilesInDirectory(pathToProj);
+        const filesToDelete = await getFilesToDelete(currentFileList, keepFileList);
 
         log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
-      `${filesToDelete.join(', ')}`);
-        // remove the file from pfe container
-        await Promise.all(
-          filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(pathToTempProj, oldFile)))
-        );
+          `${filesToDelete.join(', ')}`);
+        if (filesToDelete.length > 0) {
+          // remove the file from pfe container
+          await deleteFilesInArray(pathToProj, filesToDelete);
+        }
         res.sendStatus(200);
 
         if (project.injectMetrics) {
@@ -253,10 +250,20 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
     log.error(err);
     res.status(500).send(err);
   }
-
-
-
 });
+
+function getFilesToDelete(existingFileArray, newFileArray) {
+  const filesToDeleteSet = new Set(existingFileArray);
+  newFileArray.forEach((f) => filesToDeleteSet.delete(f));
+  return Array.from(filesToDeleteSet);
+}
+
+function deleteFilesInArray(directory, arrayOfFiles) {
+  const promiseArray = arrayOfFiles.map(filePath => {
+    return cwUtils.forceRemove(path.join(directory, filePath));
+  });
+  return Promise.all(promiseArray);
+}
 
 function getMode(project) {
   return (project.extension && project.extension.config.needsMount) ? "777" : "";
@@ -313,19 +320,18 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
 
 // List all the files under the given directory, return
 // a list of relative paths.
-async function listFiles(absolutePath, relativePath) {
+async function listFilesInDirectory(absolutePath, relativePath = '') {
   const files = await fs.readdir(absolutePath);
   const fileList = [];
   for (const f of files) {
     const nextRelativePath = path.join(relativePath, f);
     const nextAbsolutePath = path.join(absolutePath, f);
 
-
     // eslint-disable-next-line no-await-in-loop
     const stats = await fs.stat(nextAbsolutePath);
     if (stats.isDirectory()) {
       // eslint-disable-next-line no-await-in-loop
-      const subFiles = await listFiles(nextAbsolutePath, nextRelativePath);
+      const subFiles = await listFilesInDirectory(nextAbsolutePath, nextRelativePath);
       fileList.push(...subFiles);
     } else {
       fileList.push(nextRelativePath)
@@ -333,7 +339,6 @@ async function listFiles(absolutePath, relativePath) {
   }
   return fileList;
 }
-
 
 function getProjectSourceRoot(project) {
   let projectRoot = "";
