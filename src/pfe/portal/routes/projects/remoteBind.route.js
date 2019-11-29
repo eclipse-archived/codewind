@@ -213,14 +213,12 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
     if (project) {
       const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
       const tempProjectExists = await fs.pathExists(pathToTempProj);
-      // eslint-disable-next-line no-sync
       if (modifiedList.length === 0 && !tempProjectExists) {
         log.info('Temporary project directory doesn\'t exist and modified list is empty, not syncing any files');
         res.status(404).send('No files have been synced');
       } else {
-        const pathToProj = path.join(global.codewind.CODEWIND_WORKSPACE, project.name);
+        const pathToProj = project.projectPath();
         const currentFileList = await listFilesInDirectory(pathToProj);
-        // don't use pathToTempProj use the actual path ..... obv
         const filesToDelete = await getFilesToDelete(currentFileList, keepFileList);
 
         log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
@@ -322,7 +320,7 @@ async function syncToBuildContainer(project, filesToDelete, pathToTempProj, modi
 
 // List all the files under the given directory, return
 // a list of relative paths.
-async function listFiles(absolutePath, relativePath) {
+async function listFilesInDirectory(absolutePath, relativePath = '') {
   const files = await fs.readdir(absolutePath);
   const fileList = [];
   for (const f of files) {
@@ -333,7 +331,7 @@ async function listFiles(absolutePath, relativePath) {
     const stats = await fs.stat(nextAbsolutePath);
     if (stats.isDirectory()) {
       // eslint-disable-next-line no-await-in-loop
-      const subFiles = await listFiles(nextAbsolutePath, nextRelativePath);
+      const subFiles = await listFilesInDirectory(nextAbsolutePath, nextRelativePath);
       fileList.push(...subFiles);
     } else {
       fileList.push(nextRelativePath)
@@ -341,11 +339,6 @@ async function listFiles(absolutePath, relativePath) {
   }
   return fileList;
 }
-
-function listFilesInDirectory(absolutePathToDirectory) {
-  return listFiles(absolutePathToDirectory, '');
-}
-
 
 function getProjectSourceRoot(project) {
   let projectRoot = "";

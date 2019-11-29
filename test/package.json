@@ -59,8 +59,12 @@
   },
   "nyc": {
     "cwd": "../src/pfe/portal",
-    "reporter": ["html", "text", "text-summary"],
+    "reporter": [
+      "html",
+      "text",
+      "text-summary"
+    ],
     "report-dir": "../../../test/coverage",
-    "temp-directory": "../../../test/coverage/.nyc_output" 
+    "temp-directory": "../../../test/coverage/.nyc_output"
   }
 }

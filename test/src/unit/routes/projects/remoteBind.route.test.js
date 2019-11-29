@@ -83,8 +83,8 @@ describe('remoteBind.route.js', () => {
             chaiDir(testDirectory).should.not.be.empty;
         });
     });
-    describe('listFiles(absolutePath, relativePath)', () => {
-        const listFiles = RemoteBind.__get__('listFiles');
+    describe('listFilesInDirectory(absolutePath, relativePath)', () => {
+        const listFilesInDirectory = RemoteBind.__get__('listFilesInDirectory');
         const testFileArray = ['dir/file', 'dir/anotherfile', 'dir/dirinanother/file', 'anotherdir/file', 'anotherdir/anotherfile'];
         beforeEach(async() => {
             const promiseArray = testFileArray.map(file => {
@@ -96,39 +96,27 @@ describe('remoteBind.route.js', () => {
             fs.removeSync(testDirectory);
         });
         it('should recursively list all files in testFileArray', async() => {
-            const filesInDirectory = await listFiles(testDirectory, '');
+            const filesInDirectory = await listFilesInDirectory(testDirectory, '');
             filesInDirectory.length.should.equal(testFileArray.length);
             filesInDirectory.should.have.members(testFileArray);
         });
         it('should recursively list all files in directory testDirectory/anotherdir', async() => {
-            const filesInDirectory = await listFiles(path.join(testDirectory, 'anotherdir'), '');
+            const filesInDirectory = await listFilesInDirectory(path.join(testDirectory, 'anotherdir'), '');
             filesInDirectory.length.should.equal(2);
             filesInDirectory.should.have.members(['file', 'anotherfile']);
         });
         it('should recursively list all files in directory testDirectory/dir (two levels of recursion)', async() => {
-            const filesInDirectory = await listFiles(path.join(testDirectory, 'dir'), '');
+            const filesInDirectory = await listFilesInDirectory(path.join(testDirectory, 'dir'), '');
             filesInDirectory.length.should.equal(3);
             filesInDirectory.should.have.members(['file', 'anotherfile', 'dirinanother/file']);
         });
         it('should be rejected as directory does not exist', () => {
-            return listFiles('', '').should.be.rejected;
-        });
-    });
-    describe('listFilesInDirectory(absolutePathToDirectory)', () => {
-        const listFilesInDirectory = RemoteBind.__get__('listFilesInDirectory');
-        before(() => {
-            fs.ensureFileSync(path.join(testDirectory, 'file'));
-        });
-        after(() => {
-            fs.removeSync(testDirectory);
+            return listFilesInDirectory('', '').should.be.rejected;
         });
         it('returns an array which equals testFileArray as all the files should be listed in the directory', async() => {
-            const filesInDirectory = await listFilesInDirectory(testDirectory);
+            const filesInDirectory = await listFilesInDirectory(path.join(testDirectory, 'dir/dirinanother'));
             filesInDirectory.length.should.equal(1);
             filesInDirectory.should.have.members(['file']);
-        });
-        it('should be rejected as directory does not exist', () => {
-            return listFilesInDirectory('').should.be.rejected;
         });
     });
 });
@@ -136,13 +124,6 @@ describe('remoteBind.route.js', () => {
 function createFilesFromArray(directory, fileArray) {
     const promiseArray = fileArray.map(file => {
         return fs.ensureFile(path.join(directory, file));
-    });
-    return Promise.all(promiseArray);
-}
-
-function createDirectoriesFromArray(directory, dirArray) {
-    const promiseArray = dirArray.map(dir => {
-        return fs.ensureDir(path.join(directory, dir));
     });
     return Promise.all(promiseArray);
 }
@@ -156,8 +137,7 @@ function assertFilesExist(directory, fileArray) {
 }
 
 function assertFilesDoNotExist(directory, fileArray) {
-    for (let i = 0; i < fileArray.length; i++) {
-        const relativePath = fileArray[i];
+    for (const relativePath of fileArray) {
         const absolutePath = path.join(directory, relativePath);
         chaiFile(absolutePath).should.not.exist;
     }
