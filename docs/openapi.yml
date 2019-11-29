@@ -1359,7 +1359,7 @@ paths:
                 example: Failed to create the Codewind Registry Kubernetes Secret and/or patch the Service Account.
 
 
-  /api/v1/registry:
+  /api/v1/imagepushregistry:
     get:
       summary: Get the status of the Deployment Registry in the Workspace Settings File
       responses:
@@ -1370,14 +1370,18 @@ paths:
               schema:
                 type: object
                 properties:
-                  statusCode:
-                    type: integer
-                    description: The response status code
-                    example: 200
-                  deploymentRegistry:
+                  imagePushRegistry:
                     type: boolean
                     description: true if deployment registry was set
                     example: true
+                  address:
+                    type: string
+                    description: registry address, if image push registry is true
+                    example: "docker.io"
+                  namespace:
+                    type: string
+                    description: registry namespace, if image push registry is true
+                    example: "docker.io"
         500:
           description: Internal Server Error
           content:
@@ -1385,18 +1389,14 @@ paths:
               schema:
                 type: object
                 properties:
-                  statusCode:
-                    type: integer
-                    description: The response status code
-                    example: 400
-                  deploymentRegistry:
+                  imagePushRegistry:
                     type: boolean
                     description: false if deployment registry was not set
                     example: false
     post:
       summary: Test or set the specified Deployment Registry
       description: >
-        On test the API also emits a socket event `deploymentRegistryStatus` with data
+        On test the API also emits a socket event `imagePushRegistryStatus` with data
         `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
         A set operation will set the registry without testing to allow the client to force save the
         value.
@@ -1406,9 +1406,12 @@ paths:
             schema:
               type: object
               required:
-                - deploymentRegistry
+                - address
+                - namespace
               properties:
-                deploymentRegistry:
+                address:
+                  type: string
+                namespace:
                   type: string
                 operation:
                   type: string
@@ -1427,9 +1430,9 @@ paths:
                     type: integer
                     description: The response status code
                     example: 200
-                  deploymentRegistryTest:
+                  imagePushRegistryTest:
                     type: boolean
-                    description: true if deployment registry is valid
+                    description: true if image push registry is valid
                     example: true
                   msg:
                     type: string
@@ -1446,7 +1449,7 @@ paths:
                     type: integer
                     description: The response status code
                     example: 400
-                  deploymentRegistryTest:
+                  imagePushRegistryTest:
                     type: boolean
                     description: false because it is a bad request
                     example: false
@@ -1465,9 +1468,9 @@ paths:
                     type: integer
                     description: The response status code
                     example: 500
-                  deploymentRegistryTest:
+                  imagePushRegistryTest:
                     type: boolean
-                    description: false if deployment registry is invalid
+                    description: false if image push registry is invalid
                     example: false
                   msg:
                     type: string

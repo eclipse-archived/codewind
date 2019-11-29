@@ -168,7 +168,7 @@ function deployK8s() {
 			echo "Successfully tagged and pushed the application image $DEPLOYMENT_REGISTRY/$project"
 		else
 			echo "Error: $?, could not push application image $DEPLOYMENT_REGISTRY/$project" >&2
-			$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
+			$util imagePushRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
 			exit 3
 		fi

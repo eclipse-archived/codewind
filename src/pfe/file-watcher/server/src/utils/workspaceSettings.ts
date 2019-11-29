@@ -18,7 +18,8 @@ import * as io from "./socket";
 import * as locale from "./locale";
 
 export interface WorkspaceSettingsInfo {
-    deploymentRegistry: string;
+    registryAddress: string;
+    registryNamespace: string;
     watcherChunkTimeout: string;
 }
 
@@ -28,7 +29,6 @@ export interface WorkspaceMetadata {
 
 export interface IWorkspaceSettingsSuccess {
     statusCode: 200;
-    workspaceSettings: any;
 }
 
 export interface IWorkspaceSettingsFailure {
@@ -36,15 +36,15 @@ export interface IWorkspaceSettingsFailure {
     msg: string;
 }
 
-export interface IDeploymentRegistryTestSuccess {
+export interface IImagePushRegistryTestSuccess {
     statusCode: 200;
-    deploymentRegistryTest: boolean;
+    imagePushRegistryTest: boolean;
     msg: string;
 }
 
-export interface IDeploymentRegistryTestFailure {
+export interface IImagePushRegistryTestFailure {
     statusCode: 400 | 500;
-    deploymentRegistryTest: boolean;
+    imagePushRegistryTest: boolean;
     msg: string;
 }
 
@@ -73,27 +73,28 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
         return { "statusCode": 500, "msg": msg};
     }
 
-    // Do validation check on the Deployment Registry
+    // Do validation check on the Image Push Registry
+    const imagePushRegistry = settingsFileContent.registryAddress + "/" + settingsFileContent.registryNamespace;
     // eslint-disable-next-line no-useless-escape
     const regex = new RegExp(/^[A-Za-z0-9-._~:\/?#\[\]@!\$&'\(\)\*\+;%=,]+$/);
-    if (settingsFileContent.deploymentRegistry && settingsFileContent.deploymentRegistry.length) {
-        const isDeploymentRegistryValid = regex.test(settingsFileContent.deploymentRegistry);
-        logger.logInfo("Deployment Registry Validation: " + isDeploymentRegistryValid);
+    if (imagePushRegistry && imagePushRegistry.length) {
+        const isDeploymentRegistryValid = regex.test(imagePushRegistry);
+        logger.logInfo("Image Push Registry Validation: " + isDeploymentRegistryValid);
         if (!isDeploymentRegistryValid) {
-            const msg = "Codewind detected an error with the Deployment Registry " + settingsFileContent.deploymentRegistry + ". Please ensure it is a valid Deployment Registry.";
+            const msg = "Codewind detected an error with the Image Push Registry " + imagePushRegistry + ". Please ensure it is a valid Image Push Registry.";
             logger.logError(msg);
             const data: any = {
                 deploymentRegistryTest: false,
                 msg: msg
             };
-            io.emitOnListener("deploymentRegistryStatus", data);
+            io.emitOnListener("imagePushRegistryStatus", data);
             return { "statusCode": 500, "msg": msg };
         }
     }
 
-   const workspaceSettingsCache = JSON.parse( await loadWorkspaceSettings(settingsFileContent) );
+    await loadWorkspaceSettings(settingsFileContent);
 
-   return { "statusCode": 200, "workspaceSettings": workspaceSettingsCache};
+   return { "statusCode": 200 };
 }
 
 export async function writeWorkspaceSettings(newWorkspaceSettings: any): Promise<IWorkspaceSettingsSuccess | IWorkspaceSettingsFailure> {
@@ -109,7 +110,7 @@ export async function writeWorkspaceSettings(newWorkspaceSettings: any): Promise
     await readWorkspaceSettings();
 
     if (writeStatus) {
-        return { "statusCode": 200 , workspaceSettings: workspaceSettingsInfo};
+        return { "statusCode": 200 };
     } else {
         const msg = "Codewind encountered an error when trying to write the workspace settings file";
         return { statusCode: 500 , msg };
@@ -126,7 +127,8 @@ export async function writeWorkspaceSettings(newWorkspaceSettings: any): Promise
 export async function loadWorkspaceSettings(workspaceSettings: any): Promise<any> {
 
     const workspaceSettingsInfo: WorkspaceSettingsInfo = {
-        deploymentRegistry: workspaceSettings.deploymentRegistry ? workspaceSettings.deploymentRegistry : "",
+        registryAddress: workspaceSettings.registryAddress ? workspaceSettings.registryAddress : "",
+        registryNamespace: workspaceSettings.registryNamespace ? workspaceSettings.registryNamespace : "",
         watcherChunkTimeout: workspaceSettings.watcherChunkTimeout ? workspaceSettings.watcherChunkTimeout : ""
     };
 
@@ -145,8 +147,7 @@ export async function loadWorkspaceSettings(workspaceSettings: any): Promise<any
  */
 export async function cacheWorkspaceSettingsInfo(workspaceSettings: WorkspaceSettingsInfo): Promise<string> {
     return new Promise((resolve) => {
-        const workspaceSettingsJSON = JSON.stringify(workspaceSettings);
-        workspaceSettingsInfoCache = workspaceSettingsJSON;
+        workspaceSettingsInfoCache = JSON.stringify(workspaceSettings);
         logger.logInfo("Cached Workspace Settings Info Cache: " + workspaceSettingsInfoCache);
         resolve(workspaceSettingsInfoCache);
     });
@@ -167,7 +168,8 @@ export async function getWorkspaceSettingsInfo(): Promise<any> {
 
     let data: any;
     const emptyWorkspaceSettingsInfo: WorkspaceSettingsInfo = {
-        deploymentRegistry: "",
+        registryAddress: "",
+        registryNamespace: "",
         watcherChunkTimeout: ""
     };
     try {
@@ -190,81 +192,84 @@ export async function getWorkspaceSettingsInfo(): Promise<any> {
 }
 
 /**
- * @see [[Filewatcher.testDeploymentRegistry]]
+ * @see [[Filewatcher.testImagePushRegistry]]
  */
-export async function testDeploymentRegistry(deploymentRegistry: string, pullImage?: string): Promise<IDeploymentRegistryTestSuccess | IDeploymentRegistryTestFailure> {
+export async function testImagePushRegistry(address: string, namespace: string, pullImage?: string): Promise<IImagePushRegistryTestSuccess | IImagePushRegistryTestFailure> {
 
-    let deploymentRegistryTest: boolean = false;
+    let imagePushRegistryTest: boolean = false;
     pullImage = pullImage || "hello-world";
 
-    logger.logInfo("Testing the deployment registry: " + deploymentRegistry);
+    const imagePushRegistry = address + "/" + namespace;
+    logger.logDebug("Image Push registry address: " + address);
+    logger.logDebug("Image Push registry namespace: " + namespace);
+    logger.logInfo("Testing the Image Push Registry: " + imagePushRegistry);
     try {
         await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["pull", pullImage], {});
     } catch (err) {
-        const msg = `Codewind was unable to pull the ${pullImage} image during the Deployment Registry test.`;
+        const msg = `Codewind was unable to pull the ${pullImage} image during the Image Push Registry test.`;
         logger.logError(msg);
         logger.logError(err);
 
         const data: any = {
-            deploymentRegistryTest: deploymentRegistryTest,
+            imagePushRegistryTest: imagePushRegistryTest,
             msg: msg
         };
-        io.emitOnListener("deploymentRegistryStatus", data);
+        io.emitOnListener("imagePushRegistryStatus", data);
 
-        return { "statusCode": 500, "deploymentRegistryTest": deploymentRegistryTest, "msg": msg};
+        return { "statusCode": 500, "imagePushRegistryTest": imagePushRegistryTest, "msg": msg};
     }
 
-    let dockerPushEC = 1;
-    let dockerPush;
+    let buildahPushEC = 1;
+    let buildahPush;
 
     try {
-        dockerPush = (await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["push", "--tls-verify=false", pullImage, `${deploymentRegistry}/${pullImage}`], {}));
-        dockerPushEC = dockerPush.exitCode;
-        logger.logInfo("testDeploymentRegistry exit code: " + dockerPushEC);
+        buildahPush = (await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["push", "--tls-verify=false", pullImage, `${imagePushRegistry}/${pullImage}`], {}));
+        buildahPushEC = buildahPush.exitCode;
+        logger.logDebug("testDeploymentRegistry exit code: " + buildahPushEC);
     } catch (err) {
-        const msg = `Codewind was unable to push the ${pullImage} image to the Deployment Registry ${deploymentRegistry}/${pullImage}. Please make sure it is a valid Deployment Registry with the appropriate permissions.`;
+        const msg = `Codewind was unable to push the ${pullImage} image to the Image Push Registry ${imagePushRegistry}/${pullImage}. Please make sure it is a valid Image Push Registry with the appropriate permissions.`;
         logger.logError(msg);
         logger.logError(err);
 
         const data: any = {
-            deploymentRegistryTest: deploymentRegistryTest,
+            imagePushRegistryTest: imagePushRegistryTest,
             msg: msg
         };
-        io.emitOnListener("deploymentRegistryStatus", data);
+        io.emitOnListener("imagePushRegistryStatus", data);
 
-        return { "statusCode": 200, "deploymentRegistryTest": deploymentRegistryTest, "msg": msg};
+        return { "statusCode": 200, "imagePushRegistryTest": imagePushRegistryTest, "msg": msg};
     }
 
-    if (dockerPushEC == 0) {
-        deploymentRegistryTest = true;
+    if (buildahPushEC == 0) {
+        imagePushRegistryTest = true;
     }
 
-    logger.logInfo("Deployment Registry Test Status: " + deploymentRegistryTest);
+    logger.logInfo("Image Push RegistryTest Test Status: " + imagePushRegistryTest);
     let msg;
-    if (deploymentRegistryTest) {
-        msg = "Codewind projects on Kubernetes will build with the Deployment Registry: " + deploymentRegistry;
-        logger.logInfo("Successful Deployment Registry test");
+    if (imagePushRegistryTest) {
+        msg = "Codewind projects on Kubernetes will build with the Image Push Registry: " + imagePushRegistry;
+        logger.logInfo("Successful Image Push Registry test");
         logger.logInfo(msg);
     } else {
-        msg = "Codewind projects on Kubernetes cannot build with the Deployment Registry, as Codewind encountered an issue when pushing an image to: " + deploymentRegistry + ". Please make sure it is a valid Deployment Registry with the appropriate permissions.";
-        logger.logInfo("Un-successful Deployment Registry test");
-        logger.logInfo(msg);
+        msg = "Codewind projects on Kubernetes cannot build with the Image Push Registry, as Codewind encountered an issue when pushing an image to: " + imagePushRegistry + ". Please make sure it is a valid Image Push Registry with the appropriate permissions.";
+        logger.logError("Un-successful Image Push Registry test");
+        logger.logError(msg);
     }
 
     const data: any = {
-        deploymentRegistryTest: deploymentRegistryTest,
+        imagePushRegistryTest: imagePushRegistryTest,
         msg: msg
     };
 
-    io.emitOnListener("deploymentRegistryStatus", data);
+    io.emitOnListener("imagePushRegistryStatus", data);
 
-    return { "statusCode": 200, "deploymentRegistryTest": deploymentRegistryTest, "msg": msg};
+    return { "statusCode": 200, "imagePushRegistryTest": imagePushRegistryTest, "msg": msg};
 }
 
 /**
- * @see [[Filewatcher.deploymentRegistryStatus]]
+ * @see [[Filewatcher.imagePushRegistryStatus]]
  */
-export async function deploymentRegistryStatus(req: IDeploymentRegistryStatusParams): Promise<IDeploymentRegistryStatusSuccess | IDeploymentRegistryStatusFailure> {
+export async function imagePushRegistryStatus(req: IDeploymentRegistryStatusParams): Promise<IDeploymentRegistryStatusSuccess | IDeploymentRegistryStatusFailure> {
 
     if (!req.projectID || !req.detailedDeploymentRegistryStatus) {
         return { "statusCode": 400, "error": { "msg": "Missing request parameters projectID or detailedDeploymentRegistryStatus for deployment registry status"}};
@@ -273,7 +278,7 @@ export async function deploymentRegistryStatus(req: IDeploymentRegistryStatusPar
     const projectID: string = req.projectID;
     const msg: string = req.detailedDeploymentRegistryStatus;
 
-    await updateDeploymentRegistryStatus(projectID, msg);
+    await updateImagePushRegistryStatus(projectID, msg);
 
     return { "statusCode": 200};
 }
@@ -287,9 +292,9 @@ export async function deploymentRegistryStatus(req: IDeploymentRegistryStatusPar
  *
  * @returns Promise<void>
  */
-export async function updateDeploymentRegistryStatus(projectID: string, msg: string): Promise<void> {
+export async function updateImagePushRegistryStatus(projectID: string, msg: string): Promise<void> {
 
-    logger.logProjectInfo("Updating the Deployment Registry Status", projectID);
+    logger.logProjectInfo("Updating the Image Push Registry Status", projectID);
 
     const translatedMessage = await locale.getTranslation(msg);
 
@@ -298,10 +303,10 @@ export async function updateDeploymentRegistryStatus(projectID: string, msg: str
         msg: translatedMessage
     };
 
-    logger.logProjectInfo("Deployment Registry Status Message: " + translatedMessage, projectID);
-    logger.logProjectInfo("Deployment Registry Status: " + JSON.stringify(data), projectID);
+    logger.logProjectInfo("Image Push Registry Status Message: " + translatedMessage, projectID);
+    logger.logProjectInfo("Image Push Registry Status: " + JSON.stringify(data), projectID);
 
-    io.emitOnListener("deploymentRegistryStatus", data);
+    io.emitOnListener("imagePushRegistryStatus", data);
 }
 
 export interface IDeploymentRegistryStatusParams {

@@ -16,20 +16,40 @@ const { validateReq } = require('../middleware/reqValidator');
 const log = new Logger(__filename);
 
 /**
- * API Function to get status of Deployment Registry in Workspace Settings
+ * Temp API Function to bypass current IDE design for testing
  */
-router.get('/api/v1/registry', async function (req, res) {
+router.get('/api/v1/registry', function (req, res) {
   let retval;
   try {
-    let user = req.cw_user;
-    log.debug(`GET /api/v1/registry called`);
-    retval = await user.getDeploymentRegistryStatus();
-    res.status(retval.statusCode).send(retval);
+    // let user = req.cw_user;
+    log.debug(`GET /api/v1/imagepushregistry called`);
+    retval = {
+      deploymentRegistry: true
+    }
+    res.status(200).send(retval);
   } catch (error) {
     log.error(error);
     const workspaceSettings = {
-      statusCode: 500,
-      deploymentRegistry: false
+      imagePushRegistry: false
+    }
+    res.status(500).send(workspaceSettings);
+  }
+});
+
+/**
+ * API Function to get status of Deployment Registry in Workspace Settings
+ */
+router.get('/api/v1/imagepushregistry', async function (req, res) {
+  let retval;
+  try {
+    let user = req.cw_user;
+    log.debug(`GET /api/v1/imagepushregistry called`);
+    retval = await user.getDeploymentRegistryStatus();
+    res.status(200).send(retval);
+  } catch (error) {
+    log.error(error);
+    const workspaceSettings = {
+      imagePushRegistry: false
     }
     res.status(500).send(workspaceSettings);
   }
@@ -38,33 +58,31 @@ router.get('/api/v1/registry', async function (req, res) {
 /**
  * API Function to test and set the Deployment Registry
  */
-router.post('/api/v1/registry', validateReq, async function (req, res) {
+router.post('/api/v1/imagepushregistry', validateReq, async function (req, res) {
   let retval;
   try {
     let user = req.cw_user;
-    log.debug(`POST /api/v1/registry called`);
-    const deploymentRegistry = req.sanitizeBody('deploymentRegistry');
+    log.debug(`POST /api/v1/imagepushregistry called`);
+    const registryAddress = req.sanitizeBody('address');
+    const registryNamespace = req.sanitizeBody('namespace');
     const operation = req.sanitizeBody('operation');
-    if (!deploymentRegistry) {
-      const msg = "Missing required parameter, deploymentRegistry is required to be provided.";
-      const data = { "statusCode": 400, "deploymentRegistryTest": false, "msg": msg}
-      res.status(400).send(data);
-    }
+
     // The validateReq middleware will throw an error if operation is not test or set,
     // but it is optional and defaults to test.
     if (operation === undefined || operation === 'test') {
-      log.debug(`Testing deployment registry: ${deploymentRegistry}`);
-      retval = await user.testDeploymentRegistry(deploymentRegistry);
+      log.debug(`Testing image push registry: ${registryAddress}/${registryNamespace}`);
+      retval = await user.testImagePushRegistry(registryAddress, registryNamespace);
     } else if (operation === 'set') {
-      log.debug(`Setting deployment registry: ${deploymentRegistry}`);
-      retval = await user.writeWorkspaceSettings({deploymentRegistry});
+      log.debug(`Setting image push registry: ${registryAddress}/${registryNamespace}`);
+      retval = await user.writeWorkspaceSettings({registryAddress, registryNamespace});
     }
     res.status(retval.statusCode).send(retval);
   } catch (error) {
     log.error(error);
     const workspaceSettings = {
       statusCode: 500,
-      deploymentRegistry: false
+      imagePushRegistryTest: false,
+      msg: error.message
     }
     res.status(500).send(workspaceSettings);
   }

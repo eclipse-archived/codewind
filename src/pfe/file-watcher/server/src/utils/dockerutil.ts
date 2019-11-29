@@ -566,7 +566,7 @@ export async function tagAndPushImage(projectID: string, imageName: string, depl
   } catch (err) {
     logger.logProjectError("Error pushing image", projectID);
     logger.logProjectError(err, projectID);
-    await workspaceSettings.updateDeploymentRegistryStatus(projectID, "buildscripts.invalidDeploymentRegistry");
+    await workspaceSettings.updateImagePushRegistryStatus(projectID, "buildscripts.invalidDeploymentRegistry");
     throw err;
   }
   return response;

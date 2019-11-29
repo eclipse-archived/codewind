@@ -289,19 +289,20 @@ export default class Filewatcher {
 
     /**
      * @function
-     * @description Test the deployment registry to check if its a valid registry for building projects on Kubernetes.
+     * @description Test the image push registry to check if its a valid registry for building projects on Kubernetes.
      *
-     * @param deploymentRegistry <Required | String>: Deployment Registry string
+     * @param address <Required | String>: Image Push Registry address
+     * @param namespace <Required | String>: Image Push Registry namespace
      *
-     * @example await filewatcher.testDeploymentRegistry("myregistry");
+     * @example await filewatcher.testImagePushRegistry("address", "namespace");
      *
-     * @returns Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>
+     * @returns Promise<workspaceSettings.IImagePushRegistryTestSuccess | workspaceSettings.IImagePushRegistryTestFailure>
      * Response codes:
      *  @property 200: Successfully received the request
      *  @property 400: Error when attempting to test the registry
      *
      */
-    testDeploymentRegistry: (deploymentRegistry: string, pullImage?: string) => Promise<workspaceSettings.IDeploymentRegistryTestSuccess | workspaceSettings.IDeploymentRegistryTestFailure>;
+    testImagePushRegistry: (address: string, namespace: string, pullImage?: string) => Promise<workspaceSettings.IImagePushRegistryTestSuccess | workspaceSettings.IImagePushRegistryTestFailure>;
 
     /**
      * @function
@@ -319,7 +320,7 @@ export default class Filewatcher {
      *  @property 400: Bad Request: projectID and detailedDeploymentRegistryStatus are required parameters
      *
      */
-    deploymentRegistryStatus: (req: workspaceSettings.IDeploymentRegistryStatusParams) => Promise<workspaceSettings.IDeploymentRegistryStatusSuccess | workspaceSettings.IDeploymentRegistryStatusFailure> ;
+    imagePushRegistryStatus: (req: workspaceSettings.IDeploymentRegistryStatusParams) => Promise<workspaceSettings.IDeploymentRegistryStatusSuccess | workspaceSettings.IDeploymentRegistryStatusFailure> ;
 
     /**
      * @function
@@ -664,7 +665,7 @@ export default class Filewatcher {
         this.setLoggingLevel = logger.setLoggingLevel;
         this.readWorkspaceSettings = workspaceSettings.readWorkspaceSettings;
         this.writeWorkspaceSettings = workspaceSettings.writeWorkspaceSettings;
-        this.testDeploymentRegistry = workspaceSettings.testDeploymentRegistry;
+        this.testImagePushRegistry = workspaceSettings.testImagePushRegistry;
         this.registerListener = socket.registerListener;
         this.createProject = projectsController.createProject;
         this.getProjectTypes = projectsController.getProjectTypes;
@@ -675,7 +676,7 @@ export default class Filewatcher {
         this.shutdown = projectsController.shutdown;
         this.deleteProject = projectsController.deleteProject;
         this.updateStatus = projectStatusController.updateStatus;
-        this.deploymentRegistryStatus = workspaceSettings.deploymentRegistryStatus;
+        this.imagePushRegistryStatus = workspaceSettings.imagePushRegistryStatus;
         this.checkNewLogFile = projectsController.checkNewLogFile;
         this.updateProjectForNewChange = projectEventsController.updateProjectForNewChange;
     }
