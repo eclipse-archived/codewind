@@ -39,8 +39,8 @@ router.post('/internal/api/v1/projects/updateStatus', async function (req, res) 
   }
 });
 
-router.post('/internal/api/v1/projects/deploymentRegistryStatus', async function (req, res) {
-  log.debug("Internal API: deploymentRegistryStatus");
+router.post('/internal/api/v1/projects/imagePushRegistryStatus', async function (req, res) {
+  log.debug("Internal API: imagePushRegistryStatus");
   const host = req.get('host');
   if ( white_list.indexOf(host) < 0 ) {
     const err = "Request host is not in white list."
@@ -55,7 +55,7 @@ router.post('/internal/api/v1/projects/deploymentRegistryStatus', async function
       res.status(404).send(`Unable to find project ${projectID}`);
       return;
     }
-    await user.deploymentRegistryStatus(req.body);
+    await user.imagePushRegistryStatus(req.body);
     res.sendStatus(200);
   } catch (err) {
     log.error(err.info);

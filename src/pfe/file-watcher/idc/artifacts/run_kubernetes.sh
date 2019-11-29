@@ -130,7 +130,7 @@ if [[ ! -z $DEPLOYMENT_REGISTRY ]]; then
 		echo "Successfully tagged and pushed the application image $DEPLOYMENT_REGISTRY/$CONTAINER_NAME"
 	else
 		echo "Error: $?, could not push application image $DEPLOYMENT_REGISTRY/$CONTAINER_NAME" >&2
-		$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
+		$util imagePushRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
 		exit 7;
 	fi
 	

@@ -413,12 +413,12 @@ module.exports = class User {
     await this.fw.updateStatus(body);
   }
 
-  async deploymentRegistryStatus(body) {
+  async imagePushRegistryStatus(body) {
     log.info(`Updating deployment registry status for project ${body.projectID}.`);
     try{
-      await this.fw.deploymentRegistryStatus(body);
+      await this.fw.imagePushRegistryStatus(body);
     } catch (err) {
-      log.error(`Error in deploymentRegistryStatus`);
+      log.error(`Error in imagePushRegistryStatus`);
       log.error(err);
     }
   }
@@ -579,7 +579,7 @@ module.exports = class User {
     // workspaceSettingsFile is the path inside PFE Container
     const workspaceSettingsFile = path.join(this.directories["config"], "settings.json");
     let contents;
-    let isDeploymentRegistrySet = false;
+    let isImagePushRegistrySet = false;
     log.info(`Checking PFE & workspace settings deployment registry`);
 
     try {
@@ -598,27 +598,27 @@ module.exports = class User {
       }
     } catch (err) {
       log.error("Error reading file " + workspaceSettingsFile);
-      log.error(err);
-      const workspaceSettings = {
-        statusCode: 500,
-        deploymentRegistry: false
-      }
-      return workspaceSettings;
+      throw err;
     }
 
-    if (contents && contents.deploymentRegistry && contents.deploymentRegistry.length > 0) {
-      log.debug(`Workspace settings deploymentRegistry` + contents.deploymentRegistry);
-      isDeploymentRegistrySet = true;
+    if (contents && contents.registryAddress && contents.registryAddress.length > 0 && contents.registryNamespace && contents.registryNamespace.length) {
+      log.debug(`Workspace settings registryAddress` + contents.registryAddress);
+      log.debug(`Workspace settings registryNamespace` + contents.registryNamespace);
+      isImagePushRegistrySet = true;
 
       // trigger the FW workspaceSettings.readWorkspaceSettings() function to load up the cache since it's valid
       log.info(`Workspace settings file present, reading the settings file`);
       await this.readWorkspaceSettings();
     }
-    log.info(`Workspace settings deployment registry status: ${isDeploymentRegistrySet}`);
+    log.info(`Workspace settings deployment registry status: ${isImagePushRegistrySet}`);
 
     const workspaceSettings = {
-      statusCode: 200,
-      deploymentRegistry: isDeploymentRegistrySet
+      imagePushRegistry: isImagePushRegistrySet
+    }
+
+    if (isImagePushRegistrySet) {
+      workspaceSettings.address = contents.registryAddress
+      workspaceSettings.namespace = contents.registryNamespace
     }
 
     return workspaceSettings;
@@ -646,22 +646,22 @@ module.exports = class User {
       retval = await this.fw.writeWorkspaceSettings(workspaceSettings);
     } catch (err) {
       log.error(`Error in writeWorkspaceSettings`);
-      log.error(err);
+      throw err;
     }
     log.debug(`writeWorkspaceSettings return value: ` + JSON.stringify(retval));
     return retval;
   }
 
   /**
-   * Function to get test deployment registry
+   * Function to get test image push registry
    */
-  async testDeploymentRegistry(deploymentRegistry) {
+  async testImagePushRegistry(address, namespace) {
     let retval;
     try {
-      retval = await this.fw.testDeploymentRegistry(deploymentRegistry);
+      retval = await this.fw.testImagePushRegistry(address, namespace);
     } catch (err) {
-      log.error(`Error in testDeploymentRegistry`);
-      log.error(err);
+      log.error(`Error in testImagePushRegistry`);
+      throw err;
     }
     return retval;
   }

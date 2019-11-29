@@ -12,7 +12,7 @@
 export const events = {
     "creation": "projectCreation",
     "deletion": "projectDeletion",
-    "deploymentRegistryStatus": "deploymentRegistryStatus",
+    "imagePushRegistryStatus": "imagePushRegistryStatus",
     "projectValidated": "projectValidated",
     "statusChanged": "projectStatusChanged",
     "restartResult": "projectRestartResult",

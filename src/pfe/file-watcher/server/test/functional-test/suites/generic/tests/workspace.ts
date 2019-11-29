@@ -134,7 +134,7 @@ export default class WorkspaceTest {
                 it("read workspace settings with invalid deployment registry", async () => {
                     const info: any = await genericLib.readWorkspaceSettings();
                     const failureMsg = "Codewind detected an error with the Deployment Registry x^72@!$&. Please ensure it is a valid Deployment Registry.";
-                    const targetEvent = eventConfigs.events.deploymentRegistryStatus;
+                    const targetEvent = eventConfigs.events.imagePushRegistryStatus;
                     expect(info);
                     expect(info.statusCode);
                     expect(info.statusCode).to.equal(500);
@@ -159,7 +159,7 @@ export default class WorkspaceTest {
     }
 
     private runDeploymentRegistryStatus(socket: SocketIO): void {
-        describe("deploymentRegistryStatus function", () => {
+        describe("imagePushRegistryStatus function", () => {
             const deploymentRegistryRequest = {
                 "projectID": "1234",
                 "detailedDeploymentRegistryStatus": "some status"
@@ -172,7 +172,7 @@ export default class WorkspaceTest {
             it("set deployment registry status with missing projectId", async () => {
                 const request = _.cloneDeep(deploymentRegistryRequest);
                 delete request.projectID;
-                const info: any = await genericLib.deploymentRegistryStatus(request);
+                const info: any = await genericLib.imagePushRegistryStatus(request);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(400);
@@ -184,7 +184,7 @@ export default class WorkspaceTest {
             it("set deployment registry status with missing status", async () => {
                 const request = _.cloneDeep(deploymentRegistryRequest);
                 delete request.detailedDeploymentRegistryStatus;
-                const info: any = await genericLib.deploymentRegistryStatus(request);
+                const info: any = await genericLib.imagePushRegistryStatus(request);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(400);
@@ -195,8 +195,8 @@ export default class WorkspaceTest {
 
             it("set deployment registry status with valid data", async () => {
                 const request = _.cloneDeep(deploymentRegistryRequest);
-                const targetEvent = eventConfigs.events.deploymentRegistryStatus;
-                const info: any = await genericLib.deploymentRegistryStatus(request);
+                const targetEvent = eventConfigs.events.imagePushRegistryStatus;
+                const info: any = await genericLib.imagePushRegistryStatus(request);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(200);

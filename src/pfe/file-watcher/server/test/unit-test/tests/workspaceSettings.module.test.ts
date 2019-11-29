@@ -155,7 +155,7 @@ export function workspaceSettingsTestModule(): void {
         }
     });
 
-    describe("combinational testing of deploymentRegistryStatus function", () => {
+    describe("combinational testing of imagePushRegistryStatus function", () => {
 
         const combinations: any = {
             "combo1": {
@@ -177,7 +177,7 @@ export function workspaceSettingsTestModule(): void {
             const expectedResult = combinations[combo]["result"];
 
             it(combo + " => data: " + data, async() => {
-                const actualResult = await workspaceSettings.deploymentRegistryStatus(data);
+                const actualResult = await workspaceSettings.imagePushRegistryStatus(data);
                 expect(actualResult.statusCode).to.equal(expectedResult);
             });
         }

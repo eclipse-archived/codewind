@@ -212,7 +212,7 @@ function create() {
 		if [[ $exitCode -eq 1 ]]; then
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.unexpectedError"
 		elif [[ $exitCode -eq 7 ]]; then
-			$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
+			$util imagePushRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
 		fi
 		exit 3

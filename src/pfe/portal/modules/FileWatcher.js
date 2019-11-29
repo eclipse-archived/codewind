@@ -61,8 +61,8 @@ module.exports = class FileWatcher {
           break;
         }
 
-        case "deploymentRegistryStatus" : {
-          this.user.uiSocket.emit("deploymentRegistryStatus", fwProject);
+        case "imagePushRegistryStatus" : {
+          this.user.uiSocket.emit("imagePushRegistryStatus", fwProject);
           break;
         }
 
@@ -375,16 +375,16 @@ module.exports = class FileWatcher {
     }
   }
 
-  async deploymentRegistryStatus(body) {
+  async imagePushRegistryStatus(body) {
     let retval;
     try {
-      retval = await filewatcher.deploymentRegistryStatus(body);
+      retval = await filewatcher.imagePushRegistryStatus(body);
       this.logFWReturnedMsg(retval);
     } catch (err) {
       log.error(err);
     }
     if (retval.statusCode != 200) {
-      throw new Error(`deploymentRegistryStatus ${retval.statusCode} ${retval.error.msg}`);
+      throw new Error(`imagePushRegistryStatus ${retval.statusCode} ${retval.error.msg}`);
     }
   }
 
@@ -560,13 +560,14 @@ module.exports = class FileWatcher {
     }
   }
 
-  async testDeploymentRegistry(deploymentRegistry) {
+  async testImagePushRegistry(address, namespace) {
     let retval;
     try{
-      retval = await filewatcher.testDeploymentRegistry(deploymentRegistry);
+      retval = await filewatcher.testImagePushRegistry(address, namespace);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(err);
+      log.error(`Error in testImagePushRegistry`);
+      throw err;
     }
 
     return retval;
@@ -591,7 +592,8 @@ module.exports = class FileWatcher {
       retval = await filewatcher.writeWorkspaceSettings(workspaceSettings);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(err);
+      log.error(`Error in writeWorkspaceSettings`);
+      throw err;
     }
     if (retval.statusCode != 200) {
       throw new Error(`writeWorkspaceSettings ${retval.statusCode}`);
