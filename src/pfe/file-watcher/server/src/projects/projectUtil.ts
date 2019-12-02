@@ -39,7 +39,7 @@ import { Operation } from "./operation";
 import { AppLog, BuildLog, BuildRequest, ProjectInfo, UpdateProjectInfoPair } from "./Project";
 import { projectConstants, ContainerStates, StartModes, MavenFlags } from "./constants";
 import * as locale from "../utils/locale";
-import { appStateMap } from "../controllers/projectStatusController";
+import { appStateMap, DetailedAppStatus } from "../controllers/projectStatusController";
 
 const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
 const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
@@ -60,6 +60,8 @@ export const LOCAL_WORKSPACE = "/codewind-workspace";
 const projectList: Array<string> = [];
 
 const isApplicationPodUpIntervalMap = new Map();
+
+export const firstTimePingArray = new Array();
 
 export interface ProjectEvent {
     operationId: string;
@@ -1041,11 +1043,14 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             isDefaultPath = false;
             path = projectInfo.healthCheck;
         }
-
-        if (isDefaultPath) {
-            updateDetailedAppStatus(projectID, containerInfo.ip, port, path, isDefaultPath);
-        } else {
-            updateDetailedAppStatus(projectID, containerInfo.ip, port, path);
+        // only update the detailed status on first time ping
+        if (firstTimePingArray.indexOf(projectID) < 0) {
+            firstTimePingArray.push(projectID);
+            if (isDefaultPath) {
+                updateDetailedAppStatus(projectID, containerInfo.ip, port, path, isDefaultPath);
+            } else {
+                updateDetailedAppStatus(projectID, containerInfo.ip, port, path);
+            }
         }
 
         // default value of isHttps is false, overwrite if we have valid projectInfo.isHttps
@@ -2144,10 +2149,15 @@ export function updateDetailedAppStatus(projectID: string, ip: string, port: str
     const oldState = appStateMap.get(projectID).state;
     const oldMsg = appStateMap.get(projectID).msg;
 
-    let pingPathMsg = `Pinging http://${ip}:${port}${path}`;
+    let pingPathMsg: DetailedAppStatus;
+    pingPathMsg = {
+        severity: "INFO",
+        message: `Pinging http://${ip}:${port}${path}`,
+        notify: false
+    };
 
     if (isDefaultPath) {
-        pingPathMsg = `${pingPathMsg} and http://${ip}:${port}/`;
+        pingPathMsg.message = `${pingPathMsg.message} and http://${ip}:${port}/`;
     }
 
     if (oldState === AppState.starting) {
