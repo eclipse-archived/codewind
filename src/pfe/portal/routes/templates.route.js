@@ -77,8 +77,17 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
 router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const { templates: templatesController } = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
-  await templatesController.deleteRepository(repositoryUrl);
-  await sendRepositories(req, res, _next);
+  try {
+    await templatesController.deleteRepository(repositoryUrl);
+    await sendRepositories(req, res, _next);
+  } catch (error) {
+    log.error(error);
+    if (error instanceof TemplateError && error.code === 'REPOSITORY_DOES_NOT_EXIST') {
+      res.status(404).send(error.message);
+      return;
+    }
+    res.status(500).send(error.message);
+  }
 });
 
 async function sendRepositories(req, res, _next) {

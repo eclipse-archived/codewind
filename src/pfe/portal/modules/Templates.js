@@ -256,6 +256,8 @@ module.exports = class Templates {
         this.addRepositoryToProviders(deleted).catch(error => log.warn(error.message));
         throw err;
       }
+    } else {
+      throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
     }
   }
 

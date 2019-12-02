@@ -174,7 +174,7 @@ describe('Template API tests', function() {
         });
         it('DELETE should try to remove a template repository that doesn\'t exist', async function() {
             const res = await deleteTemplateRepo('http://something.com/index.json');
-            res.should.have.status(200).and.satisfyApiSpec;
+            res.should.have.status(404).and.satisfyApiSpec;
             res.body.length.should.equal(originalTemplateRepos.length);
         });
     });
@@ -184,12 +184,14 @@ describe('Template API tests', function() {
         saveReposBeforeTestAndRestoreAfter();
         const repo = sampleRepos.codewind;
         let originalTemplateRepos;
+        let originalTemplates;
         let originalNumTemplates;
         before(async function() {
             this.timeout(testTimeout.short);
             const { body: repos } = await getTemplateRepos();
             originalTemplateRepos = repos;
             const { body: templates } = await getTemplates();
+            originalTemplates = templates;
             originalNumTemplates = templates.length;
             
         });
@@ -203,7 +205,7 @@ describe('Template API tests', function() {
             this.timeout(testTimeout.short);
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.not.deep.include(repo);
+            res.body.should.not.deep.include(originalTemplates);
             res.body.length.should.be.below(originalNumTemplates);
         });
         it('POST /api/v1/templates should re-add the deleted template repository', async function() {
@@ -217,7 +219,7 @@ describe('Template API tests', function() {
             this.timeout(testTimeout.short);
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.not.deep.equal(originalTemplateRepos);
+            res.body.should.deep.equal(originalTemplates);
             res.body.length.should.equal(originalNumTemplates);
         });
     });
