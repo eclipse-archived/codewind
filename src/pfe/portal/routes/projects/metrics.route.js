@@ -194,8 +194,6 @@ router.post('/api/v1/projects/:id/metrics/inject', validateReq, async function (
     // We now need to synch files in to the build container
     copyProjectToBuild(project);
 
-    user.buildProject(project, "build");
-
     res.sendStatus(202);
 
   } catch (err) {
@@ -213,6 +211,7 @@ async function copyProjectToBuild(project){
       globalProjectPath,
       projectRoot
     );
+    user.buildProject(project, "build");
   } else {
     // if a build is in progress, wait 5 seconds and try again
     await cwUtils.timeout(5000)
