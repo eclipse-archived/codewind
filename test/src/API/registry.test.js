@@ -158,7 +158,7 @@ describe.skip('Deployment Registry route tests', function() {
 
             const res = await testRegistry();
             res.should.have.status(500);
-            res.body.deploymentRegistryTest.should.equal(false);
+            res.body.imagePushRegistryTest.should.equal(false);
         });
 
         it('should set the registry to the specified value', async function() {

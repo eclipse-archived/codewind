@@ -43,7 +43,7 @@ public class ContainerRunTask {
                     + context.getAppDockerBase() + " " + context.getLocalWorkspaceOrigin() + " "
                     + context.getprojectID() + " "
                     + context.getLogDir() + " "
-                    + context.getDeploymentRegistry();
+                    + context.getImagePushRegistry();
         }  else {
             cmd = context.getArtifactsDirectory().getPath() + Constants.SLASH + "run_docker.sh "
                     + context.getContainerName() + " " + context.getImageName() + " \"-p "

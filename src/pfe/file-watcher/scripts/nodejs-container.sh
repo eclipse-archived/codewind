@@ -21,7 +21,7 @@ START_MODE=$8
 DEBUG_PORT=$9
 FORCE_ACTION=${10}
 FOLDER_NAME=${11}
-DEPLOYMENT_REGISTRY=${12}
+IMAGE_PUSH_REGISTRY=${12}
 
 WORKSPACE=/codewind-workspace
 
@@ -43,7 +43,7 @@ echo "*** START_MODE = $START_MODE"
 echo "*** DEBUG_PORT = $DEBUG_PORT"
 echo "*** FORCE_ACTION = $FORCE_ACTION"
 echo "*** LOG_FOLDER = $LOG_FOLDER"
-echo "*** DEPLOYMENT_REGISTRY = $DEPLOYMENT_REGISTRY"
+echo "*** IMAGE_PUSH_REGISTRY = $IMAGE_PUSH_REGISTRY"
 echo "*** HOST_OS = $HOST_OS"
 
 tag=microclimate-dev-nodejs
@@ -121,7 +121,7 @@ function deployK8s() {
 	helm template $tmpChart \
 		--name $project \
 		--values=/file-watcher/scripts/override-values.yaml \
-		--set image.repository=$DEPLOYMENT_REGISTRY/$project \
+		--set image.repository=$IMAGE_PUSH_REGISTRY/$project \
 		--output-dir=$parentDir
 
 	deploymentFile=$( /file-watcher/scripts/kubeScripts/find-kube-resource.sh $tmpChart Deployment )
@@ -141,7 +141,7 @@ function deployK8s() {
 	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project $PROJECT_ID
 
 	# Push app container image to docker registry if one is set up
-	if [[ ! -z $DEPLOYMENT_REGISTRY ]]; then
+	if [[ ! -z $IMAGE_PUSH_REGISTRY ]]; then
 		# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
 		if [ "$( helm list $project --failed )" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
@@ -170,14 +170,14 @@ function deployK8s() {
 		fi
 
 		# Tag and push the image to the registry
-		$IMAGE_COMMAND push --tls-verify=false $project $DEPLOYMENT_REGISTRY/$project
+		$IMAGE_COMMAND push --tls-verify=false $project $IMAGE_PUSH_REGISTRY/$project
 
 		if [ $? -eq 0 ]; then
-			echo "Successfully tagged and pushed the application image $DEPLOYMENT_REGISTRY/$project"
+			echo "Successfully tagged and pushed the application image $IMAGE_PUSH_REGISTRY/$project"
 		else
-			echo "Error: $?, could not push application image $DEPLOYMENT_REGISTRY/$project" >&2
-			$util imagePushRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
-			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
+			echo "Error: $?, could not push application image $IMAGE_PUSH_REGISTRY/$project" >&2
+			$util imagePushRegistryStatus $PROJECT_ID "buildscripts.invalidImagePushRegistry"
+			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidImagePushRegistry"
 			exit 3
 		fi
 

@@ -378,8 +378,8 @@ export async function printHelmStatus(projectID: string, releaseName: string): P
  *
  * @returns Promise<ProcessResult>
  */
-export async function installChart(projectID: string, deploymentName: string, chartLocation: string, deploymentRegistry: string): Promise<ProcessResult> {
-    const installDeployment: string[] = ["upgrade", "--install", deploymentName, "--recreate-pods", "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + deploymentName, chartLocation];
+export async function installChart(projectID: string, deploymentName: string, chartLocation: string, imagePushRegistry: string): Promise<ProcessResult> {
+    const installDeployment: string[] = ["upgrade", "--install", deploymentName, "--recreate-pods", "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + imagePushRegistry + "/" + deploymentName, chartLocation];
     let response: ProcessResult;
 
     // Install deployment

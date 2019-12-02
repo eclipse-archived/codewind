@@ -44,7 +44,7 @@ router.get('/api/v1/imagepushregistry', async function (req, res) {
   try {
     let user = req.cw_user;
     log.debug(`GET /api/v1/imagepushregistry called`);
-    retval = await user.getDeploymentRegistryStatus();
+    retval = await user.getImagePushRegistryStatus();
     res.status(200).send(retval);
   } catch (error) {
     log.error(error);
@@ -63,18 +63,18 @@ router.post('/api/v1/imagepushregistry', validateReq, async function (req, res) 
   try {
     let user = req.cw_user;
     log.debug(`POST /api/v1/imagepushregistry called`);
-    const registryAddress = req.sanitizeBody('address');
-    const registryNamespace = req.sanitizeBody('namespace');
+    const address = req.sanitizeBody('address');
+    const namespace = req.sanitizeBody('namespace');
     const operation = req.sanitizeBody('operation');
 
     // The validateReq middleware will throw an error if operation is not test or set,
     // but it is optional and defaults to test.
     if (operation === undefined || operation === 'test') {
-      log.debug(`Testing image push registry: ${registryAddress}/${registryNamespace}`);
-      retval = await user.testImagePushRegistry(registryAddress, registryNamespace);
+      log.debug(`Testing image push registry: ${address}/${namespace}`);
+      retval = await user.testImagePushRegistry(address, namespace);
     } else if (operation === 'set') {
-      log.debug(`Setting image push registry: ${registryAddress}/${registryNamespace}`);
-      retval = await user.writeWorkspaceSettings({registryAddress, registryNamespace});
+      log.debug(`Setting image push registry: ${address}/${namespace}`);
+      retval = await user.writeWorkspaceSettings({address, namespace});
     }
     res.status(retval.statusCode).send(retval);
   } catch (error) {

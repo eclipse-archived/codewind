@@ -414,7 +414,7 @@ module.exports = class User {
   }
 
   async imagePushRegistryStatus(body) {
-    log.info(`Updating deployment registry status for project ${body.projectID}.`);
+    log.info(`Updating image push registry status for project ${body.projectID}.`);
     try{
       await this.fw.imagePushRegistryStatus(body);
     } catch (err) {
@@ -573,14 +573,14 @@ module.exports = class User {
   }
 
   /**
-   * Function to get status of deployment registry in workspace settings file
+   * Function to get status of image push registry in workspace settings file
    */
-  async getDeploymentRegistryStatus() {
+  async getImagePushRegistryStatus() {
     // workspaceSettingsFile is the path inside PFE Container
     const workspaceSettingsFile = path.join(this.directories["config"], "settings.json");
     let contents;
     let isImagePushRegistrySet = false;
-    log.info(`Checking PFE & workspace settings deployment registry`);
+    log.info(`Checking PFE & workspace settings image push registry`);
 
     try {
       if (await fs.pathExists(workspaceSettingsFile)) {
@@ -610,7 +610,7 @@ module.exports = class User {
       log.info(`Workspace settings file present, reading the settings file`);
       await this.readWorkspaceSettings();
     }
-    log.info(`Workspace settings deployment registry status: ${isImagePushRegistrySet}`);
+    log.info(`Workspace settings image push registry status: ${isImagePushRegistrySet}`);
 
     const workspaceSettings = {
       imagePushRegistry: isImagePushRegistrySet
@@ -669,24 +669,24 @@ module.exports = class User {
   /**
    * Function to setup the Docker config file and Kube secret
    */
-  async setupRegistrySecret(credentials, url) {
+  async setupRegistrySecret(credentials, address) {
     const credentialsJSON = JSON.parse(Buffer.from(credentials, "base64").toString());
     if (credentialsJSON.username == undefined || credentialsJSON.password == undefined) {
-      throw new RegistrySecretsError("INVALID_ENCODED_CREDENTIALS", "for url " + url);
+      throw new RegistrySecretsError("INVALID_ENCODED_CREDENTIALS", "for address " + address);
     }
     const username = credentialsJSON.username;
     const password = credentialsJSON.password;
-    log.info("Setting up the Docker Registry secret for url: " + url + " and username: " + username);
+    log.info("Setting up the Docker Registry secret for address: " + address + " and username: " + username);
     const registrySecretList = [];
     
     try {
       // Handle dockerhub specifically on local since docker.io does not work
-      if (url === "docker.io" && !global.codewind.RUNNING_IN_K8S) {
+      if (address === "docker.io" && !global.codewind.RUNNING_IN_K8S) {
         // eslint-disable-next-line no-param-reassign
-        url = "https://index.docker.io/v1/";
-      } else if (!url.startsWith("https://") && !url.startsWith("http://")) {
+        address = "https://index.docker.io/v1/";
+      } else if (!address.startsWith("https://") && !address.startsWith("http://")) {
         // eslint-disable-next-line no-param-reassign
-        url = "https://" + url ;
+        address = "https://" + address ;
       }
       const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
       const encodedAuth = Buffer.from(username + ":" + password).toString("base64");
@@ -697,16 +697,16 @@ module.exports = class User {
 
         for (let key in jsonObj.auths) {
           const registrySecret = {
-            url: key,
+            address: key,
             username: jsonObj.auths[key].username
           };
           registrySecretList.push(registrySecret);
-          if (key == url) {
-            throw new RegistrySecretsError("REGISTRY_DUPLICATE_URL", "for url " + url);
+          if (key == address) {
+            throw new RegistrySecretsError("REGISTRY_DUPLICATE_URL", "for address " + address);
           }
         }
 
-        jsonObj.auths[url] = {
+        jsonObj.auths[address] = {
           "username":username,
           "password":password,
           "auth":encodedAuth
@@ -716,7 +716,7 @@ module.exports = class User {
       } else {
         log.info("The Docker config file does not exist, writing the contents");
         const jsonObj = {"auths":{}}
-        jsonObj.auths[url] = {
+        jsonObj.auths[address] = {
           "username":username,
           "password":password,
           "auth":encodedAuth
@@ -726,11 +726,11 @@ module.exports = class User {
       }
       // Update the registrySecretList to send back to the caller
       const registrySecret = {
-        url: url,
+        address: address,
         username: username
       };
       registrySecretList.push(registrySecret);
-      log.info("The Docker config file has been updated for " + url);
+      log.info("The Docker config file has been updated for " + address);
     } catch (err) {
       const msg = "Failed to update the Codewind Docker Config File";
       log.error(msg);
@@ -751,7 +751,7 @@ module.exports = class User {
 
     const msg = "Failed to patch the Service Account";
     log.error(msg);
-    throw new RegistrySecretsError("SERVICE_ACCOUNT_PATCH_FAILED", "for url " + url);
+    throw new RegistrySecretsError("SERVICE_ACCOUNT_PATCH_FAILED", "for address " + address);
   }
 
   /**
@@ -844,7 +844,7 @@ module.exports = class User {
 
         for (let key in jsonObj.auths) {
           const registrySecret = {
-            url: key,
+            address: key,
             username: jsonObj.auths[key].username
           };
           registrySecretList.push(registrySecret);
@@ -866,17 +866,17 @@ module.exports = class User {
   /**
    * Function to remove the docker registries from PFE
    */
-  async removeRegistrySecret(url) {
+  async removeRegistrySecret(address) {
     const registrySecretList = [];
 
     try {
       // Handle dockerhub specifically on local since docker.io does not work
-      if (url === "docker.io" && !global.codewind.RUNNING_IN_K8S) {
+      if (address === "docker.io" && !global.codewind.RUNNING_IN_K8S) {
         // eslint-disable-next-line no-param-reassign
-        url = "https://index.docker.io/v1/";
-      } else if (!url.startsWith("https://") && !url.startsWith("http://")) {
+        address = "https://index.docker.io/v1/";
+      } else if (!address.startsWith("https://") && !address.startsWith("http://")) {
         // eslint-disable-next-line no-param-reassign
-        url = "https://" + url;
+        address = "https://" + address;
       }
       const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
       if (isDockerConfigFilePresent) {
@@ -885,12 +885,12 @@ module.exports = class User {
         let isSecretDeleted = false;
 
         for (let key in jsonObj.auths) {
-          if (key == url) {
+          if (key == address) {
             delete jsonObj.auths[key];
             isSecretDeleted = true;
           } else {
             const registrySecret = {
-              url: key,
+              address: key,
               username: jsonObj.auths[key].username
             };
             registrySecretList.push(registrySecret);
@@ -899,16 +899,16 @@ module.exports = class User {
 
         if (!isSecretDeleted) {
           // If there is no Secret deleted or no Secret to delete in the Docker Config, throw an error. Dont update the Kubernetes Secret and Service Account.
-          const msg = "Unable to find the registry secret to delete for url " + url;
+          const msg = "Unable to find the registry secret to delete for address " + address;
           log.error(msg);
-          throw new RegistrySecretsError("SECRET_DELETE_MISSING", "for url " + url);
+          throw new RegistrySecretsError("SECRET_DELETE_MISSING", "for address " + address);
         }
 
         await fs.writeJson(this.dockerConfigFile, jsonObj);
-        log.info("The Docker config file has been updated for removal of " + url);
+        log.info("The Docker config file has been updated for removal of " + address);
       } else {
         // return if there is no Docker Config file, no need to create new Kubernetes Secret or patch the Service Account
-        throw new RegistrySecretsError("NO_DOCKER_CONFIG", "for removing url " + url);
+        throw new RegistrySecretsError("NO_DOCKER_CONFIG", "for removing address " + address);
       }
     } catch (err) {
       const msg = "Failed to remove the registry secret and update the Codewind Docker Config File";
@@ -930,7 +930,7 @@ module.exports = class User {
 
     const msg = "Failed to patch the Service Account";
     log.error(msg);
-    throw new RegistrySecretsError("SERVICE_ACCOUNT_PATCH_FAILED", "for url " + url);
+    throw new RegistrySecretsError("SERVICE_ACCOUNT_PATCH_FAILED", "for address " + address);
   }
 
   /**

@@ -37,7 +37,7 @@ public class Constants {
 	public static final String DB_HELM_RELEASE = "HELM_RELEASE";
 	public static final String DB_WORKSPACE_ORIGIN = "WORKSPACE_ORIGIN";
 	public static final String DB_SERVER_START = "SERVER_START";
-	public static final String DB_DEPLOYMENT_REGISTRY = "DEPLOYMENT_REGISTRY";
+	public static final String DB_IMAGE_PUSH_REGISTRY = "IMAGE_PUSH_REGISTRY";
 	public static final String DB_START_MODE = "START_MODE";
 	public static final String DB_DEBUG_PORT = "DEBUG_PORT";
 	
@@ -126,8 +126,8 @@ public class Constants {
 
 	
 
-	public static final String DEPLOYMENT_REGISTRY = "DEPLOYMENT_REGISTRY";
-	public static final String DEPLOYMENT_REGISTRY_KEY = "--deploymentRegistry=";
+	public static final String IMAGE_PUSH_REGISTRY = "IMAGEPUSH_REGISTRY";
+	public static final String IMAGE_PUSH_REGISTRY_KEY = "--imagePushRegistry=";
 
 	public static final String START_MODE = "START_MODE";
 	public static final String START_MODE_KEY = "--startMode=";
@@ -152,7 +152,7 @@ public class Constants {
 		containerRemoveFailed("The container was not successfully removed"),
 		containerCleanupFailed("The container cleanup was not successful"),
 		applicationBuildFailed("Application build failed."),
-		invalidDeploymentRegistry("Failed to push image to invalid Deployment Registry"),
+		invalidImagePushRegistry("Failed to push image to invalid Image Push Registry"),
 		missingDockerfile("Missing required Dockerfile");
 
 		private String msg;
