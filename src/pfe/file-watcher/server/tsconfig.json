@@ -19,6 +19,7 @@
       "src/utils/locales/**/*"
     ],
     "types": [
+        "node",
         "mocha"
     ]
 }

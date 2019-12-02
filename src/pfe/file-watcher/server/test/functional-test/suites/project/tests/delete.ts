@@ -71,10 +71,13 @@ export default class DeleteTest {
 
     private runDeleteWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         it("delete project", async () => {
-            const dataFile = path.resolve(__dirname, "..", "..", "..", `${process.env.IN_K8 ? "kube" : "local"}-performance-data.json`);
-            const fileContent = JSON.parse(await fs.readFileSync(dataFile, "utf-8"));
-            const chosenTimestamp = Object.keys(fileContent[projectTemplate][projectLang]).sort().pop();
-            const startTime = Date.now();
+            let dataFile, fileContent, chosenTimestamp, startTime;
+            if (process.env.TURBINE_PERFORMANCE_TEST) {
+                dataFile = path.resolve(__dirname, "..", "..", "..", "..", "performance-test", "data", process.env.TEST_TYPE, process.env.TURBINE_PERFORMANCE_TEST, "performance-data.json");
+                fileContent = JSON.parse(await fs.readFileSync(dataFile, "utf-8"));
+                chosenTimestamp = Object.keys(fileContent[projectTemplate][projectLang]).sort().pop();
+                startTime = Date.now();
+            }
 
             const info: any = await deleteProject(projData.projectID);
             const targetEvent = eventConfigs.events.deletion;
@@ -98,10 +101,12 @@ export default class DeleteTest {
                 fail(`delete project test failed to listen for ${targetEvent}`);
             }
 
-            const endTime = Date.now();
-            const totalTestTime = (endTime - startTime) / 1000;
-            fileContent[projectTemplate][projectLang][chosenTimestamp]["delete"] = totalTestTime;
-            await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
+            if (process.env.TURBINE_PERFORMANCE_TEST) {
+                const endTime = Date.now();
+                const totalTestTime = (endTime - startTime) / 1000;
+                fileContent[projectTemplate][projectLang][chosenTimestamp]["delete"] = totalTestTime;
+                await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
+            }
         }).timeout(timeoutConfigs.createTestTimeout);
     }
 }

@@ -67,10 +67,13 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
             if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectTemplate] && project_configs.filesToUpdate[projectTemplate][projectLang] || [];
             for (const file of filesList) {
                 it(`${type.toLowerCase()} file: ${file}`, async () => {
-                    const dataFile = path.resolve(__dirname, "..", "..", "..", `${process.env.IN_K8 ? "kube" : "local"}-performance-data.json`);
-                    const fileContent = JSON.parse(await fs.readFileSync(dataFile, "utf-8"));
-                    const chosenTimestamp = Object.keys(fileContent[projectTemplate][projectLang]).sort().pop();
-                    const startTime = Date.now();
+                    let dataFile, fileContent, chosenTimestamp, startTime;
+                    if (process.env.TURBINE_PERFORMANCE_TEST) {
+                        dataFile = path.resolve(__dirname, "..", "..", "..", "..", "performance-test", "data", process.env.TEST_TYPE, process.env.TURBINE_PERFORMANCE_TEST, "performance-data.json");
+                        fileContent = JSON.parse(await fs.readFileSync(dataFile, "utf-8"));
+                        chosenTimestamp = Object.keys(fileContent[projectTemplate][projectLang]).sort().pop();
+                        startTime = Date.now();
+                    }
 
                     const fileToChange = file;
                     const pathFileToChange = path.join(projData.location, fileToChange);
@@ -117,10 +120,12 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
                         fail(`failed to find ${targetEvent} for updating docker file`);
                     }
 
-                    const endTime = Date.now();
-                    const totalTestTime = (endTime - startTime) / 1000;
-                    fileContent[projectTemplate][projectLang][chosenTimestamp][`update-${file}`] = totalTestTime;
-                    await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
+                    if (process.env.TURBINE_PERFORMANCE_TEST) {
+                        const endTime = Date.now();
+                        const totalTestTime = (endTime - startTime) / 1000;
+                        fileContent[projectTemplate][projectLang][chosenTimestamp][`${type.toLowerCase()}-${file}`] = totalTestTime;
+                        await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
+                    }
                 }).timeout(timeoutConfigs.createTestTimeout);
             }
         }

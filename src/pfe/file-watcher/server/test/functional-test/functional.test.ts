@@ -78,7 +78,9 @@ function runAllTests(): void {
   genericSuite.runTest();
   for (const chosenTemplate of Object.keys(projectTypes)) {
     for (const chosenProject of projectTypes[chosenTemplate]) {
-      createDataFile(chosenTemplate, chosenProject);
+      if (process.env.TURBINE_PERFORMANCE_TEST) {
+        createDataFile(chosenTemplate, chosenProject);
+      }
       runProjectSpecificTest(chosenTemplate, chosenProject);
     }
   }
@@ -99,7 +101,7 @@ function runAllTests(): void {
 }
 
 function createDataFile(projectTemplate: string, projectLang: string): void {
-  const dataJson = path.resolve(__dirname, `${process.env.IN_K8 ? "kube" : "local"}-performance-data.json`);
+  const dataJson = path.resolve(__dirname, "..", "performance-test", "data", process.env.TEST_TYPE, process.env.TURBINE_PERFORMANCE_TEST, "performance-data.json");
   if (! fs.existsSync(dataJson)) {
     fs.writeFileSync(dataJson, "{}", "utf-8");
   }
