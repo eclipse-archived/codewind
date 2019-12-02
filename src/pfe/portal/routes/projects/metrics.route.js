@@ -211,7 +211,7 @@ async function copyProjectToBuild(project){
       globalProjectPath,
       projectRoot
     );
-    user.buildProject(project, "build");
+    await user.buildProject(project, "build");
   } else {
     // if a build is in progress, wait 5 seconds and try again
     await cwUtils.timeout(5000)
