@@ -131,9 +131,9 @@ export async function containerCreate(operation: Operation, script: string, comm
     let deploymentRegistry: string;
 
     if (process.env.IN_K8 === "true") {
-        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo();
+        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo(true);
         logger.logProjectInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo), projectID);
-        deploymentRegistry = workspaceSettingsInfo.registryAddress.trim() + "/" + workspaceSettingsInfo.registryNamespace.trim();
+        deploymentRegistry = workspaceSettingsInfo.registryAddress.replace(/\/\s*$/, "") + "/" + workspaceSettingsInfo.registryNamespace.trim();
         logger.logProjectInfo("Deployment Registry: " + deploymentRegistry, projectID);
 
         if (projectDeploymentRegistry && projectDeploymentRegistry != deploymentRegistry) {
@@ -244,9 +244,9 @@ export async function containerUpdate(operation: Operation, script: string, comm
     let deploymentRegistry: string;
 
     if (process.env.IN_K8 === "true") {
-        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo();
+        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo(true);
         logger.logProjectInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo), projectID);
-        deploymentRegistry = workspaceSettingsInfo.registryAddress.trim() + "/" + workspaceSettingsInfo.registryNamespace.trim();
+        deploymentRegistry = workspaceSettingsInfo.registryAddress.replace(/\/\s*$/, "") + "/" + workspaceSettingsInfo.registryNamespace.trim();
         logger.logProjectInfo("Deployment Registry: " + deploymentRegistry, projectID);
 
         if (projectDeploymentRegistry && projectDeploymentRegistry != deploymentRegistry) {
@@ -1447,9 +1447,9 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             status: "failed"
         };
 
-        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo();
+        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo(true);
         logger.logInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo));
-        const deploymentRegistry: string = workspaceSettingsInfo.registryAddress.trim() + "/" + workspaceSettingsInfo.registryNamespace.trim();
+        const deploymentRegistry: string = workspaceSettingsInfo.registryAddress.replace(/\/\s*$/, "") + "/" + workspaceSettingsInfo.registryNamespace.trim();
         logger.logProjectInfo("Deployment Registry: " + deploymentRegistry, buildInfo.projectID);
 
         if (projectDeploymentRegistry && projectDeploymentRegistry != deploymentRegistry) {
