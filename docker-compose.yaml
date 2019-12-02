@@ -9,7 +9,6 @@ services:
       - HOST_WORKSPACE_DIRECTORY=${WORKSPACE_DIRECTORY}
       - CONTAINER_WORKSPACE_DIRECTORY=/codewind-workspace
       - HOST_OS=${HOST_OS}
-      - CODEWIND_VERSION=${TAG}
       - PERFORMANCE_CONTAINER=codewind-performance${PLATFORM}:${TAG}
       - HOST_HOME=${HOST_HOME}
       - HOST_MAVEN_OPTS=${HOST_MAVEN_OPTS}

@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "express": "^4.15.4",
     "express-session": "^1.16.2",
     "keycloak-connect": "^7.0.0",

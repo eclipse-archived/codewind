@@ -125,6 +125,7 @@ COPY /portal/npm-start.sh /portal/nodemon.json /portal/
 COPY /portal/eslint-rules /portal/eslint-rules
 RUN chmod -R +rx /portal/npm-start.sh
 
+COPY /portal/.env /portal/.env
 COPY /portal/server.js /portal/
 COPY /portal/modules /portal/modules
 COPY /portal/routes /portal/routes

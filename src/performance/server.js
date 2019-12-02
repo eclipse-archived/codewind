@@ -10,6 +10,9 @@
 *******************************************************************************/
 'use strict';
 
+// dotenv reads .env and adds it to the process.env object
+require('dotenv').config()
+
 const express = require('express');
 require('express-async-errors');
 const bodyParser = require('body-parser');
@@ -25,11 +28,16 @@ const monitor = require('./monitor/route');
 var loadProcess;
 let projectURL;
 
+const codewindVersion = process.env.CODEWIND_VERSION;
+
 
 app.use(bodyParser.json());
 app.get('/', (req, res) => res.send('Performance Container is running...'));
 
 app.get('/health', (req, res) => res.json({ status: 'UP' }));
+
+
+app.get('/performance/api/v1/environment', (req, res) => res.json({ codewind_version: codewindVersion }));
 
 /**
 * API Function to start a load run
