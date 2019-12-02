@@ -157,13 +157,24 @@ export async function cacheWorkspaceSettingsInfo(workspaceSettings: WorkspaceSet
  * @function
  * @description Get the workspace settings info from cache or the settings file.
  *
+ * * @param handleURL <Optional | boolean> - This option lets you handle the registry address index.docker.io/v1 conversion to docker.io if set to true.
+ *
  * @returns Promise<any>
  */
-export async function getWorkspaceSettingsInfo(): Promise<any> {
+export async function getWorkspaceSettingsInfo(handleAddress?: boolean): Promise<any> {
     const workspaceSettingsFile = constants.workspaceConstants.workspaceSettingsFile;
     if (workspaceSettingsInfoCache) {
         logger.logInfo("workspaceSettingsInfoCache cache: " + workspaceSettingsInfoCache);
-        return JSON.parse(workspaceSettingsInfoCache);
+        const workspaceSettingsInfoCacheJSON = JSON.parse(workspaceSettingsInfoCache);
+        if (handleAddress) {
+            try {
+                workspaceSettingsInfoCacheJSON.registryAddress = await validateImagePushRegistryAddress(workspaceSettingsInfoCacheJSON.registryAddress);
+            } catch (err) {
+                logger.logError(err);
+                return JSON.parse(workspaceSettingsInfoCache);
+            }
+        }
+        return workspaceSettingsInfoCacheJSON;
     }
 
     let data: any;
@@ -177,6 +188,9 @@ export async function getWorkspaceSettingsInfo(): Promise<any> {
         if (await utils.asyncFileExists(workspaceSettingsFile)) {
             data = await utils.asyncReadJSONFile(workspaceSettingsFile);
             logger.logInfo("Returning workspace settings file content: " + JSON.stringify(data));
+            if (handleAddress) {
+                data.registryAddress = await validateImagePushRegistryAddress(data.registryAddress);
+            }
             return data;
         } else {
             const msg = "The workspace settings file was not found at location: " + workspaceSettingsFile;
@@ -192,6 +206,23 @@ export async function getWorkspaceSettingsInfo(): Promise<any> {
 }
 
 /**
+ * @function
+ * @description Validate the Image Push Registry Address to handle index.docker.io/v1 to docker.io conversion.
+ *
+ * * @param workspaceSettings <Required | any> - The workspace settings JSON object
+ *
+ * @returns Promise<any> - The updated workspace settings JSON object
+ */
+export async function validateImagePushRegistryAddress(address: string): Promise<any> {
+
+    if (address.includes("index.docker.io/v1")) {
+        address = "docker.io";
+    }
+
+    return address;
+}
+
+/**
  * @see [[Filewatcher.testImagePushRegistry]]
  */
 export async function testImagePushRegistry(address: string, namespace: string, pullImage?: string): Promise<IImagePushRegistryTestSuccess | IImagePushRegistryTestFailure> {
@@ -199,6 +230,9 @@ export async function testImagePushRegistry(address: string, namespace: string, 
     let imagePushRegistryTest: boolean = false;
     pullImage = pullImage || "hello-world";
 
+    // always validate the image push registry address during test for conversion of index.docker.io/v1 to docker.io
+    address = await validateImagePushRegistryAddress(address);
+    address = address.replace(/\/\s*$/, "");
     const imagePushRegistry = address + "/" + namespace;
     logger.logDebug("Image Push registry address: " + address);
     logger.logDebug("Image Push registry namespace: " + namespace);
