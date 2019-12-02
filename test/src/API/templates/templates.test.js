@@ -11,10 +11,10 @@
 
 const chai = require('chai');
 const chaiResValidator = require('chai-openapi-response-validator');
+const chaiSubset = require('chai-subset');
 
 const {
-    defaultTemplates,
-    defaultRepoList,
+    defaultCodewindTemplates,
     validUrlNotPointingToIndexJson,
     sampleRepos,
     batchPatchTemplateRepos,
@@ -30,87 +30,76 @@ const {
 const { pathToApiSpec, testTimeout } = require('../../../config');
 
 chai.should();
+chai.use(chaiSubset);
 chai.use(chaiResValidator(pathToApiSpec));
 
-describe.skip('Template API tests', function() {
+describe('Template API tests', function() {
+    // Save the state of the repos before any test and restore the exact state after
     saveReposBeforeTestAndRestoreAfter();
-    before(async function() {
-        this.timeout(testTimeout.short);
-        await setTemplateReposTo([
-            { ...sampleRepos.codewind },
-            { ...sampleRepos.fromAppsodyExtension },
-        ]);
-    });
     describe('GET /api/v1/templates', function() {
+        before(async() => {
+            this.timeout(testTimeout.short);
+            await setTemplateReposTo([
+                { ...sampleRepos.codewind },
+            ]);
+        });
         describe('?projectStyle=', function() {
-            describe('empty', function() {
-                it.skip('should return a list of all available templates', async function() {
-                    this.timeout(testTimeout.short);
-                    const res = await getTemplates();
-                    res.should.have.status(200).and.satisfyApiSpec;
-                    res.body.length.should.equal(defaultTemplates.length);
+            it('should return at least the default Codewind templates as no projectStyle is given', async function() {
+                this.timeout(testTimeout.short);
+                const res = await getTemplates();
+                res.should.have.status(200).and.satisfyApiSpec;
+                res.body.length.should.be.at.least(defaultCodewindTemplates.length);
+            });
+            it('should return only Codewind templates as projectStyle is Codewind', async function() {
+                this.timeout(testTimeout.short);
+                const res = await getTemplates({ projectStyle: 'Codewind' });
+                res.should.have.status(200).and.satisfyApiSpec;
+                res.body.forEach(template => {
+                    if (template.projectStyle) {
+                        template.projectStyle.should.equal('Codewind');
+                    }
                 });
             });
-            describe('Codewind', function() {
-                it('should return only Codewind templates', async function() {
-                    this.timeout(testTimeout.short);
-                    const res = await getTemplates({ projectStyle: 'Codewind' });
-                    res.should.have.status(200).and.satisfyApiSpec;
-                    res.body.forEach(template => {
-                        if (template.projectStyle) {
-                            template.projectStyle.should.equal('Codewind');
-                        }
-                    });
-                });
-            });
-            for (const projectStyle of ['Appsody']) {
-                describe(projectStyle, function() {
-                    it.skip(`should return only ${projectStyle} templates`, async function() {
-                        this.timeout(testTimeout.short);
-                        const res = await getTemplates({ projectStyle });
-                        res.should.have.status(200).and.satisfyApiSpec;
-                        res.body.forEach(template =>
-                            template.projectStyle.should.equal(projectStyle)
-                        );
-                    });
-                });
-            }
-            describe('unknownStyle', function() {
-                it('should return 204', async function() {
-                    this.timeout(testTimeout.short);
-                    const res = await getTemplates({ projectStyle: 'unknownStyle' });
-                    res.should.have.status(204);
-                    res.body.should.be.empty;
-                });
+            it('should return 204 as there exists no templates with the given projectStyle', async function() {
+                this.timeout(testTimeout.short);
+                const res = await getTemplates({ projectStyle: 'unknownStyle' });
+                res.should.have.status(204);
+                res.body.should.be.empty;
             });
         });
         describe('?showEnabledOnly=', function() {
-            describe('false', function() {
-                it.skip('should return all templates (from enabled and disabled repos)', async function() {
-                    this.timeout(testTimeout.short);
-                    const res = await getTemplates({ showEnabledOnly: false });
-                    res.should.have.status(200).and.satisfyApiSpec;
-                    res.body.length.should.equal(defaultTemplates.length);
-                });
+            it('should return all templates (from enabled and disabled repos)', async function() {
+                this.timeout(testTimeout.short);
+                const res = await getTemplates({ showEnabledOnly: false });
+                res.should.have.status(200).and.satisfyApiSpec;
+                res.body.length.should.be.at.least(defaultCodewindTemplates.length);
             });
-            describe('true', function() {
-                it('should return only templates from enabled repos', async function() {
-                    this.timeout(testTimeout.short);
-                    const res = await getTemplates({ showEnabledOnly: true });
-                    res.should.have.status(200).and.satisfyApiSpec;
-                    res.body.length.should.equal(defaultTemplates.length);
-                });
+            it('should return only templates from enabled repos', async function() {
+                this.timeout(testTimeout.short);
+                const res = await getTemplates({ showEnabledOnly: true });
+                res.should.have.status(200).and.satisfyApiSpec;
+                res.body.length.should.be.at.least(defaultCodewindTemplates.length);
             });
         });
     });
 
     describe('GET /api/v1/templates/repositories', function() {
-        it.skip('should return 200 and a list of available template repositories', async function() {
+        before(async function() {
+            this.timeout(testTimeout.short);
+            await setTemplateReposTo([
+                { ...sampleRepos.codewind },
+            ]);
+        });
+        it('should return 200 and a list of available template repositories', async function() {
             this.timeout(testTimeout.short);
             const res = await getTemplateRepos();
-
+            for (let i = 0; i < res.body.length; i++) {
+                const element = res.body[i];
+                element.should.contain.keys('id', 'name', 'description', 'url', 'projectStyles', 'enabled', 'protected');
+                delete element.id;
+            }
             res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.have.deep.members(defaultRepoList);
+            res.body.should.deep.containSubset([sampleRepos.codewind]);
         });
     });
 
@@ -152,77 +141,83 @@ describe.skip('Template API tests', function() {
                     res.should.have.status(400);
                 });
             });
+            describe('a valid url', function() {
+                let originalTemplateReposLength;
+                before(async function() {
+                    this.timeout(testTimeout.short);
+                    const { body: repos } = await getTemplateRepos();
+                    originalTemplateReposLength = repos.length;
+                });
+                it('should add a template repository', async function() {
+                    this.timeout(testTimeout.short);
+                    const repoToAdd = {
+                        // Use an early version of kabanero-io collections to avoid clashes inside the Appsody CLI
+                        url: 'https://github.com/kabanero-io/collections/releases/download/v0.0.6/kabanero-index.json',
+                        description: 'Additional Codewind templates',
+                        protected: false,
+                    };
+                    const res = await addTemplateRepo(repoToAdd);
+                    res.should.have.status(200).and.satisfyApiSpec;
+                    res.body.should.deep.containSubset([repoToAdd]);
+                    res.body.length.should.equal(originalTemplateReposLength + 1);
+                });
+            });
         });
     });
 
-    describe('DELETE|POST /api/v1/templates/repositories', function() {
-        const repoToDelete = sampleRepos.codewind;
-        const repoToAdd = {
-            url: 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/aad4bafc14e1a295fb8e462c20fe8627248609a3/devfiles/index.json',
-            description: 'Additional Codewind templates.',
-            protected: false,
-        };
+    describe('DELETE /api/v1/templates/repositories', function() {
+        it('DELETE should try to remove a template repository that doesn\'t exist', async function() {
+            const res = await deleteTemplateRepo('http://something.com/index.json');            
+            res.should.have.status(404);
+        });
+    });
+
+    describe('DELETE | GET | POST /api/v1/templates/repositories', function() {
+        // Save state for this test
+        saveReposBeforeTestAndRestoreAfter();
+        const repo = sampleRepos.codewind;
         let originalTemplateRepos;
+        let originalTemplates;
         let originalNumTemplates;
         before(async function() {
             this.timeout(testTimeout.short);
-            const res = await getTemplateRepos();
-            originalTemplateRepos = res.body;
-
-            const res2 = await getTemplates();
-            originalNumTemplates = res2.body.length;
+            const { body: repos } = await getTemplateRepos();
+            originalTemplateRepos = repos;
+            const { body: templates } = await getTemplates();
+            originalTemplates = templates;
+            originalNumTemplates = templates.length;
+            
         });
-        after(async function() {
-            this.timeout(testTimeout.short);
-            await setTemplateReposTo(originalTemplateRepos);
-        });
-        // Test deleting repos
-        it('DELETE should remove a template repository', async function() {
-            const res = await deleteTemplateRepo(repoToDelete.url);
+        it('DELETE /api/v1/templates should remove a template repository', async function() {
+            const res = await deleteTemplateRepo(repo.url);
             res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.not.deep.include(repoToDelete);
+            res.body.should.not.deep.include(repo);
             res.body.length.should.equal(originalTemplateRepos.length - 1);
         });
         it('GET /api/v1/templates should return fewer templates', async function() {
             this.timeout(testTimeout.short);
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
+            res.body.should.not.deep.include(originalTemplates);
             res.body.length.should.be.below(originalNumTemplates);
         });
-        // Test adding repos
-        it.skip('POST should re-add the deleted template repository', async function() {
+        it('POST /api/v1/templates should re-add the deleted template repository', async function() {
             this.timeout(testTimeout.short);
-            const res = await addTemplateRepo(repoToDelete);
+            const res = await addTemplateRepo(repo);
             res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.deep.include(repoToDelete);
+            res.body.should.containSubset([repo]);
             res.body.length.should.equal(originalTemplateRepos.length);
         });
-        it.skip('should return the original list of available templates', async function() {
+        it('GET /api/v1/templates should return the original templates', async function() {
             this.timeout(testTimeout.short);
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
+            res.body.should.deep.equal(originalTemplates);
             res.body.length.should.equal(originalNumTemplates);
-        });
-        it.skip('POST should add a 2nd template repository', async function() {
-            this.timeout(testTimeout.short);
-            const res = await addTemplateRepo(repoToAdd);
-            res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.deep.include({
-                ...repoToAdd,
-                enabled: true,
-                projectStyles: ['Codewind'],
-            });
-            res.body.length.should.equal(originalTemplateRepos.length + 1);
-        });
-        it.skip('should return a longer list of available templates', async function() {
-            this.timeout(testTimeout.short);
-            const res = await getTemplates();
-            res.should.have.status(200).and.satisfyApiSpec;
-            res.body.length.should.be.above(originalNumTemplates);
         });
     });
     describe('PATCH /api/v1/batch/templates/repositories', function() {
-        const existingRepoUrl = sampleRepos.fromAppsodyExtension.url;
+        const { url: existingRepoUrl } = sampleRepos.codewind;
         const tests = {
             'enable an existing repo': {
                 input: [{
@@ -289,12 +284,10 @@ describe.skip('Template API tests', function() {
         };
         saveReposBeforeEachTestAndRestoreAfterEach();
         for (const [testName, test] of Object.entries(tests)) {
-            describe(`to ${testName}`, function() {
-                it(`should return 207 and the expected operations info`, async function() {
-                    const res = await batchPatchTemplateRepos(test.input);
-                    res.should.have.status(207).and.satisfyApiSpec;
-                    res.body.should.deep.equal(test.output);
-                });
+            it(`should ${testName} and return 207 and the expected operations info`, async function() {
+                const res = await batchPatchTemplateRepos(test.input);
+                res.should.have.status(207).and.satisfyApiSpec;
+                res.body.should.deep.equal(test.output);
             });
         }
     });

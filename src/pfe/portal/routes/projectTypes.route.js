@@ -83,7 +83,7 @@ router.get('/api/v1/project-types', async (req, res) => {
   const projectTypes = [];
   const seenProjectTypes = {};
   try {
-    const templates = await user.templates.getEnabledTemplates();
+    const templates = await user.templates.getTemplates(true);
     for (const template of templates) {
       
       const projectType = template.projectType;

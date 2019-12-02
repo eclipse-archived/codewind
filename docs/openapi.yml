@@ -1010,6 +1010,12 @@ paths:
                   $ref: '#/components/schemas/TemplateRepo'
         400:
           description: Bad request
+        404:
+          description: Template repository not found
+          content:
+            text/html:
+              schema:
+                type: string
   /api/v1/batch/templates/repositories:
     patch:
       summary: Batch change settings for a template repository of which Codewind is aware

@@ -42,6 +42,9 @@ function constructMessage(code, identifier, message) {
   case 'ADD_TO_PROVIDER_FAILURE':
     output = `A template provider failed to add the ${identifier} repository`;
     break;
+  case 'REPOSITORY_DOES_NOT_EXIST':
+    output = `${identifier} does not exist`;
+    break;
   default:
     output = 'Unknown template error';
   }
