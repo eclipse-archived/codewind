@@ -192,7 +192,7 @@ router.post('/api/v1/projects/:id/metrics/inject', validateReq, async function (
 
     await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
     // We now need to synch files in to the build container
-    copyProjectToBuild(project);
+    copyProjectToBuild(project, user);
 
     res.sendStatus(202);
 
@@ -202,7 +202,7 @@ router.post('/api/v1/projects/:id/metrics/inject', validateReq, async function (
   }
 });
 
-async function copyProjectToBuild(project){
+async function copyProjectToBuild(project, user){
   const globalProjectPath = path.join(project.workspace, project.name);
   const projectRoot = cwUtils.getProjectSourceRoot(project);
   if (project.buildStatus != "inProgress") {
