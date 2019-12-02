@@ -166,11 +166,13 @@ const changeInternalPort = async function (applicationPort: string, operation: O
     }
 
     try {
+        let isContainerRunning: boolean = true;
         let isApplicationPortExposed: boolean = false;
 
         // Check if the port requested has been exposed
         if (process.env.IN_K8) {
             const containerInfo: any = await projectUtil.getContainerInfo(projectInfo, true);
+            isContainerRunning = containerInfo.podName.trim().length > 0;
             for (let i = 0; i < containerInfo.podPorts.length; i++) {
                 const port = containerInfo.podPorts[i];
 
@@ -181,6 +183,7 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             }
         } else {
             const containerInfo: any = await projectUtil.getContainerInfo(projectInfo, true);
+            isContainerRunning = containerInfo.containerId.trim().length > 0;
             for (let i = 0; i < containerInfo.containerPorts.length; i++) {
                 const port = containerInfo.containerPorts[i];
 
@@ -191,7 +194,7 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             }
         }
 
-        if (!isApplicationPortExposed) {
+        if (isContainerRunning && !isApplicationPortExposed) {
             logger.logProjectInfo("The requested application port is not exposed: " + applicationPort, projectInfo.projectID);
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
