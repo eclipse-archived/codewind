@@ -1237,10 +1237,10 @@ paths:
             schema:
               type: object
               required:
-                - url
+                - address
                 - credentials
               properties:
-                url:
+                address:
                   type: string
                 credentials:
                   type: string
@@ -1255,9 +1255,9 @@ paths:
                 items:
                   type: object
                   properties:
-                    url:
+                    address:
                       type: string
-                      description: Registry url
+                      description: Registry address
                       example: docker.io
                     username:
                       type: string
@@ -1293,9 +1293,9 @@ paths:
                 items:
                   type: object
                   properties:
-                    url:
+                    address:
                       type: string
-                      description: Registry url
+                      description: Registry address
                       example: docker.io
                     username:
                       type: string
@@ -1319,9 +1319,9 @@ paths:
             schema:
               type: object
               required:
-                - url
+                - address
               properties:
-                url:
+                address:
                   type: string
       responses:
         200:
@@ -1333,9 +1333,9 @@ paths:
                 items:
                   type: object
                   properties:
-                    url:
+                    address:
                       type: string
-                      description: Registry url
+                      description: Registry address
                       example: docker.io
                     username:
                       type: string
@@ -1372,7 +1372,7 @@ paths:
                 properties:
                   imagePushRegistry:
                     type: boolean
-                    description: true if deployment registry was set
+                    description: true if image push registry was set
                     example: true
                   address:
                     type: string
@@ -1391,13 +1391,13 @@ paths:
                 properties:
                   imagePushRegistry:
                     type: boolean
-                    description: false if deployment registry was not set
+                    description: false if image push registry was not set
                     example: false
     post:
       summary: Test or set the specified Deployment Registry
       description: >
         On test the API also emits a socket event `imagePushRegistryStatus` with data
-        `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
+        `{imagePushRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
         A set operation will set the registry without testing to allow the client to force save the
         value.
       requestBody:

@@ -308,19 +308,19 @@ export default class Filewatcher {
      * @function
      * @description Emit a socket event to highlight the validity status of the Deployment Registry
      *
-     * @param req <Required | workspaceSettings.IDeploymentRegistryStatusParams> - The request object.
+     * @param req <Required | workspaceSettings.IImagePushRegistryStatusParams> - The request object.
      * Parameters:
      *  @property projectID <Required | String>: An alphanumeric identifier for a project.
-     *  @property detailedDeploymentRegistryStatus <Required | String>: The detailed message of the Deployment Registry validity.
+     *  @property detailedImagePushRegistryStatus <Required | String>: The detailed message of the Deployment Registry validity.
      *
      *
-     * @returns Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>
+     * @returns Promise<workspaceSettings.IImagePushRegistryStatusSuccess | workspaceSettings.IImagePushRegistryStatusFailure>
      * Response codes:
      *  @property 200: Successfully received the request
-     *  @property 400: Bad Request: projectID and detailedDeploymentRegistryStatus are required parameters
+     *  @property 400: Bad Request: projectID and detailedImagePushRegistryStatus are required parameters
      *
      */
-    imagePushRegistryStatus: (req: workspaceSettings.IDeploymentRegistryStatusParams) => Promise<workspaceSettings.IDeploymentRegistryStatusSuccess | workspaceSettings.IDeploymentRegistryStatusFailure> ;
+    imagePushRegistryStatus: (req: workspaceSettings.IImagePushRegistryStatusParams) => Promise<workspaceSettings.IImagePushRegistryStatusSuccess | workspaceSettings.IImagePushRegistryStatusFailure> ;
 
     /**
      * @function

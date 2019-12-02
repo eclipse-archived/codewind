@@ -28,11 +28,11 @@ export async function readWorkspaceSettings(): Promise<workspaceSettings.IWorksp
     return await filewatcher.readWorkspaceSettings();
 }
 
-export async function testDeploymentRegistry(pushRegistry: string, pullImage?: string): Promise<workspaceSettings.IImagePushRegistryTestSuccess | workspaceSettings.IImagePushRegistryTestFailure> {
-    return await filewatcher.testImagePushRegistry(pushRegistry, pullImage);
+export async function testImagePushRegistry(pushRegistryAddress: string, pushRegistryNamespace: string, pullImage?: string): Promise<workspaceSettings.IImagePushRegistryTestSuccess | workspaceSettings.IImagePushRegistryTestFailure> {
+    return await filewatcher.testImagePushRegistry(pushRegistryAddress, pushRegistryNamespace, pullImage);
 }
 
-export async function imagePushRegistryStatus(request: workspaceSettings.IDeploymentRegistryStatusParams): Promise<workspaceSettings.IDeploymentRegistryStatusSuccess | workspaceSettings.IDeploymentRegistryStatusFailure> {
+export async function imagePushRegistryStatus(request: workspaceSettings.IImagePushRegistryStatusParams): Promise<workspaceSettings.IImagePushRegistryStatusSuccess | workspaceSettings.IImagePushRegistryStatusFailure> {
     return await filewatcher.imagePushRegistryStatus(request);
 }
 

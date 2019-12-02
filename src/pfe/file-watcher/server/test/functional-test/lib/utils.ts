@@ -57,8 +57,8 @@ export function pingPFE(callback: request.RequestCallback): request.Request {
 }
 
 export function getRegistry(callback: request.RequestCallback): request.Request {
-    const registryUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.registry;
-    return request.get(registryUrl, {rejectUnauthorized: false}, callback);
+    const imagePushRegistryUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.imagepushregistry;
+    return request.get(imagePushRegistryUrl, {rejectUnauthorized: false}, callback);
 }
 
 export function cloneProject(projectName: string, parentPath: string, url: string, callback: request.RequestCallback): request.Request {

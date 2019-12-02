@@ -16,4 +16,4 @@ export const defaultInterval = ms("5s");
 
 export const createTestTimeout = ms("20m");
 export const deleteTestTimeout = ms("1m");
-export const testDeploymentRegistryTimeout = ms("60s");
+export const testImagePushRegistryTimeout = ms("60s");

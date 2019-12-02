@@ -58,7 +58,7 @@ function newLogFileAvailable() {
 }
 
 function imagePushRegistryStatus() {
-	curl -sS -k -X POST -H "Content-Type: application/json" -d '{"projectID": "'$projectID'", "detailedDeploymentRegistryStatus": "'"$message"'"}' $PORTAL_PROTOCOL://localhost:$PORTAL_PORT/internal/api/v1/projects/imagePushRegistryStatus
+	curl -sS -k -X POST -H "Content-Type: application/json" -d '{"projectID": "'$projectID'", "detailedImagePushRegistryStatus": "'"$message"'"}' $PORTAL_PROTOCOL://localhost:$PORTAL_PORT/internal/api/v1/projects/imagePushRegistryStatus
 }
 
 function getWorkspacePathForVolumeMounting() {

@@ -78,13 +78,13 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
     // eslint-disable-next-line no-useless-escape
     const regex = new RegExp(/^[A-Za-z0-9-._~:\/?#\[\]@!\$&'\(\)\*\+;%=,]+$/);
     if (imagePushRegistry && imagePushRegistry.length) {
-        const isDeploymentRegistryValid = regex.test(imagePushRegistry);
-        logger.logInfo("Image Push Registry Validation: " + isDeploymentRegistryValid);
-        if (!isDeploymentRegistryValid) {
+        const isImagePushRegistryValid = regex.test(imagePushRegistry);
+        logger.logInfo("Image Push Registry Validation: " + isImagePushRegistryValid);
+        if (!isImagePushRegistryValid) {
             const msg = "Codewind detected an error with the Image Push Registry " + imagePushRegistry + ". Please ensure it is a valid Image Push Registry.";
             logger.logError(msg);
             const data: any = {
-                deploymentRegistryTest: false,
+                imagePushRegistryTest: false,
                 msg: msg
             };
             io.emitOnListener("imagePushRegistryStatus", data);
@@ -238,7 +238,7 @@ export async function testImagePushRegistry(address: string, namespace: string, 
     logger.logDebug("Image Push registry namespace: " + namespace);
     logger.logInfo("Testing the Image Push Registry: " + imagePushRegistry);
     try {
-        await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["pull", pullImage], {});
+        await processManager.spawnDetachedAsync("imagePushRegistryTest1", "buildah", ["pull", pullImage], {});
     } catch (err) {
         const msg = `Codewind was unable to pull the ${pullImage} image during the Image Push Registry test.`;
         logger.logError(msg);
@@ -257,9 +257,9 @@ export async function testImagePushRegistry(address: string, namespace: string, 
     let buildahPush;
 
     try {
-        buildahPush = (await processManager.spawnDetachedAsync("deploymentRegistryTest1", "buildah", ["push", "--tls-verify=false", pullImage, `${imagePushRegistry}/${pullImage}`], {}));
+        buildahPush = (await processManager.spawnDetachedAsync("imagePushRegistryTest1", "buildah", ["push", "--tls-verify=false", pullImage, `${imagePushRegistry}/${pullImage}`], {}));
         buildahPushEC = buildahPush.exitCode;
-        logger.logDebug("testDeploymentRegistry exit code: " + buildahPushEC);
+        logger.logDebug("testImagePushRegistry exit code: " + buildahPushEC);
     } catch (err) {
         const msg = `Codewind was unable to push the ${pullImage} image to the Image Push Registry ${imagePushRegistry}/${pullImage}. Please make sure it is a valid Image Push Registry with the appropriate permissions.`;
         logger.logError(msg);
@@ -303,14 +303,14 @@ export async function testImagePushRegistry(address: string, namespace: string, 
 /**
  * @see [[Filewatcher.imagePushRegistryStatus]]
  */
-export async function imagePushRegistryStatus(req: IDeploymentRegistryStatusParams): Promise<IDeploymentRegistryStatusSuccess | IDeploymentRegistryStatusFailure> {
+export async function imagePushRegistryStatus(req: IImagePushRegistryStatusParams): Promise<IImagePushRegistryStatusSuccess | IImagePushRegistryStatusFailure> {
 
-    if (!req.projectID || !req.detailedDeploymentRegistryStatus) {
-        return { "statusCode": 400, "error": { "msg": "Missing request parameters projectID or detailedDeploymentRegistryStatus for deployment registry status"}};
+    if (!req.projectID || !req.detailedImagePushRegistryStatus) {
+        return { "statusCode": 400, "error": { "msg": "Missing request parameters projectID or detailedImagePushRegistryStatus for image push registry status"}};
     }
 
     const projectID: string = req.projectID;
-    const msg: string = req.detailedDeploymentRegistryStatus;
+    const msg: string = req.detailedImagePushRegistryStatus;
 
     await updateImagePushRegistryStatus(projectID, msg);
 
@@ -319,7 +319,7 @@ export async function imagePushRegistryStatus(req: IDeploymentRegistryStatusPara
 
 /**
  * @function
- * @description Update the status for a deployment registry. This function will only be called if Codewind detects an invalid deployment registry.
+ * @description Update the status for an image push registry. This function will only be called if Codewind detects an invalid image push registry.
  *
  * @param projectID <Required | String> - An alphanumeric identifier for a project.
  * @param msg <Required | String> - The new message to emit.
@@ -333,7 +333,7 @@ export async function updateImagePushRegistryStatus(projectID: string, msg: stri
     const translatedMessage = await locale.getTranslation(msg);
 
     const data: any = {
-        deploymentRegistryTest: false,
+        imagePushRegistryTest: false,
         msg: translatedMessage
     };
 
@@ -343,16 +343,16 @@ export async function updateImagePushRegistryStatus(projectID: string, msg: stri
     io.emitOnListener("imagePushRegistryStatus", data);
 }
 
-export interface IDeploymentRegistryStatusParams {
+export interface IImagePushRegistryStatusParams {
     projectID: string;
-    detailedDeploymentRegistryStatus: string;
+    detailedImagePushRegistryStatus: string;
 }
 
-export interface IDeploymentRegistryStatusSuccess {
+export interface IImagePushRegistryStatusSuccess {
     statusCode: 200;
 }
 
-export interface IDeploymentRegistryStatusFailure {
+export interface IImagePushRegistryStatusFailure {
     statusCode: 400 | 404;
     error: { msg: string };
 }

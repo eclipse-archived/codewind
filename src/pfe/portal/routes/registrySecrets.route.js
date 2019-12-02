@@ -38,9 +38,9 @@ router.post('/api/v1/registrysecrets', validateReq, async function (req, res) {
     let user = req.cw_user;
     log.debug(`POST /api/v1/registrysecrets called`);
     const credentials = req.sanitizeBody('credentials');
-    const url = req.sanitizeBody('url');
+    const address = req.sanitizeBody('address');
 
-    const registrySecretList = await user.setupRegistrySecret(credentials, url);
+    const registrySecretList = await user.setupRegistrySecret(credentials, address);
     res.status(201).send(registrySecretList);
   } catch (err) {
     log.error(err);
@@ -59,9 +59,9 @@ router.delete('/api/v1/registrysecrets', validateReq, async function (req, res) 
   try {
     let user = req.cw_user;
     log.debug(`DELETE /api/v1/registrysecrets called`);
-    const url = req.sanitizeBody('url');
+    const address = req.sanitizeBody('address');
 
-    const registrySecretList = await user.removeRegistrySecret(url);
+    const registrySecretList = await user.removeRegistrySecret(address);
     res.status(200).send(registrySecretList);
   } catch (err) {
     log.error(err);

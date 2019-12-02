@@ -24,9 +24,9 @@ export PROJECT_ID=$5
 
 export LOGFOLDER=$6
 
-DEPLOYMENT_REGISTRY=$7
+IMAGE_PUSH_REGISTRY=$7
 
-echo "run_kubernetes.sh DEPLOYMENT_REGISTRY: $DEPLOYMENT_REGISTRY"
+echo "run_kubernetes.sh IMAGE_PUSH_REGISTRY: $IMAGE_PUSH_REGISTRY"
 
 # The directory that contains this shell script (which is also the installation artifact/ dir)
 export ARTIFACTS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -100,7 +100,7 @@ parentDir=$( dirname $tmpChart )
 helm template $tmpChart \
 	--name $RELEASE_NAME \
 	--values=/file-watcher/scripts/override-values.yaml \
-	--set image.repository=$DEPLOYMENT_REGISTRY/$CONTAINER_NAME \
+	--set image.repository=$IMAGE_PUSH_REGISTRY/$CONTAINER_NAME \
 	--output-dir=$parentDir
 
 deploymentFile=$( /file-watcher/scripts/kubeScripts/find-kube-resource.sh $tmpChart Deployment )
@@ -123,14 +123,14 @@ fi
 /file-watcher/scripts/kubeScripts/add-iterdev-to-chart.sh $deploymentFile $PROJNAME "/home/default/artifacts/new_entrypoint.sh" $LOGFOLDER
 
 # Tag and push the image to the registry
-if [[ ! -z $DEPLOYMENT_REGISTRY ]]; then	
+if [[ ! -z $IMAGE_PUSH_REGISTRY ]]; then	
 	# Tag and push the image
-	buildah push --tls-verify=false $CONTAINER_NAME $DEPLOYMENT_REGISTRY/$CONTAINER_NAME
+	buildah push --tls-verify=false $CONTAINER_NAME $IMAGE_PUSH_REGISTRY/$CONTAINER_NAME
 	if [ $? -eq 0 ]; then
-		echo "Successfully tagged and pushed the application image $DEPLOYMENT_REGISTRY/$CONTAINER_NAME"
+		echo "Successfully tagged and pushed the application image $IMAGE_PUSH_REGISTRY/$CONTAINER_NAME"
 	else
-		echo "Error: $?, could not push application image $DEPLOYMENT_REGISTRY/$CONTAINER_NAME" >&2
-		$util imagePushRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
+		echo "Error: $?, could not push application image $IMAGE_PUSH_REGISTRY/$CONTAINER_NAME" >&2
+		$util imagePushRegistryStatus $PROJECT_ID "buildscripts.invalidImagePushRegistry"
 		exit 7;
 	fi
 	
