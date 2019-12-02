@@ -5,7 +5,8 @@ pipeline {
     }
     
     triggers {	
-      issueCommentTrigger('trigger_build')	
+      issueCommentTrigger('trigger_build')
+      upstream(upstreamProjects: "Codewind/codewind-odo-extension/${env.BRANCH_NAME}, Codewind/codewind-appsody-extension/${env.BRANCH_NAME}", threshold: hudson.model.Result.SUCCESS)
     }
 
     options {
