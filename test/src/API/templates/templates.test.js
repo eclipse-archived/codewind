@@ -166,16 +166,9 @@ describe('Template API tests', function() {
     });
 
     describe('DELETE /api/v1/templates/repositories', function() {
-        let originalTemplateRepos;
-        before(async function() {
-            this.timeout(testTimeout.short);
-            const { body: repos } = await getTemplateRepos();
-            originalTemplateRepos = repos;
-        });
         it('DELETE should try to remove a template repository that doesn\'t exist', async function() {
-            const res = await deleteTemplateRepo('http://something.com/index.json');
-            res.should.have.status(404).and.satisfyApiSpec;
-            res.body.length.should.equal(originalTemplateRepos.length);
+            const res = await deleteTemplateRepo('http://something.com/index.json');            
+            res.should.have.status(404);
         });
     });
 
