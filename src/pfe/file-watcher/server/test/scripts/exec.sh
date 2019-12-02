@@ -188,12 +188,12 @@ function setup {
 }
 
 function run {
-    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${REGISTRY_SECRET_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} npm run $TEST_SUITE:test:xml"
+    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${REGISTRY_SECRET_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} TURBINE_PERFORMANCE_TEST=${TURBINE_PERFORMANCE_TEST} npm run $TEST_SUITE:test:xml"
 
     if [ $TEST_TYPE == "local" ]; then
         echo -e "${BLUE}>> Copying data.json file back to docker container ... ${RESET}"
-        if [[ -f $CW_DIR/src/pfe/file-watcher/server/test/functional-test/$TEST_TYPE-performance-data.json ]]; then
-            docker cp $CW_DIR/src/pfe/file-watcher/server/test/functional-test/$TEST_TYPE-performance-data.json $CODEWIND_CONTAINER_ID:/file-watcher/server/test/functional-test
+        if [[ -f $CW_DIR/src/pfe/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST/performance-data.json ]]; then
+            docker cp $CW_DIR/src/pfe/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST/performance-data.json $CODEWIND_CONTAINER_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST
         fi
         checkExitCode $? "Failed to copy data.json file to docker container."
 
@@ -221,7 +221,7 @@ function run {
 	checkExitCode $? "Failed to clean up test directory."
 
     echo -e "${BLUE}>> Copy back data.json file back to host VM ... ${RESET}"
-    docker cp $CODEWIND_CONTAINER_ID:/file-watcher/server/test/functional-test/$TEST_TYPE-performance-data.json $CW_DIR/src/pfe/file-watcher/server/test/functional-test
+    docker cp $CODEWIND_CONTAINER_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST/performance-data.json $CW_DIR/src/pfe/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST
     checkExitCode $? "Failed to copy data.json file to host VM."
 }
 
