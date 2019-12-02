@@ -216,6 +216,11 @@ const changeInternalPort = async function (applicationPort: string, operation: O
         logger.logProjectInfo("The project has been updated", projectInfo.projectID);
         logger.logProjectTrace(JSON.stringify(projectInfo), projectInfo.projectID);
 
+        // Delete the project from the array to show the next ping message
+        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
+        }
+
         // Set the containerInfoForceRefreshMap for the project to true, so that isApplicationUp/ping can pick up the new port with a force refresh
         projectUtil.containerInfoForceRefreshMap.set(projectID, true);
 
@@ -327,6 +332,11 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
 
     try {
         await projectsController.updateProjectInfo(projectID, keyValuePair);
+
+        // Delete the project from the array to show the next ping message
+        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
+        }
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
@@ -546,6 +556,12 @@ const reconfigWWWProtocol = async function (isHttps: boolean, operation: Operati
 
     try {
         await projectsController.updateProjectInfo(projectID, keyValuePair);
+
+        // Delete the project from the array to show the next ping message
+        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
+        }
+
         const data = {
             operationId: operation.operationId,
             projectID: projectID,
