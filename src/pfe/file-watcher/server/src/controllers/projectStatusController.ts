@@ -414,7 +414,7 @@ function pingApplications(): void {
                         let shouldEmitMsg: boolean = false;
                         // Ensure that only new messages are emitted and logged
                         if (newMsg && (newMsg.toString().trim() !== (oldMsg ? oldMsg.toString().trim() : oldMsg))) {
-                            logger.logProjectInfo("pingInTransitApplications: Application state error message: " + newMsg, projectID);
+                            logger.logProjectInfo("pingApplications: Application state error message: " + newMsg, projectID);
                             shouldEmitMsg = true;
                         }
 
