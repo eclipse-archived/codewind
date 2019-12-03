@@ -29,6 +29,7 @@ var loadProcess;
 let projectURL;
 
 const codewindVersion = process.env.CODEWIND_VERSION;
+const imageBuildTime = process.env.IMAGE_BUILD_TIME
 
 
 app.use(bodyParser.json());
@@ -37,7 +38,13 @@ app.get('/', (req, res) => res.send('Performance Container is running...'));
 app.get('/health', (req, res) => res.json({ status: 'UP' }));
 
 
-app.get('/performance/api/v1/environment', (req, res) => res.json({ codewind_version: codewindVersion }));
+app.get('/performance/api/v1/environment', (req, res) => {
+    const environment = {
+        codewind_version: codewindVersion,
+        image_build_time: imageBuildTime
+    }
+    res.end(JSON.stringify(environment, null, 2));
+});
 
 /**
 * API Function to start a load run

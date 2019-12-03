@@ -25,6 +25,8 @@ COPY LICENSE NOTICE.md ./
 WORKDIR /usr/src/app
 COPY . .
 
+ARG IMAGE_BUILD_TIME
+ENV IMAGE_BUILD_TIME=${IMAGE_BUILD_TIME}
 # Install dependancies
 RUN npm ci --production
 

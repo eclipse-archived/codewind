@@ -38,6 +38,7 @@ async function main() {
     let workspaceID = process.env.WORKSPACE_ID
     let required_accessRole = process.env.ACCESS_ROLE
     const codewindVersion = process.env.CODEWIND_VERSION
+    const imageBuildTime = process.env.IMAGE_BUILD_TIME
 
     if (workspace_service != "") {
         pfe_host = process.env[(workspace_service + "_SERVICE_HOST").toUpperCase()]
@@ -142,6 +143,7 @@ async function main() {
             client_id: client_id,
             realm: realm,
             codewind_version: codewindVersion,
+            image_build_time: imageBuildTime,
         }
         res.end(JSON.stringify(environment, null, 2));
     })
