@@ -8,16 +8,13 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
 *******************************************************************************/
-require('mocha-sinon');
 const chai = require('chai');
 const rewire = require('rewire');
 const { mockReq, mockRes } = require('sinon-express-mock');
-const sinonChai = require('sinon-chai');
 
 const metricsController = rewire('../../../../src/pfe/portal/controllers/metrics.controller');
 const { suppressLogOutput } = require('../../../modules/log.service');
 
-chai.use(sinonChai);
 chai.should();
 
 describe('metrics.controller.js', () => {
@@ -97,7 +94,7 @@ describe('metrics.controller.js', () => {
             res.status.should.be.calledOnceWith(500);
             res.send.args[0][0].message.should.equal('Injection of metrics collector is not supported for projects of type \'unsupportedProjectType\'');
         });
-        it('returns 202 and injects metrics collector into project build container if we provide a good request', async function() {
+        it('returns 202 and injects metrics collector into project build container if we provide a good request', async() => {
             const request = {
                 sanitizeParams: () => 'goodProjectID',
                 sanitizeBody: () => true,
