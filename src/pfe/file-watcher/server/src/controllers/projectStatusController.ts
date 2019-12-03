@@ -337,6 +337,9 @@ export function deleteProject(projectID: string): void {
     appStateMap.delete(projectID);
     buildStateMap.delete(projectID);
     buildRequiredMap.delete(projectID);
+    if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+        projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
+    }
 }
 
 /**
