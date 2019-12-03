@@ -15,6 +15,7 @@ src/performance/webclient/build/
 test/coverage
 test/test-results.xml
 test/tmp.json
+test/resources/codewind-license-data/bin/*
 src/performance/LICENSE
 src/performance/NOTICE.md
 src/pfe/portal/LICENSE
