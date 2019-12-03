@@ -2149,18 +2149,18 @@ export function updateDetailedAppStatus(projectID: string, ip: string, port: str
     const oldState = appStateMap.get(projectID).state;
     const oldMsg = appStateMap.get(projectID).msg;
 
-    let pingPathMsg: DetailedAppStatus;
-    pingPathMsg = {
+    let pingPathEvent: DetailedAppStatus;
+    pingPathEvent = {
         severity: "INFO",
         message: `Pinging http://${ip}:${port}${path}`,
         notify: false
     };
 
     if (isDefaultPath) {
-        pingPathMsg.message = `${pingPathMsg.message} and http://${ip}:${port}/`;
+        pingPathEvent.message = `${pingPathEvent.message} and http://${ip}:${port}/`;
     }
 
     if (oldState === AppState.starting) {
-        projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathMsg);
+        projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathEvent);
     }
 }
