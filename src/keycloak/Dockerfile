@@ -9,7 +9,7 @@
 #     IBM Corporation - initial API and implementation
 ################################################################################
 
-FROM jboss/keycloak:latest
+FROM jboss/keycloak:8.0.0
 
 # Copy our license files into the new image
 COPY LICENSE NOTICE.md ./
