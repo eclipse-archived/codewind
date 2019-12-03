@@ -101,12 +101,6 @@ if [ "$IN_K8" == "true" ]; then
 		# kubectl get secret $SECRET_NAME -o jsonpath="{.data.\.dockerconfigjson}" | base64 --decode > /root/.docker/config.json
 	fi
 
-	# We are going to use a custom tiller in the namespace
-	# because we do not have cluster role binding for our Che
-	# workspace namespace and cannot access the cluster-scoped tiller
-	echo "Initializing a custom helm tiller"
-	helm init --upgrade --service-account $SERVICE_ACCOUNT_NAME
-
 	# TO BE REMOVED AS PART OF CODEWIND ISSUE https://github.com/eclipse/codewind/issues/665 WHEN APIS ARE READY TO BE CONSUMED
 	# Copy the secret's config json file over
 	echo "Copying the docker registry secrets over"
@@ -115,13 +109,5 @@ if [ "$IN_K8" == "true" ]; then
 		cp /tmp/secret/.dockerconfigjson /root/.docker/config.json
 	elif [ -e /tmp/secret/.dockercfg ]; then
 		cp /tmp/secret/.dockercfg /root/.dockercfg
-	fi
-
-	# Use a helm wrapper if TLS selected for helm
-	if [[ "$USE_HELM_TLS" == "true" ]]; then
-		echo "Creating Helm TLS wrapper"
-		mv /usr/local/bin/helm /usr/local/bin/_helm
-		cp /file-watcher/scripts/wrappers/helm_wrapper.sh /usr/local/bin/helm
-		chmod +x /usr/local/bin/helm
 	fi
 fi

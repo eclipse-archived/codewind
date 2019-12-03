@@ -171,8 +171,7 @@ function deployK8() {
 	parentDir=$( dirname $tmpChart )
 
 	# Render the chart template
-	helm template $tmpChart \
-		--name $project \
+	helm template $project $tmpChart \
 		--values=/file-watcher/scripts/override-values.yaml \
 		--set image.repository=$DEPLOYMENT_REGISTRY/$project \
 		--output-dir=$parentDir
@@ -218,19 +217,17 @@ function deployK8() {
 			exit 3
 		fi
 
-		helm upgrade \
-			--install $project \
-			--recreate-pods \
-			$tmpChart
+		helm upgrade $project $tmpChart \
+			--install  \
+			--recreate-pods
 	else
 		# Build the docker image
 		modifyDockerfileAndBuild
 
 		# Install the image using Helm
-		helm upgrade \
-			--install $project \
-			--recreate-pods \
-			$tmpChart;
+		helm upgrade $project $tmpChart \
+			--install  \
+			--recreate-pods
 	fi
 
 	if [ $? -eq 0 ]; then

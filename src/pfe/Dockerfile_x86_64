@@ -64,14 +64,14 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
     && chmod +x ./kubectl \
     && mv ./kubectl /usr/local/bin/kubectl
 
-# Install helm, fixed to the 2.9.1 version
+# Install helm, fixed to the 3.0.0 version
 RUN cd /tmp \ 
-    && curl -O https://get.helm.sh/helm-v2.9.1-linux-amd64.tar.gz \
-    && echo '56ae2d5d08c68d6e7400d462d6ed10c929effac929fedce18d2636a9b4e166ba  helm-v2.9.1-linux-amd64.tar.gz' | sha256sum -c - \
-    && tar -xvf helm-v2.9.1-linux-amd64.tar.gz \
+    && curl -O https://get.helm.sh/helm-v3.0.0-linux-amd64.tar.gz \
+    && echo '10e1fdcca263062b1d7b2cb93a924be1ef3dd6c381263d8151dd1a20a3d8c0dc  helm-v3.0.0-linux-amd64.tar.gz' | sha256sum -c - \
+    && tar -xvf helm-v3.0.0-linux-amd64.tar.gz \
     && cp /tmp/linux-amd64/helm /usr/local/bin/helm \
     && chmod +x /usr/local/bin/helm \
-    && rm -rf /tmp/linux-amd64 /tmp/helm-v2.9.1-linux-amd64.tar.gz
+    && rm -rf /tmp/linux-amd64 /tmp/helm-v3.0.0-linux-amd64.tar.gz
 
 WORKDIR /
 # Softlink to /codewind-workspace to /projects so paths

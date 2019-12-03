@@ -97,8 +97,7 @@ cp -fR $chartDir/* $tmpChart
 parentDir=$( dirname $tmpChart )
 
 # Render the template yamls for the chart
-helm template $tmpChart \
-	--name $RELEASE_NAME \
+helm template $RELEASE_NAME $tmpChart \
 	--values=/file-watcher/scripts/override-values.yaml \
 	--set image.repository=$DEPLOYMENT_REGISTRY/$CONTAINER_NAME \
 	--output-dir=$parentDir
@@ -135,16 +134,14 @@ if [[ ! -z $DEPLOYMENT_REGISTRY ]]; then
 	fi
 	
 	echo "Running install command: helm upgrade --install $RELEASE_NAME --recreate-pods $tmpChart"
-	helm upgrade \
-		--install $RELEASE_NAME \
-		--recreate-pods \
-		$tmpChart
+	helm upgrade $RELEASE_NAME $tmpChart \
+		--install  \
+		--recreate-pods
 else
 	echo "Running install command: helm upgrade --install $RELEASE_NAME --recreate-pods $tmpChart"
-	helm upgrade \
-		--install $RELEASE_NAME \
-		--recreate-pods \
-		$tmpChart
+	helm upgrade $RELEASE_NAME $tmpChart \
+		--install  \
+		--recreate-pods
 fi
 
 # Don't proceed if the helm install failed

@@ -118,8 +118,7 @@ function deployK8s() {
 	echo "Modifying charts and running Helm install from $chartDir"
 
 	# Render the template yamls for the chart
-	helm template $tmpChart \
-		--name $project \
+	helm template $project $tmpChart \
 		--values=/file-watcher/scripts/override-values.yaml \
 		--set image.repository=$DEPLOYMENT_REGISTRY/$project \
 		--output-dir=$parentDir
@@ -182,10 +181,9 @@ function deployK8s() {
 		fi
 
 		# Install the application using helm.
-		helm upgrade \
-			--install $project \
-			--recreate-pods \
-			$tmpChart;
+		helm upgrade $project $tmpChart \
+			--install \
+			--recreate-pods
 	else
 		echo "$BUILD_IMAGE_INPROGRESS_MSG $projectName"
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_INPROGRESS "buildscripts.buildImage"
@@ -207,10 +205,9 @@ function deployK8s() {
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
 			exit 3
 		fi
-		helm upgrade \
+		helm upgrade $project $tmpChart \
 			--install $project \
-			--recreate-pods \
-			$tmpChart;
+			--recreate-pods
 	fi
 
 	if [ $? -eq 0 ]; then
