@@ -75,11 +75,11 @@ describe("PFE - functional test", () => {
 
 function runAllTests(): void {
   genericSuite.runTest();
-  // for (const chosenTemplate of Object.keys(projectTypes)) {
-  //   for (const chosenProject of projectTypes[chosenTemplate]) {
-  //     runProjectSpecificTest(chosenTemplate, chosenProject);
-  //   }
-  // }
+  for (const chosenTemplate of Object.keys(projectTypes)) {
+    for (const chosenProject of projectTypes[chosenTemplate]) {
+      runProjectSpecificTest(chosenTemplate, chosenProject);
+    }
+  }
 }
 
 function runProjectSpecificTest(chosenTemplate: string, chosenProject: string): void {

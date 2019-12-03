@@ -52,9 +52,9 @@ export default class GenericTestSuite {
      */
     runTest(runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.suite, () => {
-            // this.localeTest.run();
-            // this.loggingTest.run();
-            // this.projectTest.run();
+            this.localeTest.run();
+            this.loggingTest.run();
+            this.projectTest.run();
             this.workspaceTest.run(this.socket);
         });
     }

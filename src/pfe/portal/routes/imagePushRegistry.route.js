@@ -74,7 +74,7 @@ router.post('/api/v1/imagepushregistry', validateReq, async function (req, res) 
       retval = await user.testImagePushRegistry(address, namespace);
     } else if (operation === 'set') {
       log.debug(`Setting image push registry: ${address}/${namespace}`);
-      retval = await user.writeWorkspaceSettings({address, namespace});
+      retval = await user.writeWorkspaceSettings(address, namespace);
     }
     res.status(retval.statusCode).send(retval);
   } catch (error) {
