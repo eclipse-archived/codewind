@@ -199,3 +199,6 @@ module.exports.getProjectSourceRoot = function getProjectSourceRoot(project) {
   }
   return projectRoot;
 }
+
+const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+module.exports.deepClone = deepClone;

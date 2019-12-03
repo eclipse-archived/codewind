@@ -17,8 +17,8 @@ const rewire = require('rewire');
 const xml2js = require('xml2js');
 
 const { suppressLogOutput } = require('../../../modules/log.service');
-
 const metricsService = rewire('../../../../src/pfe/portal/modules/metricsService');
+const nodeMetricsService = rewire('../../../../src/pfe/portal/modules/metricsService/node');
 
 chai.use(chaiAsPromised);
 chai.use(deepEqualInAnyOrder);
@@ -26,46 +26,45 @@ chai.should();
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
-describe('metricsService.js', () => {
+const projectDir = path.join('.', 'src', 'unit', 'modules', 'test');
+
+// nodejs
+const pathToPackageJson = path.join(projectDir, 'package.json');
+const pathToBackupPackageJson = path.join(projectDir, 'backupPackage.json');
+const originalPackageJson = {
+    /* eslint-disable quote-props, quotes, comma-dangle */
+    "name": "node",
+    "version": "1.0.0",
+    "description": "A generated IBM Cloud application",
+    "scripts": {
+        "start": "node $npm_package_config_entrypoint",
+        "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
+    },
+    "dependencies": {
+        "body-parser": "^1.18.3",
+        "express": "^4.16.4"
+    }
+    /* eslint-enable quote-props, quotes, comma-dangle */
+};
+
+const expectedPackageJson = {
+    /* eslint-disable quote-props, quotes, comma-dangle */
+    "name": "node",
+    "version": "1.0.0",
+    "description": "A generated IBM Cloud application",
+    "scripts": {
+        "start": "node -r appmetrics-codewind/attach $npm_package_config_entrypoint",
+        "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
+    },
+    "dependencies": {
+        "body-parser": "^1.18.3",
+        "express": "^4.16.4",
+        "appmetrics-codewind": "^0.1.0",
+    }
+    /* eslint-enable quote-props, quotes, comma-dangle */
+};
+describe('metricsService/index.js', () => {
     suppressLogOutput(metricsService);
-
-    const projectDir = path.join('.', 'src', 'unit', 'modules', 'test');
-
-    // nodejs
-    const pathToPackageJson = path.join(projectDir, 'package.json');
-    const pathToBackupPackageJson = path.join(projectDir, 'backupPackage.json');
-    const originalPackageJson = {
-        /* eslint-disable quote-props, quotes, comma-dangle */
-        "name": "node",
-        "version": "1.0.0",
-        "description": "A generated IBM Cloud application",
-        "scripts": {
-            "start": "node $npm_package_config_entrypoint",
-            "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
-        },
-        "dependencies": {
-            "body-parser": "^1.18.3",
-            "express": "^4.16.4"
-        }
-        /* eslint-enable quote-props, quotes, comma-dangle */
-    };
-
-    const expectedPackageJson = {
-        /* eslint-disable quote-props, quotes, comma-dangle */
-        "name": "node",
-        "version": "1.0.0",
-        "description": "A generated IBM Cloud application",
-        "scripts": {
-            "start": "node -r appmetrics-codewind/attach $npm_package_config_entrypoint",
-            "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
-        },
-        "dependencies": {
-            "body-parser": "^1.18.3",
-            "express": "^4.16.4",
-            "appmetrics-codewind": "^0.1.0",
-        }
-        /* eslint-enable quote-props, quotes, comma-dangle */
-    };
 
     // java
     const pathToTestPomXml = path.join(projectDir, 'pom.xml');
@@ -263,88 +262,6 @@ describe('metricsService.js', () => {
                 const funcToTest = () => metricsService.removeMetricsCollectorFromProject('unsupportedProjectType', projectDir);
                 return funcToTest().should.be.rejectedWith(`Injection of metrics collector is not supported for projects of type 'unsupportedProjectType'`);
             });
-        });
-    });
-    describe('nodejs', () => {
-        describe('removeMetricsCollectorFromNodeProject(projectDir)', () => {
-            before(() => {
-                fs.outputJSONSync(pathToPackageJson, expectedPackageJson);
-                fs.outputJSONSync(pathToBackupPackageJson, originalPackageJson);
-            });
-            after(() => {
-                fs.removeSync(projectDir);
-            });
-            it(`removes metrics collector from the project's package.json`, async() => {
-                const funcToTest = metricsService.__get__('removeMetricsCollectorFromNodeProject');
-                await funcToTest(projectDir);
-
-                fs.readJSONSync(pathToPackageJson).should.deep.equal(originalPackageJson);
-                fs.existsSync(pathToBackupPackageJson).should.be.false;
-            });
-        });
-        describe('injectMetricsCollectorIntoNodeProject(projectDir)', () => {
-            describe('package.json does not have metrics injection code', () => {
-                before(() => {
-                    fs.outputJSONSync(pathToPackageJson, originalPackageJson);
-                });
-                after(() => {
-                    fs.removeSync(projectDir);
-                });
-                it(`injects metrics collector into the project's package.json, and saves a back up`, async() => {
-                    const funcToTest = metricsService.__get__('injectMetricsCollectorIntoNodeProject');
-                    await funcToTest(projectDir);
-
-                    fs.readJSONSync(pathToPackageJson).should.deep.equal(expectedPackageJson);
-                    fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(originalPackageJson);
-                });
-            });
-            describe('package.json already has metrics injection code', () => {
-                before(() => {
-                    fs.outputJSONSync(pathToPackageJson, expectedPackageJson);
-                });
-                after(() => {
-                    fs.removeSync(projectDir);
-                });
-                it(`does not change the project's package.json, but saves a back up`, async() => {
-                    const funcToTest = metricsService.__get__('injectMetricsCollectorIntoNodeProject');
-                    await funcToTest(projectDir);
-
-                    fs.readJSONSync(pathToPackageJson).should.deep.equal(expectedPackageJson);
-                    fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(expectedPackageJson);
-                });
-            });
-        });
-        describe('getNewContentsOfPackageJson(originalContents)', () => {
-            it(`returns an object representing a package.json injected with metrics collector`, () => {
-                const funcToTest = metricsService.__get__('getNewContentsOfPackageJson');
-                const output = funcToTest(originalPackageJson);
-                output.should.deep.equal(expectedPackageJson);
-            });
-        });
-        describe('getNewStartScript(originalStartScript)', () => {
-            const tests = [
-                {
-                    input: 'node server.js',
-                    expectedOutput: 'node -r appmetrics-codewind/attach server.js',
-                },
-                {
-                    input: 'nodemon server.js',
-                    expectedOutput: 'nodemon -r appmetrics-codewind/attach server.js',
-                },
-                {
-                    input: 'node -r appmetrics-codewind/attach server.js',
-                    expectedOutput: 'node -r appmetrics-codewind/attach server.js',
-                },
-            ];
-            for (const test of tests) {
-                describe(test.input, () => { // eslint-disable-line no-loop-func
-                    it(`returns ${test.expectedOutput}`, () => {
-                        const funcToTest = metricsService.__get__('getNewStartScript');
-                        const output = funcToTest(test.input);
-                        output.should.deep.equal(test.expectedOutput);
-                    });
-                });
-            }
         });
     });
 
@@ -715,6 +632,92 @@ describe('metricsService.js', () => {
             });
         });
 
+    });
+});
+
+describe('metricsService/node.js', () => {
+    suppressLogOutput(nodeMetricsService);
+
+    describe('removeMetricsCollectorFromNodeProject(projectDir)', () => {
+        before(() => {
+            fs.outputJSONSync(pathToPackageJson, expectedPackageJson);
+            fs.outputJSONSync(pathToBackupPackageJson, originalPackageJson);
+        });
+        after(() => {
+            fs.removeSync(projectDir);
+        });
+        it(`removes metrics collector from the project's package.json`, async() => {
+            const funcToTest = nodeMetricsService.removeMetricsCollectorFromNodeProject;
+            await funcToTest(projectDir);
+
+            fs.readJSONSync(pathToPackageJson).should.deep.equal(originalPackageJson);
+            fs.existsSync(pathToBackupPackageJson).should.be.false;
+        });
+    });
+    describe('injectMetricsCollectorIntoNodeProject(projectDir)', () => {
+        describe('package.json does not have metrics injection code', () => {
+            before(() => {
+                fs.outputJSONSync(pathToPackageJson, originalPackageJson);
+            });
+            after(() => {
+                fs.removeSync(projectDir);
+            });
+            it(`injects metrics collector into the project's package.json, and saves a back up`, async() => {
+                const funcToTest = nodeMetricsService.injectMetricsCollectorIntoNodeProject;
+                await funcToTest(projectDir);
+
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(expectedPackageJson);
+                fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(originalPackageJson);
+            });
+        });
+        describe('package.json already has metrics injection code', () => {
+            before(() => {
+                fs.outputJSONSync(pathToPackageJson, expectedPackageJson);
+            });
+            after(() => {
+                fs.removeSync(projectDir);
+            });
+            it(`does not change the project's package.json, but saves a back up`, async() => {
+                const funcToTest = nodeMetricsService.__get__('injectMetricsCollectorIntoNodeProject');
+                await funcToTest(projectDir);
+
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(expectedPackageJson);
+                fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(expectedPackageJson);
+            });
+        });
+    });
+
+    describe('getNewContentsOfPackageJson(originalContents)', () => {
+        it(`returns an object representing a package.json injected with metrics collector`, () => {
+            const funcToTest = nodeMetricsService.__get__('getNewContentsOfPackageJson');
+            const output = funcToTest(originalPackageJson);
+            output.should.deep.equal(expectedPackageJson);
+        });
+    });
+    describe('getNewStartScript(originalStartScript)', () => {
+        const tests = [
+            {
+                input: 'node server.js',
+                expectedOutput: 'node -r appmetrics-codewind/attach server.js',
+            },
+            {
+                input: 'nodemon server.js',
+                expectedOutput: 'nodemon -r appmetrics-codewind/attach server.js',
+            },
+            {
+                input: 'node -r appmetrics-codewind/attach server.js',
+                expectedOutput: 'node -r appmetrics-codewind/attach server.js',
+            },
+        ];
+        for (const test of tests) {
+            describe(test.input, () => { // eslint-disable-line no-loop-func
+                it(`returns ${test.expectedOutput}`, () => {
+                    const funcToTest = nodeMetricsService.__get__('getNewStartScript');
+                    const output = funcToTest(test.input);
+                    output.should.deep.equal(test.expectedOutput);
+                });
+            });
+        }
     });
 });
 

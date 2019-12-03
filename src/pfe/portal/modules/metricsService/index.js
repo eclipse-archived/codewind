@@ -17,18 +17,19 @@ const dir = require('node-dir');
 const promiseAny = require('promise.any');
 
 const Logger = require('../utils/Logger');
+const nodeMetricsService = require('./node');
 
 const log = new Logger(__filename);
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const metricsCollectorInjectionFunctions = {
-  nodejs: injectMetricsCollectorIntoNodeProject,
+  nodejs: nodeMetricsService.injectMetricsCollectorIntoNodeProject,
   liberty: injectMetricsCollectorIntoLibertyProject,
   spring: injectMetricsCollectorIntoSpringProject,
 }
 
 const metricsCollectorRemovalFunctions = {
-  nodejs: removeMetricsCollectorFromNodeProject,
+  nodejs: nodeMetricsService.removeMetricsCollectorFromNodeProject,
   liberty: removeMetricsCollectorFromLibertyProject,
   spring: removeMetricsCollectorFromSpringProject,
 }
@@ -47,34 +48,6 @@ async function removeMetricsCollectorFromProject(projectType, projectDir) {
   }
   await metricsCollectorRemovalFunctions[projectType](projectDir);
   log.debug(`Successfully removed metrics collector from ${projectType} project`);
-}
-
-const getPathToPackageJson = (projectDir) => path.join(projectDir, 'package.json');
-const getPathToBackupPackageJson = (projectDir) => path.join(projectDir, 'backupPackage.json');
-
-async function injectMetricsCollectorIntoNodeProject(projectDir) {
-  const pathToPackageJson = getPathToPackageJson(projectDir);
-  const originalContentsOfPackageJson = await fs.readJSON(pathToPackageJson);
-
-  const pathToBackupPackageJson = getPathToBackupPackageJson(projectDir);
-  await fs.writeJSON(pathToBackupPackageJson, originalContentsOfPackageJson, { spaces: 2 });
-
-  const newContentsOfPackageJson = getNewContentsOfPackageJson(originalContentsOfPackageJson);
-  // TODO: change all debug -> trace
-  log.debug(`Injecting metrics collector into project's package.json, which is now ${util.inspect(newContentsOfPackageJson)}`);
-
-  await fs.writeJSON(pathToPackageJson, newContentsOfPackageJson, { spaces: 2 });
-}
-
-async function removeMetricsCollectorFromNodeProject(projectDir) {
-  const pathToBackupPackageJson = getPathToBackupPackageJson(projectDir);
-  const backupPackageJson = await fs.readJSON(pathToBackupPackageJson);
-
-  const pathToPackageJson = getPathToPackageJson(projectDir);
-  await fs.writeJSON(pathToPackageJson, backupPackageJson, { spaces: 2 });
-  log.debug(`Restored project's package.json to ${util.inspect(backupPackageJson)}`);
-
-  await fs.remove(pathToBackupPackageJson);
 }
 
 const getPathToPomXml = (projectDir) => path.join(projectDir, 'pom.xml');
@@ -122,31 +95,6 @@ async function removeMetricsCollectorFromMainAppClassFile(projectDir) {
   await fs.writeFile(pathToMainAppClassFile, backupClassFile);
   log.debug(`Restored project's main app class file to ${util.inspect(backupClassFile)}`);
   await fs.remove(pathToBackupClassFile);
-}
-
-function getNewContentsOfPackageJson(originalContentsOfPackageJson) {
-  const newContentsOfPackageJson = deepClone(originalContentsOfPackageJson);
-
-  newContentsOfPackageJson.scripts.start = getNewStartScript(originalContentsOfPackageJson.scripts.start);
-  newContentsOfPackageJson.dependencies['appmetrics-codewind'] = '^0.1.0';
-  return newContentsOfPackageJson;
-}
-
-function getNewStartScript(originalStartScript) {
-  const metricsCollectorScript = '-r appmetrics-codewind/attach';
-
-  if (originalStartScript.includes(metricsCollectorScript)) {
-    return originalStartScript;
-  }
-
-  const splitOriginalStartScript = originalStartScript.split(' ');
-  const indexOfNodeCmd = splitOriginalStartScript.findIndex(word => ['node', 'nodemon'].includes(word));
-
-  let newStartScript = deepClone(splitOriginalStartScript);
-  newStartScript.splice(indexOfNodeCmd + 1, 0, metricsCollectorScript);
-  newStartScript = newStartScript.join(' ');
-
-  return newStartScript;
 }
 
 async function backUpFile(pathToOriginal, pathToBackup) {
