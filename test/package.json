@@ -40,15 +40,16 @@
     "mocha-logger": "^1.0.6",
     "mocha-multi-reporters": "^1.1.7",
     "mocha-sinon": "^2.1.0",
+    "nyc": "^14.1.1",
+    "rewire": "^4.0.1",
     "simple-git": "^1.110.0",
     "sinon": "^7.3.2",
+    "sinon-express-mock": "^2.2.1",
     "socket.io-client": "^2.0.4",
     "uuid": "^3.3.2",
     "xml2js": "^0.4.22",
     "yamljs": "^0.3.0",
-    "zlib": "^1.0.5",
-    "nyc": "^14.1.1",
-    "rewire": "^4.0.1"
+    "zlib": "^1.0.5"
   },
   "devDependencies": {
     "eslint": "^5.9.0",
