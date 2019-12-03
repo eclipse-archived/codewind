@@ -8,9 +8,9 @@
 # Contributors:
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
-#FROM centos:7
+#FROM centos:8
 
-FROM centos@sha256:b5e66c4651870a1ad435cd75922fe2cb943c9e973a9673822d1414824a1d0475 as codewind-pfe-base
+FROM centos@sha256:f94c1d992c193b3dc09e297ffd54d8a4f1dc946c37cbeceb26d35ce1647f88d9 as codewind-pfe-base
 LABEL org.label-schema.name="Codewind PFE" org.label-schema.description="Codewind PFE" \
       org.label-schema.url="https://codewind.dev/" \
       org.label-schema.vcs-url="https://github.com/eclipse/codewind" org.label-schema.vendor="IBM"
