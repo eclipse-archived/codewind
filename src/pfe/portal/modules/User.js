@@ -639,11 +639,11 @@ module.exports = class User {
   /**
    * Function to write workspace settings
    */
-  async writeWorkspaceSettings(workspaceSettings) {
+  async writeWorkspaceSettings(address, namespace) {
     let retval;
     try {
       log.info(`Writing workspace settings file.`);
-      retval = await this.fw.writeWorkspaceSettings(workspaceSettings);
+      retval = await this.fw.writeWorkspaceSettings(address, namespace);
     } catch (err) {
       log.error(`Error in writeWorkspaceSettings`);
       throw err;
@@ -684,9 +684,6 @@ module.exports = class User {
       if (address === "docker.io" && !global.codewind.RUNNING_IN_K8S) {
         // eslint-disable-next-line no-param-reassign
         address = "https://index.docker.io/v1/";
-      } else if (!address.startsWith("https://") && !address.startsWith("http://")) {
-        // eslint-disable-next-line no-param-reassign
-        address = "https://" + address ;
       }
       const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
       const encodedAuth = Buffer.from(username + ":" + password).toString("base64");
@@ -874,9 +871,6 @@ module.exports = class User {
       if (address === "docker.io" && !global.codewind.RUNNING_IN_K8S) {
         // eslint-disable-next-line no-param-reassign
         address = "https://index.docker.io/v1/";
-      } else if (!address.startsWith("https://") && !address.startsWith("http://")) {
-        // eslint-disable-next-line no-param-reassign
-        address = "https://" + address;
       }
       const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
       if (isDockerConfigFilePresent) {

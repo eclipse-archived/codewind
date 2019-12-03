@@ -97,7 +97,11 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
    return { "statusCode": 200 };
 }
 
-export async function writeWorkspaceSettings(newWorkspaceSettings: any): Promise<IWorkspaceSettingsSuccess | IWorkspaceSettingsFailure> {
+export async function writeWorkspaceSettings(address: string, namespace: string): Promise<IWorkspaceSettingsSuccess | IWorkspaceSettingsFailure> {
+    const newWorkspaceSettings: any = {
+        registryAddress: address,
+        registryNamespace: namespace
+    };
     logger.logInfo("Writing new workspace settings: " + JSON.stringify(newWorkspaceSettings));
     const workspaceSettingsFile = constants.workspaceConstants.workspaceSettingsFile;
     const workspaceSettingsInfo = await getWorkspaceSettingsInfo();

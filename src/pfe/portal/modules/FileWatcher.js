@@ -586,10 +586,10 @@ module.exports = class FileWatcher {
     }
   }
 
-  async writeWorkspaceSettings(workspaceSettings) {
+  async writeWorkspaceSettings(address, namespace) {
     let retval;
     try{
-      retval = await filewatcher.writeWorkspaceSettings(workspaceSettings);
+      retval = await filewatcher.writeWorkspaceSettings(address, namespace);
       this.logFWReturnedMsg(retval);
     } catch (err) {
       log.error(`Error in writeWorkspaceSettings`);

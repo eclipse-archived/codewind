@@ -284,7 +284,7 @@ export default class Filewatcher {
      *  @property 500: Error when attempting to write the workspace settings file
      *
      */
-    writeWorkspaceSettings: (newWorkspaceSettings: any) => Promise<any>;
+    writeWorkspaceSettings: (address: string, namespace: string) => Promise<any>;
 
 
     /**
