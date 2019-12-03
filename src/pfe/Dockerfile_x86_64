@@ -8,23 +8,27 @@
 # Contributors:
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
-#FROM centos:8
+FROM centos as codewind-pfe-base
 
-FROM centos@sha256:0f3e07c0138fbe05abcb7a9cc7d63d9bd4c980c3f61fea5efa32e7c4217ef4da as codewind-pfe-base
+#FROM centos@sha256:0f3e07c0138fbe05abcb7a9cc7d63d9bd4c980c3f61fea5efa32e7c4217ef4da as codewind-pfe-base
 LABEL org.label-schema.name="Codewind PFE" org.label-schema.description="Codewind PFE" \
       org.label-schema.url="https://codewind.dev/" \
       org.label-schema.vcs-url="https://github.com/eclipse/codewind" org.label-schema.vendor="IBM"
 
-ARG BUILDAH_RPM=https://cbs.centos.org/kojifiles/packages/buildah/1.11.2/2.git0bafbfe.el7/x86_64/buildah-1.11.2-2.git0bafbfe.el7.x86_64.rpm
+ARG BUILDAH_RPM=https://cbs.centos.org/kojifiles/packages/buildah/1.11.4/4.el7/x86_64/buildah-1.11.4-4.el7.x86_64.rpm
+ARG SLIRP=https://cbs.centos.org/kojifiles/packages/slirp4netns/0.3.0/2.git4992082.el7/x86_64/slirp4netns-0.3.0-2.git4992082.el7.x86_64.rpm
+ARG LIBSEC=https://cbs.centos.org/kojifiles/packages/libseccomp/2.4.1/0.el7/x86_64/libseccomp-2.4.1-0.el7.x86_64.rpm
 
 # Download the buildah RPM
 RUN curl -f -o buildah.rpm $BUILDAH_RPM
+RUN curl -f -o slirp4netns.rpm $SLIRP
+RUN curl -f -o libseccomp.rpm $LIBSEC
 
 # Download and set up Node 10.x RPM
 RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 
 RUN yum install -y epel-release \
-    && yum -y --enablerepo=epel install zip unzip sudo ca-certificates openssl nodejs buildah.rpm \
+    && yum -y --enablerepo=epel install zip unzip sudo ca-certificates openssl nodejs slirp4netns.rpm libseccomp.rpm buildah.rpm \
     && yum clean all \
     && rm -rf /var/cache/yum
 
