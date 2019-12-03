@@ -300,7 +300,7 @@ function dockerRun() {
 		--expose 8080 -p 127.0.0.1::$DEBUG_PORT -P -dt $project
 	if [ $? -eq 0 ]; then
 		echo -e "Copying over source files"
-		docker cp "$WORKSPACE/$projectName" $project:/root/app
+		docker cp "$WORKSPACE/$projectName"/. $project:/root/app
 	fi
 
 }
