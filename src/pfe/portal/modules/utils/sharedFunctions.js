@@ -20,7 +20,7 @@ const exec = promisify(require('child_process').exec);
 
 // This if statement allows us to only include one utils function, exporting either
 //      the Docker of K8s one depending on which environment we're in
-module.exports = require((global.codewind.RUNNING_IN_K8S ? './kubernetesFunctions' : './dockerFunctions'));
+module.exports = require((global.codewind && global.codewind.RUNNING_IN_K8S ? './kubernetesFunctions' : './dockerFunctions'));
 
 // variable to do a async timeout
 module.exports.timeout = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -134,7 +134,7 @@ module.exports.convertFromWindowsDriveLetter = function convertFromWindowsDriveL
 /**
  * Force remove a path, regardless of whether it exists, or it's file or directory that may or may not be empty.
  * Better than fs-extra fs.remove as it won't recurse down each directory tree and take over the event loop
- * 
+ *
  * @param {string} path, path to remove
  */
 module.exports.forceRemove = async function forceRemove(path) {
