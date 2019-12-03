@@ -122,19 +122,33 @@ async function injectMetricsCollectorIntoApplicationJava(pathToApplicationJava) 
 
 function getNewContentsOfApplicationJava(originalContents) {
   const splitOriginalContents = originalContents.split('\n');
+  const componentScanPresent = splitOriginalContents.findIndex(line => {
+    return (line.indexOf('@ComponentScan(basePackages = {') != -1)
+  });
+  const metricsCollectorPresent = splitOriginalContents.some(line => {
+    return (line.indexOf('@ComponentScan(basePackages = {') != -1) && (line.indexOf('com.ibm.javametrics.codewind.spring') != -1)
+  });
 
-  const packageString = splitOriginalContents.find(line => line.includes('package'));
-  const packageName = packageString // 'package NAME'
-    .split(' ')[1] // 'NAME;'
-    .slice(0, -1); // 'NAME'
+  if (metricsCollectorPresent) {
+    return originalContents;
+  }
 
-  const indexOfSpringBootApplication = splitOriginalContents.findIndex(line => line === springAppAnnotation);
-  const metricsCollectorAnnotation = `@ComponentScan(basePackages = {"${packageName}", "com.ibm.javametrics.spring"})`;
-
+  // metrics collector not present, so...
   let newApplicationJava = deepClone(splitOriginalContents);
-  newApplicationJava.splice(indexOfSpringBootApplication + 1, 0, metricsCollectorAnnotation);
+  if (componentScanPresent != -1) {
+    // alter what's already in there
+    newApplicationJava[componentScanPresent] = newApplicationJava[componentScanPresent].replace('{', '{"com.ibm.javametrics.codewind.spring", ');
+  } else {
+    // construct a new ComponentScan line
+    const packageString = splitOriginalContents.find(line => line.includes('package'));
+    const packageName = packageString // 'package NAME;'
+      .split(' ')[1] // 'NAME;'
+      .slice(0, -1); // 'NAME'
+    const metricsCollectorAnnotation = `@ComponentScan(basePackages = {"com.ibm.javametrics.codewind.spring", "${packageName}"})`;
+    const indexOfSpringBootApplication = splitOriginalContents.findIndex(line => line === springAppAnnotation);
+    newApplicationJava.splice(indexOfSpringBootApplication + 1, 0, metricsCollectorAnnotation);
+  }
   newApplicationJava = newApplicationJava.join('\n');
-
   return newApplicationJava;
 }
 
@@ -157,31 +171,53 @@ function getNewContentsOfPomXmlForSpring(originalContents) {
 }
 
 function getNewPomXmlDependenciesForSpring(originalDependencies) {
-  const metricsCollectorDependencyAlreadyExists = originalDependencies.some(dependency =>
-    dependency.artifactId[0] === 'javametrics-spring'
-  );
-  if (metricsCollectorDependencyAlreadyExists) {
-    return originalDependencies;
+  let codewindDepNeeded, agentDepNeeded, jsonDepNeeded;
+  codewindDepNeeded = agentDepNeeded = jsonDepNeeded = true;
+  originalDependencies.forEach(dependency => {
+    switch(dependency.artifactId[0]) {
+    case 'javametrics-codewind-spring':
+      codewindDepNeeded = false;
+      break;
+    case 'javametrics-agent':
+      agentDepNeeded = false;
+      break;
+    case 'javax.json':
+      jsonDepNeeded = false;
+      break;
+    default:
+      break;
+    }
+  });
+  let newDependencies = [];
+  if (codewindDepNeeded) {
+    newDependencies.push(
+      {
+        groupId: [ 'com.ibm.runtimetools' ],
+        artifactId: [ 'javametrics-codewind-spring' ],
+        version: [ '[1.1,2.0)' ],
+      }
+    );
   }
-  const metricsCollectorDependencies = [
-    {
-      groupId: [ 'com.ibm.runtimetools' ],
-      artifactId: [ 'javametrics-spring' ],
-      version: [ '[1.1,2.0)' ],
-    },
-    {
-      groupId: [ 'com.ibm.runtimetools' ],
-      artifactId: [ 'javametrics-agent' ],
-      version: [ '[1.1,2.0)' ],
-    },
-    {
-      groupId: [ 'org.glassfish' ],
-      artifactId: [ 'javax.json' ],
-      version: [ '1.0.4' ],
-    },
-  ];
-  const newDependencies = originalDependencies.concat(metricsCollectorDependencies);
-  return newDependencies;
+  if (agentDepNeeded) {
+    newDependencies.push(
+      {
+        groupId: [ 'com.ibm.runtimetools' ],
+        artifactId: [ 'javametrics-agent' ],
+        version: [ '[1.1,2.0)' ],
+      }
+    );
+  }
+  if (jsonDepNeeded) {
+    newDependencies.push(
+      {
+        groupId: [ 'org.glassfish' ],
+        artifactId: [ 'javax.json' ],
+        version: [ '1.0.4' ],
+      }
+    );
+  }
+  const mergedDependencies = originalDependencies.concat(newDependencies);
+  return mergedDependencies;
 }
 
 async function injectMetricsCollectorIntoPomXml(pathToPomXml) {
@@ -214,129 +250,210 @@ function getNewContentsOfPomXml(originalContents) {
 }
 
 function getNewContentsOfJvmOptions(originalContents) {
-  const newJvmOptions = `${originalContents}\n-javaagent:resources/javametrics-agent.jar`;
+  const injectionString = '-javaagent:resources/javametrics-agent.jar'
+  if (originalContents.includes(injectionString)) {
+    return originalContents;
+  } 
+  const newJvmOptions = `${originalContents}\n${injectionString}`;
   return newJvmOptions;
 }
 
 function getNewPomXmlDependencies(originalDependencies) {
-  const metricsCollectorDependencyAlreadyExists = originalDependencies.some(dependency =>
-    dependency.artifactId[0] === 'javametrics-codewind'
-  );
-  if (metricsCollectorDependencyAlreadyExists) {
-    return originalDependencies;
+  let codewindDepNeeded, agentDepNeeded, restDepNeeded, jsonDepNeeded;
+  codewindDepNeeded = agentDepNeeded = restDepNeeded = jsonDepNeeded = true;
+  originalDependencies.forEach(dependency => {
+    switch(dependency.artifactId[0]) {
+    case 'javametrics-codewind':
+      codewindDepNeeded = false;
+      break;
+    case 'javametrics-agent':
+      agentDepNeeded = false;
+      break;
+    case 'javametrics-rest':
+      restDepNeeded = false;
+      break;
+    case 'javax.json':
+      jsonDepNeeded = false;
+      break;
+    default:
+      break;
+    }
+  });
+  let newDependencies = [];
+  if (codewindDepNeeded) {
+    newDependencies.push(
+      {
+        groupId: [ 'com.ibm.runtimetools' ],
+        artifactId: [ 'javametrics-codewind' ],
+        version: [ '[1.2,2.0)' ],
+        scope: [ 'provided' ],
+        type: [ 'war' ],
+      }
+    );
   }
-  const metricsCollectorDependencies = [
-    {
-      groupId: [ 'org.glassfish' ],
-      artifactId: [ 'javax.json' ],
-      version: [ '1.0.4' ],
-      scope: [ 'test' ],
-    },
-    {
-      groupId: [ 'com.ibm.runtimetools' ],
-      artifactId: [ 'javametrics-agent' ],
-      version: [ '[1.2,2.0)' ],
-      scope: [ 'provided' ],
-    },
-    {
-      groupId: [ 'com.ibm.runtimetools' ],
-      artifactId: [ 'javametrics-codewind' ],
-      version: [ '[1.2,2.0)' ],
-      scope: [ 'provided' ],
-      type: [ 'war' ],
-    },
-    {
-      groupId: [ 'com.ibm.runtimetools' ],
-      artifactId: [ 'javametrics-rest' ],
-      version: [ '[1.2,2.0)' ],
-      scope: [ 'provided' ],
-      type: [ 'war' ],
-    },
-  ];
-  const newDependencies = originalDependencies.concat(metricsCollectorDependencies);
-  return newDependencies;
+  if (agentDepNeeded) {
+    newDependencies.push(
+      {
+        groupId: [ 'com.ibm.runtimetools' ],
+        artifactId: [ 'javametrics-agent' ],
+        version: [ '[1.2,2.0)' ],
+        scope: [ 'provided' ],
+      }
+    );
+  }
+  if (restDepNeeded) {
+    newDependencies.push(
+      {
+        groupId: [ 'com.ibm.runtimetools' ],
+        artifactId: [ 'javametrics-rest' ],
+        version: [ '[1.2,2.0)' ],
+        scope: [ 'provided' ],
+        type: [ 'war' ],
+      }
+    );
+  }
+  if (jsonDepNeeded) {
+    newDependencies.push(
+      {
+        groupId: [ 'org.glassfish' ],
+        artifactId: [ 'javax.json' ],
+        version: [ '1.0.4' ],
+        scope: [ 'test' ],
+      }
+    );
+  }
+  const mergedDependencies = originalDependencies.concat(newDependencies);
+  return mergedDependencies;
 }
 
 function getNewPomXmlBuildPlugins(originalBuildPlugins) {
-  const metricsCollectorBuildPluginAlreadyExists = originalBuildPlugins.some(plugin =>
-    plugin.artifactId[0] === 'maven-dependency-plugin'
-    && plugin.executions
-    && plugin.executions[0].execution.some(execution =>
-      execution.id[0] === 'copy-javametrics-codewind'
-    )
-  );
-  if (metricsCollectorBuildPluginAlreadyExists) {
-    return originalBuildPlugins;
+  let codewindExeNeeded, agentExeNeeded, restExeNeeded, asmExeNeeded, mavenDepPluginNeeded;
+  codewindExeNeeded = agentExeNeeded = restExeNeeded = asmExeNeeded = mavenDepPluginNeeded = true;
+  const mavenDepPluginIndex = originalBuildPlugins.findIndex(plugin => {
+    return (plugin.artifactId[0] === 'maven-dependency-plugin');
+  });
+  if (mavenDepPluginIndex != -1) {
+    mavenDepPluginNeeded = false;
+    let mavenDepPlugin = originalBuildPlugins[mavenDepPluginIndex];
+    if (mavenDepPlugin.executions) {
+      mavenDepPlugin.executions[0].execution.forEach(execution => {
+        switch(execution.id[0]) {
+        case 'copy-javametrics-codewind':
+          codewindExeNeeded = false;
+          break;
+        case 'copy-javametrics-rest':
+          restExeNeeded = false;
+          break;
+        case 'copy-javametrics-agent':
+          agentExeNeeded = false;
+          break;
+        case 'copy-javametrics-asm':
+          asmExeNeeded = false;
+          break;
+        default:
+          break;
+        }
+      });
+    }
   }
-  const metricsCollectorBuildPlugin = {
-    groupId: [ 'org.apache.maven.plugins' ],
-    artifactId: [ 'maven-dependency-plugin' ],
-    version: [ '3.0.1' ],
-    executions: [
+  let newExecutionArray = [];
+  if (codewindExeNeeded) {
+    newExecutionArray.push(
       {
-        execution: [
+        id: [ 'copy-javametrics-codewind' ],
+        phase: [ 'package' ],
+        goals: [ { goal: [ 'copy-dependencies' ] } ],
+        configuration: [
           {
-            id: [ 'copy-javametrics-codewind' ],
-            phase: [ 'package' ],
-            goals: [ { goal: [ 'copy-dependencies' ] } ],
-            configuration: [
-              {
-                stripVersion: [ 'true' ],
-                outputDirectory: [
-                  '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins'
-                ],
-                includeArtifactIds: [ 'javametrics-codewind' ]
-              }
-            ]
-          },
-          {
-            id: [ 'copy-javametrics-rest' ],
-            phase: [ 'package' ],
-            goals: [ { goal: [ 'copy-dependencies' ] } ],
-            configuration: [
-              {
-                stripVersion: [ 'true' ],
-                outputDirectory: [
-                  '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins'
-                ],
-                includeArtifactIds: [ 'javametrics-rest' ]
-              }
-            ]
-          },
-          {
-            id: [ 'copy-javametrics-agent' ],
-            phase: [ 'package' ],
-            goals: [ { goal: [ 'copy-dependencies' ] } ],
-            configuration: [
-              {
-                stripVersion: [ 'true' ],
-                outputDirectory: [
-                  '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/'
-                ],
-                includeArtifactIds: [ 'javametrics-agent' ]
-              }
-            ]
-          },
-          {
-            id: [ 'copy-javametrics-asm' ],
-            phase: [ 'package' ],
-            goals: [ { goal: [ 'copy-dependencies' ] } ],
-            configuration: [
-              {
-                outputDirectory: [
-                  '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/asm'
-                ],
-                includeGroupIds: [ 'org.ow2.asm' ],
-                includeArtifactIds: [ 'asm,asm-commons' ]
-              }
-            ]
+            stripVersion: [ 'true' ],
+            outputDirectory: [
+              '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins'
+            ],
+            includeArtifactIds: [ 'javametrics-codewind' ]
           }
         ]
       }
-    ]
-  };
-  const newBuildPluginExecutions = originalBuildPlugins.concat(metricsCollectorBuildPlugin);
-  return newBuildPluginExecutions;
+    );
+  }
+  if (restExeNeeded) {
+    newExecutionArray.push(
+      {
+        id: [ 'copy-javametrics-rest' ],
+        phase: [ 'package' ],
+        goals: [ { goal: [ 'copy-dependencies' ] } ],
+        configuration: [
+          {
+            stripVersion: [ 'true' ],
+            outputDirectory: [
+              '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins'
+            ],
+            includeArtifactIds: [ 'javametrics-rest' ]
+          }
+        ]
+      }
+    );
+  }
+  if (agentExeNeeded) {
+    newExecutionArray.push(
+      {
+        id: [ 'copy-javametrics-agent' ],
+        phase: [ 'package' ],
+        goals: [ { goal: [ 'copy-dependencies' ] } ],
+        configuration: [
+          {
+            stripVersion: [ 'true' ],
+            outputDirectory: [
+              '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/'
+            ],
+            includeArtifactIds: [ 'javametrics-agent' ]
+          }
+        ]
+      }
+    );
+  }
+  if (asmExeNeeded) {
+    newExecutionArray.push(
+      {
+        id: [ 'copy-javametrics-asm' ],
+        phase: [ 'package' ],
+        goals: [ { goal: [ 'copy-dependencies' ] } ],
+        configuration: [
+          {
+            outputDirectory: [
+              '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/asm'
+            ],
+            includeGroupIds: [ 'org.ow2.asm' ],
+            includeArtifactIds: [ 'asm,asm-commons' ]
+          }
+        ]
+      }
+    );
+  }
+  if (mavenDepPluginNeeded) {
+    const metricsCollectorBuildPlugin = {
+      groupId: [ 'org.apache.maven.plugins' ],
+      artifactId: [ 'maven-dependency-plugin' ],
+      version: [ '3.0.1' ],
+      executions: [
+        {
+          execution: newExecutionArray,
+        }
+      ]
+    };
+    const newBuildPlugins = originalBuildPlugins.concat(metricsCollectorBuildPlugin);
+    return newBuildPlugins;
+  }
+  
+  
+  let metricsCollectorBuildPlugin = originalBuildPlugins[mavenDepPluginIndex];
+  if (metricsCollectorBuildPlugin.executions) {
+    metricsCollectorBuildPlugin.executions[0].execution = metricsCollectorBuildPlugin.executions[0].execution.concat(newExecutionArray);
+  } else {
+    metricsCollectorBuildPlugin.executions = [ { execution: newExecutionArray } ];
+  }
+  let newBuildPlugins = originalBuildPlugins;
+  newBuildPlugins.splice(mavenDepPluginIndex, 1, metricsCollectorBuildPlugin);
+  return newBuildPlugins;
 }
 
 module.exports = {

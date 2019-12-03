@@ -24,7 +24,7 @@ chai.should();
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
-describe('MetricsService.js', () => {
+describe.only('MetricsService.js', () => {
     const projectDir = path.join('.', 'src', 'unit', 'modules');
 
     // nodejs
@@ -102,7 +102,7 @@ describe('MetricsService.js', () => {
         expectedPomXmlForSpring = await readXml(pathToExpectedPomXmlForSpring);
 
         // To debug these parsed PomXmls
-        // const util = require('util');
+        //const util = require('util');
         // console.log('expectedPomXmlForLiberty');
         // console.log(util.inspect(expectedPomXmlForLiberty, { showHidden: false, depth: null }));
     });
@@ -300,6 +300,15 @@ describe('MetricsService.js', () => {
             });
         });
 
+        describe('getNewContentsOfJvmOptions(existingContents)', () => {
+            it('returns a string representing the contents of jvm.options after injection - no change', () => {
+                const originalJvmOptions = '-Xmx1024M\n-javaagent:resources/javametrics-agent.jar';
+                const funcToTest = metricsService.__get__('getNewContentsOfJvmOptions');
+                const output = funcToTest(originalJvmOptions);
+                output.should.equal(originalJvmOptions);
+            });
+        });
+
         describe('getNewContentsOfPomXml(originalContents)', () => {
             it('returns an object representing a pom.xml injected with metrics collector', () => {
                 const funcToTest = metricsService.__get__('getNewContentsOfPomXml');
@@ -446,7 +455,7 @@ describe('MetricsService.js', () => {
                 });
             });
             describe(`<originalBuildPlugins> include a plugin with the same name as ours but without build executions`, () => {
-                it(`returns an object representing pom.xml build plugins including the metrics collector plugin`, () => {
+                it(`returns an object representing pom.xml build plugins including the metrics collector plugin execution`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
                     const originalBuildPlugins = [{
                         groupId: [ 'org.apache.maven.plugins' ],
@@ -456,13 +465,45 @@ describe('MetricsService.js', () => {
                     }];
                     const output = funcToTest(originalBuildPlugins);
                     output.should.have.deep.members([
-                        ...originalBuildPlugins,
                         metricsCollectorBuildPlugin,
                     ]);
                 });
             });
             describe(`<originalBuildPlugins> include a plugin with the same name as ours but without the correct build executions`, () => {
-                it(`returns an object representing pom.xml build plugins including the metrics collector plugin`, () => {
+                it(`returns an object representing pom.xml build plugins including the metrics collector plugin execution`, () => {
+                    const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
+                    const randomExecution = [
+                                {
+                                    id: [ 'copy-something-random' ],
+                                    phase: [ 'package' ],
+                                    goals: [ { goal: [ 'copy-dependencies' ] } ],
+                                    configuration: [
+                                        {
+                                            stripVersion: [ 'true' ],
+                                            outputDirectory: [
+                                                '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins',
+                                            ],
+                                            includeArtifactIds: [ 'some-random-plugin' ],
+                                        },
+                                    ],
+                                },
+                            ];
+                    const originalBuildPlugins = [{
+                        groupId: [ 'org.apache.maven.plugins' ],
+                        artifactId: [ 'maven-dependency-plugin' ],
+                        version: [ '3.0.1' ],
+                        executions: [ { execution: randomExecution } ],
+                    }];
+                    const output = funcToTest(originalBuildPlugins);
+                    let outputPluginWithMetrics = deepClone(metricsCollectorBuildPlugin);
+                    outputPluginWithMetrics.executions[0].execution = randomExecution.concat(metricsCollectorBuildPlugin.executions[0].execution);
+                    output.should.have.deep.members([
+                        outputPluginWithMetrics,
+                    ]);
+                });
+            });
+            describe(`<originalBuildPlugins> include a plugin with the same name as ours but with an extra execution`, () => {
+                it(`returns an object representing pom.xml build plugins including the metrics collector plugin execution and the original execution`, () => {
                     const funcToTest = metricsService.__get__('getNewPomXmlBuildPlugins');
                     const originalBuildPlugins = [{
                         groupId: [ 'org.apache.maven.plugins' ],
@@ -471,8 +512,8 @@ describe('MetricsService.js', () => {
                         executions: [{ execution: [] }],
                     }];
                     const output = funcToTest(originalBuildPlugins);
+
                     output.should.have.deep.members([
-                        ...originalBuildPlugins,
                         metricsCollectorBuildPlugin,
                     ]);
                 });
@@ -536,7 +577,25 @@ describe('MetricsService.js', () => {
                         output.should.deep.equalInAnyOrder(test.expectedApplicationJava);
                     });
                 });
+                describe(testName, () => { // eslint-disable-line no-loop-func
+                    it('returns the object representing an Application.java injected with metrics collector with no changes', () => {
+                        const funcToTest = metricsService.__get__('getNewContentsOfApplicationJava');
+                        const output = funcToTest(test.expectedApplicationJava);
+                        output.should.deep.equalInAnyOrder(test.expectedApplicationJava);
+                    });
+                });
             }
+            const test3 = {
+                originalApplicationJava: fs.readFileSync(path.join(pathToApplicationJavas, 'package3', 'without collector.java'), 'utf8'),
+                expectedApplicationJava: fs.readFileSync(path.join(pathToApplicationJavas, 'package3', 'with collector.java'), 'utf8'),
+            };
+            describe('package application3', () => {
+                it('returns an object representing an Application.java where the ComponentScan line has been augmented with metrics collector', () => {
+                    const funcToTest = metricsService.__get__('getNewContentsOfApplicationJava');
+                    const output = funcToTest(test3.originalApplicationJava);
+                    output.should.deep.equalInAnyOrder(test3.expectedApplicationJava);
+                });
+            });
         });
 
         describe('getNewContentsOfPomXmlForSpring(originalContents)', () => {
@@ -551,7 +610,7 @@ describe('MetricsService.js', () => {
             const metricsCollectorDependencies = [
                 {
                     groupId: [ 'com.ibm.runtimetools' ],
-                    artifactId: [ 'javametrics-spring' ],
+                    artifactId: [ 'javametrics-codewind-spring' ],
                     version: [ '[1.1,2.0)' ],
                 },
                 {
