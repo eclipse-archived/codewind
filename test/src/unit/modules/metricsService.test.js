@@ -18,7 +18,7 @@ const xml2js = require('xml2js');
 
 const { suppressLogOutput } = require('../../../modules/log.service');
 
-const metricsService = rewire('../../../../src/pfe/portal/modules/MetricsService');
+const metricsService = rewire('../../../../src/pfe/portal/modules/metricsService');
 
 chai.use(chaiAsPromised);
 chai.use(deepEqualInAnyOrder);
@@ -26,7 +26,7 @@ chai.should();
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
-describe('MetricsService.js', () => {
+describe('metricsService.js', () => {
     suppressLogOutput(metricsService);
 
     const projectDir = path.join('.', 'src', 'unit', 'modules', 'test');

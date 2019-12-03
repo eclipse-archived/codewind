@@ -16,9 +16,9 @@ const xml2js = require('xml2js');
 const dir = require('node-dir');
 const promiseAny = require('promise.any');
 
-const Logger = require('./utils/Logger');
+const Logger = require('../utils/Logger');
 
-const log = new Logger('MetricsService.js');
+const log = new Logger(__filename);
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const metricsCollectorInjectionFunctions = {
@@ -60,6 +60,7 @@ async function injectMetricsCollectorIntoNodeProject(projectDir) {
   await fs.writeJSON(pathToBackupPackageJson, originalContentsOfPackageJson, { spaces: 2 });
 
   const newContentsOfPackageJson = getNewContentsOfPackageJson(originalContentsOfPackageJson);
+  // TODO: change all debug -> trace
   log.debug(`Injecting metrics collector into project's package.json, which is now ${util.inspect(newContentsOfPackageJson)}`);
 
   await fs.writeJSON(pathToPackageJson, newContentsOfPackageJson, { spaces: 2 });
