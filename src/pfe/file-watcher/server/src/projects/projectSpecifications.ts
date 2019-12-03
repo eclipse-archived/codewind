@@ -236,7 +236,7 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             status: "success",
             ports: {
                 exposedPort: containerInfo.exposedPort,
-                internalPort: containerInfo.internalPort
+                internalPort: applicationPort
             }
         };
 

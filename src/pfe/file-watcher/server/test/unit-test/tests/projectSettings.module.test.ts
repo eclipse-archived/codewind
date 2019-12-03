@@ -28,6 +28,8 @@ export function projectSettingsTestModule(): void {
     let internalPortStatus = "";
     let projectSettingsStatus = "";
 
+    let internalPortValue = "";
+
     socket.registerListener({
         name: "codewindunittest",
         handleEvent: (event, data) => {
@@ -42,10 +44,14 @@ export function projectSettingsTestModule(): void {
                     mavenPropertiesStatus = data.status;
                 } else if (data.ignoredPaths || (data.error && data.error.includes("ignoredPaths"))) {
                     ignoredPathsStatus = data.status;
-                } else if ((data.ports && data.ports.internalDebugPort)) {
-                    internalDebugPortStatus = data.status;
-                } else if ((data.ports && data.ports.internalPort)) {
-                    internalPortStatus = data.status;
+                } else if (data.ports) {
+                    if (data.ports.internalDebugPort) {
+                        internalDebugPortStatus = data.status;
+                    }
+                    if (data.ports.internalPort) {
+                        internalPortValue = data.ports.internalPort;
+                        internalPortStatus = data.status;
+                    }
                 } else {
                     projectSettingsStatus = data.status;
                 }
@@ -148,21 +154,31 @@ export function projectSettingsTestModule(): void {
         const combinations: any = {
             "combo1": {
                 "internalPortSettings": {
+                    "internalPort": ""
+                },
+                "expectedPortValue": "",
+                "result": ""
+            },
+            "combo2": {
+                "internalPortSettings": {
                     "internalPort": "1234"
                 },
-                "result": "failed"
+                "expectedPortValue": "1234",
+                "result": "success"
             }
         };
 
         for (const combo of Object.keys(combinations)) {
             const internalPortSettings = combinations[combo]["internalPortSettings"];
             const expectedResult = combinations[combo]["result"];
+            const expectedPortValue = combinations[combo]["expectedPortValue"];
 
             it(combo + " => internalPortSettings: " + JSON.stringify(internalPortSettings), async () => {
                 const projectID: string = "dummynodeproject";
 
                 await projectSettings.projectSpecificationHandler(projectID, internalPortSettings);
                 expect(internalPortStatus).to.equal(expectedResult);
+                expect(internalPortValue).to.equal(expectedPortValue);
             });
         }
     });
