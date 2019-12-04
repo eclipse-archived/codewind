@@ -66,7 +66,7 @@ export function updateStatusTest(socket: SocketIO, projData: projectsController.
                 "parameters": ["projectID", "status", "error"],
                 "values": [projectID],
                 "states": ["unknown", "stopping", "stopped", "starting", "started"],
-                "eventKeys": ["projectID", "appStatus", "appErrorStatus"],
+                "eventKeys": ["projectID", "appStatus", "detailedAppStatus"],
                 "result": {
                     "projectID": projectID
                 }
