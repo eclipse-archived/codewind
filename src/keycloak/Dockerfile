@@ -10,6 +10,9 @@
 ################################################################################
 
 FROM jboss/keycloak:8.0.0
+LABEL org.opencontainers.image.title="Codewind-Keycloak" org.opencontainers.image.description="Codewind Keycloak" \
+      org.opencontainers.image.url="https://codewind.dev/" \
+      org.opencontainers.image.source="https://github.com/eclipse/codewind"
 
 # Copy our license files into the new image
 COPY LICENSE NOTICE.md ./

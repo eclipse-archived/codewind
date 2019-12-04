@@ -40,6 +40,10 @@ RUN npm run build
 
 FROM node:10-alpine
 
+LABEL org.opencontainers.image.title="Codewind-Performance" org.opencontainers.image.description="Codewind Performance" \
+      org.opencontainers.image.url="https://codewind.dev/" \
+      org.opencontainers.image.source="https://github.com/eclipse/codewind"
+
 # Create app directory
 WORKDIR /usr/src/app
 
