@@ -26,8 +26,7 @@ RELEASE_BRANCH="master"
 TEST_ENV="local"
 ITERATIONS=10
 
-#CODEWIND_REPO=git@github.com:eclipse/codewind.git
-CODEWIND_REPO=git@github.com:ssh24/codewind.git
+CODEWIND_REPO=git@github.com:eclipse/codewind.git
 RELEASE_DIR="performance-test-codewind"
 
 function usage {
@@ -35,12 +34,12 @@ function usage {
     cat <<EOF
 Usage: $me: [-<option letter> <option value> | -h]
 Options:
-    --clean-run     To perform a clean run. Default: n
-    --environment   The test environment. Default: local
-    --post-clean    To perform a post clean up. Default: n 
-    --release       The release branch to use. Default: master
-    --iteration     Number of iterations to run the performance test. Default: 10
-    -h | --help     Display the man page
+    -c | --clean-run        To perform a clean run. Default: n
+    -e | --environment      The test environment. Default: local
+    -p | --post-clean       To perform a post clean up. Default: n 
+    -r | --release          The release branch to use. Default: master
+    -i | --iteration        Number of iterations to run the performance test. Default: 10
+    -h | --help             Display the man page
 EOF
 }
 
@@ -61,19 +60,19 @@ function displayMsg() {
 
 while :; do
     case $1 in
-        -c|--clean-run=?*)
+        -c=?*|--clean-run=?*)
         CLEAN_RUN=${1#*=}
         ;;
-        -p|--post-clean=?*)
+        -p=?*|--post-clean=?*)
         POST_CLEAN=${1#*=}
         ;;
-        -r|--release=?*)
+        -r=?*|--release=?*)
         RELEASE_BRANCH=${1#*=}
         ;;
-        -e|--environment=?*)
+        -e=?*|--environment=?*)
         TEST_ENV=${1#*=}
         ;;
-        -i|--iteration=?*)
+        -i=?*|--iteration=?*)
         ITERATIONS=${1#*=}
         ;;
         -h|--help)
@@ -95,22 +94,24 @@ fi
 
 echo -e "${CYAN}> Cloning release branch ${RESET}"
 rm -rf $RELEASE_DIR
-echo "Release branch is $RELEASE_BRANCH"
 git clone $CODEWIND_REPO -b "$RELEASE_BRANCH" $RELEASE_DIR
 displayMsg $? "Failed to clone from release branch." true
 
 echo -e "${CYAN}> Creating data directory ${RESET}"
-mkdir -p "$CURR_DIR/data/$TEST_ENV/$RELEASE_BRANCH"
+TARGET_DIR="$CURR_DIR/data/$TEST_ENV/$RELEASE_BRANCH"
+rm -rf $TARGET_DIR
+mkdir -p $TARGET_DIR
 displayMsg $? "Failed to create data directory." true
 
 export TURBINE_PERFORMANCE_TEST=${RELEASE_BRANCH}
+export TEST_TYPE=${TEST_ENV}
 
 for run in $(seq 1 $ITERATIONS);
 do
     echo -e "${CYAN}> Iteration: $run ${RESET}"
 
     echo -e "${CYAN}> Switching to release directory ${RESET}"
-    cd $RELEASE_DIR
+    cd "$CURR_DIR/$RELEASE_DIR"
     displayMsg $? "Failed to switch release directory." true
 
     echo -e "${CYAN}> Stopping codewind ${RESET}"
@@ -133,3 +134,40 @@ do
 
     ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN
 done
+
+echo -e "${CYAN}> Checking for virtualenv ${RESET}"
+ts-node -v > /dev/null 2>&1
+displayMsg $? "Missing virtualenv command. Please install and try again." true
+
+echo -e "${CYAN}> Checking for python ${RESET}"
+python --version > /dev/null 2>&1
+displayMsg $? "Missing python command. Please install and try again." true
+
+echo -e "${CYAN}> Checking for pip ${RESET}"
+pip > /dev/null 2>&1
+displayMsg $? "Missing pip command. Please install and try again." true
+
+echo -e "${CYAN}> Creating python virtual environment ${RESET}"
+virtualenv venv -p $(which python) > /dev/null 2>&1
+displayMsg $? "Failed to create up python virtual environment. Please try again." true
+
+echo -e "${CYAN}> Activating python virtual environment ${RESET}"
+source venv/bin/activate > /dev/null 2>&1
+displayMsg $? "Failed to activate up python virtual environment. Please try again." true
+
+echo -e "${CYAN}> Installing required python dependencies: pandas ${RESET}"
+pip install pandas > /dev/null 2>&1
+displayMsg $? "Failed to install pandas module. Please try again." true
+
+echo -e "${CYAN}> Installing required python dependencies: numpy ${RESET}"
+pip install numpy > /dev/null 2>&1
+displayMsg $? "Failed to install numpy module. Please try again." true
+
+echo -e "${CYAN}> Running data analyzer script ${RESET}"
+PY_FILE="get-data.py"
+python $PY_FILE
+displayMsg $? "Failed to run python script. Please install and try again." true
+
+echo -e "${CYAN}> Deactivating python virtual environment ${RESET}"
+deactivate venv > /dev/null 2>&1
+displayMsg $? "Failed to deactivate up python virtual environment. Please try again." true
