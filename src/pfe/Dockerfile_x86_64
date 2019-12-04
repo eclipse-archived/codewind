@@ -65,7 +65,7 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
     && mv ./kubectl /usr/local/bin/kubectl
 
 # Install helm, fixed to the 2.9.1 version
-RUN cd /tmp \ 
+RUN cd /tmp \
     && curl -O https://get.helm.sh/helm-v2.9.1-linux-amd64.tar.gz \
     && echo '56ae2d5d08c68d6e7400d462d6ed10c929effac929fedce18d2636a9b4e166ba  helm-v2.9.1-linux-amd64.tar.gz' | sha256sum -c - \
     && tar -xvf helm-v2.9.1-linux-amd64.tar.gz \
@@ -124,6 +124,7 @@ RUN chmod -R +rx /portal/npm-start.sh
 COPY /portal/server.js /portal/
 COPY /portal/modules /portal/modules
 COPY /portal/routes /portal/routes
+COPY /portal/controllers /portal/controllers
 COPY /portal/config /portal/config
 COPY /portal/middleware /portal/middleware
 COPY /portal/docs /portal/docs

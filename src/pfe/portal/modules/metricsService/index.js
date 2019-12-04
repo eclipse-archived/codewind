@@ -16,15 +16,22 @@ const xml2js = require('xml2js');
 const dir = require('node-dir');
 const promiseAny = require('promise.any');
 
-const Logger = require('./utils/Logger');
+const Logger = require('../utils/Logger');
+const nodeMetricsService = require('./node');
 
-const log = new Logger('MetricsService.js');
+const log = new Logger(__filename);
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const metricsCollectorInjectionFunctions = {
-  nodejs: injectMetricsCollectorIntoNodeProject,
+  nodejs: nodeMetricsService.injectMetricsCollectorIntoNodeProject,
   liberty: injectMetricsCollectorIntoLibertyProject,
   spring: injectMetricsCollectorIntoSpringProject,
+}
+
+const metricsCollectorRemovalFunctions = {
+  nodejs: nodeMetricsService.removeMetricsCollectorFromNodeProject,
+  liberty: removeMetricsCollectorFromLibertyProject,
+  spring: removeMetricsCollectorFromSpringProject,
 }
 
 async function injectMetricsCollectorIntoProject(projectType, projectDir) {
@@ -35,92 +42,127 @@ async function injectMetricsCollectorIntoProject(projectType, projectDir) {
   log.debug(`Successfully injected metrics collector into ${projectType} project`);
 }
 
-async function injectMetricsCollectorIntoNodeProject(projectDir) {
-  const pathToPackageJson = path.join(projectDir, 'package.json');
-  const originalContentsOfPackageJson = await fs.readJSON(pathToPackageJson);
-
-  const newContentsOfPackageJson = getNewContentsOfPackageJson(originalContentsOfPackageJson);
-  log.trace(`Injecting metrics collector into project's package.json, which is now ${util.inspect(newContentsOfPackageJson)}`);
-
-  await fs.writeJSON(pathToPackageJson, newContentsOfPackageJson, { spaces: 2 });
-}
-
-function getNewContentsOfPackageJson(originalContentsOfPackageJson) {
-  const newContentsOfPackageJson = deepClone(originalContentsOfPackageJson);
-
-  newContentsOfPackageJson.scripts.start = getNewStartScript(originalContentsOfPackageJson.scripts.start);
-  newContentsOfPackageJson.dependencies['appmetrics-codewind'] = '^0.1.0';
-  return newContentsOfPackageJson;
-}
-
-function getNewStartScript(originalStartScript) {
-  const metricsCollectorScript = '-r appmetrics-codewind/attach';
-
-  if (originalStartScript.includes(metricsCollectorScript)) {
-    return originalStartScript;
+async function removeMetricsCollectorFromProject(projectType, projectDir) {
+  if (!metricsCollectorRemovalFunctions.hasOwnProperty(projectType)) {
+    throw new Error(`Injection of metrics collector is not supported for projects of type '${projectType}'`);
   }
+  await metricsCollectorRemovalFunctions[projectType](projectDir);
+  log.debug(`Successfully removed metrics collector from ${projectType} project`);
+}
 
-  const splitOriginalStartScript = originalStartScript.split(' ');
-  const indexOfNodeCmd = splitOriginalStartScript.findIndex(word => ['node', 'nodemon'].includes(word));
+const getPathToPomXml = (projectDir) => path.join(projectDir, 'pom.xml');
+const getPathToBackupPomXml = (projectDir) => path.join(projectDir, 'backupPom.xml');
 
-  let newStartScript = deepClone(splitOriginalStartScript);
-  newStartScript.splice(indexOfNodeCmd + 1, 0, metricsCollectorScript);
-  newStartScript = newStartScript.join(' ');
+const getPathToJvmOptions = (projectDir) => path.join(projectDir, 'src', 'main', 'liberty', 'config', 'jvm.options');
+const getPathToBackupJvmOptions = (projectDir) => path.join(projectDir, 'src', 'main', 'liberty', 'config', 'backupJvm.options');
 
-  return newStartScript;
+async function removeMetricsCollectorFromLibertyProject(projectDir) {
+  await removeMetricsCollectorFromPomXml(projectDir);
+  await removeMetricsCollectorFromJvmOptions(projectDir);
+}
+
+async function removeMetricsCollectorFromPomXml(projectDir) {
+  const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
+  const backupPomXml = await fs.readFile(pathToBackupPomXml);
+
+  const pathToPomXml = getPathToPomXml(projectDir);
+  await fs.writeFile(pathToPomXml, backupPomXml);
+  log.debug(`Restored project's pom.xml to ${util.inspect(backupPomXml)}`);
+  await fs.remove(pathToBackupPomXml);
+}
+
+async function removeMetricsCollectorFromJvmOptions(projectDir) {
+  const pathToBackupJvmOptions = getPathToBackupJvmOptions(projectDir);
+  const backupJvmOptions = await fs.readFile(pathToBackupJvmOptions);
+
+  const pathToJvmOptions = getPathToJvmOptions(projectDir);
+  await fs.writeFile(pathToJvmOptions, backupJvmOptions);
+  log.debug(`Restored project's jvm.options to ${util.inspect(backupJvmOptions)}`);
+  await fs.remove(pathToBackupJvmOptions);
+}
+
+async function removeMetricsCollectorFromSpringProject(projectDir) {
+  await removeMetricsCollectorFromPomXml(projectDir);
+  await removeMetricsCollectorFromMainAppClassFile(projectDir);
+}
+
+const getPathToBackupMainAppClassFile = (projectDir) => path.join(projectDir, 'codewind-backup', 'Application.java');
+
+async function removeMetricsCollectorFromMainAppClassFile(projectDir) {
+  const pathToMainAppClassFile = await getPathToMainAppClassFile(projectDir);
+  const pathToBackupClassFile = getPathToBackupMainAppClassFile(projectDir);
+  const backupClassFile = await fs.readFile(pathToBackupClassFile);
+  await fs.writeFile(pathToMainAppClassFile, backupClassFile);
+  log.debug(`Restored project's main app class file to ${util.inspect(backupClassFile)}`);
+  await fs.remove(pathToBackupClassFile);
+}
+
+async function backUpFile(pathToOriginal, pathToBackup) {
+  const originalFileData = await fs.readFile(pathToOriginal);
+  await fs.outputFile(pathToBackup, originalFileData);
 }
 
 async function injectMetricsCollectorIntoLibertyProject(projectDir) {
-  const pathToPomXml = path.join(projectDir, 'pom.xml');
+  const pathToPomXml = getPathToPomXml(projectDir);
+  const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
+  await backUpFile(pathToPomXml, pathToBackupPomXml);
   await injectMetricsCollectorIntoPomXml(pathToPomXml);
 
-  const pathToJvmOptions = path.join(projectDir, 'src', 'main', 'liberty', 'config', 'jvm.options');
+  const pathToJvmOptions = getPathToJvmOptions(projectDir);
+  const pathToBackupJvmOptions = getPathToBackupJvmOptions(projectDir);
+  await backUpFile(pathToJvmOptions, pathToBackupJvmOptions);
   await injectMetricsCollectorIntoJvmOptions(pathToJvmOptions);
 }
 
 async function injectMetricsCollectorIntoSpringProject(projectDir) {
-  const pathToPomXml = path.join(projectDir, 'pom.xml');
+  const pathToPomXml = getPathToPomXml(projectDir);
+  const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
+  await backUpFile(pathToPomXml, pathToBackupPomXml);
   await injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml);
 
-  const pathToApplicationJava = await getPathToApplicationJava(projectDir);
-  await injectMetricsCollectorIntoApplicationJava(pathToApplicationJava);
+  const pathToMainAppClassFile = await getPathToMainAppClassFile(projectDir);
+  const pathToBackupMainAppClassFile = getPathToBackupMainAppClassFile(projectDir);
+  await backUpFile(pathToMainAppClassFile, pathToBackupMainAppClassFile);
+  await injectMetricsCollectorIntoMainAppClassFile(pathToMainAppClassFile);
 }
 
 const springAppAnnotation = '@SpringBootApplication';
 
-// Resolves as soon as an element in `array` satisfies `asyncCallback`,
-// Or rejects if no elements in `array` satisfy `asyncCallback`
+/**
+ * @returns element as soon as an element in `array` satisfies `asyncCallback`,
+ * Or rejects if no elements in `array` satisfy `asyncCallback`
+ */
 const findAsync = (array, asyncCallback) => promiseAny(
   array.map(element => asyncCallback(element))
 )
 
-async function getPathToApplicationJava(projectDir) {
-  const pathToSrcMainJavaDir = path.join(projectDir, 'src', 'main', 'java');
+async function getPathToMainAppClassFile(projectDir) {
+  const pathToProjectSrcFiles = path.join(projectDir, 'src', 'main', 'java');
 
-  const applicationJavaFiles = await dir.promiseFiles(pathToSrcMainJavaDir);
+  const srcFiles = await dir.promiseFiles(pathToProjectSrcFiles);
 
-  const applicationJavaFile = await findAsync(
-    applicationJavaFiles,
+  const mainAppClassFile = await findAsync(
+    srcFiles,
     async(file) => {
       const fileData = await fs.readFile(file, 'utf8');
-      const fileIsApplicationJavaFile = fileData.includes(springAppAnnotation);
-      if (fileIsApplicationJavaFile) {
+      const fileIsMainAppClassFile = fileData.includes(springAppAnnotation);
+      if (fileIsMainAppClassFile) {
         return file;
       }
       throw new Error();
     },
   );
-  return applicationJavaFile;
+  return mainAppClassFile;
 }
 
-async function injectMetricsCollectorIntoApplicationJava(pathToApplicationJava) {
-  const originalApplicationJava = await fs.readFile(pathToApplicationJava, 'utf8');
-  const newApplicationJava = getNewContentsOfApplicationJava(originalApplicationJava);
-  log.trace(`Injecting metrics collector into project's Application.java, which is now:\n${newApplicationJava}`);
-  await fs.writeFile(pathToApplicationJava, newApplicationJava);
+async function injectMetricsCollectorIntoMainAppClassFile(pathToClassFile) {
+  const originalClassFile = await fs.readFile(pathToClassFile, 'utf8');
+  const newClassFile = getNewContentsOfMainAppClassFile(originalClassFile);
+  log.debug(`Injecting metrics collector into project's main app class file, which is now:\n${newClassFile}`);
+  await fs.writeFile(pathToClassFile, newClassFile);
 }
 
-function getNewContentsOfApplicationJava(originalContents) {
+function getNewContentsOfMainAppClassFile(originalContents) {
   const splitOriginalContents = originalContents.split('\n');
 
   const packageString = splitOriginalContents.find(line => line.includes('package'));
@@ -131,11 +173,11 @@ function getNewContentsOfApplicationJava(originalContents) {
   const indexOfSpringBootApplication = splitOriginalContents.findIndex(line => line === springAppAnnotation);
   const metricsCollectorAnnotation = `@ComponentScan(basePackages = {"${packageName}", "com.ibm.javametrics.spring"})`;
 
-  let newApplicationJava = deepClone(splitOriginalContents);
-  newApplicationJava.splice(indexOfSpringBootApplication + 1, 0, metricsCollectorAnnotation);
-  newApplicationJava = newApplicationJava.join('\n');
+  let newContents = deepClone(splitOriginalContents);
+  newContents.splice(indexOfSpringBootApplication + 1, 0, metricsCollectorAnnotation);
+  newContents = newContents.join('\n');
 
-  return newApplicationJava;
+  return newContents;
 }
 
 async function injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml) {
@@ -144,7 +186,7 @@ async function injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml) {
   const newPomXmlInJsonFormat = getNewContentsOfPomXmlForSpring(originalPomXml);
   const xmlBuilder = new xml2js.Builder();
   const newPomXml = xmlBuilder.buildObject(newPomXmlInJsonFormat);
-  log.trace(`Injecting metrics collector into project's pom.xml, which is now:\n${newPomXml}`);
+  log.debug(`Injecting metrics collector into project's pom.xml, which is now:\n${newPomXml}`);
   await fs.writeFile(pathToPomXml, newPomXml);
 }
 
@@ -341,4 +383,5 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
 
 module.exports = {
   injectMetricsCollectorIntoProject,
+  removeMetricsCollectorFromProject,
 }

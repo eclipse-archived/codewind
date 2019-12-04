@@ -11,7 +11,7 @@
 'use strict';
 
 const Logger = require('./modules/utils/Logger');
-const { pipePerfProxyReqsToPerfContainer } = require('./modules/PerformanceController');
+const { pipePerfProxyReqsToPerfContainer } = require('./controllers/performance.controller');
 
 const log = new Logger('server.js');
 

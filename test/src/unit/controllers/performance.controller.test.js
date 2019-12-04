@@ -11,11 +11,11 @@
 const chai = require('chai');
 const rewire = require('rewire');
 
-const performanceController = rewire('../../../src/pfe/portal/modules/PerformanceController');
+const performanceController = rewire('../../../../src/pfe/portal/controllers/performance.controller');
 
 chai.should();
 
-describe('PerformanceController.js', function() {
+describe('performance.controller.js', function() {
     describe('getReqToPerfContainer(req, performance_host, performance_port)', function() {
         it(`returns a request object that can be made against the perf container`, function() {
             const req = {
