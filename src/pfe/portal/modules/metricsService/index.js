@@ -103,25 +103,33 @@ async function backUpFile(pathToOriginal, pathToBackup) {
 }
 
 async function injectMetricsCollectorIntoLibertyProject(projectDir) {
-  const pathToPomXml = getPathToPomXml(projectDir);
   const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
+  const pathToBackupJvmOptions = getPathToBackupJvmOptions(projectDir);
+  if ((await fs.exists(pathToBackupPomXml)) || (await fs.exists(pathToBackupJvmOptions))) {
+    throw new Error('project files already backed up (i.e. we have already injected metrics collector)');
+  }
+
+  const pathToPomXml = getPathToPomXml(projectDir);
   await backUpFile(pathToPomXml, pathToBackupPomXml);
   await injectMetricsCollectorIntoPomXml(pathToPomXml);
 
   const pathToJvmOptions = getPathToJvmOptions(projectDir);
-  const pathToBackupJvmOptions = getPathToBackupJvmOptions(projectDir);
   await backUpFile(pathToJvmOptions, pathToBackupJvmOptions);
   await injectMetricsCollectorIntoJvmOptions(pathToJvmOptions);
 }
 
 async function injectMetricsCollectorIntoSpringProject(projectDir) {
-  const pathToPomXml = getPathToPomXml(projectDir);
   const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
+  const pathToBackupMainAppClassFile = getPathToBackupMainAppClassFile(projectDir);
+  if ((await fs.exists(pathToBackupPomXml)) || (await fs.exists(pathToBackupMainAppClassFile))) {
+    throw new Error('project files already backed up (i.e. we have already injected metrics collector)');
+  }
+
+  const pathToPomXml = getPathToPomXml(projectDir);
   await backUpFile(pathToPomXml, pathToBackupPomXml);
   await injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml);
 
   const pathToMainAppClassFile = await getPathToMainAppClassFile(projectDir);
-  const pathToBackupMainAppClassFile = getPathToBackupMainAppClassFile(projectDir);
   await backUpFile(pathToMainAppClassFile, pathToBackupMainAppClassFile);
   await injectMetricsCollectorIntoMainAppClassFile(pathToMainAppClassFile);
 }
