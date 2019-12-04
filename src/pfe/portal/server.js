@@ -29,8 +29,6 @@ async function main() {
 
   // dotenv reads .env and adds it to the process.env object
   require('dotenv').config()
-  const codewindVersion = process.env.CODEWIND_VERSION
-  console.log(`Codewind version is ${codewindVersion}`)
 
   if (process.env.APPMETRICS) { // dev mode
     require('appmetrics-dash').monitor({ title: "Application Metrics Dashboard - Monitoring codewind Portal" });
