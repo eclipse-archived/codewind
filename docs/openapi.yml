@@ -257,7 +257,7 @@ paths:
           schema:
             $ref: '#/components/schemas/ProjectID'
           required: true
-          description: id of the project        
+          description: id of the project
       responses:
         202:
           description: >
@@ -266,10 +266,10 @@ paths:
           description: Project with given projectiD was not found.
         500:
           description: Any other error
-  
+
   /api/v1/projects/{id}/upload:
     put:
-      summary: Receive gzipped content of a file for the project and write this to the codewind workspace 
+      summary: Receive gzipped content of a file for the project and write this to the codewind workspace
       parameters:
         - name: id
           in: path
@@ -278,19 +278,19 @@ paths:
           required: true
           description: id of project
       requestBody:
-          description: JSON object containing file info and content 
+          description: JSON object containing file info and content
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Upload'
-    
+
       responses:
         200:
           description: The file upload was successful
         404:
           description: Project with given projectID not found
         500:
-          description: Any other error  
+          description: Any other error
 
   /api/v1/projects/{id}/upload/end:
     post:
@@ -305,7 +305,7 @@ paths:
           required: true
           description: id of the project
       requestBody:
-          description: JSON object containing project information  
+          description: JSON object containing project information
           content:
             application/json:
               schema:
@@ -318,7 +318,7 @@ paths:
           description: Project with given projectiD was not found.
         500:
           description: Any other error
- 
+
 
   /api/v1/projects/{id}:
     get:
@@ -817,8 +817,7 @@ paths:
     post:
       summary: Enable auto injection of metrics
       description: >
-        Get all metrics for a certain type or types of metric, for a specific
-        project as specified by the project ID.
+        Injects metrics collector into project, or remove injected collector from project
       parameters:
         - name: id
           in: path
@@ -835,23 +834,18 @@ paths:
               required:
                 - enable
               properties:
-                types:
-                  description: Boolean
+                enable:
                   type: boolean
-                  example: true
       responses:
         202:
-          description: >
-            Successful update of project information and build triggered
+          description: Successful update of project information and build triggered
           content:
             application/json:
               schema:
                 type: object
         404:
           description: Project not found
-        500:
-          description: Internal error has occured
- 
+
 
   /api/v1/projects/{id}/metrics/types:
     post:
@@ -1717,7 +1711,7 @@ components:
           description: an array of files that have been modified since the last project upload
           type: array
           example: ["/project/modifiedfile1"]
-      
+
     Upload:
       type: object
       required:
@@ -1736,7 +1730,7 @@ components:
           type: number
           description: the permissions for the file https://nodejs.org/api/fs.html#fs_file_modes
           example: 0o775
-     
+
     LoadrunnerConfig:
       type: object
       required:
@@ -1776,7 +1770,7 @@ components:
               example: { id: 1, message: 'codewind' }
             - type: string
               example: "{ id: 1, message: 'codewind'}"
-    
+
     LogDetails:
       type: object
       required:

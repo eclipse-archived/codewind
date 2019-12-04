@@ -8,23 +8,27 @@
 # Contributors:
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
-#FROM centos:7
+#FROM centos as codewind-pfe-base
 
-FROM centos@sha256:b5e66c4651870a1ad435cd75922fe2cb943c9e973a9673822d1414824a1d0475 as codewind-pfe-base
+FROM centos@sha256:f94c1d992c193b3dc09e297ffd54d8a4f1dc946c37cbeceb26d35ce1647f88d9 as codewind-pfe-base
 LABEL org.opencontainers.image.title="Codewind-PFE" org.opencontainers.image.description="Codewind PFE" \
       org.opencontainers.image.url="https://codewind.dev/" \
       org.opencontainers.image.source="https://github.com/eclipse/codewind"
 
-ARG BUILDAH_RPM=https://cbs.centos.org/kojifiles/packages/buildah/1.11.2/2.git0bafbfe.el7/x86_64/buildah-1.11.2-2.git0bafbfe.el7.x86_64.rpm
+ARG BUILDAH_RPM=https://cbs.centos.org/kojifiles/packages/buildah/1.11.4/4.el7/x86_64/buildah-1.11.4-4.el7.x86_64.rpm
+ARG SLIRP=https://cbs.centos.org/kojifiles/packages/slirp4netns/0.3.0/2.git4992082.el7/x86_64/slirp4netns-0.3.0-2.git4992082.el7.x86_64.rpm
+ARG LIBSEC=https://cbs.centos.org/kojifiles/packages/libseccomp/2.4.1/0.el7/x86_64/libseccomp-2.4.1-0.el7.x86_64.rpm
 
 # Download the buildah RPM
 RUN curl -f -o buildah.rpm $BUILDAH_RPM
+RUN curl -f -o slirp4netns.rpm $SLIRP
+RUN curl -f -o libseccomp.rpm $LIBSEC
 
 # Download and set up Node 10.x RPM
 RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 
 RUN yum install -y epel-release \
-    && yum -y --enablerepo=epel install zip unzip sudo ca-certificates openssl nodejs buildah.rpm \
+    && yum -y --enablerepo=epel install zip unzip sudo ca-certificates openssl nodejs slirp4netns.rpm libseccomp.rpm buildah.rpm \
     && yum clean all \
     && rm -rf /var/cache/yum
 
@@ -65,7 +69,7 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
     && mv ./kubectl /usr/local/bin/kubectl
 
 # Install helm, fixed to the 2.9.1 version
-RUN cd /tmp \ 
+RUN cd /tmp \
     && curl -O https://get.helm.sh/helm-v2.9.1-linux-amd64.tar.gz \
     && echo '56ae2d5d08c68d6e7400d462d6ed10c929effac929fedce18d2636a9b4e166ba  helm-v2.9.1-linux-amd64.tar.gz' | sha256sum -c - \
     && tar -xvf helm-v2.9.1-linux-amd64.tar.gz \
@@ -124,6 +128,7 @@ RUN chmod -R +rx /portal/npm-start.sh
 COPY /portal/server.js /portal/
 COPY /portal/modules /portal/modules
 COPY /portal/routes /portal/routes
+COPY /portal/controllers /portal/controllers
 COPY /portal/config /portal/config
 COPY /portal/middleware /portal/middleware
 COPY /portal/docs /portal/docs

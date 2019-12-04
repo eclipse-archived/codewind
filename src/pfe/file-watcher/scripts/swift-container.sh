@@ -250,7 +250,7 @@ function dockerRun() {
 	$IMAGE_COMMAND run --network=codewind_network --name "$project" -dt -P -w /swift-project "$project"
 	if [ $? -eq 0 ]; then
 		echo -e "Copying over source files"
-		docker cp "$workspace/$projectName" "$project":/swift-project
+		docker cp "$workspace/$projectName"/. "$project":/swift-project
 	fi
 
 }

@@ -1,8 +1,8 @@
 const request = require('request');
 
-const Logger = require('./utils/Logger');
+const Logger = require('../modules/utils/Logger');
 
-const log = new Logger('PerformanceController.js');
+const log = new Logger(__filename);
 
 // if we are running in Che use the workspace codewind performance service,  else use the codewind container name of "codewind-performance"
 const performance_host = process.env.CODEWIND_PERFORMANCE_SERVICE ? process.env.CODEWIND_PERFORMANCE_SERVICE : "codewind-performance";
