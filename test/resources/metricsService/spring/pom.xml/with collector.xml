@@ -45,7 +45,7 @@
         <!-- Configure javametrics monitoring -->
         <dependency>
             <groupId>com.ibm.runtimetools</groupId>
-            <artifactId>javametrics-spring</artifactId>
+            <artifactId>javametrics-codewind-spring</artifactId>
             <version>[1.1,2.0)</version>
         </dependency>
         <dependency>
