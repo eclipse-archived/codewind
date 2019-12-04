@@ -794,6 +794,12 @@ describe('metricsService/node.js', () => {
                 fs.existsSync(pathToBackupPackageJson).should.be.false;
             });
         });
+        describe('no package.json in expected location', () => {
+            it(`throws a useful error`, async() => {
+                await nodeMetricsService.injectMetricsCollectorIntoNodeProject(projectDir)
+                    .should.be.eventually.rejectedWith(`no package.json at '${pathToPackageJson}'`);
+            });
+        });
     });
 
     describe('getNewContentsOfPackageJson(originalContents)', () => {

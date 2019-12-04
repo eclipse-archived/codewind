@@ -17,6 +17,9 @@ async function injectMetricsCollectorIntoNodeProject(projectDir) {
   }
 
   const pathToPackageJson = getPathToPackageJson(projectDir);
+  if (!(await fs.exists(pathToPackageJson))) {
+    throw new Error(`no package.json at '${pathToPackageJson}'`);
+  }
   const originalContentsOfPackageJson = await fs.readJSON(pathToPackageJson);
 
   validatePackageJson(originalContentsOfPackageJson);
