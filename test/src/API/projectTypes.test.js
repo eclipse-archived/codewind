@@ -12,7 +12,7 @@ const chai = require('chai');
 const chaiResValidator = require('chai-openapi-response-validator');
 
 const reqService = require('../../modules/request.service');
-const { ADMIN_COOKIE, pathToApiSpec } = require('../../config');
+const { ADMIN_COOKIE, pathToApiSpec, testTimeout } = require('../../config');
 
 chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
@@ -20,7 +20,7 @@ chai.should();
 describe('Project Types API tests', function() {
 
     it('should return expected list of project types', async function() {
-        this.timeout(10000);
+        this.timeout(testTimeout.med);
         const res = await reqService.chai
             .get('/api/v1/project-types')
             .set('Cookie', ADMIN_COOKIE);
