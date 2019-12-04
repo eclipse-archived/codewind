@@ -19,12 +19,20 @@ async function injectMetricsCollectorIntoNodeProject(projectDir) {
   const pathToPackageJson = getPathToPackageJson(projectDir);
   const originalContentsOfPackageJson = await fs.readJSON(pathToPackageJson);
 
+  validatePackageJson(originalContentsOfPackageJson);
   await fs.writeJSON(pathToBackupPackageJson, originalContentsOfPackageJson, { spaces: 2 });
 
   const newContentsOfPackageJson = getNewContentsOfPackageJson(originalContentsOfPackageJson);
   log.trace(`Injecting metrics collector into project's package.json, which is now ${ util.inspect(newContentsOfPackageJson) }`);
 
   await fs.writeJSON(pathToPackageJson, newContentsOfPackageJson, { spaces: 2 });
+}
+
+function validatePackageJson(packageJson) {
+  const packageJsonHasStartScript = packageJson.scripts && packageJson.scripts.start;
+  if (!packageJsonHasStartScript) {
+    throw new Error('package.json missing script: start');
+  }
 }
 
 async function removeMetricsCollectorFromNodeProject(projectDir) {
@@ -42,7 +50,10 @@ function getNewContentsOfPackageJson(originalContentsOfPackageJson) {
   const newContentsOfPackageJson = deepClone(originalContentsOfPackageJson);
 
   newContentsOfPackageJson.scripts.start = getNewStartScript(originalContentsOfPackageJson.scripts.start);
-  newContentsOfPackageJson.dependencies['appmetrics-codewind'] = '^0.1.0';
+  newContentsOfPackageJson.dependencies = {
+    ...newContentsOfPackageJson.dependencies,
+    'appmetrics-codewind': '^0.1.0',
+  }
   return newContentsOfPackageJson;
 }
 
