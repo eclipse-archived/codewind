@@ -78,6 +78,8 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
                     const fileToChange = file;
                     const pathFileToChange = path.join(projData.location, fileToChange);
 
+                    await fs.appendFileSync(pathFileToChange, "\r\n", "utf-8");
+
                     const testData = _.cloneDeep(data);
                     const events = {
                         path: pathFileToChange,
