@@ -48,9 +48,7 @@ LABEL org.opencontainers.image.title="Codewind-Performance" org.opencontainers.i
 WORKDIR /usr/src/app
 
 # Copy env file
-COPY .env /usr/src/app/.env
-ARG IMAGE_BUILD_TIME
-ENV IMAGE_BUILD_TIME=${IMAGE_BUILD_TIME}
+COPY .env /usr/src/app/.envå
 
 # Copy our license files into the new image
 COPY LICENSE NOTICE.md ./
