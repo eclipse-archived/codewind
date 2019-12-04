@@ -132,7 +132,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
     let imagePushRegistry: string;
 
-    if (process.env.IN_K8 === "true") {
+    if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
         imagePushRegistry = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
 
@@ -243,7 +243,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
 
     let imagePushRegistry: string;
 
-    if (process.env.IN_K8 === "true") {
+    if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
         imagePushRegistry = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
 
