@@ -11,10 +11,14 @@ const getPathToPackageJson = (projectDir) => path.join(projectDir, 'package.json
 const getPathToBackupPackageJson = (projectDir) => path.join(projectDir, 'backupPackage.json');
 
 async function injectMetricsCollectorIntoNodeProject(projectDir) {
+  const pathToBackupPackageJson = getPathToBackupPackageJson(projectDir);
+  if (await fs.exists(pathToBackupPackageJson)) {
+    throw new Error('project files already backed up (i.e. we have already injected metrics collector)');
+  }
+
   const pathToPackageJson = getPathToPackageJson(projectDir);
   const originalContentsOfPackageJson = await fs.readJSON(pathToPackageJson);
 
-  const pathToBackupPackageJson = getPathToBackupPackageJson(projectDir);
   await fs.writeJSON(pathToBackupPackageJson, originalContentsOfPackageJson, { spaces: 2 });
 
   const newContentsOfPackageJson = getNewContentsOfPackageJson(originalContentsOfPackageJson);
