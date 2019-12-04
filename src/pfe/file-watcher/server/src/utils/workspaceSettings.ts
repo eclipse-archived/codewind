@@ -172,7 +172,7 @@ export async function getWorkspaceSettingsInfo(handleAddress?: boolean): Promise
         const workspaceSettingsInfoCacheJSON = JSON.parse(workspaceSettingsInfoCache);
         if (handleAddress) {
             try {
-                workspaceSettingsInfoCacheJSON.registryAddress = await validateImagePushRegistryAddress(workspaceSettingsInfoCacheJSON.registryAddress);
+                workspaceSettingsInfoCacheJSON.registryAddress = transformImagePushRegistryAddress(workspaceSettingsInfoCacheJSON.registryAddress);
             } catch (err) {
                 logger.logError(err);
                 return JSON.parse(workspaceSettingsInfoCache);
@@ -193,7 +193,7 @@ export async function getWorkspaceSettingsInfo(handleAddress?: boolean): Promise
             data = await utils.asyncReadJSONFile(workspaceSettingsFile);
             logger.logInfo("Returning workspace settings file content: " + JSON.stringify(data));
             if (handleAddress) {
-                data.registryAddress = await validateImagePushRegistryAddress(data.registryAddress);
+                data.registryAddress = transformImagePushRegistryAddress(data.registryAddress);
             }
             return data;
         } else {
@@ -211,19 +211,40 @@ export async function getWorkspaceSettingsInfo(handleAddress?: boolean): Promise
 
 /**
  * @function
- * @description Validate the Image Push Registry Address to handle index.docker.io/v1 to docker.io conversion.
+ * @description Transform the Image Push Registry Address to handle index.docker.io/v1 to docker.io conversion. This is done because
+ * Codewind IDE UI has a single address field for both docker config and image push registry. If a user enters https://index.docker.io/v1/
+ * the image push registry is not going to work because buildah wont be able to push to https://index.docker.io/v1/. It needs to be in the
+ * format docker.io/<namespace>
  *
- * * @param workspaceSettings <Required | any> - The workspace settings JSON object
+ * @param workspaceSettings <Required | any> - The workspace settings JSON object
  *
  * @returns Promise<any> - The updated workspace settings JSON object
  */
-export async function validateImagePushRegistryAddress(address: string): Promise<any> {
+function transformImagePushRegistryAddress(address: string): string {
 
     if (address.includes("index.docker.io/v1")) {
         address = "docker.io";
     }
 
+    // remove any trailing / and whitespace
+    address = address.replace(/\/\s*$/, "");
+
     return address;
+}
+
+/**
+ * @function
+ * @description Read the workspace settings info, and return the image push registry
+ *
+ *
+ * @returns Promise<string>
+ */
+export async function getImagePushRegistry(): Promise<string> {
+    // getWorkspaceSettingsInfo is passed handleAddress as true because getImagePushRegistry is called by projectUtil and the address needs to be transformed before pushing
+    const workspaceSettingsInfo = await getWorkspaceSettingsInfo(true);
+    logger.logInfo("Got the workspaceSettingsInfo: " + JSON.stringify(workspaceSettingsInfo));
+    const imagePushRegistry = workspaceSettingsInfo.registryAddress.trim() + "/" + workspaceSettingsInfo.registryNamespace.trim();
+    return imagePushRegistry;
 }
 
 /**
@@ -235,8 +256,7 @@ export async function testImagePushRegistry(address: string, namespace: string, 
     pullImage = pullImage || "hello-world";
 
     // always validate the image push registry address during test for conversion of index.docker.io/v1 to docker.io
-    address = await validateImagePushRegistryAddress(address);
-    address = address.replace(/\/\s*$/, "");
+    address = transformImagePushRegistryAddress(address);
     const imagePushRegistry = address + "/" + namespace;
     logger.logDebug("Image Push registry address: " + address);
     logger.logDebug("Image Push registry namespace: " + namespace);
@@ -289,7 +309,7 @@ export async function testImagePushRegistry(address: string, namespace: string, 
         logger.logInfo("Successful Image Push Registry test");
         logger.logInfo(msg);
     } else {
-        msg = "Codewind projects on Kubernetes cannot build with the Image Push Registry, as Codewind encountered an issue when pushing an image to: " + imagePushRegistry + ". Please make sure it is a valid Image Push Registry with the appropriate permissions.";
+        msg = "Codewind cannot build projects with the current Image Push Registry. The image could not be pushed to: " + imagePushRegistry + ". Please make sure it is a valid Image Push Registry with the appropriate permissions.";
         logger.logError("Un-successful Image Push Registry test");
         logger.logError(msg);
     }

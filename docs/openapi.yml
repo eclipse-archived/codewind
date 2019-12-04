@@ -1361,7 +1361,7 @@ paths:
 
   /api/v1/imagepushregistry:
     get:
-      summary: Get the status of the Deployment Registry in the Workspace Settings File
+      summary: Get the status of the Image Push Registry in the Workspace Settings File
       responses:
         200:
           description: Successfully completed
@@ -1394,7 +1394,7 @@ paths:
                     description: false if image push registry was not set
                     example: false
     post:
-      summary: Test or set the specified Deployment Registry
+      summary: Test or set the specified Image Push Registry
       description: >
         On test the API also emits a socket event `imagePushRegistryStatus` with data
         `{imagePushRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`

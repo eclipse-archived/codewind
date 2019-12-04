@@ -88,9 +88,9 @@ export interface ProjectLog {
 }
 
 const projectEventErrorMsgs = {
-    missingImagePushRegistry: "The project will not build due to missing Deployment Registry. Run the Set Deployment Registry command to set a new Deployment Registry to build projects.",
-    invalidImagePushRegistry: "Codewind was unable to push an image to the Deployment Registry. Please make sure it is a valid Deployment Registry with the appropriate permissions.",
-    wrongImagePushRegistry: "The project will not build with the new Deployment Registry. Please remove and re-add the project to deploy to the new Deployment Registry."
+    missingImagePushRegistry: "The project will not build due to missing Image Push Registry. Run the Set Deployment Registry command to set a new Image Push Registry to build projects.",
+    invalidImagePushRegistry: "Codewind cannot build projects with the current Image Push Registry. Please make sure it is a valid Image Push Registry with the appropriate permissions.",
+    wrongImagePushRegistry: "The project will not build with the new Image Push Registry. Please remove and re-add the project to deploy to the new Image Push Registry."
 };
 
 /**
@@ -133,10 +133,8 @@ export async function containerCreate(operation: Operation, script: string, comm
     let imagePushRegistry: string;
 
     if (process.env.IN_K8 === "true") {
-        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo(true);
-        logger.logProjectInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo), projectID);
-        imagePushRegistry = workspaceSettingsInfo.registryAddress.replace(/\/\s*$/, "") + "/" + workspaceSettingsInfo.registryNamespace.trim();
-        logger.logProjectInfo("Deployment Registry: " + imagePushRegistry, projectID);
+        imagePushRegistry = await workspaceSettings.getImagePushRegistry();
+        logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
 
         if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
             logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, projectID, projectName);
@@ -246,10 +244,8 @@ export async function containerUpdate(operation: Operation, script: string, comm
     let imagePushRegistry: string;
 
     if (process.env.IN_K8 === "true") {
-        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo(true);
-        logger.logProjectInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo), projectID);
-        imagePushRegistry = workspaceSettingsInfo.registryAddress.replace(/\/\s*$/, "") + "/" + workspaceSettingsInfo.registryNamespace.trim();
-        logger.logProjectInfo("Deployment Registry: " + imagePushRegistry, projectID);
+        imagePushRegistry = await workspaceSettings.getImagePushRegistry();
+        logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
 
         if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
             logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, projectID, projectName);
@@ -1452,9 +1448,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             status: "failed"
         };
 
-        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo(true);
-        logger.logInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo));
-        const imagePushRegistry: string = workspaceSettingsInfo.registryAddress.replace(/\/\s*$/, "") + "/" + workspaceSettingsInfo.registryNamespace.trim();
+        const imagePushRegistry: string = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, buildInfo.projectID);
 
         if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
