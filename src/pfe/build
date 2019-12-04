@@ -20,6 +20,6 @@ docker build -t codewind-pfe-$(../../script/platform.sh) \
 --label "org.opencontainers.image.created=$(date '+%Y-%m-%dT%k:%M:%S%z')" \
 --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \
 --label "org.opencontainers.image.version=" \
---build-arg IMAGE_BUILD_TIME=`date '+%Y%m%d-%H%M%S'`
+--build-arg IMAGE_BUILD_TIME=`date '+%Y%m%d-%H%M%S'` \
 --build-arg NODE_ENV=$NODE_ENV \
 .
