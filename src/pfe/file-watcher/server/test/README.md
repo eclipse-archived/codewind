@@ -36,7 +36,12 @@ To run the functional test on kube, run the following commands:
 
 The options `-t` takes in the type of test environment to run, by default it is `local`. The options `-c` and `-p` stands for clean up before running and post clean up after test has finished.
 
-Additional options can be passed such as `DEPLOYMENT_REGISTRY` and `USER_DEVFILE` to overwrite the default values. The default deployment registry is: `docker-registry.default.svc:5000/che` and the default devfile is from https://github.com/eclipse/codewind-che-plugin/blob/master/devfiles/latest/devfile.yaml.
+Additional options can be passed such as `IMAGE_PUSH_REGISTRY_ADDRESS`, `IMAGE_PUSH_REGISTRY_NAMESPACE` and `USER_DEVFILE` to overwrite the default values. 
+
+The default values are:
+- **IMAGE_PUSH_REGISTRY_ADDRESS**: docker-registry.default.svc:5000/che
+- **IMAGE_PUSH_REGISTRY_NAMESPACE**: eclipse-che
+- **USER_DEVFILE**: https://raw.githubusercontent.com/eclipse/codewind-che-plugin/master/devfiles/latest/devfile.yaml
 
 Don't have a Che instance? No worries, use the `che-setup.sh` script from https://github.com/eclipse/codewind-che-plugin/tree/master/scripts to deploy a che instance with codewind. More on how to deploy che automatically on the link above.
 
