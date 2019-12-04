@@ -48,7 +48,6 @@ async function main() {
             pfe_protocol = "https"
         }
     }
-    console.log(`Codewind version is ${codewindVersion}`)
     console.log(`Gatekeeper ${workspaceID} with route authentication and UI Socket pass-through`)
 
     console.log("Gatekeeper configuration:")
