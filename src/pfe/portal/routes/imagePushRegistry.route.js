@@ -37,7 +37,7 @@ router.get('/api/v1/registry', function (req, res) {
 });
 
 /**
- * API Function to get status of Deployment Registry in Workspace Settings
+ * API Function to get status of Image Push Registry in Workspace Settings
  */
 router.get('/api/v1/imagepushregistry', async function (req, res) {
   let retval;
@@ -56,7 +56,7 @@ router.get('/api/v1/imagepushregistry', async function (req, res) {
 });
 
 /**
- * API Function to test and set the Deployment Registry
+ * API Function to test and set the Image Push Registry
  */
 router.post('/api/v1/imagepushregistry', validateReq, async function (req, res) {
   let retval;

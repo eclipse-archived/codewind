@@ -306,12 +306,12 @@ export default class Filewatcher {
 
     /**
      * @function
-     * @description Emit a socket event to highlight the validity status of the Deployment Registry
+     * @description Emit a socket event to highlight the validity status of the Image Push Registry
      *
      * @param req <Required | workspaceSettings.IImagePushRegistryStatusParams> - The request object.
      * Parameters:
      *  @property projectID <Required | String>: An alphanumeric identifier for a project.
-     *  @property detailedImagePushRegistryStatus <Required | String>: The detailed message of the Deployment Registry validity.
+     *  @property detailedImagePushRegistryStatus <Required | String>: The detailed message of the Image Push Registry validity.
      *
      *
      * @returns Promise<workspaceSettings.IImagePushRegistryStatusSuccess | workspaceSettings.IImagePushRegistryStatusFailure>
