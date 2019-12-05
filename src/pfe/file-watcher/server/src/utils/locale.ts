@@ -140,7 +140,7 @@ export async function getTranslation(key: string, options?: i18next.TOptions): P
     // Fail-safe. Incase if for some reason, FW cannot fetch translation after
     // i18next is initialized successfully, parse it from the English translation file
     if (translatedMsg == key) {
-        logger.logTrace("File-watcher could not fetch the translation using the translation service");
+        logger.logError("File-watcher could not fetch the translation using the translation service");
         logger.logTrace("Attempting to parse the translation file");
         translatedMsg = await getMessageFromFile(key, "en");
     }
@@ -211,12 +211,12 @@ export async function getMessageFromFile(key: string, backupLang?: string): Prom
         for (const element in keyArray) {
             message = message[keyArray[element]];
             if (!message || message == "") {
-                logger.logTrace("File watcher was unable to find the key in the translation file, the key will be used as the translation value: " + key);
+                logger.logError("File watcher was unable to find the key in the translation file, the key will be used as the translation value: " + key);
                 return key;
             }
         }
     } catch (err) {
-        logger.logTrace("Error parsing the translation file, the key will be used as the translation value: " + key);
+        logger.logError("Error parsing the translation file, the key will be used as the translation value: " + key);
         return key;
     }
 
