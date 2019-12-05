@@ -36,17 +36,17 @@ async function inject(req, res) {
       return;
     }
 
-    await user.projectList.updateProject({
-      projectID: projectID,
-      injectMetrics: injectMetrics
-    });
-
     const projectDir = path.join(project.workspace, project.directory);
     if (injectMetrics) {
       await metricsService.injectMetricsCollectorIntoProject(project.projectType, projectDir);
     } else {
       await metricsService.removeMetricsCollectorFromProject(project.projectType, projectDir);
     }
+
+    await user.projectList.updateProject({
+      projectID: projectID,
+      injectMetrics: injectMetrics
+    });
 
     res.sendStatus(202);
 

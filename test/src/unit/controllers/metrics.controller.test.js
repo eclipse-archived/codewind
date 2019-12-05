@@ -38,7 +38,7 @@ describe('metrics.controller.js', () => {
             res.status.should.be.calledOnceWith(404);
             res.send.should.be.calledOnceWith('Unable to find project nonexistentProjectId');
         });
-        it('returns 500 if our server errors', async() => {
+        it('returns 500 if our server errors while parsing the request', async() => {
             const request = {};
             const req = mockReq(request);
             const res = mockRes();
@@ -48,7 +48,7 @@ describe('metrics.controller.js', () => {
             res.status.should.be.calledOnceWith(500);
             res.send.args[0][0].should.equal('req.sanitizeParams is not a function');
         });
-        it('returns 500 if our server errors while inserting metrics collector into project', async() => {
+        it('returns 500 and does not update the project.inf if our server errors while inserting metrics collector into project', async() => {
             const request = {
                 sanitizeParams: () => 'goodProjectID',
                 sanitizeBody: () => true,
@@ -59,7 +59,7 @@ describe('metrics.controller.js', () => {
                             directory: 'projectDir',
                             projectType: 'unsupportedProjectType',
                         }),
-                        updateProject: () => {},
+                        updateProject: () => { throw new Error('we should not update the project.inf'); },
                     },
                 },
             };
@@ -71,7 +71,7 @@ describe('metrics.controller.js', () => {
             res.status.should.be.calledOnceWith(500);
             res.send.args[0][0].should.equal('Injection of metrics collector is not supported for projects of type \'unsupportedProjectType\'');
         });
-        it('returns 500 if our server errors while removing metrics collector from project', async() => {
+        it('returns 500 and does not update the project.inf if our server errors while removing metrics collector from project', async() => {
             const request = {
                 sanitizeParams: () => 'goodProjectID',
                 sanitizeBody: () => false,
@@ -82,7 +82,7 @@ describe('metrics.controller.js', () => {
                             directory: 'projectDir',
                             projectType: 'unsupportedProjectType',
                         }),
-                        updateProject: () => {},
+                        updateProject: () => { throw new Error('we should not update the project.inf'); },
                     },
                 },
             };
