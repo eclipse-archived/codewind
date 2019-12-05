@@ -437,13 +437,9 @@ function pingApplications(): void {
                                 };
                                 pingCountMap.delete(projectID);
                             } else if (shouldEmitMsg) {
-                                let translatedMsg;
-                                if (newMsg) {
-                                    translatedMsg = (newMsg.trim().length === 0) ? newMsg : await locale.getTranslation(newMsg);
-                                }
                                 data.detailedAppStatus = {
                                     severity: "ERROR",
-                                    message: translatedMsg,
+                                    message: newMsg,
                                     notify: false
                                 };
                             }
@@ -523,10 +519,6 @@ function pingInTransitApplications(): void {
                                         projectID: projectID,
                                         appStatus: newState
                                     };
-                                    let translatedMsg;
-                                    if (newMsg) {
-                                        translatedMsg = (newMsg.trim().length === 0) ? newMsg : await locale.getTranslation(newMsg);
-                                    }
                                     if (newState === AppState.started) {
                                         data.detailedAppStatus = {
                                             severity: "INFO",
@@ -537,13 +529,13 @@ function pingInTransitApplications(): void {
                                     } else if (newState === AppState.starting && pingCount == pingCountLimit) {
                                         data.detailedAppStatus = {
                                             severity: "WARN",
-                                            message: translatedMsg,
+                                            message: newMsg,
                                             notify: true
                                         };
                                     } else if (shouldEmitMsg) {
                                         data.detailedAppStatus = {
                                             severity: "ERROR",
-                                            message: translatedMsg,
+                                            message: newMsg,
                                             notify: false
                                         };
                                     }
