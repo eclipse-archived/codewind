@@ -143,7 +143,7 @@ if [[ $CONVERT_ONLY == false ]]; then
 fi
 
 echo -e "${CYAN}> Checking for virtualenv ${RESET}"
-ts-node -v > /dev/null 2>&1
+virtualenv --version > /dev/null 2>&1
 displayMsg $? "Missing virtualenv command. Please install and try again." true
 
 echo -e "${CYAN}> Checking for python ${RESET}"
