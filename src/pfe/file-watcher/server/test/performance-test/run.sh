@@ -35,12 +35,13 @@ function usage {
     cat <<EOF
 Usage: $me: [-<option letter> <option value> | -h]
 Options:
-    -c | --clean-run        To perform a clean run. Default: n
-    -e | --environment      The test environment. Default: local
-    -p | --post-clean       To perform a post clean up. Default: n 
-    -r | --release          The release branch to use. Default: master
-    -i | --iteration        Number of iterations to run the performance test. Default: 10
-    -o | --convert-only     Convert data to csv only. Will not run performance test and use existing data json on path. Default: false
+    --clean-run         To perform a clean run. Default: n
+    --environment       The test environment. Default: local
+    --post-clean        To perform a post clean up. Default: n 
+    --release           The release branch to use. Default: master
+    --iterations        Number of iterations to run the performance test. Default: 10
+    --convert-only      Convert data to csv only. Will not run performance test and use existing data json on path. Default: false
+    --repo              The upstream repo to use. Default: git@github.com:eclipse/codewind.git
     -h | --help             Display the man page
 EOF
 }
@@ -62,23 +63,26 @@ function displayMsg() {
 
 while :; do
     case $1 in
-        -c=?*|--clean-run=?*)
+        --clean-run=?*)
         CLEAN_RUN=${1#*=}
         ;;
-        -p=?*|--post-clean=?*)
+        --post-clean=?*)
         POST_CLEAN=${1#*=}
         ;;
-        -r=?*|--release=?*)
+        --release=?*)
         RELEASE_BRANCH=${1#*=}
         ;;
-        -e=?*|--environment=?*)
+        --environment=?*)
         TEST_ENV=${1#*=}
         ;;
-        -i=?*|--iteration=?*)
+        --iterations=?*)
         ITERATIONS=${1#*=}
         ;;
-        -o|--convert-only)
+        --convert-only)
         CONVERT_ONLY=true
+        ;;
+        --repo=?*)
+        CODEWIND_REPO=${1#*=}
         ;;
         -h|--help)
         usage
@@ -141,6 +145,8 @@ if [[ $CONVERT_ONLY == false ]]; then
         ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN
     done
 fi
+
+cd $CURR_DIR
 
 echo -e "${CYAN}> Checking for virtualenv ${RESET}"
 virtualenv --version > /dev/null 2>&1
