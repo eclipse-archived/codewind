@@ -25,6 +25,7 @@ POST_CLEAN="n"
 RELEASE_BRANCH="master"
 TEST_ENV="local"
 ITERATIONS=10
+CONVERT_ONLY=false
 
 CODEWIND_REPO=git@github.com:eclipse/codewind.git
 RELEASE_DIR="performance-test-codewind"
@@ -39,6 +40,7 @@ Options:
     -p | --post-clean       To perform a post clean up. Default: n 
     -r | --release          The release branch to use. Default: master
     -i | --iteration        Number of iterations to run the performance test. Default: 10
+    -o | --convert-only     Convert data to csv only. Will not run performance test and use existing data json on path. Default: false
     -h | --help             Display the man page
 EOF
 }
@@ -75,6 +77,9 @@ while :; do
         -i=?*|--iteration=?*)
         ITERATIONS=${1#*=}
         ;;
+        -o|--convert-only)
+        CONVERT_ONLY=true
+        ;;
         -h|--help)
         usage
         exit
@@ -92,48 +97,50 @@ if [ "$CLEAN_RUN" == "y" ] && [ "$TEST_ENV" == "local" ]; then
     CLEAN_RUN="n"
 fi
 
-echo -e "${CYAN}> Cloning release branch ${RESET}"
-rm -rf $RELEASE_DIR
-git clone $CODEWIND_REPO -b "$RELEASE_BRANCH" $RELEASE_DIR
-displayMsg $? "Failed to clone from release branch." true
-
-echo -e "${CYAN}> Creating data directory ${RESET}"
-TARGET_DIR="$CURR_DIR/data/$TEST_ENV/$RELEASE_BRANCH"
-rm -rf $TARGET_DIR
-mkdir -p $TARGET_DIR
-displayMsg $? "Failed to create data directory." true
-
 export TURBINE_PERFORMANCE_TEST=${RELEASE_BRANCH}
 export TEST_TYPE=${TEST_ENV}
 
-for run in $(seq 1 $ITERATIONS);
-do
-    echo -e "${CYAN}> Iteration: $run ${RESET}"
+if [[ $CONVERT_ONLY == false ]]; then
+    echo -e "${CYAN}> Cloning release branch ${RESET}"
+    rm -rf $RELEASE_DIR
+    git clone $CODEWIND_REPO -b "$RELEASE_BRANCH" $RELEASE_DIR
+    displayMsg $? "Failed to clone from release branch." true
 
-    echo -e "${CYAN}> Switching to release directory ${RESET}"
-    cd "$CURR_DIR/$RELEASE_DIR"
-    displayMsg $? "Failed to switch release directory." true
+    echo -e "${CYAN}> Creating data directory ${RESET}"
+    TARGET_DIR="$CURR_DIR/data/$TEST_ENV/$RELEASE_BRANCH"
+    rm -rf $TARGET_DIR
+    mkdir -p $TARGET_DIR
+    displayMsg $? "Failed to create data directory." true
 
-    echo -e "${CYAN}> Stopping codewind ${RESET}"
-    ./stop.sh
-    displayMsg $? "Failed to stop codewind." true
+    for run in $(seq 1 $ITERATIONS);
+    do
+        echo -e "${CYAN}> Iteration: $run ${RESET}"
 
-    echo -e "${CYAN}> Running docker system prune ${RESET}"
-    docker system prune -af
-    displayMsg $? "Failed to perform docker system prune." false
+        echo -e "${CYAN}> Switching to release directory ${RESET}"
+        cd "$CURR_DIR/$RELEASE_DIR"
+        displayMsg $? "Failed to switch release directory." true
 
-    echo -e "${CYAN}> Running docker image prune ${RESET}"
-    docker image prune -af
-    displayMsg $? "Failed to perform docker image prune." false
+        echo -e "${CYAN}> Stopping codewind ${RESET}"
+        ./stop.sh
+        displayMsg $? "Failed to stop codewind." true
 
-    echo -e "${CYAN}> Starting codewind ${RESET}"
-    ./run.sh
-    displayMsg $? "Failed to start codewind." true
+        echo -e "${CYAN}> Running docker system prune ${RESET}"
+        docker system prune -af
+        displayMsg $? "Failed to perform docker system prune." false
 
-    cd $TEST_DIR
+        echo -e "${CYAN}> Running docker image prune ${RESET}"
+        docker image prune -af
+        displayMsg $? "Failed to perform docker image prune." false
 
-    ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN
-done
+        echo -e "${CYAN}> Starting codewind ${RESET}"
+        ./run.sh
+        displayMsg $? "Failed to start codewind." true
+
+        cd $TEST_DIR
+
+        ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN
+    done
+fi
 
 echo -e "${CYAN}> Checking for virtualenv ${RESET}"
 ts-node -v > /dev/null 2>&1
