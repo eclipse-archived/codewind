@@ -404,7 +404,11 @@ function pingApplications(): void {
                     let newMsg = stateInfo.error;
                     if (newMsg) { newMsg = newMsg.toString(); } // Convert from Error to string
                     if (stateInfo.hasOwnProperty("isAppUp")) {
-                        newState = stateInfo.isAppUp ? AppState.started : AppState.stopped;
+                        if (stateInfo.isAppUp) {
+                            newState = AppState.started;
+                        } else if ( oldState != AppState.starting) { // if oldState is starting, should leave at starting state
+                            newState = AppState.stopped;
+                        }
                     } else if (newMsg) {
                         newState = AppState.stopped;
                         pingCountMap.delete(projectID);
@@ -425,7 +429,14 @@ function pingApplications(): void {
                                 projectID: projectID,
                                 appStatus: newState
                             };
-                            if (shouldEmitMsg) {
+                            if (newState === AppState.started) {
+                                data.detailedAppStatus = {
+                                    severity: "INFO",
+                                    message: "Application started.",
+                                    notify: false
+                                };
+                                pingCountMap.delete(projectID);
+                            } else if (shouldEmitMsg) {
                                 let translatedMsg;
                                 if (newMsg) {
                                     translatedMsg = (newMsg.trim().length === 0) ? newMsg : await locale.getTranslation(newMsg);

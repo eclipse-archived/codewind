@@ -522,7 +522,8 @@ module.exports = class FileWatcher {
         ports: '',
         buildStatus: 'unknown',
         appStatus: 'unknown',
-        state: Project.STATES.closed
+        state: Project.STATES.closed,
+        detailedAppStatus: undefined
       }
       // Set the container key to '' as the container has stopped.
       const containerKey = (global.codewind.RUNNING_IN_K8S ? 'podName' : 'containerId');
