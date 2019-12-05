@@ -22,7 +22,7 @@ for appType in applicationTypes:
                     performanceObject["{}-{}".format(appType, lang)][performanceKey] = [];
                 performanceObject["{}-{}".format(appType, lang)][performanceKey].append(performance_data[appType][lang][iteration][performanceKey]);
         for performanceKey in performanceKeys:
-            performanceObject["{}-{}".format(appType, lang)][performanceKey] = np.mean(performanceObject["{}-{}".format(appType, lang)][performanceKey]);
+            performanceObject["{}-{}".format(appType, lang)][performanceKey] = round(np.mean(performanceObject["{}-{}".format(appType, lang)][performanceKey]), 3);
 
 df = pd.DataFrame(data=performanceObject);
 df.fillna("-", inplace=True);
