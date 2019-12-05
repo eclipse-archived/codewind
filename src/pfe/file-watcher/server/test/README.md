@@ -11,14 +11,14 @@ The Codewind Turbine Module currently has two test suites at the moment:
 
 ### Unit Test Suite
 
-Unit test suites are ran only on local. To run unit test on local, run the following commands:
+Unit test suites do not require a codewind instance to be up. It tests the standalone turbine functionality. To run unit test on local, run the following commands:
 - `cd src/pfe/file-watcher/server/`
 - `npm i --only=dev`
 - `npm run unit:test`
 
 ### Functional Test Suite
 
-Functional test suites can be either ran on your local Codewind instance or on a hosted Che instance on kube.
+Functional test suites require a Codewind instance running either locally or on a hosted Kubernetes cluster with Eclipse Che.
 
 #### Local
 
@@ -34,7 +34,7 @@ To run the functional test on kube, run the following commands:
 - `cd src/pfe/file-watcher/server/test/`
 - `CLUSTER_IP=<cluster_ip> CLUSTER_PORT=<cluster_port> CLUSTER_USER=<cluster_user> CLUSTER_PASSWORD=<cluster_password> ./test.sh -t kube -c y -p y`
 
-The options `-t` takes in the type of test environment to run, by default it is `local`. The options `-c` and `-p` stands for clean up before running and post clean up after test has finished.
+The options `-t` takes in the type of test environment to run, by default it is `local`. The options `-c` and `-p` stands for clean up before running and post clean up after test has finished. For additional information, check `./test.sh --help`.
 
 Additional options can be passed such as `IMAGE_PUSH_REGISTRY_ADDRESS`, `IMAGE_PUSH_REGISTRY_NAMESPACE` and `USER_DEVFILE` to overwrite the default values. 
 
@@ -43,9 +43,9 @@ The default values are:
 - **IMAGE_PUSH_REGISTRY_NAMESPACE**: eclipse-che
 - **USER_DEVFILE**: https://raw.githubusercontent.com/eclipse/codewind-che-plugin/master/devfiles/latest/devfile.yaml
 
-Don't have a Che instance? No worries, use the `che-setup.sh` script from https://github.com/eclipse/codewind-che-plugin/tree/master/scripts to deploy a che instance with codewind. More on how to deploy che automatically on the link above.
+Don't have a Che instance? No worries, use the `che-setup.sh` script from https://github.com/eclipse/codewind-che-plugin/tree/master/scripts to deploy a che instance with codewind. More on how to deploy che automatically [here](https://github.com/eclipse/codewind-che-plugin/blob/master/scripts/README.md).
 
-## Developing new test
+## Developing new tests
 
 ### Unit Test Suite
 
@@ -82,7 +82,7 @@ Specific project types supported:
   - Perl
   - Python
 
-To run only specific project types, comment out the project types not unwanted in **projectTypes** variable under `src/pfe/file-watcher/server/test/functional-test/configs/app.config.ts`.
+To run only specific project types, comment out the unwanted project types in **projectTypes** variable under `src/pfe/file-watcher/server/test/functional-test/configs/app.config.ts`.
 
 ## Debugging tests
 
