@@ -73,7 +73,19 @@
     "generateMissingFilesDescription": "Generate missing required files."
   },
   "projectUtil": {
-    "projectInfoError": "could not retrieve project info"
+    "projectInfoError": "could not retrieve project info",
+    "pingMessage": "Pinging http://{{ip}}:{{port}}{{- path}}",
+    "defaultPingPathMessage": "Pinging http://{{ip}}:{{port}}{{- path}} and http://{{ip}}:{{port}}/",
+    "appStatusError": {
+      "errorGetContainerStatus": "Failed to get container status: {{errMsg}}",
+      "errorGetAppStatus": "Failed to get application status: {{errMsg}}",
+      "httpRequestTimeout": "Http request is failed due to timeout error",
+      "errorGetContainerInfo": "Could not retrieve container info for the project",
+      "errorGetPort": "Could not retrieve the port for the project",
+      "errorGetIP": "Could not retrieve the ip for the project",
+      "errorGetHostname": "Could not retrieve the hostname for the project service",
+      "badStatusCode": "Received response, but with bad status code {{statusCode}} when pinging project"
+    }
   },
   "validator": {
     "requiredFiles": {
@@ -136,15 +148,5 @@
         "details": "This project's pom.xml specifies an invalid packaging for its output. Only Spring projects with jar packaging are supported for this project type."
       }
     }
-  },
-  "appStatusError": {
-    "errorGetContainerStatus": "Failed to get container status: {{errMsg}}",
-    "errorGetAppStatus": "Failed to get application status: {{errMsg}}",
-    "httpRequestTimeout": "Http request is failed due to timeout error",
-    "errorGetContainerInfo": "Could not retrieve container info for the project",
-    "errorGetPort": "Could not retrieve the port for the project",
-    "errorGetIP": "Could not retrieve the ip for the project",
-    "errorGetHostname": "Could not retrieve the hostname for the project service",
-    "badStatusCode": "Received response, but with bad status code {{statusCode}} when pinging project"
   }
 }
