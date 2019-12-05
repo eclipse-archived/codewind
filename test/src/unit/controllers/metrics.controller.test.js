@@ -36,7 +36,7 @@ describe('metrics.controller.js', () => {
             await metricsController.inject(req, res);
 
             res.status.should.be.calledOnceWith(404);
-            res.send.should.be.calledOnceWith({ message: 'Unable to find project nonexistentProjectId' });
+            res.send.should.be.calledOnceWith('Unable to find project nonexistentProjectId');
         });
         it('returns 500 if our server errors', async() => {
             const request = {};
@@ -46,7 +46,7 @@ describe('metrics.controller.js', () => {
             await metricsController.inject(req, res);
 
             res.status.should.be.calledOnceWith(500);
-            res.send.args[0][0].message.should.equal('req.sanitizeParams is not a function');
+            res.send.args[0][0].should.equal('req.sanitizeParams is not a function');
         });
         it('returns 500 if our server errors while inserting metrics collector into project', async() => {
             const request = {
@@ -69,7 +69,7 @@ describe('metrics.controller.js', () => {
             await metricsController.inject(req, res);
 
             res.status.should.be.calledOnceWith(500);
-            res.send.args[0][0].message.should.equal('Injection of metrics collector is not supported for projects of type \'unsupportedProjectType\'');
+            res.send.args[0][0].should.equal('Injection of metrics collector is not supported for projects of type \'unsupportedProjectType\'');
         });
         it('returns 500 if our server errors while removing metrics collector from project', async() => {
             const request = {
@@ -92,7 +92,7 @@ describe('metrics.controller.js', () => {
             await metricsController.inject(req, res);
 
             res.status.should.be.calledOnceWith(500);
-            res.send.args[0][0].message.should.equal('Injection of metrics collector is not supported for projects of type \'unsupportedProjectType\'');
+            res.send.args[0][0].should.equal('Injection of metrics collector is not supported for projects of type \'unsupportedProjectType\'');
         });
         it('returns 202 and injects metrics collector into project build container if we provide a good request', async() => {
             const request = {

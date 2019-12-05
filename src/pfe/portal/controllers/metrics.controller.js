@@ -32,7 +32,7 @@ async function inject(req, res) {
     if (!project) {
       const message = `Unable to find project ${projectID}`;
       log.error(message);
-      res.status(404).send({ message });
+      res.status(404).send(message);
       return;
     }
 
@@ -53,7 +53,7 @@ async function inject(req, res) {
     await syncProjectFilesIntoBuildContainer(project, user);
   } catch (err) {
     log.error(err);
-    res.status(500).send(err.info || err);
+    res.status(500).send(err.info || err.message);
   }
 }
 
