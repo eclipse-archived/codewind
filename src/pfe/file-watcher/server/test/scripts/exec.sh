@@ -37,7 +37,7 @@ function checkExitCode() {
 
 function downloadCwctl() {
     echo -e "${BLUE}>> Downloading latest installer ... ${RESET}"
-    EXECUTABLE_NAME="cwctl"
+    EXECUTABLE_NAME="cwctl_"$TEST_TYPE
     HOST_OS=$(uname -a)
     if [[ "$HOST_OS" =~ "Darwin" ]]; then
         extension="macos"
@@ -73,7 +73,8 @@ function setup {
     TURBINE_SERVER_DIR=$CW_DIR/src/pfe/file-watcher/server
     TEST_DIR=$TURBINE_SERVER_DIR/test
     TURBINE_DIR_CONTAINER=/file-watcher
-    TEST_OUTPUT_DIR=~/test_results/$TEST_TYPE/$TEST_SUITE/$DATE_NOW/$TIME_NOW
+    TEST_RUNS_DATE_DIR=~/test_results/$DATE_NOW
+    TEST_OUTPUT_DIR=$TEST_RUNS_DATE_DIR/$TEST_TYPE/$TEST_SUITE/$TIME_NOW
     TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
     PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
@@ -157,7 +158,7 @@ function run {
             echo -e "${RED}Dashboard IP is required to upload test results. ${RESET}\n"
             exit 1
         fi
-        $WEBSERVER_FILE $TEST_OUTPUT_DIR > /dev/null
+        $WEBSERVER_FILE $TEST_RUNS_DATE_DIR > /dev/null
         curl --header "Content-Type:text/xml" --data-binary @$TEST_OUTPUT --insecure "https://$DASHBOARD_IP/postxmlresult/$BUCKET_NAME/test" > /dev/null
     fi
 
