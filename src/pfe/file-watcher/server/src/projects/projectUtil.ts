@@ -63,6 +63,8 @@ const isApplicationPodUpIntervalMap = new Map();
 
 export const firstTimePingArray = new Array();
 
+export let pingMessage: string;
+
 export interface ProjectEvent {
     operationId: string;
     projectID: string;
@@ -2135,15 +2137,18 @@ export async function updateDetailedAppStatus(projectID: string, ip: string, por
     const oldMsg = appStateMap.get(projectID).msg;
 
     let pingPathEvent: DetailedAppStatus;
-    pingPathEvent = {
-        severity: "INFO",
-        message: await locale.getTranslation("projectUtil.pingMessage", { ip: ip, port: port, path: path }),
-        notify: false
-    };
 
     if (isDefaultPath) {
-        pingPathEvent.message = await locale.getTranslation("projectUtil.defaultPingPathMessage", { ip: ip, port: port, path: path });
+        pingMessage = await locale.getTranslation("projectUtil.defaultPingPathMessage", { ip: ip, port: port, path: path });
+    } else {
+        pingMessage = await locale.getTranslation("projectUtil.pingMessage", { ip: ip, port: port, path: path });
     }
+
+    pingPathEvent = {
+        severity: "INFO",
+        message: pingMessage,
+        notify: false
+    };
 
     if (oldState === AppState.starting) {
         projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathEvent);
