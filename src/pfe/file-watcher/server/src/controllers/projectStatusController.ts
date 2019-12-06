@@ -428,9 +428,14 @@ function pingApplications(): void {
                                 appStatus: newState
                             };
                             if (newState === AppState.started) {
+                                data.detailedAppStatus = {
+                                    severity: "INFO",
+                                    message: "",
+                                    notify: false
+                                };
                                 pingCountMap.delete(projectID);
                             }
-                            appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, appStateMap.get(projectID).detailedAppStatus));
+                            appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
                             io.emitOnListener("projectStatusChanged", data);
                         }
                     }
@@ -488,17 +493,16 @@ function pingInTransitApplications(): void {
                                     newState = AppState.stopped;
                                     pingCountMap.delete(projectID);
                                 }
+                                // first time reach the timeout, will not emit the same message when timeout exceeds.
                                 if (pingCount == pingCountLimit) {
                                     const errMsg = (appStateMap.get(projectID).detailedAppStatus) ? appStateMap.get(projectID).detailedAppStatus.message : await locale.getTranslation("projectStatusController.pingTimeoutDefaultMessage");
                                     newMsg = await locale.getTranslation("projectStatusController.pingTimeout", { pingMessage: projectUtil.pingMessage, errMsg: errMsg });
                                 }
 
-                                let isANewMessage: boolean = false;
                                 let detailedAppStatus;
                                  // Ensure that only new messages are emitted and logged
                                 if (newMsg && (newMsg.toString().trim() !== (oldMsg ? oldMsg.toString().trim() : oldMsg))) {
                                     logger.logProjectInfo("pingInTransitApplications: Application state error message: " + newMsg, projectID);
-                                    isANewMessage = true;
                                     detailedAppStatus = {
                                         severity: "ERROR",
                                         message: newMsg,
@@ -515,6 +519,12 @@ function pingInTransitApplications(): void {
                                         appStatus: newState
                                     };
                                     if (newState === AppState.started) {
+                                        detailedAppStatus = {
+                                            severity: "INFO",
+                                            message: "",
+                                            notify: false
+                                        };
+                                        data.detailedAppStatus = detailedAppStatus;
                                         pingCountMap.delete(projectID);
                                     } else if (newState === AppState.starting && pingCount == pingCountLimit) {
                                         detailedAppStatus = {
