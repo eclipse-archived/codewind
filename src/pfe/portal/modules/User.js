@@ -747,7 +747,7 @@ module.exports = class User {
       return registrySecretList;
     }
 
-    const msg = "Failed to patch the Service Account";
+    const msg = "Failed to create the Codewind Secret and/or patch the Service Account, reverting changes to the Docker Config";
     log.error(msg);
     
     // Since patching the Service Account failed, we need to revert the update to the Docker Config
@@ -827,7 +827,7 @@ module.exports = class User {
       }
     } catch (err) {
       log.error(err);
-      log.error("Failed to create the Secret and patch the Service Account");
+      log.error("Failed to create the Codewind Secret and/or patch the Service Account");
       return false;
     }
 
@@ -931,7 +931,7 @@ module.exports = class User {
       return registrySecretList;
     }
 
-    const msg = "Failed to patch the Service Account";
+    const msg = "Failed to create the Codewind Secret and/or patch the Service Account, reverting changes to the Docker Config";
     log.error(msg);
 
     // Since patching the Service Account failed, we need to revert the delete from the Docker Config

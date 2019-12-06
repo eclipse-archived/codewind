@@ -40,7 +40,7 @@ function constructMessage(code, message) {
     output = `Cannot have multiple docker registries with the same url. Please delete the previous registry and try again`;
     break;
   case "SERVICE_ACCOUNT_PATCH_FAILED":
-    output = `Failed to patch the Service Account after updating the Codewind Secret`;
+    output = `Failed to create the Codewind Secret and/or patch the Service Account`;
     break;
   case "NO_DOCKER_CONFIG":
     output = `Unable to find the Codewind Docker Config`;
