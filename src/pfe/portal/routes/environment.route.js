@@ -35,6 +35,7 @@ router.get('/api/v1/environment', async (req, res) => {
       user_string: req.cw_user.userString,
       socket_namespace: req.cw_user.uiSocketNamespace,
       codewind_version: process.env.CODEWIND_VERSION,
+      image_build_time: process.env.IMAGE_BUILD_TIME,
       workspace_location: process.env.HOST_WORKSPACE_DIRECTORY,
       os_platform: process.env.HOST_OS || 'Linux',
       tekton_dashboard: tektonDashboard

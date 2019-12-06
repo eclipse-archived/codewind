@@ -27,6 +27,9 @@ async function main() {
   // Set the umask for file creation.
   process.umask(0o002);
 
+  // dotenv reads .env and adds it to the process.env object
+  require('dotenv').config()
+
   if (process.env.APPMETRICS) { // dev mode
     require('appmetrics-dash').monitor({ title: "Application Metrics Dashboard - Monitoring codewind Portal" });
   }
