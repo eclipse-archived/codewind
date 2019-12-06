@@ -161,23 +161,13 @@ export async function cacheWorkspaceSettingsInfo(workspaceSettings: WorkspaceSet
  * @function
  * @description Get the workspace settings info from cache or the settings file.
  *
- * * @param handleURL <Optional | boolean> - This option lets you handle the registry address index.docker.io/v1 conversion to docker.io if set to true.
- *
  * @returns Promise<any>
  */
-export async function getWorkspaceSettingsInfo(handleAddress?: boolean): Promise<any> {
+export async function getWorkspaceSettingsInfo(): Promise<any> {
     const workspaceSettingsFile = constants.workspaceConstants.workspaceSettingsFile;
     if (workspaceSettingsInfoCache) {
         logger.logInfo("workspaceSettingsInfoCache cache: " + workspaceSettingsInfoCache);
         const workspaceSettingsInfoCacheJSON = JSON.parse(workspaceSettingsInfoCache);
-        if (handleAddress) {
-            try {
-                workspaceSettingsInfoCacheJSON.registryAddress = transformImagePushRegistryAddress(workspaceSettingsInfoCacheJSON.registryAddress);
-            } catch (err) {
-                logger.logError(err);
-                return JSON.parse(workspaceSettingsInfoCache);
-            }
-        }
         return workspaceSettingsInfoCacheJSON;
     }
 
@@ -192,9 +182,6 @@ export async function getWorkspaceSettingsInfo(handleAddress?: boolean): Promise
         if (await utils.asyncFileExists(workspaceSettingsFile)) {
             data = await utils.asyncReadJSONFile(workspaceSettingsFile);
             logger.logInfo("Returning workspace settings file content: " + JSON.stringify(data));
-            if (handleAddress) {
-                data.registryAddress = transformImagePushRegistryAddress(data.registryAddress);
-            }
             return data;
         } else {
             const msg = "The workspace settings file was not found at location: " + workspaceSettingsFile;
@@ -240,9 +227,16 @@ function transformImagePushRegistryAddress(address: string): string {
  * @returns Promise<string>
  */
 export async function getImagePushRegistry(): Promise<string> {
-    // getWorkspaceSettingsInfo is passed handleAddress as true because getImagePushRegistry is called by projectUtil and the address needs to be transformed before pushing
-    const workspaceSettingsInfo = await getWorkspaceSettingsInfo(true);
-    logger.logInfo("Got the workspaceSettingsInfo: " + JSON.stringify(workspaceSettingsInfo));
+    const workspaceSettingsInfo = await getWorkspaceSettingsInfo();
+    try {
+        // getImagePushRegistry() is called by projectUtil before project operations to push to registry, so transform the address
+        workspaceSettingsInfo.registryAddress = transformImagePushRegistryAddress(workspaceSettingsInfo.registryAddress);
+    } catch (err) {
+        logger.logError(err);
+        // return empty string if there is an error when transforming address. And project create/update will error out for invalid registry
+        return "";
+    }
+    logger.logInfo("WorkspaceSettingsInfo for project operations: " + JSON.stringify(workspaceSettingsInfo));
     const imagePushRegistry = workspaceSettingsInfo.registryAddress.trim() + "/" + workspaceSettingsInfo.registryNamespace.trim();
     return imagePushRegistry;
 }

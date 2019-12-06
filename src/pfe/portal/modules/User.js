@@ -770,10 +770,10 @@ module.exports = class User {
           await this.k8Client.api.v1.namespaces(process.env.KUBE_NAMESPACE).secrets(secretName).delete();
         }
 
-        // Get the Codewind PFE deployment name and uid labeled with app=codewind-pfe and codewindWorkspace=<workspace_id>
-        resp = await this.k8Client.apis.apps.v1.namespaces(process.env.KUBE_NAMESPACE).deployments.get({ qs: { labelSelector: "app=codewind-pfe,codewindWorkspace=" + process.env.CHE_WORKSPACE_ID } });
-        const ownerReferenceName = resp.body.items[0].metadata.name;
-        const ownerReferenceUID = resp.body.items[0].metadata.uid;
+        // Get the Codewind PVC name and uid for Secret's owner reference
+        resp = await this.k8Client.api.v1.namespaces(process.env.KUBE_NAMESPACE).persistentvolumeclaims(process.env.PVC_NAME).get();
+        const ownerReferenceName = resp.body.metadata.name;
+        const ownerReferenceUID = resp.body.metadata.uid;
 
         // Create the new secret with the encoded data
         const secret = {
