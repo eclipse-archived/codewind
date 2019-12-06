@@ -10,43 +10,11 @@
  *******************************************************************************/
 const express = require('express');
 
-const Logger = require('../../modules/utils/Logger');
+const projectsController = require('../../controllers/projects.controller')
+
 const router = express.Router();
-const log = new Logger(__filename);
 
-/**
- * API Function to get the a single project and return it as a json object
- * @return the project object
- */
-router.get('/api/v1/projects/:id', (req, res) => {
-  try {
-    let projectID = req.sanitizeParams('id');
-    let user = req.cw_user;
-    let project = user.projectList.retrieveProject(projectID);
-    if (project) {
-      res.status(200).send(project);
-    } else {
-      res.sendStatus(404);
-    }
-  } catch (err) {
-    log.error(err);
-    res.status(500).send(err);
-  }
-});
-
-/**
- * API Function to get the projectList and return it as an array
- * @return the projectList
- */
-router.get('/api/v1/projects', (req, res) => {
-  try {
-    const user = req.cw_user;
-    const list = user.projectList.getAsArray();
-    res.status(200).send(list);
-  } catch (err) {
-    log.error(err);
-    res.status(500).send(err);
-  }
-});
+router.get('/api/v1/projects/:id', projectsController.getProject);
+router.get('/api/v1/projects', projectsController.getProjects);
 
 module.exports = router;
