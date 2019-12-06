@@ -36,8 +36,8 @@ const pathToBackupPackageJson = path.join(projectDir, 'backupPackage.json');
 const pathToTestPackageJsons = path.join(testResourcesDir, 'node', 'package.json');
 const pathToInvalidPackageJsons = path.join(pathToTestPackageJsons, 'notValidForInjection');
 const pathToValidPackageJsons = path.join(pathToTestPackageJsons, 'validForInjection');
-const pathToPackageJsonWithoutCollector = path.join(pathToValidPackageJsons, 'withDependencies', 'without collector.json');
-const pathToPackageJsonWithCollector = path.join(pathToValidPackageJsons, 'withDependencies', 'with collector.json');
+const pathToPackageJsonWithoutCollector = path.join(pathToValidPackageJsons, 'withDependencies', 'withoutCollector.json');
+const pathToPackageJsonWithCollector = path.join(pathToValidPackageJsons, 'withDependencies', 'withCollector.json');
 const packageJsonWithoutCollector = fs.readJSONSync(pathToPackageJsonWithoutCollector);
 const packageJsonWithCollector = fs.readJSONSync(pathToPackageJsonWithCollector);
 
@@ -55,8 +55,8 @@ describe('metricsService/index.js', () => {
     const expectedJvmOptions = `${originalJvmOptions}\n-javaagent:resources/javametrics-agent.jar`;
 
     const pathToPomXmlsForLiberty = path.join(testResourcesDir, 'liberty', 'pom.xml');
-    const pathToOriginalPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'without collector.xml');
-    const pathToExpectedPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'with collector.xml');
+    const pathToOriginalPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'withoutCollector.xml');
+    const pathToExpectedPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'withCollector.xml');
     let originalPomXmlForLiberty;
     let expectedPomXmlForLiberty;
 
@@ -68,14 +68,14 @@ describe('metricsService/index.js', () => {
     const pathToTestResourcesForSpring = path.join(testResourcesDir, 'spring');
 
     const pathToMainAppClassFiles = path.join(pathToTestResourcesForSpring, 'Application.java');
-    const pathToOriginalMainAppClassFile = path.join(pathToMainAppClassFiles, 'package1', 'without collector.java');
-    const pathToExpectedMainAppClassFile = path.join(pathToMainAppClassFiles, 'package1', 'with collector.java');
+    const pathToOriginalMainAppClassFile = path.join(pathToMainAppClassFiles, 'package1', 'withoutCollector.java');
+    const pathToExpectedMainAppClassFile = path.join(pathToMainAppClassFiles, 'package1', 'withCollector.java');
     const originalMainAppClassFile = fs.readFileSync(pathToOriginalMainAppClassFile, 'utf8');
     const expectedMainAppClassFile = fs.readFileSync(pathToExpectedMainAppClassFile, 'utf8');
 
     const pathToPomXmlsForSpring = path.join(pathToTestResourcesForSpring, 'pom.xml');
-    const pathToOriginalPomXmlForSpring = path.join(pathToPomXmlsForSpring, 'without collector.xml');
-    const pathToExpectedPomXmlForSpring = path.join(pathToPomXmlsForSpring, 'with collector.xml');
+    const pathToOriginalPomXmlForSpring = path.join(pathToPomXmlsForSpring, 'withoutCollector.xml');
+    const pathToExpectedPomXmlForSpring = path.join(pathToPomXmlsForSpring, 'withCollector.xml');
     let originalPomXmlForSpring;
     let expectedPomXmlForSpring;
 
@@ -636,12 +636,12 @@ describe('metricsService/index.js', () => {
                     expectedMainAppClassFile,
                 },
                 'package application2': {
-                    originalMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package2', 'without collector.java'), 'utf8'),
-                    expectedMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package2', 'with collector.java'), 'utf8'),
+                    originalMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package2', 'withoutCollector.java'), 'utf8'),
+                    expectedMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package2', 'withCollector.java'), 'utf8'),
                 },
                 'component scan annotation already present': {
-                    originalMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package3', 'without collector.java'), 'utf8'),
-                    expectedMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package3', 'with collector.java'), 'utf8'),
+                    originalMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package3', 'withoutCollector.java'), 'utf8'),
+                    expectedMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package3', 'withCollector.java'), 'utf8'),
                 },
             };
             for (const [testName, test] of Object.entries(tests)) {
@@ -745,8 +745,8 @@ describe('metricsService/node.js', () => {
             });
         });
         describe('package.json does not have metrics collector, and has no dependencies', () => {
-            const packageJsonWithoutCollector = fs.readJSONSync(path.join(pathToValidPackageJsons, 'withoutDependencies', 'without collector.json'));
-            const packageJsonWithCollector = fs.readJSONSync(path.join(pathToValidPackageJsons, 'withoutDependencies', 'with collector.json'));
+            const packageJsonWithoutCollector = fs.readJSONSync(path.join(pathToValidPackageJsons, 'withoutDependencies', 'withoutCollector.json'));
+            const packageJsonWithCollector = fs.readJSONSync(path.join(pathToValidPackageJsons, 'withoutDependencies', 'withCollector.json'));
             before(() => {
                 fs.outputJSONSync(pathToPackageJson, packageJsonWithoutCollector);
             });
