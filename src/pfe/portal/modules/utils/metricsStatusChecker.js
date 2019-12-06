@@ -11,13 +11,10 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const util = require('util');
 
 const MetricsStatusError = require('../utils/errors/MetricsStatusError')
 const Logger = require('../utils/Logger');
 const log = new Logger('metricsStatusChecker.js');
-
-const readFile = util.promisify(fs.readFile);
 
 const filesToCheck = {
   java : 'pom.xml',
@@ -47,7 +44,7 @@ async function isMetricsAvailable(projectPath, projectLanguage) {
 async function doesMetricsPackageExist(pathOfFileToCheck, projectLanguage) {
   let metricsPackageExists = false; // default to appmetrics unavailable
   try {
-    const fileToCheck = await readFile(pathOfFileToCheck, 'utf8');
+    const fileToCheck = await fs.readFile(pathOfFileToCheck, 'utf8');
     if (projectLanguage === 'nodejs') {
       const packageJSON = JSON.parse(fileToCheck);
       // There might not be any dependencies
@@ -69,5 +66,5 @@ async function doesMetricsPackageExist(pathOfFileToCheck, projectLanguage) {
 }
 
 module.exports = {
-  isMetricsAvailable
+  isMetricsAvailable,
 }

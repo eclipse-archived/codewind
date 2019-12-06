@@ -60,7 +60,6 @@ module.exports = class Project {
     if (args.framework) this.framework = args.framework;
     if (args.services) this.services = args.services;
     if (args.gitURL) this.gitURL = args.gitURL;
-    if (args.validate) this.validate = args.validate;
     if (args.extension) this.extension = args.extension;
 
     // locOnDisk is used by the UI and needs to match what it sees.

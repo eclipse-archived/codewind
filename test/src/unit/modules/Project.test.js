@@ -33,9 +33,9 @@ const loadTestResources = path.join(__dirname, '../../../resources/load-test-dat
 describe('Project.js', () => {
     suppressLogOutput(Project);
     beforeEach(() => {
-        global.codewind = { 
-            RUNNING_IN_K8S: false,  
-            CODEWIND_WORKSPACE: `${__dirname}/project_temp/`, 
+        global.codewind = {
+            RUNNING_IN_K8S: false,
+            CODEWIND_WORKSPACE: `${__dirname}/project_temp/`,
             CODEWIND_TEMP_WORKSPACE: `${__dirname}/project_temp/temp/`,
         };
         fs.ensureDirSync(global.codewind.CODEWIND_TEMP_WORKSPACE);
@@ -122,24 +122,21 @@ describe('Project.js', () => {
                     },
                 };
                 const packageJSONPath = path.join(project.projectPath(), 'package.json');
-                await fs.ensureFile(packageJSONPath);
-                await fs.writeJSON(packageJSONPath, packageJSONContents);
+                fs.outputJSONSync(packageJSONPath, packageJSONContents);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Java', async() => {
                 const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'java' }, global.codewind.CODEWIND_WORKSPACE);
                 const pomXmlPath = path.join(project.projectPath(), 'pom.xml');
-                await fs.ensureFile(pomXmlPath);
-                await fs.writeFile(pomXmlPath, 'javametrics');
+                fs.outputFileSync(pomXmlPath, 'javametrics');
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Swift', async() => {
                 const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'swift' }, global.codewind.CODEWIND_WORKSPACE);
                 const packageSwiftPath = path.join(project.projectPath(), 'Package.swift');
-                await fs.ensureFile(packageSwiftPath);
-                await fs.writeFile(packageSwiftPath, 'SwiftMetrics.git');
+                fs.outputFileSync(packageSwiftPath, 'SwiftMetrics.git');
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
@@ -236,8 +233,7 @@ describe('Project.js', () => {
         it('Returns the contents of a created .cw-settings file', async() => {
             const project = createDefaultProjectAndCheckIsAnObject();
             const settingsPath = path.join(project.projectPath(), '.cw-settings');
-            await fs.ensureFile(settingsPath);
-            await fs.writeJson(settingsPath, { property: 'string' });
+            fs.outputJsonSync(settingsPath, { property: 'string' });
             const settings = await project.readSettingsFile();
             settings.should.have.property('property').and.equal('string');
         });

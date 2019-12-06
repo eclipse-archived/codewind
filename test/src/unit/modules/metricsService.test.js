@@ -665,7 +665,7 @@ describe('metricsService/index.js', () => {
                 'component scan annotation already present': {
                     originalMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package3', 'without collector.java'), 'utf8'),
                     expectedMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package3', 'with collector.java'), 'utf8'),
-                }, 
+                },
             };
             for (const [testName, test] of Object.entries(tests)) {
                 describe(testName, () => { // eslint-disable-line no-loop-func
