@@ -22,6 +22,11 @@ const ProjectError = require('../../../../src/pfe/portal/modules/utils/errors/Pr
 const ProjectMetricsError = require('../../../../src/pfe/portal/modules/utils/errors/ProjectMetricsError');
 
 const { suppressLogOutput } = require('../../../modules/log.service');
+const {
+    createProjectAndCheckIsAnObject,
+    createDefaultProjectAndCheckIsAnObject,
+    createNodeProjectWithPackageJsonDependencies,
+} = require('../../../modules/projectCreation.service');
 
 chai.use(chaiSubset);
 chai.use(chaiAsPromised);
@@ -719,15 +724,3 @@ describe('Project.js', () => {
         });
     });
 });
-
-function createProjectAndCheckIsAnObject(options, workspace) {
-    const project = new Project(options, workspace);
-    project.should.be.an('object');
-    return project;
-}
-
-function createDefaultProjectAndCheckIsAnObject() {
-    const options = { name: 'dummy' };
-    const workspace = global.codewind.CODEWIND_WORKSPACE;
-    return createProjectAndCheckIsAnObject(options, workspace);
-}

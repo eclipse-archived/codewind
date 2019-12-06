@@ -12,7 +12,7 @@ const chai = require('chai');
 const rewire = require('rewire');
 
 const performanceController = rewire('../../../../src/pfe/portal/controllers/performance.controller');
-const Project = require('../../../../src/pfe/portal/modules/Project');
+const { createDummyProject } = require('../../../modules/projectCreation.service');
 
 chai.should();
 
@@ -56,18 +56,3 @@ describe('performance.controller.js', function() {
         });
     });
 });
-
-function createProject(options, workspace) {
-    const project = new Project(options, workspace);
-    project.should.be.an('object');
-    return project;
-}
-
-function createDummyProject(extraOptions) {
-    const options = {
-        name: 'dummy',
-        ...extraOptions,
-    };
-    const workspace = '.';
-    return createProject(options, workspace);
-}
