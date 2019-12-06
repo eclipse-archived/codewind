@@ -678,6 +678,7 @@ module.exports = class User {
     const password = credentialsJSON.password;
     log.info("Setting up the Docker Registry secret for address: " + address + " and username: " + username);
     const registrySecretList = [];
+    let jsonObj;
     
     try {
       // Handle dockerhub specifically on local since docker.io does not work
@@ -690,7 +691,7 @@ module.exports = class User {
 
       if (isDockerConfigFilePresent) {
         log.info("The Docker config file exists, reading the contents");
-        const jsonObj = await fs.readJson(this.dockerConfigFile);
+        jsonObj = await fs.readJson(this.dockerConfigFile);
 
         for (let key in jsonObj.auths) {
           const registrySecret = {
@@ -712,7 +713,7 @@ module.exports = class User {
         await fs.writeJson(this.dockerConfigFile, jsonObj);
       } else {
         log.info("The Docker config file does not exist, writing the contents");
-        const jsonObj = {"auths":{}}
+        jsonObj = {"auths":{}}
         jsonObj.auths[address] = {
           "username":username,
           "password":password,
@@ -748,6 +749,11 @@ module.exports = class User {
 
     const msg = "Failed to patch the Service Account";
     log.error(msg);
+    
+    // Since patching the Service Account failed, we need to revert the update to the Docker Config
+    delete jsonObj.auths[address];
+    await fs.writeJson(this.dockerConfigFile, jsonObj);
+
     throw new RegistrySecretsError("SERVICE_ACCOUNT_PATCH_FAILED", "for address " + address);
   }
 
@@ -865,6 +871,8 @@ module.exports = class User {
    */
   async removeRegistrySecret(address) {
     const registrySecretList = [];
+    let jsonObj;
+    let registrySecretToBeDeleted;
 
     try {
       // Handle dockerhub specifically on local since docker.io does not work
@@ -875,11 +883,12 @@ module.exports = class User {
       const isDockerConfigFilePresent = await cwUtils.fileExists(this.dockerConfigFile)
       if (isDockerConfigFilePresent) {
         log.info("Docker Config file present, removing the specified Docker Registry from the list");
-        const jsonObj = await fs.readJson(this.dockerConfigFile);
+        jsonObj = await fs.readJson(this.dockerConfigFile);
         let isSecretDeleted = false;
 
         for (let key in jsonObj.auths) {
           if (key == address) {
+            registrySecretToBeDeleted = jsonObj.auths[key];
             delete jsonObj.auths[key];
             isSecretDeleted = true;
           } else {
@@ -924,6 +933,11 @@ module.exports = class User {
 
     const msg = "Failed to patch the Service Account";
     log.error(msg);
+
+    // Since patching the Service Account failed, we need to revert the delete from the Docker Config
+    jsonObj.auths[address] = registrySecretToBeDeleted;
+    await fs.writeJson(this.dockerConfigFile, jsonObj);
+
     throw new RegistrySecretsError("SERVICE_ACCOUNT_PATCH_FAILED", "for address " + address);
   }
 
