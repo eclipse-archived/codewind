@@ -85,7 +85,7 @@ const logsOrigin: logHelper.ILogTypes = {
 export class ShellExtensionProject implements IExtensionProject {
 
     supportedType: string;
-    detectChangeByExtension: boolean = true;
+    detectChangeByExtension: string[] = [ "env.list" ];
 
     private fullPath: string;
     private config: ShellExtensionProjectConfig;
@@ -178,6 +178,17 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param changedFiles <Optional | projectEventsController.IFileChangeEvent[]> - The file changed event array.
      */
     update = (operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): void => {
+
+        // if detectChangeByExtension is an array, that's the list of files that should trigger a REBUILD
+        if (changedFiles && Array.isArray(this.detectChangeByExtension)) {
+            for (const event of changedFiles) {
+                if (this.detectChangeByExtension.includes(event.path)) {
+                    operation.projectInfo.forceAction = "REBUILD";
+                    break;
+                }
+            }
+        }
+
         projectUtil.containerUpdate(operation, path.join(this.fullPath, "entrypoint.sh"), "update");
     }
 

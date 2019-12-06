@@ -42,6 +42,21 @@ const workspaceSettingsInfo =  workspaceSettings.workspaceSettingsInfoCache ? JS
 // default 20s timeout to wait for all chunks
 const timeout = (workspaceSettingsInfo && workspaceSettingsInfo.watcherChunkTimeout) ? workspaceSettingsInfo.watcherChunkTimeout : 20000;
 
+function shouldHandle(detectChangeByExtension: boolean | string[], path: string): boolean {
+
+    // clearly we should handle when detectChangeByExtension is false
+    if (!detectChangeByExtension) {
+        return true;
+    }
+
+    // changes are detected by extension, unless the path is in the array (list of exceptions)
+    if (Array.isArray(detectChangeByExtension)) {
+        return detectChangeByExtension.includes(path);
+    }
+
+    return false;
+}
+
 /**
  * This is a function to receive notification from filewatcher daemon
  * @see [[Filewatcher.updateProjectForNewChange]]
@@ -93,7 +108,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                     const data = await readFileAsync(settingsFilePath, "utf8");
                     const projectSettings = JSON.parse(data);
                     projectSpecifications.projectSpecificationHandler(projectID, projectSettings);
-                } else if (eventArray[i].path && !eventArray[i].path.includes(".cw-settings") && !detectChangeByExtension) {
+                } else if (eventArray[i].path && !eventArray[i].path.includes(".cw-settings") && shouldHandle(detectChangeByExtension, eventArray[i].path)) {
                     logger.logProjectInfo("Detected other file changes, Codewind will build the project", projectID);
                     isProjectBuildRequired = true;
                 }
