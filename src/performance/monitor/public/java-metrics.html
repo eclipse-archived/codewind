@@ -169,8 +169,8 @@
     pollMetricsAndUpdateDash(maxPolls, updateDash);
 
     function updateDash(projectData) {
-      console.log('projectData');
-      console.log(projectData);
+      // console.log('projectData');
+      // console.log(projectData);
       if (projectData.metrics) {
         const combinedMetrics = combineMetrics(projectData.metrics);
         updateGraphs(combinedMetrics);
@@ -198,12 +198,12 @@
       const metricsFromUserNotProvidedByCodewind = metricsFromUser.filter(userMetric =>
         !metricsFromCodewind.some(cwMetric => cwMetric.name === userMetric.name)
       );
-      console.log('metricsFromUserNotProvidedByCodewind');
-      console.log(metricsFromUserNotProvidedByCodewind);
+      // console.log('metricsFromUserNotProvidedByCodewind');
+      // console.log(metricsFromUserNotProvidedByCodewind);
 
       const combinedMetrics = metricsFromCodewind.concat(metricsFromUserNotProvidedByCodewind);
-      console.log('combinedMetrics');
-      console.log(combinedMetrics);
+      // console.log('combinedMetrics');
+      // console.log(combinedMetrics);
       return combinedMetrics;
     }
 
