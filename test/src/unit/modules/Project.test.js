@@ -78,7 +78,12 @@ describe('Project.js', () => {
                 projectType: 'docker',
                 buildLogPath: '/codewind-workspace/.logs/my-java-project-9318ab10-fef9-11e9-8761-9bf62d92b58b-9318ab10-fef9-11e9-8761-9bf62d92b58b/docker.build.log',
                 state: 'open',
-                autoBuild: false,  
+                autoBuild: false,
+                contextRoot: 'contextRoot',
+                framework: 'framework',
+                services: 'services',
+                gitURL: 'gitURL',
+                extension: 'extension',
             };
             const project = createProjectAndCheckIsAnObject(args, global.codewind.CODEWIND_WORKSPACE);
             project.should.containSubset(args);
@@ -87,24 +92,20 @@ describe('Project.js', () => {
         });
     });
     describe('toJSON()', () => {
-        it('Checks that toJSON removes fields which shouldn\'t be written to .info file on disk', () => {
-            const obj = {
-                logStreams: 'logstream',
-                loadInProgress: true,
-                loadConfig: 'someconfig',
-            };
+        it('returns project as JSON without properties that shouldn\'t be written to the .info file on disk', () => {
             const project = createDefaultProjectAndCheckIsAnObject();
-            project.should.containSubset({ name: 'dummy' });
-            project.should.not.containSubset(obj);
-    
-            project.logStreams = obj.logStreams;
-            project.loadInProgress = obj.loadInProgress;
-            project.loadConfig = obj.loadConfig;
-    
-            project.should.containSubset(obj);
-    
-            const json = project.toJSON();
-            json.should.not.containSubset(obj);
+            const forbiddenProperties = {
+                logStreams: 'logstream',
+                loadConfig: true,
+                logStreams: 'someconfig',
+            };
+            for (const [key, value] of Object.entries(forbiddenProperties)) {
+                project[key] = value;
+            }
+
+            const output = project.toJSON();
+
+            output.should.not.containSubset(forbiddenProperties);
         });
     });
     describe('checkIfMetricsAvailable()', () => {
