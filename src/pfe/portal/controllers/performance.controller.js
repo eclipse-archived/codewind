@@ -33,7 +33,7 @@ function getOptionsForReqToPerfContainer(req, performance_host, performance_port
   if (req.query.projectID) {
     const project = req.cw_user.projectList.retrieveProject(req.query.projectID);
     options.qs = {
-      appOrigin: `http://${project.host}:${project.ports.internalPort}`,
+      appOrigin: project.getAppOrigin(),
       projectLanguage: project.language,
     };
   }

@@ -65,10 +65,10 @@ module.exports = class Project {
 
     // locOnDisk is used by the UI and needs to match what it sees.
     if (args.locOnDisk) this.locOnDisk = args.locOnDisk;
-    
+
     // Project status information
     this.host = args.host || '';
-    this.ports = args.port || '';
+    this.ports = args.port || ''; // TODO use either `ports` or `port`, not both
 
     // workspace is the parent directory of the project
     // NOT the global.codewind.CODEWIND_WORKSPACE we store
@@ -126,6 +126,10 @@ module.exports = class Project {
     this.metricsAvailable = isMetricsAvailable;
     await this.writeInformationFile();
     return isMetricsAvailable;
+  }
+
+  getAppOrigin() {
+    return `http://${this.host}:${this.ports.internalPort}`;
   }
 
   /**
@@ -194,7 +198,7 @@ module.exports = class Project {
    */
   async writeInformationFile() {
     let infFileDirectory = join(global.codewind.CODEWIND_WORKSPACE, '/.projects');
-    
+
     let infFile = join(infFileDirectory, `${this.projectID}.inf`);
     await fs.ensureDir(infFileDirectory);
 
@@ -353,7 +357,7 @@ module.exports = class Project {
     const timeOfTestRun = String(time);
     log.trace(`[getPathToLoadTestDir] timeOfTestRun=${timeOfTestRun}`);
     const loadTestDirs = await getLoadTestDirs(this.loadTestPath);
-    const loadTestDir = loadTestDirs.find(dirname => dirname === timeOfTestRun);    
+    const loadTestDir = loadTestDirs.find(dirname => dirname === timeOfTestRun);
     if (!loadTestDir) {
       throw new ProjectMetricsError('NOT_FOUND', this.projectID, `found no exact match load-test metrics from time ${timeOfTestRun}`)
     }
@@ -645,7 +649,7 @@ async function getLoadTestDirs(loadTestPath){
  */
 function getOverallAvgResTime(metricsFile) {
   // If we don't have httpUrl data, throw an error
-  if (!metricsFile || !metricsFile.hasOwnProperty('httpUrls') 
+  if (!metricsFile || !metricsFile.hasOwnProperty('httpUrls')
     || !metricsFile.httpUrls || !metricsFile['httpUrls'].data) {
     throw new ProjectError('NOT_FOUND', null)
   }

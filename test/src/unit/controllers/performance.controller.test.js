@@ -12,6 +12,7 @@ const chai = require('chai');
 const rewire = require('rewire');
 
 const performanceController = rewire('../../../../src/pfe/portal/controllers/performance.controller');
+const Project = require('../../../../src/pfe/portal/modules/Project');
 
 chai.should();
 
@@ -25,12 +26,12 @@ describe('performance.controller.js', function() {
                 },
                 cw_user: {
                     projectList: {
-                        retrieveProject: () => ({
+                        retrieveProject: () => createDummyProject({
+                            language: 'nodejs',
                             host: '123.45.67.89',
-                            ports: {
+                            port: {
                                 internalPort: 1234,
                             },
-                            language: 'nodejs',
                         }),
                     },
                 },
@@ -55,3 +56,18 @@ describe('performance.controller.js', function() {
         });
     });
 });
+
+function createProject(options, workspace) {
+    const project = new Project(options, workspace);
+    project.should.be.an('object');
+    return project;
+}
+
+function createDummyProject(extraOptions) {
+    const options = {
+        name: 'dummy',
+        ...extraOptions,
+    };
+    const workspace = '.';
+    return createProject(options, workspace);
+}
