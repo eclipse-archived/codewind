@@ -70,6 +70,7 @@ describe('Templates.js', function() {
                 fs.removeSync(workspace);
             });
             it('initializes a Templates Class and creates a repository file', async function() {
+                this.timeout(testTimeout.short);
                 const templateController = new Templates(workspace);
                 fs.pathExistsSync(templateController.repositoryFile).should.be.false;
 
@@ -888,7 +889,7 @@ describe('Templates.js', function() {
                         });
                         it(`does not update the repository_list.json`, async function() {
                             fs.existsSync(testRepositoryFile).should.be.false;
-                            const updateRepoListWithReposFromProviders = Templates.__get__('updateRepoListWithReposFromProviders'); 
+                            const updateRepoListWithReposFromProviders = Templates.__get__('updateRepoListWithReposFromProviders');
                             await updateRepoListWithReposFromProviders([test.provider], [...mockRepoList], testRepositoryFile);
                             // repository file should not have been created as the repo list had not been updated
                             fs.existsSync(testRepositoryFile).should.be.false;
@@ -915,7 +916,7 @@ describe('Templates.js', function() {
                         name: 'Default templates',
                         projectStyles: ['Codewind'],
                     };
-                    const updateRepoListWithReposFromProviders = Templates.__get__('updateRepoListWithReposFromProviders'); 
+                    const updateRepoListWithReposFromProviders = Templates.__get__('updateRepoListWithReposFromProviders');
                     const provider = {
                         getRepositories() {
                             return [validCodewindRepo];
@@ -1043,7 +1044,7 @@ describe('Templates.js', function() {
             });
         });
         describe('getTemplatesFromRepo(repository)', function() {
-            const getTemplatesFromRepo = Templates.__get__('getTemplatesFromRepo'); 
+            const getTemplatesFromRepo = Templates.__get__('getTemplatesFromRepo');
             it('returns the correct templates from a valid repository', async function() {
                 const output = await getTemplatesFromRepo(sampleRepos.codewind);
                 output.should.have.deep.members(defaultCodewindTemplates);
