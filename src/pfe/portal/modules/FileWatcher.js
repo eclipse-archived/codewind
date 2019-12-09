@@ -534,7 +534,8 @@ module.exports = class FileWatcher {
     // We have to emit the full project state *and* the operation status.
     // (Storing the status in the project object is bad as it is
     // only about this close operation.)
-    this.user.uiSocket.emit('projectClosed', {...updatedProject, status: fwProject.status});
+    const { logStreams, ...uiProjectInfo } = updatedProject;
+    this.user.uiSocket.emit('projectClosed', {...uiProjectInfo, status: fwProject.status});
     log.debug('project ' + fwProject.projectID + ' successfully closed');
   }
 
