@@ -498,8 +498,9 @@ module.exports = class FileWatcher {
         results.error = error;
       }
       let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-      const { logStreams, ...uiProjectInfo } = updatedProject
-      this.user.uiSocket.emit(event, { ...results, ...uiProjectInfo })
+      // remove fields which are not required by the UI
+      const { logStreams, ...projectInfoForUI } = updatedProject
+      this.user.uiSocket.emit(event, { ...results, ...projectInfoForUI })
       if (fwProject.buildStatus === 'inProgress') {
         // Reset build logs.
         updatedProject.resetLogStream('build');
@@ -534,8 +535,9 @@ module.exports = class FileWatcher {
     // We have to emit the full project state *and* the operation status.
     // (Storing the status in the project object is bad as it is
     // only about this close operation.)
-    const { logStreams, ...uiProjectInfo } = updatedProject;
-    this.user.uiSocket.emit('projectClosed', {...uiProjectInfo, status: fwProject.status});
+    // remove fields which are not required by the UI
+    const { logStreams, ...projectInfoForUI } = updatedProject;
+    this.user.uiSocket.emit('projectClosed', {...projectInfoForUI, status: fwProject.status});
     log.debug('project ' + fwProject.projectID + ' successfully closed');
   }
 
