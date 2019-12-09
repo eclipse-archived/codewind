@@ -86,7 +86,7 @@ cache_spring > /codewind-workspace/.logs/spring-app-cache.log 2>&1 &
 echo "Creating /root/.docker/ for docker config"
 mkdir -p /root/.docker/
 
-# If running in Kubernetes, initialize helm
+# If running in Kubernetes, check if there is a registry secret to pull down
 if [ "$IN_K8" == "true" ]; then
 
 	# Check if there is a secret with labels app=codewind-pfe and codewindWorkspace=<workspace_id>
@@ -96,18 +96,7 @@ if [ "$IN_K8" == "true" ]; then
 	if [[ $SECRET = *$CHE_WORKSPACE_ID* ]]; then
 		SECRET_NAME=$( kubectl get secret --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath="{.items[0].metadata.name}" )
 		echo "A secret with the matching label has been found: $SECRET_NAME"
-		# TO BE ENABLED AS PART OF CODEWIND ISSUE https://github.com/eclipse/codewind/issues/665 WHEN APIS ARE READY TO BE CONSUMED
-		# echo "Creating the Codewind PFE Docker Config with the secret .dockerconfigjson data"
-		# kubectl get secret $SECRET_NAME -o jsonpath="{.data.\.dockerconfigjson}" | base64 --decode > /root/.docker/config.json
-	fi
-
-	# TO BE REMOVED AS PART OF CODEWIND ISSUE https://github.com/eclipse/codewind/issues/665 WHEN APIS ARE READY TO BE CONSUMED
-	# Copy the secret's config json file over
-	echo "Copying the docker registry secrets over"
-	if [ -e /tmp/secret/.dockerconfigjson ]; then
-		mkdir -p /root/.docker/
-		cp /tmp/secret/.dockerconfigjson /root/.docker/config.json
-	elif [ -e /tmp/secret/.dockercfg ]; then
-		cp /tmp/secret/.dockercfg /root/.dockercfg
+		echo "Creating the Codewind PFE Docker Config with the secret .dockerconfigjson data"
+		kubectl get secret $SECRET_NAME -o jsonpath="{.data.\.dockerconfigjson}" | base64 --decode > /root/.docker/config.json
 	fi
 fi

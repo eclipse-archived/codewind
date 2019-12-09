@@ -38,7 +38,7 @@ public class IDCContext {
 
 	private final String localWorkspaceOrigin;
 
-	private final String deploymentRegistry;
+	private final String imagePushRegistry;
 
 	private final String startMode;
 
@@ -62,7 +62,7 @@ public class IDCContext {
 
 	private final String imagesFormatString;
 	
-	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String deploymentRegistry, String startMode, String debugPort) throws IOException {
+	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String imagePushRegistry, String startMode, String debugPort) throws IOException {
 
 		this.rootPassword = rootPassword;
 
@@ -108,9 +108,9 @@ public class IDCContext {
 			appDb.put(Constants.DB_PROJECT_ID, this.projectID);
 		}
 
-		this.deploymentRegistry = deploymentRegistry;
-		if (this.deploymentRegistry != null) {
-			appDb.put(Constants.DB_DEPLOYMENT_REGISTRY, this.deploymentRegistry);
+		this.imagePushRegistry = imagePushRegistry;
+		if (this.imagePushRegistry != null) {
+			appDb.put(Constants.DB_IMAGE_PUSH_REGISTRY, this.imagePushRegistry);
 		}
 
 		this.startMode = startMode;
@@ -331,14 +331,14 @@ public class IDCContext {
 		return logFileName.toLowerCase();
 	}
 
-	public String getDeploymentRegistry() {
-		String deploymentRegistry = "";
+	public String getImagePushRegistry() {
+		String imagePushRegistry = "";
 		
-		if(appDb.get(Constants.DB_DEPLOYMENT_REGISTRY) != null) {
-			deploymentRegistry = appDb.get(Constants.DB_DEPLOYMENT_REGISTRY);
+		if(appDb.get(Constants.DB_IMAGE_PUSH_REGISTRY) != null) {
+			imagePushRegistry = appDb.get(Constants.DB_IMAGE_PUSH_REGISTRY);
 		}
 		
-		return deploymentRegistry;
+		return imagePushRegistry;
 	}
 
 	public String getKubePodId() {

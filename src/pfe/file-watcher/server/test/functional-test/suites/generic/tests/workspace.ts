@@ -36,7 +36,8 @@ export default class WorkspaceTest {
             const settingsPath = path.join(app_configs.codewindWorkspaceDir, ".config", "settings.json");
             const backupSettingsPath = path.join(app_configs.codewindWorkspaceDir, ".config", "settings_bk.json");
             const settingsContent = {
-                deploymentRegistry: "someregistry",
+                registryAddress: "someregistryaddress",
+                registryNamespace: "someregistrynamespace",
                 watcherChunkTimeout: 50000
             };
             let backupSettingsContent: any = {};
@@ -57,15 +58,13 @@ export default class WorkspaceTest {
                     expect(info);
                     expect(info.statusCode);
                     expect(info.statusCode).to.equal(200);
-                    expect(info.workspaceSettings);
-                    expect(info.workspaceSettings).to.deep.equal(backupSettingsContent);
                 }
             });
 
             this.runReadWorkspaceSettings(socket, settingsPath, settingsContent, backupSettingsPath);
-            this.runDeploymentRegistryStatus(socket);
+            this.runImagePushRegistryStatus(socket);
             if (process.env.IN_K8) {
-                this.runTestDeploymentRegistry(settingsContent);
+                this.runTestImagePushRegistry(settingsContent);
             }
         });
     }
@@ -109,17 +108,13 @@ export default class WorkspaceTest {
                     expect(info);
                     expect(info.statusCode);
                     expect(info.statusCode).to.equal(200);
-                    expect(info.workspaceSettings);
-                    expect(info.workspaceSettings).to.deep.equal(settingsContent);
-                    expect(Object.keys(info.workspaceSettings)).to.deep.equal(Object.keys(settingsContent));
-                    expect(info.workspaceSettings.deploymentRegistry).to.equal(settingsContent.deploymentRegistry);
-                    expect(info.workspaceSettings.watcherChunkTimeout).to.equal(settingsContent.watcherChunkTimeout);
                 });
             });
 
             describe("read workspace settings with invalid deployment registry in file", () => {
                 const badSettingsContent = _.cloneDeep(settingsContent);
-                badSettingsContent.deploymentRegistry = "x^72@!$&";
+                badSettingsContent.registryAddress = "x^72@!$&";
+                badSettingsContent.registryNamespace = "x^72@!$&";
 
                 before("create a backup for original settings file and create a fake settings file", async () => {
                     if (await fs.existsSync(settingsPath)) {
@@ -133,8 +128,8 @@ export default class WorkspaceTest {
 
                 it("read workspace settings with invalid deployment registry", async () => {
                     const info: any = await genericLib.readWorkspaceSettings();
-                    const failureMsg = "Codewind detected an error with the Deployment Registry x^72@!$&. Please ensure it is a valid Deployment Registry.";
-                    const targetEvent = eventConfigs.events.deploymentRegistryStatus;
+                    const failureMsg = "Codewind detected an error with the Image Push Registry " + badSettingsContent.registryAddress + "/" + badSettingsContent.registryNamespace + ". Please ensure it is a valid Image Push Registry.";
+                    const targetEvent = eventConfigs.events.imagePushRegistryStatus;
                     expect(info);
                     expect(info.statusCode);
                     expect(info.statusCode).to.equal(500);
@@ -146,9 +141,9 @@ export default class WorkspaceTest {
                         expect(event.eventName);
                         expect(event.eventName).to.equal(targetEvent);
                         expect(event.eventData);
-                        expect(event.eventData).to.haveOwnProperty("deploymentRegistryTest");
+                        expect(event.eventData).to.haveOwnProperty("imagePushRegistryTest");
                         expect(event.eventData).to.haveOwnProperty("msg");
-                        expect(event.eventData["deploymentRegistryTest"]).to.equal(false);
+                        expect(event.eventData["imagePushRegistryTest"]).to.equal(false);
                         expect(event.eventData["msg"]).to.equal(failureMsg);
                     } else {
                         fail(`read workspace settings test failed to listen for ${targetEvent}`);
@@ -158,11 +153,11 @@ export default class WorkspaceTest {
         });
     }
 
-    private runDeploymentRegistryStatus(socket: SocketIO): void {
-        describe("deploymentRegistryStatus function", () => {
+    private runImagePushRegistryStatus(socket: SocketIO): void {
+        describe("imagePushRegistryStatus function", () => {
             const deploymentRegistryRequest = {
                 "projectID": "1234",
-                "detailedDeploymentRegistryStatus": "some status"
+                "detailedImagePushRegistryStatus": "some status"
             };
 
             after("clear socket events for create test", () => {
@@ -172,31 +167,31 @@ export default class WorkspaceTest {
             it("set deployment registry status with missing projectId", async () => {
                 const request = _.cloneDeep(deploymentRegistryRequest);
                 delete request.projectID;
-                const info: any = await genericLib.deploymentRegistryStatus(request);
+                const info: any = await genericLib.imagePushRegistryStatus(request);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(400);
                 expect(info.error);
                 expect(info.error).to.haveOwnProperty("msg");
-                expect(info.error["msg"]).to.equal("Missing request parameters projectID or detailedDeploymentRegistryStatus for deployment registry status");
+                expect(info.error["msg"]).to.equal("Missing request parameters projectID or detailedImagePushRegistryStatus for image push registry status");
             });
 
             it("set deployment registry status with missing status", async () => {
                 const request = _.cloneDeep(deploymentRegistryRequest);
-                delete request.detailedDeploymentRegistryStatus;
-                const info: any = await genericLib.deploymentRegistryStatus(request);
+                delete request.detailedImagePushRegistryStatus;
+                const info: any = await genericLib.imagePushRegistryStatus(request);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(400);
                 expect(info.error);
                 expect(info.error).to.haveOwnProperty("msg");
-                expect(info.error["msg"]).to.equal("Missing request parameters projectID or detailedDeploymentRegistryStatus for deployment registry status");
+                expect(info.error["msg"]).to.equal("Missing request parameters projectID or detailedImagePushRegistryStatus for image push registry status");
             });
 
             it("set deployment registry status with valid data", async () => {
                 const request = _.cloneDeep(deploymentRegistryRequest);
-                const targetEvent = eventConfigs.events.deploymentRegistryStatus;
-                const info: any = await genericLib.deploymentRegistryStatus(request);
+                const targetEvent = eventConfigs.events.imagePushRegistryStatus;
+                const info: any = await genericLib.imagePushRegistryStatus(request);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(200);
@@ -207,10 +202,10 @@ export default class WorkspaceTest {
                     expect(event.eventName);
                     expect(event.eventName).to.equal(targetEvent);
                     expect(event.eventData);
-                    expect(event.eventData).to.haveOwnProperty("deploymentRegistryTest");
+                    expect(event.eventData).to.haveOwnProperty("imagePushRegistryTest");
                     expect(event.eventData).to.haveOwnProperty("msg");
-                    expect(event.eventData["deploymentRegistryTest"]).to.equal(false);
-                    expect(event.eventData["msg"]).to.equal(request.detailedDeploymentRegistryStatus);
+                    expect(event.eventData["imagePushRegistryTest"]).to.equal(false);
+                    expect(event.eventData["msg"]).to.equal(request.detailedImagePushRegistryStatus);
                 } else {
                     fail(`read workspace settings test failed to listen for ${targetEvent}`);
                 }
@@ -225,53 +220,53 @@ export default class WorkspaceTest {
         });
     }
 
-    private runTestDeploymentRegistry(settingsContent: any): void {
-        describe("testDeploymentRegistry function", () => {
+    private runTestImagePushRegistry(settingsContent: any): void {
+        describe("testImagePushRegistry function", () => {
             const invalidPullImage = "someimage";
 
             it("with invalid push registry", async () => {
-                const info = await genericLib.testDeploymentRegistry(settingsContent.deploymentRegistry);
+                const info = await genericLib.testImagePushRegistry(settingsContent.registryAddress, settingsContent.registryNamespace);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(200);
-                expect(info.deploymentRegistryTest);
-                expect(info.deploymentRegistryTest).to.equal(false);
+                expect(info.imagePushRegistryTest);
+                expect(info.imagePushRegistryTest).to.equal(false);
                 expect(info.msg);
-                expect(info.msg).to.equal(`Codewind was unable to push the hello-world image to the Deployment Registry ${settingsContent.deploymentRegistry}/hello-world. Please make sure it is a valid Deployment Registry with the appropriate permissions.`);
-            }).timeout(timeoutConfigs.testDeploymentRegistryTimeout);
+                expect(info.msg).to.equal(`Codewind was unable to push the hello-world image to the Image Push Registry ${settingsContent.registryAddress}/${settingsContent.registryNamespace}/hello-world. Please make sure it is a valid Image Push Registry with the appropriate permissions.`);
+            }).timeout(timeoutConfigs.testImagePushRegistryTimeout);
 
             it("with invalid push registry and pull image", async () => {
-                const info = await genericLib.testDeploymentRegistry(settingsContent.deploymentRegistry, invalidPullImage);
+                const info = await genericLib.testImagePushRegistry(settingsContent.registryAddress, settingsContent.registryNamespace, invalidPullImage);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(500);
-                expect(info.deploymentRegistryTest);
-                expect(info.deploymentRegistryTest).to.equal(false);
+                expect(info.imagePushRegistryTest);
+                expect(info.imagePushRegistryTest).to.equal(false);
                 expect(info.msg);
-                expect(info.msg).to.equal(`Codewind was unable to pull the ${invalidPullImage} image during the Deployment Registry test.`);
-            }).timeout(timeoutConfigs.testDeploymentRegistryTimeout);
+                expect(info.msg).to.equal(`Codewind was unable to pull the ${invalidPullImage} image during the Image Push Registry test.`);
+            }).timeout(timeoutConfigs.testImagePushRegistryTimeout);
 
             it("with valid push registry and invalid pull image", async () => {
-                const info = await genericLib.testDeploymentRegistry(pfe_configs.deploymentRegistry, invalidPullImage);
+                const info = await genericLib.testImagePushRegistry(pfe_configs.imagePushRegistryAddress, pfe_configs.imagePushRegistryNamespace, invalidPullImage);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(500);
-                expect(info.deploymentRegistryTest);
-                expect(info.deploymentRegistryTest).to.equal(false);
+                expect(info.imagePushRegistryTest);
+                expect(info.imagePushRegistryTest).to.equal(false);
                 expect(info.msg);
-                expect(info.msg).to.equal(`Codewind was unable to pull the ${invalidPullImage} image during the Deployment Registry test.`);
-            }).timeout(timeoutConfigs.testDeploymentRegistryTimeout);
+                expect(info.msg).to.equal(`Codewind was unable to pull the ${invalidPullImage} image during the Image Push Registry test.`);
+            }).timeout(timeoutConfigs.testImagePushRegistryTimeout);
 
             it("with valid push registry and default pull image", async () => {
-                const info = await genericLib.testDeploymentRegistry(pfe_configs.deploymentRegistry);
+                const info = await genericLib.testImagePushRegistry(pfe_configs.imagePushRegistryAddress, pfe_configs.imagePushRegistryNamespace);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(200);
-                expect(info.deploymentRegistryTest);
-                expect(info.deploymentRegistryTest).to.equal(true);
+                expect(info.imagePushRegistryTest);
+                expect(info.imagePushRegistryTest).to.equal(true);
                 expect(info.msg);
-                expect(info.msg).to.equal(`Codewind projects on Kubernetes will build with the Deployment Registry: ${pfe_configs.deploymentRegistry}`);
-            }).timeout(timeoutConfigs.testDeploymentRegistryTimeout);
+                expect(info.msg).to.equal(`Codewind projects on Kubernetes will build with the Image Push Registry: ${pfe_configs.imagePushRegistryAddress}/${pfe_configs.imagePushRegistryNamespace}`);
+            }).timeout(timeoutConfigs.testImagePushRegistryTimeout);
         });
     }
 }

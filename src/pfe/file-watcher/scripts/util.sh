@@ -57,8 +57,8 @@ function newLogFileAvailable() {
 	curl -sS -k -X GET $PORTAL_PROTOCOL://localhost:$PORTAL_PORT/internal/api/v1/projects/$projectID/logs/$type
 }
 
-function deploymentRegistryStatus() {
-	curl -sS -k -X POST -H "Content-Type: application/json" -d '{"projectID": "'$projectID'", "detailedDeploymentRegistryStatus": "'"$message"'"}' $PORTAL_PROTOCOL://localhost:$PORTAL_PORT/internal/api/v1/projects/deploymentRegistryStatus
+function imagePushRegistryStatus() {
+	curl -sS -k -X POST -H "Content-Type: application/json" -d '{"projectID": "'$projectID'", "detailedImagePushRegistryStatus": "'"$message"'"}' $PORTAL_PROTOCOL://localhost:$PORTAL_PORT/internal/api/v1/projects/imagePushRegistryStatus
 }
 
 function getWorkspacePathForVolumeMounting() {
@@ -92,10 +92,10 @@ elif [ "$COMMAND" == "newLogFileAvailable" ]; then
  	projectID=$1
  	type=$2
  	newLogFileAvailable $projectID $type &
-elif [ "$COMMAND" == "deploymentRegistryStatus" ]; then
+elif [ "$COMMAND" == "imagePushRegistryStatus" ]; then
  	projectID=$1
 	message="$2"
- 	deploymentRegistryStatus "$projectID" "$status" "$message" &
+ 	imagePushRegistryStatus "$projectID" "$status" "$message" &
 elif [ "$COMMAND" == "getWorkspacePathForVolumeMounting" ]; then
  	LOCAL_WORKSPACE=$1
  	retval=$( getWorkspacePathForVolumeMounting "$LOCAL_WORKSPACE" )

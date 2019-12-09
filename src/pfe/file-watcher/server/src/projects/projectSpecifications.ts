@@ -166,11 +166,13 @@ const changeInternalPort = async function (applicationPort: string, operation: O
     }
 
     try {
+        let isContainerRunning: boolean = true;
         let isApplicationPortExposed: boolean = false;
 
         // Check if the port requested has been exposed
         if (process.env.IN_K8) {
             const containerInfo: any = await projectUtil.getContainerInfo(projectInfo, true);
+            isContainerRunning = containerInfo.podName.trim().length > 0;
             for (let i = 0; i < containerInfo.podPorts.length; i++) {
                 const port = containerInfo.podPorts[i];
 
@@ -181,6 +183,7 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             }
         } else {
             const containerInfo: any = await projectUtil.getContainerInfo(projectInfo, true);
+            isContainerRunning = containerInfo.containerId.trim().length > 0;
             for (let i = 0; i < containerInfo.containerPorts.length; i++) {
                 const port = containerInfo.containerPorts[i];
 
@@ -191,7 +194,7 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             }
         }
 
-        if (!isApplicationPortExposed) {
+        if (isContainerRunning && !isApplicationPortExposed) {
             logger.logProjectInfo("The requested application port is not exposed: " + applicationPort, projectInfo.projectID);
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
@@ -216,6 +219,11 @@ const changeInternalPort = async function (applicationPort: string, operation: O
         logger.logProjectInfo("The project has been updated", projectInfo.projectID);
         logger.logProjectTrace(JSON.stringify(projectInfo), projectInfo.projectID);
 
+        // Delete the project from the array to show the next ping message
+        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
+        }
+
         // Set the containerInfoForceRefreshMap for the project to true, so that isApplicationUp/ping can pick up the new port with a force refresh
         projectUtil.containerInfoForceRefreshMap.set(projectID, true);
 
@@ -233,7 +241,7 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             status: "success",
             ports: {
                 exposedPort: containerInfo.exposedPort,
-                internalPort: containerInfo.internalPort
+                internalPort: applicationPort
             }
         };
 
@@ -327,6 +335,11 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
 
     try {
         await projectsController.updateProjectInfo(projectID, keyValuePair);
+
+        // Delete the project from the array to show the next ping message
+        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
+        }
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
@@ -546,6 +559,12 @@ const reconfigWWWProtocol = async function (isHttps: boolean, operation: Operati
 
     try {
         await projectsController.updateProjectInfo(projectID, keyValuePair);
+
+        // Delete the project from the array to show the next ping message
+        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
+        }
+
         const data = {
             operationId: operation.operationId,
             projectID: projectID,

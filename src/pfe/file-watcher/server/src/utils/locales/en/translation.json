@@ -23,9 +23,9 @@
       "noService": "A service file in the Helm chart could not be found.",
       "podFailedToStart": "Pod for Helm release {{- projectName}} failed to start.",
       "invalidMavenSettings": "Build aborted. Failed to get the user Maven settings",
-      "missingDeploymentRegistry": "The project will not build due to missing Deployment Registry. Run the Set Deployment Registry command to set a new Deployment Registry to build projects.",
-      "invalidDeploymentRegistry": "Codewind was unable to push an image to the Deployment Registry. Please make sure it is a valid Deployment Registry with the appropriate permissions.",
-      "wrongDeploymentRegistry": "The project will not build with the new Deployment Registry. Please remove and re-add the project to deploy to the new Deployment Registry.",
+      "missingImagePushRegistry": "The project will not build due to missing Image Push Registry. Run the Set Deployment Registry command to set a new Image Push Registry to build projects.",
+      "invalidImagePushRegistry": "Codewind was unable to push an image to the Image Push Registry. Please make sure it is a valid Image Push Registry with the appropriate permissions.",
+      "wrongImagePushRegistry": "The project will not build with the new Image Push Registry. Please remove and re-add the project to deploy to the new Image Push Registry.",
       "unexpectedError": "An unexpected error occurred",
       "odoBuildCreateInProgressMsg": "Creating odo application",
       "odoBuildCreateFailMsg": "Failed to create odo application",
@@ -66,14 +66,27 @@
     "buildRank": "Rank {{- rank}}",
     "buildStarted": "Build started",
     "appErrorWhenStopping": "An error occurred while the application was stopping. Check the application logs for details.",
-    "pingTimeout": "Failed to ping application due to timeout."
+    "pingTimeout": "Timeout: {{- pingMessage}}. The application is taking longer than expected to start. Please check the application logs for problems and ensure the project's 'healthCheck' setting is correct. Last error message received: {{- errMsg}}", 
+    "pingTimeoutDefaultMessage": "Failed to ping application."
   },
   "quickfix": {
     "generateMissingFilesName": "Generate missing files",
     "generateMissingFilesDescription": "Generate missing required files."
   },
   "projectUtil": {
-    "projectInfoError": "could not retrieve project info"
+    "projectInfoError": "could not retrieve project info",
+    "pingMessage": "Pinging http://{{ip}}:{{port}}{{- path}}",
+    "defaultPingPathMessage": "Pinging http://{{ip}}:{{port}}{{- path}} and http://{{ip}}:{{port}}/",
+    "appStatusError": {
+      "errorGetContainerStatus": "Failed to get container status: {{errMsg}}",
+      "errorGetAppStatus": "Failed to get application status: {{errMsg}}",
+      "httpRequestTimeout": "Http request is failed due to timeout error",
+      "errorGetContainerInfo": "Could not retrieve container info for the project",
+      "errorGetPort": "Could not retrieve the port for the project",
+      "errorGetIP": "Could not retrieve the ip for the project",
+      "errorGetHostname": "Could not retrieve the hostname for the project service",
+      "badStatusCode": "Received response, but with bad status code {{statusCode}} when pinging project"
+    }
   },
   "validator": {
     "requiredFiles": {

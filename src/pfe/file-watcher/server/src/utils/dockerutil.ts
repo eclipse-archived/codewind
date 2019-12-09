@@ -553,10 +553,10 @@ export async function removeImage(projectID: string, containerName: string): Pro
  * @returns Promise<ProcessResult>
  */
 
-export async function tagAndPushImage(projectID: string, imageName: string, deploymentRegistry: string): Promise<ProcessResult> {
-  const tag: string[] = ["tag", imageName, deploymentRegistry + "/" + imageName];
+export async function tagAndPushImage(projectID: string, imageName: string, imagePushRegistry: string): Promise<ProcessResult> {
+  const tag: string[] = ["tag", imageName, imagePushRegistry + "/" + imageName];
 
-  const push: string[] = ["push", "--tls-verify=false", imageName, deploymentRegistry + "/" + imageName];
+  const push: string[] = ["push", "--tls-verify=false", imageName, imagePushRegistry + "/" + imageName];
   let response: ProcessResult;
 
   // Push image
@@ -566,7 +566,7 @@ export async function tagAndPushImage(projectID: string, imageName: string, depl
   } catch (err) {
     logger.logProjectError("Error pushing image", projectID);
     logger.logProjectError(err, projectID);
-    await workspaceSettings.updateDeploymentRegistryStatus(projectID, "buildscripts.invalidDeploymentRegistry");
+    await workspaceSettings.updateImagePushRegistryStatus(projectID, "buildscripts.invalidImagePushRegistry");
     throw err;
   }
   return response;

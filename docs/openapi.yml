@@ -257,7 +257,7 @@ paths:
           schema:
             $ref: '#/components/schemas/ProjectID'
           required: true
-          description: id of the project        
+          description: id of the project
       responses:
         202:
           description: >
@@ -266,10 +266,10 @@ paths:
           description: Project with given projectiD was not found.
         500:
           description: Any other error
-  
+
   /api/v1/projects/{id}/upload:
     put:
-      summary: Receive gzipped content of a file for the project and write this to the codewind workspace 
+      summary: Receive gzipped content of a file for the project and write this to the codewind workspace
       parameters:
         - name: id
           in: path
@@ -278,19 +278,19 @@ paths:
           required: true
           description: id of project
       requestBody:
-          description: JSON object containing file info and content 
+          description: JSON object containing file info and content
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Upload'
-    
+
       responses:
         200:
           description: The file upload was successful
         404:
           description: Project with given projectID not found
         500:
-          description: Any other error  
+          description: Any other error
 
   /api/v1/projects/{id}/upload/end:
     post:
@@ -305,7 +305,7 @@ paths:
           required: true
           description: id of the project
       requestBody:
-          description: JSON object containing project information  
+          description: JSON object containing project information
           content:
             application/json:
               schema:
@@ -318,7 +318,7 @@ paths:
           description: Project with given projectiD was not found.
         500:
           description: Any other error
- 
+
 
   /api/v1/projects/{id}:
     get:
@@ -817,8 +817,7 @@ paths:
     post:
       summary: Enable auto injection of metrics
       description: >
-        Get all metrics for a certain type or types of metric, for a specific
-        project as specified by the project ID.
+        Injects metrics collector into project, or remove injected collector from project
       parameters:
         - name: id
           in: path
@@ -835,23 +834,18 @@ paths:
               required:
                 - enable
               properties:
-                types:
-                  description: Boolean
+                enable:
                   type: boolean
-                  example: true
       responses:
         202:
-          description: >
-            Successful update of project information and build triggered
+          description: Successful update of project information and build triggered
           content:
             application/json:
               schema:
                 type: object
         404:
           description: Project not found
-        500:
-          description: Internal error has occured
- 
+
 
   /api/v1/projects/{id}/metrics/types:
     post:
@@ -1243,10 +1237,10 @@ paths:
             schema:
               type: object
               required:
-                - url
+                - address
                 - credentials
               properties:
-                url:
+                address:
                   type: string
                 credentials:
                   type: string
@@ -1261,9 +1255,9 @@ paths:
                 items:
                   type: object
                   properties:
-                    url:
+                    address:
                       type: string
-                      description: Registry url
+                      description: Registry address
                       example: docker.io
                     username:
                       type: string
@@ -1299,9 +1293,9 @@ paths:
                 items:
                   type: object
                   properties:
-                    url:
+                    address:
                       type: string
-                      description: Registry url
+                      description: Registry address
                       example: docker.io
                     username:
                       type: string
@@ -1325,9 +1319,9 @@ paths:
             schema:
               type: object
               required:
-                - url
+                - address
               properties:
-                url:
+                address:
                   type: string
       responses:
         200:
@@ -1339,9 +1333,9 @@ paths:
                 items:
                   type: object
                   properties:
-                    url:
+                    address:
                       type: string
-                      description: Registry url
+                      description: Registry address
                       example: docker.io
                     username:
                       type: string
@@ -1365,9 +1359,9 @@ paths:
                 example: Failed to create the Codewind Registry Kubernetes Secret and/or patch the Service Account.
 
 
-  /api/v1/registry:
+  /api/v1/imagepushregistry:
     get:
-      summary: Get the status of the Deployment Registry in the Workspace Settings File
+      summary: Get the status of the Image Push Registry in the Workspace Settings File
       responses:
         200:
           description: Successfully completed
@@ -1376,14 +1370,18 @@ paths:
               schema:
                 type: object
                 properties:
-                  statusCode:
-                    type: integer
-                    description: The response status code
-                    example: 200
-                  deploymentRegistry:
+                  imagePushRegistry:
                     type: boolean
-                    description: true if deployment registry was set
+                    description: true if image push registry was set
                     example: true
+                  address:
+                    type: string
+                    description: registry address, if image push registry is true
+                    example: "docker.io"
+                  namespace:
+                    type: string
+                    description: registry namespace, if image push registry is true
+                    example: "docker.io"
         500:
           description: Internal Server Error
           content:
@@ -1391,19 +1389,15 @@ paths:
               schema:
                 type: object
                 properties:
-                  statusCode:
-                    type: integer
-                    description: The response status code
-                    example: 400
-                  deploymentRegistry:
+                  imagePushRegistry:
                     type: boolean
-                    description: false if deployment registry was not set
+                    description: false if image push registry was not set
                     example: false
     post:
-      summary: Test or set the specified Deployment Registry
+      summary: Test or set the specified Image Push Registry
       description: >
-        On test the API also emits a socket event `deploymentRegistryStatus` with data
-        `{deploymentRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
+        On test the API also emits a socket event `imagePushRegistryStatus` with data
+        `{imagePushRegistryTest ":" true, msg ":" message related to the socket for pass/failure}`
         A set operation will set the registry without testing to allow the client to force save the
         value.
       requestBody:
@@ -1412,9 +1406,12 @@ paths:
             schema:
               type: object
               required:
-                - deploymentRegistry
+                - address
+                - namespace
               properties:
-                deploymentRegistry:
+                address:
+                  type: string
+                namespace:
                   type: string
                 operation:
                   type: string
@@ -1433,9 +1430,9 @@ paths:
                     type: integer
                     description: The response status code
                     example: 200
-                  deploymentRegistryTest:
+                  imagePushRegistryTest:
                     type: boolean
-                    description: true if deployment registry is valid
+                    description: true if image push registry is valid
                     example: true
                   msg:
                     type: string
@@ -1452,7 +1449,7 @@ paths:
                     type: integer
                     description: The response status code
                     example: 400
-                  deploymentRegistryTest:
+                  imagePushRegistryTest:
                     type: boolean
                     description: false because it is a bad request
                     example: false
@@ -1471,9 +1468,9 @@ paths:
                     type: integer
                     description: The response status code
                     example: 500
-                  deploymentRegistryTest:
+                  imagePushRegistryTest:
                     type: boolean
-                    description: false if deployment registry is invalid
+                    description: false if image push registry is invalid
                     example: false
                   msg:
                     type: string
@@ -1717,7 +1714,7 @@ components:
           description: an array of files that have been modified since the last project upload
           type: array
           example: ["/project/modifiedfile1"]
-      
+
     Upload:
       type: object
       required:
@@ -1736,7 +1733,7 @@ components:
           type: number
           description: the permissions for the file https://nodejs.org/api/fs.html#fs_file_modes
           example: 0o775
-     
+
     LoadrunnerConfig:
       type: object
       required:
@@ -1776,7 +1773,7 @@ components:
               example: { id: 1, message: 'codewind' }
             - type: string
               example: "{ id: 1, message: 'codewind'}"
-    
+
     LogDetails:
       type: object
       required:

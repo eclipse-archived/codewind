@@ -41,8 +41,8 @@ export function workspaceSettingsTestModule(): void {
         const combinations: any = {
             "combo1": {
                 "file": path.join(workspaceSettingsDir, "testconfig.json"),
-                "data": '{ "deploymentRegistry": "testRegistry" }',
-                "result": {"deploymentRegistry": "", "watcherChunkTimeout": ""}
+                "data": '{ "registryAddress": "testRegistryAddress", "registryNamespace": "testRegistryNamespace" }',
+                "result": {"registryAddress": "", "registryNamespace": "", "watcherChunkTimeout": ""}
             },
             "combo2": {
                 "file": workspaceSettingsFile,
@@ -56,13 +56,13 @@ export function workspaceSettingsTestModule(): void {
             },
             "combo4": {
                 "file": workspaceSettingsFile,
-                "data": '{ "deploymentRegistry": "testRegistry" }',
-                "result": {"deploymentRegistry": "testRegistry"}
+                "data": '{ "registryAddress": "testRegistryAddress", "registryNamespace": "testRegistryNamespace" }',
+                "result": { "registryAddress": "testRegistryAddress", "registryNamespace": "testRegistryNamespace" }
             },
             "combo5": {
                 "file": workspaceSettingsFile,
-                "data": '{ "deploymentRegistry": "testRegistry", "watcherChunkTimeout":5000 }',
-                "result": {"deploymentRegistry": "testRegistry", "watcherChunkTimeout": 5000}
+                "data": '{ "registryAddress": "testRegistryAddress", "registryNamespace": "testRegistryNamespace", "watcherChunkTimeout":5000 }',
+                "result": {"registryAddress": "testRegistryAddress", "registryNamespace": "testRegistryNamespace", "watcherChunkTimeout": 5000}
             }
         };
         for (const combo of Object.keys(combinations)) {
@@ -107,33 +107,33 @@ export function workspaceSettingsTestModule(): void {
         const combinations: any = {
             "combo1": {
                 "file": path.join(workspaceSettingsDir, "testconfig.json"),
-                "data": '{ "deploymentRegistry": "testRegistry" }',
+                "data": '{ "registryAddress": "testRegistryAddress", "registryNamespace": "testRegistryNamespace" }',
                 "result": "The workspace settings file was not found at location"
             },
             "combo2": {
                 "file": workspaceSettingsFile,
                 "data": "non-json data",
-                "result": {"statusCode": 200, "workspaceSettings": {"deploymentRegistry": "", "watcherChunkTimeout": ""}}
+                "result": {"statusCode": 200}
             },
             "combo3": {
                 "file": workspaceSettingsFile,
                 "data": '{ "test": "data" }',
-                "result": {"statusCode": 200, "workspaceSettings": {"deploymentRegistry": "", "watcherChunkTimeout": ""}}
+                "result": {"statusCode": 200}
             },
             "combo4": {
                 "file": workspaceSettingsFile,
-                "data": '{ "deploymentRegistry": "testRegistry" }',
-                "result": {"statusCode": 200, "workspaceSettings": {"deploymentRegistry": "testRegistry", "watcherChunkTimeout": ""}}
+                "data": '{ "registryAddress": "testRegistryAddress", "registryNamespace": "testRegistryNamespace" }',
+                "result": {"statusCode": 200}
             },
             "combo5": {
                 "file": workspaceSettingsFile,
-                "data": '{ "deploymentRegistry": "testRegistry", "watcherChunkTimeout":5000 }',
-                "result": {"statusCode": 200, "workspaceSettings": {"deploymentRegistry": "testRegistry", "watcherChunkTimeout": 5000}}
+                "data": '{ "registryAddress": "testRegistryAddress", "registryNamespace": "testRegistryNamespace", "watcherChunkTimeout":5000 }',
+                "result": {"statusCode": 200}
             },
             "combo6": {
                 "file": workspaceSettingsFile,
-                "data": '{ "deploymentRegistry": "|}{"}',
-                "result": "Codewind detected an error with the Deployment Registry"
+                "data": '{ "registryAddress": "abc", "registryNamespace": "|}{"}',
+                "result": "Codewind detected an error with the Image Push Registry"
             }
         };
         for (const combo of Object.keys(combinations)) {
@@ -155,11 +155,11 @@ export function workspaceSettingsTestModule(): void {
         }
     });
 
-    describe("combinational testing of deploymentRegistryStatus function", () => {
+    describe("combinational testing of imagePushRegistryStatus function", () => {
 
         const combinations: any = {
             "combo1": {
-                "data": {"projectID": "testProjectID", "detailedDeploymentRegistryStatus": "test.NLSMessage"},
+                "data": {"projectID": "testProjectID", "detailedImagePushRegistryStatus": "test.NLSMessage"},
                 "result": 200
             },
             "combo2": {
@@ -167,7 +167,7 @@ export function workspaceSettingsTestModule(): void {
                 "result": 400
             },
             "combo3": {
-                "data": {"detailedDeploymentRegistryStatus": "test.NLSMessage"},
+                "data": {"detailedImagePushRegistryStatus": "test.NLSMessage"},
                 "result": 400
             }
         };
@@ -177,7 +177,7 @@ export function workspaceSettingsTestModule(): void {
             const expectedResult = combinations[combo]["result"];
 
             it(combo + " => data: " + data, async() => {
-                const actualResult = await workspaceSettings.deploymentRegistryStatus(data);
+                const actualResult = await workspaceSettings.imagePushRegistryStatus(data);
                 expect(actualResult.statusCode).to.equal(expectedResult);
             });
         }

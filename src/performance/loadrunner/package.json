@@ -1,16 +1,16 @@
 {
-    "name": "loadrunner",
-    "version": "1.0.0",
-    "description": "Microclimate Load Runner",
-    "main": "index.js",
-    "scripts": {
-      "start": "node server.js",
-      "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "dependencies": {
-      "body-parser": "^1.18.3",
-      "express": "^4.16.3",
-      "loadtest": "^3.0.0",
-      "socket.io": "^2.0.3"
-    }
+  "name": "loadrunner",
+  "version": "1.0.0",
+  "description": "Codewind Load Runner",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "loadtest": "^3.0.0",
+    "socket.io": "^2.0.3"
   }
+}

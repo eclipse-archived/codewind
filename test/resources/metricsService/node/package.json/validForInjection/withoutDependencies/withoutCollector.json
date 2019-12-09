@@ -1,0 +1,9 @@
+{
+    "name": "node",
+    "version": "1.0.0",
+    "description": "A generated IBM Cloud application",
+    "scripts": {
+        "start": "node $npm_package_config_entrypoint",
+        "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
+    }
+}

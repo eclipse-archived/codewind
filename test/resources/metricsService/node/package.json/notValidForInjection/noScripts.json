@@ -1,0 +1,9 @@
+{
+    "name": "node",
+    "version": "1.0.0",
+    "description": "A generated IBM Cloud application",
+    "dependencies": {
+        "body-parser": "^1.18.3",
+        "express": "^4.16.4"
+    }
+}

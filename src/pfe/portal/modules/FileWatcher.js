@@ -61,8 +61,8 @@ module.exports = class FileWatcher {
           break;
         }
 
-        case "deploymentRegistryStatus" : {
-          this.user.uiSocket.emit("deploymentRegistryStatus", fwProject);
+        case "imagePushRegistryStatus" : {
+          this.user.uiSocket.emit("imagePushRegistryStatus", fwProject);
           break;
         }
 
@@ -375,16 +375,16 @@ module.exports = class FileWatcher {
     }
   }
 
-  async deploymentRegistryStatus(body) {
+  async imagePushRegistryStatus(body) {
     let retval;
     try {
-      retval = await filewatcher.deploymentRegistryStatus(body);
+      retval = await filewatcher.imagePushRegistryStatus(body);
       this.logFWReturnedMsg(retval);
     } catch (err) {
       log.error(err);
     }
     if (retval.statusCode != 200) {
-      throw new Error(`deploymentRegistryStatus ${retval.statusCode} ${retval.error.msg}`);
+      throw new Error(`imagePushRegistryStatus ${retval.statusCode} ${retval.error.msg}`);
     }
   }
 
@@ -522,7 +522,8 @@ module.exports = class FileWatcher {
         ports: '',
         buildStatus: 'unknown',
         appStatus: 'unknown',
-        state: Project.STATES.closed
+        state: Project.STATES.closed,
+        detailedAppStatus: undefined
       }
       // Set the container key to '' as the container has stopped.
       const containerKey = (global.codewind.RUNNING_IN_K8S ? 'podName' : 'containerId');
@@ -560,13 +561,14 @@ module.exports = class FileWatcher {
     }
   }
 
-  async testDeploymentRegistry(deploymentRegistry) {
+  async testImagePushRegistry(address, namespace) {
     let retval;
     try{
-      retval = await filewatcher.testDeploymentRegistry(deploymentRegistry);
+      retval = await filewatcher.testImagePushRegistry(address, namespace);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(err);
+      log.error(`Error in testImagePushRegistry`);
+      throw err;
     }
 
     return retval;
@@ -585,13 +587,14 @@ module.exports = class FileWatcher {
     }
   }
 
-  async writeWorkspaceSettings(workspaceSettings) {
+  async writeWorkspaceSettings(address, namespace) {
     let retval;
     try{
-      retval = await filewatcher.writeWorkspaceSettings(workspaceSettings);
+      retval = await filewatcher.writeWorkspaceSettings(address, namespace);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(err);
+      log.error(`Error in writeWorkspaceSettings`);
+      throw err;
     }
     if (retval.statusCode != 200) {
       throw new Error(`writeWorkspaceSettings ${retval.statusCode}`);

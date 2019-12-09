@@ -10,6 +10,9 @@
 ################################################################################
 
 FROM node:12-alpine
+LABEL org.opencontainers.image.title="Codewind-Gatekeeper" org.opencontainers.image.description="Codewind Gatekeeper" \
+      org.opencontainers.image.url="https://codewind.dev/" \
+      org.opencontainers.image.source="https://github.com/eclipse/codewind"
 
 EXPOSE 9096 9496
 
@@ -22,6 +25,8 @@ COPY LICENSE NOTICE.md ./
 WORKDIR /usr/src/app
 COPY . .
 
+ARG IMAGE_BUILD_TIME
+ENV IMAGE_BUILD_TIME=${IMAGE_BUILD_TIME}
 # Install dependancies
 RUN npm ci --production
 

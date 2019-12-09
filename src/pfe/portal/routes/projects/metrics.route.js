@@ -16,9 +16,8 @@ const ProjectError = require('../../modules/utils/errors/ProjectError');
 const ProjectMetricsError = require('../../modules/utils/errors/ProjectMetricsError');
 const Project = require('../../modules/Project');
 const { validateReq } = require('../../middleware/reqValidator');
-const metricsService = require('../../modules/MetricsService');
-const cwUtils = require('../../modules/utils/sharedFunctions');
-const path = require('path');
+const metricsController = require('../../controllers/metrics.controller');
+
 const router = express.Router();
 const log = new Logger(__filename);
 
@@ -165,59 +164,7 @@ router.get('/api/v1/projects/:id/metrics/:type', async function (req, res) {
   }
 });
 
-/**
- * API Function to enable or disable the auto injection of metrics
- * @param project, the project
- * @return 202 if the specified setting was applied and build requested
- * @return 404 if the specified project does not exist
- * @return 500 if internal error
- */
-router.post('/api/v1/projects/:id/metrics/inject', validateReq, async function (req, res) {
-  const projectID = req.sanitizeParams('id');
-  const injectMetrics = req.sanitizeBody('enable');
-  try {
-    const user = req.cw_user;
-    const project = user.projectList.retrieveProject(projectID);
-    if (!project) {
-      const message = `Unable to find project ${projectID}`;
-      log.error(message);
-      res.status(404).send({ message });
-      return;
-    }
-
-    await user.projectList.updateProject({
-      projectID: projectID,
-      injectMetrics: injectMetrics
-    });
-
-    await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
-    // We now need to synch files in to the build container
-    copyProjectToBuild(project, user);
-
-    res.sendStatus(202);
-
-  } catch (err) {
-      log.error(err);
-      res.status(500).send(err.info || err);
-  }
-});
-
-async function copyProjectToBuild(project, user){
-  const globalProjectPath = path.join(project.workspace, project.name);
-  const projectRoot = cwUtils.getProjectSourceRoot(project);
-  if (project.buildStatus != "inProgress") {
-    await cwUtils.copyProjectContents(
-      project,
-      globalProjectPath,
-      projectRoot
-    );
-    await user.buildProject(project, "build");
-  } else {
-    // if a build is in progress, wait 5 seconds and try again
-    await cwUtils.timeout(5000)
-    await copyProjectToBuild(project);
-  }
-}
+router.post('/api/v1/projects/:id/metrics/inject', validateReq, metricsController.inject);
 
 /**
 * Updates the description of a specific load-test run on a specified project

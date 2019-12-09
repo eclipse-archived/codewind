@@ -11,7 +11,7 @@
 'use strict';
 
 const Logger = require('./modules/utils/Logger');
-const { pipePerfProxyReqsToPerfContainer } = require('./modules/PerformanceController');
+const { pipePerfProxyReqsToPerfContainer } = require('./controllers/performance.controller');
 
 const log = new Logger('server.js');
 
@@ -26,6 +26,9 @@ async function main() {
 
   // Set the umask for file creation.
   process.umask(0o002);
+
+  // dotenv reads .env and adds it to the process.env object
+  require('dotenv').config()
 
   if (process.env.APPMETRICS) { // dev mode
     require('appmetrics-dash').monitor({ title: "Application Metrics Dashboard - Monitoring codewind Portal" });

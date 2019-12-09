@@ -28,12 +28,12 @@ export async function readWorkspaceSettings(): Promise<workspaceSettings.IWorksp
     return await filewatcher.readWorkspaceSettings();
 }
 
-export async function testDeploymentRegistry(pushRegistry: string, pullImage?: string): Promise<workspaceSettings.IDeploymentRegistryTestSuccess | workspaceSettings.IDeploymentRegistryTestFailure> {
-    return await filewatcher.testDeploymentRegistry(pushRegistry, pullImage);
+export async function testImagePushRegistry(pushRegistryAddress: string, pushRegistryNamespace: string, pullImage?: string): Promise<workspaceSettings.IImagePushRegistryTestSuccess | workspaceSettings.IImagePushRegistryTestFailure> {
+    return await filewatcher.testImagePushRegistry(pushRegistryAddress, pushRegistryNamespace, pullImage);
 }
 
-export async function deploymentRegistryStatus(request: workspaceSettings.IDeploymentRegistryStatusParams): Promise<workspaceSettings.IDeploymentRegistryStatusSuccess | workspaceSettings.IDeploymentRegistryStatusFailure> {
-    return await filewatcher.deploymentRegistryStatus(request);
+export async function imagePushRegistryStatus(request: workspaceSettings.IImagePushRegistryStatusParams): Promise<workspaceSettings.IImagePushRegistryStatusSuccess | workspaceSettings.IImagePushRegistryStatusFailure> {
+    return await filewatcher.imagePushRegistryStatus(request);
 }
 
 export async function getProjectTypes(location?: string): Promise<projectsController.IGetProjectTypesSuccess | projectsController.IGetProjectTypesFailure> {

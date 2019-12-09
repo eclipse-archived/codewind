@@ -20,7 +20,7 @@ logName=$7
 START_MODE=$8
 DEBUG_PORT=$9
 FOLDER_NAME=${11}
-DEPLOYMENT_REGISTRY=${12}
+IMAGE_PUSH_REGISTRY=${12}
 MAVEN_SETTINGS=${13}
 
 WORKSPACE=/codewind-workspace
@@ -37,7 +37,7 @@ echo "*** CONTAINER_NAME = $CONTAINER_NAME"
 echo "*** START_MODE = $START_MODE"
 echo "*** DEBUG_PORT = $DEBUG_PORT"
 echo "*** HOST_OS = $HOST_OS"
-echo "*** DEPLOYMENT_REGISTRY = $DEPLOYMENT_REGISTRY"
+echo "*** IMAGE_PUSH_REGISTRY = $IMAGE_PUSH_REGISTRY"
 echo "*** MAVEN_SETTINGS = $MAVEN_SETTINGS"
 
 # Import general constants
@@ -187,8 +187,8 @@ function create() {
 		/file-watcher/idc/idc set --hostOS=$HOST_OS
 	fi
 
-	if [[ ( "$IN_K8" == "true" ) && ($DEPLOYMENT_REGISTRY) ]]; then
-		/file-watcher/idc/idc set --deploymentRegistry=$DEPLOYMENT_REGISTRY
+	if [[ ( "$IN_K8" == "true" ) && ($IMAGE_PUSH_REGISTRY) ]]; then
+		/file-watcher/idc/idc set --imagePushRegistry=$IMAGE_PUSH_REGISTRY
 	fi
 
 	if [[ -n $START_MODE ]]; then
@@ -212,8 +212,8 @@ function create() {
 		if [[ $exitCode -eq 1 ]]; then
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.unexpectedError"
 		elif [[ $exitCode -eq 7 ]]; then
-			$util deploymentRegistryStatus $PROJECT_ID "buildscripts.invalidDeploymentRegistry"
-			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
+			$util imagePushRegistryStatus $PROJECT_ID "buildscripts.invalidImagePushRegistry"
+			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidImagePushRegistry"
 		fi
 		exit 3
 	else
@@ -249,9 +249,9 @@ elif [ "$COMMAND" == "update" ]; then
 		/file-watcher/idc/idc set --startMode=$START_MODE
 	fi
 
-	# If the User changes deployment registry between builds, we need to pick it up
-	if [[ ( "$IN_K8" == "true" ) && ($DEPLOYMENT_REGISTRY) ]]; then
-		/file-watcher/idc/idc set --deploymentRegistry=$DEPLOYMENT_REGISTRY
+	# If the User changes image push registry between builds, we need to pick it up
+	if [[ ( "$IN_K8" == "true" ) && ($IMAGE_PUSH_REGISTRY) ]]; then
+		/file-watcher/idc/idc set --imagePushRegistry=$IMAGE_PUSH_REGISTRY
 	fi
 
 	echo "idc build started for $ROOT $(date)"
@@ -265,7 +265,7 @@ elif [ "$COMMAND" == "update" ]; then
 		if [[ $exitCode -eq 1 ]]; then
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.unexpectedError"
 		elif [[ $exitCode -eq 7 ]]; then
-			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidDeploymentRegistry"
+			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.invalidImagePushRegistry"
 		elif [[ $exitCode -eq 8 ]]; then
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFailMissingFile"
 		fi

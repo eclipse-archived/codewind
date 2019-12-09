@@ -39,7 +39,7 @@ import { Operation } from "./operation";
 import { AppLog, BuildLog, BuildRequest, ProjectInfo, UpdateProjectInfoPair } from "./Project";
 import { projectConstants, ContainerStates, StartModes, MavenFlags } from "./constants";
 import * as locale from "../utils/locale";
-import { appStateMap } from "../controllers/projectStatusController";
+import { appStateMap, DetailedAppStatus } from "../controllers/projectStatusController";
 
 const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
 const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
@@ -60,6 +60,10 @@ export const LOCAL_WORKSPACE = "/codewind-workspace";
 const projectList: Array<string> = [];
 
 const isApplicationPodUpIntervalMap = new Map();
+
+export const firstTimePingArray = new Array();
+
+export let pingMessage: string;
 
 export interface ProjectEvent {
     operationId: string;
@@ -86,9 +90,9 @@ export interface ProjectLog {
 }
 
 const projectEventErrorMsgs = {
-    missingDeploymentRegistry: "The project will not build due to missing Deployment Registry. Run the Set Deployment Registry command to set a new Deployment Registry to build projects.",
-    invalidDeploymentRegistry: "Codewind was unable to push an image to the Deployment Registry. Please make sure it is a valid Deployment Registry with the appropriate permissions.",
-    wrongDeploymentRegistry: "The project will not build with the new Deployment Registry. Please remove and re-add the project to deploy to the new Deployment Registry."
+    missingImagePushRegistry: "The project will not build due to missing Image Push Registry. Run the Set Deployment Registry command to set a new Image Push Registry to build projects.",
+    invalidImagePushRegistry: "Codewind cannot build projects with the current Image Push Registry. Please make sure it is a valid Image Push Registry with the appropriate permissions.",
+    wrongImagePushRegistry: "The project will not build with the new Image Push Registry. Please remove and re-add the project to deploy to the new Image Push Registry."
 };
 
 /**
@@ -108,12 +112,12 @@ export async function containerCreate(operation: Operation, script: string, comm
     const projectID = operation.projectInfo.projectID;
     const projectName = projectLocation.split("/").pop();
     const projectType = operation.projectInfo.projectType;
-    const projectDeploymentRegistry = operation.projectInfo.deploymentRegistry;
+    const projectImagePushRegistry = operation.projectInfo.deploymentRegistry;
     if (projectList.indexOf(projectID) === -1)
         projectList.push(projectID);
 
     logger.logProjectInfo("Creating container for " + operation.projectInfo.projectType + " project " + projectLocation, projectID, projectName);
-    logger.logProjectInfo("projectInfo.deploymentRegistry: " + projectDeploymentRegistry, projectID);
+    logger.logProjectInfo("projectInfo.deploymentRegistry: " + projectImagePushRegistry, projectID);
     operation.containerName = await getContainerName(operation.projectInfo);
     // Refer to the comment in getLogName function for this usage
     const logName = getLogName(operation.projectInfo.projectID, projectLocation);
@@ -128,44 +132,42 @@ export async function containerCreate(operation: Operation, script: string, comm
         status: "failed"
     };
 
-    let deploymentRegistry: string;
+    let imagePushRegistry: string;
 
-    if (process.env.IN_K8 === "true") {
-        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo();
-        logger.logProjectInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo), projectID);
-        deploymentRegistry = workspaceSettingsInfo.deploymentRegistry.trim();
-        logger.logProjectInfo("Deployment Registry: " + deploymentRegistry, projectID);
+    if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
+        imagePushRegistry = await workspaceSettings.getImagePushRegistry();
+        logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
 
-        if (projectDeploymentRegistry && projectDeploymentRegistry != deploymentRegistry) {
-            logger.logProjectError(projectEventErrorMsgs.wrongDeploymentRegistry, projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.wrongDeploymentRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.wrongDeploymentRegistry");
+        if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
+            logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.wrongImagePushRegistry;
+            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.wrongImagePushRegistry");
             io.emitOnListener(event, projectEvent);
             return;
         }
 
-        if (!deploymentRegistry.length) {
-            logger.logProjectError(projectEventErrorMsgs.missingDeploymentRegistry, projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.missingDeploymentRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.missingDeploymentRegistry");
+        if (!imagePushRegistry.length) {
+            logger.logProjectError(projectEventErrorMsgs.missingImagePushRegistry, projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.missingImagePushRegistry;
+            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.missingImagePushRegistry");
             io.emitOnListener(event, projectEvent);
             return;
         }
 
-        logger.logInfo("Deployment Registry: " + deploymentRegistry);
+        logger.logInfo("Image Push Registry: " + imagePushRegistry);
     }
 
     const keyValuePair: UpdateProjectInfoPair = {
         key: "deploymentRegistry",
-        value: deploymentRegistry,
+        value: imagePushRegistry,
         saveIntoJsonFile: true
     };
     const projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
-    logger.logTrace("The projectInfo has been updated for deploymentRegistry: " + JSON.stringify(projectInfo));
+    logger.logTrace("The projectInfo has been updated for imagePushRegistry: " + JSON.stringify(projectInfo));
 
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command,
         operation.containerName, String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode,
-        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry];
+        operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry];
 
         if (projectType == "liberty" || projectType == "spring") {
 
@@ -185,7 +187,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
             args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
                 String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings];
+                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry, userMavenSettings];
         } else if (projectType == "odo") {
             const componentName: string = await getComponentName(projectName);
 
@@ -222,9 +224,9 @@ export async function containerUpdate(operation: Operation, script: string, comm
     const projectID = operation.projectInfo.projectID;
     const projectName = projectLocation.split("/").pop();
     const projectType = operation.projectInfo.projectType;
-    const projectDeploymentRegistry = operation.projectInfo.deploymentRegistry;
+    const projectImagePushRegistry = operation.projectInfo.deploymentRegistry;
     logger.logProjectInfo("Updating container for " + operation.projectInfo.projectType + " project " + projectLocation, projectID, projectName);
-    logger.logProjectInfo("projectInfo.deploymentRegistry " + projectDeploymentRegistry, projectID);
+    logger.logProjectInfo("projectInfo.deploymentRegistry " + projectImagePushRegistry, projectID);
     operation.containerName = await getContainerName(operation.projectInfo);
     // Refer to the comment in getLogName function for this usage
     const logName = getLogName(operation.projectInfo.projectID, projectLocation);
@@ -241,44 +243,42 @@ export async function containerUpdate(operation: Operation, script: string, comm
         status: "failed"
     };
 
-    let deploymentRegistry: string;
+    let imagePushRegistry: string;
 
-    if (process.env.IN_K8 === "true") {
-        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo();
-        logger.logProjectInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo), projectID);
-        deploymentRegistry = workspaceSettingsInfo.deploymentRegistry.trim();
-        logger.logProjectInfo("Deployment Registry: " + deploymentRegistry, projectID);
+    if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
+        imagePushRegistry = await workspaceSettings.getImagePushRegistry();
+        logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
 
-        if (projectDeploymentRegistry && projectDeploymentRegistry != deploymentRegistry) {
-            logger.logProjectError(projectEventErrorMsgs.wrongDeploymentRegistry, projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.wrongDeploymentRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.wrongDeploymentRegistry");
+        if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
+            logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.wrongImagePushRegistry;
+            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.wrongImagePushRegistry");
             io.emitOnListener(event, projectEvent);
             return;
         }
 
-        if (!deploymentRegistry.length) {
-            logger.logProjectError(projectEventErrorMsgs.missingDeploymentRegistry, projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.missingDeploymentRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.missingDeploymentRegistry");
+        if (!imagePushRegistry.length) {
+            logger.logProjectError(projectEventErrorMsgs.missingImagePushRegistry, projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.missingImagePushRegistry;
+            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.missingImagePushRegistry");
             io.emitOnListener(event, projectEvent);
             return;
         }
 
-        logger.logInfo("Deployment Registry: " + deploymentRegistry);
+        logger.logInfo("Image Push Registry: " + imagePushRegistry);
     }
 
     const keyValuePair: UpdateProjectInfoPair = {
         key: "deploymentRegistry",
-        value: deploymentRegistry,
+        value: imagePushRegistry,
         saveIntoJsonFile: true
     };
     const projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
-    logger.logTrace("The projectInfo has been updated for deploymentRegistry: " + JSON.stringify(projectInfo));
+    logger.logTrace("The projectInfo has been updated for imagePushRegistry: " + JSON.stringify(projectInfo));
 
     let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
         String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-        (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry];
+        (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry];
 
     if (projectType == "liberty" || projectType == "spring") {
 
@@ -298,7 +298,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
 
         args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
             String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-            (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, deploymentRegistry, userMavenSettings];
+            (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry, userMavenSettings];
     } else if (projectType == "odo") {
         const componentName: string = await getComponentName(projectName);
 
@@ -655,18 +655,18 @@ export async function containerDelete(projectInfo: ProjectInfo, script: string):
     const projectID = projectInfo.projectID;
     const projectName = projectInfo.location.split("/").pop();
     const containerName = await getContainerName(projectInfo);
-    const deploymentRegistry = projectInfo.deploymentRegistry;
+    const imagePushRegistry = projectInfo.deploymentRegistry;
     logger.logProjectInfo("containerDelete: Kill running processes and remove container... ", projectID, projectName);
     logger.logProjectInfo("Project ID:        " + projectInfo.projectID, projectID, projectName);
     logger.logProjectInfo("Project Location:  " + projectInfo.location, projectID, projectName);
     logger.logProjectInfo("Project Type:      " + projectInfo.projectType, projectID, projectName);
     logger.logProjectInfo("Project Container: " + containerName, projectID, projectName);
-    logger.logProjectInfo("projectInfo.deploymentRegistry: " + deploymentRegistry, projectID);
+    logger.logProjectInfo("projectInfo.deploymentRegistry: " + imagePushRegistry, projectID);
 
     processManager.killRunningProcesses(projectInfo.projectID, projectName);
 
     try {
-        let args: any[] = [projectInfo.location, LOCAL_WORKSPACE, projectID, "remove", containerName, undefined, undefined, undefined, undefined, undefined, undefined, deploymentRegistry];
+        let args: any[] = [projectInfo.location, LOCAL_WORKSPACE, projectID, "remove", containerName, undefined, undefined, undefined, undefined, undefined, undefined, imagePushRegistry];
 
         if (projectInfo.projectType == "odo") {
             const logDir: string = await logHelper.getLogDir(projectID, projectName);
@@ -968,8 +968,9 @@ export async function isContainerActive(projectID: string, handler: any): Promis
         if (containerState.hasOwnProperty("state") && containerState.state === ContainerStates.containerActive) {
             const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
             if (projectHandler.hasOwnProperty("getContainerStatus")) {
-                projectHandler.getContainerStatus(projectInfo, containerName, (err: Error, state: ContainerStates) => {
-                    handler({ state: state, error: err });
+                projectHandler.getContainerStatus(projectInfo, containerName, async (err: Error, state: ContainerStates) => {
+                    const errMsg = (err) ? await locale.getTranslation("projectUtil.appStatusError.errorGetContainerStatus", { errMsg: err.toString() }) : undefined;
+                    handler({ state: state, error: errMsg });
                 });
             } else {
                 handler(containerState);
@@ -997,15 +998,13 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
         const ignoreLog = true;
         const projectInfo = await getProjectInfo(projectID, ignoreLog);
         if (!projectInfo) {
-            const errorMsg = "could not retrieve project info";
-            handler({ error: errorMsg });
+            handler({ error: await locale.getTranslation("projectUtil.projectInfoError") });
             return;
         }
 
         const containerInfo: kubeutil.PodInfo | dockerutil.ContainerInfo = await getContainerInfo(projectInfo, containerInfoForceRefreshMap.get(projectInfo.projectID));
         if (!containerInfo) {
-            const errorMsg = "could not retrieve container info for the project";
-            handler({ error: errorMsg });
+            handler({ error: await locale.getTranslation("projectUtil.appStatusError.errorGetContainerInfo") });
             return;
         }
 
@@ -1013,18 +1012,15 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
 
         // If no ip or port then application is not running
         if (!port) {
-            const errorMsg = "could not retrieve the port for the project";
-            handler({ error: errorMsg });
+            handler({ error: await locale.getTranslation("projectUtil.appStatusError.errorGetPort") });
             return;
         }
 
         if (process.env.IN_K8 !== "true" && !containerInfo.ip) {
-            const errorMsg = "could not retrieve the ip for the project";
-            handler({ error: errorMsg });
+            handler({ error: await locale.getTranslation("projectUtil.appStatusError.errorGetIP") });
             return;
         } else if (process.env.IN_K8 === "true" && !containerInfo.serviceName) {
-            const errorMsg = "could not retrieve the hostname for the project service";
-            handler({ error: errorMsg });
+            handler({ error: await locale.getTranslation("projectUtil.appStatusError.errorGetHostname") });
             return;
         }
 
@@ -1041,11 +1037,14 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             isDefaultPath = false;
             path = projectInfo.healthCheck;
         }
-
-        if (isDefaultPath) {
-            updateDetailedAppStatus(projectID, containerInfo.ip, port, path, isDefaultPath);
-        } else {
-            updateDetailedAppStatus(projectID, containerInfo.ip, port, path);
+        // only update the detailed status on first time ping
+        if (firstTimePingArray.indexOf(projectID) < 0) {
+            firstTimePingArray.push(projectID);
+            if (isDefaultPath) {
+                updateDetailedAppStatus(projectID, containerInfo.ip, port, path, isDefaultPath);
+            } else {
+                updateDetailedAppStatus(projectID, containerInfo.ip, port, path);
+            }
         }
 
         // default value of isHttps is false, overwrite if we have valid projectInfo.isHttps
@@ -1079,7 +1078,7 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
         let statusCode: number = undefined;
         let isGoodStatusCode: Boolean = undefined;
 
-        protocol.request(options, (res) => {
+        protocol.request(options, async (res) => {
             statusCode = res.statusCode;
 
             // We consider the app to be running if we get any non-error status code.
@@ -1090,41 +1089,36 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             } else if (!isGoodStatusCode && path === "/health") {
                 options.path = "/";
 
-                protocol.request(options, (res) => {
+                protocol.request(options, async (res) => {
                     statusCode = res.statusCode;
 
                     // We consider the app to be running if we get any non-error status code.
                     isGoodStatusCode = statusCode >= 200 && statusCode < 400;
 
                     if (!isGoodStatusCode) {
-                        const errorMsg = `Received response, but with bad status code ${statusCode} when pinging project`;
-                        handler({ isAppUp: false, error: errorMsg });
+                        handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.badStatusCode", { statusCode: statusCode}) });
                     } else {
                         handler({ isAppUp: true });
                     }
-                }).on("error", (err) => {
-                    handler({ isAppUp: false, error: err });
-                }).on("timeout", () => {
-                    const errorMsg = "Http request is failed due to timeout error";
+                }).on("error", async (err) => {
+                    handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.errorGetAppStatus", { errMsg: err.message }) });
+                }).on("timeout", async () => {
                     if (!statusCode) {
-                        handler({ isAppUp: false, error: errorMsg });
+                        handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.httpRequestTimeout") });
                     }
                 }).end();
             } else {
-                const errorMsg = `Received response, but with bad status code ${statusCode} when pinging project`;
-                handler({ isAppUp: false, error: errorMsg });
+                handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.badStatusCode", { statusCode: statusCode}) });
             }
-        }).on("error", (err) => {
-            handler({ isAppUp: false, error: err });
-        }).on("timeout", () => {
-            const errorMsg = "Http request is failed due to timeout error";
+        }).on("error", async (err) => {
+            handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.errorGetAppStatus", { errMsg: err.message }) });
+        }).on("timeout", async () => {
             if (!statusCode) {
-                handler({ isAppUp: false, error: errorMsg });
+                handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.httpRequestTimeout") });
             }
         }).end();
     } catch (err) {
-        const errorMsg = "failed to get application status: " + err;
-        handler({ error: errorMsg });
+        handler({ error: await locale.getTranslation("projectUtil.appStatusError.errorGetAppStatus", { errMsg: err.message }) });
     }
 }
 
@@ -1436,8 +1430,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
     const projectName = normalizedProjectLocation.split("/").reverse()[0];
     const logDir = await logHelper.getLogDir(buildInfo.projectID, projectName);
     const dockerBuildLog = path.resolve(buildInfo.projectLocation + "/../.logs/" + logDir, logHelper.buildLogs.dockerBuild + logHelper.logExtension);
-    const projectDeploymentRegistry = operation.projectInfo.deploymentRegistry;
-    logger.logProjectInfo("projectInfo.deploymentRegistry: " + projectDeploymentRegistry, buildInfo.projectID);
+    const projectImagePushRegistry = operation.projectInfo.deploymentRegistry;
+    logger.logProjectInfo("projectInfo.deploymentRegistry: " + projectImagePushRegistry, buildInfo.projectID);
     if (process.env.IN_K8 === "true") {
         // Kubernetes environment
 
@@ -1447,34 +1441,32 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             status: "failed"
         };
 
-        const workspaceSettingsInfo = await workspaceSettings.getWorkspaceSettingsInfo();
-        logger.logInfo("workspaceSettingsInfo " + JSON.stringify(workspaceSettingsInfo));
-        const deploymentRegistry: string = workspaceSettingsInfo.deploymentRegistry.trim();
-        logger.logProjectInfo("Deployment Registry: " + deploymentRegistry, buildInfo.projectID);
+        const imagePushRegistry: string = await workspaceSettings.getImagePushRegistry();
+        logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, buildInfo.projectID);
 
-        if (projectDeploymentRegistry && projectDeploymentRegistry != deploymentRegistry) {
-            logger.logProjectError(projectEventErrorMsgs.wrongDeploymentRegistry, buildInfo.projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.wrongDeploymentRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.wrongDeploymentRegistry");
+        if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
+            logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, buildInfo.projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.wrongImagePushRegistry;
+            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.wrongImagePushRegistry");
             io.emitOnListener(event, projectEvent);
             return;
         }
 
-        if (!deploymentRegistry.length) {
-            logger.logProjectError(projectEventErrorMsgs.missingDeploymentRegistry, buildInfo.projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.missingDeploymentRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.missingDeploymentRegistry");
+        if (!imagePushRegistry.length) {
+            logger.logProjectError(projectEventErrorMsgs.missingImagePushRegistry, buildInfo.projectID, projectName);
+            projectEvent.error = projectEventErrorMsgs.missingImagePushRegistry;
+            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.missingImagePushRegistry");
             io.emitOnListener(event, projectEvent);
             return;
         }
 
         const keyValuePair: UpdateProjectInfoPair = {
             key: "deploymentRegistry",
-            value: deploymentRegistry,
+            value: imagePushRegistry,
             saveIntoJsonFile: true
         };
         const projectInfo = await projectsController.updateProjectInfo(buildInfo.projectID, keyValuePair);
-        logger.logProjectInfo("The projectInfo has been updated for deploymentRegistry: " + JSON.stringify(projectInfo), projectInfo.projectID);
+        logger.logProjectInfo("The projectInfo has been updated for imagePushRegistry: " + JSON.stringify(projectInfo), projectInfo.projectID);
 
         let defaultChartLocation = buildInfo.projectLocation + "/chart";
         const dirList = await utils.asyncReadDir(defaultChartLocation);
@@ -1510,7 +1502,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         // Modify the temp copy of the chart to add the needed labels and serviceAccount
         try {
             // Render the chart template
-            await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["template", buildInfo.containerName, defaultChartLocation, "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + deploymentRegistry + "/" + buildInfo.containerName, "--output-dir=" + chartParentFolder], {});
+            await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["template", buildInfo.containerName, defaultChartLocation, "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + imagePushRegistry + "/" + buildInfo.containerName, "--output-dir=" + chartParentFolder], {});
 
             // Find the locations of the deployment and service file
             const deploymentFile = (await processManager.spawnDetachedAsync(buildInfo.projectID, "bash", ["/file-watcher/scripts/kubeScripts/find-kube-resource.sh", defaultChartLocation, "Deployment"], {})).stdout;
@@ -1567,19 +1559,19 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         try {
             // Tag and push image
             // Tag and push the docker registry image, which we will use during the helm install
-            await dockerutil.tagAndPushImage(buildInfo.projectID, buildInfo.containerName, deploymentRegistry);
+            await dockerutil.tagAndPushImage(buildInfo.projectID, buildInfo.containerName, imagePushRegistry);
         } catch (err) {
             const msg = "Failed to push image to the registry for " + projectName;
             logger.logProjectError(msg, buildInfo.projectID, buildInfo.containerName);
             logger.logProjectError(err, buildInfo.projectID, buildInfo.containerName);
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.invalidDeploymentRegistry");
+            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.invalidImagePushRegistry");
             await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopped, " ");
             throw new Error(msg);
         }
 
         try {
             // Install Helm Deployment
-            const installResult = await kubeutil.installChart(buildInfo.projectID, buildInfo.containerName, defaultChartLocation, deploymentRegistry);
+            const installResult = await kubeutil.installChart(buildInfo.projectID, buildInfo.containerName, defaultChartLocation, imagePushRegistry);
             await appendToBuildLogFile(buildInfo, installResult.stdout, logDir);
         } catch (err) {
             const msg = "Helm chart install stage failed for " + projectName;
@@ -1796,8 +1788,8 @@ export async function removeProject(projectInfo: ProjectInfo): Promise<void> {
     processManager.killRunningProcesses(projectInfo.projectID, projectName);
 
     if (process.env.IN_K8 === "true") {
-        const deploymentRegistry = projectInfo.deploymentRegistry;
-        logger.logProjectInfo("projectInfo.deploymentRegistry: " + deploymentRegistry, projectID);
+        const imagePushRegistry = projectInfo.deploymentRegistry;
+        logger.logProjectInfo("projectInfo.deploymentRegistry: " + imagePushRegistry, projectID);
 
         const intervalID: NodeJS.Timer = isApplicationPodUpIntervalMap.get(projectInfo.projectID);
         if (intervalID != undefined) {
@@ -1823,7 +1815,7 @@ export async function removeProject(projectInfo: ProjectInfo): Promise<void> {
                 await dockerutil.removeImage(projectInfo.projectID, result.stdout.trim());
             }
         } catch (err) {
-            const msg = "Error removing image " + containerName + " and/or " + deploymentRegistry + "/" + containerName;
+            const msg = "Error removing image " + containerName + " and/or " + imagePushRegistry + "/" + containerName;
             logger.logProjectError(err, projectInfo.projectID);
             logger.logProjectInfo(msg, projectInfo.projectID);
         }
@@ -2138,19 +2130,27 @@ export async function restartProject(operation: Operation, startMode: string, ev
  * @param port <Required | String> - The project port that Turbine pings.
  * @param path <Required | String> - The project path that Turbine pings.
  *
- * @returns void
+ * @returns Promise<void>
  */
-export function updateDetailedAppStatus(projectID: string, ip: string, port: string, path: string, isDefaultPath?: boolean): void {
+export async function updateDetailedAppStatus(projectID: string, ip: string, port: string, path: string, isDefaultPath?: boolean): Promise<void> {
     const oldState = appStateMap.get(projectID).state;
     const oldMsg = appStateMap.get(projectID).msg;
 
-    let pingPathMsg = `Pinging http://${ip}:${port}${path}`;
+    let pingPathEvent: DetailedAppStatus;
 
     if (isDefaultPath) {
-        pingPathMsg = `${pingPathMsg} and http://${ip}:${port}/`;
+        pingMessage = await locale.getTranslation("projectUtil.defaultPingPathMessage", { ip: ip, port: port, path: path });
+    } else {
+        pingMessage = await locale.getTranslation("projectUtil.pingMessage", { ip: ip, port: port, path: path });
     }
 
+    pingPathEvent = {
+        severity: "INFO",
+        message: pingMessage,
+        notify: false
+    };
+
     if (oldState === AppState.starting) {
-        projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathMsg);
+        projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathEvent);
     }
 }
