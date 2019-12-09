@@ -28,7 +28,6 @@ async function main() {
     let client_id = process.env.CLIENT_ID
     let auth_url = process.env.AUTH_URL
     let client_secret = process.env.CLIENT_SECRET
-    let enable_auth = process.env.ENABLE_AUTH
     let gatekeeper_host = process.env.GATEKEEPER_HOST
     let workspace_service = process.env.WORKSPACE_SERVICE
     let portal_secure = process.env.PORTAL_HTTPS
@@ -118,16 +117,8 @@ async function main() {
     const keyCloak = new Keycloak({ store: memoryStore }, kcConfig);
 
     // Slot-in authentication middleware
-    let authMiddleware = function (req, res, next) { next() }
-
-    // Activate / Disable authenticated routes features
-    if (enable_auth == "1") {
-        console.log(`** Gatekeeper: Authentication is enabled - ENABLE_AUTH=${enable_auth}`);
-        authMiddleware = keyCloak.protect("realm:"+required_accessRole);
-        app.use(keyCloak.middleware({ logout: '/logout', admin: '/' }));
-    } else {
-        console.log(`** Gatekeeper: Authentication is disabled - ENABLE_AUTH=${enable_auth}`);
-    }
+    const authMiddleware = keyCloak.protect("realm:"+required_accessRole);
+    app.use(keyCloak.middleware({ logout: '/logout', admin: '/' }));
 
     console.log("Added environment route to : /api/v1/gatekeeper/environment")
     // environment route
