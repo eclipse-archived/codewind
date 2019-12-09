@@ -16,16 +16,25 @@ const log = new Logger(__filename);
  * Return a single project (as JSON)
  * @return the project object
  */
-function getProject(req, res) {
+async function getProject(req, res) {
   try {
     let projectID = req.sanitizeParams('id');
     let user = req.cw_user;
-    let project = user.projectList.retrieveProject(projectID);
-    if (project) {
-      res.status(200).send(project);
-    } else {
+    const project = user.projectList.retrieveProject(projectID);
+    if (!project) {
       res.sendStatus(404);
+      return;
     }
+    const {
+      protocol,
+      headers: { host },
+    } = req;
+    const pfeOrigin = `${protocol}://${host}`;
+    const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
+    res.status(200).send({
+      ...project,
+      appMonitorUrl,
+    });
   } catch (err) {
     log.error(err);
     res.status(500).send(err);

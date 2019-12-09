@@ -46,95 +46,16 @@ const createDefaultProjectAndCheckIsAnObject = () => {
 };
 
 
-const createNodeProjectWithPackageJsonDependencies = (projectDir, dependencies) => {
-    const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'nodejs' }, projectDir);
+const createNodeProjectWithPackageJsonDependencies = (projectDir, dependencies, extraCreationArgs) => {
+    const creationArgs = {
+        name: 'dummy',
+        language: 'nodejs',
+        ...extraCreationArgs,
+    };
+    const project = createProjectAndCheckIsAnObject(creationArgs, projectDir);
     const packageJSONPath = path.join(project.projectPath(), 'package.json');
     fs.outputJsonSync(packageJSONPath, { dependencies });
     return project;
-};
-
-const exampleProject = {
-    projectID: '0e018aa0-1515-11ea-9063-896c05b47bde',
-    name: 'node3',
-    codewindVersion: 'latest',
-    language: 'nodejs',
-    locOnDisk: '/Users/richard.waller@ibm.com/codewind-workspace/node3',
-    host: '172.18.0.5',
-    ports: {
-        exposedPort: '32771',
-        internalPort: '3000',
-        internalDebugPort: '9229',
-    },
-    workspace: '/codewind-workspace/',
-    directory: 'node3',
-    infLockFlag: false,
-    loadTestPath: '/codewind-workspace/node3/load-test',
-    projectType: 'nodejs',
-    buildLogPath: '/codewind-workspace/.logs/node3-0e018aa0-1515-11ea-9063-896c05b47bde/docker.build.log',
-    state: 'open',
-    autoBuild: true,
-    injectMetrics: 'true',
-    buildStatus: 'success',
-    detailedBuildStatus: ' ',
-    projectWatchStateId: 'ea72093628ff9aa1904c2a8de89bf009',
-    ignoredPaths: [
-        '/.project',
-        '/run-dev',
-        '/run-debug',
-        '/package-lock.json*',
-        '/nodejs_restclient.log',
-        '/nodejs_dc.log',
-        '/manifest.yml',
-        '/idt.js',
-        '/cli-config.yml',
-        '/README.md',
-        '/Jenkinsfile',
-        '/.cfignore',
-        '/load-test*',
-        '*/node_modules*',
-        '*/.git/*',
-        '*/.DS_Store',
-        '*/*.swp',
-        '*/*.swx',
-        '*/4913',
-        '*/.dockerignore',
-        '*/.gitignore',
-        '*/*~',
-        '/.settings',
-        '/chart',
-    ],
-    appStatus: 'started',
-    detailedAppStatus: {
-        severity: 'INFO',
-        message: 'Application started.',
-        notify: false,
-    },
-    lastbuild: 1575543700071,
-    appImageLastBuild: '1575543689000',
-    location: '/codewind-workspace/node3',
-    validationStatus: 'success',
-    validationResults: [],
-    isHttps: false,
-    containerId: '63d21ae7e283372c0ac40d90517b651e3cc52fdb0bbefc15c0321197d5e21f0b',
-    logs: {
-        build: [
-            {
-                origin: 'workspace',
-                files: [
-                    '/codewind-workspace/.logs/node3-0e018aa0-1515-11ea-9063-896c05b47bde/docker.build.log',
-                ],
-            },
-        ],
-        app: [
-            {
-                origin: 'workspace',
-                files: [
-                    '/codewind-workspace/.logs/node3-0e018aa0-1515-11ea-9063-896c05b47bde/app.log',
-                ],
-            },
-        ],
-    },
-    metricsAvailable: true,
 };
 
 module.exports = {
@@ -143,5 +64,4 @@ module.exports = {
     createProjectAndCheckIsAnObject,
     createDefaultProjectAndCheckIsAnObject,
     createNodeProjectWithPackageJsonDependencies,
-    exampleProject,
 };

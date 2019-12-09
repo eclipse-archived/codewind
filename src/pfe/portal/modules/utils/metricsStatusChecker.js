@@ -47,9 +47,9 @@ async function doesMetricsPackageExist(pathOfFileToCheck, projectLanguage) {
     const fileToCheck = await fs.readFile(pathOfFileToCheck, 'utf8');
     if (projectLanguage === 'nodejs') {
       const packageJSON = JSON.parse(fileToCheck);
-      // There might not be any dependencies
-      if (packageJSON.dependencies) {
-        if (packageJSON.dependencies['appmetrics-dash']) {
+      const { dependencies } = packageJSON;
+      if (dependencies) {
+        if (dependencies['appmetrics-dash'] || dependencies['appmetrics-codewind']) {
           metricsPackageExists = true;
         }
       }

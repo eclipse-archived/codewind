@@ -16,9 +16,10 @@ const projectsController = rewire('../../../../src/pfe/portal/controllers/projec
 const ProjectList = require('../../../../src/pfe/portal/modules/ProjectList');
 
 const { suppressLogOutput } = require('../../../modules/log.service');
-const { exampleProject } = require('../../../modules/projectCreation.service');
+const { createNodeProjectWithPackageJsonDependencies } = require('../../../modules/projectCreation.service');
 
 chai.should();
+const projectDir = './test';
 
 describe('projects.controller.js', () => {
     suppressLogOutput(projectsController);
@@ -51,10 +52,13 @@ describe('projects.controller.js', () => {
         });
         it('returns 200 and the project if the project ID is good', async() => {
             const projectList = new ProjectList();
-            projectList.addProject(exampleProject);
+            const project = createNodeProjectWithPackageJsonDependencies(projectDir, {});
+            projectList.addProject(project);
 
             const request = {
-                sanitizeParams: () => exampleProject.projectID,
+                protocol: 'http',
+                headers: { host: '127.0.0.1:10000' },
+                sanitizeParams: () => project.projectID,
                 cw_user: { projectList },
             };
             const req = mockReq(request);
@@ -63,7 +67,64 @@ describe('projects.controller.js', () => {
             await projectsController.getProject(req, res);
 
             res.status.should.be.calledOnceWith(200);
-            res.send.args[0][0].should.deep.equal(exampleProject);
+            res.send.args[0][0].should.deep.equal({
+                ...project,
+                appMonitorUrl: undefined, // eslint-disable-line no-undefined
+            });
+        });
+        it('returns 200 and the project with correct appMonitorUrl if the project ID is good and has the correct package.json', async() => {
+            const projectList = new ProjectList();
+            const packageJsonDependencies = {
+                'appmetrics-dash': '^0.1.0',
+            };
+            const extraCreationArgs = {
+                host: '127.0.0.1',
+                port: { internalPort: 32777 },
+            };
+            const project = createNodeProjectWithPackageJsonDependencies(projectDir, packageJsonDependencies, extraCreationArgs);
+            projectList.addProject(project);
+
+            const request = {
+                protocol: 'http',
+                headers: { host: '127.0.0.1:10000' },
+                sanitizeParams: () => project.projectID,
+                cw_user: { projectList },
+            };
+            const req = mockReq(request);
+            const res = mockRes();
+
+            await projectsController.getProject(req, res);
+
+            res.status.should.be.calledOnceWith(200);
+            res.send.args[0][0].should.deep.equal({
+                ...project,
+                appMonitorUrl: 'http://127.0.0.1:32777/appmetrics-dash',
+            });
+        });
+        it('returns 200 and the project with correct appMonitorUrl if the project ID is good and has the correct package.json', async() => {
+            const projectList = new ProjectList();
+            const packageJsonDependencies = {
+                'appmetrics-codewind': '^0.1.0',
+            };
+            const project = createNodeProjectWithPackageJsonDependencies(projectDir, packageJsonDependencies);
+            projectList.addProject(project);
+
+            const request = {
+                protocol: 'http',
+                headers: { host: '127.0.0.1:10000' },
+                sanitizeParams: () => project.projectID,
+                cw_user: { projectList },
+            };
+            const req = mockReq(request);
+            const res = mockRes();
+
+            await projectsController.getProject(req, res);
+
+            res.status.should.be.calledOnceWith(200);
+            res.send.args[0][0].should.deep.equal({
+                ...project,
+                appMonitorUrl: `http://127.0.0.1:10000/performance/monitor/dashboard/nodejs?theme=dark&projectID=${project.projectID}`,
+            });
         });
     });
     describe('getProjects(req, res)', () => {
@@ -82,10 +143,11 @@ describe('projects.controller.js', () => {
         });
         it('returns 200 and a list of projects if there are no errors', async() => {
             const projectList = new ProjectList();
-            projectList.addProject(exampleProject);
+            const project = createNodeProjectWithPackageJsonDependencies(projectDir, {});
+            projectList.addProject(project);
 
             const request = {
-                sanitizeParams: () => exampleProject.projectID,
+                sanitizeParams: () => project.projectID,
                 cw_user: { projectList },
             };
             const req = mockReq(request);
@@ -94,8 +156,7 @@ describe('projects.controller.js', () => {
             await projectsController.getProjects(req, res);
 
             res.status.should.be.calledOnceWith(200);
-            res.send.args[0][0].should.deep.equal([exampleProject]);
+            res.send.args[0][0].should.deep.equal([project]);
         });
     });
 });
-

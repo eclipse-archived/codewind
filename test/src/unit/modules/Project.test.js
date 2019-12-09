@@ -8,7 +8,6 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
 *******************************************************************************/
-global.codewind = { RUNNING_IN_K8S: false };
 const fs = require('fs-extra');
 const { execSync } = require('child_process');
 const path = require('path');
@@ -30,7 +29,7 @@ const {
 
 chai.use(chaiSubset);
 chai.use(chaiAsPromised);
-chai.should();
+const should = chai.should();
 const { expect } = chai;
 
 const loadTestResources = path.join(__dirname, '../../../resources/load-test-data/');
@@ -173,7 +172,46 @@ describe('Project.js', () => {
                 areMetricsAvailable.should.be.false;
             });
         });
-        
+    });
+    describe('getAppMonitorUrl(pfeOrigin)', () => {
+        const testDir = path.join('.', 'test');
+        afterEach(() => {
+            fs.removeSync(testDir);
+        });
+        it(`returns 'undefined' if metrics are unavailable`, async() => {
+            const projectWithoutMetrics = createDefaultProjectAndCheckIsAnObject();
+            const appMonitorUrl = await projectWithoutMetrics.getAppMonitorUrl();
+            should.equal(appMonitorUrl, undefined); // eslint-disable-line no-undefined
+        });
+        it(`returns '<appOrigin>/appmetrics-dash' if project is nodejs and its package.json contains appmetrics-dash`, async() => {
+            const project = createNodeProjectWithPackageJsonDependencies(testDir, {
+                'appmetrics-dash': '^0.1.0',
+            });
+            const appMonitorUrl = await project.getAppMonitorUrl();
+            appMonitorUrl.should.include('http')
+                .and.include('://')
+                .and.include('/appmetrics-dash');
+        });
+        it(`returns '<appOrigin>/appmetrics-dash' if project is nodejs and its package.json contains appmetrics-dash and appmetrics-codewind`, async() => {
+            const project = createNodeProjectWithPackageJsonDependencies(testDir, {
+                'appmetrics-dash': '^0.1.0',
+                'appmetrics-codewind': '^0.1.0',
+            });
+            const appMonitorUrl = await project.getAppMonitorUrl();
+            appMonitorUrl.should.include('http')
+                .and.include('://')
+                .and.include('/appmetrics-dash');
+        });
+        it(`returns the path to the dashboard hosted by our performance container if project is nodejs and its package.json contains appmetrics-codewind`, async() => {
+            const pfeOrigin = 'http://localhost:10000';
+            const project = createNodeProjectWithPackageJsonDependencies(testDir, {
+                'appmetrics-codewind': '^0.1.0',
+            });
+            const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
+            appMonitorUrl.should.be.a('string')
+                .and.satisfy(url => url.startsWith(pfeOrigin))
+                .and.include('/performance/monitor/dashboard/nodejs?theme=dark&projectID=');
+        });
     });
     describe('getPort()', () => {
         it('Checks that the port returned is internal as RUNNING_IN_K8S is false', () => {

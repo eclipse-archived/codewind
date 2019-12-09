@@ -13,6 +13,7 @@ const fs = require('fs-extra');
 const { join } = require('path');
 const uuidv1 = require('uuid/v1');
 
+const metricsService = require('./metricsService');
 const cwUtils = require('./utils/sharedFunctions');
 const metricsStatusChecker = require('./utils/metricsStatusChecker');
 const ProjectError = require('./utils/errors/ProjectError');
@@ -125,6 +126,17 @@ module.exports = class Project {
     this.metricsAvailable = isMetricsAvailable;
     await this.writeInformationFile();
     return isMetricsAvailable;
+  }
+
+  async getAppMonitorUrl(pfeOrigin) {
+    const appMonitorUrl = await metricsService.getAppMonitorUrl(
+      this.projectPath(),
+      this.language,
+      this.getAppOrigin(),
+      this.projectID,
+      pfeOrigin,
+    );
+    return appMonitorUrl;
   }
 
   getAppOrigin() {

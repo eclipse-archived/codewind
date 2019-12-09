@@ -17,6 +17,7 @@ const dir = require('node-dir');
 const promiseAny = require('promise.any');
 
 const Logger = require('../utils/Logger');
+const { isMetricsAvailable } = require('../utils/metricsStatusChecker');
 const nodeMetricsService = require('./node');
 
 const log = new Logger(__filename);
@@ -302,7 +303,7 @@ function getNewContentsOfJvmOptions(originalContents) {
   const injectionString = '-javaagent:resources/javametrics-agent.jar'
   if (originalContents.includes(injectionString)) {
     return originalContents;
-  } 
+  }
   const newJvmOptions = `${originalContents}\n${injectionString}`;
   return newJvmOptions;
 }
@@ -500,7 +501,33 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
   return newBuildPlugins;
 }
 
+async function getAppMonitorUrl( // eslint-disable-line consistent-return
+  projectPath,
+  projectLanguage,
+  appOrigin,
+  projectID,
+  pfeOrigin,
+) {
+  if (!await isMetricsAvailable(projectPath, projectLanguage)) {
+    return undefined;
+  }
+  const fileToCheck = 'package.json';
+  const pathOfFileToCheck = await path.join(projectPath, fileToCheck);
+  const packageJson = await fs.readJson(pathOfFileToCheck);
+  const { dependencies } = packageJson;
+  if (dependencies) {
+    if (dependencies['appmetrics-dash']) {
+      return `${appOrigin}/appmetrics-dash`;
+    }
+    if (dependencies['appmetrics-codewind']) {
+      const dashboardPath = `/performance/monitor/dashboard/${projectLanguage}`;
+      return `${pfeOrigin}${dashboardPath}?theme=dark&projectID=${projectID}`;
+    }
+  }
+}
+
 module.exports = {
   injectMetricsCollectorIntoProject,
   removeMetricsCollectorFromProject,
+  getAppMonitorUrl,
 }
