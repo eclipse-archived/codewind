@@ -44,7 +44,7 @@ const timeout = (workspaceSettingsInfo && workspaceSettingsInfo.watcherChunkTime
 
 /**
  * Determine if Codewind should handle a detected file change, or if it is handled by an extension
- * 
+ *
  * @param detectChangeByExtension property from the project handler
  * @param path the path of detected file change
  */
