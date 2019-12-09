@@ -21,6 +21,7 @@ module.exports = class RegistrySecretsError extends BaseError {
 // Error codes
 module.exports.INVALID_ENCODED_CREDENTIALS = "INVALID_ENCODED_CREDENTIALS";
 module.exports.REGISTRY_DUPLICATE_URL = "REGISTRY_DUPLICATE_URL";
+module.exports.SECRET_CREATE_FAILED = "SECRET_CREATE_FAILED";
 module.exports.SERVICE_ACCOUNT_PATCH_FAILED = "SERVICE_ACCOUNT_PATCH_FAILED";
 module.exports.NO_DOCKER_CONFIG = "NO_DOCKER_CONFIG";
 module.exports.SECRET_DELETE_MISSING = "SECRET_DELETE_MISSING";
@@ -39,8 +40,11 @@ function constructMessage(code, message) {
   case "REGISTRY_DUPLICATE_URL":
     output = `Cannot have multiple docker registries with the same url. Please delete the previous registry and try again`;
     break;
+  case "SECRET_CREATE_FAILED":
+    output = `Failed to create the Codewind Secret`;
+    break;
   case "SERVICE_ACCOUNT_PATCH_FAILED":
-    output = `Failed to create the Codewind Secret and/or patch the Service Account`;
+    output = `Failed to patch the Service Account`;
     break;
   case "NO_DOCKER_CONFIG":
     output = `Unable to find the Codewind Docker Config`;
