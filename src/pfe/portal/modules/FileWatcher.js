@@ -225,7 +225,7 @@ module.exports = class FileWatcher {
       location: project.projectPath(false),
       applicationPort: project.applicationPort,
       settings: settingsFileContents,
-      language: project.language 
+      language: project.language
     };
 
     log.info(`Calling createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
@@ -468,7 +468,7 @@ module.exports = class FileWatcher {
       }
       let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
       await this.handleFWProjectEvent(event, projectUpdate);
-      WebSocket.watchListChanged(data);      
+      WebSocket.watchListChanged(data);
     } catch (err) {
       log.error(err);
     }
@@ -498,7 +498,8 @@ module.exports = class FileWatcher {
         results.error = error;
       }
       let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-      this.user.uiSocket.emit(event, {...results , ...updatedProject});
+      const { logStreams, ...uiProjectInfo } = updatedProject
+      this.user.uiSocket.emit(event, { ...results, ...uiProjectInfo })
       if (fwProject.buildStatus === 'inProgress') {
         // Reset build logs.
         updatedProject.resetLogStream('build');
@@ -666,7 +667,7 @@ function logEvent(event, projectData) {
   }
   log.debug(`${msg} ${projectData.projectID})`);
   log.trace(`${msg}: ${JSON.stringify(projectData, null, 2)})`);
-  
+
   if(updateTimerStart > 0 && event == "projectStatusChanged" && projectData.buildStatus && status == 'success'){
     let updateBuildTimerEnd = Date.now()
     log.info(`${projectData.projectID} update->build end time: ${ updateBuildTimerEnd }`)
@@ -680,5 +681,5 @@ function logEvent(event, projectData) {
     log.info(`${msg} ${projectData.projectID}) total time for update->run: ${ totalUpdateTime } seconds`)
     updateTimerStart = 0;
   }
-  
+
 }
