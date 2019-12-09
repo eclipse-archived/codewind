@@ -155,6 +155,32 @@ describe('Templates.js', function() {
                     (output.length).should.be.above(defaultCodewindTemplates.length);
                 });
             });
+            describe('and enable a repository and get the new templates', function() {
+                let templateController;
+                before(async function() {
+                    this.timeout(testTimeout.short);
+                    fs.ensureDirSync(testWorkspaceConfigDir);
+                    templateController = new Templates(testWorkspaceConfigDir);
+                    const disabledRepo = { ...sampleRepos.codewind };
+                    disabledRepo.enabled = false;
+                    // Use a disabled repository, getTemplates should return no templates
+                    templateController.repositoryList = [disabledRepo];
+                    templateController.projectTemplatesNeedsRefresh = true;
+                    const templates = await templateController.getTemplates(true);
+                    templates.length.should.equal(0);
+                });
+                after(() => {
+                    fs.removeSync(testWorkspaceDir);
+                });
+                it('returns an updated template list after a repo is enabled', async function() {
+                    this.timeout(testTimeout.short);
+                    // Change repository to be enabled
+                    await templateController.enableOrDisableRepository({ url: sampleRepos.codewind.url, value: true });
+                    // Get templates should return updated list of templates
+                    const templates = await templateController.getTemplates(true);
+                    templates.length.should.not.equal(0);
+                });
+            });
         });
         describe('getTemplatesByStyle(projectStyle, showEnabledOnly = false)', function() {
             it('gets only templates of a specific style', async function() {
@@ -217,13 +243,20 @@ describe('Templates.js', function() {
         });
         describe('getEnabledRepositories()', function() {
             let templateController;
-            before(() => {
+            beforeEach(() => {
                 templateController = new Templates('');
                 templateController.repositoryList = [mockRepos.enabled, mockRepos.disabled];
             });
             it('returns only enabled repos', async function() {
                 const output = await templateController.getEnabledRepositories();
                 output.should.deep.equal([mockRepos.enabled]);
+            });
+            it('return the repository list with a new, enabled repository', async() => {
+                await templateController.enableOrDisableRepository({ url: '2', value: true });
+                const enabledRepo = { ...mockRepos.disabled };
+                enabledRepo.enabled = true;
+                const output = await templateController.getEnabledRepositories();
+                output[1].should.deep.equal(enabledRepo);
             });
         });
         describe('doesRepositoryExist()', function() {
@@ -605,6 +638,7 @@ describe('Templates.js', function() {
                     const operationResponse = await templateController.enableOrDisableRepository({ url: testRepo.url, value: input });
                     operationResponse.should.have.property('status', 200);
                     operationResponse.should.not.have.property('error');
+                    templateController.projectTemplatesNeedsRefresh.should.be.true;
 
                     const repoPostChange = await templateController.getRepository(testRepo.url);
                     repoPostChange.should.have.property('enabled', output);
