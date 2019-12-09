@@ -63,6 +63,8 @@ const isApplicationPodUpIntervalMap = new Map();
 
 export const firstTimePingArray = new Array();
 
+export let pingMessage: string;
+
 export interface ProjectEvent {
     operationId: string;
     projectID: string;
@@ -966,8 +968,9 @@ export async function isContainerActive(projectID: string, handler: any): Promis
         if (containerState.hasOwnProperty("state") && containerState.state === ContainerStates.containerActive) {
             const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
             if (projectHandler.hasOwnProperty("getContainerStatus")) {
-                projectHandler.getContainerStatus(projectInfo, containerName, (err: Error, state: ContainerStates) => {
-                    handler({ state: state, error: err });
+                projectHandler.getContainerStatus(projectInfo, containerName, async (err: Error, state: ContainerStates) => {
+                    const errMsg = (err) ? await locale.getTranslation("projectUtil.appStatusError.errorGetContainerStatus", { errMsg: err.toString() }) : undefined;
+                    handler({ state: state, error: errMsg });
                 });
             } else {
                 handler(containerState);
@@ -995,15 +998,13 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
         const ignoreLog = true;
         const projectInfo = await getProjectInfo(projectID, ignoreLog);
         if (!projectInfo) {
-            const errorMsg = "could not retrieve project info";
-            handler({ error: errorMsg });
+            handler({ error: await locale.getTranslation("projectUtil.projectInfoError") });
             return;
         }
 
         const containerInfo: kubeutil.PodInfo | dockerutil.ContainerInfo = await getContainerInfo(projectInfo, containerInfoForceRefreshMap.get(projectInfo.projectID));
         if (!containerInfo) {
-            const errorMsg = "could not retrieve container info for the project";
-            handler({ error: errorMsg });
+            handler({ error: await locale.getTranslation("projectUtil.appStatusError.errorGetContainerInfo") });
             return;
         }
 
@@ -1011,18 +1012,15 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
 
         // If no ip or port then application is not running
         if (!port) {
-            const errorMsg = "could not retrieve the port for the project";
-            handler({ error: errorMsg });
+            handler({ error: await locale.getTranslation("projectUtil.appStatusError.errorGetPort") });
             return;
         }
 
         if (process.env.IN_K8 !== "true" && !containerInfo.ip) {
-            const errorMsg = "could not retrieve the ip for the project";
-            handler({ error: errorMsg });
+            handler({ error: await locale.getTranslation("projectUtil.appStatusError.errorGetIP") });
             return;
         } else if (process.env.IN_K8 === "true" && !containerInfo.serviceName) {
-            const errorMsg = "could not retrieve the hostname for the project service";
-            handler({ error: errorMsg });
+            handler({ error: await locale.getTranslation("projectUtil.appStatusError.errorGetHostname") });
             return;
         }
 
@@ -1080,7 +1078,7 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
         let statusCode: number = undefined;
         let isGoodStatusCode: Boolean = undefined;
 
-        protocol.request(options, (res) => {
+        protocol.request(options, async (res) => {
             statusCode = res.statusCode;
 
             // We consider the app to be running if we get any non-error status code.
@@ -1091,41 +1089,36 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             } else if (!isGoodStatusCode && path === "/health") {
                 options.path = "/";
 
-                protocol.request(options, (res) => {
+                protocol.request(options, async (res) => {
                     statusCode = res.statusCode;
 
                     // We consider the app to be running if we get any non-error status code.
                     isGoodStatusCode = statusCode >= 200 && statusCode < 400;
 
                     if (!isGoodStatusCode) {
-                        const errorMsg = `Received response, but with bad status code ${statusCode} when pinging project`;
-                        handler({ isAppUp: false, error: errorMsg });
+                        handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.badStatusCode", { statusCode: statusCode}) });
                     } else {
                         handler({ isAppUp: true });
                     }
-                }).on("error", (err) => {
-                    handler({ isAppUp: false, error: err });
-                }).on("timeout", () => {
-                    const errorMsg = "Http request is failed due to timeout error";
+                }).on("error", async (err) => {
+                    handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.errorGetAppStatus", { errMsg: err.message }) });
+                }).on("timeout", async () => {
                     if (!statusCode) {
-                        handler({ isAppUp: false, error: errorMsg });
+                        handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.httpRequestTimeout") });
                     }
                 }).end();
             } else {
-                const errorMsg = `Received response, but with bad status code ${statusCode} when pinging project`;
-                handler({ isAppUp: false, error: errorMsg });
+                handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.badStatusCode", { statusCode: statusCode}) });
             }
-        }).on("error", (err) => {
-            handler({ isAppUp: false, error: err });
-        }).on("timeout", () => {
-            const errorMsg = "Http request is failed due to timeout error";
+        }).on("error", async (err) => {
+            handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.errorGetAppStatus", { errMsg: err.message }) });
+        }).on("timeout", async () => {
             if (!statusCode) {
-                handler({ isAppUp: false, error: errorMsg });
+                handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.httpRequestTimeout") });
             }
         }).end();
     } catch (err) {
-        const errorMsg = "failed to get application status: " + err;
-        handler({ error: errorMsg });
+        handler({ error: await locale.getTranslation("projectUtil.appStatusError.errorGetAppStatus", { errMsg: err.message }) });
     }
 }
 
@@ -2137,22 +2130,25 @@ export async function restartProject(operation: Operation, startMode: string, ev
  * @param port <Required | String> - The project port that Turbine pings.
  * @param path <Required | String> - The project path that Turbine pings.
  *
- * @returns void
+ * @returns Promise<void>
  */
-export function updateDetailedAppStatus(projectID: string, ip: string, port: string, path: string, isDefaultPath?: boolean): void {
+export async function updateDetailedAppStatus(projectID: string, ip: string, port: string, path: string, isDefaultPath?: boolean): Promise<void> {
     const oldState = appStateMap.get(projectID).state;
     const oldMsg = appStateMap.get(projectID).msg;
 
     let pingPathEvent: DetailedAppStatus;
-    pingPathEvent = {
-        severity: "INFO",
-        message: `Pinging http://${ip}:${port}${path}`,
-        notify: false
-    };
 
     if (isDefaultPath) {
-        pingPathEvent.message = `${pingPathEvent.message} and http://${ip}:${port}/`;
+        pingMessage = await locale.getTranslation("projectUtil.defaultPingPathMessage", { ip: ip, port: port, path: path });
+    } else {
+        pingMessage = await locale.getTranslation("projectUtil.pingMessage", { ip: ip, port: port, path: path });
     }
+
+    pingPathEvent = {
+        severity: "INFO",
+        message: pingMessage,
+        notify: false
+    };
 
     if (oldState === AppState.starting) {
         projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathEvent);

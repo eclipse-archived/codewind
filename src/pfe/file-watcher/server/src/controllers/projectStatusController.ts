@@ -404,37 +404,36 @@ function pingApplications(): void {
                     let newMsg = stateInfo.error;
                     if (newMsg) { newMsg = newMsg.toString(); } // Convert from Error to string
                     if (stateInfo.hasOwnProperty("isAppUp")) {
-                        newState = stateInfo.isAppUp ? AppState.started : AppState.stopped;
+                        if (stateInfo.isAppUp) {
+                            newState = AppState.started;
+                        } else if ( oldState != AppState.starting) { // if oldState is starting, should leave at starting state
+                            newState = AppState.stopped;
+                        }
                     } else if (newMsg) {
                         newState = AppState.stopped;
                         pingCountMap.delete(projectID);
                     }
                     // Protect against changing from unknown state to stopped. For first time project creation, app status should be unknown before it's changed to starting state.
                     if (!(oldState == AppState.unknown && newState == AppState.stopped)) {
-                        let shouldEmitMsg: boolean = false;
                         // Ensure that only new messages are emitted and logged
                         if (newMsg && (newMsg.toString().trim() !== (oldMsg ? oldMsg.toString().trim() : oldMsg))) {
                             logger.logProjectInfo("pingApplications: Application state error message: " + newMsg, projectID);
-                            shouldEmitMsg = true;
                         }
 
-                        // Update the state only if it has changed or newMsg has been received
-                        if (newState != oldState || shouldEmitMsg) {
+                        // Update the state only if it has changed
+                        if (newState != oldState) {
                             logger.logProjectInfo("pingApplications: Application state for project " + projectID + " has changed from " + oldState + " to " + newState, projectID);
                             const data: any = {
                                 projectID: projectID,
                                 appStatus: newState
                             };
-                            if (shouldEmitMsg) {
-                                let translatedMsg;
-                                if (newMsg) {
-                                    translatedMsg = (newMsg.trim().length === 0) ? newMsg : await locale.getTranslation(newMsg);
-                                }
+                            if (newState === AppState.started) {
                                 data.detailedAppStatus = {
-                                    severity: "ERROR",
-                                    message: translatedMsg,
+                                    severity: "INFO",
+                                    message: "",
                                     notify: false
                                 };
+                                pingCountMap.delete(projectID);
                             }
                             appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
                             io.emitOnListener("projectStatusChanged", data);
@@ -494,50 +493,49 @@ function pingInTransitApplications(): void {
                                     newState = AppState.stopped;
                                     pingCountMap.delete(projectID);
                                 }
+                                // first time reach the timeout, will not emit the same message when timeout exceeds.
                                 if (pingCount == pingCountLimit) {
-                                    newMsg = "projectStatusController.pingTimeout";
+                                    const errMsg = (appStateMap.get(projectID).detailedAppStatus) ? appStateMap.get(projectID).detailedAppStatus.message : await locale.getTranslation("projectStatusController.pingTimeoutDefaultMessage");
+                                    newMsg = await locale.getTranslation("projectStatusController.pingTimeout", { pingMessage: projectUtil.pingMessage, errMsg: errMsg });
                                 }
 
-                                let shouldEmitMsg: boolean = false;
+                                let detailedAppStatus;
                                  // Ensure that only new messages are emitted and logged
                                 if (newMsg && (newMsg.toString().trim() !== (oldMsg ? oldMsg.toString().trim() : oldMsg))) {
                                     logger.logProjectInfo("pingInTransitApplications: Application state error message: " + newMsg, projectID);
-                                    shouldEmitMsg = true;
+                                    detailedAppStatus = {
+                                        severity: "ERROR",
+                                        message: newMsg,
+                                        notify: false
+                                    };
+                                    appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
                                 }
                                 // Update the state only if it has changed
                                 // first time reach the timeout, will not emit the same message when timeout exceeds.
-                                if (newState !== oldState || shouldEmitMsg || ((newState === AppState.starting) && pingCount == pingCountLimit)) {
+                                if (newState !== oldState || ((newState === AppState.starting) && pingCount == pingCountLimit)) {
                                     logger.logProjectInfo("pingInTransitApplications: Application state for project " + projectID + " has changed from " + oldState + " to " + newState, projectID);
                                     const data: any = {
                                         projectID: projectID,
                                         appStatus: newState
                                     };
-                                    let translatedMsg;
-                                    if (newMsg) {
-                                        translatedMsg = (newMsg.trim().length === 0) ? newMsg : await locale.getTranslation(newMsg);
-                                    }
                                     if (newState === AppState.started) {
-                                        data.detailedAppStatus = {
+                                        detailedAppStatus = {
                                             severity: "INFO",
-                                            message: "Application started.",
+                                            message: "",
                                             notify: false
                                         };
+                                        data.detailedAppStatus = detailedAppStatus;
                                         pingCountMap.delete(projectID);
                                     } else if (newState === AppState.starting && pingCount == pingCountLimit) {
-                                        data.detailedAppStatus = {
+                                        detailedAppStatus = {
                                             severity: "WARN",
-                                            message: translatedMsg,
+                                            message: newMsg,
                                             notify: true
                                         };
-                                    } else if (shouldEmitMsg) {
-                                        data.detailedAppStatus = {
-                                            severity: "ERROR",
-                                            message: translatedMsg,
-                                            notify: false
-                                        };
+                                        data.detailedAppStatus = detailedAppStatus;
                                     }
                                     io.emitOnListener("projectStatusChanged", data);
-                                    appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
+                                    appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
 
                                 }
                             }

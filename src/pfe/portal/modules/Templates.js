@@ -170,6 +170,7 @@ module.exports = class Templates {
     try {
       const repo = await this.getRepository(url);
       repo.enabled = (value === 'true' || value === true);
+      this.projectTemplatesNeedsRefresh = true;
       return {
         status: 200
       };
