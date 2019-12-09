@@ -155,7 +155,7 @@ describe('Templates.js', function() {
                     (output.length).should.be.above(defaultCodewindTemplates.length);
                 });
             });
-            describe('returns enabled templates', function() {
+            describe('and enable a repository and get the new templates', function() {
                 let templateController;
                 before(async function() {
                     this.timeout(testTimeout.short);
