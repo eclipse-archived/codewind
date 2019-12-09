@@ -16,27 +16,6 @@ const { validateReq } = require('../middleware/reqValidator');
 const log = new Logger(__filename);
 
 /**
- * Temp API Function to bypass current IDE design for testing
- */
-router.get('/api/v1/registry', function (req, res) {
-  let retval;
-  try {
-    // let user = req.cw_user;
-    log.debug(`GET /api/v1/imagepushregistry called`);
-    retval = {
-      deploymentRegistry: true
-    }
-    res.status(200).send(retval);
-  } catch (error) {
-    log.error(error);
-    const workspaceSettings = {
-      imagePushRegistry: false
-    }
-    res.status(500).send(workspaceSettings);
-  }
-});
-
-/**
  * API Function to get status of Image Push Registry in Workspace Settings
  */
 router.get('/api/v1/imagepushregistry', async function (req, res) {
