@@ -42,6 +42,12 @@ const workspaceSettingsInfo =  workspaceSettings.workspaceSettingsInfoCache ? JS
 // default 20s timeout to wait for all chunks
 const timeout = (workspaceSettingsInfo && workspaceSettingsInfo.watcherChunkTimeout) ? workspaceSettingsInfo.watcherChunkTimeout : 20000;
 
+/**
+ * Determine if Codewind should handle a detected file change, or if it is handled by an extension
+ * 
+ * @param detectChangeByExtension property from the project handler
+ * @param path the path of detected file change
+ */
 function shouldHandle(detectChangeByExtension: boolean | string[], path: string): boolean {
 
     // clearly we should handle when detectChangeByExtension is false
@@ -49,11 +55,14 @@ function shouldHandle(detectChangeByExtension: boolean | string[], path: string)
         return true;
     }
 
-    // changes are detected by extension, unless the path is in the array (list of exceptions)
+    // if detectChangeByExtension is an array, it means file changes, except those whose
+    // path are in the array, are detected by extension
     if (Array.isArray(detectChangeByExtension)) {
+        // if path is in the array then Codewind should handle it
         return detectChangeByExtension.includes(path);
     }
 
+    // otherwise, detectChangeByExtension is true so Codewind should not handle it
     return false;
 }
 
