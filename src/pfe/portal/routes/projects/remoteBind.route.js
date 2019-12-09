@@ -292,24 +292,28 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
         projectRoot
       );
     }
-    filesToDelete.forEach((f) => {
-      const data = {
-        path: f,
-        timestamp: timeStamp,
-        type: "DELETE",
-        directory: false
-      };
-      IFileChangeEvent.push(data);
-    });
-    modifiedList.forEach((f) => {
-      const data = {
-        path: f,
-        timestamp: timeStamp,
-        type: "MODIFY",
-        directory: false
-      };
-      IFileChangeEvent.push(data);
-    });
+    if (filesToDelete != undefined) {
+      filesToDelete.forEach((f) => {
+        const data = {
+          path: f,
+          timestamp: timeStamp,
+          type: "DELETE",
+          directory: false
+        };
+        IFileChangeEvent.push(data);
+      });
+    }
+    if (modifiedList != undefined) {
+      modifiedList.forEach((f) => {
+        const data = {
+          path: f,
+          timestamp: timeStamp,
+          type: "MODIFY",
+          directory: false
+        };
+        IFileChangeEvent.push(data);
+      });
+    }
     user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
   } else {
     // if a build is in progress, wait 5 seconds and try again
