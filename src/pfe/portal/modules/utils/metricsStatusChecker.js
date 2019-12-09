@@ -49,12 +49,13 @@ async function doesMetricsPackageExist(pathOfFileToCheck, projectLanguage) {
       const packageJSON = JSON.parse(fileToCheck);
       const { dependencies } = packageJSON;
       if (dependencies) {
-        if (dependencies['appmetrics-dash'] || dependencies['appmetrics-codewind']) {
+        if (dependencies['appmetrics-dash']) {
           metricsPackageExists = true;
         }
       }
     } else if (projectLanguage === 'java') {
-      metricsPackageExists = fileToCheck.includes('javametrics');
+      metricsPackageExists = fileToCheck.includes('javametrics-dash') // for liberty
+        || fileToCheck.includes('javametrics-spring'); // for spring
     } else if (projectLanguage === 'swift') {
       metricsPackageExists = fileToCheck.includes('SwiftMetrics.git');
     }

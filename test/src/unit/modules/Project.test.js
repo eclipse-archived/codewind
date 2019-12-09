@@ -25,11 +25,13 @@ const {
     createProjectAndCheckIsAnObject,
     createDefaultProjectAndCheckIsAnObject,
     createNodeProjectWithPackageJsonDependencies,
+    createLibertyProjectWithPomXml,
+    createSpringProjectWithPomXml,
 } = require('../../../modules/projectCreation.service');
 
 chai.use(chaiSubset);
 chai.use(chaiAsPromised);
-const should = chai.should();
+chai.should();
 const { expect } = chai;
 
 const loadTestResources = path.join(__dirname, '../../../resources/load-test-data/');
@@ -134,7 +136,7 @@ describe('Project.js', () => {
             it('Checks metrics for Java', async() => {
                 const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'java' }, global.codewind.CODEWIND_WORKSPACE);
                 const pomXmlPath = path.join(project.projectPath(), 'pom.xml');
-                fs.outputFileSync(pomXmlPath, 'javametrics');
+                fs.outputFileSync(pomXmlPath, 'javametrics-dash');
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
@@ -174,43 +176,91 @@ describe('Project.js', () => {
         });
     });
     describe('getAppMonitorUrl(pfeOrigin)', () => {
+        const pathToTestResourcesDir = path.join('.', 'resources', 'metricsDependencies');
         const testDir = path.join('.', 'test');
+        const pfeOrigin = 'http://localhost:10000';
         afterEach(() => {
             fs.removeSync(testDir);
         });
-        it(`returns 'undefined' if metrics are unavailable`, async() => {
-            const projectWithoutMetrics = createDefaultProjectAndCheckIsAnObject();
-            const appMonitorUrl = await projectWithoutMetrics.getAppMonitorUrl();
-            should.equal(appMonitorUrl, undefined); // eslint-disable-line no-undefined
-        });
-        it(`returns '<appOrigin>/appmetrics-dash' if project is nodejs and its package.json contains appmetrics-dash`, async() => {
-            const project = createNodeProjectWithPackageJsonDependencies(testDir, {
-                'appmetrics-dash': '^0.1.0',
+        describe('if project is nodejs', () => {
+            it(`returns path to dash hosted by our perf container if we inject metrics, and project does not contain appmetrics-dash`, async() => {
+                const project = createNodeProjectWithPackageJsonDependencies({ injectMetrics: true }, testDir, {});
+                const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
+                appMonitorUrl.should.be.a('string')
+                    .and.satisfy(url => url.startsWith(pfeOrigin))
+                    .and.include(`/performance/monitor/dashboard/${'nodejs'}?theme=dark&projectID=${project.projectID}`);
             });
-            const appMonitorUrl = await project.getAppMonitorUrl();
-            appMonitorUrl.should.include('http')
-                .and.include('://')
-                .and.include('/appmetrics-dash');
-        });
-        it(`returns '<appOrigin>/appmetrics-dash' if project is nodejs and its package.json contains appmetrics-dash and appmetrics-codewind`, async() => {
-            const project = createNodeProjectWithPackageJsonDependencies(testDir, {
-                'appmetrics-dash': '^0.1.0',
-                'appmetrics-codewind': '^0.1.0',
+            it(`returns path to dash hosted by our perf container if we inject metrics, and project contains appmetrics-dash`, async() => {
+                const project = createNodeProjectWithPackageJsonDependencies({ injectMetrics: true }, testDir, { 'appmetrics-dash': '^0.1.0' });
+                const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
+                appMonitorUrl.should.be.a('string')
+                    .and.satisfy(url => url.startsWith(pfeOrigin))
+                    .and.include(`/performance/monitor/dashboard/${'nodejs'}?theme=dark&projectID=${project.projectID}`);
             });
-            const appMonitorUrl = await project.getAppMonitorUrl();
-            appMonitorUrl.should.include('http')
-                .and.include('://')
-                .and.include('/appmetrics-dash');
-        });
-        it(`returns the path to the dashboard hosted by our performance container if project is nodejs and its package.json contains appmetrics-codewind`, async() => {
-            const pfeOrigin = 'http://localhost:10000';
-            const project = createNodeProjectWithPackageJsonDependencies(testDir, {
-                'appmetrics-codewind': '^0.1.0',
+            it(`returns '<appOrigin>/appmetrics-dash' if we (by default) do not inject metrics, and project contains appmetrics-dash`, async() => {
+                const project = createNodeProjectWithPackageJsonDependencies({}, testDir, { 'appmetrics-dash': '^0.1.0' });
+                const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
+                appMonitorUrl.should.include('http')
+                    .and.include('://')
+                    .and.include('/appmetrics-dash');
             });
-            const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
-            appMonitorUrl.should.be.a('string')
-                .and.satisfy(url => url.startsWith(pfeOrigin))
-                .and.include('/performance/monitor/dashboard/nodejs?theme=dark&projectID=');
+            it(`returns path to dash hosted by our perf container if we (by default) do not inject metrics, and project does not contain appmetrics-dash`, async() => {
+                const project = createNodeProjectWithPackageJsonDependencies({}, testDir, {});
+                const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
+                appMonitorUrl.should.be.a('string')
+                    .and.satisfy(url => url.startsWith(pfeOrigin))
+                    .and.include(`/performance/monitor/dashboard/${'nodejs'}?theme=dark&projectID=${project.projectID}`);
+            });
+        });
+        describe('if project is liberty', () => {
+            const pathToPomXmlsForLiberty = path.join(pathToTestResourcesDir, 'liberty', 'pom.xml');
+            it(`returns '<appOrigin>/javametrics-dash' if we (by default) do not inject metrics, and project contains javametrics-dash`, async() => {
+                const pathToPomXmlWithJavametricsDash = path.join(pathToPomXmlsForLiberty, 'withJavametricsDash.xml');
+                const pomXmlWithJavametricsDash = fs.readFileSync(pathToPomXmlWithJavametricsDash);
+                const project = createLibertyProjectWithPomXml({}, testDir, pomXmlWithJavametricsDash);
+
+                const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
+
+                appMonitorUrl.should.include('http')
+                    .and.include('://')
+                    .and.include('/javametrics-dash');
+            });
+            it(`returns path to dash hosted by our perf container if we (by default) do not inject metrics, and project does not contain javametrics-dash`, async() => {
+                const pathToPomXmlWithoutJavametricsDash = path.join(pathToPomXmlsForLiberty, 'withoutJavametricsDash.xml');
+                const pomXmlWithoutJavametricsDash = fs.readFileSync(pathToPomXmlWithoutJavametricsDash);
+                const project = createLibertyProjectWithPomXml({}, testDir, pomXmlWithoutJavametricsDash);
+
+                const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
+
+                appMonitorUrl.should.be.a('string')
+                    .and.satisfy(url => url.startsWith(pfeOrigin))
+                    .and.include(`/performance/monitor/dashboard/${'java'}?theme=dark&projectID=${project.projectID}`);
+            });
+        });
+        describe('if project is spring', () => {
+            const pathToPomXmlsForSpring = path.join(pathToTestResourcesDir, 'spring', 'pom.xml');
+            it(`returns '<appOrigin>/javametrics-dash' if we (by default) do not inject metrics, and project contains javametrics-spring`, async() => {
+                const pathToPomXmlWithJavametricsSpring = path.join(pathToPomXmlsForSpring, 'withJavametricsSpring.xml');
+                const pomXmlWithJavametricsSpring = fs.readFileSync(pathToPomXmlWithJavametricsSpring);
+                const project = createSpringProjectWithPomXml({}, testDir, pomXmlWithJavametricsSpring);
+
+                const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
+
+                appMonitorUrl.should.include('http')
+                    .and.include('://')
+                    .and.include('/javametrics-dash');
+            });
+            it(`returns path to dash hosted by our perf container if we (by default) do not inject metrics, and project does not contain javametrics-dash`, async() => {
+                const pathToPomXmlWithoutJavametricsSpring = path.join(pathToPomXmlsForSpring, 'withoutJavametricsSpring.xml');
+                const pomXmlWithoutJavametricsSpring = fs.readFileSync(pathToPomXmlWithoutJavametricsSpring);
+                const project = createSpringProjectWithPomXml({}, testDir, pomXmlWithoutJavametricsSpring);
+
+                const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
+
+                appMonitorUrl.should.be.a('string')
+                    .and.satisfy(url => url.startsWith(pfeOrigin))
+                    .and.include(`/performance/monitor/dashboard/${'java'}?theme=dark&projectID=${project.projectID}`);
+            });
         });
     });
     describe('getPort()', () => {

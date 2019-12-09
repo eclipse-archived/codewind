@@ -501,29 +501,26 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
   return newBuildPlugins;
 }
 
-async function getAppMonitorUrl( // eslint-disable-line consistent-return
+const pathsToDashboardsHostedByProject = {
+  java : 'javametrics-dash',
+  nodejs : 'appmetrics-dash',
+  swift : 'swiftmetrics-dash',
+};
+
+async function getAppMonitorUrl(
   projectPath,
   projectLanguage,
   appOrigin,
   projectID,
   pfeOrigin,
+  injectMetrics,
 ) {
-  if (!await isMetricsAvailable(projectPath, projectLanguage)) {
-    return undefined;
+  const metricsAvailable = await isMetricsAvailable(projectPath, projectLanguage);
+  if (!injectMetrics && metricsAvailable) {
+    return `${appOrigin}/${pathsToDashboardsHostedByProject[projectLanguage]}`;
   }
-  const fileToCheck = 'package.json';
-  const pathOfFileToCheck = await path.join(projectPath, fileToCheck);
-  const packageJson = await fs.readJson(pathOfFileToCheck);
-  const { dependencies } = packageJson;
-  if (dependencies) {
-    if (dependencies['appmetrics-dash']) {
-      return `${appOrigin}/appmetrics-dash`;
-    }
-    if (dependencies['appmetrics-codewind']) {
-      const dashboardPath = `/performance/monitor/dashboard/${projectLanguage}`;
-      return `${pfeOrigin}${dashboardPath}?theme=dark&projectID=${projectID}`;
-    }
-  }
+  const dashboardPath = `/performance/monitor/dashboard/${projectLanguage}`;
+  return `${pfeOrigin}${dashboardPath}?theme=dark&projectID=${projectID}`;
 }
 
 module.exports = {

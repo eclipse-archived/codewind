@@ -52,7 +52,7 @@ describe('projects.controller.js', () => {
         });
         it('returns 200 and the project if the project ID is good', async() => {
             const projectList = new ProjectList();
-            const project = createNodeProjectWithPackageJsonDependencies(projectDir, {});
+            const project = createNodeProjectWithPackageJsonDependencies({}, projectDir, {});
             projectList.addProject(project);
 
             const request = {
@@ -67,10 +67,8 @@ describe('projects.controller.js', () => {
             await projectsController.getProject(req, res);
 
             res.status.should.be.calledOnceWith(200);
-            res.send.args[0][0].should.deep.equal({
-                ...project,
-                appMonitorUrl: undefined, // eslint-disable-line no-undefined
-            });
+            res.send.args[0][0].should.deep.include(project);
+            res.send.args[0][0].appMonitorUrl.should.be.a('string');
         });
         it('returns 200 and the project with correct appMonitorUrl if the project ID is good and has the correct package.json', async() => {
             const projectList = new ProjectList();
@@ -81,7 +79,7 @@ describe('projects.controller.js', () => {
                 host: '127.0.0.1',
                 port: { internalPort: 32777 },
             };
-            const project = createNodeProjectWithPackageJsonDependencies(projectDir, packageJsonDependencies, extraCreationArgs);
+            const project = createNodeProjectWithPackageJsonDependencies(extraCreationArgs, projectDir, packageJsonDependencies);
             projectList.addProject(project);
 
             const request = {
@@ -96,17 +94,15 @@ describe('projects.controller.js', () => {
             await projectsController.getProject(req, res);
 
             res.status.should.be.calledOnceWith(200);
-            res.send.args[0][0].should.deep.equal({
-                ...project,
-                appMonitorUrl: 'http://127.0.0.1:32777/appmetrics-dash',
-            });
+            res.send.args[0][0].should.deep.include(project);
+            res.send.args[0][0].appMonitorUrl.should.be.a('string');
         });
-        it('returns 200 and the project with correct appMonitorUrl if the project ID is good and has the correct package.json', async() => {
+        it('returns 200 and the project with an appMonitorUrl', async() => {
             const projectList = new ProjectList();
             const packageJsonDependencies = {
                 'appmetrics-codewind': '^0.1.0',
             };
-            const project = createNodeProjectWithPackageJsonDependencies(projectDir, packageJsonDependencies);
+            const project = createNodeProjectWithPackageJsonDependencies({}, projectDir, packageJsonDependencies);
             projectList.addProject(project);
 
             const request = {
@@ -121,15 +117,15 @@ describe('projects.controller.js', () => {
             await projectsController.getProject(req, res);
 
             res.status.should.be.calledOnceWith(200);
-            res.send.args[0][0].should.deep.equal({
-                ...project,
-                appMonitorUrl: `http://127.0.0.1:10000/performance/monitor/dashboard/nodejs?theme=dark&projectID=${project.projectID}`,
-            });
+            res.send.args[0][0].should.deep.include(project);
+            res.send.args[0][0].appMonitorUrl.should.be.a('string');
         });
     });
     describe('getProjects(req, res)', () => {
         it('returns 500 if our server errors while getting the project list', async() => {
             const request = {
+                protocol: 'http',
+                headers: { host: '127.0.0.1:10000' },
                 sanitizeParams: () => 'goodProjectID',
                 cw_user: {},
             };
@@ -143,10 +139,12 @@ describe('projects.controller.js', () => {
         });
         it('returns 200 and a list of projects if there are no errors', async() => {
             const projectList = new ProjectList();
-            const project = createNodeProjectWithPackageJsonDependencies(projectDir, {});
+            const project = createNodeProjectWithPackageJsonDependencies({}, projectDir, {});
             projectList.addProject(project);
 
             const request = {
+                protocol: 'http',
+                headers: { host: '127.0.0.1:10000' },
                 sanitizeParams: () => project.projectID,
                 cw_user: { projectList },
             };
@@ -156,7 +154,8 @@ describe('projects.controller.js', () => {
             await projectsController.getProjects(req, res);
 
             res.status.should.be.calledOnceWith(200);
-            res.send.args[0][0].should.deep.equal([project]);
+            res.send.args[0][0][0].should.deep.include(project);
+            res.send.args[0][0][0].appMonitorUrl.should.be.a('string');
         });
     });
 });

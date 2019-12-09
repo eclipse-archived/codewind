@@ -135,6 +135,7 @@ module.exports = class Project {
       this.getAppOrigin(),
       this.projectID,
       pfeOrigin,
+      this.injectMetrics,
     );
     return appMonitorUrl;
   }

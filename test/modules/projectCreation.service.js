@@ -45,23 +45,63 @@ const createDefaultProjectAndCheckIsAnObject = () => {
     return createProjectAndCheckIsAnObject(options, workspace);
 };
 
-
-const createNodeProjectWithPackageJsonDependencies = (projectDir, dependencies, extraCreationArgs) => {
+const createNodeProject = (options, workspace) => {
     const creationArgs = {
         name: 'dummy',
         language: 'nodejs',
-        ...extraCreationArgs,
+        ...options,
     };
-    const project = createProjectAndCheckIsAnObject(creationArgs, projectDir);
+    return createProjectAndCheckIsAnObject(creationArgs, workspace);
+};
+
+const createLibertyProject = (options, workspace) => {
+    const creationArgs = {
+        name: 'dummy',
+        language: 'java',
+        type: 'liberty',
+        ...options,
+    };
+    return createProjectAndCheckIsAnObject(creationArgs, workspace);
+};
+
+const createSpringProject = (options, workspace) => {
+    const creationArgs = {
+        name: 'dummy',
+        language: 'java',
+        type: 'spring',
+        ...options,
+    };
+    return createProjectAndCheckIsAnObject(creationArgs, workspace);
+};
+
+const createNodeProjectWithPackageJsonDependencies = (options, projectDir, dependencies) => {
+    const project = createNodeProject(options, projectDir);
     const packageJSONPath = path.join(project.projectPath(), 'package.json');
     fs.outputJsonSync(packageJSONPath, { dependencies });
+    return project;
+};
+
+const createLibertyProjectWithPomXml = (options, projectDir, pomXmlFileData) => {
+    const project = createLibertyProject(options, projectDir);
+    const pathToPomXml = path.join(project.projectPath(), 'pom.xml');
+    fs.outputFileSync(pathToPomXml, pomXmlFileData);
+    return project;
+};
+
+const createSpringProjectWithPomXml = (options, projectDir, pomXmlFileData) => {
+    const project = createSpringProject(options, projectDir);
+    const pathToPomXml = path.join(project.projectPath(), 'pom.xml');
+    fs.outputFileSync(pathToPomXml, pomXmlFileData);
     return project;
 };
 
 module.exports = {
     createProject,
     createDummyProject,
+    createNodeProject,
     createProjectAndCheckIsAnObject,
     createDefaultProjectAndCheckIsAnObject,
     createNodeProjectWithPackageJsonDependencies,
+    createLibertyProjectWithPomXml,
+    createSpringProjectWithPomXml,
 };

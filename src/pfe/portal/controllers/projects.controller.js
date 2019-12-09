@@ -25,11 +25,7 @@ async function getProject(req, res) {
       res.sendStatus(404);
       return;
     }
-    const {
-      protocol,
-      headers: { host },
-    } = req;
-    const pfeOrigin = `${protocol}://${host}`;
+    const pfeOrigin = getPfeOrigin(req);
     const appMonitorUrl = await project.getAppMonitorUrl(pfeOrigin);
     res.status(200).send({
       ...project,
@@ -45,15 +41,32 @@ async function getProject(req, res) {
  * Return the project list (as JSON array)
  * @return the projectList
  */
-function getProjects(req, res) {
+async function getProjects(req, res) {
   try {
     const user = req.cw_user;
-    const list = user.projectList.getAsArray();
-    res.status(200).send(list);
+    const projects = user.projectList.getAsArray();
+    const pfeOrigin = getPfeOrigin(req);
+    const projectsWithAddedDetails = await Promise.all(
+      projects.map(async project => ({
+        ...project,
+        appMonitorUrl: await project.getAppMonitorUrl(pfeOrigin),
+      }))
+    );
+    res.status(200).send(projectsWithAddedDetails);
   } catch (err) {
+    console.log(err);
+
     log.error(err);
     res.status(500).send(err);
   }
+}
+
+function getPfeOrigin(req) {
+  const {
+    protocol,
+    headers: { host },
+  } = req;
+  return `${protocol}://${host}`;
 }
 
 module.exports = {
