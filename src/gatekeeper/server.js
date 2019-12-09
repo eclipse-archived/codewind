@@ -1,6 +1,7 @@
 const express = require('express')
 const Keycloak = require('keycloak-connect');
 const session = require('express-session');
+const httpProxy = require('http-proxy');
 const request = require('request')
 const { promisify } = require('util');
 const https = require('https');
@@ -217,7 +218,15 @@ async function main() {
     const pem = require('pem');
     const createCertificateAsync = promisify(pem.createCertificate);
     let keys = await createCertificateAsync({ selfSigned: true });
-    server = https.createServer({ key: keys.serviceKey, cert: keys.certificate }, app).listen(port);
+    server = https.createServer({ key: keys.serviceKey, cert: keys.certificate }, app)
+
+    var proxy = new httpProxy.createProxyServer({secure: false, target: `wss://${pfe_host}:${pfe_port}`, ws:true});
+    server.on('upgrade', function (req, socket, head) {
+        console.log("Proxy: websocket connect 'upgrade'")
+        proxy.ws(req, socket, head);
+    });
+
+    server.listen(port, () => console.log(`Gatekeeper listening on port ${port}!`))
 
 }
 

@@ -27,49 +27,26 @@ chai.should();
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const projectDir = path.join('.', 'src', 'unit', 'modules', 'test');
+const testResourcesDir = path.join('.', 'resources', 'metricsService');
 
 // nodejs
 const pathToPackageJson = path.join(projectDir, 'package.json');
 const pathToBackupPackageJson = path.join(projectDir, 'backupPackage.json');
-const originalPackageJson = {
-    /* eslint-disable quote-props, quotes, comma-dangle */
-    "name": "node",
-    "version": "1.0.0",
-    "description": "A generated IBM Cloud application",
-    "scripts": {
-        "start": "node $npm_package_config_entrypoint",
-        "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
-    },
-    "dependencies": {
-        "body-parser": "^1.18.3",
-        "express": "^4.16.4"
-    }
-    /* eslint-enable quote-props, quotes, comma-dangle */
-};
 
-const expectedPackageJson = {
-    /* eslint-disable quote-props, quotes, comma-dangle */
-    "name": "node",
-    "version": "1.0.0",
-    "description": "A generated IBM Cloud application",
-    "scripts": {
-        "start": "node -r appmetrics-codewind/attach $npm_package_config_entrypoint",
-        "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
-    },
-    "dependencies": {
-        "body-parser": "^1.18.3",
-        "express": "^4.16.4",
-        "appmetrics-codewind": "^0.1.0",
-    }
-    /* eslint-enable quote-props, quotes, comma-dangle */
-};
+const pathToTestPackageJsons = path.join(testResourcesDir, 'node', 'package.json');
+const pathToInvalidPackageJsons = path.join(pathToTestPackageJsons, 'notValidForInjection');
+const pathToValidPackageJsons = path.join(pathToTestPackageJsons, 'validForInjection');
+const pathToPackageJsonWithoutCollector = path.join(pathToValidPackageJsons, 'withDependencies', 'withoutCollector.json');
+const pathToPackageJsonWithCollector = path.join(pathToValidPackageJsons, 'withDependencies', 'withCollector.json');
+const packageJsonWithoutCollector = fs.readJSONSync(pathToPackageJsonWithoutCollector);
+const packageJsonWithCollector = fs.readJSONSync(pathToPackageJsonWithCollector);
+
 describe('metricsService/index.js', () => {
     suppressLogOutput(metricsService);
 
-    // java
+    // both liberty and spring
     const pathToTestPomXml = path.join(projectDir, 'pom.xml');
     const pathToTestBackupPomXml = path.join(projectDir, 'backupPom.xml');
-    const pathToTestResourcesDir = path.join('.', 'resources', 'metricsService');
 
     // liberty
     const pathToJvmOptions = path.join(projectDir, 'src', 'main', 'liberty', 'config', 'jvm.options');
@@ -77,9 +54,9 @@ describe('metricsService/index.js', () => {
     const originalJvmOptions = 'foobar';
     const expectedJvmOptions = `${originalJvmOptions}\n-javaagent:resources/javametrics-agent.jar`;
 
-    const pathToPomXmlsForLiberty = path.join(pathToTestResourcesDir, 'liberty', 'pom.xml');
-    const pathToOriginalPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'without collector.xml');
-    const pathToExpectedPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'with collector.xml');
+    const pathToPomXmlsForLiberty = path.join(testResourcesDir, 'liberty', 'pom.xml');
+    const pathToOriginalPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'withoutCollector.xml');
+    const pathToExpectedPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'withCollector.xml');
     let originalPomXmlForLiberty;
     let expectedPomXmlForLiberty;
 
@@ -88,17 +65,17 @@ describe('metricsService/index.js', () => {
     const pathToMainAppClassFile = path.join(pathToJavaProjectSrcFiles, 'application', 'Application.java');
     const pathToBackupMainAppClassFile = path.join(projectDir, 'codewind-backup', 'Application.java');
 
-    const pathToTestResourcesForSpring = path.join(pathToTestResourcesDir, 'spring');
+    const pathToTestResourcesForSpring = path.join(testResourcesDir, 'spring');
 
     const pathToMainAppClassFiles = path.join(pathToTestResourcesForSpring, 'Application.java');
-    const pathToOriginalMainAppClassFile = path.join(pathToMainAppClassFiles, 'package1', 'without collector.java');
-    const pathToExpectedMainAppClassFile = path.join(pathToMainAppClassFiles, 'package1', 'with collector.java');
+    const pathToOriginalMainAppClassFile = path.join(pathToMainAppClassFiles, 'package1', 'withoutCollector.java');
+    const pathToExpectedMainAppClassFile = path.join(pathToMainAppClassFiles, 'package1', 'withCollector.java');
     const originalMainAppClassFile = fs.readFileSync(pathToOriginalMainAppClassFile, 'utf8');
     const expectedMainAppClassFile = fs.readFileSync(pathToExpectedMainAppClassFile, 'utf8');
 
     const pathToPomXmlsForSpring = path.join(pathToTestResourcesForSpring, 'pom.xml');
-    const pathToOriginalPomXmlForSpring = path.join(pathToPomXmlsForSpring, 'without collector.xml');
-    const pathToExpectedPomXmlForSpring = path.join(pathToPomXmlsForSpring, 'with collector.xml');
+    const pathToOriginalPomXmlForSpring = path.join(pathToPomXmlsForSpring, 'withoutCollector.xml');
+    const pathToExpectedPomXmlForSpring = path.join(pathToPomXmlsForSpring, 'withCollector.xml');
     let originalPomXmlForSpring;
     let expectedPomXmlForSpring;
 
@@ -122,26 +99,26 @@ describe('metricsService/index.js', () => {
         describe(`('nodejs', <goodProjectDir>)`, () => {
             describe('project files not already backed up (i.e. we have not injected metrics collector)', () => {
                 beforeEach(() => {
-                    fs.outputJSONSync(pathToPackageJson, originalPackageJson);
+                    fs.outputJSONSync(pathToPackageJson, packageJsonWithoutCollector);
                 });
                 it(`injects metrics collector into the project's package.json, and saves a back up`, async() => {
                     await metricsService.injectMetricsCollectorIntoProject('nodejs', projectDir);
 
-                    fs.readJSONSync(pathToPackageJson).should.deep.equal(expectedPackageJson);
-                    fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(originalPackageJson);
+                    fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithCollector);
+                    fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(packageJsonWithoutCollector);
                 });
             });
             describe('project files already backed up (i.e. we have already injected metrics collector)', () => {
                 beforeEach(() => {
-                    fs.outputJSONSync(pathToBackupPackageJson, originalPackageJson);
-                    fs.outputJSONSync(pathToPackageJson, originalPackageJson);
+                    fs.outputJSONSync(pathToBackupPackageJson, packageJsonWithoutCollector);
+                    fs.outputJSONSync(pathToPackageJson, packageJsonWithoutCollector);
                 });
                 it(`throws a useful error`, async() => {
                     await metricsService.injectMetricsCollectorIntoProject('nodejs', projectDir)
                         .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
 
-                    fs.readJSONSync(pathToPackageJson).should.deep.equal(originalPackageJson);
-                    fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(originalPackageJson);
+                    fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithoutCollector);
+                    fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(packageJsonWithoutCollector);
                 });
             });
         });
@@ -235,7 +212,7 @@ describe('metricsService/index.js', () => {
         });
         describe(`('unsupportedProjectType', <goodProjectDir>)`, () => {
             beforeEach(() => {
-                fs.outputJSONSync(pathToPackageJson, originalPackageJson);
+                fs.outputJSONSync(pathToPackageJson, packageJsonWithoutCollector);
             });
             it(`throws a useful error`, () => {
                 const funcToTest = () => metricsService.injectMetricsCollectorIntoProject('unsupportedProjectType', projectDir);
@@ -250,13 +227,13 @@ describe('metricsService/index.js', () => {
         });
         describe(`('nodejs', <goodProjectDir>)`, () => {
             beforeEach(() => {
-                fs.outputJSONSync(pathToPackageJson, expectedPackageJson);
-                fs.outputJSONSync(pathToBackupPackageJson, originalPackageJson);
+                fs.outputJSONSync(pathToPackageJson, packageJsonWithCollector);
+                fs.outputJSONSync(pathToBackupPackageJson, packageJsonWithoutCollector);
             });
             it(`removes metrics collector from the project's package.json`, async() => {
                 await metricsService.removeMetricsCollectorFromProject('nodejs', projectDir);
 
-                fs.readJSONSync(pathToPackageJson).should.deep.equal(originalPackageJson);
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithoutCollector);
                 fs.existsSync(pathToBackupPackageJson).should.be.false;
             });
         });
@@ -302,8 +279,8 @@ describe('metricsService/index.js', () => {
         });
         describe(`('unsupportedProjectType', <goodProjectDir>)`, () => {
             beforeEach(() => {
-                fs.outputJSONSync(pathToPackageJson, expectedPackageJson);
-                fs.outputJSONSync(pathToBackupPackageJson, originalPackageJson);
+                fs.outputJSONSync(pathToPackageJson, packageJsonWithCollector);
+                fs.outputJSONSync(pathToBackupPackageJson, packageJsonWithoutCollector);
             });
             it(`throws a useful error`, () => {
                 const funcToTest = () => metricsService.removeMetricsCollectorFromProject('unsupportedProjectType', projectDir);
@@ -659,12 +636,12 @@ describe('metricsService/index.js', () => {
                     expectedMainAppClassFile,
                 },
                 'package application2': {
-                    originalMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package2', 'without collector.java'), 'utf8'),
-                    expectedMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package2', 'with collector.java'), 'utf8'),
+                    originalMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package2', 'withoutCollector.java'), 'utf8'),
+                    expectedMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package2', 'withCollector.java'), 'utf8'),
                 },
                 'component scan annotation already present': {
-                    originalMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package3', 'without collector.java'), 'utf8'),
-                    expectedMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package3', 'with collector.java'), 'utf8'),
+                    originalMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package3', 'withoutCollector.java'), 'utf8'),
+                    expectedMainAppClassFile: fs.readFileSync(path.join(pathToMainAppClassFiles, 'package3', 'withCollector.java'), 'utf8'),
                 },
             };
             for (const [testName, test] of Object.entries(tests)) {
@@ -738,8 +715,8 @@ describe('metricsService/node.js', () => {
 
     describe('removeMetricsCollectorFromNodeProject(projectDir)', () => {
         before(() => {
-            fs.outputJSONSync(pathToPackageJson, expectedPackageJson);
-            fs.outputJSONSync(pathToBackupPackageJson, originalPackageJson);
+            fs.outputJSONSync(pathToPackageJson, packageJsonWithCollector);
+            fs.outputJSONSync(pathToBackupPackageJson, packageJsonWithoutCollector);
         });
         after(() => {
             fs.removeSync(projectDir);
@@ -748,39 +725,79 @@ describe('metricsService/node.js', () => {
             const funcToTest = nodeMetricsService.removeMetricsCollectorFromNodeProject;
             await funcToTest(projectDir);
 
-            fs.readJSONSync(pathToPackageJson).should.deep.equal(originalPackageJson);
+            fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithoutCollector);
             fs.existsSync(pathToBackupPackageJson).should.be.false;
         });
     });
     describe('injectMetricsCollectorIntoNodeProject(projectDir)', () => {
-        describe('package.json does not have metrics injection code', () => {
+        afterEach(() => {
+            fs.removeSync(projectDir);
+        });
+        describe('package.json does not have metrics collector, and has dependencies', () => {
             before(() => {
-                fs.outputJSONSync(pathToPackageJson, originalPackageJson);
-            });
-            after(() => {
-                fs.removeSync(projectDir);
+                fs.outputJSONSync(pathToPackageJson, packageJsonWithoutCollector);
             });
             it(`injects metrics collector into the project's package.json, and saves a back up`, async() => {
-                const funcToTest = nodeMetricsService.injectMetricsCollectorIntoNodeProject;
-                await funcToTest(projectDir);
+                await nodeMetricsService.injectMetricsCollectorIntoNodeProject(projectDir);
 
-                fs.readJSONSync(pathToPackageJson).should.deep.equal(expectedPackageJson);
-                fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(originalPackageJson);
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithCollector);
+                fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(packageJsonWithoutCollector);
             });
         });
-        describe('package.json already has metrics injection code', () => {
+        describe('package.json does not have metrics collector, and has no dependencies', () => {
+            const packageJsonWithoutCollector = fs.readJSONSync(path.join(pathToValidPackageJsons, 'withoutDependencies', 'withoutCollector.json'));
+            const packageJsonWithCollector = fs.readJSONSync(path.join(pathToValidPackageJsons, 'withoutDependencies', 'withCollector.json'));
             before(() => {
-                fs.outputJSONSync(pathToPackageJson, expectedPackageJson);
+                fs.outputJSONSync(pathToPackageJson, packageJsonWithoutCollector);
             });
-            after(() => {
-                fs.removeSync(projectDir);
+            it(`injects metrics collector into the project's package.json, and saves a back up`, async() => {
+                await nodeMetricsService.injectMetricsCollectorIntoNodeProject(projectDir);
+
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithCollector);
+                fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(packageJsonWithoutCollector);
+            });
+        });
+        describe('package.json already has metrics collector', () => {
+            before(() => {
+                fs.outputJSONSync(pathToPackageJson, packageJsonWithCollector);
             });
             it(`does not change the project's package.json, but saves a back up`, async() => {
-                const funcToTest = nodeMetricsService.__get__('injectMetricsCollectorIntoNodeProject');
-                await funcToTest(projectDir);
+                await nodeMetricsService.injectMetricsCollectorIntoNodeProject(projectDir);
 
-                fs.readJSONSync(pathToPackageJson).should.deep.equal(expectedPackageJson);
-                fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(expectedPackageJson);
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithCollector);
+                fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(packageJsonWithCollector);
+            });
+        });
+        describe('package.json has no scripts', () => {
+            const existingPackageJson = fs.readJSONSync(path.join(pathToInvalidPackageJsons, 'noScripts.json'));
+            before(() => {
+                fs.outputJSONSync(pathToPackageJson, existingPackageJson);
+            });
+            it(`errors without changing the project's package.json nor back up`, async() => {
+                await nodeMetricsService.injectMetricsCollectorIntoNodeProject(projectDir)
+                    .should.be.eventually.rejectedWith('package.json missing script: start');
+
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(existingPackageJson);
+                fs.existsSync(pathToBackupPackageJson).should.be.false;
+            });
+        });
+        describe('package.json has scripts but no start script', () => {
+            const existingPackageJson = fs.readJSONSync(path.join(pathToInvalidPackageJsons, 'scriptsButNoStart.json'));
+            before(() => {
+                fs.outputJSONSync(pathToPackageJson, existingPackageJson);
+            });
+            it(`errors without changing the project's package.json nor back up`, async() => {
+                await nodeMetricsService.injectMetricsCollectorIntoNodeProject(projectDir)
+                    .should.be.eventually.rejectedWith('package.json missing script: start');
+
+                fs.readJSONSync(pathToPackageJson).should.deep.equal(existingPackageJson);
+                fs.existsSync(pathToBackupPackageJson).should.be.false;
+            });
+        });
+        describe('no package.json in expected location', () => {
+            it(`throws a useful error`, async() => {
+                await nodeMetricsService.injectMetricsCollectorIntoNodeProject(projectDir)
+                    .should.be.eventually.rejectedWith(`no package.json at '${pathToPackageJson}'`);
             });
         });
     });
@@ -788,8 +805,8 @@ describe('metricsService/node.js', () => {
     describe('getNewContentsOfPackageJson(originalContents)', () => {
         it(`returns an object representing a package.json injected with metrics collector`, () => {
             const funcToTest = nodeMetricsService.__get__('getNewContentsOfPackageJson');
-            const output = funcToTest(originalPackageJson);
-            output.should.deep.equal(expectedPackageJson);
+            const output = funcToTest(packageJsonWithoutCollector);
+            output.should.deep.equal(packageJsonWithCollector);
         });
     });
     describe('getNewStartScript(originalStartScript)', () => {
