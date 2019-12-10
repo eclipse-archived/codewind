@@ -53,6 +53,18 @@ function downloadCwctl() {
     checkExitCode $? "Failed to give correct permission to run installer."
 }
 
+function setupRegistrySecret() {
+    echo -e "${BLUE}Setting up the Registry Secret ... ${RESET}"
+    ENCODED_CREDENTIALS=$( node ./scripts/utils.js encode $REGISTRY_SECRET_USERNAME $REGISTRY_SECRET_PASSWORD )
+    if [[ ($? -ne 0) ]]; then
+        echo -e "${RED}Test setup failed during Registry Secret's base64 credential encode. ${RESET}\n"
+        exit 1
+    fi
+
+    REGISTRY_SECRET_SETUP_CURL_API="curl -d '{\"address\": \"$REGISTRY_SECRET_ADDRESS\", \"credentials\": \"$ENCODED_CREDENTIALS\"}' -H \"Content-Type: application/json\" -X POST https://localhost:9191/api/v1/registrysecrets -k"
+    kubectl exec -i $CODEWIND_POD_ID -- bash -c "$REGISTRY_SECRET_SETUP_CURL_API"
+}
+
 function createProject() {
    ./$EXECUTABLE_NAME project create --url $1 $2
 }
@@ -79,10 +91,11 @@ function setup {
     PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
     TURBINE_NPM_INSTALL_CMD="cd /file-watcher/server; npm install --only=dev"
-    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${IMAGE_PUSH_REGISTRY_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} npm run $TEST_SUITE:test:xml"
+    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${REGISTRY_SECRET_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} npm run $TEST_SUITE:test:xml"
 
     mkdir -p $TEST_OUTPUT_DIR
 
+    # Copy the test files to the PFE container/pod and run npm install
     if [ $TEST_TYPE == "local" ]; then
         CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
         docker cp $TURBINE_SERVER_DIR $CODEWIND_CONTAINER_ID:$TURBINE_DIR_CONTAINER \
@@ -139,6 +152,11 @@ function setup {
 	    copyToPFE "$PROJECT_DIR/$PROJECT_NAME"
 	    checkExitCode $? "Failed to copy project to PFE container."
     done
+
+    if [ $TEST_TYPE == "kube" ]; then
+        # Set up registry secrets (docker config) in PFE container/pod
+        setupRegistrySecret
+    fi
 }
 
 function run {
