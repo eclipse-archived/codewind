@@ -30,8 +30,10 @@ export default class DeleteTest {
 
     run(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
-            this.runDeleteWithMissingProjectID();
-            this.runDeleteWithInvalidProjectID();
+            if (!process.env.TURBINE_PERFORMANCE_TEST) {
+                this.runDeleteWithMissingProjectID();
+                this.runDeleteWithInvalidProjectID();
+            }
             this.runDeleteWithValidData(socket, projData, projectTemplate, projectLang);
             this.afterAllHook(socket);
         });

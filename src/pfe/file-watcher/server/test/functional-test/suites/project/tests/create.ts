@@ -34,8 +34,10 @@ export default class CreateTest {
 
     run(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
-            this.runCreateWithoutProjectID(projData);
-            this.runCreateWithoutProjectType(projData);
+            if (!process.env.TURBINE_PERFORMANCE_TEST) {
+                this.runCreateWithoutProjectID(projData);
+                this.runCreateWithoutProjectType(projData);
+            }
             this.runCreateWithValidData(socket, projData, projectTemplate, projectLang);
             this.afterAllHook(socket, projData, projectTemplate, projectLang);
         });
