@@ -42,7 +42,7 @@ Options:
     --post-clean        To perform a post clean up. Default: n 
     --release           The release branch to use. Default: master
     --iterations        Number of iterations to run the performance test. Default: 10
-    --convert-only      Convert data to csv only. Will not run performance test and use existing data json on path. Default: false
+    --report-only      Convert data to csv only. Will not run performance test and use existing data json on path. Default: false
     --repo              The upstream repo to use. Default: git@github.com:eclipse/codewind.git
     -h | --help         Display the man page
 EOF
@@ -80,7 +80,7 @@ while :; do
         --iterations=?*)
         ITERATIONS=${1#*=}
         ;;
-        --convert-only)
+        --report-only)
         CONVERT_ONLY=true
         ;;
         --repo=?*)
