@@ -7,6 +7,8 @@ The Codewind Turbine Module currently has two test suites at the moment:
 
 2. **Functional Test Suite**: This test suite creates an instance of turbine as a node module and calls each actionable function (i.e Create, Delete, Update, etc.). This is the bigger test suite out of the two and can be ran on either a local Codewind instance or a hosted Che instance on kube.
 
+3. **Performance Test Suite**: This test suite uses the functional test suite to run turbine performance metrics. This suite tests the main functionalities such as Create, Update and Delete. It uses the functional test suite code to run the performance test.
+
 ## How to run the test
 
 ### Unit Test Suite
@@ -44,6 +46,14 @@ The default values are:
 - **USER_DEVFILE**: https://raw.githubusercontent.com/eclipse/codewind-che-plugin/master/devfiles/latest/devfile.yaml
 
 Don't have a Che instance? No worries, use the `che-setup.sh` script from https://github.com/eclipse/codewind-che-plugin/tree/master/scripts to deploy a che instance with codewind. More on how to deploy che automatically [here](https://github.com/eclipse/codewind-che-plugin/blob/master/scripts/README.md).
+
+### Performance Test Suite
+
+Performance test suite can be ran either on local or kube, similar to Functional Test Suite. To run the performance test, run the following commands:
+- `cd src/pfe/file-watcher/server/test/performance-test`
+- `./performance-run.sh --release=<base_release>`
+
+By default, the performance run is defaulted to run 10 iterations. The option to run for fewer or more iterations can be passed to the script. For additional information on the script options, check `./run.sh --help`.
 
 ## Developing new tests
 
