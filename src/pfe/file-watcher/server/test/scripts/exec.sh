@@ -53,7 +53,31 @@ function downloadCwctl() {
     checkExitCode $? "Failed to give correct permission to run installer."
 }
 
+function setupInternalRegistryCredentials() {
+    # Adapted from https://github.com/eclipse/codewind-che-plugin/blob/master/scripts/che-setup.sh
+    echo -e "${BLUE}Setting up the Internal Registry Credentials ... ${RESET}"
+    OC_VERSION=$( oc version 2>&1 )
+    if [[ "$OC_VERSION" =~ "Client Version: version.Info{Major:\"4\"" ]]; then
+        REGISTRY_SECRET_ADDRESS="image-registry.openshift-image-registry.svc:5000"
+    else
+        REGISTRY_SECRET_ADDRESS="docker-registry.default.svc:5000"
+    fi
+
+    REGISTRY_SECRET_USERNAME=turbine-test-sa
+
+    oc delete sa $REGISTRY_SECRET_USERNAME
+    oc create sa $REGISTRY_SECRET_USERNAME
+
+    oc policy add-role-to-user system:image-builder system:serviceaccount:$NAMESPACE:$REGISTRY_SECRET_USERNAME
+
+    ENCODED_TOKEN=$(oc get secret $(oc describe sa $REGISTRY_SECRET_USERNAME | tail -n 2 | head -n 1 | awk '{$1=$1};1') -o json | jq ".data.token")
+    REGISTRY_SECRET_PASSWORD=$( node ./scripts/utils.js decode $ENCODED_TOKEN )
+}
+
 function setupRegistrySecret() {
+    if [[ ! -z $INTERNAL_REGISTRY ]]; then
+        setupInternalRegistryCredentials
+    fi
     echo -e "${BLUE}Setting up the Registry Secret ... ${RESET}"
     ENCODED_CREDENTIALS=$( node ./scripts/utils.js encode $REGISTRY_SECRET_USERNAME $REGISTRY_SECRET_PASSWORD )
     if [[ ($? -ne 0) ]]; then
@@ -91,7 +115,6 @@ function setup {
     PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
     TURBINE_NPM_INSTALL_CMD="cd /file-watcher/server; npm install --only=dev"
-    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${REGISTRY_SECRET_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} npm run $TEST_SUITE:test:xml"
 
     mkdir -p $TEST_OUTPUT_DIR
 
@@ -160,6 +183,8 @@ function setup {
 }
 
 function run {
+    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${REGISTRY_SECRET_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} npm run $TEST_SUITE:test:xml"
+
     if [ $TEST_TYPE == "local" ]; then
         docker exec -i $CODEWIND_CONTAINER_ID bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
         docker cp $CODEWIND_CONTAINER_ID:/test_output.xml $TEST_OUTPUT
