@@ -225,7 +225,7 @@ module.exports = class FileWatcher {
       location: project.projectPath(false),
       applicationPort: project.applicationPort,
       settings: settingsFileContents,
-      language: project.language 
+      language: project.language
     };
 
     log.info(`Calling createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
@@ -468,7 +468,7 @@ module.exports = class FileWatcher {
       }
       let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
       await this.handleFWProjectEvent(event, projectUpdate);
-      WebSocket.watchListChanged(data);      
+      WebSocket.watchListChanged(data);
     } catch (err) {
       log.error(err);
     }
@@ -498,7 +498,9 @@ module.exports = class FileWatcher {
         results.error = error;
       }
       let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-      this.user.uiSocket.emit(event, {...results , ...updatedProject});
+      // remove fields which are not required by the UI
+      const { logStreams, ...projectInfoForUI } = updatedProject
+      this.user.uiSocket.emit(event, { ...results, ...projectInfoForUI })
       if (fwProject.buildStatus === 'inProgress') {
         // Reset build logs.
         updatedProject.resetLogStream('build');
@@ -534,7 +536,9 @@ module.exports = class FileWatcher {
     // We have to emit the full project state *and* the operation status.
     // (Storing the status in the project object is bad as it is
     // only about this close operation.)
-    this.user.uiSocket.emit('projectClosed', {...updatedProject, status: fwProject.status});
+    // remove fields which are not required by the UI
+    const { logStreams, ...projectInfoForUI } = updatedProject;
+    this.user.uiSocket.emit('projectClosed', {...projectInfoForUI, status: fwProject.status});
     log.debug('project ' + fwProject.projectID + ' successfully closed');
   }
 
@@ -667,7 +671,7 @@ function logEvent(event, projectData) {
   }
   log.debug(`${msg} ${projectData.projectID})`);
   log.trace(`${msg}: ${JSON.stringify(projectData, null, 2)})`);
-  
+
   if(updateTimerStart > 0 && event == "projectStatusChanged" && projectData.buildStatus && status == 'success'){
     let updateBuildTimerEnd = Date.now()
     log.info(`${projectData.projectID} update->build end time: ${ updateBuildTimerEnd }`)
@@ -681,5 +685,5 @@ function logEvent(event, projectData) {
     log.info(`${msg} ${projectData.projectID}) total time for update->run: ${ totalUpdateTime } seconds`)
     updateTimerStart = 0;
   }
-  
+
 }
