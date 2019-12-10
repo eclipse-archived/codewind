@@ -53,7 +53,7 @@ Performance test suite can be ran either on local or kube, similar to Functional
 - `cd src/pfe/file-watcher/server/test/performance-test`
 - `./performance-run.sh --release=<base_release>`
 
-By default, the performance run is defaulted to run 10 iterations. The option to run for fewer or more iterations can be passed to the script. For additional information on the script options, check `./run.sh --help`.
+By default, the performance run is defaulted to run 10 iterations. The option to run for fewer or more iterations can be passed to the script. For additional information on the script options, check `./performance-run.sh --help`.
 
 ## Developing new tests
 

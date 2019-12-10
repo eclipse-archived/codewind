@@ -41,17 +41,19 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
 
         const requiredKeys = ["projectID", "timestamp", "chunk", "chunk_total", "eventArray"];
         for (const key of requiredKeys) {
-            it(`call updateProjectForNewChange without required key: ${key}`, async() => {
-                const testData = _.cloneDeep(data);
-                delete testData[key];
-                const info: any = await updateProjectForNewChange(testData.projectID, testData.timestamp, testData.chunk, testData.chunk_total, testData.eventArray);
-                expect(info);
-                expect(info.statusCode);
-                expect(info.statusCode).to.equal(400);
-                expect(info.error);
-                expect(info.error).to.haveOwnProperty("msg");
-                expect(info.error.msg).to.equal("Bad request. projectID, timestamp, chunk, chunk_total and eventArray are required.");
-            });
+            if (!process.env.TURBINE_PERFORMANCE_TEST) {
+                it(`call updateProjectForNewChange without required key: ${key}`, async() => {
+                    const testData = _.cloneDeep(data);
+                    delete testData[key];
+                    const info: any = await updateProjectForNewChange(testData.projectID, testData.timestamp, testData.chunk, testData.chunk_total, testData.eventArray);
+                    expect(info);
+                    expect(info.statusCode);
+                    expect(info.statusCode).to.equal(400);
+                    expect(info.error);
+                    expect(info.error).to.haveOwnProperty("msg");
+                    expect(info.error.msg).to.equal("Bad request. projectID, timestamp, chunk, chunk_total and eventArray are required.");
+                });
+            }
         }
 
         const types = ["MODIFY", "CREATE"];

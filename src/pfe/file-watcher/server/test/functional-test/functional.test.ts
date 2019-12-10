@@ -70,7 +70,6 @@ describe("PFE - functional test", () => {
       });
     });
   }
-
   runAllTests();
 });
 
@@ -86,7 +85,7 @@ function runAllTests(): void {
   }
 }
 
- function runProjectSpecificTest(chosenTemplate: string, chosenProject: string): void {
+function runProjectSpecificTest(chosenTemplate: string, chosenProject: string): void {
   const projData: projectsController.ICreateProjectParams = {
     projectID: `${chosenTemplate}-${chosenProject}-${projectConfigs.appSuffix}`,
     projectType: chosenTemplate === codewindTemplates.default ? chosenProject : chosenTemplate,
