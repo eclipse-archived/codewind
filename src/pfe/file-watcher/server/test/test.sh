@@ -39,6 +39,7 @@ function run {
     # Need to run 'run.sh' in Codewind home directory because 'run.sh' uses relative path to run other building scripts
     if [ $TEST_TYPE == "local" ]; then
         cd $CW_DIR
+        ./run.sh
         cd -
     elif [ $TEST_TYPE == "kube" ]; then
         # Generate the Che Access Token for Che User Authentication

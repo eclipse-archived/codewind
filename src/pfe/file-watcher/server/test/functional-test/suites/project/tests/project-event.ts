@@ -81,7 +81,14 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
                     const pathFileToChange = path.join(projData.location, fileToChange);
 
                     if (file.toLowerCase() === "dockerfile") {
-                        await fs.appendFileSync(pathFileToChange, "RUN mkdir turbine-test/", "utf-8");
+                        const dockerFileContents = await fs.readFileSync(pathFileToChange).toString();
+                        const contentSplits = dockerFileContents.split(/\r?\n/);
+                        if (projectLang.toLowerCase() == "liberty") {
+                            contentSplits.splice(contentSplits.indexOf("USER root") + 1, 0, "RUN mkdir -p /home/defaut/turbine-test");
+                        } else {
+                            contentSplits.splice(1, 0, "RUN mkdir -p /turbine-test");
+                        }
+                        await fs.writeFileSync(pathFileToChange, contentSplits.join("\n"), "utf-8");
                     } else {
                         await fs.appendFileSync(pathFileToChange, "\r\n", "utf-8");
                     }

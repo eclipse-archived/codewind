@@ -30,6 +30,7 @@ CONVERT_ONLY=false
 CODEWIND_REPO=git@github.com:eclipse/codewind.git
 RELEASE_DIR="performance-test-codewind"
 USER_DEVFILE=
+TEST_PATH="src/pfe/file-watcher/server/test"
 
 function usage {
     me=$(basename $0)
@@ -98,9 +99,6 @@ while :; do
     shift
 done
 
-# always use the master test source to run against the release branch
-TEST_DIR=$(cd .. && pwd)
-
 # in local we don't need a clean run from the test as it is done as a pre setup for the performance test
 if [ "$CLEAN_RUN" == "y" ] && [ "$TEST_ENV" == "local" ]; then
     CLEAN_RUN="n"
@@ -125,35 +123,19 @@ if [[ $CONVERT_ONLY == false ]]; then
     mkdir -p $TARGET_DIR
     displayMsg $? "Failed to create data directory." true
 
+    echo -e "${CYAN}> Switching to release directory ${RESET}"
+    cd "$CURR_DIR/$RELEASE_DIR/$TEST_PATH"
+    displayMsg $? "Failed to switch release directory." true
+
     for run in $(seq 1 $ITERATIONS);
     do
         echo -e "${CYAN}> Iteration: $run ${RESET}"
 
-        if [ "$TEST_ENV" == "local" ]; then
-            echo -e "${CYAN}> Switching to release directory ${RESET}"
-            cd "$CURR_DIR/$RELEASE_DIR"
-            displayMsg $? "Failed to switch release directory." true
+        echo -e "${CYAN}> Cleaning up docker ${RESET}"
+        docker system prune -af
+        displayMsg $? "Failed to clean up docker." true
 
-            echo -e "${CYAN}> Stopping codewind ${RESET}"
-            ./stop.sh
-            displayMsg $? "Failed to stop codewind." true
-
-            echo -e "${CYAN}> Running docker system prune ${RESET}"
-            docker system prune -af
-            displayMsg $? "Failed to perform docker system prune." false
-
-            echo -e "${CYAN}> Running docker image prune ${RESET}"
-            docker image prune -af
-            displayMsg $? "Failed to perform docker image prune." false
-
-            echo -e "${CYAN}> Starting codewind ${RESET}"
-            ./run.sh
-            displayMsg $? "Failed to start codewind." true
-        fi
-
-        cd $TEST_DIR
-
-        NAMESPACE=${NAMESPACE} CLUSTER_IP=${CLUSTER_IP} CLUSTER_PORT=${CLUSTER_PORT} CLUSTER_USER=${CLUSTER_USER} CLUSTER_PASSWORD=${CLUSTER_PASSWORD} ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN
+        PERFORMANCE_DATA_DIR=${TARGET_DIR} NAMESPACE=${NAMESPACE} CLUSTER_IP=${CLUSTER_IP} CLUSTER_PORT=${CLUSTER_PORT} CLUSTER_USER=${CLUSTER_USER} CLUSTER_PASSWORD=${CLUSTER_PASSWORD} ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN
     done
 fi
 
