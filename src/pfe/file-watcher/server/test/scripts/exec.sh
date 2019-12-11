@@ -72,10 +72,14 @@ function setupInternalRegistryCredentials() {
 
     ENCODED_TOKEN=$(oc get secret $(oc describe sa $REGISTRY_SECRET_USERNAME | tail -n 2 | head -n 1 | awk '{$1=$1};1') -o json | jq ".data.token")
     REGISTRY_SECRET_PASSWORD=$( node ./scripts/utils.js decode $ENCODED_TOKEN )
+    if [[ ($? -ne 0) ]]; then
+        echo -e "${RED}Test setup failed during Registry Secret's base64 credential decode. ${RESET}\n"
+        exit 1
+    fi
 }
 
 function setupRegistrySecret() {
-    if [[ ! -z $INTERNAL_REGISTRY ]]; then
+    if [[ $INTERNAL_REGISTRY == "y" ]]; then
         setupInternalRegistryCredentials
     fi
     echo -e "${BLUE}Setting up the Registry Secret ... ${RESET}"
@@ -119,6 +123,7 @@ function setup {
     mkdir -p $TEST_OUTPUT_DIR
 
     # Copy the test files to the PFE container/pod and run npm install
+    echo -e "${BLUE}Copying over the Filewatcher dir to the Codewind container/pod ... ${RESET}"
     if [ $TEST_TYPE == "local" ]; then
         CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
         docker cp $TURBINE_SERVER_DIR $CODEWIND_CONTAINER_ID:$TURBINE_DIR_CONTAINER \

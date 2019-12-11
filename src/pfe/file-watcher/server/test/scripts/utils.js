@@ -18,12 +18,12 @@ const option = process.argv[2];
 if (option.includes("help") || option == "-h") {
     printUsage();
 } else if (option == "encode") {
-    if (process.argv[3] == undefined || process.argv[4] == undefined || process.argv.length != 5) {
+    if (process.argv.length != 5) {
         printUsage();
     }
     encodeCredentials(process.argv[3], process.argv[4]);
 } else if (option == "decode") {
-    if (process.argv[3] == undefined || process.argv.length != 4) {
+    if (process.argv.length != 4) {
         printUsage();
     }
     decodeCredentials(process.argv[3]);
@@ -44,7 +44,7 @@ function encodeCredentials(username, password) {
     console.log(encodedCredentials);
 }
 
-function decodeCredentials(encodedCredentials) {
-    const decodedCredentials = Buffer.from(encodedCredentials, "base64").toString();
+function decodeCredentials(encodedString) {
+    const decodedCredentials = Buffer.from(encodedString, "base64").toString();
     console.log(decodedCredentials);
 }
