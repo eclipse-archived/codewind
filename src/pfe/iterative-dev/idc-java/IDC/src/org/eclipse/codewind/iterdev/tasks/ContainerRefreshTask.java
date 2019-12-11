@@ -30,7 +30,7 @@ public class ContainerRefreshTask {
 
                 // If running in K8s, needs to delete helm release first
                 if (context.isK8s()) {
-                    TaskUtils.runCmd("helm delete " + appDb.get(Constants.DB_HELM_RELEASE) + " --purge", context, true);
+                    TaskUtils.runCmd("helm delete " + appDb.get(Constants.DB_HELM_RELEASE), context, true);
                 }
                 else {
                         // Erase the container

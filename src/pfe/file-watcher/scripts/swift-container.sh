@@ -86,9 +86,9 @@ function deployK8s() {
 	tmpChart=/tmp/$projectName/$chartName
 
 	# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
-	if [ "$( helm list $project --failed )" ]; then
+	if [ "$( helm list --failed -q | grep $project)" ]; then
 		$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-		helm delete $project --purge
+		helm delete $project
 	fi
 
 	# Create a temporary folder to build the dockerfile
@@ -138,8 +138,7 @@ function deployK8s() {
 
 	echo "Modifying charts and running Helm install from $tmpChart"
 	# Render the template yamls for the chart
-	helm template $tmpChart \
-		--name $project \
+	helm template $project $tmpChart \
 		--values=/file-watcher/scripts/override-values.yaml \
 		--set image.repository=$IMAGE_PUSH_REGISTRY/$project \
 		--output-dir=$parentDir
@@ -174,15 +173,13 @@ function deployK8s() {
 		fi
 
 		# Install the application using Helm
-		helm upgrade \
-			--install $project \
-			--recreate-pods \
-			$tmpChart;
+		helm upgrade $project $tmpChart \
+			--install  \
+			--recreate-pods
 	else
-		helm upgrade \
-			--install $project \
-			--recreate-pods \
-			$tmpChart
+		helm upgrade $project $tmpChart \
+			--install  \
+			--recreate-pods
 	fi
 
 	if [ $? -eq 0 ]; then
@@ -208,7 +205,7 @@ function deployK8s() {
 			# Print the Helm status before deleting the release
 			helm status $project
 
-			helm delete $project --purge
+			helm delete $project
 
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPED "$errorMsg"
 			exit 3
@@ -412,7 +409,7 @@ elif [ "$COMMAND" == "remove" ]; then
 		pgrep -f "kubectl logs -f" | xargs kill -9
 
 		# Remove the helm release
-		helm delete $project --purge
+		helm delete $project
 	else
 		# Remove container
 		if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then

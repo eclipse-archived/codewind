@@ -48,7 +48,7 @@ public class ContainerRemoveTask {
 				
 				if(releaseName != null && !releaseName.isEmpty()) {
 					// Delete the helm release, then the docker image
-					ProcessRunner pr = TaskUtils.runCmd("helm delete " + releaseName + " --purge", context, false);
+					ProcessRunner pr = TaskUtils.runCmd("helm delete " + releaseName, context, false);
 					if(pr.getErrorCode().orElse(0) != 0) {
 						Logger.error("Error code: " + pr.getErrorCode() + ", Failed to remove the the Helm release " + releaseName);
 						return false;
