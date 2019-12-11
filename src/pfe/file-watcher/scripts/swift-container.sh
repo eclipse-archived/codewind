@@ -88,7 +88,7 @@ function deployK8s() {
 	# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
 	if [ "$( helm list $project --failed )" ]; then
 		$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-		helm delete $project --purge
+		helm delete $project
 	fi
 
 	# Create a temporary folder to build the dockerfile
@@ -205,7 +205,7 @@ function deployK8s() {
 			# Print the Helm status before deleting the release
 			helm status $project
 
-			helm delete $project --purge
+			helm delete $project
 
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPED "$errorMsg"
 			exit 3
@@ -409,7 +409,7 @@ elif [ "$COMMAND" == "remove" ]; then
 		pgrep -f "kubectl logs -f" | xargs kill -9
 
 		# Remove the helm release
-		helm delete $project --purge
+		helm delete $project
 	else
 		# Remove container
 		if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then

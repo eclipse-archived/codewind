@@ -70,7 +70,7 @@ mkdir -p $LOGSDIR
 # If there's a failed Helm release already, delete it. See https://github.com/helm/helm/issues/3353
 if [[ "$( helm list $RELEASE_NAME --failed )" ]]; then
 	echo "Deleting old failed helm release $RELEASE_NAME"
-	helm delete $RELEASE_NAME --purge
+	helm delete $RELEASE_NAME
 fi
 
 # Find the Helm chart folder, error out if it can't be found
@@ -162,7 +162,7 @@ while [ $POD_RUNNING -eq 0 ]; do
 		# Print the Helm status before deleting the release
 		helm status $RELEASE_NAME
 
-		helm delete $RELEASE_NAME --purge
+		helm delete $RELEASE_NAME
 		exit 1;
 	fi
 	sleep 1;
