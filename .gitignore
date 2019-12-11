@@ -22,3 +22,5 @@ src/pfe/portal/LICENSE
 src/pfe/portal/NOTICE.md
 src/initialize/LICENSE
 src/initialize/NOTICE.md
+src/gatekeeper/NOTICE.md
+src/keycloak/NOTICE.md
