@@ -95,7 +95,7 @@ describe('Template API tests', function() {
             const res = await getTemplateRepos();
             for (let i = 0; i < res.body.length; i++) {
                 const element = res.body[i];
-                element.should.contain.keys('id', 'name', 'description', 'url', 'projectStyles', 'enabled', 'protected');
+                element.should.contain.keys('url');
                 delete element.id;
             }
             res.should.have.status(200).and.satisfyApiSpec;
