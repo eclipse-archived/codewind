@@ -177,6 +177,16 @@ module.exports = class User {
   }
 
   /**
+   * Read the .cw-settings file if it exists
+   */
+  async getSettings(projFile) {
+    const settingsFilePath = path.join(projFile.workspace, projFile.name, '.cw-settings');
+    const settFileExists = await fs.pathExists(settingsFilePath);
+    const settFile = settFileExists ? await fs.readJson(settingsFilePath) : {};
+    return settFile;
+  }
+
+  /**
    * Function to initialise a users existing projects
    * Searches the directory containing the project inf files so we only
    * add projects we've run previously to the projectList
@@ -189,11 +199,7 @@ module.exports = class User {
       if (!fileName.startsWith('.')) {
         try {
           const projFile = await fs.readJson(file);
-          // should now have a project name
-          const projName = projFile.name;
-          let settingsFilePath = path.join(projFile.workspace, projName, '.cw-settings');
-          const settFileExists = await fs.pathExists(settingsFilePath);
-          const settFile = settFileExists ? await fs.readJson(settingsFilePath) : {};
+          const settFile = await this.getSettings(projFile);
           let project = new Project({ ...projFile, ...settFile }, projFile.workspace);
           this.projectList.addProject(project);
         } catch (err) {
@@ -235,6 +241,17 @@ module.exports = class User {
           }
           project.projectID = projFile.projectID;
           project.ignoredPaths = projFile.ignoredPaths;
+
+          // read settings file for additional refPaths to monitor
+          const settFile = await this.getSettings(projFile);
+          if (Array.isArray(settFile.refPaths)) {
+            project.refPaths = [];
+            settFile.refPaths.forEach((path) => {
+              if (typeof path.from === 'string' && typeof path.to === 'string')
+                project.refPaths.push({ from: path.from, to: path.to });
+            });
+          }
+
           if (projFile.projectWatchStateId == undefined) {
             project.projectWatchStateId = crypto.randomBytes(16).toString("hex");
             let projectUpdate = { projectID: projFile.projectID, projectWatchStateId: project.projectWatchStateId };
