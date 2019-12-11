@@ -669,6 +669,7 @@ module.exports = class User {
   /**
    * Function to setup the Docker config file. In Kubernetes, the function also creates the Codewind secret from
    * the Docker config and patches the Service Account with the created Codewind Secret. On local, this is skipped.
+   * This API function is needed in local because some project stacks pull images from private registries like Appsody.
    */
   async setupRegistrySecret(credentials, address) {
     const credentialsJSON = JSON.parse(Buffer.from(credentials, "base64").toString());
@@ -737,14 +738,12 @@ module.exports = class User {
     }
 
     // Only update the Kube secret when running in K8s
-    let isServiceAccountPatched = false;
     let serviceAccountPatchData;
     if (global.codewind.RUNNING_IN_K8S) {
       serviceAccountPatchData = await this.updateServiceAccountWithDockerRegisrySecret();
-      isServiceAccountPatched = serviceAccountPatchData.isServiceAccountPatched;
     }
 
-    if (isServiceAccountPatched || !global.codewind.RUNNING_IN_K8S) {
+    if (serviceAccountPatchData === undefined || !global.codewind.RUNNING_IN_K8S) {
       // when either the service account is patched successfully or we are in local Codewind, we can return
       log.debug("Codewind Docker Registry List: " + JSON.stringify(registrySecretList));
       return registrySecretList;
@@ -758,7 +757,7 @@ module.exports = class User {
     await fs.writeJson(this.dockerConfigFile, jsonObj);
     await this.updateServiceAccountWithDockerRegisrySecret();
 
-    throw new RegistrySecretsError(serviceAccountPatchData.error, "for address " + address);
+    throw new RegistrySecretsError(serviceAccountPatchData, "for address " + address);
   }
 
   /**
@@ -815,11 +814,7 @@ module.exports = class User {
       } catch (err) {
         log.error(err);
         log.error("Failed to create the Codewind Secret");
-        const data = {
-          isServiceAccountPatched: false,
-          error: "SECRET_CREATE_FAILED"
-        };
-        return data;
+        return "SECRET_CREATE_FAILED";
       }
 
       try {
@@ -836,27 +831,16 @@ module.exports = class User {
       } catch (err) {
         log.error(err);
         log.error("Failed to patch the Service Account");
-        const data = {
-          isServiceAccountPatched: false,
-          error: "SERVICE_ACCOUNT_PATCH_FAILED"
-        };
-        return data;
+        return "SERVICE_ACCOUNT_PATCH_FAILED";
       }
     } else {
       // updateServiceAccountWithDockerRegisrySecret was called but there was no Docker Config, error out
       const msg = "No Docker Config found but was requested to patch Service Account.";
       log.error(msg);
-      const data = {
-        isServiceAccountPatched: false,
-        error: "NO_DOCKER_CONFIG"
-      };
-      return data;
+      return "NO_DOCKER_CONFIG";
     }
 
-    const data = {
-      isServiceAccountPatched: true
-    };
-    return data;
+    return undefined;
   }
 
   /**
@@ -894,6 +878,7 @@ module.exports = class User {
   /**
    * Function to remove the registry secret from the Docker Config. In Kubernetes, the function also creates the Codewind secret from
    * the Docker config and patches the Service Account with the created Codewind Secret. On local, this is skipped.
+   * This API function is needed in local because some project stacks pull images from private registries like Appsody.
    */
   async removeRegistrySecret(address) {
     const registrySecretList = [];
@@ -946,14 +931,12 @@ module.exports = class User {
     }
 
     // Only update the Kube secret when running in K8s
-    let isServiceAccountPatched = false;
     let serviceAccountPatchData;
     if (global.codewind.RUNNING_IN_K8S) {
       serviceAccountPatchData = await this.updateServiceAccountWithDockerRegisrySecret();
-      isServiceAccountPatched = serviceAccountPatchData.isServiceAccountPatched;
     }
 
-    if (isServiceAccountPatched || !global.codewind.RUNNING_IN_K8S) {
+    if (serviceAccountPatchData === undefined || !global.codewind.RUNNING_IN_K8S) {
       // when either the service account is patched successfully or we are in local Codewind, we can return
       log.debug("Codewind Docker Registry List: " + JSON.stringify(registrySecretList));
       return registrySecretList;
@@ -967,7 +950,7 @@ module.exports = class User {
     await fs.writeJson(this.dockerConfigFile, jsonObj);
     await this.updateServiceAccountWithDockerRegisrySecret();
 
-    throw new RegistrySecretsError(serviceAccountPatchData.error, "for address " + address);
+    throw new RegistrySecretsError(serviceAccountPatchData, "for address " + address);
   }
 
   /**
