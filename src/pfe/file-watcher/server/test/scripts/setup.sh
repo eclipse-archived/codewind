@@ -51,7 +51,7 @@ function install {
         
         HTTPSTATUS=$(curl $DEFAULT_DEVFILE | curl -s --header "Content-Type: text/yaml" --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request POST --data-binary @- -D- -o/dev/null $CHE_ENDPOINT/api/workspace/devfile?start-after-create=true 2>/dev/null | sed -n 3p | cut -d ' ' -f2) 
         if [[ $HTTPSTATUS -ne 201 ]]; then
-            echo -e "${RED}Codewind workspace setup has failed. ${RESET}\n"
+            echo -e "${RED}Codewind workspace setup has failed with HTTPSTATUS $HTTPSTATUS. ${RESET}\n"
             exit 1
         fi
         # Wait until the Codewind pod is up and running
@@ -100,7 +100,7 @@ function uninstall {
             echo -e "${BLUE}Stopping the Codewind Workspace ${RESET}\n"
             HTTPSTATUS=$(curl -I --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request DELETE $CHE_ENDPOINT/api/workspace/$WORKSPACE_ID/runtime 2>/dev/null | head -n 1| cut -d$' ' -f2)
             if [[ $HTTPSTATUS -ne 204 ]]; then
-                echo -e "${RED}Codewind workspace has failed to stop. Will attempt to remove the workspace... ${RESET}\n"
+                echo -e "${RED}Codewind workspace has failed to stop with HTTPSTATUS $HTTPSTATUS. Will attempt to remove the workspace... ${RESET}\n"
             fi
             # We must wait for the workspace to stop before removing it, otherwise the workspace removal fails
             echo -e "${BLUE}Sleeping for 10s to allow the workspace to stop before removing it ${RESET}\n"
@@ -110,7 +110,7 @@ function uninstall {
             echo -e "${BLUE}Removing the Codewind Workspace ${RESET}\n"
             HTTPSTATUS=$(curl -I --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request DELETE $CHE_ENDPOINT/api/workspace/$WORKSPACE_ID 2>/dev/null | head -n 1| cut -d$' ' -f2)
             if [[ $HTTPSTATUS -ne 204 ]]; then
-                echo -e "${RED}Codewind workspace has failed to be removed... ${RESET}\n"
+                echo -e "${RED}Codewind workspace has failed to be removed with HTTPSTATUS $HTTPSTATUS... ${RESET}\n"
                 exit 1
             fi
 
