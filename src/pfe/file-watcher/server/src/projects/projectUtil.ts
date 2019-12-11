@@ -1525,8 +1525,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
 
         try {
             // If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
-            result = await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["list", buildInfo.containerName, "--failed"], {});
-            if (result.stdout.length !== 0) {
+            result = await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["list", "--failed", "-q"], {});
+            if (result.stdout.includes(buildInfo.containerName)) {
                 if (projectStatusController.getAppState(buildInfo.projectID) == projectStatusController.AppState.started) {
                     await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopping, "");
                 }

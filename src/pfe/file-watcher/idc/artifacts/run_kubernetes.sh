@@ -68,7 +68,7 @@ fi
 mkdir -p $LOGSDIR
 
 # If there's a failed Helm release already, delete it. See https://github.com/helm/helm/issues/3353
-if [[ "$( helm list $RELEASE_NAME --failed )" ]]; then
+if [[ "$( helm list --failed -q | grep $RELEASE_NAME )" ]]; then
 	echo "Deleting old failed helm release $RELEASE_NAME"
 	helm delete $RELEASE_NAME
 fi

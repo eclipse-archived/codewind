@@ -142,7 +142,7 @@ function deployK8s() {
 	# Push app container image to docker registry if one is set up
 	if [[ ! -z $IMAGE_PUSH_REGISTRY ]]; then
 		# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
-		if [ "$( helm list $project --failed )" ]; then
+		if [ "$( helm list --failed -q | grep $project )" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
 			helm delete $project
 		fi
