@@ -1204,7 +1204,7 @@ export interface IProjectSettings {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     ignoredPaths?: string[];
-    refPaths?: Array<RefPath>;
+    refPaths?: RefPath[];
     isHttps?: boolean;
 }
 
@@ -1325,5 +1325,5 @@ export interface ICheckNewLogFileFailure {
 export interface NewProjectAddedEvent {
     projectID: string;
     ignoredPaths: string[];
-    refPaths?: Array<RefPath>;
+    refPaths?: RefPath[];
 }
