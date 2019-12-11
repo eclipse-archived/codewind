@@ -246,9 +246,11 @@ module.exports = class User {
           const settFile = await this.getSettings(projFile);
           if (Array.isArray(settFile.refPaths)) {
             project.refPaths = [];
-            settFile.refPaths.forEach((path) => {
-              if (typeof path.from === 'string' && typeof path.to === 'string')
-                project.refPaths.push({ from: path.from, to: path.to });
+            settFile.refPaths.forEach((refPath) => {
+              if ((typeof refPath.from === "string" && refPath.from.trim().length > 0) &&
+                  (typeof refPath.to === "string" && refPath.to.trim().length > 0)) {
+                  project.refPaths.push({ from: refPath.from, to: refPath.to });
+              }
             });
           }
 

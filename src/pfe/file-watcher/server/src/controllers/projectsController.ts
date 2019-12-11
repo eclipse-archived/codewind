@@ -19,7 +19,7 @@ import { actionMap } from "../projects/actions";
 import * as projectSpecifications from "../projects/projectSpecifications";
 import { Operation } from "../projects/operation";
 import * as localeTrans from "../utils/locale";
-import { AppLog, BuildLog, ProjectInfo, ProjectMetadata, ProjectCapabilities, UpdateProjectInfoPair } from "../projects/Project";
+import { AppLog, BuildLog, ProjectInfo, ProjectMetadata, ProjectCapabilities, RefPath, UpdateProjectInfoPair } from "../projects/Project";
 import * as io from "../utils/socket";
 import * as utils from "../utils/utils";
 import * as constants from "../projects/constants";
@@ -312,6 +312,19 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                 } else {
                     projectInfo.ignoredPaths = settings.ignoredPaths;
                 }
+            } else if (key == "refPaths" && (settings.refPaths instanceof Array)) {
+                projectInfo.refPaths = [];
+                settings.refPaths.forEach((refPath) => {
+                    if ((typeof refPath.from === "string" && refPath.from.trim().length > 0) &&
+                        (typeof refPath.to === "string" && refPath.to.trim().length > 0)) {
+                            projectInfo.refPaths.push({ from: refPath.from, to: refPath.to });
+                    }
+                });
+                if (projectInfo.refPaths.length == 0) {
+                    logger.logProjectInfo("The refPaths array is empty, File-watcher will ignore the setting", projectID, projectName);
+                } else {
+                    logger.logProjectInfo("refPaths after removing invalid entries: " + projectInfo.refPaths, projectID, projectName);
+                }
             } else if (key == "isHttps") {
                 if (typeof settings.isHttps == "boolean") {
                     logger.logProjectInfo("Setting isHttps from the project settings", projectID, projectName);
@@ -479,6 +492,9 @@ async function triggerBuild(project: BuildQueueType): Promise<void> {
         projectID: projectID,
         ignoredPaths: projectInfo.ignoredPaths
     };
+    if (projectInfo.refPaths) {
+        eventData.refPaths = projectInfo.refPaths;
+    }
     io.emitOnListener("newProjectAdded", eventData);
 }
 
@@ -1188,6 +1204,7 @@ export interface IProjectSettings {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     ignoredPaths?: string[];
+    refPaths?: Array<RefPath>;
     isHttps?: boolean;
 }
 
@@ -1308,4 +1325,5 @@ export interface ICheckNewLogFileFailure {
 export interface NewProjectAddedEvent {
     projectID: string;
     ignoredPaths: string[];
+    refPaths?: Array<RefPath>;
 }

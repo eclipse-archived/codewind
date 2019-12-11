@@ -30,6 +30,7 @@ export interface ProjectInfo {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     ignoredPaths?: string[];
+    refPaths?: Array<RefPath>;
     extensionID?: string;
     language?: string;
     isHttps?: boolean;
@@ -92,9 +93,15 @@ export interface ProjectSettingsEvent {
     contextRoot?: String;
     healthCheck?: string;
     ignoredPaths?: string[];
+    refPaths?: Array<RefPath>;
     mavenProfiles?: string[];
     mavenProperties?: string[];
     isHttps?: boolean;
+}
+
+export interface RefPath {
+    from: string;
+    to: string;
 }
 
 /**
