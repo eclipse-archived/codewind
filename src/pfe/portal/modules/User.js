@@ -242,6 +242,7 @@ module.exports = class User {
           } else {
             project.projectWatchStateId = projFile.projectWatchStateId;
           }
+          project.lastSyncTime = projFile.lastSyncTime;
           log.debug("Find project " + projName + " with info: " + JSON.stringify(project));
           watchList.projects.push(project);
         } catch (err) {
@@ -877,7 +878,7 @@ module.exports = class User {
 
   /**
    * Function to remove the registry secret from the Docker Config. In Kubernetes, the function also creates the Codewind secret from
-   * the Docker config and patches the Service Account with the created Codewind Secret. On local, this is skipped.
+   * the Docker config and patches the Service Account with the created Codewind Secret. On local, this is skipped. 
    * This API function is needed in local because some project stacks pull images from private registries like Appsody.
    */
   async removeRegistrySecret(address) {
