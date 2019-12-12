@@ -878,7 +878,6 @@ module.exports = class User {
 
   /**
    * Function to remove the registry secret from the Docker Config. In Kubernetes, the function also creates the Codewind secret from
-   * the Docker config and patches the Service Account with the created Codewind Secret. On local, this is skipped. 
    * This API function is needed in local because some project stacks pull images from private registries like Appsody.
    */
   async removeRegistrySecret(address) {
