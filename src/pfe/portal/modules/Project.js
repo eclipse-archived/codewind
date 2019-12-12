@@ -55,6 +55,7 @@ module.exports = class Project {
     this.language = args.language;
     this.validate = args.validate;
     this.creationTime = args.creationTime;
+    this.lastSyncTime = '';
 
     if (args.contextRoot) this.contextRoot = args.contextRoot;
     if (args.framework) this.framework = args.framework;

@@ -94,6 +94,7 @@ async function bindStart(req, res) {
 
     if (creationTime) {
       projectDetails.creationTime = creationTime;
+      projectDetails.lastSyncTime = creationTime;
     }
 
     if (projectType) {
@@ -227,9 +228,9 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
           // remove the file from pfe container
           await deleteFilesInArray(pathToProj, filesToDelete);
         }
-        res.sendStatus(200);
-
+        
         await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
+        res.sendStatus(202);
 
         if (project.injectMetrics) {
           try {
@@ -244,6 +245,12 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         log.info(`Total time to sync project ${project.name} to build container is ${timersynctime} seconds`);
         timersyncstart = 0;
 
+        let updatedProject = {
+          projectID,
+          lastSyncTime: timeStamp
+        }
+
+        await user.projectList.updateProject(updatedProject);
       }
     } else {
       res.sendStatus(404);
@@ -292,28 +299,24 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
         projectRoot
       );
     }
-    if (filesToDelete != undefined) {
-      filesToDelete.forEach((f) => {
-        const data = {
-          path: f,
-          timestamp: timeStamp,
-          type: "DELETE",
-          directory: false
-        };
-        IFileChangeEvent.push(data);
-      });
-    }
-    if (modifiedList != undefined) {
-      modifiedList.forEach((f) => {
-        const data = {
-          path: f,
-          timestamp: timeStamp,
-          type: "MODIFY",
-          directory: false
-        };
-        IFileChangeEvent.push(data);
-      });
-    }
+    filesToDelete.forEach((f) => {
+      const data = {
+        path: f,
+        timestamp: timeStamp,
+        type: "DELETE",
+        directory: false
+      };
+      IFileChangeEvent.push(data);
+    });
+    modifiedList.forEach((f) => {
+      const data = {
+        path: f,
+        timestamp: timeStamp,
+        type: "MODIFY",
+        directory: false
+      };
+      IFileChangeEvent.push(data);
+    });
     user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
   } else {
     // if a build is in progress, wait 5 seconds and try again
