@@ -131,15 +131,12 @@ module.exports.forceRemove = async function forceRemove(path) {
 }
 
 /** C:\helloThere -> /c/helloThere */
-function convertFromWindowsDriveLetter(absolutePath) {
-  if (!isWindowsAbsolutePath(absolutePath)) {
-    return absolutePath;
+function convertFromWindowsDriveLetter(windowsPath) {
+  if (!isWindowsAbsolutePath(windowsPath)) {
+    return windowsPath;
   }
-  let linuxPath;
-  // Replace \ with /
-  linuxPath = convertBackSlashesToForwardSlashes(absolutePath);
+  let linuxPath = convertBackSlashesToForwardSlashes(windowsPath);
   const char0 = linuxPath.charAt(0);
-  // Strip first two characters
   linuxPath = linuxPath.substring(2);
   linuxPath = "/" + char0.toLowerCase() + linuxPath;
   return linuxPath;

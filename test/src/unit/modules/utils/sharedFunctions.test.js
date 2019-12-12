@@ -70,7 +70,7 @@ describe('sharedFunctions.js', () => {
             const convertedPath = sharedFunctions.convertFromWindowsDriveLetter(filePath);
             convertedPath.should.equal('/c/folder/anotherfolder/javaproject');
         });
-        it('returns a the original linux path', () => {
+        it('returns the original linux path', () => {
             const filePath = '/some/random/path';
             const convertedPath = sharedFunctions.convertFromWindowsDriveLetter(filePath);
             convertedPath.should.equal(filePath);
