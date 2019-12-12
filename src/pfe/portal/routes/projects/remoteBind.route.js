@@ -94,6 +94,7 @@ async function bindStart(req, res) {
 
     if (creationTime) {
       projectDetails.creationTime = creationTime;
+      projectDetails.lastSyncTime = creationTime;
     }
 
     if (projectType) {
@@ -243,6 +244,11 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         let timersynctime = (timersyncend - timersyncstart) / 1000;
         log.info(`Total time to sync project ${project.name} to build container is ${timersynctime} seconds`);
         timersyncstart = 0;
+        let updatedProject = {
+          projectID,
+          lastSyncTime: timeStamp
+        }
+        await user.projectList.updateProject(updatedProject);
 
       }
     } else {
