@@ -64,4 +64,33 @@ describe('sharedFunctions.js', () => {
             return fs.pathExists(testFile).should.eventually.be.false;
         });
     });
+    describe('convertFromWindowsDriveLetter(absolutePath)', () => {
+        it('returns a converted linux path from a windows path', () => {
+            const filePath = 'C:\\folder\\anotherfolder\\javaproject';
+            const convertedPath = sharedFunctions.convertFromWindowsDriveLetter(filePath);
+            convertedPath.should.equal('/c/folder/anotherfolder/javaproject');
+        });
+        it('returns the original linux path', () => {
+            const filePath = '/some/random/path';
+            const convertedPath = sharedFunctions.convertFromWindowsDriveLetter(filePath);
+            convertedPath.should.equal(filePath);
+        });
+    });
+    describe('isWindowsAbsolutePath(absolutePath)', () => {
+        it('returns true as filePath is windows', () => {
+            const filePath = 'C:\\folder\\anotherfolder\\javaproject';
+            const isWindowsPath = sharedFunctions.isWindowsAbsolutePath(filePath);
+            isWindowsPath.should.be.true;
+        });
+        it('returns false as filePath is linux', () => {
+            const filePath = '/some/random/path';
+            const isWindowsPath = sharedFunctions.isWindowsAbsolutePath(filePath);
+            isWindowsPath.should.be.false;
+        });
+        it('returns false as filePath is not absolute', () => {
+            const filePath = '..\\Publications\\TravelBrochure.pdf';
+            const isWindowsPath = sharedFunctions.isWindowsAbsolutePath(filePath);
+            isWindowsPath.should.be.false;
+        });
+    });
 });

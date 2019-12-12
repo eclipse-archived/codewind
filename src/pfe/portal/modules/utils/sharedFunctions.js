@@ -115,22 +115,6 @@ module.exports.copyProject = async function copyFile(fromProjectPath, toProjectP
   await module.exports.forceRemove(fromProjectPath)
 }
 
-/** C:\helloThere -> /c/helloThere */
-module.exports.convertFromWindowsDriveLetter = function convertFromWindowsDriveLetter(absolutePath) {
-  if (!isWindowsAbsolutePath(absolutePath)) {
-    return absolutePath;
-  }
-  let temp;
-  // Replace \ with /
-  temp = convertBackSlashesToForwardSlashes(absolutePath);
-  const char0 = temp.charAt(0);
-  // Strip first two characters
-  temp = temp.substring(2);
-  temp = "/" + char0.toLowerCase() + temp;
-  return temp;
-
-}
-
 /**
  * Force remove a path, regardless of whether it exists, or it's file or directory that may or may not be empty.
  * Better than fs-extra fs.remove as it won't recurse down each directory tree and take over the event loop
@@ -144,6 +128,18 @@ module.exports.forceRemove = async function forceRemove(path) {
   catch (err) {
     log.warn(err.message);
   }
+}
+
+/** C:\helloThere -> /c/helloThere */
+function convertFromWindowsDriveLetter(windowsPath) {
+  if (!isWindowsAbsolutePath(windowsPath)) {
+    return windowsPath;
+  }
+  let linuxPath = convertBackSlashesToForwardSlashes(windowsPath);
+  const char0 = linuxPath.charAt(0);
+  linuxPath = linuxPath.substring(2);
+  linuxPath = "/" + char0.toLowerCase() + linuxPath;
+  return linuxPath;
 }
 
 function convertBackSlashesToForwardSlashes(str) {
@@ -201,4 +197,7 @@ module.exports.getProjectSourceRoot = function getProjectSourceRoot(project) {
 }
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+
+module.exports.convertFromWindowsDriveLetter = convertFromWindowsDriveLetter;
+module.exports.isWindowsAbsolutePath = isWindowsAbsolutePath;
 module.exports.deepClone = deepClone;
