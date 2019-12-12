@@ -68,9 +68,9 @@ fi
 mkdir -p $LOGSDIR
 
 # If there's a failed Helm release already, delete it. See https://github.com/helm/helm/issues/3353
-if [[ "$( helm list $RELEASE_NAME --failed )" ]]; then
+if [[ "$( helm list --failed -q | grep $RELEASE_NAME )" ]]; then
 	echo "Deleting old failed helm release $RELEASE_NAME"
-	helm delete $RELEASE_NAME --purge
+	helm delete $RELEASE_NAME
 fi
 
 # Find the Helm chart folder, error out if it can't be found
@@ -97,8 +97,7 @@ cp -fR $chartDir/* $tmpChart
 parentDir=$( dirname $tmpChart )
 
 # Render the template yamls for the chart
-helm template $tmpChart \
-	--name $RELEASE_NAME \
+helm template $RELEASE_NAME $tmpChart \
 	--values=/file-watcher/scripts/override-values.yaml \
 	--set image.repository=$IMAGE_PUSH_REGISTRY/$CONTAINER_NAME \
 	--output-dir=$parentDir
@@ -135,16 +134,14 @@ if [[ ! -z $IMAGE_PUSH_REGISTRY ]]; then
 	fi
 	
 	echo "Running install command: helm upgrade --install $RELEASE_NAME --recreate-pods $tmpChart"
-	helm upgrade \
-		--install $RELEASE_NAME \
-		--recreate-pods \
-		$tmpChart
+	helm upgrade $RELEASE_NAME $tmpChart \
+		--install  \
+		--recreate-pods
 else
 	echo "Running install command: helm upgrade --install $RELEASE_NAME --recreate-pods $tmpChart"
-	helm upgrade \
-		--install $RELEASE_NAME \
-		--recreate-pods \
-		$tmpChart
+	helm upgrade $RELEASE_NAME $tmpChart \
+		--install  \
+		--recreate-pods
 fi
 
 # Don't proceed if the helm install failed
@@ -165,7 +162,7 @@ while [ $POD_RUNNING -eq 0 ]; do
 		# Print the Helm status before deleting the release
 		helm status $RELEASE_NAME
 
-		helm delete $RELEASE_NAME --purge
+		helm delete $RELEASE_NAME
 		exit 1;
 	fi
 	sleep 1;

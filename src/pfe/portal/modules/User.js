@@ -261,6 +261,7 @@ module.exports = class User {
           } else {
             project.projectWatchStateId = projFile.projectWatchStateId;
           }
+          project.lastSyncTime = projFile.lastSyncTime;
           log.debug("Find project " + projName + " with info: " + JSON.stringify(project));
           watchList.projects.push(project);
         } catch (err) {

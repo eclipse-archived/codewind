@@ -1791,6 +1791,7 @@ components:
         - pathToMonitor
         - ignoredPaths
         - projectWatchStateId
+        - lastSyncTime
       properties:
         projectID:
           $ref: '#/components/schemas/ProjectID'
@@ -1812,6 +1813,10 @@ components:
           type: string
           format: uuid
           example: "e3f3ba629b5a9e75ebb0818934575a66"
+        lastSyncTime:
+          description: the time in millisconds since epoch that the project was last updated in codewind
+          type: number
+          example: 1576080088223
     WatchListRefPath:
       type: object
       required:

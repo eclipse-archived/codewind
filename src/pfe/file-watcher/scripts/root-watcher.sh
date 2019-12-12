@@ -86,7 +86,7 @@ cache_spring > /codewind-workspace/.logs/spring-app-cache.log 2>&1 &
 echo "Creating /root/.docker/ for docker config"
 mkdir -p /root/.docker/
 
-# If running in Kubernetes, initialize helm
+# If running in Kubernetes, check if there is a registry secret to pull down
 if [ "$IN_K8" == "true" ]; then
 
 	# Check if there is a secret with labels app=codewind-pfe and codewindWorkspace=<workspace_id>
@@ -98,19 +98,5 @@ if [ "$IN_K8" == "true" ]; then
 		echo "A secret with the matching label has been found: $SECRET_NAME"
 		echo "Creating the Codewind PFE Docker Config with the secret .dockerconfigjson data"
 		kubectl get secret $SECRET_NAME -o jsonpath="{.data.\.dockerconfigjson}" | base64 --decode > /root/.docker/config.json
-	fi
-
-	# We are going to use a custom tiller in the namespace
-	# because we do not have cluster role binding for our Che
-	# workspace namespace and cannot access the cluster-scoped tiller
-	echo "Initializing a custom helm tiller"
-	helm init --upgrade --service-account $SERVICE_ACCOUNT_NAME
-
-	# Use a helm wrapper if TLS selected for helm
-	if [[ "$USE_HELM_TLS" == "true" ]]; then
-		echo "Creating Helm TLS wrapper"
-		mv /usr/local/bin/helm /usr/local/bin/_helm
-		cp /file-watcher/scripts/wrappers/helm_wrapper.sh /usr/local/bin/helm
-		chmod +x /usr/local/bin/helm
 	fi
 fi
