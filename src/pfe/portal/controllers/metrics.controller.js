@@ -32,14 +32,9 @@ async function inject(req, res) {
     if (!project) {
       const message = `Unable to find project ${projectID}`;
       log.error(message);
-      res.status(404).send({ message });
+      res.status(404).send(message);
       return;
     }
-
-    await user.projectList.updateProject({
-      projectID: projectID,
-      injectMetrics: injectMetrics
-    });
 
     const projectDir = path.join(project.workspace, project.directory);
     if (injectMetrics) {
@@ -48,12 +43,17 @@ async function inject(req, res) {
       await metricsService.removeMetricsCollectorFromProject(project.projectType, projectDir);
     }
 
+    await user.projectList.updateProject({
+      projectID: projectID,
+      injectMetrics: injectMetrics
+    });
+
     res.sendStatus(202);
 
     await syncProjectFilesIntoBuildContainer(project, user);
   } catch (err) {
     log.error(err);
-    res.status(500).send(err.info || err);
+    res.status(500).send(err.info || err.message);
   }
 }
 
