@@ -98,6 +98,11 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
 }
 
 export async function writeWorkspaceSettings(address: string, namespace: string): Promise<IWorkspaceSettingsSuccess | IWorkspaceSettingsFailure> {
+    // Clean up namespace if user enters address/namespace in the UI
+    if (namespace.startsWith(address.replace(/\/\s*$/, "") + "/")) {
+        namespace = namespace.replace(address.replace(/\/\s*$/, "") + "/", "");
+    }
+
     const newWorkspaceSettings: any = {
         registryAddress: address,
         registryNamespace: namespace
@@ -237,7 +242,13 @@ export async function getImagePushRegistry(): Promise<string> {
         return "";
     }
     logger.logInfo("WorkspaceSettingsInfo for project operations: " + JSON.stringify(workspaceSettingsInfo));
-    const imagePushRegistry = workspaceSettingsInfo.registryAddress.trim() + "/" + workspaceSettingsInfo.registryNamespace.trim();
+    let imagePushRegistry = workspaceSettingsInfo.registryAddress.trim();
+
+    // Only append if user entered a namespace
+    if (workspaceSettingsInfo.registryNamespace.length > 0) {
+        imagePushRegistry = imagePushRegistry + "/" + workspaceSettingsInfo.registryNamespace.trim();
+    }
+
     return imagePushRegistry;
 }
 
