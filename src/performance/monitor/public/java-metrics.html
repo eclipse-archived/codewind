@@ -215,6 +215,9 @@
       const httpRequestData = { time };
       for (const metric of metrics) {
         const metricsObj = metric.metrics[0];
+        if (metricsObj === undefined) {
+          continue;
+        }
         const metricValue = metricsObj.value;
         if (['base:cpu_process_cpu_load_percent', 'base_cpu_processCpuLoad_percent', 'process_cpu_used_ratio '].includes(metric.name)) {
           cpuData.process = metricValue;

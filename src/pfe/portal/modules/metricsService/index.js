@@ -35,19 +35,21 @@ const metricsCollectorRemovalFunctions = {
 }
 
 async function injectMetricsCollectorIntoProject(projectType, projectDir) {
-  if (!metricsCollectorInjectionFunctions.hasOwnProperty(projectType)) {
-    throw new Error(`Injection of metrics collector is not supported for projects of type '${projectType}'`);
+  const projtype = (projectType === 'docker') ? 'liberty' : projectType
+  if (!metricsCollectorInjectionFunctions.hasOwnProperty(projtype)) {
+    throw new Error(`Injection of metrics collector is not supported for projects of type '${projtype}'`);
   }
-  await metricsCollectorInjectionFunctions[projectType](projectDir);
-  log.debug(`Successfully injected metrics collector into ${projectType} project`);
+  await metricsCollectorInjectionFunctions[projtype](projectDir);
+  log.debug(`Successfully injected metrics collector into ${projtype} project`);
 }
 
 async function removeMetricsCollectorFromProject(projectType, projectDir) {
-  if (!metricsCollectorRemovalFunctions.hasOwnProperty(projectType)) {
-    throw new Error(`Injection of metrics collector is not supported for projects of type '${projectType}'`);
+  const projtype = (projectType === 'docker') ? 'liberty' : projectType
+  if (!metricsCollectorRemovalFunctions.hasOwnProperty(projtype)) {
+    throw new Error(`Injection of metrics collector is not supported for projects of type '${projtype}'`);
   }
-  await metricsCollectorRemovalFunctions[projectType](projectDir);
-  log.debug(`Successfully removed metrics collector from ${projectType} project`);
+  await metricsCollectorRemovalFunctions[projtype](projectDir);
+  log.debug(`Successfully removed metrics collector from ${projtype} project`);
 }
 
 const getPathToPomXml = (projectDir) => path.join(projectDir, 'pom.xml');
