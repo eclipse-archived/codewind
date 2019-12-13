@@ -46,6 +46,18 @@ router.post('/api/v1/imagepushregistry', validateReq, async function (req, res) 
     const namespace = req.sanitizeBody('namespace');
     const operation = req.sanitizeBody('operation');
 
+    // if user enters it as address/namespace in the UI, throw an error
+    if (namespace.startsWith(address.replace(/\/\s*$/, "") + "/")) {
+      const msg = "Namespace cannot be in the format address/namespace. Please enter a valid namespace.";
+      log.error(msg);
+      const workspaceSettings = {
+        imagePushRegistryTest: false,
+        msg: msg
+      }
+      res.status(400).send(workspaceSettings);
+      return;
+    }
+
     // The validateReq middleware will throw an error if operation is not test or set,
     // but it is optional and defaults to test.
     if (operation === undefined || operation === 'test') {
