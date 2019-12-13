@@ -323,7 +323,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                 if (projectInfo.refPaths.length == 0) {
                     logger.logProjectInfo("The refPaths array is empty, File-watcher will ignore the setting", projectID, projectName);
                 } else {
-                    logger.logProjectInfo("refPaths after removing invalid entries: " + projectInfo.refPaths, projectID, projectName);
+                    logger.logProjectInfo("refPaths after removing invalid entries: " + JSON.stringify(projectInfo.refPaths), projectID, projectName);
                 }
             } else if (key == "isHttps") {
                 if (typeof settings.isHttps == "boolean") {

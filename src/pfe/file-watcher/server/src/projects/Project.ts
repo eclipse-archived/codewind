@@ -111,8 +111,8 @@ export class RefPath {
 
     static createFrom(refPath: any): RefPath {
 
-        if ((typeof refPath.from === "string" && refPath.from.trim().length > 0) &&
-            (typeof refPath.to === "string" && refPath.to.trim().length > 0)) {
+        if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
+            (typeof refPath.to === "string" && (refPath.to = refPath.to.trim()).length > 0)) {
             return new RefPath(refPath.from, refPath.to);
         }
 

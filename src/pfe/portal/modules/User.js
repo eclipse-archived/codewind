@@ -247,8 +247,8 @@ module.exports = class User {
           if (Array.isArray(settFile.refPaths)) {
             project.refPaths = [];
             settFile.refPaths.forEach((refPath) => {
-              if ((typeof refPath.from === "string" && refPath.from.trim().length > 0) &&
-                  (typeof refPath.to === "string" && refPath.to.trim().length > 0)) {
+              if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
+                  (typeof refPath.to === "string" && (refPath.to = refPath.to.trim()).length > 0)) {
                   project.refPaths.push({ from: refPath.from, to: refPath.to });
               }
             });
