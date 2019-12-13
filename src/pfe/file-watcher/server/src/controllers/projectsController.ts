@@ -314,10 +314,10 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                 }
             } else if (key == "refPaths" && (settings.refPaths instanceof Array)) {
                 projectInfo.refPaths = [];
-                settings.refPaths.forEach((refPath) => {
-                    if ((typeof refPath.from === "string" && refPath.from.trim().length > 0) &&
-                        (typeof refPath.to === "string" && refPath.to.trim().length > 0)) {
-                            projectInfo.refPaths.push({ from: refPath.from, to: refPath.to });
+                settings.refPaths.forEach((el) => {
+                    const refPath = RefPath.createFrom(el);
+                    if (refPath) {
+                        projectInfo.refPaths.push(refPath);
                     }
                 });
                 if (projectInfo.refPaths.length == 0) {
@@ -1048,6 +1048,11 @@ export async function updateProjectInfo(projectID: string, keyValuePair: UpdateP
 
     if (keyValuePair.saveIntoJsonFile === undefined) {
         keyValuePair.saveIntoJsonFile = true;
+    }
+
+    // remove case
+    if (!keyValuePair.value) {
+        delete projectInfo[keyValuePair.key];
     }
 
     try {
