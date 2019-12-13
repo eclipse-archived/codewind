@@ -13,6 +13,8 @@ import { StartModes } from "./constants";
 import { ProjectInfo, UpdateProjectInfoPair, ProjectSettingsEvent } from "./Project";
 import * as logger from "../utils/logger";
 import * as projectsController from "../controllers/projectsController";
+import { appStateMap, ProjectState } from "../controllers/projectStatusController";
+import * as projectStatusController from "../controllers/projectStatusController";
 import * as projectExtensions from "../extensions/projectExtensions";
 import * as projectUtil from "./projectUtil";
 import { Operation } from "./operation";
@@ -219,10 +221,7 @@ const changeInternalPort = async function (applicationPort: string, operation: O
         logger.logProjectInfo("The project has been updated", projectInfo.projectID);
         logger.logProjectTrace(JSON.stringify(projectInfo), projectInfo.projectID);
 
-        // Delete the project from the array to show the next ping message
-        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
-            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
-        }
+        resetisFirstTimePing(projectID);
 
         // Set the containerInfoForceRefreshMap for the project to true, so that isApplicationUp/ping can pick up the new port with a force refresh
         projectUtil.containerInfoForceRefreshMap.set(projectID, true);
@@ -336,10 +335,7 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
     try {
         await projectsController.updateProjectInfo(projectID, keyValuePair);
 
-        // Delete the project from the array to show the next ping message
-        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
-            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
-        }
+        resetisFirstTimePing(projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
@@ -560,10 +556,7 @@ const reconfigWWWProtocol = async function (isHttps: boolean, operation: Operati
     try {
         await projectsController.updateProjectInfo(projectID, keyValuePair);
 
-        // Delete the project from the array to show the next ping message
-        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
-            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
-        }
+        resetisFirstTimePing(projectID);
 
         const data = {
             operationId: operation.operationId,
@@ -855,6 +848,57 @@ export async function projectSpecificationHandler(projectID: string, settings: a
     return { "operationId": operation.operationId };
 }
 
+/**
+ * @function
+ * @description Reconfig the pingTimeout for a project.
+ *
+ * @param pingTimeout <Required | string> - Required value for reconfiguration of pingTimeout.
+ * @param operation <Required | Operation> - Operation object for the project.
+ *
+ * @returns Promise<any>
+ */
+const changePingTimeout = async function (pingTimeout: string, operation: Operation): Promise<any> {
+
+    const projectInfo: ProjectInfo = operation.projectInfo;
+    const projectID = projectInfo.projectID;
+    const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+
+    // make sure the value we saved in projectinfo is an integer
+    let pingTimeoutInt: number = parseInt(pingTimeout);
+
+    if (!pingTimeoutInt) {
+        // Set the debug port to the default debug port if available else undefined
+        if (projectHandler.getDefaultPingTimeout()) {
+            pingTimeoutInt = projectHandler.getDefaultPingTimeout();
+        } else {
+            pingTimeoutInt = 30;
+        }
+        logger.logProjectInfo("The pingTimeout is empty, setting to the default pingTimeout: " + pingTimeoutInt, projectID);
+    }
+
+    if (projectInfo.pingTimeoutInt !== pingTimeoutInt) {
+        const keyValuePair: UpdateProjectInfoPair = {
+                key: "pingTimeout",
+                value: pingTimeoutInt,
+                saveIntoJsonFile: true
+        };
+        operation.projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
+
+        resetisFirstTimePing(projectID);
+        projectStatusController.pingCountMap.delete(projectID);
+
+    } else {
+        logger.logProjectInfo("The pingTimeout is already set to: " + pingTimeoutInt, projectID);
+    }
+
+};
+
+const resetisFirstTimePing = function (projectID: string): any {
+    const oldProjectState: ProjectState = appStateMap.get(projectID);
+    appStateMap.set(projectID, new ProjectState(oldProjectState.state, oldProjectState.msg, oldProjectState.lastbuild, oldProjectState.appImageLastBuild, oldProjectState.buildImageLastBuild, oldProjectState.detailedAppStatus, oldProjectState.isFirstTimePing));
+};
+
+
 
 specificationSettingMap.set("internalDebugPort", changeInternalDebugPort);
 specificationSettingMap.set("internalPort", changeInternalPort);
@@ -864,3 +908,4 @@ specificationSettingMap.set("mavenProfiles", changeMavenProfiles);
 specificationSettingMap.set("mavenProperties", changeMavenProperties);
 specificationSettingMap.set("ignoredPaths", reconfigIgnoredFilesForDaemon);
 specificationSettingMap.set("isHttps", reconfigWWWProtocol);
+specificationSettingMap.set("pingTimeout", changePingTimeout);

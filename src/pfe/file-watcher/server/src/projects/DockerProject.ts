@@ -171,4 +171,14 @@ export class DockerProject implements ProjectExtension {
 
         validator.sendResult();
     }
+
+    /**
+     * @function
+     * @description Get the default ping timeout of a docker project.
+     *
+     * @returns number
+     */
+    getDefaultPingTimeout(): number {
+        return 30;
+    }
 }

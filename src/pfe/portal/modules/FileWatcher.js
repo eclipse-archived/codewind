@@ -425,7 +425,7 @@ module.exports = class FileWatcher {
         let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths, status: fwProject.status };
         await this.handleFWProjectEvent(event, projectUpdate);
         WebSocket.watchListChanged(data);
-      } else if (fwProject.contextRoot || fwProject.ports || fwProject.mavenProfiles || fwProject.mavenProperties || typeof fwProject.isHttps == "boolean") {
+      } else if (fwProject.contextRoot || fwProject.ports || fwProject.mavenProfiles || fwProject.mavenProperties || fwProject.pingTimeout || typeof fwProject.isHttps == "boolean") {
         // Update the project.inf on project settings change
         await this.handleFWProjectEvent(event, fwProject);
       }

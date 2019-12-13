@@ -35,6 +35,7 @@ export interface ProjectInfo {
     isHttps?: boolean;
     appBaseURL?: string;
     compositeAppName?: string;
+    pingTimeout?: number;
 }
 
 export interface ProjectMetadata {

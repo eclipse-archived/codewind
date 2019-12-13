@@ -36,7 +36,7 @@ const STATES = {
 const METRIC_TYPES = ['cpu', 'gc', 'memory', 'http']
 
 const CW_SETTINGS_PROPERTIES = [
-  "contextRoot", "internalPort", "internalDebugPort",
+  "contextRoot", "internalPort", "internalDebugPort", "pingTimeout",
   "healthCheck", "isHttps", "ignoredPaths", "mavenProfiles", "mavenProperties"
 ];
 

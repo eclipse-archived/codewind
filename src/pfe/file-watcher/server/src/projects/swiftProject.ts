@@ -155,3 +155,13 @@ export async function getLogs(type: string, logDirectory: string, projectID: str
 export function getDefaultAppPort(): string {
     return "8080";
 }
+
+/**
+ * @function
+ * @description Get the default ping timeout of a swift project.
+ *
+ * @returns number
+ */
+export function getDefaultPingTimeout(): number {
+    return 30;
+}

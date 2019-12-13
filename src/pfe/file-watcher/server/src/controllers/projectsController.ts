@@ -249,6 +249,12 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         projectInfo.ignoredPaths = selectedProjectHandler.defaultIgnoredPath;
     }
 
+    if (projInfo && projInfo.pingTimeout) {
+        projectInfo.pingTimeout = projInfo.pingTimeout;
+    } else if ( selectedProjectHandler.getDefaultPingTimeout ) {
+        projectInfo.pingTimeout = selectedProjectHandler.getDefaultPingTimeout();
+    }
+
     // Set isHttps to false by default, override if the isHttps settings key is found
     projectInfo.isHttps = false;
 
@@ -320,6 +326,13 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                     // Default to http if we cannot get the isHttps settings
                     logger.logProjectInfo("Defaulting isHttps to false as the project setting isHttps is not a boolean", projectID, projectName);
                     projectInfo.isHttps = false;
+                }
+            }  else if (key == "pingTimeout") {
+                // pingTimeout in project setting file is a string, but is a number in projectInfo
+                const pingTimeout = parseInt(settings.pingTimeout);
+                if (pingTimeout) {
+                    logger.logProjectInfo("Setting pingTimeout from the project settings: " + pingTimeout, projectName);
+                    projectInfo.pingTimeout = pingTimeout;
                 }
             }
         }
@@ -1189,6 +1202,7 @@ export interface IProjectSettings {
     mavenProperties?: string[];
     ignoredPaths?: string[];
     isHttps?: boolean;
+    pingTimeout?: string;
 }
 
 export interface IProjectActionParams {
