@@ -463,7 +463,6 @@ const reconfigRefPathsForDaemon = async function (refPaths: RefPath[], operation
     const projectID = projectInfo.projectID;
 
     // if defined, do some checks, sanitized the input etc
-    // if undefined, it means we are removing the property
     if (refPaths) {
         if (!(refPaths instanceof Array)) {
             const errorMsg = "BAD_REQUEST: refPaths must be an array.";
@@ -501,6 +500,12 @@ const reconfigRefPathsForDaemon = async function (refPaths: RefPath[], operation
                 return;
         }
     }
+    // if undefined and previously it was also undefined, nothing changed
+    else if (!projectInfo.refPaths) {
+        logger.logProjectInfo("The ref path list for file watching is unchanged", projectID);
+        return;
+    }
+    // otherwise the property was removed
 
     const keyValuePair: UpdateProjectInfoPair = {
         key: "refPaths",
