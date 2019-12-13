@@ -98,11 +98,6 @@ export async function readWorkspaceSettings(): Promise<IWorkspaceSettingsSuccess
 }
 
 export async function writeWorkspaceSettings(address: string, namespace: string): Promise<IWorkspaceSettingsSuccess | IWorkspaceSettingsFailure> {
-    // Clean up namespace if user enters address/namespace in the UI
-    if (namespace.startsWith(address.replace(/\/\s*$/, "") + "/")) {
-        namespace = namespace.replace(address.replace(/\/\s*$/, "") + "/", "");
-    }
-
     const newWorkspaceSettings: any = {
         registryAddress: address,
         registryNamespace: namespace
