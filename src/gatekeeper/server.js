@@ -132,6 +132,7 @@ async function main() {
         const environment = {
             auth_url: auth_url,
             client_id: client_id,
+            workspace_id: workspaceID,
             realm: realm,
             codewind_version: codewindVersion,
             image_build_time: imageBuildTime,
