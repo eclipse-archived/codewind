@@ -61,7 +61,7 @@ const projectList: Array<string> = [];
 
 const isApplicationPodUpIntervalMap = new Map();
 
-export const firstTimePingArray = new Array();
+// export const firstTimePingArray = new Array();
 
 export let pingMessage: string;
 
@@ -82,6 +82,7 @@ export interface ProjectEvent {
     isHttps?: boolean;
     appBaseURL?: string;
     compositeAppName?: string;
+    pingTimeout?: string;
 }
 
 export interface ProjectLog {
@@ -351,6 +352,9 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
     }
     if (typeof operation.projectInfo.isHttps == "boolean") {
         projectInfo.isHttps = operation.projectInfo.isHttps;
+    }
+    if (operation.projectInfo.pingTimeout) {
+        projectInfo.pingTimeout = operation.projectInfo.pingTimeout.toString();
     }
 
     const projectMetadata = projectsController.getProjectMetadataById(projectID);
@@ -1038,8 +1042,8 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             path = projectInfo.healthCheck;
         }
         // only update the detailed status on first time ping
-        if (firstTimePingArray.indexOf(projectID) < 0) {
-            firstTimePingArray.push(projectID);
+        const isFirstTimePing = appStateMap.get(projectID).isFirstTimePing;
+        if (isFirstTimePing != false) {
             if (isDefaultPath) {
                 updateDetailedAppStatus(projectID, containerInfo.ip, port, path, isDefaultPath);
             } else {
@@ -1311,6 +1315,9 @@ export async function buildAndRun(operation: Operation, command: string): Promis
     }
     if (typeof operation.projectInfo.isHttps == "boolean") {
         projectEvent.isHttps = operation.projectInfo.isHttps;
+    }
+    if (operation.projectInfo.pingTimeout) {
+        projectEvent.pingTimeout = operation.projectInfo.pingTimeout.toString();
     }
     const buildInfo: BuildRequest = {
         projectLocation: projectLocation,
@@ -2151,6 +2158,6 @@ export async function updateDetailedAppStatus(projectID: string, ip: string, por
     };
 
     if (oldState === AppState.starting) {
-        projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathEvent);
+        projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathEvent, false);
     }
 }

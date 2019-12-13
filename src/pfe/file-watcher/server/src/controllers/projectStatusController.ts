@@ -14,6 +14,7 @@ import * as io from "../utils/socket";
 import * as projectUtil from "../projects/projectUtil";
 import * as logger from "../utils/logger";
 import * as locale from "../utils/locale";
+import * as projectExtensions from "../extensions/projectExtensions";
 import { actionMap } from "../projects/actions";
 import { ContainerStates } from "../projects/constants";
 import { ProjectInfo } from "../projects/Project";
@@ -47,7 +48,7 @@ const buildRequiredMap = new Map();
 
 const pingInterval = 10000;
 const inTransitPingInterval = 2000;
-const pingCountMap = new Map();
+export const pingCountMap = new Map();
 
 // Keep track of project status.  The type parameter is used to determine the type of the status
 // such as application state or build status.
@@ -56,13 +57,14 @@ const pingCountMap = new Map();
  * @class
  * @description The class representing the project states.
  */
-class ProjectState {
+export class ProjectState {
     state: any;
     msg: string;
     lastbuild?: number;
     appImageLastBuild?: string;
     buildImageLastBuild?: string;
     detailedAppStatus?: DetailedAppStatus;
+    isFirstTimePing?: boolean;
 
     /**
      * @constructor
@@ -74,8 +76,9 @@ class ProjectState {
      * @param appImageLastBuild <Optional | String> - The last app image info.
      * @param buildImageLastBuild <Optional | String> - The last build image info.
      * @param detailedAppStatus <Optional | DetailedAppStatus> - The detailed app status to update.
+     * @param isFirstTimePing <Optional | Boolean> - If it's the first time pinging the app
      */
-    constructor(state: any, msg: string, lastbuild?: number, appImageLastBuild?: string, buildImageLastBuild?: string, detailedAppStatus?: DetailedAppStatus) {
+    constructor(state: any, msg: string, lastbuild?: number, appImageLastBuild?: string, buildImageLastBuild?: string, detailedAppStatus?: DetailedAppStatus, isFirstTimePing?: boolean) {
         this.state = state;
         this.msg = msg;
         if (lastbuild)
@@ -86,6 +89,8 @@ class ProjectState {
             this.buildImageLastBuild = buildImageLastBuild;
         if (detailedAppStatus)
             this.detailedAppStatus = detailedAppStatus;
+        if (isFirstTimePing != undefined)
+            this.isFirstTimePing = isFirstTimePing;
     }
 
     /**
@@ -180,10 +185,11 @@ export async function updateStatus(req: IUpdateStatusParams): Promise<IUpdateSta
  * @param appImageLastBuild <Optional | String> - The last app image timestamp.
  * @param buildImageLastBuild <Optional | String> - The last build image timestamp.
  * @param translatedMsg <Optional | String> - The translated new message.
+ * @param isFirstTimePing <Optional | Boolean> - If it's the first time pinging the app
  *
  * @returns Promise<void>
  */
-export async function updateProjectStatus(type: string, projectID: string, status: string, msg: string, appImageLastBuild?: string, buildImageLastBuild?: string, translatedMsg?: string, detailedAppStatus?: DetailedAppStatus): Promise<void> {
+export async function updateProjectStatus(type: string, projectID: string, status: string, msg: string, appImageLastBuild?: string, buildImageLastBuild?: string, translatedMsg?: string, detailedAppStatus?: DetailedAppStatus, isFirstTimePing?: boolean): Promise<void> {
 
     if (type == STATE_TYPES.appState) {
 
@@ -204,11 +210,6 @@ export async function updateProjectStatus(type: string, projectID: string, statu
         // Also protect against changing from unknown state to stopped. For first time project creation, app status should be unknown before it's changed to starting state.
         if ((newState != oldState || newDetailedState != oldDetailedState || newError != oldError) && !(oldState == AppState.stopped && newState == AppState.stopping) && !(oldState == AppState.unknown && newState == AppState.stopped)) {
             logger.logProjectInfo("Application state changed for project: " + projectID + " from: " + oldState + ", to: " + newState + (newDetailedState ? ", with message: " + newDetailedState.message : ""), projectID);
-
-            // Delete the project from the array to show the next ping message
-            if (newState === AppState.starting && newState !== oldState && projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
-                projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
-            }
 
             const data: any = {
                 projectID: projectID,
@@ -231,8 +232,11 @@ export async function updateProjectStatus(type: string, projectID: string, statu
                     notify: false
                 };
             }
-            appStateMap.set(projectID, new ProjectState(newState, newError, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus ));
-
+            if ( (newState === AppState.starting) && (newState === oldState)) {
+                appStateMap.set(projectID, new ProjectState(newState, newError, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus, isFirstTimePing != undefined ? isFirstTimePing : appStateMap.get(projectID).isFirstTimePing ));
+            } else {
+                appStateMap.set(projectID, new ProjectState(newState, newError, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus ));
+            }
 
             io.emitOnListener("projectStatusChanged", data);
         }
@@ -337,9 +341,7 @@ export function deleteProject(projectID: string): void {
     appStateMap.delete(projectID);
     buildStateMap.delete(projectID);
     buildRequiredMap.delete(projectID);
-    if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
-        projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
-    }
+    pingCountMap.delete(projectID);
 }
 
 /**
@@ -470,9 +472,18 @@ function pingInTransitApplications(): void {
                                 const oldMsg = appStateMap.get(projectID).msg;
                                 let newState = oldState;
                                 let newMsg = stateInfo.error;
+
                                 let pingCount = pingCountMap.get(projectID);
-                                // 30 pings = 1 min timeout
-                                const pingCountLimit = 30;
+                                const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+                                let pingCountLimit;
+                                if (projectInfo.pingTimeout) {
+                                    pingCountLimit = projectInfo.pingTimeout;
+                                } else if ( projectHandler.getDefaultPingTimeout ) {
+                                    pingCountLimit = projectHandler.getDefaultPingTimeout();
+                                } else {
+                                    pingCountLimit = 30; // 30 pings = 1 min timeout
+                                }
+
                                 if (newMsg) { newMsg = newMsg.toString(); } // Convert from Error to string
                                 if (stateInfo.hasOwnProperty("isAppUp")) {
                                     if (oldState === AppState.starting && stateInfo.isAppUp) {
@@ -508,7 +519,12 @@ function pingInTransitApplications(): void {
                                         message: newMsg,
                                         notify: false
                                     };
-                                    appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
+                                    // if the app is still in starting start, want to keep the isFirstTimePing value
+                                    if ( (newState === AppState.starting) &&  (oldState === newState)) {
+                                        appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus, appStateMap.get(projectID).isFirstTimePing));
+                                    } else {
+                                        appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
+                                    }
                                 }
                                 // Update the state only if it has changed
                                 // first time reach the timeout, will not emit the same message when timeout exceeds.
@@ -535,7 +551,12 @@ function pingInTransitApplications(): void {
                                         data.detailedAppStatus = detailedAppStatus;
                                     }
                                     io.emitOnListener("projectStatusChanged", data);
-                                    appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
+                                    // if the app is still in starting start, want to keep the isFirstTimePing value
+                                    if ( (newState === AppState.starting) &&  (oldState === newState)) {
+                                        appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus, appStateMap.get(projectID).isFirstTimePing));
+                                    } else {
+                                        appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
+                                    }
 
                                 }
                             }
