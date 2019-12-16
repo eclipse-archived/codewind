@@ -1409,8 +1409,6 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
     const projectName = normalizedProjectLocation.split("/").reverse()[0];
     const logDir = await logHelper.getLogDir(buildInfo.projectID, projectName);
     const dockerBuildLog = path.resolve(buildInfo.projectLocation + "/../.logs/" + logDir, logHelper.buildLogs.dockerBuild + logHelper.logExtension);
-    const projectImagePushRegistry = operation.projectInfo.deploymentRegistry;
-    logger.logProjectInfo("projectInfo.deploymentRegistry: " + projectImagePushRegistry, buildInfo.projectID);
     if (process.env.IN_K8 === "true") {
         // Kubernetes environment
 
@@ -1422,14 +1420,6 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
 
         const imagePushRegistry: string = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, buildInfo.projectID);
-
-        if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
-            logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, buildInfo.projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.wrongImagePushRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.wrongImagePushRegistry");
-            io.emitOnListener(event, projectEvent);
-            return;
-        }
 
         if (!imagePushRegistry.length) {
             logger.logProjectError(projectEventErrorMsgs.missingImagePushRegistry, buildInfo.projectID, projectName);
