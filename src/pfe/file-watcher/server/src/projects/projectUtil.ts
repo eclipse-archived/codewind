@@ -82,7 +82,7 @@ export interface ProjectEvent {
     isHttps?: boolean;
     appBaseURL?: string;
     compositeAppName?: string;
-    pingTimeout?: string;
+    statusPingTimeout?: string;
 }
 
 export interface ProjectLog {
@@ -353,8 +353,8 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
     if (typeof operation.projectInfo.isHttps == "boolean") {
         projectInfo.isHttps = operation.projectInfo.isHttps;
     }
-    if (operation.projectInfo.pingTimeout) {
-        projectInfo.pingTimeout = operation.projectInfo.pingTimeout.toString();
+    if (operation.projectInfo.statusPingTimeout) {
+        projectInfo.statusPingTimeout = operation.projectInfo.statusPingTimeout.toString();
     }
 
     const projectMetadata = projectsController.getProjectMetadataById(projectID);
@@ -1316,8 +1316,8 @@ export async function buildAndRun(operation: Operation, command: string): Promis
     if (typeof operation.projectInfo.isHttps == "boolean") {
         projectEvent.isHttps = operation.projectInfo.isHttps;
     }
-    if (operation.projectInfo.pingTimeout) {
-        projectEvent.pingTimeout = operation.projectInfo.pingTimeout.toString();
+    if (operation.projectInfo.statusPingTimeout) {
+        projectEvent.statusPingTimeout = operation.projectInfo.statusPingTimeout.toString();
     }
     const buildInfo: BuildRequest = {
         projectLocation: projectLocation,
