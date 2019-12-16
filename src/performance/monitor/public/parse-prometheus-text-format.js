@@ -486,6 +486,8 @@
       if (sample.labels && sample.labels[keyName] && sample[valueName]) {
         if (!flattened) {
           flattened = {};
+        }
+        if (!flattened[groupName]) {
           flattened[groupName] = {};
         }
 
