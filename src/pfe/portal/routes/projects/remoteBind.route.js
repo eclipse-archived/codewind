@@ -94,7 +94,6 @@ async function bindStart(req, res) {
 
     if (creationTime) {
       projectDetails.creationTime = creationTime;
-      projectDetails.lastSyncTime = creationTime;
     }
 
     if (projectType) {
@@ -246,7 +245,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         timersyncstart = 0;
         let updatedProject = {
           projectID,
-          lastSyncTime: timeStamp
+          creationTime: timeStamp
         }
         await user.projectList.updateProject(updatedProject);
 
