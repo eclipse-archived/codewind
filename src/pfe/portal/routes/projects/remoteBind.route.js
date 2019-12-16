@@ -275,12 +275,7 @@ function getFilesToDelete(existingFileArray, newFileArray) {
 
 function fileIsProtected(filePath) {
   const protectedPrefixes = [".odo/", "node_modules/"];
-  protectedPrefixes.forEach((prefix) => {
-    if (filePath.startsWith(prefix)){
-      return true;
-    };
-  });
-  return false;
+  return protectedPrefixes.some((prefix) => filePath.startsWith(prefix));
 }
 
 function deleteFilesInArray(directory, arrayOfFiles) {

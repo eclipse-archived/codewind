@@ -27,7 +27,7 @@ const { file: chaiFile, dir: chaiDir } = chaiFiles;
 
 const testDirectory = path.join(__dirname, 'remoteBindRouteTest');
 
-describe.only('remoteBind.route.js', () => {
+describe('remoteBind.route.js', () => {
     suppressLogOutput(RemoteBind);
     describe('getFilesToDelete(existingFileArray, newFileArray)', () => {
         const getFilesToDelete = RemoteBind.__get__('getFilesToDelete');
@@ -35,7 +35,7 @@ describe.only('remoteBind.route.js', () => {
             const existingFileArray = ['package.json', 'package.lock'];
             const newFileArray = ['package.json'];
             const filesToDelete = getFilesToDelete(existingFileArray, newFileArray);
-            filesToDelete.lenlsgth.should.equal(1);
+            filesToDelete.length.should.equal(1);
             filesToDelete.should.deep.equal(['package.lock']);
         });
         it('returns an empty array of files to be deleted as both existing files are also in the new file array', () => {
@@ -49,12 +49,33 @@ describe.only('remoteBind.route.js', () => {
             filesToDelete.length.should.equal(0);
             filesToDelete.should.deep.equal([]);
         });
-        it('returns an empty array as atleast all the new files exist in the existingFileArray', () => {
+        it('returns an empty array as at least all the new files exist in the existingFileArray', () => {
             const existingFileArray = ['package.json'];
             const newFileArray = ['package.json', 'package.lock'];
             const filesToDelete = getFilesToDelete(existingFileArray, newFileArray);
             filesToDelete.length.should.equal(0);
             filesToDelete.should.deep.equal([]);
+        });
+        it('returns an empty array as at .odo should not be deleted', () => {
+            const existingFileArray = ['package.json', '.odo/test'];
+            const newFileArray = ['package.json', 'package.lock'];
+            const filesToDelete = getFilesToDelete(existingFileArray, newFileArray);
+            filesToDelete.length.should.equal(0);
+            filesToDelete.should.deep.equal([]);
+        });
+        it('returns an empty array as at node_modules should not be deleted', () => {
+            const existingFileArray = ['package.json', 'node_modules/test'];
+            const newFileArray = ['package.json', 'package.lock'];
+            const filesToDelete = getFilesToDelete(existingFileArray, newFileArray);
+            filesToDelete.length.should.equal(0);
+            filesToDelete.should.deep.equal([]);
+        });
+        it('returns .odo in the array deleteme/.odo should be deleted as .odo is not top level in this case', () => {
+            const existingFileArray = ['package.json', 'deleteme/.odo'];
+            const newFileArray = ['package.json', 'package.lock'];
+            const filesToDelete = getFilesToDelete(existingFileArray, newFileArray);
+            filesToDelete.length.should.equal(1);
+            filesToDelete.should.deep.equal(['deleteme/.odo']);
         });
     });
     describe('deleteFilesInArray(directory, arrayOfFiles)', () => {
@@ -120,22 +141,22 @@ describe.only('remoteBind.route.js', () => {
         });
     });
     describe('fileIsProtected(filePath)', () => {
-        const fileIsProtected = RemoteBind.__get__('fileIsProtected')
+        const fileIsProtected = RemoteBind.__get__('fileIsProtected');
         it('should return true when file is inside .odo dir', () => {
-            const filePath = ".odo/test";
+            const filePath = '.odo/test';
             const isProtected = fileIsProtected(filePath);
-            isProtected.should.equal(true)
+            isProtected.should.equal(true);
         });
         it('should return true when file is inside .odo dir', () => {
-            const filePath = 'node_modules/test'
-            const isProtected = fileIsProtected(filePath)
-            isProtected.should.equal(true)
-        })
+            const filePath = 'node_modules/test';
+            const isProtected = fileIsProtected(filePath);
+            isProtected.should.equal(true);
+        });
         it('should return false when file is not inside a protected dir', () => {
             const filePath = 'src/test';
             const isProtected = fileIsProtected(filePath);
-            isProtected.should.equal(true);
-        })
+            isProtected.should.equal(false);
+        });
     });
 });
 
