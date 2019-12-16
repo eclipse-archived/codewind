@@ -417,8 +417,8 @@ module.exports = class FileWatcher {
         let pathToMonitor = project.locOnDisk;
         const isWindowsPath = cwUtils.isWindowsAbsolutePath(pathToMonitor);
         if (isWindowsPath) {
-          project.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
-          log.debug(`Converted path to unix style ` + project.pathToMonitor);
+          pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
+          log.debug(`Converted path to unix style ` + pathToMonitor);
         }
         const projectWatchStateId = crypto.randomBytes(16).toString("hex");
         const data = {
@@ -453,8 +453,8 @@ module.exports = class FileWatcher {
       let pathToMonitor = project.locOnDisk;
       const isWindowsPath = cwUtils.isWindowsAbsolutePath(pathToMonitor);
       if (isWindowsPath) {
-        project.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
-        log.debug(`Converted path to unix style ` + project.pathToMonitor);
+        pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
+        log.debug(`Converted path to unix style ` + pathToMonitor);
       }
       let time = Date.now()
       if (project.creationTime) {
