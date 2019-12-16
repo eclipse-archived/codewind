@@ -92,7 +92,6 @@ export interface ProjectLog {
 const projectEventErrorMsgs = {
     missingImagePushRegistry: "The project will not build due to missing Image Push Registry. Run the Set Deployment Registry command to set a new Image Push Registry to build projects.",
     invalidImagePushRegistry: "Codewind cannot build projects with the current Image Push Registry. Please make sure it is a valid Image Push Registry with the appropriate permissions.",
-    wrongImagePushRegistry: "The project will not build with the new Image Push Registry. Please remove and re-add the project to deploy to the new Image Push Registry."
 };
 
 /**
