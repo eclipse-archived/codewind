@@ -325,8 +325,15 @@
     //       };
     //       break;
     //   }
+    const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+    const normalisationFactor = 0.6;
     function processCPUData(data, totalProcessCPULoad, totalSystemCPULoad, numCPULoadSamples) {
+      ['system', 'process'].forEach(category => {
+        const dataValue = parseFloat(data[category], 10);
+        data[category] = (dataValue < 0) ? 0 : dataValue * normalisationFactor;
+      });
       updateCPUData(JSON.stringify(data));
+
       totalProcessCPULoad += data.process;
       totalSystemCPULoad += data.system;
       numCPULoadSamples++;
