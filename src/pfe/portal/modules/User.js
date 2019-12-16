@@ -621,14 +621,16 @@ module.exports = class User {
       throw err;
     }
 
-    if (contents && contents.registryAddress && contents.registryAddress.length > 0 && contents.registryNamespace && contents.registryNamespace.length) {
-      log.debug(`Workspace settings registryAddress` + contents.registryAddress);
-      log.debug(`Workspace settings registryNamespace` + contents.registryNamespace);
+    if (contents && contents.registryAddress && contents.registryAddress.length > 0 && contents.registryNamespace != null) {
+      log.debug(`Workspace settings registryAddress: ` + contents.registryAddress);
+      log.debug(`Workspace settings registryNamespace: ` + contents.registryNamespace);
       isImagePushRegistrySet = true;
 
       // trigger the FW workspaceSettings.readWorkspaceSettings() function to load up the cache since it's valid
       log.info(`Workspace settings file present, reading the settings file`);
       await this.readWorkspaceSettings();
+    } else {
+      log.info("Registry address or registry namespace not found in the workspace settings file");
     }
     log.info(`Workspace settings image push registry status: ${isImagePushRegistrySet}`);
 
