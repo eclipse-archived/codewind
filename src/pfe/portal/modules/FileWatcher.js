@@ -415,8 +415,10 @@ module.exports = class FileWatcher {
         // Send all file watcher clients project related data when a new project is added or ignored paths has changed
         const ignoredPaths = fwProject.ignoredPaths;
         let pathToMonitor = project.locOnDisk;
-        if (process.env.HOST_OS === "windows") {
-          pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
+        const isWindowsPath = cwUtils.isWindowsAbsolutePath(pathToMonitor);
+        if (isWindowsPath) {
+          project.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
+          log.debug(`Converted path to unix style ` + project.pathToMonitor);
         }
         const projectWatchStateId = crypto.randomBytes(16).toString("hex");
         const data = {
@@ -449,10 +451,11 @@ module.exports = class FileWatcher {
       // Send all file watcher clients project related data when a new project is added or ignored paths has changed
       const ignoredPaths = fwProject.ignoredPaths;
       let pathToMonitor = project.locOnDisk;
-      if (process.env.HOST_OS === "windows") {
-        pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
+      const isWindowsPath = cwUtils.isWindowsAbsolutePath(pathToMonitor);
+      if (isWindowsPath) {
+        project.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
+        log.debug(`Converted path to unix style ` + project.pathToMonitor);
       }
-
       let time = Date.now()
       if (project.creationTime) {
         time = project.creationTime
