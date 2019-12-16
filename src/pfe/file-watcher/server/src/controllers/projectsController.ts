@@ -249,10 +249,10 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         projectInfo.ignoredPaths = selectedProjectHandler.defaultIgnoredPath;
     }
 
-    if (projInfo && projInfo.pingTimeout) {
-        projectInfo.pingTimeout = projInfo.pingTimeout;
+    if (projInfo && projInfo.statusPingTimeout) {
+        projectInfo.statusPingTimeout = projInfo.statusPingTimeout;
     } else if ( selectedProjectHandler.getDefaultPingTimeout ) {
-        projectInfo.pingTimeout = selectedProjectHandler.getDefaultPingTimeout();
+        projectInfo.statusPingTimeout = selectedProjectHandler.getDefaultPingTimeout();
     }
 
     // Set isHttps to false by default, override if the isHttps settings key is found
@@ -327,12 +327,12 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                     logger.logProjectInfo("Defaulting isHttps to false as the project setting isHttps is not a boolean", projectID, projectName);
                     projectInfo.isHttps = false;
                 }
-            }  else if (key == "pingTimeout") {
-                // pingTimeout in project setting file is a string, but is a number in projectInfo
-                const pingTimeout = parseInt(settings.pingTimeout);
-                if (pingTimeout) {
-                    logger.logProjectInfo("Setting pingTimeout from the project settings: " + pingTimeout, projectName);
-                    projectInfo.pingTimeout = pingTimeout;
+            }  else if (key == "statusPingTimeout") {
+                // statusPingTimeout in project setting file is a string, but is a number in projectInfo
+                const statusPingTimeout = parseInt(settings.statusPingTimeout);
+                if (statusPingTimeout) {
+                    logger.logProjectInfo("Setting statusPingTimeout from the project settings: " + statusPingTimeout, projectName);
+                    projectInfo.statusPingTimeout = statusPingTimeout;
                 }
             }
         }
@@ -1202,7 +1202,7 @@ export interface IProjectSettings {
     mavenProperties?: string[];
     ignoredPaths?: string[];
     isHttps?: boolean;
-    pingTimeout?: string;
+    statusPingTimeout?: string;
 }
 
 export interface IProjectActionParams {

@@ -476,8 +476,8 @@ function pingInTransitApplications(): void {
                                 let pingCount = pingCountMap.get(projectID);
                                 const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
                                 let pingCountLimit;
-                                if (projectInfo.pingTimeout) {
-                                    pingCountLimit = projectInfo.pingTimeout;
+                                if (projectInfo.statusPingTimeout) {
+                                    pingCountLimit = projectInfo.statusPingTimeout;
                                 } else if ( projectHandler.getDefaultPingTimeout ) {
                                     pingCountLimit = projectHandler.getDefaultPingTimeout();
                                 } else {

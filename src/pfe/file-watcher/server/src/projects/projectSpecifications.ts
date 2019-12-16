@@ -792,6 +792,64 @@ const changeMavenProperties = async function (mavenProperties: any, operation: O
 
 /**
  * @function
+ * @description Reconfig the statusPingTimeout for a project.
+ *
+ * @param statusPingTimeout <Required | string> - Required value for reconfiguration of statusPingTimeout.
+ * @param operation <Required | Operation> - Operation object for the project.
+ *
+ * @returns Promise<any>
+ */
+const changeStatusPingTimeout = async function (statusPingTimeout: string, operation: Operation): Promise<any> {
+
+    const projectInfo: ProjectInfo = operation.projectInfo;
+    const projectID = projectInfo.projectID;
+    const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+
+    // make sure the value we saved in projectinfo is an integer
+    let pingTimeoutInt: number = parseInt(statusPingTimeout);
+
+    if (!pingTimeoutInt) {
+        // Set the debug port to the default debug port if available else undefined
+        if (projectHandler.getDefaultPingTimeout()) {
+            pingTimeoutInt = projectHandler.getDefaultPingTimeout();
+        } else {
+            pingTimeoutInt = 30;
+        }
+        logger.logProjectInfo("The pingTimeout is empty, setting to the default statusPingTimeout: " + pingTimeoutInt, projectID);
+    }
+
+    if (projectInfo.pingTimeoutInt !== pingTimeoutInt) {
+        const keyValuePair: UpdateProjectInfoPair = {
+                key: "statusPingTimeout",
+                value: pingTimeoutInt,
+                saveIntoJsonFile: true
+        };
+        operation.projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
+
+        resetisFirstTimePing(projectID);
+        projectStatusController.pingCountMap.delete(projectID);
+
+        const data: ProjectSettingsEvent = {
+            operationId: operation.operationId,
+            projectID: projectID,
+            statusPingTimeout: statusPingTimeout,
+            status: "success"
+        };
+        io.emitOnListener("projectSettingsChanged", data);
+
+    } else {
+        logger.logProjectInfo("The statusPingTimeout is already set to: " + pingTimeoutInt, projectID);
+    }
+
+};
+
+const resetisFirstTimePing = function (projectID: string): any {
+    const oldProjectState: ProjectState = appStateMap.get(projectID);
+    appStateMap.set(projectID, new ProjectState(oldProjectState.state, oldProjectState.msg, oldProjectState.lastbuild, oldProjectState.appImageLastBuild, oldProjectState.buildImageLastBuild, oldProjectState.detailedAppStatus, oldProjectState.isFirstTimePing));
+};
+
+/**
+ * @function
  * @description Project specification handler.
  *
  * @param projectID <Required | string> - Project ID of the project that user wants to configure.
@@ -814,6 +872,9 @@ export async function projectSpecificationHandler(projectID: string, settings: a
 
     // Create operation
     const operation = new Operation("", projectInfo);
+    specificationSettingMap.forEach( item => {
+        console.log("TEST!!! specificationSettingMap has: " + item.name);
+    });
 
     for (const key in settings) {
         if (!specificationSettingMap.has(key)) {
@@ -848,57 +909,6 @@ export async function projectSpecificationHandler(projectID: string, settings: a
     return { "operationId": operation.operationId };
 }
 
-/**
- * @function
- * @description Reconfig the pingTimeout for a project.
- *
- * @param pingTimeout <Required | string> - Required value for reconfiguration of pingTimeout.
- * @param operation <Required | Operation> - Operation object for the project.
- *
- * @returns Promise<any>
- */
-const changePingTimeout = async function (pingTimeout: string, operation: Operation): Promise<any> {
-
-    const projectInfo: ProjectInfo = operation.projectInfo;
-    const projectID = projectInfo.projectID;
-    const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
-
-    // make sure the value we saved in projectinfo is an integer
-    let pingTimeoutInt: number = parseInt(pingTimeout);
-
-    if (!pingTimeoutInt) {
-        // Set the debug port to the default debug port if available else undefined
-        if (projectHandler.getDefaultPingTimeout()) {
-            pingTimeoutInt = projectHandler.getDefaultPingTimeout();
-        } else {
-            pingTimeoutInt = 30;
-        }
-        logger.logProjectInfo("The pingTimeout is empty, setting to the default pingTimeout: " + pingTimeoutInt, projectID);
-    }
-
-    if (projectInfo.pingTimeoutInt !== pingTimeoutInt) {
-        const keyValuePair: UpdateProjectInfoPair = {
-                key: "pingTimeout",
-                value: pingTimeoutInt,
-                saveIntoJsonFile: true
-        };
-        operation.projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
-
-        resetisFirstTimePing(projectID);
-        projectStatusController.pingCountMap.delete(projectID);
-
-    } else {
-        logger.logProjectInfo("The pingTimeout is already set to: " + pingTimeoutInt, projectID);
-    }
-
-};
-
-const resetisFirstTimePing = function (projectID: string): any {
-    const oldProjectState: ProjectState = appStateMap.get(projectID);
-    appStateMap.set(projectID, new ProjectState(oldProjectState.state, oldProjectState.msg, oldProjectState.lastbuild, oldProjectState.appImageLastBuild, oldProjectState.buildImageLastBuild, oldProjectState.detailedAppStatus, oldProjectState.isFirstTimePing));
-};
-
-
 
 specificationSettingMap.set("internalDebugPort", changeInternalDebugPort);
 specificationSettingMap.set("internalPort", changeInternalPort);
@@ -908,4 +918,4 @@ specificationSettingMap.set("mavenProfiles", changeMavenProfiles);
 specificationSettingMap.set("mavenProperties", changeMavenProperties);
 specificationSettingMap.set("ignoredPaths", reconfigIgnoredFilesForDaemon);
 specificationSettingMap.set("isHttps", reconfigWWWProtocol);
-specificationSettingMap.set("pingTimeout", changePingTimeout);
+specificationSettingMap.set("statusPingTimeout", changeStatusPingTimeout);
