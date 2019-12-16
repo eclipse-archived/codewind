@@ -146,6 +146,18 @@ module.exports.forceRemove = async function forceRemove(path) {
   }
 }
 
+/** C:\helloThere -> /c/helloThere */
+function convertFromWindowsDriveLetter(windowsPath) {
+  if (!isWindowsAbsolutePath(windowsPath)) {
+    return windowsPath;
+  }
+  let linuxPath = convertBackSlashesToForwardSlashes(windowsPath);
+  const char0 = linuxPath.charAt(0);
+  linuxPath = linuxPath.substring(2);
+  linuxPath = "/" + char0.toLowerCase() + linuxPath;
+  return linuxPath;
+}
+
 function convertBackSlashesToForwardSlashes(str) {
   return str.split("\\").join("/");
 }
@@ -201,4 +213,7 @@ module.exports.getProjectSourceRoot = function getProjectSourceRoot(project) {
 }
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+
+module.exports.convertFromWindowsDriveLetter = convertFromWindowsDriveLetter;
+module.exports.isWindowsAbsolutePath = isWindowsAbsolutePath;
 module.exports.deepClone = deepClone;
