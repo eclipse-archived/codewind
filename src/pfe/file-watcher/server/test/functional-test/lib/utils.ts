@@ -25,6 +25,7 @@ import * as project_configs from "../configs/project.config";
 import * as eventConfigs from "../configs/event.config";
 import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
+import dockerode from "dockerode";
 
 const chalk = require("chalk"); // tslint:disable-line:no-require-imports
 
@@ -50,6 +51,8 @@ const TEST_LOG_COLORS: any = {
     [TEST_LOG_CONTEXTS[3]]: "magentaBright",
     [TEST_LOG_CONTEXTS[4]]: "cyanBright"
 };
+
+const docker = new dockerode();
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
     const pingUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.projects;
@@ -239,3 +242,34 @@ export function logMsg(suite: string, context: string, msg: string): void {
 function writeLog(color: any, suite: string, context: string, msg: string): void {
     console.log(chalk[color](`[${new Date().toUTCString()}] [Suite: ${suite}] [Context: ${context}] ${msg}`));
 }
+
+export async function getAllDockerContainerInfo(containerName?: string): Promise<Array<any>> {
+    const containers = await docker.listContainers();
+    const containerInfos = [];
+    if (containerName) {
+        for (const containerInfo of containers) {
+            for (const cName of containerInfo.Names) {
+                if (cName.includes(containerName)) {
+                    containerInfos.push(containerInfo);
+                }
+            }
+        }
+        return _.uniq(containerInfos);
+    } else {
+        return containers;
+    }
+}
+
+export async function getDockerContainerNames(): Promise<Array<string>> {
+    const containers = await getAllDockerContainerInfo();
+    const containerNames = [];
+    for (const containerInfo of containers) {
+        for (const containerName of containerInfo.Names) {
+            containerNames.push(containerName);
+        }
+    }
+    return containerNames;
+}
+
+
+
