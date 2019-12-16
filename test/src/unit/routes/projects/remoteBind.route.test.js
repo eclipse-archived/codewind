@@ -27,7 +27,7 @@ const { file: chaiFile, dir: chaiDir } = chaiFiles;
 
 const testDirectory = path.join(__dirname, 'remoteBindRouteTest');
 
-describe('remoteBind.route.js', () => {
+describe.only('remoteBind.route.js', () => {
     suppressLogOutput(RemoteBind);
     describe('getFilesToDelete(existingFileArray, newFileArray)', () => {
         const getFilesToDelete = RemoteBind.__get__('getFilesToDelete');
@@ -35,7 +35,7 @@ describe('remoteBind.route.js', () => {
             const existingFileArray = ['package.json', 'package.lock'];
             const newFileArray = ['package.json'];
             const filesToDelete = getFilesToDelete(existingFileArray, newFileArray);
-            filesToDelete.length.should.equal(1);
+            filesToDelete.lenlsgth.should.equal(1);
             filesToDelete.should.deep.equal(['package.lock']);
         });
         it('returns an empty array of files to be deleted as both existing files are also in the new file array', () => {
@@ -118,6 +118,24 @@ describe('remoteBind.route.js', () => {
             filesInDirectory.length.should.equal(1);
             filesInDirectory.should.have.members(['file']);
         });
+    });
+    describe('fileIsProtected(filePath)', () => {
+        const fileIsProtected = RemoteBind.__get__('fileIsProtected')
+        it('should return true when file is inside .odo dir', () => {
+            const filePath = ".odo/test";
+            const isProtected = fileIsProtected(filePath);
+            isProtected.should.equal(true)
+        });
+        it('should return true when file is inside .odo dir', () => {
+            const filePath = 'node_modules/test'
+            const isProtected = fileIsProtected(filePath)
+            isProtected.should.equal(true)
+        })
+        it('should return false when file is not inside a protected dir', () => {
+            const filePath = 'src/test';
+            const isProtected = fileIsProtected(filePath);
+            isProtected.should.equal(true);
+        })
     });
 });
 

@@ -263,7 +263,24 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
 function getFilesToDelete(existingFileArray, newFileArray) {
   const filesToDeleteSet = new Set(existingFileArray);
   newFileArray.forEach((f) => filesToDeleteSet.delete(f));
+  // if file is in a protected dir, do not delete it
+  filesToDeleteSet.forEach((f) => {
+    if (fileIsProtected(f)) {
+      filesToDeleteSet.delete(f)
+    }
+  })
+
   return Array.from(filesToDeleteSet);
+}
+
+function fileIsProtected(filePath) {
+  const protectedPrefixes = [".odo/", "node_modules/"];
+  protectedPrefixes.forEach((prefix) => {
+    if (filePath.startsWith(prefix)){
+      return true;
+    };
+  });
+  return false;
 }
 
 function deleteFilesInArray(directory, arrayOfFiles) {
