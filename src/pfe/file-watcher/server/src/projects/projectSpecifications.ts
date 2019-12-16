@@ -421,7 +421,7 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
         ignoredPaths = projectHandler.defaultIgnoredPath;
     }
 
-    if (projectInfo.ignoredPaths.length == ignoredPaths.length
+    if (projectInfo.ignoredPaths && projectInfo.ignoredPaths.length == ignoredPaths.length
         && projectInfo.ignoredPaths.every((element, index) => {
             return element === ignoredPaths[index];
         })
