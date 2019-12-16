@@ -112,12 +112,10 @@ export async function containerCreate(operation: Operation, script: string, comm
     const projectID = operation.projectInfo.projectID;
     const projectName = projectLocation.split("/").pop();
     const projectType = operation.projectInfo.projectType;
-    const projectImagePushRegistry = operation.projectInfo.deploymentRegistry;
     if (projectList.indexOf(projectID) === -1)
         projectList.push(projectID);
 
     logger.logProjectInfo("Creating container for " + operation.projectInfo.projectType + " project " + projectLocation, projectID, projectName);
-    logger.logProjectInfo("projectInfo.deploymentRegistry: " + projectImagePushRegistry, projectID);
     operation.containerName = await getContainerName(operation.projectInfo);
     // Refer to the comment in getLogName function for this usage
     const logName = getLogName(operation.projectInfo.projectID, projectLocation);
@@ -137,14 +135,6 @@ export async function containerCreate(operation: Operation, script: string, comm
     if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
         imagePushRegistry = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
-
-        if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
-            logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.wrongImagePushRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.wrongImagePushRegistry");
-            io.emitOnListener(event, projectEvent);
-            return;
-        }
 
         if (!imagePushRegistry.length) {
             logger.logProjectError(projectEventErrorMsgs.missingImagePushRegistry, projectID, projectName);
@@ -224,9 +214,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
     const projectID = operation.projectInfo.projectID;
     const projectName = projectLocation.split("/").pop();
     const projectType = operation.projectInfo.projectType;
-    const projectImagePushRegistry = operation.projectInfo.deploymentRegistry;
     logger.logProjectInfo("Updating container for " + operation.projectInfo.projectType + " project " + projectLocation, projectID, projectName);
-    logger.logProjectInfo("projectInfo.deploymentRegistry " + projectImagePushRegistry, projectID);
     operation.containerName = await getContainerName(operation.projectInfo);
     // Refer to the comment in getLogName function for this usage
     const logName = getLogName(operation.projectInfo.projectID, projectLocation);
@@ -248,14 +236,6 @@ export async function containerUpdate(operation: Operation, script: string, comm
     if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
         imagePushRegistry = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
-
-        if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
-            logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.wrongImagePushRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.wrongImagePushRegistry");
-            io.emitOnListener(event, projectEvent);
-            return;
-        }
 
         if (!imagePushRegistry.length) {
             logger.logProjectError(projectEventErrorMsgs.missingImagePushRegistry, projectID, projectName);
