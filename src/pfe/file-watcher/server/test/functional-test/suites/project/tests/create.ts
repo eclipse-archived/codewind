@@ -83,6 +83,17 @@ export default class CreateTest {
 
     runCreateWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         it("create project", async () => {
+            let containerInfo, containerName, imageName;
+            if (!process.env.IN_K8) {
+                containerInfo = await utils.getAllDockerContainerInfo(projData.projectID);
+                containerName = await utils.getDockerContainerNames();
+                imageName = await utils.getDockerImageNames();
+
+                expect(!containerInfo);
+                expect(!imageName.includes(projData.projectID));
+                expect(!containerName.includes(projData.projectID));
+            }
+
             let dataFile, fileContent, chosenTimestamp, startTime;
             if (process.env.TURBINE_PERFORMANCE_TEST) {
                 dataFile = path.resolve(__dirname, "..", "..", "..", "..", "performance-test", "data", process.env.TEST_TYPE, process.env.TURBINE_PERFORMANCE_TEST, "performance-data.json");
@@ -102,6 +113,18 @@ export default class CreateTest {
 
             await waitForCreationEvent(projData.projectType, projectTemplate);
             await waitForProjectStartedEvent();
+
+            if (!process.env.IN_K8) {
+                containerInfo = await utils.getAllDockerContainerInfo(projData.projectID);
+                containerName = await utils.getDockerContainerNames();
+                imageName = await utils.getDockerImageNames();
+
+                expect(containerInfo);
+                expect(containerInfo[0].Image.includes(projData.projectID));
+
+                expect(imageName.includes(projData.projectID));
+                expect(containerName.includes(projData.projectID));
+            }
 
             if (process.env.TURBINE_PERFORMANCE_TEST) {
                 const endTime = Date.now();

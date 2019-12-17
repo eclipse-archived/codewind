@@ -73,7 +73,7 @@ export default class DeleteTest {
 
     private runDeleteWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         it("delete project", async () => {
-            let containerName, containerInfo, imageName;
+            let containerInfo, containerName, imageName;
             if (!process.env.IN_K8) {
                 containerName = await utils.getDockerContainerNames();
                 containerInfo = await utils.getAllDockerContainerInfo(projData.projectID);
@@ -115,6 +115,8 @@ export default class DeleteTest {
                     containerInfo = await utils.getAllDockerContainerInfo(projData.projectID);
                     expect(!containerName.includes(projData.projectID));
                     expect(!containerInfo);
+                    expect(!imageName.includes(projData.projectID));
+                    expect(!containerName.includes(projData.projectID));
                 }
             } else {
                 fail(`delete project test failed to listen for ${targetEvent}`);
