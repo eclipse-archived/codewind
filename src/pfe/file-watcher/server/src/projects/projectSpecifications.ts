@@ -825,7 +825,10 @@ const changeStatusPingTimeout = async function (statusPingTimeout: string, opera
         };
         operation.projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
 
-        resetisFirstTimePing(projectID);
+        const oldProjectState: ProjectState = appStateMap.get(projectID);
+        if (oldProjectState) {
+            appStateMap.set(projectID, new ProjectState(oldProjectState.state, oldProjectState.msg, oldProjectState.lastbuild, oldProjectState.appImageLastBuild, oldProjectState.buildImageLastBuild, oldProjectState.detailedAppStatus));
+        }
         projectStatusController.pingCountMap.delete(projectID);
 
         const data: ProjectSettingsEvent = {
@@ -840,13 +843,6 @@ const changeStatusPingTimeout = async function (statusPingTimeout: string, opera
         logger.logProjectInfo("The statusPingTimeout is already set to: " + pingTimeoutInt, projectID);
     }
 
-};
-
-const resetisFirstTimePing = function (projectID: string): any {
-    const oldProjectState: ProjectState = appStateMap.get(projectID);
-    if (oldProjectState) {
-        appStateMap.set(projectID, new ProjectState(oldProjectState.state, oldProjectState.msg, oldProjectState.lastbuild, oldProjectState.appImageLastBuild, oldProjectState.buildImageLastBuild, oldProjectState.detailedAppStatus, oldProjectState.isFirstTimePing));
-    }
 };
 
 /**
