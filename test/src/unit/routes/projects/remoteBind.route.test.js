@@ -113,9 +113,29 @@ describe('remoteBind.route.js', () => {
             const topLevelDirectories = getTopLevelDirectories(directoryArray);
             topLevelDirectories.should.deep.equal(['nondir/']);
         });
+        it('returns both given directories where one is a prefix other the other', () => {
+            const directoryArray = ['some', 'someother'];
+            const topLevelDirectories = getTopLevelDirectories(directoryArray);
+            topLevelDirectories.should.deep.equal(directoryArray);
+        });
+        it('returns both given directories where one is a prefix other the other (reverse)', () => {
+            const directoryArray = ['someother', 'some'];
+            const topLevelDirectories = getTopLevelDirectories(directoryArray);
+            topLevelDirectories.should.deep.equal(directoryArray);
+        });
+        it('returns one directory when one has a trailing slash and the other doesn\'t', () => {
+            const directoryArray = ['some/', 'some'];
+            const topLevelDirectories = getTopLevelDirectories(directoryArray);
+            topLevelDirectories.should.deep.equal(['some/']);
+        });
+        it('returns one directory when one has a trailing slash and the other doesn\'t (reverse)', () => {
+            const directoryArray = ['some', 'some/'];
+            const topLevelDirectories = getTopLevelDirectories(directoryArray);
+            topLevelDirectories.should.deep.equal(['some']);
+        });
     });
-    describe('deleteFilesInArray(directory, arrayOfFiles)', () => {
-        const deleteFilesInArray = RemoteBind.__get__('deleteFilesInArray');
+    describe('deletePathsInArray(directory, arrayOfFiles)', () => {
+        const deletePathsInArray = RemoteBind.__get__('deletePathsInArray');
         const testFileArray = ['package.json', 'server.js', 'dir/file', 'dir/anotherfile', 'anotherdir/file'];
         beforeEach(async() => {
             await createFilesFromArray(testDirectory, testFileArray);
@@ -125,19 +145,26 @@ describe('remoteBind.route.js', () => {
         });
         it('should delete no files on disk as an empty array is given', async() => {
             assertFilesExist(testDirectory, testFileArray);
-            await deleteFilesInArray(testDirectory, []);
+            await deletePathsInArray(testDirectory, []);
             assertFilesExist(testDirectory, testFileArray);
         });
         it('should delete all files on disk as the whole testFileArray is given but leave the directory', async() => {
             assertFilesExist(testDirectory, testFileArray);
-            await deleteFilesInArray(testDirectory, testFileArray);
+            await deletePathsInArray(testDirectory, testFileArray);
             assertFilesDoNotExist(testDirectory, testFileArray);
         });
         it('should delete the files in the testFileArray but leave the directories in place', async() => {
             assertFilesExist(testDirectory, testFileArray);
-            await deleteFilesInArray(testDirectory, testFileArray);
+            await deletePathsInArray(testDirectory, testFileArray);
             assertFilesDoNotExist(testDirectory, testFileArray);
             chaiDir(testDirectory).should.not.be.empty;
+        });
+        it('should delete the directories in an array', async() => {
+            assertFilesExist(testDirectory, testFileArray);
+            await deletePathsInArray(testDirectory, ['dir', 'anotherdir']);
+            fs.pathExistsSync(path.join(testDirectory, 'dir')).should.be.false;
+            fs.pathExistsSync(path.join(testDirectory, 'anotherdir')).should.be.false;
+            fs.pathExistsSync(path.join(testDirectory, 'package.json')).should.be.true;
         });
     });
     describe('recusivelyListDirectories(absolutePath, relativePath)', () => {

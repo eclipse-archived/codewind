@@ -220,7 +220,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
       } else {
         const pathToProj = project.projectPath();
 
-        // // Delete by directory
+        // Delete by directory
         const currentDirectoryList = await recusivelyListDirectories(pathToProj);
         const directoriesToDelete = await getPathsToDelete(currentDirectoryList, keepDirList);
         if (directoriesToDelete.length > 0) {
@@ -228,7 +228,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
           const topLevelDirectories = getTopLevelDirectories(directoriesToDelete);
           log.info(`Removing locally deleted directories from project: ${project.name}, ID: ${project.projectID} - ` +
           `${topLevelDirectories.join(', ')}`);
-          await deleteFilesInArray(pathToProj, topLevelDirectories);
+          await deletePathsInArray(pathToProj, topLevelDirectories);
         }
 
         // Delete by file
@@ -238,7 +238,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
           log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
           `${filesToDelete.join(', ')}`);
           // remove the files from pfe container
-          await deleteFilesInArray(pathToProj, filesToDelete);
+          await deletePathsInArray(pathToProj, filesToDelete);
         }
 
         res.sendStatus(200);
@@ -294,17 +294,23 @@ function fileIsProtected(filePath) {
 function getTopLevelDirectories(directoryArray) {
   let topLevelDirArray = [];
   directoryArray.forEach(dir => {
-    const existingTopLevelDirectories = topLevelDirArray.filter(rootDirectory => dir.startsWith(rootDirectory));
+    const existingTopLevelDirectories = topLevelDirArray.filter(rootDirectory => compareDirs(dir, rootDirectory));
     if (existingTopLevelDirectories.length === 0) {
       // if there are subdirectories of "dir" already in the topLevelDirArray remove them
-      topLevelDirArray = topLevelDirArray.filter(finalDir => !finalDir.startsWith(dir));
+      topLevelDirArray = topLevelDirArray.filter(finalDir => !compareDirs(finalDir, dir));
       topLevelDirArray.push(dir);
     }
   });
   return topLevelDirArray;
 }
 
-function deleteFilesInArray(directory, arrayOfFiles) {
+function compareDirs(string, prefix) {
+  string = path.join('/', string, '/');
+  prefix = path.join('/', prefix, '/');
+  return string.startsWith(prefix);
+}
+
+function deletePathsInArray(directory, arrayOfFiles) {
   const promiseArray = arrayOfFiles.map(filePath => {
     return cwUtils.forceRemove(path.join(directory, filePath));
   });
