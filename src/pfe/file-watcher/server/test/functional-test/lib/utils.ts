@@ -271,5 +271,15 @@ export async function getDockerContainerNames(): Promise<Array<string>> {
     return containerNames;
 }
 
-
-
+export async function getDockerImageNames(): Promise<Array<string>> {
+    const images = await docker.listImages();
+    const imageNames = [];
+    for (const imageInfo of images) {
+        if (imageInfo.RepoTags) {
+            for (const imageName of imageInfo.RepoTags) {
+                imageNames.push(imageName);
+            }
+        }
+    }
+    return imageNames;
+}
