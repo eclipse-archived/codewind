@@ -804,7 +804,6 @@ const changeStatusPingTimeout = async function (statusPingTimeout: string, opera
     const projectInfo: ProjectInfo = operation.projectInfo;
     const projectID = projectInfo.projectID;
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
-
     // make sure the value we saved in projectinfo is an integer
     let pingTimeoutInt: number = parseInt(statusPingTimeout);
 
@@ -818,7 +817,7 @@ const changeStatusPingTimeout = async function (statusPingTimeout: string, opera
         logger.logProjectInfo("The pingTimeout is empty, setting to the default statusPingTimeout: " + pingTimeoutInt, projectID);
     }
 
-    if (projectInfo.pingTimeoutInt !== pingTimeoutInt) {
+    if (projectInfo.statusPingTimeout !== pingTimeoutInt) {
         const keyValuePair: UpdateProjectInfoPair = {
                 key: "statusPingTimeout",
                 value: pingTimeoutInt,
@@ -845,7 +844,9 @@ const changeStatusPingTimeout = async function (statusPingTimeout: string, opera
 
 const resetisFirstTimePing = function (projectID: string): any {
     const oldProjectState: ProjectState = appStateMap.get(projectID);
-    appStateMap.set(projectID, new ProjectState(oldProjectState.state, oldProjectState.msg, oldProjectState.lastbuild, oldProjectState.appImageLastBuild, oldProjectState.buildImageLastBuild, oldProjectState.detailedAppStatus, oldProjectState.isFirstTimePing));
+    if (oldProjectState) {
+        appStateMap.set(projectID, new ProjectState(oldProjectState.state, oldProjectState.msg, oldProjectState.lastbuild, oldProjectState.appImageLastBuild, oldProjectState.buildImageLastBuild, oldProjectState.detailedAppStatus, oldProjectState.isFirstTimePing));
+    }
 };
 
 /**
@@ -872,9 +873,6 @@ export async function projectSpecificationHandler(projectID: string, settings: a
 
     // Create operation
     const operation = new Operation("", projectInfo);
-    specificationSettingMap.forEach( item => {
-        console.log("TEST!!! specificationSettingMap has: " + item.name);
-    });
 
     for (const key in settings) {
         if (!specificationSettingMap.has(key)) {
