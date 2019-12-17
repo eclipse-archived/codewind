@@ -61,8 +61,6 @@ const projectList: Array<string> = [];
 
 const isApplicationPodUpIntervalMap = new Map();
 
-// export const firstTimePingArray = new Array();
-
 export let pingMessage: string;
 
 export interface ProjectEvent {
