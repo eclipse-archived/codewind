@@ -203,6 +203,7 @@ async function uploadFile(req, res) {
 router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   const projectID = req.sanitizeParams('id');
   const keepFileList = req.sanitizeBody('fileList');
+  const keepDirList = req.sanitizeBody('directoryList');
   const modifiedList = req.sanitizeBody('modifiedList') || [];
   const timeStamp = req.sanitizeBody('timeStamp');
   const IFileChangeEvent = [];
@@ -218,15 +219,28 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         res.status(404).send('No files have been synced');
       } else {
         const pathToProj = project.projectPath();
-        const currentFileList = await listFilesInDirectory(pathToProj);
-        const filesToDelete = await getFilesToDelete(currentFileList, keepFileList);
 
-        log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
-          `${filesToDelete.join(', ')}`);
+        // // Delete by directory
+        const currentDirectoryList = await recusivelyListDirectories(pathToProj);
+        const directoriesToDelete = await getPathsToDelete(currentDirectoryList, keepDirList);
+        if (directoriesToDelete.length > 0) {
+          // Get the highest level directory
+          const topLevelDirectories = getTopLevelDirectories(directoriesToDelete);
+          log.info(`Removing locally deleted directories from project: ${project.name}, ID: ${project.projectID} - ` +
+          `${topLevelDirectories.join(', ')}`);
+          await deleteFilesInArray(pathToProj, topLevelDirectories);
+        }
+
+        // Delete by file
+        const currentFileList = await listFilesInDirectory(pathToProj);
+        const filesToDelete = await getPathsToDelete(currentFileList, keepFileList);
         if (filesToDelete.length > 0) {
-          // remove the file from pfe container
+          log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
+          `${filesToDelete.join(', ')}`);
+          // remove the files from pfe container
           await deleteFilesInArray(pathToProj, filesToDelete);
         }
+
         res.sendStatus(200);
 
         await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
@@ -259,22 +273,35 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   }
 });
 
-function getFilesToDelete(existingFileArray, newFileArray) {
-  const filesToDeleteSet = new Set(existingFileArray);
-  newFileArray.forEach((f) => filesToDeleteSet.delete(f));
+function getPathsToDelete(existingPathArray, newPathArray) {
+  const pathsToDeleteSet = new Set(existingPathArray);
+  newPathArray.forEach((f) => pathsToDeleteSet.delete(f));
   // if file is in a protected dir, do not delete it
-  filesToDeleteSet.forEach((f) => {
+  pathsToDeleteSet.forEach((f) => {
     if (fileIsProtected(f)) {
-      filesToDeleteSet.delete(f)
+      pathsToDeleteSet.delete(f)
     }
   })
 
-  return Array.from(filesToDeleteSet);
+  return Array.from(pathsToDeleteSet);
 }
 
 function fileIsProtected(filePath) {
   const protectedPrefixes = [".odo/", "node_modules/"];
   return protectedPrefixes.some((prefix) => filePath.startsWith(prefix));
+}
+
+function getTopLevelDirectories(directoryArray) {
+  let topLevelDirArray = [];
+  directoryArray.forEach(dir => {
+    const existingTopLevelDirectories = topLevelDirArray.filter(rootDirectory => dir.startsWith(rootDirectory));
+    if (existingTopLevelDirectories.length === 0) {
+      // if there are subdirectories of "dir" already in the topLevelDirArray remove them
+      topLevelDirArray = topLevelDirArray.filter(finalDir => !finalDir.startsWith(dir));
+      topLevelDirArray.push(dir);
+    }
+  });
+  return topLevelDirArray;
 }
 
 function deleteFilesInArray(directory, arrayOfFiles) {
@@ -337,6 +364,23 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
     await cwUtils.timeout(5000)
     await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
   }
+}
+
+// List all the directories under a given directory
+async function recusivelyListDirectories(absolutePath, relativePath = '') {
+  const directories = await fs.readdir(absolutePath);
+  const completeDirectoryList = await Promise.all(directories.map(async dir => {
+    const directoryList = [];
+    const nextRelativePath = path.join(relativePath, dir);
+    const nextAbsolutePath = path.join(absolutePath, dir);
+    const stats = await fs.stat(nextAbsolutePath);
+    if (stats.isDirectory()) {
+      const subDirectories = await recusivelyListDirectories(nextAbsolutePath, nextRelativePath);
+      directoryList.push(nextRelativePath, ...subDirectories);
+    }
+    return directoryList;
+  }))
+  return completeDirectoryList.reduce((a, b) => a.concat(b), []);
 }
 
 // List all the files under the given directory, return
