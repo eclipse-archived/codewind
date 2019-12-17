@@ -119,6 +119,7 @@ function setup {
     PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
     TURBINE_NPM_INSTALL_CMD="cd /file-watcher/server; npm install --only=dev"
+    PERFORMANCE_TEST_DIR="mkdir -p /file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST"
 
     mkdir -p $TEST_OUTPUT_DIR
 
