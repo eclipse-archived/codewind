@@ -43,7 +43,7 @@ Options:
     --post-clean        To perform a post clean up. Default: n 
     --release           The release branch to use. Default: master
     --iterations        Number of iterations to run the performance test. Default: 10
-    --report-only      Convert data to csv only. Will not run performance test and use existing data json on path. Default: false
+    --report-only       Convert data to csv only. Will not run performance test and use existing data json on path. Default: false
     --repo              The upstream repo to use. Default: git@github.com:eclipse/codewind.git
     -h | --help         Display the man page
 EOF
@@ -170,7 +170,7 @@ pip install numpy > /dev/null 2>&1
 displayMsg $? "Failed to install numpy module. Please try again." true
 
 echo -e "${CYAN}> Running data analyzer script ${RESET}"
-PY_FILE="get-data.py"
+PY_FILE="analyze-data.py"
 python $PY_FILE
 displayMsg $? "Failed to run python script. Please install and try again." true
 
