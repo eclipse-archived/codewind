@@ -51,7 +51,6 @@ module.exports = class LoadRunner {
    */
   async createCollection() {
     const metricsContextRoot = this.project.getMetricsContextRoot();
-    log.debug(`createCollection: ${this.project.projectID}, ${this.project.host}, ${this.project.getPort()}, ${metricsContextRoot}`);
 
     let collection = null;
     try {
@@ -61,6 +60,15 @@ module.exports = class LoadRunner {
         path: `/${metricsContextRoot}/api/v1/collections/`,
         method: 'POST',
       }
+
+      // when available get the connection details from the project service
+      if (this.project.kubeServiceHost && this.project.kubeServicePort ) {
+        options.host = this.project.kubeServiceHost;
+        options.port = this.project.kubeServicePort;
+      }
+
+      log.info(`createCollection: ${this.project.projectID}, ${options.host}, ${options.port}, ${metricsContextRoot}`);
+
       let metricsRes = await cwUtils.asyncHttpRequest(options);
       log.debug('createCollection: metricsRes.statusCode=' + metricsRes.statusCode);
       switch (metricsRes.statusCode) {
@@ -101,6 +109,13 @@ module.exports = class LoadRunner {
       path: '/' + this.project.getMetricsContextRoot() + `/api/v1/` + this.collectionUri,
       method: 'GET',
     }
+
+    // when available get the connection details from the project service
+    if (this.project.kubeServiceHost && this.project.kubeServicePort ) {
+      options.host = this.project.kubeServiceHost;
+      options.port = this.project.kubeServicePort;
+    }
+
     try {
       // Get the metrics collection
       let metricsRes = await cwUtils.asyncHttpRequest(options);
@@ -172,6 +187,9 @@ module.exports = class LoadRunner {
 
       await this.createResultsDirectory();
 
+      // Update project endpoints
+      await this.project.getProjectKubeService();
+
       if (this.project.git) {
         const hasChanges = await this.project.git.hasChanges();
         if (!hasChanges) {
@@ -219,12 +237,22 @@ module.exports = class LoadRunner {
       await cwUtils.timeout(5000);
       try {
         // eslint-disable-next-line no-await-in-loop
-        let httpCheckHealth = await cwUtils.asyncHttpRequest({
+
+        let options = {
           host: this.project.host,
           port: this.project.getPort(),
           path: '/health',
           method: 'GET'
-        });
+        }
+
+        // when available get the connection details from the project service
+        if (this.project.kubeServiceHost && this.project.kubeServicePort ) {
+          options.host = this.project.kubeServiceHost;
+          options.port = this.project.kubeServicePort;
+      }
+
+        let httpCheckHealth = await cwUtils.asyncHttpRequest(options);
+
         log.info(`httpCheckHealth ${httpCheckHealth.statusCode}`);
         if (mode && httpCheckHealth.statusCode === 200) {
           log.info("LibertyServer has responded to /health");

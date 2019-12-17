@@ -12,6 +12,8 @@
 const fs = require('fs-extra');
 const { join } = require('path');
 const uuidv1 = require('uuid/v1');
+const Client = require('kubernetes-client').Client
+const config = require('kubernetes-client').config;
 
 const cwUtils = require('./utils/sharedFunctions');
 const metricsStatusChecker = require('./utils/metricsStatusChecker');
@@ -106,6 +108,33 @@ module.exports = class Project {
       this.injectMetrics = args.injectMetrics;
     }
   }
+
+
+  // Ask Kube for project connection details by querying the project service
+  async getProjectKubeService() {
+    if (global.codewind.RUNNING_IN_K8S) {
+      try {
+        const namespace = process.env.KUBE_NAMESPACE
+        const projectID = this.projectID
+        const client = new Client({ config: config.getInCluster(), version: '1.9' });
+        const services = await client.api.v1.namespaces(namespace).services.get({ qs: { labelSelector: 'projectID='+projectID } })
+
+        if (services && services.body && services.body.items && services.body.items[0]) {
+          const ipAddress = services.body.items[0].spec.clusterIP
+          const port = services.body.items[0].spec.ports[0].targetPort
+
+          // update service host
+          this.kubeServiceHost = ipAddress
+          this.kubeServicePort = port
+          return  {hostname:ipAddress, port:port}
+        }
+      } catch (error) {
+        log.error(error)
+      }
+    }
+    return {}
+  }
+
 
   toJSON() {
     // Exclude properties that we don't want to write to the .info file on disk. The
