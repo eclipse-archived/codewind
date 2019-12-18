@@ -96,7 +96,7 @@ export interface ProjectSettingsEvent {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     isHttps?: boolean;
-    statusPingTimeout?: string;
+    statusPingTimeout?: number;
 }
 
 /**

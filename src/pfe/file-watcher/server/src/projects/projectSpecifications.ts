@@ -845,7 +845,7 @@ const changeStatusPingTimeout = async function (statusPingTimeout: string, opera
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
             projectID: projectID,
-            statusPingTimeout: statusPingTimeout,
+            statusPingTimeout: pingTimeoutInt,
             status: "success"
         };
         io.emitOnListener("projectSettingsChanged", data);
