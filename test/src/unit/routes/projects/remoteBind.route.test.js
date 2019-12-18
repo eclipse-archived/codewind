@@ -134,6 +134,18 @@ describe('remoteBind.route.js', () => {
             topLevelDirectories.should.deep.equal(['some']);
         });
     });
+    describe('compareDirs(string, prefix)', () => {
+        const compareDirs = RemoteBind.__get__('compareDirs');
+        it('returns true as relative the file paths are equivalent', async() => {
+            compareDirs('/filepath', 'filepath').should.be.true;
+        });
+        it('returns true as relative the file paths are equivalent', async() => {
+            compareDirs('/filepath', 'filepath/').should.be.true;
+        });
+        it('returns false as relative the file paths are different', async() => {
+            compareDirs('filepath', 'filepathextended').should.be.false;
+        });
+    });
     describe('deletePathsInArray(directory, arrayOfFiles)', () => {
         const deletePathsInArray = RemoteBind.__get__('deletePathsInArray');
         const testFileArray = ['package.json', 'server.js', 'dir/file', 'dir/anotherfile', 'anotherdir/file'];
