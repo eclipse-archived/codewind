@@ -241,6 +241,7 @@ let buildChartDataHTTP = function (params) {
  *
  * @param {*} metrics the loaded metrics from redux
  * @param {string} filteredUrl the URL path
+ * @return [{container,time}] an array of timestamps each containing a containerName and starttime
  */
 let getHTTPHitTimestamps = function (metrics, filteredUrl) {
 
@@ -256,7 +257,7 @@ let getHTTPHitTimestamps = function (metrics, filteredUrl) {
             return false;
         });
         if (foundUrlSamples) {
-            timestamps.push(snapshot.time);
+            timestamps.push({container: snapshot.container, time: snapshot.time});
         }
     });
     return timestamps;
@@ -273,15 +274,15 @@ let sortMetrics = function (metrics, filteredUrl) {
     let x = -1;
     let model = httpHitTimestamps.map(t => {
         x = x + 1;
-        return { 'id': t.toString(), 'time': t, 'plotNumber': x }
+        return { 'id': t.container, 'time': t.time, 'plotNumber': x }
     })
 
-    // merge all the metrics into the data model using a timestamp key
+    // merge all the metrics into the data model using the ID
     metrics.forEach(metricType => {
         metricType.metrics.forEach(snapshot => {
-            const timestamp = model.find(element => { return element['time'] === snapshot['time'] });
+            const timestamp = model.find(element => { return element['id'] === snapshot['container'] });
             if (timestamp) {
-                let metricsGroup = {}
+                let metricsGroup = {};
                 metricsGroup.type = metricType.type;
                 metricsGroup.value = snapshot;
                 timestamp[metricType.type] = metricsGroup;
