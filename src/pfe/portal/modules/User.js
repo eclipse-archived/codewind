@@ -230,7 +230,7 @@ module.exports = class User {
           const watchStateId = crypto.randomBytes(16).toString("hex");
           const projectUpdate = { projectID: project.projectID, projectWatchStateId: watchStateId };
           await this.projectList.updateProject(projectUpdate);
-        } 
+        }
         let projectUpdate = {
           projectID: project.projectID,
           projectWatchStateId: project.projectWatchStateId,
@@ -238,6 +238,19 @@ module.exports = class User {
           ignoredPaths: project.ignoredPaths,
           projectCreationTime: project.creationTime
         }
+
+        // read settings file for additional refPaths to monitor
+        const settFile = await project.readSettingsFile();
+        if (Array.isArray(settFile.refPaths)) {
+          projectUpdate.refPaths = [];
+          settFile.refPaths.forEach((refPath) => {
+            if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
+                (typeof refPath.to === "string" && (refPath.to = refPath.to.trim()).length > 0)) {
+                  projectUpdate.refPaths.push({ from: refPath.from, to: refPath.to });
+            }
+          });
+        }
+
         watchList.projects.push(projectUpdate);
       }
     }
