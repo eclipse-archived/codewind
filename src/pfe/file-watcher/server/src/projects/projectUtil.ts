@@ -63,6 +63,8 @@ const isApplicationPodUpIntervalMap = new Map();
 
 export let pingMessage: string;
 
+export const firstTimePingArray = new Array();
+
 export interface ProjectEvent {
     operationId: string;
     projectID: string;
@@ -1040,8 +1042,8 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
             path = projectInfo.healthCheck;
         }
         // only update the detailed status on first time ping
-        const isFirstTimePing = appStateMap.get(projectID).isFirstTimePing;
-        if (isFirstTimePing != false) {
+        if (firstTimePingArray.indexOf(projectID) < 0) {
+            firstTimePingArray.push(projectID);
             if (isDefaultPath) {
                 updateDetailedAppStatus(projectID, containerInfo.ip, port, path, isDefaultPath);
             } else {
@@ -2156,6 +2158,6 @@ export async function updateDetailedAppStatus(projectID: string, ip: string, por
     };
 
     if (oldState === AppState.starting) {
-        projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathEvent, false);
+        projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathEvent);
     }
 }

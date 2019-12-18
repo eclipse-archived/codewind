@@ -253,6 +253,8 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         projectInfo.statusPingTimeout = projInfo.statusPingTimeout;
     } else if ( selectedProjectHandler.getDefaultPingTimeout ) {
         projectInfo.statusPingTimeout = selectedProjectHandler.getDefaultPingTimeout();
+    } else {
+        projectInfo.statusPingTimeout = 30;
     }
 
     // Set isHttps to false by default, override if the isHttps settings key is found
