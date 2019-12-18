@@ -221,7 +221,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         const pathToProj = project.projectPath();
 
         // Delete by directory
-        const currentDirectoryList = await recusivelyListDirectories(pathToProj);
+        const currentDirectoryList = await recursivelyListFilesOrDirectories(true, pathToProj);
         const directoriesToDelete = await getPathsToDelete(currentDirectoryList, keepDirList);
         if (directoriesToDelete.length > 0) {
           // Get the highest level directory
@@ -232,7 +232,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         }
 
         // Delete by file
-        const currentFileList = await listFilesInDirectory(pathToProj);
+        const currentFileList = await recursivelyListFilesOrDirectories(false, pathToProj);
         const filesToDelete = await getPathsToDelete(currentFileList, keepFileList);
         if (filesToDelete.length > 0) {
           log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
@@ -294,17 +294,17 @@ function fileIsProtected(filePath) {
 function getTopLevelDirectories(directoryArray) {
   let topLevelDirArray = [];
   directoryArray.forEach(dir => {
-    const existingTopLevelDirectories = topLevelDirArray.filter(rootDirectory => compareDirs(dir, rootDirectory));
+    const existingTopLevelDirectories = topLevelDirArray.filter(rootDirectory => compareDirectoryNames(dir, rootDirectory));
     if (existingTopLevelDirectories.length === 0) {
       // if there are subdirectories of "dir" already in the topLevelDirArray remove them
-      topLevelDirArray = topLevelDirArray.filter(finalDir => !compareDirs(finalDir, dir));
+      topLevelDirArray = topLevelDirArray.filter(finalDir => !compareDirectoryNames(finalDir, dir));
       topLevelDirArray.push(dir);
     }
   });
   return topLevelDirArray;
 }
 
-function compareDirs(string, prefix) {
+function compareDirectoryNames(string, prefix) {
   string = path.join('/', string, '/');
   prefix = path.join('/', prefix, '/');
   return string.startsWith(prefix);
@@ -372,43 +372,24 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
   }
 }
 
-// List all the directories under a given directory
-async function recusivelyListDirectories(absolutePath, relativePath = '') {
-  const directories = await fs.readdir(absolutePath);
-  const completeDirectoryList = await Promise.all(directories.map(async dir => {
-    const directoryList = [];
+// List all the files or directories under a given directory
+async function recursivelyListFilesOrDirectories(getDirectories, absolutePath, relativePath = '') {
+  const directoryContents = await fs.readdir(absolutePath);
+  const completePathArray = await Promise.all(directoryContents.map(async dir => {
+    const pathList = [];
     const nextRelativePath = path.join(relativePath, dir);
     const nextAbsolutePath = path.join(absolutePath, dir);
     const stats = await fs.stat(nextAbsolutePath);
     if (stats.isDirectory()) {
-      const subDirectories = await recusivelyListDirectories(nextAbsolutePath, nextRelativePath);
-      directoryList.push(nextRelativePath, ...subDirectories);
+      const subDirectories = await recursivelyListFilesOrDirectories(getDirectories, nextAbsolutePath, nextRelativePath);
+      if (getDirectories) pathList.push(nextRelativePath);
+      pathList.push(...subDirectories);
+    } else if (!getDirectories) {
+      pathList.push(nextRelativePath);
     }
-    return directoryList;
+    return pathList;
   }))
-  return completeDirectoryList.reduce((a, b) => a.concat(b), []);
-}
-
-// List all the files under the given directory, return
-// a list of relative paths.
-async function listFilesInDirectory(absolutePath, relativePath = '') {
-  const files = await fs.readdir(absolutePath);
-  const fileList = [];
-  for (const f of files) {
-    const nextRelativePath = path.join(relativePath, f);
-    const nextAbsolutePath = path.join(absolutePath, f);
-
-    // eslint-disable-next-line no-await-in-loop
-    const stats = await fs.stat(nextAbsolutePath);
-    if (stats.isDirectory()) {
-      // eslint-disable-next-line no-await-in-loop
-      const subFiles = await listFilesInDirectory(nextAbsolutePath, nextRelativePath);
-      fileList.push(...subFiles);
-    } else {
-      fileList.push(nextRelativePath)
-    }
-  }
-  return fileList;
+  return completePathArray.reduce((a, b) => a.concat(b), []);
 }
 
 /**

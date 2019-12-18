@@ -134,16 +134,22 @@ describe('remoteBind.route.js', () => {
             topLevelDirectories.should.deep.equal(['some']);
         });
     });
-    describe('compareDirs(string, prefix)', () => {
-        const compareDirs = RemoteBind.__get__('compareDirs');
+    describe('compareDirectoryNames(string, prefix)', () => {
+        const compareDirectoryNames = RemoteBind.__get__('compareDirectoryNames');
         it('returns true as relative the file paths are equivalent', async() => {
-            compareDirs('/filepath', 'filepath').should.be.true;
+            compareDirectoryNames('/filepath', 'filepath').should.be.true;
         });
         it('returns true as relative the file paths are equivalent', async() => {
-            compareDirs('/filepath', 'filepath/').should.be.true;
+            compareDirectoryNames('/filepath', 'filepath/').should.be.true;
+        });
+        it('returns true as relative the file paths are equivalent', async() => {
+            compareDirectoryNames('filepath', 'filepath/').should.be.true;
         });
         it('returns false as relative the file paths are different', async() => {
-            compareDirs('filepath', 'filepathextended').should.be.false;
+            compareDirectoryNames('filepath', 'filepathextended').should.be.false;
+        });
+        it('returns false as relative the file paths are different', async() => {
+            compareDirectoryNames('.filepath', 'filepath').should.be.false;
         });
     });
     describe('deletePathsInArray(directory, arrayOfFiles)', () => {
@@ -179,72 +185,73 @@ describe('remoteBind.route.js', () => {
             fs.pathExistsSync(path.join(testDirectory, 'package.json')).should.be.true;
         });
     });
-    describe('recusivelyListDirectories(absolutePath, relativePath)', () => {
-        const recusivelyListDirectories = RemoteBind.__get__('recusivelyListDirectories');
-        const testDirArray = ['dir', 'dir/dirinanother', 'dir/dirinanother/anotherdirinanother', 'anotherdir', 'finaldir', 'finaldir/dirwithinfinal'];
-        const testFileArray = ['dir/file', 'dir/anotherfile', 'dir/dirinanother/file', 'dir/dirinanother/anotherdirinanother/file', 'anotherdir/file', 'anotherdir/anotherfile', 'finaldir/dirwithinfinal/file'];
-        beforeEach(async() => {
-            const promiseArray = testFileArray.map(file => {
-                return fs.ensureFile(path.join(testDirectory, file));
+    describe('recursivelyListFilesOrDirectories(getDirectories, absolutePath, relativePath)', () => {
+        const recursivelyListFilesOrDirectories = RemoteBind.__get__('recursivelyListFilesOrDirectories');
+        describe('Get the directories (getDirectories = true)', () => {
+            const testDirArray = ['dir', 'dir/dirinanother', 'dir/dirinanother/anotherdirinanother', 'anotherdir', 'finaldir', 'finaldir/dirwithinfinal'];
+            const testFileArray = ['dir/file', 'dir/anotherfile', 'dir/dirinanother/file', 'dir/dirinanother/anotherdirinanother/file', 'anotherdir/file', 'anotherdir/anotherfile', 'finaldir/dirwithinfinal/file'];
+            beforeEach(async() => {
+                const promiseArray = testFileArray.map(file => {
+                    return fs.ensureFile(path.join(testDirectory, file));
+                });
+                await Promise.all(promiseArray);
             });
-            await Promise.all(promiseArray);
-        });
-        afterEach(() => {
-            fs.removeSync(testDirectory);
-        });
-        it('should recursively list all directories in testFileArray', async() => {
-            const filesInDirectory = await recusivelyListDirectories(testDirectory, '');
-            filesInDirectory.length.should.equal(testDirArray.length);
-            filesInDirectory.should.have.members(testDirArray);
-        });
-        it('should recursively list all directories in directory testDirectory/dir', async() => {
-            const filesInDirectory = await recusivelyListDirectories(path.join(testDirectory, 'dir'), '');
-            filesInDirectory.length.should.equal(2);
-            filesInDirectory.should.have.members(['dirinanother', 'dirinanother/anotherdirinanother']);
-        });
-        it('should be rejected as directory does not exist', () => {
-            return recusivelyListDirectories('', '').should.be.rejected;
-        });
-        it('should return an empty array as there are no subdirectories', async() => {
-            const filesInDirectory = await recusivelyListDirectories(path.join(testDirectory, 'anotherdir'), '');
-            filesInDirectory.length.should.equal(0);
-            filesInDirectory.should.have.members([]);
-        });
-    });
-    describe('listFilesInDirectory(absolutePath, relativePath)', () => {
-        const listFilesInDirectory = RemoteBind.__get__('listFilesInDirectory');
-        const testFileArray = ['dir/file', 'dir/anotherfile', 'dir/dirinanother/file', 'anotherdir/file', 'anotherdir/anotherfile'];
-        beforeEach(async() => {
-            const promiseArray = testFileArray.map(file => {
-                return fs.ensureFile(path.join(testDirectory, file));
+            afterEach(() => {
+                fs.removeSync(testDirectory);
             });
-            await Promise.all(promiseArray);
+            it('should recursively list all directories in testFileArray', async() => {
+                const filesInDirectory = await recursivelyListFilesOrDirectories(true, testDirectory, '');
+                filesInDirectory.length.should.equal(testDirArray.length);
+                filesInDirectory.should.have.members(testDirArray);
+            });
+            it('should recursively list all directories in directory testDirectory/dir', async() => {
+                const filesInDirectory = await recursivelyListFilesOrDirectories(true, path.join(testDirectory, 'dir'), '');
+                filesInDirectory.length.should.equal(2);
+                filesInDirectory.should.have.members(['dirinanother', 'dirinanother/anotherdirinanother']);
+            });
+            it('should be rejected as directory does not exist', () => {
+                return recursivelyListFilesOrDirectories(true, '', '').should.be.rejected;
+            });
+            it('should return an empty array as there are no subdirectories', async() => {
+                const filesInDirectory = await recursivelyListFilesOrDirectories(true, path.join(testDirectory, 'anotherdir'), '');
+                filesInDirectory.length.should.equal(0);
+                filesInDirectory.should.have.members([]);
+            });
         });
-        afterEach(() => {
-            fs.removeSync(testDirectory);
-        });
-        it('should recursively list all files in testFileArray', async() => {
-            const filesInDirectory = await listFilesInDirectory(testDirectory, '');
-            filesInDirectory.length.should.equal(testFileArray.length);
-            filesInDirectory.should.have.members(testFileArray);
-        });
-        it('should recursively list all files in directory testDirectory/anotherdir', async() => {
-            const filesInDirectory = await listFilesInDirectory(path.join(testDirectory, 'anotherdir'), '');
-            filesInDirectory.length.should.equal(2);
-            filesInDirectory.should.have.members(['file', 'anotherfile']);
-        });
-        it('should recursively list all files in directory testDirectory/dir (two levels of recursion)', async() => {
-            const filesInDirectory = await listFilesInDirectory(path.join(testDirectory, 'dir'), '');
-            filesInDirectory.length.should.equal(3);
-            filesInDirectory.should.have.members(['file', 'anotherfile', 'dirinanother/file']);
-        });
-        it('should be rejected as directory does not exist', () => {
-            return listFilesInDirectory('', '').should.be.rejected;
-        });
-        it('returns an array which equals testFileArray as all the files should be listed in the directory', async() => {
-            const filesInDirectory = await listFilesInDirectory(path.join(testDirectory, 'dir/dirinanother'));
-            filesInDirectory.length.should.equal(1);
-            filesInDirectory.should.have.members(['file']);
+        describe('Get the files (getDirectories = false)', () => {
+            const testFileArray = ['dir/file', 'dir/anotherfile', 'dir/dirinanother/file', 'anotherdir/file', 'anotherdir/anotherfile'];
+            beforeEach(async() => {
+                const promiseArray = testFileArray.map(file => {
+                    return fs.ensureFile(path.join(testDirectory, file));
+                });
+                await Promise.all(promiseArray);
+            });
+            afterEach(() => {
+                fs.removeSync(testDirectory);
+            });
+            it('should recursively list all files in testFileArray', async() => {
+                const filesInDirectory = await recursivelyListFilesOrDirectories(false, testDirectory, '');
+                filesInDirectory.length.should.equal(testFileArray.length);
+                filesInDirectory.should.have.members(testFileArray);
+            });
+            it('should recursively list all files in directory testDirectory/anotherdir', async() => {
+                const filesInDirectory = await recursivelyListFilesOrDirectories(false, path.join(testDirectory, 'anotherdir'), '');
+                filesInDirectory.length.should.equal(2);
+                filesInDirectory.should.have.members(['file', 'anotherfile']);
+            });
+            it('should recursively list all files in directory testDirectory/dir (two levels of recursion)', async() => {
+                const filesInDirectory = await recursivelyListFilesOrDirectories(false, path.join(testDirectory, 'dir'), '');
+                filesInDirectory.length.should.equal(3);
+                filesInDirectory.should.have.members(['file', 'anotherfile', 'dirinanother/file']);
+            });
+            it('should be rejected as directory does not exist', () => {
+                return recursivelyListFilesOrDirectories(false, '', '').should.be.rejected;
+            });
+            it('returns an array which equals testFileArray as all the files should be listed in the directory', async() => {
+                const filesInDirectory = await recursivelyListFilesOrDirectories(false, path.join(testDirectory, 'dir/dirinanother'));
+                filesInDirectory.length.should.equal(1);
+                filesInDirectory.should.have.members(['file']);
+            });
         });
     });
     describe('fileIsProtected(filePath)', () => {
