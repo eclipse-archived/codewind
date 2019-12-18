@@ -319,7 +319,7 @@ pipeline {
                             for i in "${DOCKER_IMAGE_ARRAY[@]}"
                             do
                                 echo "Publishing $i:$TAG"
-                                ./script/publish.sh $i $TAG
+                                docker push $i:${TAG:-latest}"
                             done
 
                             if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
@@ -331,7 +331,7 @@ pipeline {
                                 for i in "${DOCKER_IMAGE_ARRAY[@]}"
                                 do
                                     echo "Publishing $i:$TAG_CUMULATIVE"
-                                    ./script/publish.sh $i $TAG_CUMULATIVE
+                                    docker push $i:${TAG_CUMULATIVE:-latest}"
                                 done
                             fi
                         else
