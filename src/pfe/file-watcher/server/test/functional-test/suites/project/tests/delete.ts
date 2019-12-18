@@ -17,6 +17,15 @@ import * as utils from "../../../lib/utils";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
+import * as pfe_configs from "../../../configs/pfe.config";
+
+const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
+const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
+let k8sClient: any = undefined;
+
+if (process.env.IN_K8) {
+    k8sClient = new Client({ config: config.getInCluster(), version: "1.9"});
+}
 
 import path from "path";
 import fs from "fs";
@@ -81,6 +90,16 @@ export default class DeleteTest {
                 expect(containerInfo);
                 imageName = containerInfo[0].Image;
                 expect(imageName.includes(projData.projectID));
+            } else {
+                try {
+                    let resp: any = undefined;
+
+                    // Get the deployment name and uid labeled with the unique project ID
+                    resp = await k8sClient.apis.apps.v1.namespaces(pfe_configs.cheNamespace).deployments.get({ qs: { labelSelector: "projectID=" + projectID } });
+                    console.log(">>>> RESPONSE: %j", resp);
+                } catch (err) {
+                    fail(`delete project test failed to find kube deployment ${err}`);
+                }
             }
 
             let dataFile, fileContent, chosenTimestamp, startTime;
@@ -110,6 +129,13 @@ export default class DeleteTest {
                 expect(event.eventData).to.haveOwnProperty("status");
                 expect(event.eventData["status"]).to.equal("success");
 
+                if (process.env.TURBINE_PERFORMANCE_TEST) {
+                    const endTime = Date.now();
+                    const totalTestTime = (endTime - startTime) / 1000;
+                    fileContent[projectTemplate][projectLang][chosenTimestamp]["delete"] = totalTestTime;
+                    await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
+                }
+
                 if (!process.env.IN_K8) {
                     containerName = await utils.getDockerContainerNames();
                     containerInfo = await utils.getAllDockerContainerInfo(projData.projectID);
@@ -120,13 +146,6 @@ export default class DeleteTest {
                 }
             } else {
                 fail(`delete project test failed to listen for ${targetEvent}`);
-            }
-
-            if (process.env.TURBINE_PERFORMANCE_TEST) {
-                const endTime = Date.now();
-                const totalTestTime = (endTime - startTime) / 1000;
-                fileContent[projectTemplate][projectLang][chosenTimestamp]["delete"] = totalTestTime;
-                await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
             }
         }).timeout(timeoutConfigs.createTestTimeout);
     }
