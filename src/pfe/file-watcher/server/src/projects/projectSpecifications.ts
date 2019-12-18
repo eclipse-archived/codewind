@@ -13,7 +13,6 @@ import { StartModes } from "./constants";
 import { ProjectInfo, UpdateProjectInfoPair, ProjectSettingsEvent } from "./Project";
 import * as logger from "../utils/logger";
 import * as projectsController from "../controllers/projectsController";
-import { appStateMap, ProjectState } from "../controllers/projectStatusController";
 import * as projectStatusController from "../controllers/projectStatusController";
 import * as projectExtensions from "../extensions/projectExtensions";
 import * as projectUtil from "./projectUtil";
@@ -221,7 +220,11 @@ const changeInternalPort = async function (applicationPort: string, operation: O
         logger.logProjectInfo("The project has been updated", projectInfo.projectID);
         logger.logProjectTrace(JSON.stringify(projectInfo), projectInfo.projectID);
 
-        resetisFirstTimePing(projectID);
+        // Delete the project from the array to show the next ping message
+        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
+        }
+        projectStatusController.pingCountMap.delete(projectID);
 
         // Set the containerInfoForceRefreshMap for the project to true, so that isApplicationUp/ping can pick up the new port with a force refresh
         projectUtil.containerInfoForceRefreshMap.set(projectID, true);
@@ -335,7 +338,11 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
     try {
         await projectsController.updateProjectInfo(projectID, keyValuePair);
 
-        resetisFirstTimePing(projectID);
+        // Delete the project from the array to show the next ping message
+        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
+        }
+        projectStatusController.pingCountMap.delete(projectID);
 
         const data: ProjectSettingsEvent = {
             operationId: operation.operationId,
@@ -556,7 +563,11 @@ const reconfigWWWProtocol = async function (isHttps: boolean, operation: Operati
     try {
         await projectsController.updateProjectInfo(projectID, keyValuePair);
 
-        resetisFirstTimePing(projectID);
+        // Delete the project from the array to show the next ping message
+        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
+        }
+        projectStatusController.pingCountMap.delete(projectID);
 
         const data = {
             operationId: operation.operationId,
@@ -805,16 +816,16 @@ const changeStatusPingTimeout = async function (statusPingTimeout: string, opera
     const projectID = projectInfo.projectID;
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     // make sure the value we saved in projectinfo is an integer
-    let pingTimeoutInt: number = parseInt(statusPingTimeout);
+    let pingTimeoutInt: number = parseInt(statusPingTimeout, 10);
 
-    if (!pingTimeoutInt) {
-        // Set the debug port to the default debug port if available else undefined
+    if (isNaN(pingTimeoutInt)) {
+        // Set the changeStatusPingTimeout to the default changeStatusPingTimeout if available else 30 if default one is undefined
         if (projectHandler.getDefaultPingTimeout()) {
             pingTimeoutInt = projectHandler.getDefaultPingTimeout();
         } else {
             pingTimeoutInt = 30;
         }
-        logger.logProjectInfo("The pingTimeout is empty, setting to the default statusPingTimeout: " + pingTimeoutInt, projectID);
+        logger.logProjectInfo("The statusPingTimeout is empty, setting to the default statusPingTimeout: " + pingTimeoutInt, projectID);
     }
 
     if (projectInfo.statusPingTimeout !== pingTimeoutInt) {
@@ -825,9 +836,9 @@ const changeStatusPingTimeout = async function (statusPingTimeout: string, opera
         };
         operation.projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
 
-        const oldProjectState: ProjectState = appStateMap.get(projectID);
-        if (oldProjectState) {
-            appStateMap.set(projectID, new ProjectState(oldProjectState.state, oldProjectState.msg, oldProjectState.lastbuild, oldProjectState.appImageLastBuild, oldProjectState.buildImageLastBuild, oldProjectState.detailedAppStatus));
+        // Delete the project from the array to show the next ping message
+        if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
+            projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
         }
         projectStatusController.pingCountMap.delete(projectID);
 
