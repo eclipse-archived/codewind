@@ -16,6 +16,14 @@ pkill java
 
 # Run a maven build to generate the new jar
 cd /root/app
+
+if [ -f localm2cache.zip ]; then
+    echo "Extracting maven m2 cache for $PROJECT_NAME"
+    $JAVA_HOME/bin/jar -xf localm2cache.zip
+    rm -f localm2cache.zip
+    echo "Finished extracting maven m2 cache for $PROJECT_NAME"	
+fi
+
 echo "Running Maven build for $PROJECT_NAME"
 echo "mvn -Dmaven.repo.local=/root/app/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$MAVEN_BUILD.log""
 mvn -Dmaven.repo.local=/root/app/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$MAVEN_BUILD.log"
