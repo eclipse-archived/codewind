@@ -137,19 +137,25 @@ describe('remoteBind.route.js', () => {
     describe('compareDirectoryNames(string, prefix)', () => {
         const compareDirectoryNames = RemoteBind.__get__('compareDirectoryNames');
         it('returns true as relative the file paths are equivalent', async() => {
-            compareDirectoryNames('/filepath', 'filepath').should.be.true;
-        });
-        it('returns true as relative the file paths are equivalent', async() => {
-            compareDirectoryNames('/filepath', 'filepath/').should.be.true;
+            compareDirectoryNames('filepath/', 'filepath').should.be.true;
         });
         it('returns true as relative the file paths are equivalent', async() => {
             compareDirectoryNames('filepath', 'filepath/').should.be.true;
+        });
+        it('returns true as relative the file paths are equivalent', async() => {
+            compareDirectoryNames('filepath', 'filepath').should.be.true;
         });
         it('returns false as relative the file paths are different', async() => {
             compareDirectoryNames('filepath', 'filepathextended').should.be.false;
         });
         it('returns false as relative the file paths are different', async() => {
+            compareDirectoryNames('filepathextended', 'filepath').should.be.false;
+        });
+        it('returns false as relative the file paths are different', async() => {
             compareDirectoryNames('.filepath', 'filepath').should.be.false;
+        });
+        it('returns false as a relative path and an absolute path are different', async() => {
+            compareDirectoryNames('/filepath', 'filepath').should.be.false;
         });
     });
     describe('deletePathsInArray(directory, arrayOfFiles)', () => {

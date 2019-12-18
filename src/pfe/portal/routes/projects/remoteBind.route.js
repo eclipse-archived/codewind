@@ -305,8 +305,8 @@ function getTopLevelDirectories(directoryArray) {
 }
 
 function compareDirectoryNames(string, prefix) {
-  string = path.join('/', string, '/');
-  prefix = path.join('/', prefix, '/');
+  string = path.normalize(string + '/');
+  prefix = path.normalize(prefix + '/');
   return string.startsWith(prefix);
 }
 
