@@ -17,7 +17,6 @@ const FilewatcherError = require('./utils/errors/FilewatcherError');
 const ProjectListError = require('./utils/errors/ProjectListError');
 const WebSocket = require('./WebSocket');
 const crypto = require('crypto');
-const cwUtils = require('./utils/sharedFunctions');
 const fw = require('file-watcher');
 const log = new Logger('FileWatcher.js');
 const filewatcher = new fw();

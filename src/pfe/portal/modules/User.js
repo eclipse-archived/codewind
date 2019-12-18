@@ -217,22 +217,22 @@ module.exports = class User {
       projects: []
     };
     let projectArray = this.projectList.getAsArray();
-    for (let i = 0; i < projectArray.length; i++) {
+    for (const project of projectArray) {
       // Only include enabled projects
-      if (projectArray[i].isOpen()) {
-        if (projectArray[i].projectWatchStateId == undefined) {
-          let watchStateId = crypto.randomBytes(16).toString("hex");
-          let projectUpdate = { projectID: projectArray[i].projectID, projectWatchStateId: watchStateId };
+      if (project.isOpen()) {
+        if (project.projectWatchStateId == undefined) {
+          const watchStateId = crypto.randomBytes(16).toString("hex");
+          const projectUpdate = { projectID: project.projectID, projectWatchStateId: watchStateId };
           await this.projectList.updateProject(projectUpdate);
         } 
-        let project = {
-          projectID: projectArray[i].projectID,
-          projectWatchStateId: projectArray[i].projectWatchStateId,
-          pathToMonitor: projectArray[i].pathToMonitor,
-          ignoredPaths: projectArray[i].ignoredPaths,
-          projectCreationTime: projectArray[i].creationTime
+        let projectUpdate = {
+          projectID: project.projectID,
+          projectWatchStateId: project.projectWatchStateId,
+          pathToMonitor: project.pathToMonitor,
+          ignoredPaths: project.ignoredPaths,
+          projectCreationTime: project.creationTime
         }
-        watchList.projects.push(project);
+        watchList.projects.push(projectUpdate);
       }
     }
     log.debug("The watch list: " + JSON.stringify(watchList));
