@@ -299,6 +299,7 @@ module.exports = class Project {
       // If a file doesn't include the metrics of that type, skip the file
       if (metricsFile[metricsFileType] != undefined) {
         const metric = {
+          container: loadTestDirectories[i],
           time: metricsFile.time.data.start || metricsFile.time.data.startTime,
           endTime: metricsFile.time.data.end || metricsFile.time.data.endTime,
           value: metricsFile[metricsFileType] };
