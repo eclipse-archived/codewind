@@ -92,18 +92,6 @@ function create() {
 					cp $mnt/cache/localm2cache.zip .
 					buildah rm $CACHE_CONTAINER_ID
 					echo "Finished downloading maven m2 cache to $ROOT"
-
-					echo "Extracting maven m2 cache to $ROOT"
-					unzip -q localm2cache.zip
-					rm -rf localm2cache.zip
-					echo "Finished extracting maven m2 cache to $ROOT"
-
-					# Verify maven m2 cache
-					if [ -d $MAVEN_M2_CACHE ]; then
-						echo "Maven m2 cache is set up for $ROOT"
-					else
-						echo "Maven m2 cache is not set up for $ROOT"
-					fi
 				else
 					echo "Maven m2 cache cannot be retrieved for spring project $ROOT because the cache image could not be pulled using buildah"
 				fi
@@ -113,26 +101,13 @@ function create() {
 				dockerPullExitCode=$?
 
 				if [ $dockerPullExitCode -eq 0 ]; then
-					echo "Finished pulling maven m2 cache image for $ROOT using docker"
-					echo "Maven m2 cache will be used for spring project $ROOT"
+					echo "Finished pulling cache image for $ROOT using docker"
+					echo "Cache will be used for spring project $ROOT"
 					CACHE_CONTAINER_ID=$(docker create ibmcom/codewind-java-project-cache)
-
 					echo "Downloading maven m2 cache to $ROOT"
 					docker cp $CACHE_CONTAINER_ID:/cache/localm2cache.zip .
+					echo "Finished downloading maven m2 cache to $ROOT"	
 					docker rm -f $CACHE_CONTAINER_ID
-					echo "Finished downloading maven m2 cache to $ROOT"
-
-					echo "Extracting maven m2 cache to $ROOT"
-					unzip -q localm2cache.zip
-					rm -rf localm2cache.zip
-					echo "Finished extracting maven m2 cache to $ROOT"
-
-					# Verify maven m2 cache
-					if [ -d $MAVEN_M2_CACHE ]; then
-						echo "Maven m2 cache is set up for $ROOT"
-					else
-						echo "Maven m2 cache is not set up for $ROOT"
-					fi
 				else
 					echo "Maven m2 cache cannot be retrieved for spring project $ROOT because the cache image could not be pulled using docker"
 				fi
