@@ -28,7 +28,7 @@ if [ ! -d $HOME/$MAVEN_M2_CACHE ]; then
 	cd $HOME
 
 	echo "Extracting maven m2 cache to $HOME"
-	$JAVA_HOME/bin/jar -xf $APP_DIR/localm2cache.zip
+	$JAVA_HOME/bin/jar -xf $APP_DIR/ .zip
 	rm -rf $APP_DIR/localm2cache.zip
 	echo "Finished extracting maven m2 cache to $HOME"
 fi
