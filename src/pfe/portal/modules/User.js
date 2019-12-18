@@ -177,16 +177,6 @@ module.exports = class User {
   }
 
   /**
-   * Read the .cw-settings file if it exists
-   */
-  async getSettings(projFile) {
-    const settingsFilePath = path.join(projFile.workspace, projFile.name, '.cw-settings');
-    const settFileExists = await fs.pathExists(settingsFilePath);
-    const settFile = settFileExists ? await fs.readJson(settingsFilePath) : {};
-    return settFile;
-  }
-
-  /**
    * Function to initialise a users existing projects
    * Searches the directory containing the project inf files so we only
    * add projects we've run previously to the projectList
@@ -199,7 +189,11 @@ module.exports = class User {
       if (!fileName.startsWith('.')) {
         try {
           const projFile = await fs.readJson(file);
-          const settFile = await this.getSettings(projFile);
+          // should now have a project name	
+          const projName = projFile.name;	
+          let settingsFilePath = path.join(projFile.workspace, projName, '.cw-settings');	
+          const settFileExists = await fs.pathExists(settingsFilePath);	
+          const settFile = settFileExists ? await fs.readJson(settingsFilePath) : {};
           let project = new Project({ ...projFile, ...settFile }, projFile.workspace);
           this.projectList.addProject(project);
         } catch (err) {
