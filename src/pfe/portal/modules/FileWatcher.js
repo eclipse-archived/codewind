@@ -427,7 +427,7 @@ module.exports = class FileWatcher {
           ignoredPaths: ignoredPaths,
           refPaths: fwProject.refPaths
         }
-        let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
+        let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths, status: fwProject.status };
         await this.handleFWProjectEvent(event, projectUpdate);
         WebSocket.watchListChanged(data);
       } else if (fwProject.contextRoot || fwProject.ports || fwProject.mavenProfiles || fwProject.mavenProperties || typeof fwProject.isHttps == "boolean") {
@@ -468,7 +468,7 @@ module.exports = class FileWatcher {
         refPaths: fwProject.refPaths,
         projectCreationTime: time
       }
-      let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
+      let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths, status: fwProject.status };
       await this.handleFWProjectEvent(event, projectUpdate);
       WebSocket.watchListChanged(data);
     } catch (err) {
