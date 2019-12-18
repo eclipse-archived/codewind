@@ -20,6 +20,8 @@ export const baseURL = pfe.PROTOCOL + "://" + pfe.HOST + ":" + pfe.PORT;
 export const imagePushRegistryAddress = process.env.IMAGE_PUSH_REGISTRY_ADDRESS || "docker-registry.default.svc:5000";
 export const imagePushRegistryNamespace = process.env.IMAGE_PUSH_REGISTRY_NAMESPACE || "eclipse-che";
 
+export const cheNamespace = process.env.CHE_NS || "eclipse-che";
+
 const apiv1 = "/api/v1/";
 
 export const pfeAPIs = {
