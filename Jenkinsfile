@@ -314,8 +314,6 @@ pipeline {
                                                         "eclipse/codewind-keycloak-amd64"
                                                         "eclipse/codewind-gatekeeper-amd64")
 
-                            chmod u+x ./script/publish.sh
-
                             for i in "${DOCKER_IMAGE_ARRAY[@]}"
                             do
                                 echo "Publishing $i:$TAG"
