@@ -297,7 +297,6 @@ pipeline {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                     sh '''#!/usr/bin/env bash
                         echo "Publishing docker images for Eclipse Codewind ..."
-                        export REGISTRY="eclipse"
                         echo "Branch name is $GIT_BRANCH"
 
                         if [[ $GIT_BRANCH == "master" ]]; then
@@ -310,17 +309,17 @@ pipeline {
                         # Acceptable branch names: master, start with '<number>.<number>'
                         if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
 
-                            declare -a DOCKER_IMAGE_ARRAY=("codewind-performance-amd64" 
-                                                        "codewind-pfe-amd64" 
-                                                        "codewind-keycloak-amd64"
-                                                        "codewind-gatekeeper-amd64")
+                            declare -a DOCKER_IMAGE_ARRAY=("eclipse/codewind-performance-amd64" 
+                                                        "eclipse/codewind-pfe-amd64" 
+                                                        "eclipse/codewind-keycloak-amd64"
+                                                        "eclipse/codewind-gatekeeper-amd64")
 
                             chmod u+x ./script/publish.sh
 
                             for i in "${DOCKER_IMAGE_ARRAY[@]}"
                             do
-                                echo "Publishing $REGISTRY/$i:$TAG"
-                                ./script/publish.sh $i $REGISTRY $TAG
+                                echo "Publishing $i:$TAG"
+                                ./script/publish.sh $i $TAG
                             done
 
                             if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
@@ -331,8 +330,8 @@ pipeline {
 
                                 for i in "${DOCKER_IMAGE_ARRAY[@]}"
                                 do
-                                    echo "Publishing $REGISTRY/$i:$TAG_CUMULATIVE"
-                                    ./script/publish.sh $i $REGISTRY $TAG_CUMULATIVE
+                                    echo "Publishing $i:$TAG_CUMULATIVE"
+                                    ./script/publish.sh $i $TAG_CUMULATIVE
                                 done
                             fi
                         else
