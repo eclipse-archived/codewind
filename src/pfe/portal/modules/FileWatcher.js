@@ -17,7 +17,6 @@ const FilewatcherError = require('./utils/errors/FilewatcherError');
 const ProjectListError = require('./utils/errors/ProjectListError');
 const WebSocket = require('./WebSocket');
 const crypto = require('crypto');
-const cwUtils = require('./utils/sharedFunctions');
 const fw = require('file-watcher');
 const log = new Logger('FileWatcher.js');
 const filewatcher = new fw();
@@ -414,10 +413,7 @@ module.exports = class FileWatcher {
       if (fwProject.ignoredPaths || event == "newProjectAdded") {
         // Send all file watcher clients project related data when a new project is added or ignored paths has changed
         const ignoredPaths = fwProject.ignoredPaths;
-        let pathToMonitor = project.locOnDisk;
-        if (process.env.HOST_OS === "windows") {
-          pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
-        }
+        const pathToMonitor = project.pathToMonitor;
         const projectWatchStateId = crypto.randomBytes(16).toString("hex");
         const data = {
           changeType: "update",
@@ -448,11 +444,8 @@ module.exports = class FileWatcher {
       const project = this.user.projectList.retrieveProject(projectID);
       // Send all file watcher clients project related data when a new project is added or ignored paths has changed
       const ignoredPaths = fwProject.ignoredPaths;
-      let pathToMonitor = project.locOnDisk;
-      if (process.env.HOST_OS === "windows") {
-        pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
-      }
-
+      const pathToMonitor = project.pathToMonitor;
+  
       let time = Date.now()
       if (project.creationTime) {
         time = project.creationTime
