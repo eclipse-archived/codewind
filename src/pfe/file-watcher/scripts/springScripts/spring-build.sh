@@ -14,9 +14,9 @@ MAVEN_BUILD=maven.build
 # Kill the server running the springboot jar
 pkill java
 
-# Run a maven build to generate the new jar
-cd /root/app
-
+# Extract the .m2 cache to /root/m2cache
+mkdir -p /root/m2cache
+cd /root/m2cache
 if [ -f localm2cache.zip ]; then
     echo "Extracting maven m2 cache for $PROJECT_NAME"
     $JAVA_HOME/bin/jar -xf localm2cache.zip
@@ -24,9 +24,12 @@ if [ -f localm2cache.zip ]; then
     echo "Finished extracting maven m2 cache for $PROJECT_NAME"	
 fi
 
+# Run a maven build to generate the new jar
+cd /root/app
+
 echo "Running Maven build for $PROJECT_NAME"
-echo "mvn -Dmaven.repo.local=/root/app/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$MAVEN_BUILD.log""
-mvn -Dmaven.repo.local=/root/app/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$MAVEN_BUILD.log"
+echo "mvn -Dmaven.repo.local=/root/m2cache/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$MAVEN_BUILD.log""
+mvn -Dmaven.repo.local=/root/m2cache/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$MAVEN_BUILD.log"
 if [[ $? -ne 0 ]]; then
     # Exit if maven build failed
     echo "Maven build failed for $PROJECT_NAME"
