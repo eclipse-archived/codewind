@@ -189,10 +189,10 @@ module.exports = class User {
       if (!fileName.startsWith('.')) {
         try {
           const projFile = await fs.readJson(file);
-          // should now have a project name	
-          const projName = projFile.name;	
-          let settingsFilePath = path.join(projFile.workspace, projName, '.cw-settings');	
-          const settFileExists = await fs.pathExists(settingsFilePath);	
+          // should now have a project name
+          const projName = projFile.name;
+          let settingsFilePath = path.join(projFile.workspace, projName, '.cw-settings');
+          const settFileExists = await fs.pathExists(settingsFilePath);
           const settFile = settFileExists ? await fs.readJson(settingsFilePath) : {};
           let project = new Project({ ...projFile, ...settFile }, projFile.workspace);
           this.projectList.addProject(project);
