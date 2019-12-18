@@ -82,8 +82,7 @@ class RunTestHistory extends Component {
      */
     async handleDeleteRow(rowID) {
         this.setState({ deleteInProgress: true });
-        const rowTime = formatDateToString(parseInt(rowID));
-        const result = await postDeleteTests(this.props.projectID, rowTime);
+        const result = await postDeleteTests(this.props.projectID, rowID);
         if (result.status && result.status === 200) {
             await this.props.dispatch(reloadMetricsData(this.props.projectID, this.props.projectMetricTypes.types));
         } else {

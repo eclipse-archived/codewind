@@ -48,7 +48,6 @@ const CW_SETTINGS_PROPERTIES = [
 module.exports = class Project {
 
   constructor(args, workspace) {
-    // TODO evaluate use of just .id instead of .projectID
     this.projectID = args.projectID || uuidv1();
     this.name = args.name;
     this.codewindVersion = args.codewindVersion || process.env.CODEWIND_VERSION;
@@ -65,6 +64,17 @@ module.exports = class Project {
 
     // locOnDisk is used by the UI and needs to match what it sees.
     if (args.locOnDisk) this.locOnDisk = args.locOnDisk;
+
+    // Set up the pathToMonitor, this must always be unix style
+    if (args.pathToMonitor) { 
+      this.pathToMonitor = args.pathToMonitor;
+    } else {
+      this.pathToMonitor = this.locOnDisk;
+      const isWindowsPath = cwUtils.isWindowsAbsolutePath(this.pathToMonitor);
+      if (isWindowsPath) {
+        this.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(this.pathToMonitor);
+      } 
+    }
     
     // Project status information
     this.host = args.host || '';
@@ -289,6 +299,7 @@ module.exports = class Project {
       // If a file doesn't include the metrics of that type, skip the file
       if (metricsFile[metricsFileType] != undefined) {
         const metric = {
+          container: loadTestDirectories[i],
           time: metricsFile.time.data.start || metricsFile.time.data.startTime,
           endTime: metricsFile.time.data.end || metricsFile.time.data.endTime,
           value: metricsFile[metricsFileType] };

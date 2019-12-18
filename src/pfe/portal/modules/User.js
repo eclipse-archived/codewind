@@ -219,62 +219,28 @@ module.exports = class User {
    * Function to get watchList for all open projects
    */
   async getWatchList() {
-    let fileNameList = await fs.readdir(this.directories.projects);
     let watchList = {
       projects: []
     };
-    await Promise.all(fileNameList.map(async (fileName) => {
-      let file = path.join(this.directories.projects, fileName);
-      if (!fileName.startsWith('.')) {
-        try {
-          const projFile = await fs.readJson(file);
-          // do not add closed project in the list
-          if (projFile.state == Project.STATES.closed) {
-            return;
-          }
-          const project = {};
-          const projName = projFile.name;
-          project.pathToMonitor = projFile.locOnDisk;
-          const isWindowsPath = cwUtils.isWindowsAbsolutePath(project.pathToMonitor);
-          if (isWindowsPath) {
-            project.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(project.pathToMonitor);
-          }
-          project.projectID = projFile.projectID;
-          project.ignoredPaths = projFile.ignoredPaths;
-
-          // read settings file for additional refPaths to monitor
-          const settFile = await this.getSettings(projFile);
-          if (Array.isArray(settFile.refPaths)) {
-            project.refPaths = [];
-            settFile.refPaths.forEach((refPath) => {
-              if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
-                  (typeof refPath.to === "string" && (refPath.to = refPath.to.trim()).length > 0)) {
-                  project.refPaths.push({ from: refPath.from, to: refPath.to });
-              }
-            });
-          }
-
-          if (projFile.projectWatchStateId == undefined) {
-            project.projectWatchStateId = crypto.randomBytes(16).toString("hex");
-            let projectUpdate = { projectID: projFile.projectID, projectWatchStateId: project.projectWatchStateId };
-            await this.projectList.updateProject(projectUpdate);
-          } else {
-            project.projectWatchStateId = projFile.projectWatchStateId;
-          }
-          project.projectCreationTime = projFile.creationTime;
-          log.debug("Find project " + projName + " with info: " + JSON.stringify(project));
-          watchList.projects.push(project);
-        } catch (err) {
-          // Corrupt project inf file
-          if (err instanceof SyntaxError) {
-            log.error('Failed to parse project file ' + fileName);
-          } else {
-            log.error(err);
-          }
+    let projectArray = this.projectList.getAsArray();
+    for (const project of projectArray) {
+      // Only include enabled projects
+      if (project.isOpen()) {
+        if (project.projectWatchStateId == undefined) {
+          const watchStateId = crypto.randomBytes(16).toString("hex");
+          const projectUpdate = { projectID: project.projectID, projectWatchStateId: watchStateId };
+          await this.projectList.updateProject(projectUpdate);
+        } 
+        let projectUpdate = {
+          projectID: project.projectID,
+          projectWatchStateId: project.projectWatchStateId,
+          pathToMonitor: project.pathToMonitor,
+          ignoredPaths: project.ignoredPaths,
+          projectCreationTime: project.creationTime
         }
+        watchList.projects.push(projectUpdate);
       }
-    }));
-
+    }
     log.debug("The watch list: " + JSON.stringify(watchList));
     return watchList;
   }

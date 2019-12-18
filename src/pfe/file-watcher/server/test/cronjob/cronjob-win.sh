@@ -21,7 +21,7 @@ cd /c
 TEST_WD=$(pwd)
 
 CW_CONTAINER="codewind-pfe"
-DEFAULT_IMG="codewind-pfe-amd64"
+DEFAULT_IMG="eclipse/codewind-pfe-amd64"
 IN_CONTAINER_PATH="/file-watcher/server"
 
 IMAGE_TAG=""
@@ -131,7 +131,7 @@ if [[ ! -z "$IMAGE_TAG" ]]; then
 	docker pull $IMAGE_TAG
 	checkExitCode $? "Failed to pull down custom image."
 	
-	echo -e "${BLUE}>> Tagging custom image: $IMAGE_TAG -> codewind-pfe-amd64  ... ${RESET}"
+	echo -e "${BLUE}>> Tagging custom image: $IMAGE_TAG -> $DEFAULT_IMG  ... ${RESET}"
 	docker tag $IMAGE_TAG $DEFAULT_IMG
 	checkExitCode $? "Failed to tag custom image."
 fi
