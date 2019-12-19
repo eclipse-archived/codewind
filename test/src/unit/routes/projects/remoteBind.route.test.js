@@ -134,28 +134,34 @@ describe('remoteBind.route.js', () => {
             topLevelDirectories.should.deep.equal(['some']);
         });
     });
-    describe('compareDirectoryNames(string, prefix)', () => {
-        const compareDirectoryNames = RemoteBind.__get__('compareDirectoryNames');
-        it('returns true as relative the file paths are equivalent', async() => {
-            compareDirectoryNames('filepath/', 'filepath').should.be.true;
+    describe('isSubdirectory(dir1, dir2)', () => {
+        const isSubdirectory = RemoteBind.__get__('isSubdirectory');
+        it('returns true as relative the file paths are equivalent (1)', async() => {
+            isSubdirectory('filepath/', 'filepath').should.be.true;
         });
-        it('returns true as relative the file paths are equivalent', async() => {
-            compareDirectoryNames('filepath', 'filepath/').should.be.true;
+        it('returns true as relative the file paths are equivalent (2)', async() => {
+            isSubdirectory('filepath', 'filepath/').should.be.true;
         });
-        it('returns true as relative the file paths are equivalent', async() => {
-            compareDirectoryNames('filepath', 'filepath').should.be.true;
+        it('returns true as relative the file paths are equivalent (3)', async() => {
+            isSubdirectory('filepath', 'filepath').should.be.true;
         });
-        it('returns false as relative the file paths are different', async() => {
-            compareDirectoryNames('filepath', 'filepathextended').should.be.false;
+        it('returns false as relative the file paths are different (1)', async() => {
+            isSubdirectory('filepath', 'filepathextended').should.be.false;
         });
-        it('returns false as relative the file paths are different', async() => {
-            compareDirectoryNames('filepathextended', 'filepath').should.be.false;
+        it('returns false as relative the file paths are different (2)', async() => {
+            isSubdirectory('filepathextended', 'filepath').should.be.false;
         });
-        it('returns false as relative the file paths are different', async() => {
-            compareDirectoryNames('.filepath', 'filepath').should.be.false;
+        it('returns false as relative the file paths are different (3)', async() => {
+            isSubdirectory('.filepath', 'filepath').should.be.false;
         });
         it('returns false as a relative path and an absolute path are different', async() => {
-            compareDirectoryNames('/filepath', 'filepath').should.be.false;
+            isSubdirectory('/filepath', 'filepath').should.be.false;
+        });
+        it('returns true as filepath/subdirectory is a subdirectory of filepath', async() => {
+            isSubdirectory('filepath/subdirectory', 'filepath').should.be.true;
+        });
+        it('returns false as filepath is not a subdirectory of filepath/subdirectory', async() => {
+            isSubdirectory('filepath', 'filepath/subdirectory').should.be.false;
         });
     });
     describe('deletePathsInArray(directory, arrayOfFiles)', () => {

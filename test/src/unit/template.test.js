@@ -762,7 +762,7 @@ describe('Templates.js', function() {
                 await templateController.deleteRepository(url);
                 templateController.repositoryList.should.deep.equal([]);
             });
-            it('attempts to delete a repo that does not exist', async function() {
+            it('attempts to delete a repo that does not exist', function() {
                 const mockRepoList = [sampleRepos.codewind];
                 const templateController = new Templates(testWorkspaceDir);
                 templateController.repositoryList = [...mockRepoList];

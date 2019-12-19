@@ -294,19 +294,20 @@ function fileIsProtected(filePath) {
 function getTopLevelDirectories(directoryArray) {
   let topLevelDirArray = [];
   directoryArray.forEach(dir => {
-    const existingTopLevelDirectories = topLevelDirArray.filter(rootDirectory => compareDirectoryNames(dir, rootDirectory));
+    const existingTopLevelDirectories = topLevelDirArray.filter(rootDirectory => isSubdirectory(dir, rootDirectory));
     if (existingTopLevelDirectories.length === 0) {
       // if there are subdirectories of "dir" already in the topLevelDirArray remove them
-      topLevelDirArray = topLevelDirArray.filter(finalDir => !compareDirectoryNames(finalDir, dir));
+      topLevelDirArray = topLevelDirArray.filter(finalDir => !isSubdirectory(finalDir, dir));
       topLevelDirArray.push(dir);
     }
   });
   return topLevelDirArray;
 }
 
-function compareDirectoryNames(string, prefix) {
-  string = path.normalize(string + '/');
-  prefix = path.normalize(prefix + '/');
+function isSubdirectory(dir1, dir2) {
+  // returns true if dir2 is a subdirectory of dir1 or they are the same
+  const string = path.normalize(dir1 + '/');
+  const prefix = path.normalize(dir2 + '/');
   return string.startsWith(prefix);
 }
 
