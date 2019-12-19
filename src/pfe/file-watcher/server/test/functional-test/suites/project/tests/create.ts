@@ -83,16 +83,7 @@ export default class CreateTest {
 
     runCreateWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         it("create project", async () => {
-            let containerInfo, containerName, imageName;
-            if (!process.env.IN_K8) {
-                containerInfo = await utils.getAllDockerContainerInfo(projData.projectID);
-                containerName = await utils.getDockerContainerNames();
-                imageName = await utils.getDockerImageNames();
-
-                expect(!containerInfo);
-                expect(!imageName.includes(projData.projectID));
-                expect(!containerName.includes(projData.projectID));
-            }
+            process.env.IN_K8 ? await utils.checkForKubeResources(projData.projectID, false) : await utils.checkForDockerResources(projData.projectID, false);
 
             let dataFile, fileContent, chosenTimestamp, startTime;
             if (process.env.TURBINE_PERFORMANCE_TEST) {
@@ -101,7 +92,6 @@ export default class CreateTest {
                 chosenTimestamp = Object.keys(fileContent[projectTemplate][projectLang]).sort().pop();
                 startTime = Date.now();
             }
-
 
             const info: any = await createProject(projData);
             expect(info).to.exist;
@@ -114,24 +104,14 @@ export default class CreateTest {
             await waitForCreationEvent(projData.projectType, projectTemplate);
             await waitForProjectStartedEvent();
 
-            if (!process.env.IN_K8) {
-                containerInfo = await utils.getAllDockerContainerInfo(projData.projectID);
-                containerName = await utils.getDockerContainerNames();
-                imageName = await utils.getDockerImageNames();
-
-                expect(containerInfo);
-                expect(containerInfo[0].Image.includes(projData.projectID));
-
-                expect(imageName.includes(projData.projectID));
-                expect(containerName.includes(projData.projectID));
-            }
-
             if (process.env.TURBINE_PERFORMANCE_TEST) {
                 const endTime = Date.now();
                 const totalTestTime = (endTime - startTime) / 1000;
                 fileContent[projectTemplate][projectLang][chosenTimestamp]["create"] = totalTestTime;
                 await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
             }
+
+            process.env.IN_K8 ? await utils.checkForKubeResources(projData.projectID) : await utils.checkForDockerResources(projData.projectID);
         }).timeout(timeoutConfigs.createTestTimeout);
 
         async function waitForCreationEvent(projectType: string, projectTemplate: string): Promise<void> {

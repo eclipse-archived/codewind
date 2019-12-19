@@ -43,6 +43,9 @@ export const readFileAsync = promisify(fs.readFile);
 export const openAsync = promisify(fs.open);
 export const readAsync = promisify(fs.readFile);
 
+const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
+const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
+
 const TEST_LOG_CONTEXTS = ["before", "after", "describe", "it", "info"];
 const TEST_LOG_COLORS: any = {
     [TEST_LOG_CONTEXTS[0]]: "yellowBright",
@@ -53,6 +56,11 @@ const TEST_LOG_COLORS: any = {
 };
 
 const docker = new dockerode();
+let k8sClient: any = undefined;
+
+if (process.env.IN_K8) {
+    k8sClient = new Client({ config: config.getInCluster(), version: "1.9"});
+}
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
     const pingUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.projects;
@@ -282,4 +290,61 @@ export async function getDockerImageNames(): Promise<Array<string>> {
         }
     }
     return imageNames;
+}
+
+
+export async function checkForDockerResources(projectID: string, exists: boolean = true): Promise<void> {
+    const containerInfo = await getAllDockerContainerInfo(projectID);
+    const containerName = await getDockerContainerNames();
+    const imageName = await getDockerImageNames();
+
+    if (exists) {
+        expect(containerInfo);
+        expect(containerInfo[0].Image.includes(projectID));
+        expect(imageName.includes(projectID));
+        expect(containerName.includes(projectID));
+    } else {
+        expect(!containerInfo);
+        expect(!imageName.includes(projectID));
+        expect(!containerName.includes(projectID));
+    }
+}
+
+export async function checkForKubeResources(projectID: string, exists: boolean = true): Promise<void> {
+    let deploymentResp, podResp, serviceResp;
+    try {
+        deploymentResp = await k8sClient.apis.apps.v1.namespaces(pfe_configs.cheNamespace).deployments.get({ qs: { labelSelector: "projectID=" + projectID } });
+        podResp = await k8sClient.api.v1.namespaces(pfe_configs.cheNamespace).pods.get({ qs: { labelSelector: "projectID=" + projectID } });
+        serviceResp = await k8sClient.api.v1.namespaces(pfe_configs.cheNamespace).services.get({ qs: { labelSelector: "projectID=" + projectID } });
+
+        if (exists) {
+            expect(deploymentResp);
+            expect(deploymentResp.body);
+            expect(deploymentResp.body.items);
+            expect(deploymentResp.body.items.length).to.be.greaterThan(0);
+            expect(deploymentResp.body.items[0].metadata.name).includes(projectID);
+
+            expect(podResp);
+            expect(podResp.body);
+            expect(podResp.body.items);
+            expect(podResp.body.items.length).to.be.greaterThan(0);
+            expect(podResp.body.items[0].metadata.name).includes(projectID);
+
+            expect(serviceResp);
+            expect(serviceResp.body);
+            expect(serviceResp.body.items);
+            expect(serviceResp.body.items.length).to.be.greaterThan(0);
+            expect(serviceResp.body.items[0].metadata.name).includes(projectID);
+        } else {
+            expect(deploymentResp);
+            expect(deploymentResp.body.items);
+            expect(deploymentResp.body.items.length).to.equal(0);
+
+            expect(serviceResp);
+            expect(serviceResp.body.items);
+            expect(serviceResp.body.items.length).to.equal(0);
+        }
+    } catch (err) {
+        fail(`failed to find kube deployment ${err}`);
+    }
 }
