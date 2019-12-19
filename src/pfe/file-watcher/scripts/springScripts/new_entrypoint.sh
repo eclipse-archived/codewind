@@ -42,8 +42,6 @@ if [[ "$IN_K8" == "true" ]]; then
     ln -s /codewind-workspace/$PROJECT_NAME /root/app
 fi
 
-# Create symlinks to /root/logs and /root/app on the Liberty app container / pod
-# Note that $PROJECT_NAME is an env-var defined and set in the liberty app's deployment.yaml
 mkdir -p /root/logs
 
 # ------ keep old new entry point logic the same ------
