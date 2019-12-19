@@ -29,7 +29,7 @@ const testDirectory = path.join(__dirname, 'remoteBindRouteTest');
 
 describe('remoteBind.route.js', () => {
     suppressLogOutput(RemoteBind);
-    describe('getFilesToDelete(existingFileArray, newFileArray)', () => {
+    describe('getPathsToDelete(existingPathArray, newPathArray)', () => {
         const getPathsToDelete = RemoteBind.__get__('getPathsToDelete');
         it('returns an array of files to be deleted', () => {
             const existingFileArray = ['package.json', 'package.lock'];
