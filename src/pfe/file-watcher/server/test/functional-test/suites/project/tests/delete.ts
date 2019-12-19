@@ -101,18 +101,18 @@ export default class DeleteTest {
                 expect(event.eventData["projectID"]).to.equal(projData.projectID);
                 expect(event.eventData).to.haveOwnProperty("status");
                 expect(event.eventData["status"]).to.equal("success");
-
-                if (process.env.TURBINE_PERFORMANCE_TEST) {
-                    const endTime = Date.now();
-                    const totalTestTime = (endTime - startTime) / 1000;
-                    fileContent[projectTemplate][projectLang][chosenTimestamp]["delete"] = totalTestTime;
-                    await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
-                }
-
-                process.env.IN_K8 ? await utils.checkForKubeResources(projData.projectID, false) : await utils.checkForDockerResources(projData.projectID, false);
             } else {
                 fail(`delete project test failed to listen for ${targetEvent}`);
             }
+
+            if (process.env.TURBINE_PERFORMANCE_TEST) {
+                const endTime = Date.now();
+                const totalTestTime = (endTime - startTime) / 1000;
+                fileContent[projectTemplate][projectLang][chosenTimestamp]["delete"] = totalTestTime;
+                await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
+            }
+
+            process.env.IN_K8 ? await utils.checkForKubeResources(projData.projectID, false) : await utils.checkForDockerResources(projData.projectID, false);
         }).timeout(timeoutConfigs.createTestTimeout);
     }
 }
