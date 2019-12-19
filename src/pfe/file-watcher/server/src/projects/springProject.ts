@@ -208,6 +208,16 @@ export function getDefaultDebugPort(): string {
 
 /**
  * @function
+ * @description Get the default ping timeout of a spring project.
+ *
+ * @returns number
+ */
+export function getDefaultPingTimeout(): number {
+    return 30;
+}
+
+/**
+ * @function
  * @description Stop a spring project.
  *
  * @param projectInfo <Required | ProjectInfo> - The metadata information for a project.

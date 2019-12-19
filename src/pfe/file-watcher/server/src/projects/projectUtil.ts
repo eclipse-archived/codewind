@@ -61,9 +61,9 @@ const projectList: Array<string> = [];
 
 const isApplicationPodUpIntervalMap = new Map();
 
-export const firstTimePingArray = new Array();
-
 export let pingMessage: string;
+
+export const firstTimePingArray = new Array();
 
 export interface ProjectEvent {
     operationId: string;
@@ -82,6 +82,7 @@ export interface ProjectEvent {
     isHttps?: boolean;
     appBaseURL?: string;
     compositeAppName?: string;
+    statusPingTimeout?: string;
 }
 
 export interface ProjectLog {
@@ -351,6 +352,9 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
     }
     if (typeof operation.projectInfo.isHttps == "boolean") {
         projectInfo.isHttps = operation.projectInfo.isHttps;
+    }
+    if (operation.projectInfo.statusPingTimeout) {
+        projectInfo.statusPingTimeout = operation.projectInfo.statusPingTimeout.toString();
     }
 
     const projectMetadata = projectsController.getProjectMetadataById(projectID);
@@ -1311,6 +1315,9 @@ export async function buildAndRun(operation: Operation, command: string): Promis
     }
     if (typeof operation.projectInfo.isHttps == "boolean") {
         projectEvent.isHttps = operation.projectInfo.isHttps;
+    }
+    if (operation.projectInfo.statusPingTimeout) {
+        projectEvent.statusPingTimeout = operation.projectInfo.statusPingTimeout.toString();
     }
     const buildInfo: BuildRequest = {
         projectLocation: projectLocation,

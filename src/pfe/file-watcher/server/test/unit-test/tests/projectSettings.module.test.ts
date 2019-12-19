@@ -27,7 +27,7 @@ export function projectSettingsTestModule(): void {
     let internalDebugPortStatus = "";
     let internalPortStatus = "";
     let projectSettingsStatus = "";
-
+    let statusPingTimeoutValue = "";
     let internalPortValue = "";
 
     socket.registerListener({
@@ -52,6 +52,8 @@ export function projectSettingsTestModule(): void {
                         internalPortValue = data.ports.internalPort;
                         internalPortStatus = data.status;
                     }
+                } else if (data.statusPingTimeout) {
+                    statusPingTimeoutValue = data.statusPingTimeout;
                 } else {
                     projectSettingsStatus = data.status;
                 }
@@ -290,6 +292,55 @@ export function projectSettingsTestModule(): void {
             });
         }
     });
+
+    describe("combinational testing of changeStatusPingTimeout function", () => {
+
+        const projectMetadataPath = path.join(app_configs.projectDataDir, "dummynodeproject");
+        const originalProjectMetadata = path.join(app_configs.projectDataDir, "dummynodeproject.json");
+        const testProjectMetadata = path.join(projectMetadataPath, "dummynodeproject.json");
+
+        before("create test directories", async () => {
+            if (!(await existsAsync(projectMetadataPath))) {
+                await mkdirAsync(projectMetadataPath);
+                await copyAsync(originalProjectMetadata, testProjectMetadata);
+            }
+        });
+
+        after("remove test directories", async () => {
+            if ((await existsAsync(projectMetadataPath))) {
+                await unlinkAsync(testProjectMetadata);
+                await rmdirAsync(projectMetadataPath);
+            }
+        });
+
+        const combinations: any = {
+            "combo1": {
+                "statusPingTimeoutSettings": {
+                    "statusPingTimeout": "10"
+                },
+                "result": 10
+            },
+            "combo2": {
+                "statusPingTimeoutSettings": {
+                    "statusPingTimeout": "test"
+                },
+                "result": 30
+            }
+        };
+
+        for (const combo of Object.keys(combinations)) {
+            const statusPingTimeoutSettings = combinations[combo]["statusPingTimeoutSettings"];
+            const expectedResult = combinations[combo]["result"];
+
+            it(combo + " => statusPingTimeoutSettings: " + JSON.stringify(statusPingTimeoutSettings), async () => {
+                const projectID: string = "dummynodeproject";
+
+                await projectSettings.projectSpecificationHandler(projectID, statusPingTimeoutSettings);
+                expect(statusPingTimeoutValue).to.equal(expectedResult);
+            });
+        }
+    });
+
 
     describe("combinational testing of changeMavenProfiles function", () => {
 

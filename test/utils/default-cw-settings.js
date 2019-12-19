@@ -7,6 +7,7 @@ const defaultSpringSettings = {
     mavenProfiles: [''],
     mavenProperties: [''],
     isHttps: false,
+    statusPingTimeout: '',
 };
 
 const defaultLibertySettings = {
@@ -18,6 +19,7 @@ const defaultLibertySettings = {
     mavenProfiles: [''],
     mavenProperties: [''],
     isHttps: false,
+    statusPingTimeout: '',
 };
 
 const defaultNodeSettings = {
@@ -27,6 +29,7 @@ const defaultNodeSettings = {
     healthCheck: '',
     ignoredPaths: [''],
     isHttps: false,
+    statusPingTimeout: '',
 };
 
 const defaultSwiftSettings = {
@@ -35,6 +38,7 @@ const defaultSwiftSettings = {
     healthCheck: '',
     ignoredPaths: [''],
     isHttps: false,
+    statusPingTimeout: '',
 };
 
 const defaultDockerSettings = {
@@ -43,6 +47,7 @@ const defaultDockerSettings = {
     healthCheck: '',
     ignoredPaths: [''],
     isHttps: false,
+    statusPingTimeout: '',
 };
 
 module.exports = {

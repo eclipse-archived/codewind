@@ -14,6 +14,7 @@ import * as io from "../utils/socket";
 import * as projectUtil from "../projects/projectUtil";
 import * as logger from "../utils/logger";
 import * as locale from "../utils/locale";
+import * as projectExtensions from "../extensions/projectExtensions";
 import { actionMap } from "../projects/actions";
 import { ContainerStates } from "../projects/constants";
 import { ProjectInfo } from "../projects/Project";
@@ -47,7 +48,7 @@ const buildRequiredMap = new Map();
 
 const pingInterval = 10000;
 const inTransitPingInterval = 2000;
-const pingCountMap = new Map();
+export const pingCountMap = new Map();
 
 // Keep track of project status.  The type parameter is used to determine the type of the status
 // such as application state or build status.
@@ -233,7 +234,6 @@ export async function updateProjectStatus(type: string, projectID: string, statu
             }
             appStateMap.set(projectID, new ProjectState(newState, newError, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus ));
 
-
             io.emitOnListener("projectStatusChanged", data);
         }
     } else if (type == STATE_TYPES.buildState) {
@@ -337,6 +337,7 @@ export function deleteProject(projectID: string): void {
     appStateMap.delete(projectID);
     buildStateMap.delete(projectID);
     buildRequiredMap.delete(projectID);
+    pingCountMap.delete(projectID);
     if (projectUtil.firstTimePingArray.indexOf(projectID) > -1) {
         projectUtil.firstTimePingArray.splice(projectUtil.firstTimePingArray.indexOf(projectID), 1);
     }
@@ -470,9 +471,10 @@ function pingInTransitApplications(): void {
                                 const oldMsg = appStateMap.get(projectID).msg;
                                 let newState = oldState;
                                 let newMsg = stateInfo.error;
+
                                 let pingCount = pingCountMap.get(projectID);
-                                // 30 pings = 1 min timeout
-                                const pingCountLimit = 30;
+                                const pingCountLimit = projectInfo.statusPingTimeout;
+
                                 if (newMsg) { newMsg = newMsg.toString(); } // Convert from Error to string
                                 if (stateInfo.hasOwnProperty("isAppUp")) {
                                     if (oldState === AppState.starting && stateInfo.isAppUp) {

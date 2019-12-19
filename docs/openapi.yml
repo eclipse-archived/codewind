@@ -1700,6 +1700,7 @@ components:
       required:
         - timestamp
         - fileList
+        - directoryList
         - modifiedList
       properties:
         timestamp:
@@ -1710,6 +1711,10 @@ components:
           description: an array of all files the project contains
           type: array
           example: ["/project/file1", "/project/file2", "project/modifiedfile1"]
+        directoryList:
+          description: an array of all directories the project contains
+          type: array
+          example: ["/project"]
         modifiedList:
           description: an array of files that have been modified since the last project upload
           type: array
