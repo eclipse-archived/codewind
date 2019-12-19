@@ -287,7 +287,7 @@ function getPathsToDelete(existingPathArray, newPathArray) {
 }
 
 function fileIsProtected(filePath) {
-  const protectedPrefixes = [".odo/", "node_modules/"];
+  const protectedPrefixes = [".odo/", "node_modules/", ".m2/"];
   return protectedPrefixes.some((prefix) => filePath.startsWith(prefix));
 }
 
