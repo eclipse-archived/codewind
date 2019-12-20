@@ -9,6 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 import mocha from "mocha";
+import * as _ from "lodash";
 import { expect } from "chai";
 import fs from "fs";
 import path from "path";
@@ -75,8 +76,8 @@ describe("PFE - functional test", () => {
 
 function runAllTests(): void {
   genericSuite.runTest();
-  for (const chosenTemplate of Object.keys(projectTypes)) {
-    for (const chosenProject of projectTypes[chosenTemplate]) {
+  for (const chosenTemplate of _.shuffle(Object.keys(projectTypes))) {
+    for (const chosenProject of _.shuffle(projectTypes[chosenTemplate])) {
       if (process.env.TURBINE_PERFORMANCE_TEST) {
         createDataFile(chosenTemplate, chosenProject);
       }
