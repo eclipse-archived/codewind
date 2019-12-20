@@ -12,6 +12,7 @@ import mocha from "mocha";
 import { expect } from "chai";
 import * as _ from "lodash";
 import path from "path";
+import fs from "fs";
 
 import * as projectsController from "../../../../../src/controllers/projectsController";
 import { updateProjectForNewChange } from "../../../lib/project";
@@ -40,17 +41,19 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
 
         const requiredKeys = ["projectID", "timestamp", "chunk", "chunk_total", "eventArray"];
         for (const key of requiredKeys) {
-            it(`call updateProjectForNewChange without required key: ${key}`, async() => {
-                const testData = _.cloneDeep(data);
-                delete testData[key];
-                const info: any = await updateProjectForNewChange(testData.projectID, testData.timestamp, testData.chunk, testData.chunk_total, testData.eventArray);
-                expect(info);
-                expect(info.statusCode);
-                expect(info.statusCode).to.equal(400);
-                expect(info.error);
-                expect(info.error).to.haveOwnProperty("msg");
-                expect(info.error.msg).to.equal("Bad request. projectID, timestamp, chunk, chunk_total and eventArray are required.");
-            });
+            if (!process.env.TURBINE_PERFORMANCE_TEST) {
+                it(`call updateProjectForNewChange without required key: ${key}`, async() => {
+                    const testData = _.cloneDeep(data);
+                    delete testData[key];
+                    const info: any = await updateProjectForNewChange(testData.projectID, testData.timestamp, testData.chunk, testData.chunk_total, testData.eventArray);
+                    expect(info);
+                    expect(info.statusCode);
+                    expect(info.statusCode).to.equal(400);
+                    expect(info.error);
+                    expect(info.error).to.haveOwnProperty("msg");
+                    expect(info.error.msg).to.equal("Bad request. projectID, timestamp, chunk, chunk_total and eventArray are required.");
+                });
+            }
         }
 
         const types = ["MODIFY", "CREATE"];
@@ -66,8 +69,29 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
             if (type.toLowerCase() === "modify") filesList = project_configs.filesToUpdate[projectTemplate] && project_configs.filesToUpdate[projectTemplate][projectLang] || [];
             for (const file of filesList) {
                 it(`${type.toLowerCase()} file: ${file}`, async () => {
+                    let dataFile, fileContent, chosenTimestamp, startTime;
+                    if (process.env.TURBINE_PERFORMANCE_TEST) {
+                        dataFile = path.resolve(__dirname, "..", "..", "..", "..", "performance-test", "data", process.env.TEST_TYPE, process.env.TURBINE_PERFORMANCE_TEST, "performance-data.json");
+                        fileContent = JSON.parse(await fs.readFileSync(dataFile, "utf-8"));
+                        chosenTimestamp = Object.keys(fileContent[projectTemplate][projectLang]).sort().pop();
+                        startTime = Date.now();
+                    }
+
                     const fileToChange = file;
                     const pathFileToChange = path.join(projData.location, fileToChange);
+
+                    if (file.toLowerCase() === "dockerfile") {
+                        const dockerFileContents = await fs.readFileSync(pathFileToChange).toString();
+                        const contentSplits = dockerFileContents.split(/\r?\n/);
+                        if (projectLang.toLowerCase() == "liberty") {
+                            contentSplits.splice(contentSplits.indexOf("USER root") + 1, 0, "RUN mkdir -p /home/defaut/turbine-test");
+                        } else {
+                            contentSplits.splice(1, 0, "RUN mkdir -p /turbine-test");
+                        }
+                        await fs.writeFileSync(pathFileToChange, contentSplits.join("\n"), "utf-8");
+                    } else {
+                        await fs.appendFileSync(pathFileToChange, "\r\n", "utf-8");
+                    }
 
                     const testData = _.cloneDeep(data);
                     const events = {
@@ -109,6 +133,13 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
                         }
                     } else {
                         fail(`failed to find ${targetEvent} for updating docker file`);
+                    }
+
+                    if (process.env.TURBINE_PERFORMANCE_TEST) {
+                        const endTime = Date.now();
+                        const totalTestTime = (endTime - startTime) / 1000;
+                        fileContent[projectTemplate][projectLang][chosenTimestamp][`${type.toLowerCase()}-${file}`] = totalTestTime;
+                        await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
                     }
                 }).timeout(timeoutConfigs.createTestTimeout);
             }

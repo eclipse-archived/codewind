@@ -33,12 +33,14 @@ export default class ProjectTest {
 
     run(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
-            this.runProjectActionTest(socket, projData, projectTemplate, projectLang);
-            this.runProjectCapabilityTest(projData.projectID, projectTemplate, projectLang);
+            if (!process.env.TURBINE_PERFORMANCE_TEST) {
+                this.runProjectActionTest(socket, projData, projectTemplate, projectLang);
+                this.runProjectCapabilityTest(projData.projectID, projectTemplate, projectLang);
+                this.runProjectLogsTest(socket, projData, projectTemplate, projectLang);
+                this.runProjectSpecificationTest(socket, projData, projectTemplate, projectLang);
+                this.runUpdateStatusTest(socket, projData, projectTemplate, projectLang);
+            }
             this.runProjectEventTest(socket, projData, projectTemplate, projectLang);
-            this.runProjectLogsTest(socket, projData, projectTemplate, projectLang);
-            this.runProjectSpecificationTest(socket, projData, projectTemplate, projectLang);
-            this.runUpdateStatusTest(socket, projData, projectTemplate, projectLang);
         });
     }
 

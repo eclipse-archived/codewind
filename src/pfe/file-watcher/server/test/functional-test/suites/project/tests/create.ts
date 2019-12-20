@@ -22,6 +22,9 @@ import * as logConfigs from "../../../configs/log.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
+import path from "path";
+import fs from "fs";
+
 export default class CreateTest {
     testName: string;
 
@@ -31,8 +34,10 @@ export default class CreateTest {
 
     run(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
         (runOnly ? describe.only : describe)(this.testName, () => {
-            this.runCreateWithoutProjectID(projData);
-            this.runCreateWithoutProjectType(projData);
+            if (!process.env.TURBINE_PERFORMANCE_TEST) {
+                this.runCreateWithoutProjectID(projData);
+                this.runCreateWithoutProjectType(projData);
+            }
             this.runCreateWithValidData(socket, projData, projectTemplate, projectLang);
             this.afterAllHook(socket, projData, projectTemplate, projectLang);
         });
@@ -78,6 +83,16 @@ export default class CreateTest {
 
     runCreateWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         it("create project", async () => {
+            process.env.IN_K8 ? await utils.checkForKubeResources(projData.projectID, false) : await utils.checkForDockerResources(projData.projectID, false);
+
+            let dataFile, fileContent, chosenTimestamp, startTime;
+            if (process.env.TURBINE_PERFORMANCE_TEST) {
+                dataFile = path.resolve(__dirname, "..", "..", "..", "..", "performance-test", "data", process.env.TEST_TYPE, process.env.TURBINE_PERFORMANCE_TEST, "performance-data.json");
+                fileContent = JSON.parse(await fs.readFileSync(dataFile, "utf-8"));
+                chosenTimestamp = Object.keys(fileContent[projectTemplate][projectLang]).sort().pop();
+                startTime = Date.now();
+            }
+
             const info: any = await createProject(projData);
             expect(info).to.exist;
             expect(info.statusCode).to.exist;
@@ -88,6 +103,15 @@ export default class CreateTest {
 
             await waitForCreationEvent(projData.projectType, projectTemplate);
             await waitForProjectStartedEvent();
+
+            if (process.env.TURBINE_PERFORMANCE_TEST) {
+                const endTime = Date.now();
+                const totalTestTime = (endTime - startTime) / 1000;
+                fileContent[projectTemplate][projectLang][chosenTimestamp]["create"] = totalTestTime;
+                await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
+            }
+
+            process.env.IN_K8 ? await utils.checkForKubeResources(projData.projectID) : await utils.checkForDockerResources(projData.projectID);
         }).timeout(timeoutConfigs.createTestTimeout);
 
         async function waitForCreationEvent(projectType: string, projectTemplate: string): Promise<void> {

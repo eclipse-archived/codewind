@@ -77,6 +77,9 @@ function runAllTests(): void {
   genericSuite.runTest();
   for (const chosenTemplate of Object.keys(projectTypes)) {
     for (const chosenProject of projectTypes[chosenTemplate]) {
+      if (process.env.TURBINE_PERFORMANCE_TEST) {
+        createDataFile(chosenTemplate, chosenProject);
+      }
       runProjectSpecificTest(chosenTemplate, chosenProject);
     }
   }
@@ -94,4 +97,17 @@ function runProjectSpecificTest(chosenTemplate: string, chosenProject: string): 
     language: chosenProject
   };
   projectSuite.runTest(projData, chosenTemplate, chosenProject);
+}
+
+function createDataFile(projectTemplate: string, projectLang: string): void {
+  const dataJson = path.resolve(__dirname, "..", "performance-test", "data", process.env.TEST_TYPE, process.env.TURBINE_PERFORMANCE_TEST, "performance-data.json");
+  if (! fs.existsSync(dataJson)) {
+    fs.writeFileSync(dataJson, "{}", "utf-8");
+  }
+  const fileContent = JSON.parse(fs.readFileSync(dataJson, "utf-8"));
+  fileContent[projectTemplate] = fileContent[projectTemplate] || {};
+  fileContent[projectTemplate][projectLang] = fileContent[projectTemplate][projectLang] || {};
+  const timestamp = Date.now();
+  fileContent[projectTemplate][projectLang][timestamp] = {};
+  fs.writeFileSync(dataJson, JSON.stringify(fileContent));
 }

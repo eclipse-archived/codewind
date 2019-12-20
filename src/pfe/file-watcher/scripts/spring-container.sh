@@ -268,7 +268,6 @@ function dockerRun() {
 	$IMAGE_COMMAND run --network=codewind_network \
 		--entrypoint "/scripts/new_entrypoint.sh" \
 		--name $project \
-		-v "$workspace/.logs":/root/logs \
 		--expose 8080 -p 127.0.0.1::$DEBUG_PORT -P -dt $project
 	if [ $? -eq 0 ]; then
 		echo -e "Copying over source files"
