@@ -408,7 +408,7 @@ pipeline {
                   printf "\n${RED}Error removing docker network $RESET\n";
               fi
 
-              # Remove the default network
+              # Remove the default network 
               printf "\nRemoving docker network\n";
               docker network rm codewind_default
               if [ $? -eq 0 ]; then
