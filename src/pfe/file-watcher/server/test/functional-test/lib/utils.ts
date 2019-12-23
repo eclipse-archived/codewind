@@ -322,19 +322,19 @@ export async function checkForKubeResources(projectID: string, exists: boolean =
             expect(deploymentResp.body);
             expect(deploymentResp.body.items);
             expect(deploymentResp.body.items.length).to.be.greaterThan(0);
-            expect(deploymentResp.body.items[0].metadata.name).includes(projectID);
+            expect(deploymentResp.body.items[0].metadata.name.includes(projectID));
 
             expect(podResp);
             expect(podResp.body);
             expect(podResp.body.items);
             expect(podResp.body.items.length).to.be.greaterThan(0);
-            expect(podResp.body.items[0].metadata.name).includes(projectID);
+            expect(podResp.body.items[0].metadata.name.includes(projectID));
 
             expect(serviceResp);
             expect(serviceResp.body);
             expect(serviceResp.body.items);
             expect(serviceResp.body.items.length).to.be.greaterThan(0);
-            expect(serviceResp.body.items[0].metadata.name).includes(projectID);
+            expect(serviceResp.body.items[0].metadata.name.includes(projectID));
         } else {
             expect(deploymentResp);
             expect(deploymentResp.body.items);
