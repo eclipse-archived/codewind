@@ -189,7 +189,7 @@ function setup {
 }
 
 function run {
-    TURBINE_EXEC_TEST_CMD="while true; do echo Keeping PFE Alive; sleep 60; done & cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${REGISTRY_SECRET_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} NAMESPACE=${NAMESPACE} TURBINE_PERFORMANCE_TEST=${TURBINE_PERFORMANCE_TEST} npm run $TEST_SUITE:test:xml"
+    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; ./test/scripts/keep-pod-alive.sh & JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${REGISTRY_SECRET_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} NAMESPACE=${NAMESPACE} TURBINE_PERFORMANCE_TEST=${TURBINE_PERFORMANCE_TEST} npm run $TEST_SUITE:test:xml; ps -ef | grep \"keep-pod-alive.sh\" | grep -v grep | awk '{print $2}' | xargs kill"
 
     if [ $TEST_TYPE == "local" ]; then
         if [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
