@@ -14,6 +14,7 @@ import * as projectsController from "../../../../../src/controllers/projectsCont
 import { deleteProject } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 import * as utils from "../../../lib/utils";
+import * as appConfigs from "../../../configs/app.config";
 import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
@@ -73,7 +74,9 @@ export default class DeleteTest {
 
     private runDeleteWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         it("delete project", async () => {
-            process.env.IN_K8 ? await utils.checkForKubeResources(projData.projectID) : await utils.checkForDockerResources(projData.projectID);
+            const odoDeploymentConfigSelector = `cw-${appConfigs.projectPrefix}${projectTemplate}-${projectLang}-app`;
+
+            process.env.IN_K8 ? (projectTemplate === appConfigs.codewindTemplates.odo ? await utils.checkForKubeResources("deploymentconfig", odoDeploymentConfigSelector, ["pods"]) : await utils.checkForKubeResources("projectID", projData.projectID)) : await utils.checkForDockerResources(projData.projectID);
 
             let dataFile, fileContent, chosenTimestamp, startTime;
             if (process.env.TURBINE_PERFORMANCE_TEST) {
@@ -112,7 +115,7 @@ export default class DeleteTest {
                 await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
             }
 
-            process.env.IN_K8 ? await utils.checkForKubeResources(projData.projectID, false) : await utils.checkForDockerResources(projData.projectID, false);
+            process.env.IN_K8 ? (projectTemplate === appConfigs.codewindTemplates.odo ? await utils.checkForKubeResources("deploymentconfig", odoDeploymentConfigSelector, ["pods"], false) : await utils.checkForKubeResources("projectID", projData.projectID, ["deployments", "pods", "services"], false)) : await utils.checkForDockerResources(projData.projectID, false);
         }).timeout(timeoutConfigs.createTestTimeout);
     }
 }
