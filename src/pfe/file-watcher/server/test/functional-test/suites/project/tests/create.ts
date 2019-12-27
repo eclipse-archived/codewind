@@ -83,7 +83,9 @@ export default class CreateTest {
 
     runCreateWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
         it("create project", async () => {
-            process.env.IN_K8 ? await utils.checkForKubeResources(projData.projectID, false) : await utils.checkForDockerResources(projData.projectID, false);
+            const odoDeploymentConfigSelector = `cw-${appConfigs.projectPrefix}${projectTemplate}-${projectLang}-app`;
+
+            process.env.IN_K8 ? (projectTemplate === appConfigs.codewindTemplates.odo ? await utils.checkForKubeResources("deploymentconfig", odoDeploymentConfigSelector, ["pods"], false) : await utils.checkForKubeResources("projectID", projData.projectID, ["deployments", "pods", "services"], false)) : await utils.checkForDockerResources(projData.projectID, false);
 
             let dataFile, fileContent, chosenTimestamp, startTime;
             if (process.env.TURBINE_PERFORMANCE_TEST) {
@@ -111,7 +113,7 @@ export default class CreateTest {
                 await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
             }
 
-            process.env.IN_K8 ? await utils.checkForKubeResources(projData.projectID) : await utils.checkForDockerResources(projData.projectID);
+            process.env.IN_K8 ? (projectTemplate === appConfigs.codewindTemplates.odo ? await utils.checkForKubeResources("deploymentconfig", odoDeploymentConfigSelector, ["pods"]) : await utils.checkForKubeResources("projectID", projData.projectID)) : await utils.checkForDockerResources(projData.projectID);
         }).timeout(timeoutConfigs.createTestTimeout);
 
         async function waitForCreationEvent(projectType: string, projectTemplate: string): Promise<void> {
