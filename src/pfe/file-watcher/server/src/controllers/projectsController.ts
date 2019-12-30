@@ -27,6 +27,7 @@ import * as projectUtil from "../projects/projectUtil";
 import * as logHelper from "../projects/logHelper";
 import * as logger from "../utils/logger";
 import * as statusController from "./projectStatusController";
+import * as projectEventsController from "./projectEventsController";
 import * as projectExtensions from "../extensions/projectExtensions";
 import * as processManager from "../utils/processManager";
 import { Validator } from "../projects/Validator";
@@ -394,34 +395,13 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     // set default docker build log for initial project creation
     const logFilePath = path.join(logDirectory, logHelper.buildLogs.dockerBuild + logHelper.logExtension);
 
-
     // note: state here is our own status tracker to track that the build has been started once only
     const project: BuildQueueType = {
         operation: operation,
         handler: selectedProjectHandler
     };
-    let target: BuildQueueType = undefined;
 
-    await lock.acquire("buildQueueLock", done => {
-        // Check if project is already in the build queue, if it is then no need to add it
-        target = buildQueue.find((item) => {
-            return item.operation.projectInfo.projectID === project.operation.projectInfo.projectID;
-        });
-        if (target) {
-            logger.logProjectInfo("The project is already in the build queue so it won't be added again", projectID, projectName);
-        } else {
-            logger.logProjectInfo("Pushing project to build queue", projectID, projectName);
-            buildQueue.push(project);
-        }
-        done();
-    }, async () => {
-        // buildQueueLock release
-        // emit updated queued project ranks
-        if (target) {
-            await emitProjectRanks();
-        }
-        await checkBuildQueue();
-    }, {});
+    await addProjectToBuildQueue(project);
 
     return {
             "statusCode": 202,
@@ -432,11 +412,47 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
 
 /**
  * @function
- * @description Check the build queue periodically (every 5 seconds) and once a project has been created.
+ * @description Checks if a project is already in the build queue or not and then adds it to if it is missing.
+ *
+ * @param project <Required | BuildQueueType> - The project info of type build queue.
+ * @param changedFiles <Optional | IFileChangeEvent> - List of files changed - required for update case scenarios.
  *
  * @returns void
  */
-async function checkBuildQueue(): Promise<void> {
+export async function addProjectToBuildQueue(project: BuildQueueType, changedFiles?: projectEventsController.IFileChangeEvent[]): Promise<void> {
+    let target: BuildQueueType = undefined;
+
+    await lock.acquire("buildQueueLock", done => {
+        // Check if project is already in the build queue, if it is then no need to add it
+        target = buildQueue.find((item) => {
+            return item.operation.projectInfo.projectID === project.operation.projectInfo.projectID;
+        });
+        if (target) {
+            logger.logProjectInfo("The project is already in the build queue so it won't be added again", project.operation.projectInfo.projectID);
+        } else {
+            logger.logProjectInfo("Pushing project to build queue", project.operation.projectInfo.projectID);
+            buildQueue.push(project);
+        }
+        done();
+    }, async () => {
+        // buildQueueLock release
+        // emit updated queued project ranks
+        if (target) {
+            await emitProjectRanks();
+        }
+        await checkBuildQueue(changedFiles);
+    }, {});
+}
+
+/**
+ * @function
+ * @description Check the build queue periodically (every 5 seconds) and once a project has been created.
+ *
+ * @param changedFiles <Optional | IFileChangeEvent> - List of files changed - required for update case scenarios.
+ *
+ * @returns void
+ */
+async function checkBuildQueue(changedFiles?: projectEventsController.IFileChangeEvent[]): Promise<void> {
     let buildQueueLength = 0;
     await lock.acquire(["buildQueueLock", "runningBuildsLock"], done => {
         // assert the builds in progress is always between 0 to MAX_BUILDS inclusive
@@ -458,7 +474,7 @@ async function checkBuildQueue(): Promise<void> {
 
                 logger.logDebug("Metadata for next build: " + JSON.stringify(buildToBeTriggered));
 
-                triggerBuild(buildToBeTriggered);
+                triggerBuild(buildToBeTriggered, changedFiles);
                 runningBuilds.push(buildToBeTriggered);
             }
         }
@@ -481,46 +497,54 @@ async function checkBuildQueue(): Promise<void> {
  * @description Trigger the first build in the queue.
  *
  * @param project <Required | BuildQueueType> - The project metadata.
+ * @param changedFiles <Optional | IFileChangeEvent> - List of files changed - required for update case scenarios.
  *
  * @returns Promise<void>
  */
-async function triggerBuild(project: BuildQueueType): Promise<void> {
+async function triggerBuild(project: BuildQueueType, changedFiles?: projectEventsController.IFileChangeEvent[]): Promise<void> {
     const projectInfo = project.operation.projectInfo;
 
     const projectID = projectInfo.projectID;
     const selectedProjectHandler = project.handler;
 
     const operation = project.operation;
+    const operationType = operation.type;
 
-    logger.logProjectInfo("Beginning build for " + projectID, projectID);
+    logger.logProjectInfo(`Beginning build for ${projectID} for operation type: ${operationType}`, projectID);
 
-    // we need to check for the required files for the corresponding project handler
-    if (selectedProjectHandler.requiredFiles) {
-        const validator = new Validator(operation);
-        await validator.validateRequiredFiles(selectedProjectHandler.requiredFiles);
-        const result: any = validator.result();
-        if (result.status == "failed") {
-            await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.failed, "buildscripts.buildFailMissingFile");
-            return;
+    if (operationType.toLowerCase() === "create") {
+        // we need to check for the required files for the corresponding project handler
+        if (selectedProjectHandler.requiredFiles) {
+            const validator = new Validator(operation);
+            await validator.validateRequiredFiles(selectedProjectHandler.requiredFiles);
+            const result: any = validator.result();
+            if (result.status == "failed") {
+                await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.failed, "buildscripts.buildFailMissingFile");
+                return;
+            }
         }
+
+        logger.logProjectInfo("Build began for " + projectID, projectID);
+        await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.inProgress, "projectStatusController.buildStarted");
+
+        // Hand off operation to appropriate handler for execution
+        logger.logProjectInfo("Handing create operation to the selected project handler", projectID);
+        selectedProjectHandler.create(operation);
+
+        // To notify filewatcher daemon that the project has been added
+        const eventData: NewProjectAddedEvent = {
+            projectID: projectID,
+            ignoredPaths: projectInfo.ignoredPaths
+        };
+        if (projectInfo.refPaths) {
+            eventData.refPaths = projectInfo.refPaths;
+        }
+        io.emitOnListener("newProjectAdded", eventData);
+    } else if (operationType.toLowerCase() === "update") {
+        selectedProjectHandler.update(operation, changedFiles);
+    } else {
+        return;
     }
-
-    logger.logProjectInfo("Build began for " + projectID, projectID);
-    await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.inProgress, "projectStatusController.buildStarted");
-
-    // Hand off operation to appropriate handler for execution
-    logger.logProjectInfo("Handing create operation to the selected project handler", projectID);
-    selectedProjectHandler.create(operation);
-
-    // To notify filewatcher daemon that the project has been added
-    const eventData: NewProjectAddedEvent = {
-        projectID: projectID,
-        ignoredPaths: projectInfo.ignoredPaths
-    };
-    if (projectInfo.refPaths) {
-        eventData.refPaths = projectInfo.refPaths;
-    }
-    io.emitOnListener("newProjectAdded", eventData);
 }
 
 /**
