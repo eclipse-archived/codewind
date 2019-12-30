@@ -225,7 +225,11 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                     if (projectInfo.autoBuildEnabled) {
                         if (!statusController.isBuildInProgressOrQueued(projectID)) {
                             const operation = new projectOperation.Operation("update", projectInfo);
-                            projectHandler.update(operation, changedFilesMap.get(projectInfo.projectID));
+                            const project: projectsController.BuildQueueType = {
+                                operation: operation,
+                                handler: projectHandler
+                            };
+                            await projectsController.addProjectToBuildQueue(project, changedFilesMap.get(projectInfo.projectID));
                         } else {
                             logger.logProjectInfo("Project "  + projectID + " build is in progress, set build request flag to true", projectID);
                             const keyValuePair: UpdateProjectInfoPair = {
@@ -250,7 +254,11 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                     if (projectInfo.autoBuildEnabled) {
                         if (!statusController.isBuildInProgressOrQueued(projectID)) {
                             const operation = new projectOperation.Operation("update", projectInfo);
-                            projectHandler.update(operation, changedFilesMap.get(projectInfo.projectID));
+                            const project: projectsController.BuildQueueType = {
+                                operation: operation,
+                                handler: projectHandler
+                            };
+                            await projectsController.addProjectToBuildQueue(project, changedFilesMap.get(projectInfo.projectID));
                         } else {
                             logger.logProjectInfo("Project "  + projectID + " build is in progress, set build request flag to true", projectID);
                             const keyValuePair: UpdateProjectInfoPair = {

@@ -144,16 +144,20 @@ async function enableAndBuild(projectInfo: ProjectInfo): Promise<void> {
                 logger.logProjectInfo("Start build on switch to auto build enabled", projectID, projectName);
                 const operation = new Operation("update", projectInfo);
                 await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, projectID, statusController.BuildState.inProgress, "action.calculateDifference");
-                const intervaltimer = setInterval(() => {
+                const intervaltimer = setInterval(async () => {
                     // wait till no expected incoming chunks in order to get a full fileChanged array
-                    lock.acquire(["chunkRemainingLock", "changedFilesLock"], done => {
+                    await lock.acquire(["chunkRemainingLock", "changedFilesLock"], async done => {
                         const chunkRemainingArray = projectEventsController.chunkRemainingMap.get(projectID);
                         if (chunkRemainingArray && chunkRemainingArray.length > 0) {
                             done();
                             return;
                         }
                         const changedFiles = projectEventsController.changedFilesMap.get(projectID);
-                        projectHandler.update(operation, changedFiles);
+                        const project: projectsController.BuildQueueType = {
+                            operation: operation,
+                            handler: projectHandler
+                        };
+                        await projectsController.addProjectToBuildQueue(project, changedFiles);
                         projectEventsController.changedFilesMap.delete(projectID);
                         clearInterval(intervaltimer);
                         done();
@@ -229,9 +233,9 @@ export const build = async function (args: IProjectActionParams): Promise<{ oper
     if (!statusController.isBuildInProgressOrQueued(args.projectID)) {
         await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, args.projectID, statusController.BuildState.inProgress, "action.calculateDifference");
         const operation = new Operation("update", projectInfo);
-        const intervaltimer = setInterval(() => {
+        const intervaltimer = setInterval(async () => {
             // wait till no expected incoming chunks in order to get a full fileChanged array
-            lock.acquire(["chunkRemainingLock", "changedFilesLock"], async done => {
+            await lock.acquire(["chunkRemainingLock", "changedFilesLock"], async done => {
                 const chunkRemainingArray = projectEventsController.chunkRemainingMap.get(args.projectID);
                 if (chunkRemainingArray && chunkRemainingArray.length > 0) {
                     done();
@@ -240,7 +244,11 @@ export const build = async function (args: IProjectActionParams): Promise<{ oper
                 const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
                 projectInfo.forceAction = "REBUILD";
                 const changedFiles = projectEventsController.changedFilesMap.get(args.projectID);
-                projectHandler.update(operation, changedFiles);
+                const project: projectsController.BuildQueueType = {
+                    operation: operation,
+                    handler: projectHandler
+                };
+                await projectsController.addProjectToBuildQueue(project, changedFiles);
                 statusController.buildRequired(args.projectID, false);
                 // delete cache from the map, since a build is triggerred
                 projectEventsController.changedFilesMap.delete(args.projectID);
