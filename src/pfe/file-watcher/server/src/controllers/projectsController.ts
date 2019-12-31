@@ -401,6 +401,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         handler: selectedProjectHandler
     };
 
+    // for create operation
     await addProjectToBuildQueue(project);
 
     return {
@@ -415,11 +416,10 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
  * @description Checks if a project is already in the build queue or not and then adds it to if it is missing.
  *
  * @param project <Required | BuildQueueType> - The project info of type build queue.
- * @param changedFiles <Optional | IFileChangeEvent> - List of files changed - required for update case scenarios.
  *
  * @returns void
  */
-export async function addProjectToBuildQueue(project: BuildQueueType, changedFiles?: projectEventsController.IFileChangeEvent[]): Promise<void> {
+export async function addProjectToBuildQueue(project: BuildQueueType): Promise<void> {
     let target: BuildQueueType = undefined;
 
     await lock.acquire("buildQueueLock", done => {
@@ -440,7 +440,7 @@ export async function addProjectToBuildQueue(project: BuildQueueType, changedFil
         if (target) {
             await emitProjectRanks();
         }
-        await checkBuildQueue(changedFiles);
+        await checkBuildQueue();
     }, {});
 }
 
@@ -448,11 +448,9 @@ export async function addProjectToBuildQueue(project: BuildQueueType, changedFil
  * @function
  * @description Check the build queue periodically (every 5 seconds) and once a project has been created.
  *
- * @param changedFiles <Optional | IFileChangeEvent> - List of files changed - required for update case scenarios.
- *
  * @returns void
  */
-async function checkBuildQueue(changedFiles?: projectEventsController.IFileChangeEvent[]): Promise<void> {
+async function checkBuildQueue(): Promise<void> {
     let buildQueueLength = 0;
     await lock.acquire(["buildQueueLock", "runningBuildsLock"], done => {
         // assert the builds in progress is always between 0 to MAX_BUILDS inclusive
@@ -474,7 +472,7 @@ async function checkBuildQueue(changedFiles?: projectEventsController.IFileChang
 
                 logger.logDebug("Metadata for next build: " + JSON.stringify(buildToBeTriggered));
 
-                triggerBuild(buildToBeTriggered, changedFiles);
+                triggerBuild(buildToBeTriggered);
                 runningBuilds.push(buildToBeTriggered);
             }
         }
@@ -497,11 +495,10 @@ async function checkBuildQueue(changedFiles?: projectEventsController.IFileChang
  * @description Trigger the first build in the queue.
  *
  * @param project <Required | BuildQueueType> - The project metadata.
- * @param changedFiles <Optional | IFileChangeEvent> - List of files changed - required for update case scenarios.
  *
  * @returns Promise<void>
  */
-async function triggerBuild(project: BuildQueueType, changedFiles?: projectEventsController.IFileChangeEvent[]): Promise<void> {
+async function triggerBuild(project: BuildQueueType): Promise<void> {
     const projectInfo = project.operation.projectInfo;
 
     const projectID = projectInfo.projectID;
@@ -541,7 +538,7 @@ async function triggerBuild(project: BuildQueueType, changedFiles?: projectEvent
         }
         io.emitOnListener("newProjectAdded", eventData);
     } else if (operationType.toLowerCase() === "update") {
-        selectedProjectHandler.update(operation, changedFiles);
+        selectedProjectHandler.update(operation, projectEventsController.changedFilesMap.get(projectID));
     } else {
         return;
     }
