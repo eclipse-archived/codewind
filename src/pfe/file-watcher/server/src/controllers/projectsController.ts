@@ -521,11 +521,11 @@ async function triggerBuild(project: BuildQueueType): Promise<void> {
             }
         }
 
-        logger.logProjectInfo("Build began for " + projectID, projectID);
+        logger.logProjectInfo(`${operationType} build began for ${projectID}`, projectID);
         await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.inProgress, "projectStatusController.buildStarted");
 
         // Hand off operation to appropriate handler for execution
-        logger.logProjectInfo("Handing create operation to the selected project handler", projectID);
+        logger.logProjectInfo(`Handing ${operationType} operation to the selected project handler`, projectID);
         selectedProjectHandler.create(operation);
 
         // To notify filewatcher daemon that the project has been added
@@ -538,6 +538,11 @@ async function triggerBuild(project: BuildQueueType): Promise<void> {
         }
         io.emitOnListener("newProjectAdded", eventData);
     } else if (operationType.toLowerCase() === "update") {
+        logger.logProjectInfo(`${operationType} build began for ${projectID}`, projectID);
+        await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.inProgress, "projectStatusController.buildStarted");
+
+        // Hand off operation to appropriate handler for execution
+        logger.logProjectInfo(`Handing ${operationType} operation to the selected project handler`, projectID);
         selectedProjectHandler.update(operation, projectEventsController.changedFilesMap.get(projectID));
     } else {
         return;
