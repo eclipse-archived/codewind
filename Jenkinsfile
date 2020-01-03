@@ -16,14 +16,6 @@ pipeline {
 
     stages {
         stage('Build Docker images') {
-            // This when clause disables Tagged build
-            when {
-                beforeAgent true
-                not {
-                    buildingTag()
-                }
-            }
-
             steps {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                     
@@ -116,13 +108,6 @@ pipeline {
         }
 
         stage('Run Turbine Unit Test Suite') {
-            // This when clause disables Tagged build
-            when {
-                beforeAgent true
-                not {
-                    buildingTag()
-                }
-            }
             options {
                 timeout(time: 30, unit: 'MINUTES') 
             }
@@ -169,15 +154,6 @@ pipeline {
             options {
                 timeout(time: 2, unit: 'HOURS') 
             }   
-
-            // This when clause disables Tagged build
-            when {
-                beforeAgent true
-                not {
-                    buildingTag()
-                }
-            }
-                   
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
@@ -280,16 +256,11 @@ pipeline {
         
         stage('Publish Docker images') {
 
-            // This when clause disables PR/Tag build uploads; you may comment this out if you want your build uploaded.
+            // This when clause disables PR build uploads; you may comment this out if you want your build uploaded.
             when {
                 beforeAgent true
-                allOf {
-                    not {
-                        changeRequest()
-                    }
-                    not {
-                        buildingTag()
-                    }
+                not {
+                    changeRequest()
                 }
             }
             
