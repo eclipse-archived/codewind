@@ -481,6 +481,7 @@ router.post('/api/v1/projects/:id/unbind', validateReq, async function (req, res
     }
     user.uiSocket.emit('projectDeletion', data);
     log.error(`Error deleting project: ${util.inspect(data)}`);
+    res.status(500).send(data.error);
   }
 });
 
