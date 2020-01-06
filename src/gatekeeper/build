@@ -1,4 +1,4 @@
-docker build -t codewind-gatekeeper-$(../../script/platform.sh) \
+docker build -t eclipse/codewind-gatekeeper-$(../../script/platform.sh) \
 --label "org.opencontainers.image.created=$(date '+%Y-%m-%dT%k:%M:%S%z')" \
 --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \
 --label "org.opencontainers.image.version=" \

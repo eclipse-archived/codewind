@@ -503,6 +503,8 @@ paths:
             description: if the project with id was not found
           409:
             description: if unbind was already in progress
+          500:
+            description: internal error, includes an error message string if available
 
   /api/v1/projects/{id}/compare:
     get:
@@ -1700,6 +1702,7 @@ components:
       required:
         - timestamp
         - fileList
+        - directoryList
         - modifiedList
       properties:
         timestamp:
@@ -1710,6 +1713,10 @@ components:
           description: an array of all files the project contains
           type: array
           example: ["/project/file1", "/project/file2", "project/modifiedfile1"]
+        directoryList:
+          description: an array of all directories the project contains
+          type: array
+          example: ["/project"]
         modifiedList:
           description: an array of files that have been modified since the last project upload
           type: array
@@ -1791,6 +1798,7 @@ components:
         - pathToMonitor
         - ignoredPaths
         - projectWatchStateId
+        - projectCreationTime
       properties:
         projectID:
           $ref: '#/components/schemas/ProjectID'
@@ -1807,6 +1815,10 @@ components:
           type: string
           format: uuid
           example: "e3f3ba629b5a9e75ebb0818934575a66"
+        projectCreationTime:
+          description: the time in millisconds since epoch that the project was last updated in codewind
+          type: number
+          example: 1576080088223
     FileChangeList:
         type: object
         required:

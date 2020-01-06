@@ -25,6 +25,7 @@ import * as project_configs from "../configs/project.config";
 import * as eventConfigs from "../configs/event.config";
 import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
+import dockerode from "dockerode";
 
 const chalk = require("chalk"); // tslint:disable-line:no-require-imports
 
@@ -42,6 +43,9 @@ export const readFileAsync = promisify(fs.readFile);
 export const openAsync = promisify(fs.open);
 export const readAsync = promisify(fs.readFile);
 
+const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
+const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
+
 const TEST_LOG_CONTEXTS = ["before", "after", "describe", "it", "info"];
 const TEST_LOG_COLORS: any = {
     [TEST_LOG_CONTEXTS[0]]: "yellowBright",
@@ -50,6 +54,13 @@ const TEST_LOG_COLORS: any = {
     [TEST_LOG_CONTEXTS[3]]: "magentaBright",
     [TEST_LOG_CONTEXTS[4]]: "cyanBright"
 };
+
+const docker = new dockerode();
+let k8sClient: any = undefined;
+
+if (process.env.IN_K8) {
+    k8sClient = new Client({ config: config.getInCluster(), version: "1.9"});
+}
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
     const pingUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.projects;
@@ -238,4 +249,125 @@ export function logMsg(suite: string, context: string, msg: string): void {
 
 function writeLog(color: any, suite: string, context: string, msg: string): void {
     console.log(chalk[color](`[${new Date().toUTCString()}] [Suite: ${suite}] [Context: ${context}] ${msg}`));
+}
+
+export async function getAllDockerContainerInfo(containerName?: string): Promise<Array<any>> {
+    const containers = await docker.listContainers();
+    const containerInfos = [];
+    if (containerName) {
+        for (const containerInfo of containers) {
+            for (const cName of containerInfo.Names) {
+                if (cName.includes(containerName)) {
+                    containerInfos.push(containerInfo);
+                }
+            }
+        }
+        return _.uniq(containerInfos);
+    } else {
+        return containers;
+    }
+}
+
+export async function getDockerContainerNames(): Promise<Array<string>> {
+    const containers = await getAllDockerContainerInfo();
+    const containerNames = [];
+    for (const containerInfo of containers) {
+        for (const containerName of containerInfo.Names) {
+            containerNames.push(containerName);
+        }
+    }
+    return containerNames;
+}
+
+export async function getDockerImageNames(): Promise<Array<string>> {
+    const images = await docker.listImages();
+    const imageNames = [];
+    for (const imageInfo of images) {
+        if (imageInfo.RepoTags) {
+            for (const imageName of imageInfo.RepoTags) {
+                imageNames.push(imageName);
+            }
+        }
+    }
+    return imageNames;
+}
+
+
+export async function checkForDockerResources(projectID: string, exists: boolean = true): Promise<void> {
+    const containerInfo = await getAllDockerContainerInfo(projectID);
+    const containerName = await getDockerContainerNames();
+    const imageName = await getDockerImageNames();
+
+    if (exists) {
+        expect(containerInfo);
+        expect(containerInfo[0].Image.includes(projectID));
+        expect(imageName.includes(projectID));
+        expect(containerName.includes(projectID));
+    } else {
+        expect(!containerInfo);
+        expect(!imageName.includes(projectID));
+        expect(!containerName.includes(projectID));
+    }
+}
+
+export async function checkForKubeResources(selectorType: string, selector: string, resources: Array<string> = ["deployments", "pods", "services"], exists: boolean = true): Promise<void> {
+    let deploymentResp, podResp, serviceResp;
+    try {
+        if (resources.includes("deployments")) {
+            deploymentResp = await k8sClient.apis.apps.v1.namespaces(pfe_configs.cheNamespace).deployments.get({ qs: { labelSelector: `${selectorType}=${selector}`} });
+        }
+        if (resources.includes("pods")) {
+            podResp = await k8sClient.api.v1.namespaces(pfe_configs.cheNamespace).pods.get({ qs: { labelSelector: `${selectorType}=${selector}` } });
+        }
+        if (resources.includes("services")) {
+            serviceResp = await k8sClient.api.v1.namespaces(pfe_configs.cheNamespace).services.get({ qs: { labelSelector: `${selectorType}=${selector}` } });
+        }
+
+        if (exists) {
+            if (deploymentResp) {
+                expect(deploymentResp);
+                expect(deploymentResp.body);
+                expect(deploymentResp.body.items);
+                expect(deploymentResp.body.items.length).to.be.greaterThan(0);
+                expect(deploymentResp.body.items[0].metadata.name.includes(selector));
+            }
+
+            if (podResp) {
+                expect(podResp);
+                expect(podResp.body);
+                expect(podResp.body.items);
+                expect(podResp.body.items.length).to.be.greaterThan(0);
+                expect(podResp.body.items[0].metadata.name.includes(selector));
+            }
+
+            if (serviceResp) {
+                expect(serviceResp);
+                expect(serviceResp.body);
+                expect(serviceResp.body.items);
+                expect(serviceResp.body.items.length).to.be.greaterThan(0);
+                expect(serviceResp.body.items[0].metadata.name.includes(selector));
+            }
+        } else {
+            if (deploymentResp) {
+                expect(deploymentResp);
+                expect(deploymentResp.body.items);
+                expect(deploymentResp.body.items.length).to.equal(0);
+            }
+
+            if (podResp) {
+                expect(podResp);
+                expect(podResp.body);
+                expect(podResp.body.items);
+                expect(podResp.body.items.length).to.be.gte(0); // this is because a pod maybe terminating after delete and still show up
+            }
+
+            if (serviceResp) {
+                expect(serviceResp);
+                expect(serviceResp.body.items);
+                expect(serviceResp.body.items.length).to.equal(0);
+            }
+        }
+    } catch (err) {
+        fail(`failed to find kube deployment ${err}`);
+    }
 }

@@ -17,7 +17,6 @@ const FilewatcherError = require('./utils/errors/FilewatcherError');
 const ProjectListError = require('./utils/errors/ProjectListError');
 const WebSocket = require('./WebSocket');
 const crypto = require('crypto');
-const cwUtils = require('./utils/sharedFunctions');
 const fw = require('file-watcher');
 const log = new Logger('FileWatcher.js');
 const filewatcher = new fw();
@@ -225,7 +224,7 @@ module.exports = class FileWatcher {
       location: project.projectPath(false),
       applicationPort: project.applicationPort,
       settings: settingsFileContents,
-      language: project.language 
+      language: project.language
     };
 
     log.info(`Calling createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
@@ -414,10 +413,7 @@ module.exports = class FileWatcher {
       if (fwProject.ignoredPaths || event == "newProjectAdded") {
         // Send all file watcher clients project related data when a new project is added or ignored paths has changed
         const ignoredPaths = fwProject.ignoredPaths;
-        let pathToMonitor = project.locOnDisk;
-        if (process.env.HOST_OS === "windows") {
-          pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
-        }
+        const pathToMonitor = project.pathToMonitor;
         const projectWatchStateId = crypto.randomBytes(16).toString("hex");
         const data = {
           changeType: "update",
@@ -426,10 +422,10 @@ module.exports = class FileWatcher {
           pathToMonitor: pathToMonitor,
           ignoredPaths: ignoredPaths,
         }
-        let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
+        let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths, status: fwProject.status };
         await this.handleFWProjectEvent(event, projectUpdate);
         WebSocket.watchListChanged(data);
-      } else if (fwProject.contextRoot || fwProject.ports || fwProject.mavenProfiles || fwProject.mavenProperties || typeof fwProject.isHttps == "boolean") {
+      } else if (fwProject.contextRoot || fwProject.ports || fwProject.mavenProfiles || fwProject.mavenProperties || fwProject.statusPingTimeout || typeof fwProject.isHttps == "boolean") {
         // Update the project.inf on project settings change
         await this.handleFWProjectEvent(event, fwProject);
       }
@@ -448,11 +444,8 @@ module.exports = class FileWatcher {
       const project = this.user.projectList.retrieveProject(projectID);
       // Send all file watcher clients project related data when a new project is added or ignored paths has changed
       const ignoredPaths = fwProject.ignoredPaths;
-      let pathToMonitor = project.locOnDisk;
-      if (process.env.HOST_OS === "windows") {
-        pathToMonitor = cwUtils.convertFromWindowsDriveLetter(pathToMonitor);
-      }
-
+      const pathToMonitor = project.pathToMonitor;
+  
       let time = Date.now()
       if (project.creationTime) {
         time = project.creationTime
@@ -466,9 +459,9 @@ module.exports = class FileWatcher {
         ignoredPaths: ignoredPaths,
         projectCreationTime: time
       }
-      let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths };
+      let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths, status: fwProject.status };
       await this.handleFWProjectEvent(event, projectUpdate);
-      WebSocket.watchListChanged(data);      
+      WebSocket.watchListChanged(data);
     } catch (err) {
       log.error(err);
     }
@@ -498,7 +491,9 @@ module.exports = class FileWatcher {
         results.error = error;
       }
       let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-      this.user.uiSocket.emit(event, {...results , ...updatedProject});
+      // remove fields which are not required by the UI
+      const { logStreams, ...projectInfoForUI } = updatedProject
+      this.user.uiSocket.emit(event, { ...results, ...projectInfoForUI })
       if (fwProject.buildStatus === 'inProgress') {
         // Reset build logs.
         updatedProject.resetLogStream('build');
@@ -534,7 +529,9 @@ module.exports = class FileWatcher {
     // We have to emit the full project state *and* the operation status.
     // (Storing the status in the project object is bad as it is
     // only about this close operation.)
-    this.user.uiSocket.emit('projectClosed', {...updatedProject, status: fwProject.status});
+    // remove fields which are not required by the UI
+    const { logStreams, ...projectInfoForUI } = updatedProject;
+    this.user.uiSocket.emit('projectClosed', {...projectInfoForUI, status: fwProject.status});
     log.debug('project ' + fwProject.projectID + ' successfully closed');
   }
 
@@ -667,7 +664,7 @@ function logEvent(event, projectData) {
   }
   log.debug(`${msg} ${projectData.projectID})`);
   log.trace(`${msg}: ${JSON.stringify(projectData, null, 2)})`);
-  
+
   if(updateTimerStart > 0 && event == "projectStatusChanged" && projectData.buildStatus && status == 'success'){
     let updateBuildTimerEnd = Date.now()
     log.info(`${projectData.projectID} update->build end time: ${ updateBuildTimerEnd }`)
@@ -681,5 +678,5 @@ function logEvent(event, projectData) {
     log.info(`${msg} ${projectData.projectID}) total time for update->run: ${ totalUpdateTime } seconds`)
     updateTimerStart = 0;
   }
-  
+
 }

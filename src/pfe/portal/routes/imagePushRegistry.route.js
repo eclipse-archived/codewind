@@ -16,27 +16,6 @@ const { validateReq } = require('../middleware/reqValidator');
 const log = new Logger(__filename);
 
 /**
- * Temp API Function to bypass current IDE design for testing
- */
-router.get('/api/v1/registry', function (req, res) {
-  let retval;
-  try {
-    // let user = req.cw_user;
-    log.debug(`GET /api/v1/imagepushregistry called`);
-    retval = {
-      deploymentRegistry: true
-    }
-    res.status(200).send(retval);
-  } catch (error) {
-    log.error(error);
-    const workspaceSettings = {
-      imagePushRegistry: false
-    }
-    res.status(500).send(workspaceSettings);
-  }
-});
-
-/**
  * API Function to get status of Image Push Registry in Workspace Settings
  */
 router.get('/api/v1/imagepushregistry', async function (req, res) {
@@ -66,6 +45,18 @@ router.post('/api/v1/imagepushregistry', validateReq, async function (req, res) 
     const address = req.sanitizeBody('address');
     const namespace = req.sanitizeBody('namespace');
     const operation = req.sanitizeBody('operation');
+
+    // if user enters it as address/namespace in the UI, throw an error
+    if (namespace.startsWith(address.replace(/\/\s*$/, "") + "/")) {
+      const msg = "Namespace cannot be in the format address/namespace. Please enter a valid namespace.";
+      log.error(msg);
+      const workspaceSettings = {
+        imagePushRegistryTest: false,
+        msg: msg
+      }
+      res.status(400).send(workspaceSettings);
+      return;
+    }
 
     // The validateReq middleware will throw an error if operation is not test or set,
     // but it is optional and defaults to test.

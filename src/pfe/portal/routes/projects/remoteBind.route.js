@@ -203,6 +203,7 @@ async function uploadFile(req, res) {
 router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   const projectID = req.sanitizeParams('id');
   const keepFileList = req.sanitizeBody('fileList');
+  const keepDirList = req.sanitizeBody('directoryList');
   const modifiedList = req.sanitizeBody('modifiedList') || [];
   const timeStamp = req.sanitizeBody('timeStamp');
   const IFileChangeEvent = [];
@@ -218,15 +219,31 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         res.status(404).send('No files have been synced');
       } else {
         const pathToProj = project.projectPath();
-        const currentFileList = await listFilesInDirectory(pathToProj);
-        const filesToDelete = await getFilesToDelete(currentFileList, keepFileList);
 
-        log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
-          `${filesToDelete.join(', ')}`);
-        if (filesToDelete.length > 0) {
-          // remove the file from pfe container
-          await deleteFilesInArray(pathToProj, filesToDelete);
+        // Delete by directory
+        const currentDirectoryList = await recursivelyListFilesOrDirectories(true, pathToTempProj);
+        const directoriesToDelete = await getPathsToDelete(currentDirectoryList, keepDirList);
+        if (directoriesToDelete.length > 0) {
+          // Get the highest level directory
+          const topLevelDirectories = getTopLevelDirectories(directoriesToDelete);
+          log.info(`Removing locally deleted directories from project: ${project.name}, ID: ${project.projectID} - ` +
+          `${topLevelDirectories.join(', ')}`);
+          await deletePathsInArray(pathToTempProj, topLevelDirectories);
+          await deletePathsInArray(pathToProj, topLevelDirectories);
+ 
         }
+
+        // Delete by file
+        const currentFileList = await recursivelyListFilesOrDirectories(false, pathToTempProj);
+        const filesToDelete = await getPathsToDelete(currentFileList, keepFileList);
+        if (filesToDelete.length > 0) {
+          log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
+          `${filesToDelete.join(', ')}`);
+          await deletePathsInArray(pathToTempProj, filesToDelete);
+          // remove the files from pfe container
+          await deletePathsInArray(pathToProj, filesToDelete);
+        }
+
         res.sendStatus(200);
 
         await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
@@ -243,6 +260,11 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         let timersynctime = (timersyncend - timersyncstart) / 1000;
         log.info(`Total time to sync project ${project.name} to build container is ${timersynctime} seconds`);
         timersyncstart = 0;
+        let updatedProject = {
+          projectID,
+          creationTime: timeStamp
+        }
+        await user.projectList.updateProject(updatedProject);
 
       }
     } else {
@@ -254,13 +276,33 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   }
 });
 
-function getFilesToDelete(existingFileArray, newFileArray) {
-  const filesToDeleteSet = new Set(existingFileArray);
-  newFileArray.forEach((f) => filesToDeleteSet.delete(f));
-  return Array.from(filesToDeleteSet);
+function getPathsToDelete(existingPathArray, newPathArray) {
+  const pathsToDeleteSet = new Set(existingPathArray);
+  newPathArray.forEach((f) => pathsToDeleteSet.delete(f));
+  return Array.from(pathsToDeleteSet);
 }
 
-function deleteFilesInArray(directory, arrayOfFiles) {
+function getTopLevelDirectories(directoryArray) {
+  let topLevelDirArray = [];
+  directoryArray.forEach(dir => {
+    const existingTopLevelDirectories = topLevelDirArray.filter(rootDirectory => isSubdirectory(dir, rootDirectory));
+    if (existingTopLevelDirectories.length === 0) {
+      // if there are subdirectories of "dir" already in the topLevelDirArray remove them
+      topLevelDirArray = topLevelDirArray.filter(finalDir => !isSubdirectory(finalDir, dir));
+      topLevelDirArray.push(dir);
+    }
+  });
+  return topLevelDirArray;
+}
+
+function isSubdirectory(dir1, dir2) {
+  // returns true if dir2 is a subdirectory of dir1 or they are the same
+  const string = path.normalize(dir1 + '/');
+  const prefix = path.normalize(dir2 + '/');
+  return string.startsWith(prefix);
+}
+
+function deletePathsInArray(directory, arrayOfFiles) {
   const promiseArray = arrayOfFiles.map(filePath => {
     return cwUtils.forceRemove(path.join(directory, filePath));
   });
@@ -292,24 +334,28 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
         projectRoot
       );
     }
-    filesToDelete.forEach((f) => {
-      const data = {
-        path: f,
-        timestamp: timeStamp,
-        type: "DELETE",
-        directory: false
-      };
-      IFileChangeEvent.push(data);
-    });
-    modifiedList.forEach((f) => {
-      const data = {
-        path: f,
-        timestamp: timeStamp,
-        type: "MODIFY",
-        directory: false
-      };
-      IFileChangeEvent.push(data);
-    });
+    if (filesToDelete != undefined) {
+      filesToDelete.forEach((f) => {
+        const data = {
+          path: f,
+          timestamp: timeStamp,
+          type: "DELETE",
+          directory: false
+        };
+        IFileChangeEvent.push(data);
+      });
+    }
+    if (modifiedList != undefined) {
+      modifiedList.forEach((f) => {
+        const data = {
+          path: f,
+          timestamp: timeStamp,
+          type: "MODIFY",
+          directory: false
+        };
+        IFileChangeEvent.push(data);
+      });
+    }
     user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
   } else {
     // if a build is in progress, wait 5 seconds and try again
@@ -318,26 +364,24 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
   }
 }
 
-// List all the files under the given directory, return
-// a list of relative paths.
-async function listFilesInDirectory(absolutePath, relativePath = '') {
-  const files = await fs.readdir(absolutePath);
-  const fileList = [];
-  for (const f of files) {
-    const nextRelativePath = path.join(relativePath, f);
-    const nextAbsolutePath = path.join(absolutePath, f);
-
-    // eslint-disable-next-line no-await-in-loop
+// List all the files or directories under a given directory
+async function recursivelyListFilesOrDirectories(getDirectories, absolutePath, relativePath = '') {
+  const directoryContents = await fs.readdir(absolutePath);
+  const completePathArray = await Promise.all(directoryContents.map(async dir => {
+    const pathList = [];
+    const nextRelativePath = path.join(relativePath, dir);
+    const nextAbsolutePath = path.join(absolutePath, dir);
     const stats = await fs.stat(nextAbsolutePath);
     if (stats.isDirectory()) {
-      // eslint-disable-next-line no-await-in-loop
-      const subFiles = await listFilesInDirectory(nextAbsolutePath, nextRelativePath);
-      fileList.push(...subFiles);
-    } else {
-      fileList.push(nextRelativePath)
+      const subDirectories = await recursivelyListFilesOrDirectories(getDirectories, nextAbsolutePath, nextRelativePath);
+      if (getDirectories) pathList.push(nextRelativePath);
+      pathList.push(...subDirectories);
+    } else if (!getDirectories) {
+      pathList.push(nextRelativePath);
     }
-  }
-  return fileList;
+    return pathList;
+  }))
+  return completePathArray.reduce((a, b) => a.concat(b), []);
 }
 
 /**
@@ -437,6 +481,7 @@ router.post('/api/v1/projects/:id/unbind', validateReq, async function (req, res
     }
     user.uiSocket.emit('projectDeletion', data);
     log.error(`Error deleting project: ${util.inspect(data)}`);
+    res.status(500).send(data.error);
   }
 });
 

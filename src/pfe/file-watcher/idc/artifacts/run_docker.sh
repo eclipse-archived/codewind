@@ -60,8 +60,8 @@ if [[ $MICROCLIMATE_WS_ORIGIN &&  "$APPDIR" == '/codewind-workspace'* ]]
 		LOGSDIR=$MICROCLIMATE_WS_ORIGIN/.logs/"$LOGFOLDER"
 		echo "Log path used for volume mounting is: "$LOGSDIR""
 
-# on liberty the docker run checks for the output of the the command - check ContainerRunTask.java line 77 https://github.com/eclipse/codewind/blob/deebc7bdf94d8a27f8ff1756e7ba63c6030d87c8/src/pfe/iterative-dev/idc-java/IDC/src/org/eclipse/codewind/iterdev/tasks/ContainerRunTask.java#L77
-		OUTPUT_DOCKER_RUN="$(docker run -dt --entrypoint "/home/default/artifacts/new_entrypoint.sh" --name $CONTAINER_NAME -v "$LOGSDIR":/logs --network=codewind_network $PORT_MAPPING_PARAMS $CONTAINER_IMAGE_NAME)"
+		# on liberty the docker run checks for the output of the the command - check ContainerRunTask.java line 77 https://github.com/eclipse/codewind/blob/deebc7bdf94d8a27f8ff1756e7ba63c6030d87c8/src/pfe/iterative-dev/idc-java/IDC/src/org/eclipse/codewind/iterdev/tasks/ContainerRunTask.java#L77
+		OUTPUT_DOCKER_RUN="$(docker run -dt --entrypoint "/home/default/artifacts/new_entrypoint.sh" --name $CONTAINER_NAME --network=codewind_network $PORT_MAPPING_PARAMS $CONTAINER_IMAGE_NAME)"
 		if [ $? -eq 0 ]; then
 			echo -e "Copying over source files"
 			docker cp "$APP_DIRECTORY"/. $CONTAINER_NAME:$HOME/app
@@ -70,7 +70,7 @@ if [[ $MICROCLIMATE_WS_ORIGIN &&  "$APPDIR" == '/codewind-workspace'* ]]
 
 	else
 		# on liberty the docker run checks for the output of the the command - check ContainerRunTask.java line 77 https://github.com/eclipse/codewind/blob/deebc7bdf94d8a27f8ff1756e7ba63c6030d87c8/src/pfe/iterative-dev/idc-java/IDC/src/org/eclipse/codewind/iterdev/tasks/ContainerRunTask.java#L77
-		OUTPUT_DOCKER_RUN="$(docker run -dt --name $CONTAINER_NAME -v "$LOGSDIR":$HOME/logs $PORT_MAPPING_PARAMS $CONTAINER_IMAGE_NAME)"
+		OUTPUT_DOCKER_RUN="$(docker run -dt --name $CONTAINER_NAME $PORT_MAPPING_PARAMS $CONTAINER_IMAGE_NAME)"
 		if [ $? -eq 0 ]; then
 			echo -e "Copying over source files"
 			docker cp "$APP_DIRECTORY"/. $CONTAINER_NAME:$HOME/app

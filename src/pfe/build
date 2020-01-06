@@ -1,6 +1,7 @@
-mvn -f iterative-dev/pom.xml clean package -DskipTests | fgrep -v 'Downloaded' | fgrep -v 'Downloading';
-if [ $? -ne 0 ]; then
-    echo "iterative-dev build failed"
+mvn -f iterative-dev/pom.xml clean package -DskipTests
+EC=$?
+if [ $EC -ne 0 ]; then
+    echo "iterative-dev build failed with exit code " $EC
     exit 1;
 fi
 
@@ -15,7 +16,7 @@ else
     NODE_ENV=production
 fi
 
-docker build -t codewind-pfe-$(../../script/platform.sh) \
+docker build -t eclipse/codewind-pfe-$(../../script/platform.sh) \
 --file $1 \
 --label "org.opencontainers.image.created=$(date '+%Y-%m-%dT%k:%M:%S%z')" \
 --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \

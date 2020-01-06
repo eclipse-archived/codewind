@@ -379,4 +379,14 @@ export class ShellExtensionProject implements IExtensionProject {
 
         return name;
     }
+
+    /**
+     * @function
+     * @description Get the default ping timeout of an appsody project.
+     *
+     * @returns number
+     */
+    getDefaultPingTimeout(): number {
+        return 90;
+    }
 }

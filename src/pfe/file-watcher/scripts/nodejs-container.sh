@@ -118,8 +118,7 @@ function deployK8s() {
 	echo "Modifying charts and running Helm install from $chartDir"
 
 	# Render the template yamls for the chart
-	helm template $tmpChart \
-		--name $project \
+	helm template $project $tmpChart \
 		--values=/file-watcher/scripts/override-values.yaml \
 		--set image.repository=$IMAGE_PUSH_REGISTRY/$project \
 		--output-dir=$parentDir
@@ -143,9 +142,9 @@ function deployK8s() {
 	# Push app container image to docker registry if one is set up
 	if [[ ! -z $IMAGE_PUSH_REGISTRY ]]; then
 		# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
-		if [ "$( helm list $project --failed )" ]; then
+		if [ "$( helm list --failed -q | grep $project )" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-			helm delete $project --purge
+			helm delete $project
 		fi
 
 		echo "$BUILD_IMAGE_INPROGRESS_MSG $projectName"
@@ -182,10 +181,9 @@ function deployK8s() {
 		fi
 
 		# Install the application using helm.
-		helm upgrade \
-			--install $project \
-			--recreate-pods \
-			$tmpChart;
+		helm upgrade $project $tmpChart \
+			--install \
+			--recreate-pods
 	else
 		echo "$BUILD_IMAGE_INPROGRESS_MSG $projectName"
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_INPROGRESS "buildscripts.buildImage"
@@ -207,10 +205,9 @@ function deployK8s() {
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
 			exit 3
 		fi
-		helm upgrade \
+		helm upgrade $project $tmpChart \
 			--install $project \
-			--recreate-pods \
-			$tmpChart;
+			--recreate-pods
 	fi
 
 	if [ $? -eq 0 ]; then
@@ -236,7 +233,7 @@ function deployK8s() {
 			# Print the Helm status before deleting the release
 			helm status $project
 
-			helm delete $project --purge
+			helm delete $project
 
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPED "$errorMsg"
 			exit 3
@@ -474,7 +471,7 @@ elif [ "$COMMAND" == "remove" ]; then
 	echo "Removing the container for app $ROOT."
 
 	if [ "$IN_K8" == "true" ]; then
-		helm delete $project --purge
+		helm delete $project
 	else
 		# Remove container
 		if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then

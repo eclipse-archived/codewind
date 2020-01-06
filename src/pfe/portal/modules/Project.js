@@ -12,6 +12,8 @@
 const fs = require('fs-extra');
 const { join } = require('path');
 const uuidv1 = require('uuid/v1');
+const Client = require('kubernetes-client').Client
+const config = require('kubernetes-client').config;
 
 const cwUtils = require('./utils/sharedFunctions');
 const metricsStatusChecker = require('./utils/metricsStatusChecker');
@@ -36,7 +38,7 @@ const STATES = {
 const METRIC_TYPES = ['cpu', 'gc', 'memory', 'http']
 
 const CW_SETTINGS_PROPERTIES = [
-  "contextRoot", "internalPort", "internalDebugPort",
+  "contextRoot", "internalPort", "internalDebugPort", "statusPingTimeout",
   "healthCheck", "isHttps", "ignoredPaths", "mavenProfiles", "mavenProperties"
 ];
 
@@ -48,7 +50,6 @@ const CW_SETTINGS_PROPERTIES = [
 module.exports = class Project {
 
   constructor(args, workspace) {
-    // TODO evaluate use of just .id instead of .projectID
     this.projectID = args.projectID || uuidv1();
     this.name = args.name;
     this.codewindVersion = args.codewindVersion || process.env.CODEWIND_VERSION;
@@ -65,6 +66,17 @@ module.exports = class Project {
 
     // locOnDisk is used by the UI and needs to match what it sees.
     if (args.locOnDisk) this.locOnDisk = args.locOnDisk;
+
+    // Set up the pathToMonitor, this must always be unix style
+    if (args.pathToMonitor) { 
+      this.pathToMonitor = args.pathToMonitor;
+    } else {
+      this.pathToMonitor = this.locOnDisk;
+      const isWindowsPath = cwUtils.isWindowsAbsolutePath(this.pathToMonitor);
+      if (isWindowsPath) {
+        this.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(this.pathToMonitor);
+      } 
+    }
     
     // Project status information
     this.host = args.host || '';
@@ -106,6 +118,33 @@ module.exports = class Project {
       this.injectMetrics = args.injectMetrics;
     }
   }
+
+
+  // Ask Kube for project connection details by querying the project service
+  async getProjectKubeService() {
+    if (global.codewind.RUNNING_IN_K8S) {
+      try {
+        const namespace = process.env.KUBE_NAMESPACE
+        const projectID = this.projectID
+        const client = new Client({ config: config.getInCluster(), version: '1.9' });
+        const services = await client.api.v1.namespaces(namespace).services.get({ qs: { labelSelector: 'projectID='+projectID } })
+
+        if (services && services.body && services.body.items && services.body.items[0]) {
+          const ipAddress = services.body.items[0].spec.clusterIP
+          const port = services.body.items[0].spec.ports[0].targetPort
+
+          // update service host
+          this.kubeServiceHost = ipAddress
+          this.kubeServicePort = port
+          return  {hostname:ipAddress, port:port}
+        }
+      } catch (error) {
+        log.error(error)
+      }
+    }
+    return {}
+  }
+
 
   toJSON() {
     // Exclude properties that we don't want to write to the .info file on disk. The
@@ -289,6 +328,7 @@ module.exports = class Project {
       // If a file doesn't include the metrics of that type, skip the file
       if (metricsFile[metricsFileType] != undefined) {
         const metric = {
+          container: loadTestDirectories[i],
           time: metricsFile.time.data.start || metricsFile.time.data.startTime,
           endTime: metricsFile.time.data.end || metricsFile.time.data.endTime,
           value: metricsFile[metricsFileType] };

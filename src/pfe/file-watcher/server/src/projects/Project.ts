@@ -35,6 +35,7 @@ export interface ProjectInfo {
     isHttps?: boolean;
     appBaseURL?: string;
     compositeAppName?: string;
+    statusPingTimeout?: number;
 }
 
 export interface ProjectMetadata {
@@ -95,6 +96,7 @@ export interface ProjectSettingsEvent {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     isHttps?: boolean;
+    statusPingTimeout?: number;
 }
 
 /**

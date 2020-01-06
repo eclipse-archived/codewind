@@ -10,13 +10,10 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
-# Wrapper for helm
-if [[ $KUBE_NAMESPACE && "$1" == "install" ]]; then
-    # If using alt-namespace, need to specify namespace flag for helm install
-    _helm "$@" --tls --namespace $KUBE_NAMESPACE
-elif [[ $KUBE_NAMESPACE && "$1" == "template" ]]; then 
-    # helm template can't have the tls flag
-    _helm "$@" --namespace $KUBE_NAMESPACE
-else
-    _helm "$@" --tls
-fi
+INTERVAL="30s"
+
+while true;
+do
+    echo "Keeping PFE pod/container alive every $INTERVAL ...";
+    sleep $INTERVAL;
+done

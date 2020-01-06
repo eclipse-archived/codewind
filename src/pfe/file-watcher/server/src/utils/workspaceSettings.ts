@@ -237,7 +237,13 @@ export async function getImagePushRegistry(): Promise<string> {
         return "";
     }
     logger.logInfo("WorkspaceSettingsInfo for project operations: " + JSON.stringify(workspaceSettingsInfo));
-    const imagePushRegistry = workspaceSettingsInfo.registryAddress.trim() + "/" + workspaceSettingsInfo.registryNamespace.trim();
+    let imagePushRegistry = workspaceSettingsInfo.registryAddress.trim();
+
+    // Only append if user entered a namespace
+    if (workspaceSettingsInfo.registryNamespace.length > 0) {
+        imagePushRegistry = imagePushRegistry + "/" + workspaceSettingsInfo.registryNamespace.trim();
+    }
+
     return imagePushRegistry;
 }
 

@@ -28,10 +28,18 @@ let socketURL = `${AppConstants.API_SERVER}/default`;
 
 const socket = io(socketURL, { timeout: '5000' });
 
+// Authenticate socket after connecting
+socket.on('connect', function(){
+  const accessToken = localStorage.getItem("cw-access-token");
+  if (accessToken) {
+    socket.emit('authentication', {  token:  accessToken});
+  }
+});
+
 function App() {
 
   const projectID = ProjectIDChecker.projectID();
- 
+
   return (
     <SocketContext.Provider value={socket}>
       <div className="App">

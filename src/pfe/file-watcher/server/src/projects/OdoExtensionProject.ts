@@ -347,4 +347,14 @@ export class OdoExtensionProject implements IExtensionProject {
 
         return appBaseURL;
     }
+
+    /**
+     * @function
+     * @description Get the default ping timeout of an odo project.
+     *
+     * @returns number
+     */
+    getDefaultPingTimeout(): number {
+        return 30;
+    }
 }

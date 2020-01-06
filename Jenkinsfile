@@ -16,14 +16,6 @@ pipeline {
 
     stages {
         stage('Build Docker images') {
-            // This when clause disables Tagged build
-            when {
-                beforeAgent true
-                not {
-                    buildingTag()
-                }
-            }
-
             steps {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                     
@@ -116,13 +108,6 @@ pipeline {
         }
 
         stage('Run Turbine Unit Test Suite') {
-            // This when clause disables Tagged build
-            when {
-                beforeAgent true
-                not {
-                    buildingTag()
-                }
-            }
             options {
                 timeout(time: 30, unit: 'MINUTES') 
             }
@@ -169,15 +154,6 @@ pipeline {
             options {
                 timeout(time: 2, unit: 'HOURS') 
             }   
-
-            // This when clause disables Tagged build
-            when {
-                beforeAgent true
-                not {
-                    buildingTag()
-                }
-            }
-                   
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
@@ -280,16 +256,11 @@ pipeline {
         
         stage('Publish Docker images') {
 
-            // This when clause disables PR/Tag build uploads; you may comment this out if you want your build uploaded.
+            // This when clause disables PR build uploads; you may comment this out if you want your build uploaded.
             when {
                 beforeAgent true
-                allOf {
-                    not {
-                        changeRequest()
-                    }
-                    not {
-                        buildingTag()
-                    }
+                not {
+                    changeRequest()
                 }
             }
             
@@ -297,7 +268,6 @@ pipeline {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                     sh '''#!/usr/bin/env bash
                         echo "Publishing docker images for Eclipse Codewind ..."
-                        export REGISTRY="eclipse"
                         echo "Branch name is $GIT_BRANCH"
 
                         if [[ $GIT_BRANCH == "master" ]]; then
@@ -310,17 +280,15 @@ pipeline {
                         # Acceptable branch names: master, start with '<number>.<number>'
                         if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
 
-                            declare -a DOCKER_IMAGE_ARRAY=("codewind-performance-amd64" 
-                                                        "codewind-pfe-amd64" 
-                                                        "codewind-keycloak-amd64"
-                                                        "codewind-gatekeeper-amd64")
-
-                            chmod u+x ./script/publish.sh
+                            declare -a DOCKER_IMAGE_ARRAY=("eclipse/codewind-performance-amd64" 
+                                                        "eclipse/codewind-pfe-amd64" 
+                                                        "eclipse/codewind-keycloak-amd64"
+                                                        "eclipse/codewind-gatekeeper-amd64")
 
                             for i in "${DOCKER_IMAGE_ARRAY[@]}"
                             do
-                                echo "Publishing $REGISTRY/$i:$TAG"
-                                ./script/publish.sh $i $REGISTRY $TAG
+                                echo "Publishing $i:$TAG"
+                                docker push $i:${TAG:-latest}
                             done
 
                             if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
@@ -331,8 +299,8 @@ pipeline {
 
                                 for i in "${DOCKER_IMAGE_ARRAY[@]}"
                                 do
-                                    echo "Publishing $REGISTRY/$i:$TAG_CUMULATIVE"
-                                    ./script/publish.sh $i $REGISTRY $TAG_CUMULATIVE
+                                    echo "Publishing $i:$TAG_CUMULATIVE"
+                                    docker push $i:${TAG_CUMULATIVE:-latest}
                                 done
                             fi
                         else

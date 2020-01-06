@@ -40,7 +40,7 @@ public class ContainerCleanTask {
 					if (str != null) {
 						if (str.contains("idc") && IDCUtils.getUserResponse(Constants.missingIDCDirPromptQues).equalsIgnoreCase("yes")) {
 							Logger.info("* Deleting the helm release");
-							TaskUtils.runCmd("helm delete " + str + " --purge", context, false);
+							TaskUtils.runCmd("helm delete " + str, context, false);
 						}
 					}
 				}
@@ -73,7 +73,7 @@ public class ContainerCleanTask {
 						if (IDCUtils.getUserResponse(Constants.modifiedAppDirPromptQues).equalsIgnoreCase("yes")) {
 							Logger.info("* Deleting the Helm release. ");
 
-							TaskUtils.runCmd("helm delete " + releaseID + " --purge", context, false);
+							TaskUtils.runCmd("helm delete " + releaseID, context, false);
 							TaskUtils.runCmd(imageCommand + " image rm " + appDB.get(Constants.DB_CONTAINER_NAME) + " -f", context, false);
 
 							// Delete .idc db and docker dir contents

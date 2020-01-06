@@ -61,9 +61,9 @@ const projectList: Array<string> = [];
 
 const isApplicationPodUpIntervalMap = new Map();
 
-export const firstTimePingArray = new Array();
-
 export let pingMessage: string;
+
+export const firstTimePingArray = new Array();
 
 export interface ProjectEvent {
     operationId: string;
@@ -82,6 +82,7 @@ export interface ProjectEvent {
     isHttps?: boolean;
     appBaseURL?: string;
     compositeAppName?: string;
+    statusPingTimeout?: string;
 }
 
 export interface ProjectLog {
@@ -92,7 +93,6 @@ export interface ProjectLog {
 const projectEventErrorMsgs = {
     missingImagePushRegistry: "The project will not build due to missing Image Push Registry. Run the Set Deployment Registry command to set a new Image Push Registry to build projects.",
     invalidImagePushRegistry: "Codewind cannot build projects with the current Image Push Registry. Please make sure it is a valid Image Push Registry with the appropriate permissions.",
-    wrongImagePushRegistry: "The project will not build with the new Image Push Registry. Please remove and re-add the project to deploy to the new Image Push Registry."
 };
 
 /**
@@ -112,12 +112,10 @@ export async function containerCreate(operation: Operation, script: string, comm
     const projectID = operation.projectInfo.projectID;
     const projectName = projectLocation.split("/").pop();
     const projectType = operation.projectInfo.projectType;
-    const projectImagePushRegistry = operation.projectInfo.deploymentRegistry;
     if (projectList.indexOf(projectID) === -1)
         projectList.push(projectID);
 
     logger.logProjectInfo("Creating container for " + operation.projectInfo.projectType + " project " + projectLocation, projectID, projectName);
-    logger.logProjectInfo("projectInfo.deploymentRegistry: " + projectImagePushRegistry, projectID);
     operation.containerName = await getContainerName(operation.projectInfo);
     // Refer to the comment in getLogName function for this usage
     const logName = getLogName(operation.projectInfo.projectID, projectLocation);
@@ -137,14 +135,6 @@ export async function containerCreate(operation: Operation, script: string, comm
     if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
         imagePushRegistry = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
-
-        if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
-            logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.wrongImagePushRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.wrongImagePushRegistry");
-            io.emitOnListener(event, projectEvent);
-            return;
-        }
 
         if (!imagePushRegistry.length) {
             logger.logProjectError(projectEventErrorMsgs.missingImagePushRegistry, projectID, projectName);
@@ -224,9 +214,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
     const projectID = operation.projectInfo.projectID;
     const projectName = projectLocation.split("/").pop();
     const projectType = operation.projectInfo.projectType;
-    const projectImagePushRegistry = operation.projectInfo.deploymentRegistry;
     logger.logProjectInfo("Updating container for " + operation.projectInfo.projectType + " project " + projectLocation, projectID, projectName);
-    logger.logProjectInfo("projectInfo.deploymentRegistry " + projectImagePushRegistry, projectID);
     operation.containerName = await getContainerName(operation.projectInfo);
     // Refer to the comment in getLogName function for this usage
     const logName = getLogName(operation.projectInfo.projectID, projectLocation);
@@ -248,14 +236,6 @@ export async function containerUpdate(operation: Operation, script: string, comm
     if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
         imagePushRegistry = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
-
-        if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
-            logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.wrongImagePushRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.wrongImagePushRegistry");
-            io.emitOnListener(event, projectEvent);
-            return;
-        }
 
         if (!imagePushRegistry.length) {
             logger.logProjectError(projectEventErrorMsgs.missingImagePushRegistry, projectID, projectName);
@@ -351,6 +331,9 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
     }
     if (typeof operation.projectInfo.isHttps == "boolean") {
         projectInfo.isHttps = operation.projectInfo.isHttps;
+    }
+    if (operation.projectInfo.statusPingTimeout) {
+        projectInfo.statusPingTimeout = operation.projectInfo.statusPingTimeout.toString();
     }
 
     const projectMetadata = projectsController.getProjectMetadataById(projectID);
@@ -1312,6 +1295,9 @@ export async function buildAndRun(operation: Operation, command: string): Promis
     if (typeof operation.projectInfo.isHttps == "boolean") {
         projectEvent.isHttps = operation.projectInfo.isHttps;
     }
+    if (operation.projectInfo.statusPingTimeout) {
+        projectEvent.statusPingTimeout = operation.projectInfo.statusPingTimeout.toString();
+    }
     const buildInfo: BuildRequest = {
         projectLocation: projectLocation,
         LOCAL_WORKSPACE: LOCAL_WORKSPACE,
@@ -1430,8 +1416,6 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
     const projectName = normalizedProjectLocation.split("/").reverse()[0];
     const logDir = await logHelper.getLogDir(buildInfo.projectID, projectName);
     const dockerBuildLog = path.resolve(buildInfo.projectLocation + "/../.logs/" + logDir, logHelper.buildLogs.dockerBuild + logHelper.logExtension);
-    const projectImagePushRegistry = operation.projectInfo.deploymentRegistry;
-    logger.logProjectInfo("projectInfo.deploymentRegistry: " + projectImagePushRegistry, buildInfo.projectID);
     if (process.env.IN_K8 === "true") {
         // Kubernetes environment
 
@@ -1443,14 +1427,6 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
 
         const imagePushRegistry: string = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, buildInfo.projectID);
-
-        if (projectImagePushRegistry && projectImagePushRegistry != imagePushRegistry) {
-            logger.logProjectError(projectEventErrorMsgs.wrongImagePushRegistry, buildInfo.projectID, projectName);
-            projectEvent.error = projectEventErrorMsgs.wrongImagePushRegistry;
-            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.wrongImagePushRegistry");
-            io.emitOnListener(event, projectEvent);
-            return;
-        }
 
         if (!imagePushRegistry.length) {
             logger.logProjectError(projectEventErrorMsgs.missingImagePushRegistry, buildInfo.projectID, projectName);
@@ -1502,7 +1478,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
         // Modify the temp copy of the chart to add the needed labels and serviceAccount
         try {
             // Render the chart template
-            await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["template", defaultChartLocation, "--name", buildInfo.containerName, "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + imagePushRegistry + "/" + buildInfo.containerName, "--output-dir=" + chartParentFolder], {});
+            await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["template", buildInfo.containerName, defaultChartLocation, "--values=/file-watcher/scripts/override-values.yaml", "--set", "image.repository=" + imagePushRegistry + "/" + buildInfo.containerName, "--output-dir=" + chartParentFolder], {});
 
             // Find the locations of the deployment and service file
             const deploymentFile = (await processManager.spawnDetachedAsync(buildInfo.projectID, "bash", ["/file-watcher/scripts/kubeScripts/find-kube-resource.sh", defaultChartLocation, "Deployment"], {})).stdout;
@@ -1525,8 +1501,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
 
         try {
             // If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
-            result = await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["list", buildInfo.containerName, "--failed"], {});
-            if (result.stdout.length !== 0) {
+            result = await processManager.spawnDetachedAsync(buildInfo.projectID, "helm", ["list", "--failed", "-q"], {});
+            if (result.stdout.includes(buildInfo.containerName)) {
                 if (projectStatusController.getAppState(buildInfo.projectID) == projectStatusController.AppState.started) {
                     await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopping, "");
                 }

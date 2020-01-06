@@ -66,6 +66,13 @@ async function main() {
     // referer field.
     let origin = req.headers['origin'] || req.headers['referer'];
 
+    if (targetOrigin) {
+      targetOrigin = targetOrigin.toLowerCase()
+    }
+    if (origin) {
+      origin = origin.toLowerCase()
+    }
+
     let originURL = new URL(origin);
 
     log.trace(`Checking origin host ${originURL.host} matches expected host ${targetOrigin}`);
