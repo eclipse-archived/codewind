@@ -236,8 +236,6 @@ module.exports = class LoadRunner {
       // eslint-disable-next-line no-await-in-loop
       await cwUtils.timeout(5000);
       try {
-        // eslint-disable-next-line no-await-in-loop
-
         let options = {
           host: this.project.host,
           port: this.project.getPort(),
@@ -249,8 +247,9 @@ module.exports = class LoadRunner {
         if (this.project.kubeServiceHost && this.project.kubeServicePort ) {
           options.host = this.project.kubeServiceHost;
           options.port = this.project.kubeServicePort;
-      }
+        }
 
+        // eslint-disable-next-line no-await-in-loop
         let httpCheckHealth = await cwUtils.asyncHttpRequest(options);
 
         log.info(`httpCheckHealth ${httpCheckHealth.statusCode}`);
