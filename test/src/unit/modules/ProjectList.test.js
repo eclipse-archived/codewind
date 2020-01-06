@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
-*******************************************************************************/
+ *******************************************************************************/
 global.codewind = { RUNNING_IN_K8S: false };
 
 const fs = require('fs-extra');
@@ -49,7 +49,10 @@ describe('ProjectList.js', () => {
     describe('addProject(project)', () => {
         it('Creates a new Project and adds it to the ProjectList', () => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project);
             const { list } = projectList;
             list.should.not.eql({});
@@ -58,7 +61,10 @@ describe('ProjectList.js', () => {
         });
         it('Throws an error as the project already exists', () => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project);
             const { list } = projectList;
             list.should.not.eql({});
@@ -72,7 +78,10 @@ describe('ProjectList.js', () => {
     describe('projectNameExists(name)', () => {
         it('Returns true as project name exists', () => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project);
             const exists = projectList.projectNameExists('newdummyproject');
             exists.should.be.true;
@@ -84,7 +93,10 @@ describe('ProjectList.js', () => {
         });
         it('Returns false as a project with the name "random" is not in the ProjectList', () => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project);
             const exists = projectList.projectNameExists('random');
             exists.should.be.false;
@@ -93,7 +105,10 @@ describe('ProjectList.js', () => {
     describe('removeProject(id)', () => {
         it('Removes a project from the ProjectList', () => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project);
             const { list } = projectList;
             list.should.have.property(project.projectID);
@@ -113,7 +128,10 @@ describe('ProjectList.js', () => {
     describe('retrieveProject(id)', () => {
         it('Retrieves a project that exists', () => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project);
             const { list } = projectList;
             list.should.have.property(project.projectID);
@@ -125,7 +143,7 @@ describe('ProjectList.js', () => {
             const projectList = new ProjectList();
             const id = '123';
             const retrievedProject = projectList.retrieveProject(id);
-            // eslint-disable-next-line no-undefined
+      // eslint-disable-next-line no-undefined
             assert.equal(retrievedProject, undefined);
         });
     });
@@ -133,7 +151,11 @@ describe('ProjectList.js', () => {
         it('Errors as project does not have a projectID', () => {
             const projectList = new ProjectList();
             const func = () => projectList.updateProject({});
-            return func().should.be.rejectedWith('MALFORMED', null, 'Project does not have a project ID');
+            return func().should.be.rejectedWith(
+                'MALFORMED',
+                null,
+                'Project does not have a project ID'
+            );
         });
         it('Errors as project is not a member of the ProjectList', () => {
             const projectList = new ProjectList();
@@ -142,9 +164,12 @@ describe('ProjectList.js', () => {
         });
         it('Updates a project by adding new field', async() => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project);
-            
+
             const updatedProject = { ...project };
             updatedProject.newField = 'NEW';
 
@@ -153,14 +178,21 @@ describe('ProjectList.js', () => {
 
             const returnedProject = await projectList.updateProject(updatedProject);
             returnedProject.should.haveOwnProperty('newField').and.equal('NEW');
-            const returnedProjectInfPath = path.join(global.codewind.CODEWIND_WORKSPACE, '.projects', `${returnedProject.projectID}.inf`);            
+            const returnedProjectInfPath = path.join(
+                global.codewind.CODEWIND_WORKSPACE,
+                '.projects',
+                `${returnedProject.projectID}.inf`
+            );
             fs.existsSync(returnedProjectInfPath).should.be.true;
         });
         it('Updates a project by changing an existing field', async() => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project);
-            
+
             const updatedProject = { ...project };
             updatedProject.name = 'NEW';
 
@@ -169,16 +201,23 @@ describe('ProjectList.js', () => {
 
             const returnedProject = await projectList.updateProject(updatedProject);
             returnedProject.should.haveOwnProperty('name').and.equal('NEW');
-            const returnedProjectInfPath = path.join(global.codewind.CODEWIND_WORKSPACE, '.projects', `${returnedProject.projectID}.inf`);            
+            const returnedProjectInfPath = path.join(
+                global.codewind.CODEWIND_WORKSPACE,
+                '.projects',
+                `${returnedProject.projectID}.inf`
+            );
             fs.existsSync(returnedProjectInfPath).should.be.true;
         });
         it('Updates a project\'s host to "ingress_host" and appStatus to "started"', async() => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project);
-            // CHE_INGRESS_HOST is set when appStatus is set to started
+      // CHE_INGRESS_HOST is set when appStatus is set to started
             process.env.CHE_INGRESS_HOST = 'ingress_host';
-            
+
             const updatedProject = { ...project };
             updatedProject.appStatus = 'started';
 
@@ -190,7 +229,11 @@ describe('ProjectList.js', () => {
             const returnedProject = await projectList.updateProject(updatedProject);
             returnedProject.should.haveOwnProperty('appStatus').and.equal('started');
             returnedProject.should.haveOwnProperty('host').and.equal('ingress_host');
-            const returnedProjectInfPath = path.join(global.codewind.CODEWIND_WORKSPACE, '.projects', `${returnedProject.projectID}.inf`);            
+            const returnedProjectInfPath = path.join(
+                global.codewind.CODEWIND_WORKSPACE,
+                '.projects',
+                `${returnedProject.projectID}.inf`
+            );
             fs.existsSync(returnedProjectInfPath).should.be.true;
         });
     });
@@ -198,7 +241,11 @@ describe('ProjectList.js', () => {
         it('Errors as project does not have a projectID', () => {
             const projectList = new ProjectList();
             const func = () => projectList.reloadSettingsFile({});
-            return func().should.be.rejectedWith('MALFORMED', null, 'Project does not have a project ID');
+            return func().should.be.rejectedWith(
+                'MALFORMED',
+                null,
+                'Project does not have a project ID'
+            );
         });
         it('Errors as project is not a member of the ProjectList', () => {
             const projectList = new ProjectList();
@@ -207,47 +254,63 @@ describe('ProjectList.js', () => {
         });
         it('Reloads a project by reading from its .cw-settings file. A field found in .cw-settings is added to the project object', async() => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'reloadNewField' }, global.codewind.CODEWIND_WORKSPACE);
-            
-            // Create .inf file
-            const projectInfPath = path.join(global.codewind.CODEWIND_WORKSPACE, '.projects', `${project.projectID}.inf`);
+            const project = new Project(
+                { name: 'reloadNewField', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
+
+      // Create .inf file
+            const projectInfPath = path.join(
+                global.codewind.CODEWIND_WORKSPACE,
+                '.projects',
+                `${project.projectID}.inf`
+            );
             await project.writeInformationFile();
             projectList.addProject(project);
             fs.existsSync(projectInfPath).should.be.true;
 
-            // Create .cw-settings file
+      // Create .cw-settings file
             const settingsFilePath = path.join(project.projectPath(), '.cw-settings');
             fs.existsSync(settingsFilePath).should.be.false;
             await fs.ensureFile(settingsFilePath);
             await fs.writeJSON(settingsFilePath, { newField: 'NEW' });
             fs.existsSync(settingsFilePath).should.be.true;
-            
-            // Reload project to pick up new .cw-settings
+
+      // Reload project to pick up new .cw-settings
             const reloadedProject = await projectList.reloadSettingsFile(project);
             reloadedProject.should.haveOwnProperty('newField').and.equal('NEW');
-            fs.existsSync(projectInfPath).should.be.true; 
+            fs.existsSync(projectInfPath).should.be.true;
         });
-        it('Reloads a project by reading from its .cw-settings file and ignores the projectID property (Don\'t overwrite projectID)', async() => {
+        it("Reloads a project by reading from its .cw-settings file and ignores the projectID property (Don't overwrite projectID)", async() => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'reloadProjectID' }, global.codewind.CODEWIND_WORKSPACE);
-            
-            // Create .inf file
-            const projectInfPath = path.join(global.codewind.CODEWIND_WORKSPACE, '.projects', `${project.projectID}.inf`);
+            const project = new Project(
+                { name: 'reloadProjectID', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
+
+      // Create .inf file
+            const projectInfPath = path.join(
+                global.codewind.CODEWIND_WORKSPACE,
+                '.projects',
+                `${project.projectID}.inf`
+            );
             await project.writeInformationFile();
             projectList.addProject(project);
             fs.existsSync(projectInfPath).should.be.true;
 
-            // Create .cw-settings file
+      // Create .cw-settings file
             const settingsFilePath = path.join(project.projectPath(), '.cw-settings');
             fs.existsSync(settingsFilePath).should.be.false;
             await fs.ensureFile(settingsFilePath);
             await fs.writeJSON(settingsFilePath, { projectID: '123' });
             fs.existsSync(settingsFilePath).should.be.true;
-            
-            // Reload project to pick up new .cw-settings
+
+      // Reload project to pick up new .cw-settings
             const reloadedProject = await projectList.reloadSettingsFile(project);
-            reloadedProject.should.haveOwnProperty('projectID').and.equal(project.projectID);
-            fs.existsSync(projectInfPath).should.be.true; 
+            reloadedProject.should
+                .haveOwnProperty('projectID')
+                .and.equal(project.projectID);
+            fs.existsSync(projectInfPath).should.be.true;
         });
     });
     describe('deleteProjectKey(projectID, key)', () => {
@@ -258,20 +321,30 @@ describe('ProjectList.js', () => {
         });
         it('Deletes a property (key) from a Project and writes to the .inf file', async() => {
             const projectList = new ProjectList();
-            const project = new Project({ name: 'dummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = new Project(
+                { name: 'dummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             project.should.haveOwnProperty('name').and.equal('dummyproject');
-            
-            // Create .inf file
-            const projectInfPath = path.join(global.codewind.CODEWIND_WORKSPACE, '.projects', `${project.projectID}.inf`);
+
+      // Create .inf file
+            const projectInfPath = path.join(
+                global.codewind.CODEWIND_WORKSPACE,
+                '.projects',
+                `${project.projectID}.inf`
+            );
             await project.writeInformationFile();
             projectList.addProject(project);
             fs.existsSync(projectInfPath).should.be.true;
-            
-            // Delete key from project
-            const projectWithoutName = await projectList.deleteProjectKey(project.projectID, 'name');
+
+      // Delete key from project
+            const projectWithoutName = await projectList.deleteProjectKey(
+                project.projectID,
+                'name'
+            );
             projectWithoutName.should.not.haveOwnProperty('name');
 
-            // Verify key is deleted from .inf
+      // Verify key is deleted from .inf
             fs.existsSync(projectInfPath).should.be.true;
             const infContents = await fs.readJson(projectInfPath);
             infContents.should.not.haveOwnProperty('name');
@@ -287,9 +360,15 @@ describe('ProjectList.js', () => {
         });
         it('Gets the projectList as an array (2 elements)', () => {
             const projectList = new ProjectList();
-            const project1 = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project1 = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project1);
-            const project2 = new Project({ name: 'newdummyproject' }, global.codewind.CODEWIND_WORKSPACE);
+            const project2 = new Project(
+                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
+                global.codewind.CODEWIND_WORKSPACE
+            );
             projectList.addProject(project2);
             Object.keys(projectList.list).length.should.equal(2);
 
