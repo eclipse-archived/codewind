@@ -1,6 +1,7 @@
-mvn -f iterative-dev/pom.xml clean package -DskipTests | fgrep -v 'Downloaded' | fgrep -v 'Downloading';
-if [ $? -ne 0 ]; then
-    echo "iterative-dev build failed"
+mvn -f iterative-dev/pom.xml clean package -DskipTests
+EC=$?
+if [ $EC -ne 0 ]; then
+    echo "iterative-dev build failed with exit code " $EC
     exit 1;
 fi
 

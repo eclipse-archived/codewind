@@ -27,12 +27,12 @@
       "invalidImagePushRegistry": "Codewind was unable to push an image to the Image Push Registry. Please make sure it is a valid Image Push Registry with the appropriate permissions.",
       "wrongImagePushRegistry": "The project will not build with the new Image Push Registry. Please remove and re-add the project to deploy to the new Image Push Registry.",
       "unexpectedError": "An unexpected error occurred",
-      "odoBuildCreateInProgressMsg": "Creating odo application",
-      "odoBuildCreateFailMsg": "Failed to create odo application",
-      "odoBuildPushInProgressMsg": "Building and deploying odo application",
-      "odoBuildPushFailMsg": "Failed to build or deploy odo application",
-      "odoBuildUrlInProgressMsg": "Creating URL for odo application",
-      "odoBuildUrlFailMsg": "Fail to create URL for odo application"
+      "odoBuildCreateInProgressMsg": "Creating odo component",
+      "odoBuildCreateFailMsg": "Failed to create odo component",
+      "odoBuildPushInProgressMsg": "Building and deploying odo component",
+      "odoBuildPushFailMsg": "Failed to build or deploy odo component",
+      "odoBuildUrlInProgressMsg": "Creating URL for odo component",
+      "odoBuildUrlFailMsg": "Fail to create URL for odo component"
   },
   "buildApplicationTask": {
     "pomChangeDetected": "pom.xml change detected, running clean build",

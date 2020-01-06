@@ -310,39 +310,62 @@ export async function checkForDockerResources(projectID: string, exists: boolean
     }
 }
 
-export async function checkForKubeResources(projectID: string, exists: boolean = true): Promise<void> {
+export async function checkForKubeResources(selectorType: string, selector: string, resources: Array<string> = ["deployments", "pods", "services"], exists: boolean = true): Promise<void> {
     let deploymentResp, podResp, serviceResp;
     try {
-        deploymentResp = await k8sClient.apis.apps.v1.namespaces(pfe_configs.cheNamespace).deployments.get({ qs: { labelSelector: "projectID=" + projectID } });
-        podResp = await k8sClient.api.v1.namespaces(pfe_configs.cheNamespace).pods.get({ qs: { labelSelector: "projectID=" + projectID } });
-        serviceResp = await k8sClient.api.v1.namespaces(pfe_configs.cheNamespace).services.get({ qs: { labelSelector: "projectID=" + projectID } });
+        if (resources.includes("deployments")) {
+            deploymentResp = await k8sClient.apis.apps.v1.namespaces(pfe_configs.cheNamespace).deployments.get({ qs: { labelSelector: `${selectorType}=${selector}`} });
+        }
+        if (resources.includes("pods")) {
+            podResp = await k8sClient.api.v1.namespaces(pfe_configs.cheNamespace).pods.get({ qs: { labelSelector: `${selectorType}=${selector}` } });
+        }
+        if (resources.includes("services")) {
+            serviceResp = await k8sClient.api.v1.namespaces(pfe_configs.cheNamespace).services.get({ qs: { labelSelector: `${selectorType}=${selector}` } });
+        }
 
         if (exists) {
-            expect(deploymentResp);
-            expect(deploymentResp.body);
-            expect(deploymentResp.body.items);
-            expect(deploymentResp.body.items.length).to.be.greaterThan(0);
-            expect(deploymentResp.body.items[0].metadata.name).includes(projectID);
+            if (deploymentResp) {
+                expect(deploymentResp);
+                expect(deploymentResp.body);
+                expect(deploymentResp.body.items);
+                expect(deploymentResp.body.items.length).to.be.greaterThan(0);
+                expect(deploymentResp.body.items[0].metadata.name.includes(selector));
+            }
 
-            expect(podResp);
-            expect(podResp.body);
-            expect(podResp.body.items);
-            expect(podResp.body.items.length).to.be.greaterThan(0);
-            expect(podResp.body.items[0].metadata.name).includes(projectID);
+            if (podResp) {
+                expect(podResp);
+                expect(podResp.body);
+                expect(podResp.body.items);
+                expect(podResp.body.items.length).to.be.greaterThan(0);
+                expect(podResp.body.items[0].metadata.name.includes(selector));
+            }
 
-            expect(serviceResp);
-            expect(serviceResp.body);
-            expect(serviceResp.body.items);
-            expect(serviceResp.body.items.length).to.be.greaterThan(0);
-            expect(serviceResp.body.items[0].metadata.name).includes(projectID);
+            if (serviceResp) {
+                expect(serviceResp);
+                expect(serviceResp.body);
+                expect(serviceResp.body.items);
+                expect(serviceResp.body.items.length).to.be.greaterThan(0);
+                expect(serviceResp.body.items[0].metadata.name.includes(selector));
+            }
         } else {
-            expect(deploymentResp);
-            expect(deploymentResp.body.items);
-            expect(deploymentResp.body.items.length).to.equal(0);
+            if (deploymentResp) {
+                expect(deploymentResp);
+                expect(deploymentResp.body.items);
+                expect(deploymentResp.body.items.length).to.equal(0);
+            }
 
-            expect(serviceResp);
-            expect(serviceResp.body.items);
-            expect(serviceResp.body.items.length).to.equal(0);
+            if (podResp) {
+                expect(podResp);
+                expect(podResp.body);
+                expect(podResp.body.items);
+                expect(podResp.body.items.length).to.be.gte(0); // this is because a pod maybe terminating after delete and still show up
+            }
+
+            if (serviceResp) {
+                expect(serviceResp);
+                expect(serviceResp.body.items);
+                expect(serviceResp.body.items.length).to.equal(0);
+            }
         }
     } catch (err) {
         fail(`failed to find kube deployment ${err}`);
