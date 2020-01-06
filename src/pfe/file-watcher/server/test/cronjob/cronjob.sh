@@ -41,7 +41,7 @@ while getopts "t:s:p:c:h" OPTION; do
         s) 
             TEST_SUITE=$OPTARG
             # Check if test suite argument is corrent
-            if [[ ($TEST_SUITE != "functional") ]]; then
+            if [[ ($TEST_SUITE != "functional") && ($TEST_SUITE != "unit") ]]; then
                 echo -e "${RED}Test suite argument is not correct. ${RESET}\n"
                 usage
                 exit 1
