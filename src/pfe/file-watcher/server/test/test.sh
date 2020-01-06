@@ -58,14 +58,8 @@ function run {
         fi
     fi
 
-    # Run test cases
-    ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE -d $CLEAN_WORKSPACE
-    if [[ $? -eq 0 ]]; then
-        echo -e "${GREEN}\nFinished running tests. ${RESET}\n"
-    else
-        echo -e "${RED}\nThe test run has failed. ${RESET}\n"
-        exit 1
-    fi
+    # Execute the tests
+    executeTests
 }
 
 function cleanRun {
@@ -113,6 +107,17 @@ function cleanRun {
     fi
 }
 
+function executeTests {
+    # Run test cases
+    ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE -d $CLEAN_WORKSPACE
+    if [[ $? -eq 0 ]]; then
+        echo -e "${GREEN}\nFinished running tests. ${RESET}\n"
+    else
+        echo -e "${RED}\nThe test run has failed. ${RESET}\n"
+        exit 1
+    fi
+}
+
 while getopts "t:s:p:c:d:h" OPTION; do
     case "$OPTION" in
         t) 
@@ -127,7 +132,7 @@ while getopts "t:s:p:c:d:h" OPTION; do
         s) 
             TEST_SUITE=$OPTARG
             # Check if test suite argument is corrent
-            if [[ ($TEST_SUITE != "functional") ]]; then
+            if [[ ($TEST_SUITE != "functional") && ($TEST_SUITE != "unit") ]]; then
                 echo -e "${RED}Test suite argument is not correct. ${RESET}\n"
                 usage
                 exit 1
@@ -216,8 +221,12 @@ if [[ $TEST_TYPE == "kube" ]]; then
     fi
 fi
 
-if [[ ($CLEAN_RUN == "y") ]]; then
-    cleanRun
-else
-    run
+if [ $TEST_SUITE == "functional" ]; then
+    if [[ ($CLEAN_RUN == "y") ]]; then
+        cleanRun
+    else
+        run
+    fi
+elif [ $TEST_SUITE == "unit" ]; then
+    executeTests
 fi
