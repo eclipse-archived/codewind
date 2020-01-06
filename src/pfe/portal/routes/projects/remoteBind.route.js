@@ -221,22 +221,25 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
         const pathToProj = project.projectPath();
 
         // Delete by directory
-        const currentDirectoryList = await recursivelyListFilesOrDirectories(true, pathToProj);
+        const currentDirectoryList = await recursivelyListFilesOrDirectories(true, pathToTempProj);
         const directoriesToDelete = await getPathsToDelete(currentDirectoryList, keepDirList);
         if (directoriesToDelete.length > 0) {
           // Get the highest level directory
           const topLevelDirectories = getTopLevelDirectories(directoriesToDelete);
           log.info(`Removing locally deleted directories from project: ${project.name}, ID: ${project.projectID} - ` +
           `${topLevelDirectories.join(', ')}`);
+          await deletePathsInArray(pathToTempProj, topLevelDirectories);
           await deletePathsInArray(pathToProj, topLevelDirectories);
+ 
         }
 
         // Delete by file
-        const currentFileList = await recursivelyListFilesOrDirectories(false, pathToProj);
+        const currentFileList = await recursivelyListFilesOrDirectories(false, pathToTempProj);
         const filesToDelete = await getPathsToDelete(currentFileList, keepFileList);
         if (filesToDelete.length > 0) {
           log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
           `${filesToDelete.join(', ')}`);
+          await deletePathsInArray(pathToTempProj, filesToDelete);
           // remove the files from pfe container
           await deletePathsInArray(pathToProj, filesToDelete);
         }
@@ -276,19 +279,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
 function getPathsToDelete(existingPathArray, newPathArray) {
   const pathsToDeleteSet = new Set(existingPathArray);
   newPathArray.forEach((f) => pathsToDeleteSet.delete(f));
-  // if file is in a protected dir, do not delete it
-  pathsToDeleteSet.forEach((f) => {
-    if (fileIsProtected(f)) {
-      pathsToDeleteSet.delete(f)
-    }
-  })
-
   return Array.from(pathsToDeleteSet);
-}
-
-function fileIsProtected(filePath) {
-  const protectedPrefixes = [".odo/", "node_modules/", ".m2/"];
-  return protectedPrefixes.some((prefix) => filePath.startsWith(prefix));
 }
 
 function getTopLevelDirectories(directoryArray) {
@@ -490,6 +481,7 @@ router.post('/api/v1/projects/:id/unbind', validateReq, async function (req, res
     }
     user.uiSocket.emit('projectDeletion', data);
     log.error(`Error deleting project: ${util.inspect(data)}`);
+    res.status(500).send(data.error);
   }
 });
 
