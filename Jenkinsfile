@@ -21,7 +21,7 @@ pipeline {
                     
                     // NOTE: change of this sh call should be in sync with './script/build.sh'. 
                     sh '''#!/usr/bin/env bash
-
+                        echo "MY CHANGES"
                         # Docker system prune
                         echo "Docker system prune ..."
                         docker system df
