@@ -112,13 +112,14 @@ function setup {
     BUCKET_NAME=turbine-$TEST_TYPE-$TEST_SUITE
     TURBINE_SERVER_DIR=$CW_DIR/src/pfe/file-watcher/server
     TEST_DIR=$TURBINE_SERVER_DIR/test
-    TURBINE_DIR_CONTAINER=/file-watcher
+    TURBINE_DIR_CONTAINER=/file-watcher/server
     TEST_RUNS_DATE_DIR=~/test_results/$DATE_NOW
     TEST_OUTPUT_DIR=$TEST_RUNS_DATE_DIR/$TEST_TYPE/$TEST_SUITE/$TIME_NOW
     TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
     PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
     TURBINE_NPM_INSTALL_CMD="cd /file-watcher/server; npm install --only=dev"
+    PERFORMANCE_TEST_DIR="mkdir -p /file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST"
 
     mkdir -p $TEST_OUTPUT_DIR
 
@@ -126,11 +127,11 @@ function setup {
     echo -e "${BLUE}Copying over the Filewatcher dir to the Codewind container/pod ... ${RESET}"
     if [ $TEST_TYPE == "local" ]; then
         CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
-        docker cp $TURBINE_SERVER_DIR $CODEWIND_CONTAINER_ID:$TURBINE_DIR_CONTAINER \
+        docker cp $TEST_DIR $CODEWIND_CONTAINER_ID:$TURBINE_DIR_CONTAINER \
         && docker exec -i $CODEWIND_CONTAINER_ID bash -c "$TURBINE_NPM_INSTALL_CMD"
     elif [ $TEST_TYPE == "kube" ]; then
         CODEWIND_POD_ID=$(kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 | cut -d " " -f 1)
-        kubectl cp $TURBINE_SERVER_DIR $CODEWIND_POD_ID:$TURBINE_DIR_CONTAINER \
+        kubectl cp $TEST_DIR $CODEWIND_POD_ID:$TURBINE_DIR_CONTAINER \
         && kubectl exec -i $CODEWIND_POD_ID -- bash -c "$TURBINE_NPM_INSTALL_CMD"
     fi
 
@@ -188,12 +189,36 @@ function setup {
 }
 
 function run {
-    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${REGISTRY_SECRET_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} npm run $TEST_SUITE:test:xml"
+    TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; ./test/scripts/keep-pod-alive.sh & JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${REGISTRY_SECRET_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} NAMESPACE=${NAMESPACE} TURBINE_PERFORMANCE_TEST=${TURBINE_PERFORMANCE_TEST} npm run $TEST_SUITE:test:xml; ps -ef | grep \"keep-pod-alive.sh\" | grep -v grep | awk '{print $2}' | xargs kill"
 
     if [ $TEST_TYPE == "local" ]; then
+        if [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
+            echo -e "${BLUE}>> Creating data directory in PFE docker if it does not exist already ... ${RESET}"
+            docker exec -i $CODEWIND_CONTAINER_ID bash -c "$PERFORMANCE_TEST_DIR"
+            checkExitCode $? "Failed to create data directory in PFE docker."
+
+            if [[ -f "$PERFORMANCE_DATA_DIR"/performance-data.json ]]; then
+                echo -e "${BLUE}>> Copying data.json file back to docker container ... ${RESET}"
+                docker cp "$PERFORMANCE_DATA_DIR"/performance-data.json $CODEWIND_CONTAINER_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST
+                checkExitCode $? "Failed to copy data.json file to docker container."
+            fi
+        fi
+
         docker exec -i $CODEWIND_CONTAINER_ID bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
         docker cp $CODEWIND_CONTAINER_ID:/test_output.xml $TEST_OUTPUT
     elif [ $TEST_TYPE == "kube" ]; then
+        if [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
+            echo -e "${BLUE}>> Creating data directory in PFE kube if it does not exist already ... ${RESET}"
+            kubectl exec -i $CODEWIND_POD_ID -- bash -c "$PERFORMANCE_TEST_DIR"
+            checkExitCode $? "Failed to create data directory in PFE kube."
+
+            if [[ -f "$PERFORMANCE_DATA_DIR"/performance-data.json ]]; then
+                echo -e "${BLUE}>> Copying data.json file back to docker container ... ${RESET}"
+                kubectl cp "$PERFORMANCE_DATA_DIR"/performance-data.json $CODEWIND_POD_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST
+                checkExitCode $? "Failed to copy data.json file to docker container."
+            fi
+        fi
+
         kubectl exec -i $CODEWIND_POD_ID -- bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
         kubectl cp $CODEWIND_POD_ID:/test_output.xml $TEST_OUTPUT
     fi
@@ -213,6 +238,16 @@ function run {
     echo -e "${BLUE}>> Cleaning up test projects ... ${RESET}"
 	rm -rf $PROJECT_DIR
 	checkExitCode $? "Failed to clean up test directory."
+
+    if [ $TEST_TYPE == "local" ] & [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
+        echo -e "${BLUE}>> Copy back data.json file back to host VM ... ${RESET}"
+        docker cp $CODEWIND_CONTAINER_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST/performance-data.json "$PERFORMANCE_DATA_DIR"
+        checkExitCode $? "Failed to copy data.json file to host VM local."
+    elif [ $TEST_TYPE == "kube" ] & [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
+        echo -e "${BLUE}>> Copy back data.json file back to host VM ... ${RESET}"
+        kubectl cp $CODEWIND_POD_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST/performance-data.json "$PERFORMANCE_DATA_DIR"
+        checkExitCode $? "Failed to copy data.json file to host VM on kube."
+    fi
 }
 
 while getopts "t:s:d:h" OPTION; do
