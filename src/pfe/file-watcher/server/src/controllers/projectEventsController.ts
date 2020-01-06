@@ -55,8 +55,8 @@ function shouldHandle(detectChangeByExtension: boolean | string[], path: string)
         return true;
     }
 
-    // if detectChangeByExtension is an array, it means file changes, except those whose
-    // paths are in the array, are detected by extension
+    // if detectChangeByExtension is an array, it means file changes ARE
+    // detected by extension - except when the file path is specified in the array
     if (Array.isArray(detectChangeByExtension)) {
         // if path is in the array then Codewind should handle it
         return detectChangeByExtension.includes(path);
