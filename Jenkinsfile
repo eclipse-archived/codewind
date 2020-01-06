@@ -21,7 +21,6 @@ pipeline {
                     
                     // NOTE: change of this sh call should be in sync with './script/build.sh'. 
                     sh '''#!/usr/bin/env bash
-
                         # Docker system prune
                         echo "Docker system prune ..."
                         docker system df
@@ -170,9 +169,9 @@ pipeline {
                         . $NVM_DIR/nvm.sh
                         nvm i 10
                         
-                        # Install docker-compose 
-                        curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o ~/docker-compose
-                        chmod +x ~/docker-compose
+                        # Install docker-compose
+                        curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/bin/docker-compose
+                        chmod +x /usr/bin/docker-compose
 
                         # Run eslint on portal code
                         cd src/pfe/portal
@@ -183,72 +182,59 @@ pipeline {
                         fi
                         cd ../../..
 
+                        # Build and eslint the portal tests
+                        cd test/
+                        npm install
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        npm run eslint
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        # Run the portal unit tests
+                        npm run unittest
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+                        cd ..
+
                         # Create codewind-workspace if it does not exist
                         printf "\n\nCreating codewind-workspace\n"
                         mkdir -m 777 -p codewind-workspace
 
-                        export REPOSITORY='';
-                        export TAG
-                        export WORKSPACE_DIRECTORY=$PWD/codewind-workspace;
-                        export WORKSPACE_VOLUME=cw-workspace;
-                        export HOST_OS=$(uname);
-                        export HOST_HOME=$HOME
-                        export ARCH=$(uname -m);
-                        # Select the right images for this architecture.
-                        if [ "$ARCH" = "x86_64" ]; then
-                          export PLATFORM="-amd64"
-                        else
-                          export PLATFORM="-$ARCH"
+                        # Save Docker image ID of PFE to ensure we're not using the image from Dockerhub
+                        BUILT_PFE_IMAGE_ID=$(docker images --filter=reference=eclipse/codewind-pfe-amd64:latest --format "{{.ID}}")
+                        echo "PFE Image: $BUILT_PFE_IMAGE_ID"
+
+                        # Start Codewind
+                        sh ./start.sh
+                        if [ $? -ne 0 ]; then
+                            echo "Error starting Codewind"
+                            exit 1
                         fi
 
-                        # Start codewind running
-                        ~/docker-compose -f docker-compose.yaml -f docker-compose-remote.yaml up -d;
-
-                        if [ $? -eq 0 ]; then
-                            # Reset so we don't get conflicts
-                            unset REPOSITORY;
-                            unset WORKSPACE_DIRECTORY;
-                            printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
-                            printf "\nCurrent running codewind containers\n";
-                            docker ps --filter name=codewind
-                        else
-                            printf "\n\n${RED}FAILED TO START CONTAINERS $RESET\n";
-                            exit;
+                        # Check that cwctl has not pulled down a new PFE image
+                        POST_START_IMAGE_ID=$(docker images --filter=reference=eclipse/codewind-pfe-amd64:latest --format "{{.ID}}")
+                        echo "PFE Container image: $POST_START_IMAGE_ID"
+                        if [ "$BUILT_PFE_IMAGE_ID" != "$POST_START_IMAGE_ID" ]; then
+                            echo "Error a new PFE image has been downloaded"
+                            echo "Built PFE image ID: $BUILT_PFE_IMAGE_ID"
+                            echo "Downloaded PFE image ID: $POST_START_IMAGE_ID"
+                            echo "Docker images"
+                            docker images
+                            echo "Docker ps"
+                            docker ps
+                            exit 1
                         fi
 
-                        printf "\n\nPausing for 30 seconds to allow containers to start\n";
-                        sleep 30;
-
-                        # Check to see if any containers exited straight away
-                        printf "\n\n${BLUE}CHECKING FOR codewind CONTAINERS THAT EXITED STRAIGHT AFTER BEING RUN $RESET\n";
-                        EXITED_PROCESSES=$(docker ps -q --filter "name=codewind" --filter "status=exited"  | wc -l)
-                        if [ $EXITED_PROCESSES -gt 0 ]; then
-                          printf "\n${RED}Exited containers found $RESET\n";
-                          # docker ps --filter "name=codewind" --filter "status=exited";
-                          NUM_CODE_ZERO=$(docker ps -q --filter "name=codewind" --filter "status=exited" --filter "exited=0" | wc -l);
-                          NUM_CODE_ONE=$(docker ps -q --filter "name=codewind" --filter "status=exited" --filter "exited=1" | wc -l);
-                          if [ $NUM_CODE_ZERO -gt 0 ]; then
-                            printf "\n${RED}$NUM_CODE_ZERO found with an exit code '0' $RESET\n";
-                            docker ps --filter "name=codewind" --filter "status=exited" --filter "exited=0";
-                            printf "\nUse 'docker logs [container name]' to find why the exit happened";
-                          fi
-                          if [ $NUM_CODE_ONE -gt 0 ]; then
-                            printf "\n${RED}$NUM_CODE_ONE found with an exit code '1' $RESET\n";
-                            docker ps --filter "name=codewind" --filter "status=exited" --filter "exited=1";
-                            printf "\nUse 'docker logs [container name]' to debug exit";
-                          fi
-                        else
-                          printf "\nNo containers exited \n";
-                        fi
-
-                        printf "\n\ncodewind now available\n";
-
-                        # Build the tests and run them against the portal.
+                        # Run the API tests now Portal has started
                         cd test/
-                        npm install
-                        npm run eslint
-                        npm run test
+                        npm run apitest
                         '''
+
                     }
                 }
             }
@@ -388,6 +374,10 @@ pipeline {
               docker builder prune -a -f
               docker system df
               df -lh
+
+              # Remove docker-compose
+              echo "Removing docker-compose"
+              rm -f /usr/bin/docker-compose
             '''
         }
         failure {
