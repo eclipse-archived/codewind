@@ -170,8 +170,12 @@ pipeline {
                         nvm i 10
                         
                         # Install docker-compose
-                        curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/bin/docker-compose
-                        chmod +x /usr/bin/docker-compose
+                        curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o ~/.local/bin/docker-compose
+                        if [ $? -ne 0 ]; then
+                            echo "Error downloading docker-compose"
+                            exit 1
+                        fi
+                        chmod +x ~/.local/bin/docker-compose
 
                         # Run eslint on portal code
                         cd src/pfe/portal
@@ -377,7 +381,7 @@ pipeline {
 
               # Remove docker-compose
               echo "Removing docker-compose"
-              rm -f /usr/bin/docker-compose
+              rm -f ~/.local/bin/docker-compose
             '''
         }
         failure {
