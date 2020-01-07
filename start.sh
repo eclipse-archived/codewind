@@ -90,14 +90,25 @@ fi
 
 printf "\n${GREEN}Downloading cwctl to start Codewind containers $RESET\n";
 printf "${YELLOW}Set CW_CLI_BRANCH={branch} to override the branch used to pull cwctl $RESET\n";
+
 curl -o ./script/cli-pull.sh -sS https://raw.githubusercontent.com/eclipse/codewind-vscode/master/dev/bin/cli-pull.sh
 chmod +x ./script/cli-pull.sh
 
-cd script
-./cli-pull.sh
-cd - 
+ARCH=$(uname -m)
+if [ "$ARCH" == "ppc64le" ]; then
+   mkdir -p ./script/linux
+   cd ./script/linux
+   curl -fsSL http://download.eclipse.org/codewind/codewind-installer/master/latest/cwctl-ppc64le -o cwctl
+   chmod +x cwctl
+   cd -
+else
+   cd script
+   ./cli-pull.sh
+   cd - 
+fi
 
 OS=$(uname -a | awk '{print $1;}')
+
 CWCTL=./script/linux/cwctl
 if [ $OS == "Darwin" ]; then
   CWCTL=./script/darwin/cwctl
