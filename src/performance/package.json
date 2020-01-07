@@ -7,7 +7,7 @@
     "start": "PORT=9095 node server.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "EPL-2.0",
   "proxy": "http://localhost:3001",
   "dependencies": {
     "axios": "^0.19.0",
