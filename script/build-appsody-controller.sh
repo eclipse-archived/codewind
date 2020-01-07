@@ -1,17 +1,11 @@
 # ----------------------------------------------------------------------------
 #
-# Package	: Thorntail
-# Version	: latest
-# Source repo	: https://github.com/thorntail/thorntail.git
-# Tested on	: rhel_7.6
-# Script License: Apache License, Version 2 or later
-# Maintainer	: Vrushali Inamdar <vrushali.inamdar@ibm.com>
-#
-# Disclaimer: This script has been tested in root mode on given
-# ==========  platform using the mentioned version of the package.
+# This script downloads the ppc64le specific version of appsody and 
+#      builds appsody-controller binary from source.
+# This script has been tested in root mode on rhel7.7 platform 
+#             using the mentioned version of the package.
 #             It may not work as expected with newer versions of the
-#             package and/or distribution. In such case, please
-#             contact "Maintainer" of this script.
+#             package and/or distribution. 
 #
 # ----------------------------------------------------------------------------
 
