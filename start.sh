@@ -79,20 +79,20 @@ sleep 5;
 
 # Check to see if any containers exited straight away
 printf "\n\n${BLUE}CHECKING FOR codewind CONTAINERS THAT EXITED STRAIGHT AFTER BEING RUN $RESET\n";
-EXITED_PROCESSES=$(docker ps -q --filter "name=codewind" --filter "status=exited"  | wc -l)
+EXITED_PROCESSES=$(docker ps -a -q --filter "name=codewind" --filter "status=exited"  | wc -l)
 if [ $EXITED_PROCESSES -gt 0 ]; then
   printf "\n${RED}Exited containers found $RESET\n";
   # docker ps --filter "name=codewind" --filter "status=exited";
-  NUM_CODE_ZERO=$(docker ps -q --filter "name=codewind" --filter "status=exited" --filter "exited=0" | wc -l);
-  NUM_CODE_ONE=$(docker ps -q --filter "name=codewind" --filter "status=exited" --filter "exited=1" | wc -l);
+  NUM_CODE_ZERO=$(docker ps -a -q --filter "name=codewind" --filter "status=exited" --filter "exited=0" | wc -l);
+  NUM_CODE_ONE=$(docker ps -a -q --filter "name=codewind" --filter "status=exited" --filter "exited=1" | wc -l);
   if [ $NUM_CODE_ZERO -gt 0 ]; then
     printf "\n${RED}$NUM_CODE_ZERO found with an exit code '0' $RESET\n";
-    docker ps --filter "name=codewind" --filter "status=exited" --filter "exited=0";
+    docker ps -a --filter "name=codewind" --filter "status=exited" --filter "exited=0";
     printf "\nUse 'docker logs [container name]' to find why the exit happened";
   fi
   if [ $NUM_CODE_ONE -gt 0 ]; then
     printf "\n${RED}$NUM_CODE_ONE found with an exit code '1' $RESET\n";
-    docker ps --filter "name=codewind" --filter "status=exited" --filter "exited=1";
+    docker ps -a --filter "name=codewind" --filter "status=exited" --filter "exited=1";
     printf "\nUse 'docker logs [container name]' to debug exit";
   fi
 else
