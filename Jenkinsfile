@@ -238,6 +238,9 @@ pipeline {
                         # Run the API tests now Portal has started
                         cd test/
                         npm run apitest
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
                         '''
 
                     }
