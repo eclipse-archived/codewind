@@ -44,9 +44,13 @@ Have any questions or commments on Codewind? Or would you like to get involved i
 
 ## Contributing
 We welcome submitting issues and contributions.
-1. [Submitting bugs](https://github.com/eclipse/codewind/issues)
-2. [Contributing](CONTRIBUTING.md)
-3. [View the API documentation](https://eclipse.github.io/codewind/)
+- [Submitting bugs](https://github.com/eclipse/codewind/issues)
+- [Contributing](CONTRIBUTING.md)
+- [View the API documentation](https://eclipse.github.io/codewind/)
+- [Improve docs](https://github.com/eclipse/codewind-docs)
+- [Codewind architecture](https://github.com/codewind-resources/design-documentation)
+- [Codewind repositories](https://github.com/eclipse?utf8=%E2%9C%93&q=codewind&type=&language=)
+- [Good first issues for new contributors](https://github.com/eclipse/codewind/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 ## License
 [EPL 2.0](https://www.eclipse.org/legal/epl-2.0/)
