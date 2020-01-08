@@ -154,7 +154,7 @@ function updateGraphs(metrics) {
       aggregateDataAboutHttpsRequestsSentDuringSnapshot.url = metricsObj.labels.url;
       aggregateDataAboutHttpsRequestsSentDuringSnapshot.longest = metricsObj.value;
 
-    } else if (metric.name.includes('alltime')) {
+    } else if (metric.name.includes('alltime') || metric.name === 'http_requests_total') {
       for (const metricsObj of metric.metrics) {
         const { handler, method } = metricsObj.labels;
         const endpoint = `${method.toUpperCase()} ${handler}`;
@@ -164,7 +164,7 @@ function updateGraphs(metrics) {
           };
         }
         const alltimeData = alltimeDataAboutHttpRequests[endpoint];
-        if (metric.name === 'http_requests_alltime_total') {
+        if (metric.name === 'http_requests_total') {
           alltimeData.hits = metricsObj.value;
         } else if (metric.name === 'http_requests_alltime_duration_average_microseconds') {
           alltimeData.averageResponseTime = metricsObj.value;
