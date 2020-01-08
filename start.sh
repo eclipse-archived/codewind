@@ -71,7 +71,7 @@ if [ $? -eq 0 ]; then
   docker ps --filter name=codewind
 else
   printf "\n\n${RED}FAILED TO START CONTAINERS $RESET\n";
-  exit;
+  exit 1;
 fi
 
 printf "\n\n${BLUE}PAUSING TO ALLOW CONTAINERS TIME TO START $RESET\n";
