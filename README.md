@@ -26,13 +26,13 @@ Have any questions or commments on Codewind? Or would like to get involved in so
 
 ## Contributing
 We welcome submitting issues and contributions.
-- [Submitting bugs](https://github.com/eclipse/codewind/issues)
-- [Contributing](CONTRIBUTING.md)
-- [View the API documentation](https://eclipse.github.io/codewind/)
-- [Improve docs](https://github.com/eclipse/codewind-docs)
-- [Codewind architecture](https://github.com/codewind-resources/design-documentation)
-- [Codewind repositories](https://github.com/eclipse?utf8=%E2%9C%93&q=codewind&type=&language=)
-- [Good first issues for new contributors](https://github.com/eclipse/codewind/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+- :bug: [Submitting bugs](https://github.com/eclipse/codewind/issues)
+- :pencil2: [Contributing](CONTRIBUTING.md)
+- :mag_right: [View the API documentation](https://eclipse.github.io/codewind/)
+- :memo: [Improve docs](https://github.com/eclipse/codewind-docs)
+- :building_construction: [Codewind architecture](https://github.com/codewind-resources/design-documentation)
+- :octocat: [Codewind repositories](https://github.com/eclipse?utf8=%E2%9C%93&q=codewind&type=&language=)
+- :sparkles: [Good first issues for new contributors](https://github.com/eclipse/codewind/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 ## Building Codewind from the source
 1. Clone the `codewind` repository.
