@@ -15,6 +15,25 @@ Use the following instructions to install Codewind with your choice of editor:
 2. [Eclipse plugin](https://github.com/eclipse/codewind-eclipse)
 3. [Eclipse Che plugin](https://github.com/eclipse/codewind-che-plugin)
 
+## Feedback and Community
+
+Have any questions or commments on Codewind? Or would like to get involved in some way? Here's how you can get in touch with us:
+- **Support:** You can ask questions, report bugs, and request features using [GitHub issues](https://github.com/eclipse/codewind/issues).
+- **Public Chat:** Join the public [eclipse-codewind](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind) and [eclipse-codewind-dev](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind-dev) Mattermost channels
+- **Twitter:** [@EclipseCodewind](https://twitter.com/EclipseCodewind)
+- **Mailing List:** [codewind-dev@eclipse.org](https://accounts.eclipse.org/mailing-list/codewind-dev)
+- **Weekly Meetings:** We hold [weekly calls](https://github.com/eclipse/codewind/wiki/Codewind-Calls) every Tuesday and Thursday at 9:00 AM EST / 2:00 PM GMT.
+
+## Contributing
+We welcome submitting issues and contributions.
+- [Submitting bugs](https://github.com/eclipse/codewind/issues)
+- [Contributing](CONTRIBUTING.md)
+- [View the API documentation](https://eclipse.github.io/codewind/)
+- [Improve docs](https://github.com/eclipse/codewind-docs)
+- [Codewind architecture](https://github.com/codewind-resources/design-documentation)
+- [Codewind repositories](https://github.com/eclipse?utf8=%E2%9C%93&q=codewind&type=&language=)
+- [Good first issues for new contributors](https://github.com/eclipse/codewind/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+
 ## Building Codewind from the source
 1. Clone the `codewind` repository.
 2. Run the `./script/build.sh` script to run the Codewind build, or run the `./run.sh` script to build and start Codewind.
@@ -32,25 +51,6 @@ To use these you should:
 4. Open the Codewind directory in VSCode (Something like `code github/codewind`).
 5. Open the debugging tab and select one of the debugging options.
 
-## Feedback and Community
-
-Have any questions or commments on Codewind? Or would like to get involved in some way? Here's how you can get in touch with us:
-- **Support:** You can ask questions, report bugs, and request features using [GitHub issues](https://github.com/eclipse/codewind/issues).
-- **Public Chat:** Join the public [eclipse-codewind](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind) and [eclipse-codewind-dev](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind-dev) Mattermost channels
-- **Twitter:** [@EclipseCodewind](https://twitter.com/EclipseCodewind)
-- **Mailing List:** [codewind-dev@eclipse.org](https://accounts.eclipse.org/mailing-list/codewind-dev)
-- **Weekly Meetings:** We hold [weekly calls](https://github.com/eclipse/codewind/wiki/Codewind-Calls) every Tuesday and Thursday at 9:00 AM EST / 2:00 PM GMT.
-
-
-## Contributing
-We welcome submitting issues and contributions.
-- [Submitting bugs](https://github.com/eclipse/codewind/issues)
-- [Contributing](CONTRIBUTING.md)
-- [View the API documentation](https://eclipse.github.io/codewind/)
-- [Improve docs](https://github.com/eclipse/codewind-docs)
-- [Codewind architecture](https://github.com/codewind-resources/design-documentation)
-- [Codewind repositories](https://github.com/eclipse?utf8=%E2%9C%93&q=codewind&type=&language=)
-- [Good first issues for new contributors](https://github.com/eclipse/codewind/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 ## License
 [EPL 2.0](https://www.eclipse.org/legal/epl-2.0/)
