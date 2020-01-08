@@ -50,20 +50,15 @@ const timeout = (workspaceSettingsInfo && workspaceSettingsInfo.watcherChunkTime
  */
 function shouldHandle(detectChangeByExtension: boolean | string[], path: string): boolean {
 
-    // clearly Codewind should handle when detectChangeByExtension is false
-    if (!detectChangeByExtension) {
-        return true;
+    // detectChangeByExtension is not an array, treat it as a boolean
+    // Codewind should handle if changes are *not* detected by the extension
+    if (!Array.isArray(detectChangeByExtension)) {
+        return !detectChangeByExtension;
     }
 
-    // if detectChangeByExtension is an array, it means file changes ARE
-    // detected by extension - except when the file path is specified in the array
-    if (Array.isArray(detectChangeByExtension)) {
-        // if path is in the array then Codewind should handle it
-        return detectChangeByExtension.includes(path);
-    }
-
-    // otherwise, detectChangeByExtension is true so Codewind should not handle it
-    return false;
+    // otherwise, detectChangeByExtension is an array
+    // Codewind should handle only if the path is in the detectChangeByExtension array
+    return detectChangeByExtension.includes(path);
 }
 
 /**
