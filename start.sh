@@ -16,23 +16,8 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 YELLOW='\033[1;33m'
 RESET='\033[0m'
-DEVMODE=false
 
 printf "\n\n${BLUE}Running 'start.sh' to start codewind. $RESET\n";
-
-while [ "$#" -gt 0 ]; do
-  case $1 in
-    -t|--tag) TAG="$2"; shift 2;;
-    --dev) DEVMODE=true; shift 1;;
-    *) shift 1;;
-  esac
-done
-
-# If no tag argument then set to latest
-if [ -z "$TAG" ]; then
-  TAG='latest';
-fi
-printf "\nTag is set to $TAG\n";
 
 # CREATE CODEWIND-WORKSPACE IF NOT EXISTS
 printf "\n\n${BLUE}CREATING CODEWIND-WORKSPACE IF IT DOESN'T EXIST${RESET}\n"
@@ -45,102 +30,69 @@ rm $GIT_CONFIG
 git config -f $GIT_CONFIG --add user.name "`git config --get user.name || echo 'codewind user'`"
 git config -f $GIT_CONFIG --add user.email "`git config --get user.email || echo 'codewind.user@localhost'`"
 
-
-# Set docker-compose file
-DOCKER_COMPOSE_FILE="docker-compose.yaml -f docker-compose-remote.yaml"
-
-
-if [ "$DEVMODE" = true ]; then
-  printf "\nDev mode is enabled\n";
-  DOCKER_COMPOSE_FILE="docker-compose.yaml -f docker-compose-dev.yaml"
-fi
-
-
-# REMOVE PREVIOUS DOCKER PROCESSES FOR CODEWIND
-printf "\n\n${BLUE}CHECKING FOR EXISTING CODEWIND PROCESSES $RESET\n";
-# Check for existing processes (stopped or running)
-if [ $(docker ps -q -a --filter name=codewind | wc -l) -gt 0 ]; then
-  printf "\n${RED}Existing processes found $RESET\n";
-  # Check for running processes only
-  if [ $(docker ps -q --filter name=codewind | wc -l) -gt 0 ]; then
-    printf "\nStopping existing processes\n";
-    # Stop running processes
-    docker stop $(docker ps -q --filter name=codewind)
-    # Check stop command ran properly or exit
-    if [ $? -ne 0 ]; then
-        printf "\n${RED}Something went wrong while stopping existing processes.\n";
-        printf "Exiting $RESET\n";
-        exit;
-    fi
-  fi
-  printf "\nRemoving stopped processes";
-  # Remove all processes (if running now stopped)
-  docker rm $(docker ps -a -q --filter name=codewind)
-  # Check remove command ran properly or exit
-  if [ $? -ne 0 ]; then
-      printf "\n${RED}Something went wrong while removing existing processes.\n";
-      printf "Exiting $RESET\n";
-      exit;
-  else
-    printf "\n${GREEN}Existing processes stopped and removed $RESET\n";
-  fi
-else
-  printf "\n${GREEN}No existing processes found $RESET\n";
-fi
-
 printf "\n${GREEN}Downloading cwctl to start Codewind containers $RESET\n";
 printf "${YELLOW}Set CW_CLI_BRANCH={branch} to override the branch used to pull cwctl $RESET\n";
 curl -o ./script/cli-pull.sh -sS https://raw.githubusercontent.com/eclipse/codewind-vscode/master/dev/bin/cli-pull.sh
 chmod +x ./script/cli-pull.sh
 
+OS=$(uname -a | awk '{print $1;}')
+ARCH=$(uname -m)
 cd script
-./cli-pull.sh
+if [ $OS == "Darwin" ]; then
+  printf "MacOS detected, only downloading MacOS CWCTL\n\n"
+  ./cli-pull.sh "darwin"
+  CWCTL=./script/darwin/cwctl
+elif [ `echo $OS | grep "_NT-10"` ]; then
+  printf "Windows detected, only downloading Windows CWCTL\n\n"
+  ./cli-pull.sh "windows"
+  CWCTL=./script/windows/cwctl.exe
+elif [ "$ARCH" == "ppc64le" ]; then
+  printf "ppc64le detected, only downloading ppc64le CWCTL\n\n"
+  ./cli-pull.sh "ppc64le"
+  CWCTL=./script/ppc64le/cwctl
+else
+  printf "Else condition hit, only downloading Linux CWCTL\n\n"
+  ./cli-pull.sh "linux"
+  CWCTL=./script/linux/cwctl
+fi
 cd - 
 
-OS=$(uname -a | awk '{print $1;}')
-CWCTL=./script/linux/cwctl
-if [ $OS == "Darwin" ]; then
-  CWCTL=./script/darwin/cwctl
-else if [ `echo $OS | grep "_NT-10"` ]; then
-    CWCTL=./script/windows/cwctl.exe
-  fi
-fi
-
 # REMOVE PREVIOUS DOCKER PROCESSES FOR CODEWIND
-printf "\n\n${BLUE}CHECKING FOR EXISTING CODEWIND APPS $RESET\n";
+printf "\n\n${BLUE}REMOVING EXISTING CODEWIND DOCKER CONTAINERS $RESET\n";
 # Check for existing processes (stopped or running)
 $CWCTL stop-all
 
+printf "\n\n${BLUE}STARTING CODEWIND DOCKER CONTAINERS $RESET\n";
 $CWCTL start --debug
 
 if [ $? -eq 0 ]; then
-    printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
-    printf "\nCurrent running codewind containers\n";
-    docker ps --filter name=codewind
+  printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
+  printf "\nCurrent running codewind containers\n";
+  docker ps --filter name=codewind
 else
-    printf "\n\n${RED}FAILED TO START CONTAINERS $RESET\n";
-    exit;
+  printf "\n\n${RED}FAILED TO START CONTAINERS $RESET\n";
+  exit 1;
 fi
 
 printf "\n\n${BLUE}PAUSING TO ALLOW CONTAINERS TIME TO START $RESET\n";
-sleep 20;
+sleep 5;
 
 # Check to see if any containers exited straight away
 printf "\n\n${BLUE}CHECKING FOR codewind CONTAINERS THAT EXITED STRAIGHT AFTER BEING RUN $RESET\n";
-EXITED_PROCESSES=$(docker ps -q --filter "name=codewind" --filter "status=exited"  | wc -l)
+EXITED_PROCESSES=$(docker ps -a -q --filter "name=codewind" --filter "status=exited"  | wc -l)
 if [ $EXITED_PROCESSES -gt 0 ]; then
   printf "\n${RED}Exited containers found $RESET\n";
   # docker ps --filter "name=codewind" --filter "status=exited";
-  NUM_CODE_ZERO=$(docker ps -q --filter "name=codewind" --filter "status=exited" --filter "exited=0" | wc -l);
-  NUM_CODE_ONE=$(docker ps -q --filter "name=codewind" --filter "status=exited" --filter "exited=1" | wc -l);
+  NUM_CODE_ZERO=$(docker ps -a -q --filter "name=codewind" --filter "status=exited" --filter "exited=0" | wc -l);
+  NUM_CODE_ONE=$(docker ps -a -q --filter "name=codewind" --filter "status=exited" --filter "exited=1" | wc -l);
   if [ $NUM_CODE_ZERO -gt 0 ]; then
     printf "\n${RED}$NUM_CODE_ZERO found with an exit code '0' $RESET\n";
-    docker ps --filter "name=codewind" --filter "status=exited" --filter "exited=0";
+    docker ps -a --filter "name=codewind" --filter "status=exited" --filter "exited=0";
     printf "\nUse 'docker logs [container name]' to find why the exit happened";
   fi
   if [ $NUM_CODE_ONE -gt 0 ]; then
     printf "\n${RED}$NUM_CODE_ONE found with an exit code '1' $RESET\n";
-    docker ps --filter "name=codewind" --filter "status=exited" --filter "exited=1";
+    docker ps -a --filter "name=codewind" --filter "status=exited" --filter "exited=1";
     printf "\nUse 'docker logs [container name]' to debug exit";
   fi
 else
