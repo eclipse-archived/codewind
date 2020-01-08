@@ -174,6 +174,11 @@ done
 
 # Log in to the OKD cluster with default credentials
 if [[ $TEST_TYPE == "kube" ]]; then
+    if [ $TEST_SUITE == "unit" ]; then
+        echo -e "${RED}Turbine Unit tests are not designed to run on a Kube environment, please switch to Local. ${RESET}\n"
+        exit 1
+    fi
+
     CHECK_EX=0
 
     # Check if the mandatory arguments have been set up
