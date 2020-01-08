@@ -16,17 +16,8 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
-# Developer-mode option for running with appmetrics, see start.sh
-DEVMODE=''
-
 printf "\n\n${BLUE}Running 'run.sh' to build and start codewind. $RESET\n";
 
-while [ "$#" -gt 0 ]; do
-  case $1 in
-    --dev) DEVMODE='--dev'; shift 1;;
-    *) shift 1;;
-  esac
-done
 
 # Set before mvn is run to prevent the reset of the MAVEN_OPTS that can happen if its in the start.sh script
 export HOST_MAVEN_OPTS=$MAVEN_OPTS
@@ -53,7 +44,7 @@ git config -f $GIT_CONFIG --add user.email "`git config --get user.email || echo
 DIR=`pwd`
 
 # Setting the NOBUILD env var to true uses the current images.
-# Used in travis when we build and push the images with script/build.sh
+# Used in Jenkins when we build and push the images with script/build.sh
 # before running the tests via ./test.sh
 if [ "$NOBUILD" = "true" ]; then
   echo "*** Using existing images, not performing image rebuild ***"
@@ -75,4 +66,4 @@ fi
 cd $DIR/
 
 # Start codewind
-./start.sh $DEVMODE --tag latest
+./start.sh
