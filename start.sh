@@ -36,6 +36,7 @@ curl -o ./script/cli-pull.sh -sS https://raw.githubusercontent.com/eclipse/codew
 chmod +x ./script/cli-pull.sh
 
 OS=$(uname -a | awk '{print $1;}')
+ARCH=$(uname -m)
 cd script
 if [ $OS == "Darwin" ]; then
   printf "MacOS detected, only downloading MacOS CWCTL\n\n"
@@ -45,8 +46,12 @@ elif [ `echo $OS | grep "_NT-10"` ]; then
   printf "Windows detected, only downloading Windows CWCTL\n\n"
   ./cli-pull.sh "windows"
   CWCTL=./script/windows/cwctl.exe
+elif [ "$ARCH" == "ppc64le" ]; then
+  printf "ppc64le detected, only downloading ppc64le CWCTL\n\n"
+  ./cli-pull.sh "ppc64le"
+  CWCTL=./script/ppc64le/cwctl
 else
-  printf "Else detected, only downloading Linux CWCTL\n\n"
+  printf "Else condition hit, only downloading Linux CWCTL\n\n"
   ./cli-pull.sh "linux"
   CWCTL=./script/linux/cwctl
 fi
@@ -57,6 +62,7 @@ printf "\n\n${BLUE}REMOVING EXISTING CODEWIND DOCKER CONTAINERS $RESET\n";
 # Check for existing processes (stopped or running)
 $CWCTL stop-all
 
+printf "\n\n${BLUE}STARTING CODEWIND DOCKER CONTAINERS $RESET\n";
 $CWCTL start --debug
 
 if [ $? -eq 0 ]; then
