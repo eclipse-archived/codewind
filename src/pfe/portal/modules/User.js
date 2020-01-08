@@ -115,7 +115,6 @@ module.exports = class User {
       }
       log.info(`Extensions initialised for user ${this.user_id}.`)
       log.debug(`Loaded extensions are:\n\t${this.extensionList.getNames().join(",\n\t")}`);
-
       // Initialise the list after we have created extensions as they may
       // add template repositories. The log messages allow us to confirm
       // how long this takes.

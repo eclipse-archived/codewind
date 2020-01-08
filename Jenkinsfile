@@ -176,6 +176,8 @@ pipeline {
                         else
                             VERSION="$GIT_BRANCH"
                         fi
+                        
+                        echo "extension to be downloaded: $VERSION"
                         mkdir -p ${SRC_DIR}/pfe/extensions
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip

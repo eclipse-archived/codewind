@@ -67,23 +67,23 @@ fi
 cd ../../..
 
 # Tell PFE to start with code coverage enabled
-export PFE_DEV_NODE_ENV=production # Don't install devDependencies for test
-export PFE_CODE_COVERAGE=true # Run with nyc code coverage enabled
+export PFE_DEV_NODE_ENV=development # Don't install devDependencies for test
+export PFE_CODE_COVERAGE=false # Run with nyc code coverage enabled
 
 # Start Codewind
 ./run.sh;
 
 # Build the tests and run them against the portal.
 cd test/
-npm install
-npm run eslint
-if [[ ! -z $TRAVIS_BUILD_NUMBER && $? -ne 0 ]]; then
-  exit 1
-fi
+# npm install
+# npm run eslint
+# if [[ ! -z $TRAVIS_BUILD_NUMBER && $? -ne 0 ]]; then
+#   exit 1
+# fi
 
 GIT_AUTH=$AUTH
 GIT_EXPORT_AUTH=$EXPORT_AUTH
-npm run test
+npm run apitest
 rc=$?;
 cd ..
 
@@ -102,6 +102,7 @@ printf "${RESET}"
 
 # Shutdown and cleanup.
 ./stop.sh;
+docker volume prune -f
 
 if [ -f test/test-results.xml ]; then
   # If not a PR build then send the results to the dashboard

@@ -41,7 +41,8 @@
             "address": "127.0.0.1",
             "port": 34000,
             "localRoot": "${workspaceFolder}/src/pfe/portal",
-            "remoteRoot": "/portal"
+            "remoteRoot": "/portal",
+            "restart": true
         },
     ]
 }
