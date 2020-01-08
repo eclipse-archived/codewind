@@ -22,7 +22,7 @@ Have any questions or commments on Codewind? Or would like to get involved in so
 - **Public Chat:** Join the public [eclipse-codewind](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind) and [eclipse-codewind-dev](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind-dev) Mattermost channels
 - **Twitter:** [@EclipseCodewind](https://twitter.com/EclipseCodewind)
 - **Mailing List:** [codewind-dev@eclipse.org](https://accounts.eclipse.org/mailing-list/codewind-dev)
-- **Weekly Meetings:** We hold [weekly calls](https://github.com/eclipse/codewind/wiki/Codewind-Calls) every Tuesday and Thursday at 9:00 AM EST / 2:00 PM GMT.
+- **Weekly Meetings:** We hold [weekly calls](https://github.com/eclipse/codewind/wiki/Codewind-Calls) every Tuesday and Thursday at 9:00 AM Eastern Time / 14:00 UTC.
 
 ## Contributing
 We welcome submitting issues and contributions.
