@@ -148,3 +148,8 @@ else
 fi
 
 printf "\n\n${BLUE}CODEWIND CONTAINERS NOW AVAILABLE. PORTAL API ACCESSIBLE AT localhost:10000, PERFORMANCE UI at localhost:9095 $RESET\n";
+
+# If a container has stopped, exit with error code
+if [ $EXITED_PROCESSES -gt 0 ]; then
+  exit 1;
+fi;
