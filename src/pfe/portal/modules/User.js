@@ -134,10 +134,22 @@ module.exports = class User {
     project.loadInProgress = true;
     try {
       let config = await project.getLoadTestConfig();
-      let url = "http://" + project.host + ":" + project.getPort() + config.path;
+
+      let projectHost = project.host;
+      let projectPort = project.getPort();
+      const projectProtocol = project.isHttps ? "https://" : "http://"
+
+      // If in Kube retrieve connection details from the project service
+      const hostOptions = await project.getProjectKubeService();
+      if (hostOptions && hostOptions.hostname && hostOptions.port) {
+        projectHost = hostOptions.hostname;
+        projectPort = hostOptions.port;
+      }
+
+      let url = projectProtocol  + projectHost + ":" + projectPort + config.path;
       config.url = url;
       project.loadConfig = config;
-      log.debug(`Running load for project: ${project.projectID} config: ${JSON.stringify(config)}`);
+      log.info(`Running load for project: ${project.projectID} config: ${JSON.stringify(config)}`);
       const runLoadResp = await this.loadRunner.runLoad(config, project, description);
       return runLoadResp;
     } catch (err) {

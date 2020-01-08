@@ -33,9 +33,9 @@ const loadTestResources = path.join(__dirname, '../../../resources/load-test-dat
 describe('Project.js', () => {
     suppressLogOutput(Project);
     beforeEach(() => {
-        global.codewind = { 
-            RUNNING_IN_K8S: false,  
-            CODEWIND_WORKSPACE: `${__dirname}/project_temp/`, 
+        global.codewind = {
+            RUNNING_IN_K8S: false,
+            CODEWIND_WORKSPACE: `${__dirname}/project_temp/`,
             CODEWIND_TEMP_WORKSPACE: `${__dirname}/project_temp/temp/`,
         };
         fs.ensureDirSync(global.codewind.CODEWIND_TEMP_WORKSPACE);
@@ -47,7 +47,7 @@ describe('Project.js', () => {
     describe('new Project()', () => {
         it('Initialises a new Project with minimal arguments', () => {
             const project = new Project({
-                name: 'newdummyproject',
+                name: 'newdummyproject', locOnDisk: '/Documents/projectDir/',
             }, './someworkspace');
             project.should.be.an('object');
             project.should.have.property('projectID').to.be.a('string');
@@ -58,7 +58,7 @@ describe('Project.js', () => {
         });
         it('Sets directory to name', () => {
             const project = createProjectAndCheckIsAnObject({
-                name: 'newdummyproject',
+                name: 'newdummyproject', locOnDisk: '/Documents/projectDir/',
             }, './someworkspace');
             const name = project.name;
             project.should.have.property('directory');
@@ -78,7 +78,7 @@ describe('Project.js', () => {
                 projectType: 'docker',
                 buildLogPath: '/codewind-workspace/.logs/my-java-project-9318ab10-fef9-11e9-8761-9bf62d92b58b-9318ab10-fef9-11e9-8761-9bf62d92b58b/docker.build.log',
                 state: 'open',
-                autoBuild: false,  
+                autoBuild: false,
             };
             const project = createProjectAndCheckIsAnObject(args, global.codewind.CODEWIND_WORKSPACE);
             project.should.containSubset(args);
@@ -96,13 +96,13 @@ describe('Project.js', () => {
             const project = createDefaultProjectAndCheckIsAnObject();
             project.should.containSubset({ name: 'dummy' });
             project.should.not.containSubset(obj);
-    
+
             project.logStreams = obj.logStreams;
             project.loadInProgress = obj.loadInProgress;
             project.loadConfig = obj.loadConfig;
-    
+
             project.should.containSubset(obj);
-    
+
             const json = project.toJSON();
             json.should.not.containSubset(obj);
         });
@@ -115,7 +115,7 @@ describe('Project.js', () => {
                 areMetricsAvailable.should.be.false;
             });
             it('Checks metrics for Node.js', async() => {
-                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'nodejs' }, global.codewind.CODEWIND_WORKSPACE);
+                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'nodejs', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
                 const packageJSONContents = {
                     dependencies: {
                         'appmetrics-dash': true,
@@ -128,7 +128,7 @@ describe('Project.js', () => {
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Java', async() => {
-                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'java' }, global.codewind.CODEWIND_WORKSPACE);
+                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'java', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
                 const pomXmlPath = path.join(project.projectPath(), 'pom.xml');
                 await fs.ensureFile(pomXmlPath);
                 await fs.writeFile(pomXmlPath, 'javametrics');
@@ -136,7 +136,7 @@ describe('Project.js', () => {
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Swift', async() => {
-                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'swift' }, global.codewind.CODEWIND_WORKSPACE);
+                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'swift', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
                 const packageSwiftPath = path.join(project.projectPath(), 'Package.swift');
                 await fs.ensureFile(packageSwiftPath);
                 await fs.writeFile(packageSwiftPath, 'SwiftMetrics.git');
@@ -146,31 +146,31 @@ describe('Project.js', () => {
         });
         describe('Checks if metrics are available for Appsody projects', () => {
             it('Checks metrics for Appsody: Node.js', async() => {
-                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'nodejs' };
+                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'nodejs', locOnDisk: '/Documents/projectDir/' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Appsody: Java', async() => {
-                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'java' };
+                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'java', locOnDisk: '/Documents/projectDir/' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Appsody: Swift', async() => {
-                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'swift' };
+                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'swift', locOnDisk: '/Documents/projectDir/' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Appsody: Invalid Language', async() => {
-                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'invalid' };
+                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'invalid', locOnDisk: '/Documents/projectDir/' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.false;
             });
         });
-        
+
     });
     describe('getPort()', () => {
         it('Checks that the port returned is internal as RUNNING_IN_K8S is false', () => {
@@ -195,22 +195,22 @@ describe('Project.js', () => {
     });
     describe('getMetricsContextRoot()', () => {
         it('Gets metrics root for a Node.js project', () => {
-            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'nodejs' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'nodejs', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('appmetrics');
         });
         it('Gets metrics root for a Java project', () => {
-            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'java' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'java', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('javametrics');
         });
         it('Gets metrics root for a Swift project', () => {
-            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'swift' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'swift', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('swiftmetrics');
         });
         it('Gets a blank string metrics root for an invalid project', () => {
-            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'invalid' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'invalid', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
             const metricsRoot = project.getMetricsContextRoot();
             metricsRoot.should.equal('');
         });
@@ -222,7 +222,7 @@ describe('Project.js', () => {
     });
     describe('projectPath(_)', () => {
         it('Checks that projectPath() is workspace+directory', () => {
-            const project = createProjectAndCheckIsAnObject({ name: 'dummy', directory: 'directory' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', directory: 'directory', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
             const projectPath = project.projectPath();
             projectPath.should.equal(path.join(global.codewind.CODEWIND_WORKSPACE, 'directory'));
         });
@@ -244,7 +244,7 @@ describe('Project.js', () => {
     });
     describe('writeInformationFile()', () => {
         it('Checks that the information file is created', async() => {
-            const project = createProjectAndCheckIsAnObject({ name: 'dummy', directory: 'directory' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', directory: 'directory', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
             const infPath = path.join(global.codewind.CODEWIND_WORKSPACE, '/.projects', `${project.projectID}.inf`);
             fs.existsSync(infPath).should.be.false;
             await project.writeInformationFile();
@@ -290,13 +290,13 @@ describe('Project.js', () => {
             expect(logPath).to.be.null;
         });
         it('Checks that the buildLogPath is returned', () => {
-            const project = createProjectAndCheckIsAnObject({ name: 'dummy', buildLogPath: 'somepath' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', buildLogPath: 'somepath', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
             project.should.have.property('buildLogPath').and.equal('somepath');
             const logPath = project.getBuildLogPath();
             logPath.should.equal('somepath');
         });
         it('Checks that the buildLogPath has codewind-workspace substituted with global workspace', () => {
-            const project = createProjectAndCheckIsAnObject({ name: 'dummy', buildLogPath: '/codewind-workspace/somelogfile' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', buildLogPath: '/codewind-workspace/somelogfile', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
             project.should.have.property('buildLogPath').and.equal('/codewind-workspace/somelogfile');
             const logPath = project.getBuildLogPath();
             logPath.should.equal(path.join(global.codewind.CODEWIND_WORKSPACE, 'somelogfile'));
@@ -730,7 +730,7 @@ function createProjectAndCheckIsAnObject(options, workspace) {
 }
 
 function createDefaultProjectAndCheckIsAnObject() {
-    const options = { name: 'dummy' };
+    const options = { name: 'dummy', locOnDisk: '/Documents/projectDir/' };
     const workspace = global.codewind.CODEWIND_WORKSPACE;
     return createProjectAndCheckIsAnObject(options, workspace);
 }

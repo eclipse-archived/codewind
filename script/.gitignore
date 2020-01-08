@@ -1,5 +1,6 @@
 darwin
 linux
 windows
+ppc64le
 cli_version.properties
 cli-pull.sh

@@ -38,6 +38,7 @@ interface PortMappings {
  */
 interface ShellExtensionProjectConfig {
     requiredFiles: string[];
+    rebuildTriggers?: string[];
     buildContainerLogs?: logHelper.ILogOriginTypes;
     buildWorkspaceLogs?: logHelper.ILogOriginTypes;
     appContainerLogs?: logHelper.ILogOriginTypes;
@@ -85,7 +86,7 @@ const logsOrigin: logHelper.ILogTypes = {
 export class ShellExtensionProject implements IExtensionProject {
 
     supportedType: string;
-    detectChangeByExtension: boolean = true;
+    detectChangeByExtension: boolean | string[] = true;
 
     private fullPath: string;
     private config: ShellExtensionProjectConfig;
@@ -156,6 +157,9 @@ export class ShellExtensionProject implements IExtensionProject {
     init = async (projectInfo: ProjectInfo): Promise<void> => {
         this.fullPath = projectInfo.extensionID;
         this.config = await fs.readJson(path.join(this.fullPath, ".sh-extension"));
+        if (Array.isArray(this.config.rebuildTriggers)) {
+            this.detectChangeByExtension = this.config.rebuildTriggers.map(item => String(item));
+        }
         this.setLogsOriginFromExtension();
         await this.setLanguage(projectInfo);
     }
@@ -178,6 +182,17 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param changedFiles <Optional | projectEventsController.IFileChangeEvent[]> - The file changed event array.
      */
     update = (operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): void => {
+
+        // detectChangeByExtension may contain a list of files that should trigger a REBUILD
+        if (changedFiles && Array.isArray(this.detectChangeByExtension)) {
+            for (const file of changedFiles) {
+                if (this.detectChangeByExtension.includes(file.path)) {
+                    operation.projectInfo.forceAction = "REBUILD";
+                    break;
+                }
+            }
+        }
+
         projectUtil.containerUpdate(operation, path.join(this.fullPath, "entrypoint.sh"), "update");
     }
 
