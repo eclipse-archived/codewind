@@ -420,8 +420,12 @@ module.exports = class FileWatcher {
           projectWatchStateId: projectWatchStateId,
           projectID: projectID,
           pathToMonitor: pathToMonitor,
-          ignoredPaths: ignoredPaths,
-          refPaths: fwProject.refPaths
+          ignoredPaths: ignoredPaths
+        }
+        if (fwProject.refPaths) {
+          data.refPaths = fwProject.refPaths.map((refPath) => {
+            return { from: project.resolveMonitorPath(refPath.from), to: refPath.to };
+          });
         }
         let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths, status: fwProject.status };
         await this.handleFWProjectEvent(event, projectUpdate);
@@ -458,8 +462,12 @@ module.exports = class FileWatcher {
         projectID: projectID,
         pathToMonitor: pathToMonitor,
         ignoredPaths: ignoredPaths,
-        refPaths: fwProject.refPaths,
         projectCreationTime: time
+      }
+      if (fwProject.refPaths) {
+        data.refPaths = fwProject.refPaths.map((refPath) => {
+          return { from: project.resolveMonitorPath(refPath.from), to: refPath.to };
+        });
       }
       let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths, status: fwProject.status };
       await this.handleFWProjectEvent(event, projectUpdate);

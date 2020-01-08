@@ -252,7 +252,7 @@ module.exports = class User {
           settFile.refPaths.forEach((refPath) => {
             if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
                 (typeof refPath.to === "string" && (refPath.to = refPath.to.trim()).length > 0)) {
-                  projectUpdate.refPaths.push({ from: refPath.from, to: refPath.to });
+                  projectUpdate.refPaths.push({ from: project.resolveMonitorPath(refPath.from), to: refPath.to });
             }
           });
         }

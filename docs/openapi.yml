@@ -1831,7 +1831,7 @@ components:
         - to
       properties:
         from:
-          description: path to file on local machine
+          description: absolute path to file on local machine
           type: string
         to:
           description: relative path to root of project inside container

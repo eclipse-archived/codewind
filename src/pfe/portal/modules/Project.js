@@ -10,7 +10,7 @@
  *******************************************************************************/
 
 const fs = require('fs-extra');
-const { join } = require('path');
+const { isAbsolute, join } = require('path');
 const uuidv1 = require('uuid/v1');
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
@@ -643,6 +643,17 @@ module.exports = class Project {
     const filePath = join(this.loadTestPath, 'config.json');
     await fs.writeJson(filePath, config, {spaces: '  '});
     return config;
+  }
+
+  /**
+   * Resolves the given path against the project's monitor path.
+   * The path is unchanged if it is already absolute.
+   * 
+   * @param {String} path
+   * @returns {String} an absolute path
+   */
+  resolveMonitorPath(path) {
+    return isAbsolute(path) ? path : join(this.pathToMonitor, path);
   }
 }
 
