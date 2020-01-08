@@ -42,9 +42,9 @@ if [ $OS == "Darwin" ]; then
   ./cli-pull.sh "darwin"
   CWCTL=./script/darwin/cwctl
 elif [ `echo $OS | grep "_NT-10"` ]; then
-    printf "Windows detected, only downloading Windows CWCTL\n\n"
-    ./cli-pull.sh "windows"
-    CWCTL=./script/windows/cwctl.exe
+  printf "Windows detected, only downloading Windows CWCTL\n\n"
+  ./cli-pull.sh "windows"
+  CWCTL=./script/windows/cwctl.exe
 else
   printf "Else detected, only downloading Linux CWCTL\n\n"
   ./cli-pull.sh "linux"
@@ -60,12 +60,12 @@ $CWCTL stop-all
 $CWCTL start --debug
 
 if [ $? -eq 0 ]; then
-    printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
-    printf "\nCurrent running codewind containers\n";
-    docker ps --filter name=codewind
+  printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";
+  printf "\nCurrent running codewind containers\n";
+  docker ps --filter name=codewind
 else
-    printf "\n\n${RED}FAILED TO START CONTAINERS $RESET\n";
-    exit;
+  printf "\n\n${RED}FAILED TO START CONTAINERS $RESET\n";
+  exit;
 fi
 
 printf "\n\n${BLUE}PAUSING TO ALLOW CONTAINERS TIME TO START $RESET\n";
