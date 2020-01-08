@@ -34,7 +34,7 @@ To use these you should:
 
 ## Feedback and Community
 
-Have any questions or commments on Codewind? Or would you like to get involved in some way? Here's how you can get in touch with us:
+Have any questions or commments on Codewind? Or would like to get involved in some way? Here's how you can get in touch with us:
 - **Support:** You can ask questions, report bugs, and request features using [GitHub issues](https://github.com/eclipse/codewind/issues).
 - **Public Chat:** Join the public [eclipse-codewind](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind) and [eclipse-codewind-dev](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind-dev) Mattermost channels
 - **Twitter:** [@EclipseCodewind](https://twitter.com/EclipseCodewind)
