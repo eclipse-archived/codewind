@@ -33,7 +33,9 @@ module.exports = class ExtensionList {
    */
   async initialise(extensionsPath, templates) {
     try {
+      log.trace(`loading extensions from disk, path: ${extensionsPath}`);
       const extensions = await this.loadExtensionsFromDisk(extensionsPath);
+      log.trace(`adding extensions to the templates, path: ${extensionsPath}`);
       await addExtensionsToTemplates(extensions, templates);
     } catch(err) {
       log.error('Error loading codewind extension:');
@@ -73,8 +75,10 @@ module.exports = class ExtensionList {
    */
   async loadExtensionsFromDisk(extensionsPath) {
     const entries = await fs.readdir(extensionsPath);
+    log.trace(`Extension Path: ${extensionsPath}, directory contents: ${entries}`);
     const returnedObjects = await Promise.all(entries.map(entry => this.loadExtensionFromDisk(extensionsPath, entry)));
     const extensions = returnedObjects.filter(Boolean);
+    log.trace(`Extension Path: ${extensionsPath}, filtered returned extensions: ${extensions.map(ext=>ext.name).join(",\n\t")}`);
     return extensions;
   }
 

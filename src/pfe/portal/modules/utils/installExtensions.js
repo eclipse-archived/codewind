@@ -33,9 +33,9 @@ const odoExtensionName = "codewind-odo-extension";
  *                                defaults to defaultExtensionsDir variable
  */
 async function installBuiltInExtensions(targetDir, extensionsDir = defaultExtensionsDir) {
-
   // get the zips from the /extensions directory
   const entries = await fs.readdir(extensionsDir, { withFileTypes: true });
+  log.debug(`contents of extension directory (${extensionsDir}): ${entries.map(entry=>entry.name).join(",\n\t")}`)
   await Promise.all(entries.map(entry => {
     return installBuiltInExtension(entry, targetDir, extensionsDir);
   }));
