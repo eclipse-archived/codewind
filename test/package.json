@@ -13,7 +13,7 @@
     "test-codewind": "scripts/mocha.sh"
   },
   "author": "",
-  "license": "ISC",
+  "license": "EPL-2.0",
   "private": true,
   "files": [
     "test",
