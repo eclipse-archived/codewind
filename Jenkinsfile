@@ -163,6 +163,7 @@ pipeline {
                         export PATH=$PATH:$HOME/dc/
                         ARCH=`uname -m`;
                         printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
+                        DIR=`pwd`;
 
                         # Install nvm to easily set version of node to use
                         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
@@ -185,7 +186,7 @@ pipeline {
                         if [ $? -ne 0 ]; then
                             exit 1
                         fi
-                        cd ../../..
+                        cd $DIR
 
                         # Build and eslint the portal tests
                         cd test/
