@@ -167,6 +167,7 @@ describe('Template API tests', function() {
 
     describe('DELETE /api/v1/templates/repositories', function() {
         it('DELETE should try to remove a template repository that doesn\'t exist', async function() {
+            this.timeout(testTimeout.short);
             const res = await deleteTemplateRepo('http://something.com/index.json');            
             res.should.have.status(404);
         });
@@ -189,6 +190,7 @@ describe('Template API tests', function() {
             
         });
         it('DELETE /api/v1/templates should remove a template repository', async function() {
+            this.timeout(testTimeout.short);
             const res = await deleteTemplateRepo(repo.url);
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.not.deep.include(repo);
@@ -285,6 +287,7 @@ describe('Template API tests', function() {
         saveReposBeforeEachTestAndRestoreAfterEach();
         for (const [testName, test] of Object.entries(tests)) {
             it(`should ${testName} and return 207 and the expected operations info`, async function() {
+                this.timeout(testTimeout.short);
                 const res = await batchPatchTemplateRepos(test.input);
                 res.should.have.status(207).and.satisfyApiSpec;
                 res.body.should.deep.equal(test.output);
