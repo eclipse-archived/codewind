@@ -456,7 +456,7 @@ function pingInTransitApplications(): void {
     appStateMap.forEach((stateObj, projectID) => {
         const currentState = stateObj.state;
         if (currentState === AppState.starting || currentState === AppState.stopping) {
-            projectUtil.isContainerActive(projectID, (containerStatus: any) => {
+            projectUtil.isContainerActive(projectID, async (containerStatus: any) => {
                 if (containerStatus.hasOwnProperty("state")) {
                     if (containerStatus.state === ContainerStates.containerActive) {
                         // The container is running so try pinging the application
@@ -565,6 +565,7 @@ function pingInTransitApplications(): void {
                                     notify: true
                                 };
                                 appStateMap.set(projectID, new ProjectState(AppState.stopped, data.appErrorStatus, undefined, undefined, undefined, data.detailedAppStatus));
+                                data.detailedAppStatus.message =  await locale.getTranslation(data.detailedAppStatus.message);
                             } else {
                                 appStateMap.set(projectID, new ProjectState(AppState.stopped, undefined));
                             }
