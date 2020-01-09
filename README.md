@@ -9,30 +9,28 @@ Build high-quality cloud-native applications for Kubernetes, regardless of your 
 Codewind enables you to create applications from a template or sample and includes support for launching, updating, testing, and debugging in  Docker containers on the desktop. Codewind also supports these features on Kubernetes. You can use Codewind to move existing applications to Docker and Kuberenetes. Codewind provides validation to ensure that applications follow best practices.
 
 ## Getting started
-
 Use the following instructions to install Codewind with your choice of editor:
 1. [VS Code extension](https://github.com/eclipse/codewind-vscode)
 2. [Eclipse plugin](https://github.com/eclipse/codewind-eclipse)
 3. [Eclipse Che plugin](https://github.com/eclipse/codewind-che-plugin)
 
-## Feedback and Community
-
-Have any questions or commments on Codewind? Or would like to get involved in some way? Here's how you can get in touch with us:
-- **Support:** You can ask questions, report bugs, and request features using [GitHub issues](https://github.com/eclipse/codewind/issues).
-- **Public Chat:** Join the public [eclipse-codewind](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind) and [eclipse-codewind-dev](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind-dev) Mattermost channels
-- **Twitter:** [@EclipseCodewind](https://twitter.com/EclipseCodewind)
-- **Mailing List:** [codewind-dev@eclipse.org](https://accounts.eclipse.org/mailing-list/codewind-dev)
-- **Weekly Meetings:** We hold [weekly calls](https://github.com/eclipse/codewind/wiki/Codewind-Calls) every Tuesday and Thursday at 9:00 AM Eastern Time / 14:00 UTC.
+## Feedback and community
+Have any questions or comments on Codewind? Want to get involved? You can get in touch with the team:
+- **Support:** Ask questions, report bugs, and request features with [GitHub issues](https://github.com/eclipse/codewind/issues).
+- **Public chat:** Join the public [eclipse-codewind](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind) and [eclipse-codewind-dev](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind-dev) Mattermost channels.
+- **Twitter:** Follow Codewind on Twitter at [@EclipseCodewind](https://twitter.com/EclipseCodewind).
+- **Mailing list:** Join the mailing list from [codewind-dev@eclipse.org](https://accounts.eclipse.org/mailing-list/codewind-dev).
+- **Weekly meetings:** The Codewind team holds [weekly calls](https://github.com/eclipse/codewind/wiki/Codewind-Calls) every Tuesday and Thursday at 9:00 AM Eastern Time / 14:00 UTC.
 
 ## Contributing
 We welcome submitting issues and contributions.
-- :bug: [Submitting bugs](https://github.com/eclipse/codewind/issues)
-- :pencil2: [Contributing](CONTRIBUTING.md)
-- :mag_right: [View the API documentation](https://eclipse.github.io/codewind/)
-- :memo: [Improve docs](https://github.com/eclipse/codewind-docs)
-- :building_construction: [Codewind architecture](https://github.com/codewind-resources/design-documentation)
-- :octocat: [Codewind repositories](https://github.com/eclipse?utf8=%E2%9C%93&q=codewind&type=&language=)
-- :sparkles: [Good first issues for new contributors](https://github.com/eclipse/codewind/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+- :bug: [Submit bugs.](https://github.com/eclipse/codewind/issues)
+- :pencil2: [Contribute.](CONTRIBUTING.md)
+- :mag_right: [View the API documentation.](https://eclipse.github.io/codewind/)
+- :memo: [Improve the docs.](https://github.com/eclipse/codewind-docs)
+- :building_construction: [View the Codewind architecture.](https://github.com/codewind-resources/design-documentation)
+- :octocat: [See the Codewind repositories.](https://github.com/eclipse?utf8=%E2%9C%93&q=codewind&type=&language=)
+- :sparkles: [Check out good first issues for new contributors.](https://github.com/eclipse/codewind/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 ## Building Codewind from the source
 1. Clone the `codewind` repository.
@@ -50,7 +48,6 @@ To use these you should:
 3. Run the `./run.sh` script to build and start Codewind.
 4. Open the Codewind directory in VSCode (Something like `code github/codewind`).
 5. Open the debugging tab and select one of the debugging options.
-
 
 ## License
 [EPL 2.0](https://www.eclipse.org/legal/epl-2.0/)
