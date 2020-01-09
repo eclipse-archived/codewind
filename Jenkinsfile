@@ -45,8 +45,6 @@ pipeline {
                             exit 1
                         fi
 
-                        cd $DIR
-
                         # Run eslint on portal tests
                         cd $DIR/test
                         npm install
