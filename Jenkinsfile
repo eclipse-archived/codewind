@@ -15,7 +15,7 @@ pipeline {
     }
 
     stages {
-        stage('Run Portal eslint and Unit Test Suite') {
+        stage('Run Portal eslint and unit tests') {
             options {
                 timeout(time: 30, unit: 'MINUTES') 
             }
@@ -77,7 +77,7 @@ pipeline {
             }
         }
 
-        stage('Run Turbine Unit Test Suite') {
+        stage('Run Turbine unit test suite') {
             options {
                 timeout(time: 30, unit: 'MINUTES') 
             }
@@ -303,7 +303,6 @@ pipeline {
                     sh '''#!/usr/bin/env bash
                         echo "Publishing docker images for Eclipse Codewind ..."
                         echo "Branch name is $GIT_BRANCH"
-                        echo "change"
 
                         if [[ $GIT_BRANCH == "master" ]]; then
                             TAG="latest"
