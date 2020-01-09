@@ -15,6 +15,110 @@ pipeline {
     }
 
     stages {
+        stage('Run Portal eslint and unit tests') {
+            options {
+                timeout(time: 30, unit: 'MINUTES') 
+            }
+            steps {
+                withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
+                    sh '''#!/usr/bin/env bash
+                        DIR=`pwd`;
+
+                        echo "Starting unit tests for Portal..."
+                        export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
+
+                        # Install nvm to easily set version of node to use
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                        export NVM_DIR="$HOME/.nvm" 
+                        . $NVM_DIR/nvm.sh
+                        nvm i 10
+                        
+                        # Run eslint on portal code
+                        cd $DIR/src/pfe/portal
+                        npm install
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        npm run eslint
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        # Run eslint on portal tests
+                        cd $DIR/test
+                        npm install
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        npm run eslint
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+                            
+                        # Run the unit test suite
+                        echo "Portal unit tests"
+
+                        # Copy the docs into the portal directory
+                        cp -r $DIR/docs $DIR/src/pfe/portal/
+
+                        npm run unittest
+                        if [ $? -eq 0 ]; then
+                            echo "+++   PORTAL UNIT TESTS COMPLETED SUCCESSFULLY   +++";
+                        else
+                            echo "+++   PORTAL UNIT TESTS FAILED   +++";
+                            exit 1;
+                        fi
+                        '''
+                }
+            }
+        }
+
+        stage('Run Turbine unit test suite') {
+            options {
+                timeout(time: 30, unit: 'MINUTES') 
+            }
+            steps {
+                withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
+                    withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
+                        sh '''#!/usr/bin/env bash
+                        DIR=`pwd`;
+                        echo "Starting unit tests for Turbine..."
+                        export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
+                        
+                        ARCH=`uname -m`;
+                        printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
+
+                        # Install nvm to easily set version of node to use
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                        export NVM_DIR="$HOME/.nvm" 
+                        . $NVM_DIR/nvm.sh
+                        nvm i 10
+                        
+                        # Run eslint on turbine code
+                        cd $DIR/src/pfe/file-watcher/server
+                        npm install
+                        
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+                            
+                        # Run the unit test suite
+                        echo "Started running Turbine Unit Test Suite"
+                        npm run unit:test
+                        if [ $? -eq 0 ]; then
+                            echo "+++   TURBINE UNIT TESTS COMPLETED SUCCESSFULLY   +++";
+                        else
+                            echo "+++   TURBINE UNIT TESTS FAILED   +++";
+                            exit 1;
+                        fi
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Build Docker images') {
             steps {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
@@ -105,51 +209,8 @@ pipeline {
                 }
             }
         }
-
-        stage('Run Turbine Unit Test Suite') {
-            options {
-                timeout(time: 30, unit: 'MINUTES') 
-            }
-            steps {
-                withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
-                    withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
-                        sh '''#!/usr/bin/env bash
-                        echo "Starting unit tests for Turbine..."
-                        export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
-                        
-                        ARCH=`uname -m`;
-                        printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
-
-                        # Install nvm to easily set version of node to use
-                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-                        export NVM_DIR="$HOME/.nvm" 
-                        . $NVM_DIR/nvm.sh
-                        nvm i 10
-                        
-                        # Run eslint on turbine code
-                        cd src/pfe/file-watcher/server
-                        npm install
-                        
-                        if [ $? -ne 0 ]; then
-                            exit 1
-                        fi
-                            
-                        # Run the unit test suite
-                        echo "Started running Turbine Unit Test Suite"
-                        npm run unit:test
-                        if [ $? -eq 0 ]; then
-                            echo "+++   TURBINE UNIT TESTS COMPLETED SUCCESSFULLY   +++";
-                        else
-                            echo "+++   TURBINE UNIT TESTS FAILED   +++";
-                            exit 1;
-                        fi
-                        '''
-                    }
-                }
-            }
-        }
         
-        stage('Run Codewind test suite') {  
+        stage('Start Codewind and run the API tests') {  
             options {
                 timeout(time: 2, unit: 'HOURS') 
             }   
@@ -163,6 +224,7 @@ pipeline {
                         export PATH=$PATH:$HOME/dc/
                         ARCH=`uname -m`;
                         printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
+                        DIR=`pwd`;
 
                         # Install nvm to easily set version of node to use
                         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
@@ -178,44 +240,16 @@ pipeline {
                         fi
                         chmod +x $HOME/dc/docker-compose
 
-                        # Run eslint on portal code
-                        cd src/pfe/portal
-                        npm install
-                        npm run eslint
-                        if [ $? -ne 0 ]; then
-                            exit 1
-                        fi
-                        cd ../../..
-
-                        # Build and eslint the portal tests
-                        cd test/
-                        npm install
-                        if [ $? -ne 0 ]; then
-                            exit 1
-                        fi
-
-                        npm run eslint
-                        if [ $? -ne 0 ]; then
-                            exit 1
-                        fi
-
-                        # Run the portal unit tests
-                        npm run unittest
-                        if [ $? -ne 0 ]; then
-                            exit 1
-                        fi
-                        cd ..
-
                         # Create codewind-workspace if it does not exist
                         printf "\n\nCreating codewind-workspace\n"
-                        mkdir -m 777 -p codewind-workspace
+                        mkdir -m 777 -p $DIR/codewind-workspace
 
                         # Save Docker image ID of PFE to ensure we're not using the image from Dockerhub
                         BUILT_PFE_IMAGE_ID=$(docker images --filter=reference=eclipse/codewind-pfe-amd64:latest --format "{{.ID}}")
                         echo "PFE Image: $BUILT_PFE_IMAGE_ID"
 
                         # Start Codewind
-                        sh ./start.sh
+                        sh $DIR/start.sh
                         if [ $? -ne 0 ]; then
                             echo "Error starting Codewind"
                             exit 1
@@ -236,7 +270,12 @@ pipeline {
                         fi
 
                         # Run the API tests now Portal has started
-                        cd test/
+                        cd $DIR/test/
+                        npm install 
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
                         npm run apitest
                         if [ $? -ne 0 ]; then
                             exit 1
