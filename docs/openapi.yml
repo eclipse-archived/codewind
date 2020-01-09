@@ -1634,7 +1634,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
         url:
           type: string
         name:
