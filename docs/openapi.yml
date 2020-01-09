@@ -503,8 +503,6 @@ paths:
             description: if the project with id was not found
           409:
             description: if unbind was already in progress
-          500:
-            description: internal error, includes an error message string if available
 
   /api/v1/projects/{id}/compare:
     get:
@@ -1636,7 +1634,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
         url:
           type: string
         name:
