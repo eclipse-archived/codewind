@@ -34,7 +34,7 @@ pipeline {
                         nvm i 10
                         
                         # Run eslint on portal code
-                        cd src/pfe/portal
+                        cd $DIR/src/pfe/portal
                         npm install
                         if [ $? -ne 0 ]; then
                             exit 1
@@ -48,7 +48,7 @@ pipeline {
                         cd $DIR
 
                         # Run eslint on portal tests
-                        cd test
+                        cd $DIR/test
                         npm install
                         if [ $? -ne 0 ]; then
                             exit 1
@@ -85,6 +85,7 @@ pipeline {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                         sh '''#!/usr/bin/env bash
+                        DIR=`pwd`;
                         echo "Starting unit tests for Turbine..."
                         export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
                         
@@ -98,7 +99,7 @@ pipeline {
                         nvm i 10
                         
                         # Run eslint on turbine code
-                        cd src/pfe/file-watcher/server
+                        cd $DIR/src/pfe/file-watcher/server
                         npm install
                         
                         if [ $? -ne 0 ]; then
@@ -243,14 +244,14 @@ pipeline {
 
                         # Create codewind-workspace if it does not exist
                         printf "\n\nCreating codewind-workspace\n"
-                        mkdir -m 777 -p codewind-workspace
+                        mkdir -m 777 -p $DIR/codewind-workspace
 
                         # Save Docker image ID of PFE to ensure we're not using the image from Dockerhub
                         BUILT_PFE_IMAGE_ID=$(docker images --filter=reference=eclipse/codewind-pfe-amd64:latest --format "{{.ID}}")
                         echo "PFE Image: $BUILT_PFE_IMAGE_ID"
 
                         # Start Codewind
-                        sh ./start.sh
+                        sh $DIR/start.sh
                         if [ $? -ne 0 ]; then
                             echo "Error starting Codewind"
                             exit 1
@@ -271,7 +272,7 @@ pipeline {
                         fi
 
                         # Run the API tests now Portal has started
-                        cd test/
+                        cd $DIR/test/
                         npm install 
                         if [ $? -ne 0 ]; then
                             exit 1
