@@ -232,39 +232,14 @@ async function main() {
    * be set up first, before this function is run.
    */
   function setRoutes() {
+    log.info('Setting up codewind Express routes');
+
     // Add the user object into the request
     app.all('*', function (req, res, next) {
       if (req.user == undefined) req.user = "default"
       req.cw_user = userList.retrieve(req.user);
       next();
     });
-
-    const webpages = __dirname + '/client/dist';
-    const css = __dirname + '/client/dist/css';
-    const images = __dirname + '/client/dist/img';
-    const fonts = __dirname + '/client/dist/fonts';
-    const scripts = __dirname + '/client/dist/js';
-    const bash = __dirname + '/bash';
-
-    log.info('Setting up codewind Express routes');
-    app.use('/', express.static(webpages, {
-      extensions: ['html', 'png']
-    }));
-    app.use('/css', express.static(css, {
-      extensions: ['css']
-    }));
-    app.use('/img', express.static(images, {
-      extensions: ['png', 'jpg', 'svg']
-    }));
-    app.use('/js', express.static(scripts, {
-      extensions: ['js', 'gz']
-    }));
-    app.use('/fonts', express.static(fonts, {
-      extensions: ['eot', 'woff', 'woff2']
-    }));
-    app.use('/', express.static(bash, {
-      extensions: ['sh'],
-    }));
 
     /* Proxy Performance container routes */
     app.use('/performance/*', pipePerfProxyReqsToPerfContainer);
