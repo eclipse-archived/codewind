@@ -237,7 +237,7 @@ module.exports = class Project {
     if (await fs.pathExists(refPathsFile)) {
       refPaths = await fs.readJson(refPathsFile, { throws: false });
     }
-    return refPaths;
+    return refPaths || {};
   }
 
   /**

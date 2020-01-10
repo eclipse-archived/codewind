@@ -247,7 +247,7 @@ module.exports = class User {
 
         // read ref paths file for additional refPaths to monitor
         const refPathsFile = await project.readRefPathsFile();
-        if (refPathsFile && Array.isArray(refPathsFile.refPaths)) {
+        if (refPathsFile.refPaths instanceof Array) {
           projectUpdate.refPaths = [];
           refPathsFile.refPaths.forEach((refPath) => {
             if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
