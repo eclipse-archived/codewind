@@ -26,7 +26,6 @@ import * as utils from "../utils/utils";
 const lock = new AsyncLock();
 
 const fileStatAsync = promisify(fs.stat);
-const readFileAsync = promisify(fs.readFile);
 
 /**
  * @description
@@ -59,15 +58,6 @@ function shouldHandle(detectChangeByExtension: boolean | string[], path: string)
     // otherwise, detectChangeByExtension is an array
     // Codewind should handle only if the path is in the detectChangeByExtension array
     return detectChangeByExtension.includes(path);
-}
-
-function readSettingsFile(projectInfo: ProjectInfo, name: string): object {
-
-    const filePath = path.join(projectInfo.location, name);
-
-
-
-    return {};
 }
 
 /**
