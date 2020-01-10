@@ -245,11 +245,11 @@ module.exports = class User {
           projectCreationTime: project.creationTime
         }
 
-        // read settings file for additional refPaths to monitor
-        const settFile = await project.readSettingsFile();
-        if (Array.isArray(settFile.refPaths)) {
+        // read ref paths file for additional refPaths to monitor
+        const refPathsFile = await project.readRefPathsFile();
+        if (refPathsFile && Array.isArray(refPathsFile.refPaths)) {
           projectUpdate.refPaths = [];
-          settFile.refPaths.forEach((refPath) => {
+          refPathsFile.refPaths.forEach((refPath) => {
             if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
                 (typeof refPath.to === "string" && (refPath.to = refPath.to.trim()).length > 0)) {
                   projectUpdate.refPaths.push({ from: project.resolveMonitorPath(refPath.from), to: refPath.to });

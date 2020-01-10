@@ -228,6 +228,19 @@ module.exports = class Project {
   }
 
   /**
+   * Function to read the project .cw-refpaths.json file
+   * @return the contents of the file is an object containing a refPaths array
+   */
+  async readRefPathsFile() {
+    const refPathsFile = join(this.projectPath(), '.cw-refpaths.json');
+    let refPaths;
+    if (await fs.pathExists(refPathsFile)) {
+      refPaths = await fs.readJson(refPathsFile, { throws: false });
+    }
+    return refPaths;
+  }
+
+  /**
    * Function to generate the project information file
    * @return this, the project object
    */
