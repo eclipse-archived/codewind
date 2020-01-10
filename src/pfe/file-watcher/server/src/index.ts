@@ -218,6 +218,13 @@ export default class Filewatcher {
      * }
      * ```
      *
+     * @example projectCapabilitiesReady
+     * ```json
+     * {
+     *     "projectID": "271c8f40-7721-11e9-81ae-6f8cd0194e7c"
+     * }
+     * ```
+     *
      */
     registerListener: (listener: socket.FWEventHandler) => void ;
 
