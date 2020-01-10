@@ -59,6 +59,7 @@ describe('Templates.js', function() {
     suppressLogOutput(Templates);
     describe('Class functions', function() {
         describe('initializeRepositoryList()', function() {
+            this.timeout(testTimeout.short);
             const workspace = path.join(__dirname, 'initializeRepositoryList');
             const customRepoFile = path.join(workspace, 'custom_repo_file.json');
             beforeEach(() => {
@@ -94,7 +95,7 @@ describe('Templates.js', function() {
             it('Gets all templates', async function() {
                 this.timeout(testTimeout.short);
                 const templateController = new Templates('');
-                const templateList = await templateController.getTemplates(false, false);
+                const templateList = await templateController.getTemplates(false);
                 templateList.length.should.be.at.least(defaultCodewindTemplates.length);
             });
             it('gets only enabled templates', async function() {
@@ -105,8 +106,34 @@ describe('Templates.js', function() {
                     repository.enabled = false;
                     repository.enabled.should.be.false;
                 }
-                const templateList = await templateController.getTemplates(true, false);
+                const templateList = await templateController.getTemplates(true);
                 templateList.length.should.equal(0);
+            });
+            it('gets all templates after enabled templates', async function() {
+                this.timeout(testTimeout.short);
+                const templateController = new Templates('');
+                const { repositoryList } = templateController;
+                for (const repository of repositoryList) {
+                    repository.enabled = false;
+                    repository.enabled.should.be.false;
+                }
+                const enabledTmplateList = await templateController.getTemplates(true);
+                enabledTmplateList.length.should.equal(0);
+                const templateList = await templateController.getTemplates(false);
+                templateList.length.should.be.at.least(defaultCodewindTemplates.length);
+            });
+            it('gets enabled templates after all templates', async function() {
+                this.timeout(testTimeout.short);
+                const templateController = new Templates('');
+                const templateList = await templateController.getTemplates(false);
+                templateList.length.should.be.at.least(defaultCodewindTemplates.length);
+                const { repositoryList } = templateController;
+                for (const repository of repositoryList) {
+                    repository.enabled = false;
+                    repository.enabled.should.be.false;
+                }
+                const enabledTemplateList = await templateController.getTemplates(true);
+                enabledTemplateList.length.should.equal(0);
             });
             describe('verifies the Codewind default templates are there and all others contain the required keys', function() {
                 it('returns the default templates', async function() {
@@ -183,50 +210,30 @@ describe('Templates.js', function() {
             });
         });
         describe('getTemplatesByStyle(projectStyle, showEnabledOnly = false)', function() {
+            const workspace = path.join(__dirname, 'initializeRepositoryList');
             it('gets only templates of a specific style', async function() {
                 this.timeout(testTimeout.short);
-                const templateController = new Templates('');
-                templateController.projectTemplatesNeedsRefresh = false;
-                templateController.projectTemplates = [
-                    {
-                        name: 'project1',
-                        projectStyle: 'otherprojectstyle',
-                    },
-                    {
-                        name: 'project2',
-                        projectStyle: 'projectstyle',
-                    },
-                ];
-                const templateList = await templateController.getTemplatesByStyle('projectstyle');
-                templateList[0].name.should.equal('project2');
-                templateList.length.should.equal(1);
+                const templateController = new Templates(workspace);
+                const templateList = await templateController.getTemplatesByStyle('Codewind');
+                templateList.length.should.be.gt(1);
+            });
+            it('gets no templates for a non-existent style', async function() {
+                this.timeout(testTimeout.short);
+                const templateController = new Templates(workspace);
+                const templateList = await templateController.getTemplatesByStyle('NotAStyle');
+                templateList.length.should.equal(0);
             });
         });
         describe('getAllTemplateStyles()', function() {
+            const workspace = path.join(__dirname, 'initializeRepositoryList');
             describe('returns only Codewind templates as it is the style in the projectTemplates', function() {
-                const sampleTemplateList = [sampleCodewindTemplate];
                 let templateController;
                 before(() => {
-                    templateController = new Templates('');
-                    templateController.projectTemplates = sampleTemplateList;
-                    templateController.projectTemplatesNeedsRefresh = false;
+                    templateController = new Templates(workspace);
                 });
-                it(`returns ['Codewind']`, async function() {
+                it(`returns ['Codewind', 'Appsody']`, async function() {
                     const output = await templateController.getAllTemplateStyles();
-                    output.should.deep.equal(['Codewind']);
-                });
-            });
-            describe('returns only Codewind and NewStyle templates as both exist in the projectTemplates', function() {
-                const sampleTemplateList = [sampleCodewindTemplate, { projectStyle: 'NewStyle' }];
-                let templateController;
-                before(() => {
-                    templateController = new Templates('');
-                    templateController.projectTemplates = sampleTemplateList;
-                    templateController.projectTemplatesNeedsRefresh = false;
-                });
-                it(`returns ['Codewind', 'NewStyle']`, async function() {
-                    const output = await templateController.getAllTemplateStyles();
-                    output.should.deep.equal(['Codewind', 'NewStyle']);
+                    output.should.deep.equal(['Codewind', 'Appsody']);
                 });
             });
         });
