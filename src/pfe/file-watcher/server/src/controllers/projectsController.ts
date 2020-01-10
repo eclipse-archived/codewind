@@ -10,9 +10,7 @@
  *******************************************************************************/
 "use strict";
 import { promisify } from "util";
-import crypto from "crypto";
 import fs from "fs";
-import { readJson } from "fs-extra";
 import path from "path";
 import AsyncLock from "async-lock";
 // local imports
@@ -344,8 +342,8 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     // check if there's a ref paths file
     const refPathsFilePath = path.join(projectLocation, ".cw-refpaths.json");
     if (await utils.asyncFileExists(refPathsFilePath)) {
-        const refPathsFile = await readJson(refPathsFilePath, { throws: false });
-        if (refPathsFile && (refPathsFile.refPaths instanceof Array)) {
+        const refPathsFile = await utils.asyncReadJSONFile(refPathsFilePath);
+        if (refPathsFile.refPaths instanceof Array) {
             projectInfo.refPaths = [];
             refPathsFile.refPaths.forEach((el: any) => {
                 const refPath = RefPath.createFrom(el);
