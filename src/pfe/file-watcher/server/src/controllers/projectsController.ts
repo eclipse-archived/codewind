@@ -341,21 +341,19 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
 
     // check if there's a ref paths file
     const refPathsFilePath = path.join(projectLocation, ".cw-refpaths.json");
-    if (await utils.asyncFileExists(refPathsFilePath)) {
-        const refPathsFile = await utils.asyncReadJSONFile(refPathsFilePath);
-        if (refPathsFile.refPaths instanceof Array) {
-            projectInfo.refPaths = [];
-            refPathsFile.refPaths.forEach((el: any) => {
-                const refPath = RefPath.createFrom(el);
-                if (refPath) {
-                    projectInfo.refPaths.push(refPath);
-                }
-            });
-            if (projectInfo.refPaths.length == 0) {
-                logger.logProjectInfo("The refPaths array is empty, File-watcher will ignore the setting", projectID, projectName);
-            } else {
-                logger.logProjectInfo("refPaths after removing invalid entries: " + JSON.stringify(projectInfo.refPaths), projectID, projectName);
+    const refPathsFile = await utils.asyncReadJSONFile(refPathsFilePath);
+    if (refPathsFile.refPaths instanceof Array) {
+        projectInfo.refPaths = [];
+        refPathsFile.refPaths.forEach((el: any) => {
+            const refPath = RefPath.createFrom(el);
+            if (refPath) {
+                projectInfo.refPaths.push(refPath);
             }
+        });
+        if (projectInfo.refPaths.length == 0) {
+            logger.logProjectInfo("The refPaths array is empty, File-watcher will ignore the setting", projectID, projectName);
+        } else {
+            logger.logProjectInfo("refPaths after removing invalid entries: " + JSON.stringify(projectInfo.refPaths), projectID, projectName);
         }
     }
 
