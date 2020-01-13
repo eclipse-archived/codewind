@@ -116,7 +116,11 @@ async function bindStart(req, res) {
     if (err.code === 'INVALID_PROJECT_NAME'){
       res.status(400).send(err.info);
     } else {
-      res.sendStatus(500);
+      let errorMessage = ""
+      if (err) {
+        errorMessage = err.info || err
+      }
+      res.status(500).send(`Project bind failed ${errorMessage}`);
     }
     log.error(err);
     return;
@@ -441,8 +445,8 @@ async function bindEnd(req, res) {
       status: 'failed',
       error: err.info || err
     }
-    res.status(500);
     user.uiSocket.emit('projectBind', data);
+    res.status(500).send(data.error);
   }
 }
 
@@ -481,7 +485,6 @@ router.post('/api/v1/projects/:id/unbind', validateReq, async function (req, res
     }
     user.uiSocket.emit('projectDeletion', data);
     log.error(`Error deleting project: ${util.inspect(data)}`);
-    res.status(500).send(data.error);
   }
 });
 

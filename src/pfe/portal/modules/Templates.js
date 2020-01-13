@@ -20,32 +20,29 @@ const TemplateError = require('./utils/errors/TemplateError');
 
 const log = new Logger('Templates.js');
 
-const DEFAULT_REPOSITORY_LIST = [
-  {
-    url: 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json',
-    description: 'Codewind project templates help you create containerized projects for various runtimes.',
-    enabled: true,
-    protected: true,
-    projectStyles: ['Codewind'],
-    name: 'Default templates',
-  },
-];
+const CODEWIND_REPO = {
+  url: 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json',
+  description: 'Codewind project templates help you create containerized projects for various runtimes.',
+  enabled: true,
+  protected: true,
+  projectStyles: ['Codewind'],
+  name: 'Default templates',
+};
 
-const kabaneroDescription = 'Kabanero, an open source project, brings together open source technologies into a microservices-based framework.' +
+const kabaneroDescription = 'Kabanero, an open source project, brings together open source technologies into a microservices-based framework. ' +
 'Kabanero builds cloud native applications ready for deployment onto Kubernetes and Knative.'
 
 const KABANERO_REPO = {
-  url: 'https://github.com/kabanero-io/collections/releases/download/0.2.1/kabanero-index.json',
+  url: 'https://github.com/kabanero-io/collections/releases/latest/download/kabanero-index.json',
   name: 'Kabanero Collections',
   description: kabaneroDescription,
   enabled: false,
   protected: true,
 };
 
-// only add the kabanero repo locally
-if (!global.codewind.RUNNING_IN_K8S) {
-  DEFAULT_REPOSITORY_LIST.push(KABANERO_REPO);
-}
+const DEFAULT_REPOSITORY_LIST = [
+  CODEWIND_REPO, KABANERO_REPO,
+];
 
 module.exports = class Templates {
 
@@ -139,7 +136,7 @@ module.exports = class Templates {
     }
   }
 
-  async batchUpdate(requestedOperations) { 
+  async batchUpdate(requestedOperations) {
     const promiseList = requestedOperations.map(operation => this.performOperationOnRepository(operation));
     const operationResults = await Promise.all(promiseList);
     await writeRepositoryList(this.repositoryFile, this.repositoryList);
@@ -317,7 +314,7 @@ function getRepositoryIndex(url, repositories) {
 
 async function updateRepoListWithReposFromProviders(providers, repositoryList, repositoryFile) {
   const providedRepos = await getReposFromProviders(Object.values(providers));
-  
+
   const extraRepos = providedRepos.filter(providedRepo =>
     !repositoryList.find(existingRepo => existingRepo.url === providedRepo.url)
   );

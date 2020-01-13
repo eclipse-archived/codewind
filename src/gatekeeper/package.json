@@ -8,7 +8,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "EPL-2.0",
   "dependencies": {
     "dotenv": "^8.2.0",
     "express": "^4.15.4",

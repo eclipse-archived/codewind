@@ -43,6 +43,25 @@ const workspaceSettingsInfo =  workspaceSettings.workspaceSettingsInfoCache ? JS
 const timeout = (workspaceSettingsInfo && workspaceSettingsInfo.watcherChunkTimeout) ? workspaceSettingsInfo.watcherChunkTimeout : 20000;
 
 /**
+ * Determine if Codewind should handle a detected file change, or if it is handled by an extension
+ *
+ * @param detectChangeByExtension property from the project handler
+ * @param path the path of detected file change
+ */
+function shouldHandle(detectChangeByExtension: boolean | string[], path: string): boolean {
+
+    // detectChangeByExtension is not an array, treat it as a boolean
+    // Codewind should handle if changes are *not* detected by the extension
+    if (!Array.isArray(detectChangeByExtension)) {
+        return !detectChangeByExtension;
+    }
+
+    // otherwise, detectChangeByExtension is an array
+    // Codewind should handle only if the path is in the detectChangeByExtension array
+    return detectChangeByExtension.includes(path);
+}
+
+/**
  * This is a function to receive notification from filewatcher daemon
  * @see [[Filewatcher.updateProjectForNewChange]]
  */
@@ -93,7 +112,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                     const data = await readFileAsync(settingsFilePath, "utf8");
                     const projectSettings = JSON.parse(data);
                     projectSpecifications.projectSpecificationHandler(projectID, projectSettings);
-                } else if (eventArray[i].path && !eventArray[i].path.includes(".cw-settings") && !detectChangeByExtension) {
+                } else if (eventArray[i].path && !eventArray[i].path.includes(".cw-settings") && shouldHandle(detectChangeByExtension, eventArray[i].path)) {
                     logger.logProjectInfo("Detected other file changes, Codewind will build the project", projectID);
                     isProjectBuildRequired = true;
                 }
