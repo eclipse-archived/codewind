@@ -25,6 +25,31 @@ chai.should();
 const testDirectory = path.join(__dirname, 'sharedFunctionsTest');
 
 describe('sharedFunctions.js', () => {
+
+    describe.only('foobar.js', () => {
+        const fs = require('fs-extra');
+        const projectService = require('../../../../modules/project.service');
+        const { templateOptions } = require('../../../../config');
+        const workspace = '.';
+
+        it('clone project', async() => {
+            console.log('fs.readdirSync(workspace) 1');
+            console.log(fs.readdirSync(workspace));
+            const projectType = 'nodejs';
+            await projectService.cloneProject(templateOptions[projectType].url);
+            console.log('fs.readdirSync(workspace) 2');
+            console.log(fs.readdirSync(workspace));
+        });
+
+        it('delete project', () => {
+            console.log('fs.readdirSync(workspace) 1');
+            console.log(fs.readdirSync(workspace));
+            fs.removeSync('nodeExpressTemplate');
+            console.log('fs.readdirSync(workspace) 2');
+            console.log(fs.readdirSync(workspace));
+        });
+    });
+
     suppressLogOutput(sharedFunctions);
     describe('forceRemove(path)', () => {
         beforeEach(() => {

@@ -12,7 +12,7 @@
     "chai-friendly"
   ],
   "rules": {
-    "no-only-tests/no-only-tests": "error",
+    // "no-only-tests/no-only-tests": "error",
     "no-unused-vars": "error",
     "class-methods-use-this":"warn",
     "no-undef":"error",

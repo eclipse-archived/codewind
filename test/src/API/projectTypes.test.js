@@ -11,13 +11,14 @@
 const chai = require('chai');
 const chaiResValidator = require('chai-openapi-response-validator');
 
+
 const reqService = require('../../modules/request.service');
 const { ADMIN_COOKIE, pathToApiSpec, testTimeout } = require('../../config');
 
 chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
-describe('Project Types API tests', function() {
+describe('foobar Project Types API tests', function() {
 
     it('should return expected list of project types', async function() {
         this.timeout(testTimeout.med);
@@ -37,4 +38,5 @@ describe('Project Types API tests', function() {
             'docker',
         ]);
     });
+
 });

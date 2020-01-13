@@ -35,7 +35,7 @@ async function cloneAndBindAndBuildProject(projectName, projectType) {
     const workspace = await findWorkspaceLocation();
     const projectPath = `${workspace}/${projectName}`;
     await cloneProject(templateOptions[projectType].url, projectPath);
-    
+
     const res = await bindProject({
         name: projectName,
         path: projectPath,
@@ -50,9 +50,9 @@ async function cloneAndBindProject(projectName, projectType) {
     const workspace = await findWorkspaceLocation();
     const projectPath = `${workspace}/${projectName}`;
     await cloneProject(templateOptions[projectType].url, projectPath);
-    
+
     await validate(projectPath);
-    
+
     const res = await bindProjectWithoutBuilding({
         name: projectName,
         path: projectPath,
@@ -144,7 +144,7 @@ function completeCreationOptions(options = {}) {
     completeOptions.name = options.name || generateUniqueName();
     completeOptions.language = templateOptions[options.type].language;
     completeOptions.url = templateOptions[options.type].url;
-    
+
     return completeOptions;
 }
 
@@ -253,7 +253,7 @@ async function deleteProjectDir(projectName){
     const workspace_location = await findWorkspaceLocation();
     const projectPath = path.join(workspace_location, projectName);
     // after is failing in jenkins with permission issues.  This is not
-    // actually part of the test, its us trying to be good and clean up   
+    // actually part of the test, its us trying to be good and clean up
 
     //await fs.remove(projectPath);
 }
@@ -346,7 +346,7 @@ async function awaitProject(projectName) {
 
 async function awaitProjectStarted(projectID) {
     const socketService = await SocketService.createSocket();
-    const expectedSocketMsg = { 
+    const expectedSocketMsg = {
         projectID,
         msgType: 'projectStarted',
     };
@@ -356,7 +356,7 @@ async function awaitProjectStarted(projectID) {
 
 async function awaitProjectBuilding(projectID) {
     const socketService = await SocketService.createSocket();
-    const expectedSocketMsg = { 
+    const expectedSocketMsg = {
         projectID,
         msgType: 'projectBuilding',
     };
@@ -411,6 +411,7 @@ async function findWorkspaceLocation() {
     res.should.have.ownProperty('body');
     const { workspace_location } =  res.body;
     await containerService.ensureDir(containerDir);
+    console.log(`containerDir: ${containerDir}`);
     return workspace_location;
 }
 

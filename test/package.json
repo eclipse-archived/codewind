@@ -4,7 +4,7 @@
   "description": "Test material for Codewind",
   "main": "index.js",
   "scripts": {
-    "test": "scripts/mocha.sh src/API src/unit",
+    "test": "npm run unittest && npm run apitest",
     "integrationtest": "scripts/mocha.sh src/integration",
     "unittest": "scripts/mocha.sh src/unit",
     "apitest": "scripts/mocha.sh src/API",
