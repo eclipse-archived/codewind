@@ -1539,8 +1539,17 @@ components:
           type: integer
           example: localhost
         ports:
-          type: integer
-          example: 31234
+          type: object
+          properties:
+            exposedPort:
+              type: string
+              example: "32801"
+            internalPort:
+              type: string
+              example: "3000"
+            internalDebugPort:
+              type: string
+              example: "9229"
     ProjectID:
       type: string
       format: uuid
