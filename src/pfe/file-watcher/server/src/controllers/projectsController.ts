@@ -371,6 +371,10 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
     try {
         // Save project metadata
         await saveProjectInfo(projectID, projectInfo);
+        const data = {
+            projectID: projectID
+        };
+        io.emitOnListener("projectCapabilitiesReady", data);
     } catch (err) {
         logger.logProjectError(JSON.stringify(err), projectID);
     }
