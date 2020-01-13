@@ -29,7 +29,7 @@ const CODEWIND_REPO = {
   name: 'Default templates',
 };
 
-const kabaneroDescription = 'Kabanero, an open source project, brings together open source technologies into a microservices-based framework.' +
+const kabaneroDescription = 'Kabanero, an open source project, brings together open source technologies into a microservices-based framework. ' +
 'Kabanero builds cloud native applications ready for deployment onto Kubernetes and Knative.'
 
 const KABANERO_REPO = {
