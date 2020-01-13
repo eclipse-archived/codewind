@@ -395,7 +395,7 @@ export async function installChart(projectID: string, deploymentName: string, ch
     return response;
 }
 
-export async function exposeOverIngress(projectID: string, isHTTPS: boolean, appPort?: number): Promise<string> {
+export async function exposeOverIngress(projectID: string, projectName: string, isHTTPS: boolean, appPort?: number): Promise<string> {
     let ownerReferenceName: string;
     let ownerReferenceUID: string;
     let serviceName: string;
@@ -427,18 +427,24 @@ export async function exposeOverIngress(projectID: string, isHTTPS: boolean, app
     // Thanks to Kubernetes and Ingress, some ingress controllers impose a character limitation on the host name, so:
     // If the ingress domain prefix is < 62 characters, trim the resultant app's ingress domain to fit within the limit
     // If the ingress domain prefix is >= 62 characters, don't trim, as the character limit likely doesn't apply here.
-    const ingressPrefix = process.env.INGRESS_PREFIX;
-    const ingressPrefixLength = ingressPrefix.length;
-    let ingressDomain: string;
-    if (ingressPrefixLength < 62) {
+    const ingressDomain = process.env.INGRESS_PREFIX;
+    const ingressDomainLength = ingressDomain.length;
+
+    let projectIngressURL: string;
+    if (ingressDomainLength < 62) {
         // Since we include a dash, calculate the difference between 62 chars and the prefix
-        const spaceRemaining = 62 - ingressPrefixLength;
-        ingressDomain = serviceName.substring(0, spaceRemaining) + "-" + ingressPrefix;
+        const spaceRemaining = 62 - ingressDomainLength;
+
+        // Generate four random alphanumeric characters and add it to the front of the project name to ensure uniqueness
+        const projectIngress = Math.random().toString(36).substring(2, 6) + projectName;
+
+        // Trim the project's ingress to fit within the limit
+        projectIngressURL = projectIngress.substring(0, spaceRemaining) + "-" + ingressDomain;
     } else {
-        ingressDomain = serviceName + "-" + ingressPrefix;
+        projectIngressURL = projectName + "-" + ingressDomain;
     }
 
-    logger.logProjectInfo("*** Ingress: " + ingressDomain, projectID);
+    logger.logProjectInfo("*** Ingress: " + projectIngressURL, projectID);
 
     try {
         // Re-use the unique service name as the ingress name
@@ -467,7 +473,7 @@ export async function exposeOverIngress(projectID: string, isHTTPS: boolean, app
             "spec": {
                 "rules": [
                     {
-                        "host": `${ingressDomain}`,
+                        "host": `${projectIngressURL}`,
                         "http": {
                             "paths": [
                                 {
@@ -499,9 +505,9 @@ export async function exposeOverIngress(projectID: string, isHTTPS: boolean, app
 
     // Add the scheme to the ingress domain and return it as the URL
     if (isHTTPS) {
-        return "https://" + ingressDomain;
+        return "https://" + projectIngressURL;
     } else {
-        return "http://" + ingressDomain;
+        return "http://" + projectIngressURL;
     }
 }
 
