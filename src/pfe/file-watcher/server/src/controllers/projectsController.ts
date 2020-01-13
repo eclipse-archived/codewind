@@ -339,7 +339,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         }
     }
 
-    // check if there's a ref paths file
+    // read the .cw-refpaths.json file, will be {} if it doesn't exist
     const refPathsFilePath = path.join(projectLocation, ".cw-refpaths.json");
     const refPathsFile = await utils.asyncReadJSONFile(refPathsFilePath);
     if (refPathsFile.refPaths instanceof Array) {

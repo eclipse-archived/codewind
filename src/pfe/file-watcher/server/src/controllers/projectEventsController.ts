@@ -114,16 +114,18 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                 }
             }
             if (isSettingFileChanged) {
-                logger.logProjectInfo("cw-settings or cw-refpaths file changed.", projectID);
+                logger.logProjectInfo("A Codewind settings file changed.", projectID);
 
+                // first read .cw-settings file
                 const settingsFilePath = path.join(projectInfo.location, ".cw-settings");
                 const projectSettings = await utils.asyncReadJSONFile(settingsFilePath);
                 delete projectSettings.refPaths; // this must come from the next file
 
+                // then read .cw-refpaths.json file
                 const refPathsFilePath = path.join(projectInfo.location, ".cw-refpaths.json");
-                const projectRefPaths = await utils.asyncReadJSONFile(refPathsFilePath);
-                if (projectRefPaths.refPaths) {
-                    projectSettings.refPaths = projectRefPaths.refPaths;
+                const refPathsFile = await utils.asyncReadJSONFile(refPathsFilePath);
+                if (refPathsFile.refPaths) {
+                    projectSettings.refPaths = refPathsFile.refPaths;
                 }
 
                 projectSpecifications.projectSpecificationHandler(projectID, projectSettings);
