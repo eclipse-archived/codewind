@@ -425,14 +425,14 @@ export async function exposeOverIngress(projectID: string, projectName: string, 
 
     // Calculate the ingress domain
     // Thanks to Kubernetes and Ingress, some ingress controllers impose a character limitation on the host name, so:
-    // If the ingress domain prefix is < 62 characters, trim the resultant app's ingress domain to fit within the limit
-    // If the ingress domain prefix is >= 62 characters, don't trim, as the character limit likely doesn't apply here.
+    // If the ingress domain prefix is <= 62 characters and the resultant project ingress is over 62, trim
+    // Otherwise, don't trim the ingress.
     const ingressDomain = process.env.INGRESS_PREFIX;
     const ingressDomainLength = ingressDomain.length;
 
-    let projectIngressURL: string;
-    if (ingressDomainLength < 62) {
-        // Since we include a dash, calculate the difference between 62 chars and the prefix
+    let projectIngressURL = projectName + "-" + ingressDomain;
+    if (ingressDomainLength <= 62 && projectIngressURL.length > 62) {
+        // Calculate how many characters we can keep
         const spaceRemaining = 62 - ingressDomainLength;
 
         // Generate four random alphanumeric characters and add it to the front of the project name to ensure uniqueness
@@ -440,8 +440,6 @@ export async function exposeOverIngress(projectID: string, projectName: string, 
 
         // Trim the project's ingress to fit within the limit
         projectIngressURL = projectIngress.substring(0, spaceRemaining) + "-" + ingressDomain;
-    } else {
-        projectIngressURL = projectName + "-" + ingressDomain;
     }
 
     logger.logProjectInfo("*** Ingress: " + projectIngressURL, projectID);
