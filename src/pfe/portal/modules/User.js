@@ -84,7 +84,6 @@ module.exports = class User {
       await this.initialiseExistingProjects();
 
       this.templates = new Templates(this.workspace);
-      await this.templates.initializeRepositoryList();
 
       // Create the list of codewind extensions
       this.extensionList = new ExtensionList();
@@ -101,6 +100,15 @@ module.exports = class User {
       } catch (error) {
         log.error(`Codewind extensions failed to load. Error ${util.inspect(error)}`);
       }
+
+      // Initialise the list after we have created extensions as they may
+      // add template repositories. The log messages allow us to confirm
+      // how long this takes.
+      log.info(`Initialising template repository list`);
+      await this.templates.initializeRepositoryList();
+      log.info(`Initialising template list`);
+      await this.templates.getTemplates(false);
+      log.info(`Default templates cached`);
 
       // Connect up the UI Socket Authentication handler
       if (process.env.CODEWIND_AUTH_HOST) {
