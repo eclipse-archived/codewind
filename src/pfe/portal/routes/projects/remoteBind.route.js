@@ -42,7 +42,7 @@ let timersyncend = 0;
  * @return 409 if the project path or name are already in use
  * @return 500 if there was an error
  */
-router.post('/api/v1/projects/bind/start', async function (req, res) {await bindStart(req, res)});
+router.post('/api/v1/projects/bind/start', validateReq, async function (req, res) {await bindStart(req, res)});
 
 async function bindStart(req, res) {
   timerbindstart = Date.now();
@@ -234,7 +234,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
           `${topLevelDirectories.join(', ')}`);
           await deletePathsInArray(pathToTempProj, topLevelDirectories);
           await deletePathsInArray(pathToProj, topLevelDirectories);
- 
+
         }
 
         // Delete by file

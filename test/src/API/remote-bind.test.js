@@ -12,21 +12,16 @@
 
 const chai = require('chai');
 const path = require('path');
-const fs = require('fs-extra');
-const zlib = require('zlib');
-const klawSync = require('klaw-sync');
 
 const projectService = require('../../modules/project.service');
-const reqService = require('../../modules/request.service');
 const containerService = require('../../modules/container.service');
-const { testTimeout, ADMIN_COOKIE, TEMP_TEST_DIR } = require('../../config');
+const { testTimeout, TEMP_TEST_DIR } = require('../../config');
 
 chai.should();
 
-const localProjectName = `project-to-bind-${Date.now()}`;
-const pathToLocalRepo = path.join(TEMP_TEST_DIR, localProjectName);
-
 describe('Remote Bind tests', () => {
+    const projectName = `project-to-bind-${Date.now()}`;
+    const pathToLocalRepo = path.join(TEMP_TEST_DIR, projectName);
     let projectID;
 
     before('use the git API to clone a project to disk, ready for upload to codewind', async function() {
@@ -42,25 +37,56 @@ describe('Remote Bind tests', () => {
         await projectService.removeProject(pathToLocalRepo, projectID);
     });
 
-    describe('Complete remote-bind', () => {
-        describe('Success Case', () => {
-            it('succeeds in creating a project, uploading files to it, and then building the project', async function() {
-                this.timeout(testTimeout.med);
+    describe('Complete bind (these `it` blocks depend on each other passing)', () => {
+        it('returns 202 when starting the bind process', async function() {
+            this.timeout(testTimeout.med);
 
-                const res = await testRemoteBindStart(localProjectName, pathToLocalRepo);
-                projectID = res.body.projectID;
-                const projectIDs  = await projectService.getProjectIDs();
-                projectIDs.should.include(projectID);
-                await testRemoteBindUpload(projectID, localProjectName, pathToLocalRepo);
-                await testRemoteBindEnd(projectID);
+            const res = await projectService.bindStart({
+                name: projectName,
+                language: 'nodejs',
+                projectType: 'nodejs',
+                path: pathToLocalRepo,
+                creationTime: Date.now(),
             });
+
+            res.should.have.status(202);
+            const expectedFields = ['projectID', 'name', 'workspace'];
+            expectedFields.forEach(field => {
+                res.body[field].should.not.be.null;
+            });
+            projectID = res.body.projectID;
+        });
+        it('returns 200 for each file it uploads to PFE', async function() {
+            this.timeout(testTimeout.med);
+
+            await projectService.uploadFiles(projectID, pathToLocalRepo);
+
+            const pathToUploadedFile = path.join('codewind-workspace', 'cw-temp', projectName, 'package.json');
+            const uploadedFileExists = await containerService.fileExists(pathToUploadedFile);
+            uploadedFileExists.should.be.true;
+        });
+        it('returns 200 when ending the bind process, then builds the project', async function() {
+            const res = await projectService.bindEnd(projectID);
+            res.should.have.status(200);
+            await projectService.awaitProjectBuilding(projectID);
+        });
+        it('returns 409 when trying to bind a project that is already bound', async function() {
+            const originalNumProjects = await projectService.countProjects();
+            await projectService.bindStart({
+                name: projectName,
+                language: 'nodejs',
+                projectType: 'nodejs',
+                path: pathToLocalRepo,
+            });
+            const finalNumProjects = await projectService.countProjects();
+            finalNumProjects.should.equal(originalNumProjects);
         });
     });
     describe('POST /bind/start', () => {
         describe('Failure Cases', () => {
             it('returns 400 if projectName is invalid', async function() {
                 this.timeout(testTimeout.short);
-                const res = await startRemoteBind({
+                const res = await projectService.bindStart({
                     name: '<',
                     language: 'nodejs',
                     projectType: 'nodejs',
@@ -69,8 +95,8 @@ describe('Remote Bind tests', () => {
             });
             it('returns 400 if projectType is invalid', async function() {
                 this.timeout(testTimeout.short);
-                const res = await startRemoteBind({
-                    name: localProjectName,
+                const res = await projectService.bindStart({
+                    name: projectName,
                     language: 'nodejs',
                     projectType: 'invalid',
                 });
@@ -83,8 +109,11 @@ describe('Remote Bind tests', () => {
             it('returns 400 for a project that does not exist', async function() {
                 this.timeout(testTimeout.short);
                 const invalidID = 'doesnotexist';
-                const pathOfFileToCheck = `${pathToLocalRepo}/package.json`;
-                const res = await uploadFile(invalidID, pathOfFileToCheck);
+                const res = await projectService.uploadFile(
+                    invalidID,
+                    pathToLocalRepo,
+                    'package.json',
+                );
                 res.should.have.status(404);
             });
         });
@@ -94,86 +123,9 @@ describe('Remote Bind tests', () => {
             it('returns 400 for a project that does not exist', async function() {
                 this.timeout(testTimeout.short);
                 const invalidID = 'doesnotexist';
-                const res = await endRemoteBind(invalidID);
+                const res = await projectService.bindEnd(invalidID);
                 res.should.have.status(404);
             });
         });
     });
 });
-
-async function testRemoteBindStart(projectName, pathToLocalRepo){
-    const res = await startRemoteBind({
-        name: projectName,
-        language: 'nodejs',
-        projectType: 'nodejs',
-        path: pathToLocalRepo,
-    });
-    res.should.have.status(202);
-    const expectedFields = ['projectID', 'name', 'workspace'];
-    expectedFields.forEach(field => {
-        res.body[field].should.not.be.null;
-    });
-    return res;
-};
-
-async function testRemoteBindUpload(projectID, projectName, pathToDirToUpload) {
-    const filePaths = recursivelyGetAllPaths(pathToDirToUpload);
-    for (const filePath of filePaths) {
-        const res = await uploadFile(projectID, filePath);
-        res.should.have.status(200);
-    }
-    const fileToCheck = path.join('codewind-workspace', 'cw-temp', projectName, 'package.json');
-    const fileExists = await containerService.fileExists(fileToCheck);
-    fileExists.should.be.true;
-};
-
-async function testRemoteBindEnd(projectID) {
-    const endRes = await endRemoteBind(projectID);
-    endRes.should.have.status(200);
-    await projectService.awaitProjectBuilding(projectID);
-};
-
-function recursivelyGetAllPaths(inputPath) {
-    const paths = klawSync(inputPath,  { nodir: true });
-    const filePaths = paths.map((path) => path.path);
-    return filePaths;
-};
-
-async function startRemoteBind(options) {
-    const res = await reqService.chai
-        .post('/api/v1/projects/bind/start')
-        .set('Cookie', ADMIN_COOKIE)
-        .send(options);
-    return res;
-};
-
-async function endRemoteBind(projectID) {
-    const res = await reqService.chai
-        .post(`/api/v1/projects/${projectID}/bind/end`)
-        .set('Cookie', ADMIN_COOKIE)
-        .send({ id: projectID });
-    return res;
-};
-
-async function uploadFile(projectID, filePath) {
-    const fileContent = JSON.stringify(fs.readFileSync(filePath, 'utf-8'));
-    const zippedContent = zlib.deflateSync(fileContent);
-    const base64CompressedContent = zippedContent.toString('base64');
-    const relativePathToFile = path.relative(pathToLocalRepo, filePath);
-    const options = {
-        isDirectory: false,
-        mode: 420,
-        path: relativePathToFile,
-        msg: base64CompressedContent,
-    };
-    const res = await uploadZippedFileUsingPfeApi (projectID, options);
-    return res;
-};
-
-async function uploadZippedFileUsingPfeApi(projectID, options) {
-    const res = await reqService.chai
-        .put(`/api/v1/projects/${projectID}/upload`)
-        .set('Cookie', ADMIN_COOKIE)
-        .send(options);
-    return res;
-}

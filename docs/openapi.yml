@@ -1630,7 +1630,13 @@ components:
           example: "https://github.com/codewind-resources/pythonTemplate"
         projectType:
           type: string
-          example: "docker"
+          enum:
+            - docker
+            - liberty
+            - nodejs
+            - spring
+            - swift
+            - appsodyExtension
         source:
           type: string
           example: "Default Codewind Templates"

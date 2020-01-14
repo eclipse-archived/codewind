@@ -10,17 +10,19 @@
  *******************************************************************************/
 
 const chai = require('chai');
+const path = require('path');
 
 const projectService = require('../../../modules/project.service');
-const { testTimeout } = require('../../../config');
+const { testTimeout, TEMP_TEST_DIR } = require('../../../config');
 
 chai.should();
 
-describe.skip('Project-list tests', function() {
+describe('Project-list tests', function() {
     describe('GET /projects', function() {
         let originalProjectIDs;
         let projectID;
         const projectName = `projectlist${Date.now()}`;
+        const pathToLocalRepo = path.join(TEMP_TEST_DIR, projectName);
 
         it('should return a list of projectIDs', async function() {
             originalProjectIDs = await projectService.getProjectIDs();
@@ -29,7 +31,7 @@ describe.skip('Project-list tests', function() {
 
         it('should create a project', async function() {
             this.timeout(testTimeout.med);
-            projectID = await projectService.cloneAndBindProject(projectName, 'nodejs');
+            projectID = await projectService.createProjectFromTemplate(projectName, 'nodejs');
         });
 
         it('should return the same list but now including the extra projectID', async function() {
@@ -39,8 +41,7 @@ describe.skip('Project-list tests', function() {
 
         it('should delete the extra project', async function() {
             this.timeout(testTimeout.med);
-            await projectService.unbindProject(projectID);
-            await projectService.deleteProjectDir(projectName);
+            await projectService.removeProject(pathToLocalRepo, projectID);
         });
 
         it('should return the original list of projectIDs', async function() {
