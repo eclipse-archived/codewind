@@ -259,9 +259,13 @@ paths:
           required: true
           description: id of the project
       responses:
-        202:
+        200:
           description: >
-            Bind end request accepted. Will attempt to complete binding the Codewind project.
+            Bind end request accepted. Will complete binding the Codewind project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
         404:
           description: Project with given projectiD was not found.
         500:
@@ -1536,7 +1540,7 @@ components:
         projectType:
           $ref: '#/components/schemas/ProjectType'
         host:
-          type: integer
+          type: string
           example: localhost
         ports:
           type: object

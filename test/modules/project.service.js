@@ -59,7 +59,6 @@ async function bindProject(options) {
     const { projectID } = resFromBindStart.body;
     await uploadFiles(projectID, options.path);
     const resFromBindEnd = await bindEnd(projectID);
-    awaitProjectBuilding(projectID);
     return resFromBindEnd;
 }
 
@@ -87,11 +86,15 @@ async function bindEnd(projectID) {
 
 async function uploadFiles(projectID, pathToDirToUpload) {
     const filePaths = recursivelyGetAllPaths(pathToDirToUpload);
-    for (const filePath of filePaths) {
-        const pathFromDirToFile = path.relative(pathToDirToUpload, filePath);
-        const res = await uploadFile(projectID, pathToDirToUpload, pathFromDirToFile);
-        res.should.have.status(200);
-    }
+    const responses = [];
+    await Promise.all(
+        filePaths.map(async(filePath) => {
+            const pathFromDirToFile = path.relative(pathToDirToUpload, filePath);
+            const res = await uploadFile(projectID, pathToDirToUpload, pathFromDirToFile);
+            responses.push(res);
+        })
+    );
+    return responses;
 }
 
 async function uploadFile(projectID, pathToDirToUpload, pathFromDirToFile) {

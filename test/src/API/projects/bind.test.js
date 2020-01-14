@@ -12,14 +12,16 @@
 
 const chai = require('chai');
 const path = require('path');
+const chaiResValidator = require('chai-openapi-response-validator');
 
-const projectService = require('../../modules/project.service');
-const containerService = require('../../modules/container.service');
-const { testTimeout, TEMP_TEST_DIR } = require('../../config');
+const projectService = require('../../../modules/project.service');
+const containerService = require('../../../modules/container.service');
+const { testTimeout, TEMP_TEST_DIR, pathToApiSpec } = require('../../../config');
 
+chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
-describe('Remote Bind tests', () => {
+describe('Bind projects tests', () => {
     const projectName = `project-to-bind-${Date.now()}`;
     const pathToLocalRepo = path.join(TEMP_TEST_DIR, projectName);
     let projectID;
@@ -50,25 +52,26 @@ describe('Remote Bind tests', () => {
             });
 
             res.should.have.status(202);
-            const expectedFields = ['projectID', 'name', 'workspace'];
-            expectedFields.forEach(field => {
-                res.body[field].should.not.be.null;
-            });
+            res.should.satisfyApiSpec;
+
             projectID = res.body.projectID;
         });
-        it('returns 200 for each file it uploads to PFE', async function() {
+        it('returns 200 for each file successfully uploaded to PFE', async function() {
             this.timeout(testTimeout.med);
 
-            await projectService.uploadFiles(projectID, pathToLocalRepo);
+            const responses = await projectService.uploadFiles(projectID, pathToLocalRepo);
 
+            responses.forEach(res => {
+                res.should.have.status(200);
+            });
             const pathToUploadedFile = path.join('codewind-workspace', 'cw-temp', projectName, 'package.json');
             const uploadedFileExists = await containerService.fileExists(pathToUploadedFile);
             uploadedFileExists.should.be.true;
         });
-        it('returns 200 when ending the bind process, then builds the project', async function() {
+        it('returns 200 when ending the bind process', async function() {
             const res = await projectService.bindEnd(projectID);
             res.should.have.status(200);
-            await projectService.awaitProjectBuilding(projectID);
+            res.should.satisfyApiSpec;
         });
         it('returns 409 when trying to bind a project that is already bound', async function() {
             const originalNumProjects = await projectService.countProjects();
