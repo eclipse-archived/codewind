@@ -387,6 +387,6 @@ export class ShellExtensionProject implements IExtensionProject {
      * @returns number
      */
     getDefaultPingTimeout(): number {
-        return 90;
+        return 150; // 150 ping * 2 sec/ping = 5 mins timeout
     }
 }

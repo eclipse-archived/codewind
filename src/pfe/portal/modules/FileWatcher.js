@@ -167,6 +167,11 @@ module.exports = class FileWatcher {
           break;
         }
 
+        case "projectCapabilitiesReady" : {
+          await this.handleFWProjectEvent('projectCapabilitiesReady', fwProject);
+          break;
+        }
+
         default: {
           log.debug("Unknown event received: " + event);
           log.debug("Detailed message received from file-watcher module: " + JSON.stringify(fwProject));

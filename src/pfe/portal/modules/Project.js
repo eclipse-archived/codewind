@@ -80,7 +80,7 @@ module.exports = class Project {
     
     // Project status information
     this.host = args.host || '';
-    this.ports = args.port || '';
+    this.ports = args.ports || {};
 
     // workspace is the parent directory of the project
     // NOT the global.codewind.CODEWIND_WORKSPACE we store
