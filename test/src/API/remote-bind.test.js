@@ -19,23 +19,23 @@ const klawSync = require('klaw-sync');
 const projectService = require('../../modules/project.service');
 const reqService = require('../../modules/request.service');
 const containerService = require('../../modules/container.service');
-const { testTimeout, ADMIN_COOKIE } = require('../../config');
+const { testTimeout, ADMIN_COOKIE, TEMP_TEST_DIR } = require('../../config');
 
 chai.should();
 
-let pathToLocalRepo;
+const localProjectName = `project-to-bind-${Date.now()}`;
+const pathToLocalRepo = path.join(TEMP_TEST_DIR, localProjectName);
+// const workspace_location = '.'; // TODO
+// TODO remove console.log
+// TODO eslint .only
+// TODO openapi
+// TODO tidy
 
-describe.skip('Remote Bind tests', () => {
+describe.only('Remote Bind tests', () => {
     let projectID;
-    let workspace_location;
-    let localProjectName;
-    const remoteProjectName = `project-in-pfe-${Date.now()}`;
 
     before('use the git API to clone a project to disk, ready for upload to codewind', async function() {
         this.timeout(testTimeout.med);
-        localProjectName = `project-to-bind-${Date.now()}`;
-        workspace_location = await projectService.findWorkspaceLocation();
-        pathToLocalRepo = path.join(workspace_location, localProjectName);
         await projectService.cloneProject(
             'https://github.com/microclimate-dev2ops/microclimateNodeTemplate.git',
             pathToLocalRepo,
@@ -44,20 +44,19 @@ describe.skip('Remote Bind tests', () => {
 
     after(async function() {
         this.timeout(testTimeout.med);
-        await projectService.unbindProject(projectID);
-        await projectService.deleteProjectDir(remoteProjectName);
-        await projectService.deleteProjectDir(localProjectName);
+        await projectService.removeProject(pathToLocalRepo, projectID);
     });
 
     describe('Complete remote-bind', () => {
-        describe('Success Case', () => {
+        describe.only('Success Case', () => {
             it('succeeds in creating a project, uploading files to it, and then building the project', async function() {
                 this.timeout(testTimeout.med);
-                const res = await testRemoteBindStart(remoteProjectName);
+
+                const res = await testRemoteBindStart(localProjectName, pathToLocalRepo);
                 projectID = res.body.projectID;
                 const projectIDs  = await projectService.getProjectIDs();
                 projectIDs.should.include(projectID);
-                await testRemoteBindUpload(projectID, remoteProjectName, pathToLocalRepo);
+                await testRemoteBindUpload(projectID, localProjectName, pathToLocalRepo);
                 await testRemoteBindEnd(projectID);
             });
         });
@@ -76,7 +75,7 @@ describe.skip('Remote Bind tests', () => {
             it('returns 400 if projectType is invalid', async function() {
                 this.timeout(testTimeout.short);
                 const res = await startRemoteBind({
-                    name: remoteProjectName,
+                    name: localProjectName,
                     language: 'nodejs',
                     projectType: 'invalid',
                 });
@@ -107,11 +106,12 @@ describe.skip('Remote Bind tests', () => {
     });
 });
 
-async function testRemoteBindStart(projectName){
+async function testRemoteBindStart(projectName, pathToLocalRepo){
     const res = await startRemoteBind({
         name: projectName,
         language: 'nodejs',
         projectType: 'nodejs',
+        path: pathToLocalRepo,
     });
     res.should.have.status(202);
     console.dir(res.body);
@@ -128,7 +128,10 @@ async function testRemoteBindUpload(projectID, projectName, pathToDirToUpload) {
         const res = await uploadFile(projectID, filePath);
         res.should.have.status(200);
     }
-    const fileToCheck = path.join('codewind-workspace', projectName, 'package.json');
+    const fileToCheck = path.join('codewind-workspace', 'cw-temp', projectName, 'package.json');
+    const cwTemp = await containerService.readDir('codewind-workspace/cw-temp');
+    console.log('cwTemp');
+    console.log(cwTemp);
     const fileExists = await containerService.fileExists(fileToCheck);
     fileExists.should.be.true;
 };
@@ -156,7 +159,8 @@ async function startRemoteBind(options) {
 async function endRemoteBind(projectID) {
     const res = await reqService.chai
         .post(`/api/v1/projects/${projectID}/bind/end`)
-        .set('Cookie', ADMIN_COOKIE);
+        .set('Cookie', ADMIN_COOKIE)
+        .send({ id: projectID });
     return res;
 };
 
@@ -166,7 +170,8 @@ async function uploadFile(projectID, filePath) {
     const base64CompressedContent = zippedContent.toString('base64');
     const relativePathToFile = path.relative(pathToLocalRepo, filePath);
     const options = {
-        directory: false,
+        isDirectory: false,
+        mode: 420,
         path: relativePathToFile,
         msg: base64CompressedContent,
     };
@@ -181,4 +186,3 @@ async function uploadZippedFileUsingPfeApi(projectID, options) {
         .send(options);
     return res;
 }
-

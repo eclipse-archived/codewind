@@ -19,8 +19,7 @@ const zlib = require('zlib');
 
 const reqService = require('./request.service');
 const SocketService = require('./socket.service');
-const containerService = require('./container.service');
-const { ADMIN_COOKIE, containerDir, templateOptions } = require('../config');
+const { ADMIN_COOKIE, templateOptions, TEMP_TEST_DIR } = require('../config');
 
 chai.should();
 const sleep = promisify(setTimeout);
@@ -32,14 +31,15 @@ const fastestCreationOptions = {
 };
 
 async function cloneAndBindAndBuildProject(projectName, projectType) {
-    const workspace = await findWorkspaceLocation();
-    const projectPath = `${workspace}/${projectName}`;
-    await cloneProject(templateOptions[projectType].url, projectPath);
-    
+    const { url, language } = templateOptions[projectType];
+
+    const projectPath = path.join(TEMP_TEST_DIR, projectName);
+    await cloneProject(url, projectPath);
+
     const res = await bindProject({
         name: projectName,
         path: projectPath,
-        language: templateOptions[projectType].language,
+        language,
         projectType,
         autoBuild: true,
     });
@@ -47,16 +47,15 @@ async function cloneAndBindAndBuildProject(projectName, projectType) {
 }
 
 async function cloneAndBindProject(projectName, projectType) {
-    const workspace = await findWorkspaceLocation();
-    const projectPath = `${workspace}/${projectName}`;
-    await cloneProject(templateOptions[projectType].url, projectPath);
-    
-    await validate(projectPath);
-    
+    const { url, language } = templateOptions[projectType];
+
+    const projectPath = path.join(TEMP_TEST_DIR, projectName);
+    await cloneProject(url, projectPath);
+
     const res = await bindProjectWithoutBuilding({
         name: projectName,
         path: projectPath,
-        language: templateOptions[projectType].language,
+        language,
         projectType,
     });
     return res.body.projectID;
@@ -144,16 +143,8 @@ function completeCreationOptions(options = {}) {
     completeOptions.name = options.name || generateUniqueName();
     completeOptions.language = templateOptions[options.type].language;
     completeOptions.url = templateOptions[options.type].url;
-    
-    return completeOptions;
-}
 
-async function validate(projectPath) {
-    const res = await reqService.chai
-        .post('/api/v1/validate')
-        .set('cookie', ADMIN_COOKIE)
-        .send({ projectPath });
-    return res;
+    return completeOptions;
 }
 
 /**
@@ -249,13 +240,9 @@ function closeProject(
         : reqService.makeReq(req, expectedResStatus);
 }
 
-async function deleteProjectDir(projectName){
-    const workspace_location = await findWorkspaceLocation();
-    const projectPath = path.join(workspace_location, projectName);
-    // after is failing in jenkins with permission issues.  This is not
-    // actually part of the test, its us trying to be good and clean up   
-
-    //await fs.remove(projectPath);
+async function removeProject(pathToProjectDir, projectID){
+    fs.removeSync(pathToProjectDir);
+    await unbindProject(projectID);
 }
 
 /**
@@ -346,7 +333,7 @@ async function awaitProject(projectName) {
 
 async function awaitProjectStarted(projectID) {
     const socketService = await SocketService.createSocket();
-    const expectedSocketMsg = { 
+    const expectedSocketMsg = {
         projectID,
         msgType: 'projectStarted',
     };
@@ -356,7 +343,7 @@ async function awaitProjectStarted(projectID) {
 
 async function awaitProjectBuilding(projectID) {
     const socketService = await SocketService.createSocket();
-    const expectedSocketMsg = { 
+    const expectedSocketMsg = {
         projectID,
         msgType: 'projectBuilding',
     };
@@ -401,17 +388,6 @@ async function startLogStreams(projectID) {
 
 async function cloneProject(giturl, dest) {
     await git().clone(giturl, dest);
-}
-
-async function findWorkspaceLocation() {
-    const res = await reqService.chai
-        .get('/api/v1/environment')
-        .set('Cookie', ADMIN_COOKIE);
-    res.should.have.status(200);
-    res.should.have.ownProperty('body');
-    const { workspace_location } =  res.body;
-    await containerService.ensureDir(containerDir);
-    return workspace_location;
 }
 
 function readCwSettings(projectPath) {
@@ -461,13 +437,11 @@ module.exports = {
     cancelLoad,
     getLogStreams,
     startLogStreams,
-    validate,
     bindProject,
     unbindProject,
-    deleteProjectDir,
+    removeProject,
     buildProject,
     cloneProject,
-    findWorkspaceLocation,
     readCwSettings,
     cloneAndBindAndBuildProject,
     cloneAndBindProject,
