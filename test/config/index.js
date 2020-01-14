@@ -37,7 +37,7 @@ const IBM_GITHUB_AUTH = process.env.GIT_EXPORT_AUTH || '';
 const K8S_NAME_SPACE = process.env.KUBE_NAMESPACE || 'default';
 
 const containerDir = '/home/cwuser/codewind-test-projects/';
-const dir = '/tmp/codewind-test-projects/';
+const TEMP_TEST_DIR = __dirname;
 
 const METRIC_TYPES = ['cpu', 'memory', 'gc', 'http']; // Data types are hardcoded in the Project.js
 const MOCK_LOADTEST_DIR = path.resolve(__dirname, '../resources/load-test-data');
@@ -122,7 +122,7 @@ module.exports = {
     WORKSPACE_DIR,
     CODEWIND_SOCKET_URL,
     containerDir,
-    dir,
+    TEMP_TEST_DIR,
     testTimeout,
     METRIC_TYPES,
     MOCK_LOADTEST_DIR,

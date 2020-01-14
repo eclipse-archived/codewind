@@ -20,7 +20,7 @@ const zlib = require('zlib');
 const reqService = require('./request.service');
 const SocketService = require('./socket.service');
 const containerService = require('./container.service');
-const { ADMIN_COOKIE, containerDir, templateOptions } = require('../config');
+const { ADMIN_COOKIE, templateOptions, TEMP_TEST_DIR } = require('../config');
 
 chai.should();
 const sleep = promisify(setTimeout);
@@ -249,13 +249,9 @@ function closeProject(
         : reqService.makeReq(req, expectedResStatus);
 }
 
-async function deleteProjectDir(projectName){
-    const workspace_location = await findWorkspaceLocation();
-    const projectPath = path.join(workspace_location, projectName);
-    // after is failing in jenkins with permission issues.  This is not
-    // actually part of the test, its us trying to be good and clean up   
-
-    //await fs.remove(projectPath);
+async function removeProject(pathToProjectDir, projectID){
+    fs.removeSync(pathToProjectDir);
+    await unbindProject(projectID);
 }
 
 /**
@@ -464,7 +460,7 @@ module.exports = {
     validate,
     bindProject,
     unbindProject,
-    deleteProjectDir,
+    removeProject,
     buildProject,
     cloneProject,
     findWorkspaceLocation,
