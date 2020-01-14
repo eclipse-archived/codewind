@@ -9,6 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const path = require('path');
+const os = require('os');
 const { execSync } = require('child_process');
 
 // Obtain the host and port Codewind is running on locally if not specifed
@@ -37,7 +38,7 @@ const IBM_GITHUB_AUTH = process.env.GIT_EXPORT_AUTH || '';
 const K8S_NAME_SPACE = process.env.KUBE_NAMESPACE || 'default';
 
 const containerDir = '/home/cwuser/codewind-test-projects/';
-const TEMP_TEST_DIR = __dirname;
+const TEMP_TEST_DIR = path.join(os.tmpdir());
 
 const METRIC_TYPES = ['cpu', 'memory', 'gc', 'http']; // Data types are hardcoded in the Project.js
 const MOCK_LOADTEST_DIR = path.resolve(__dirname, '../resources/load-test-data');
