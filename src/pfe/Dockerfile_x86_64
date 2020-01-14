@@ -165,6 +165,7 @@ EXPOSE 9090
 
 # Moved the FORCE_COLOR env var for colored logs from root-watcher.sh to the Dockerfile
 ENV FORCE_COLOR=1
+ENV LOG_LEVEL=info
 
 # USER mcuser
 # TODO, work out how to start everything.

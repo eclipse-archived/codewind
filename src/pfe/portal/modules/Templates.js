@@ -48,7 +48,9 @@ module.exports = class Templates {
 
   constructor(workspace) {
     // If this exists it overrides the contents of DEFAULT_REPOSITORY_LIST
-    this.projectTemplates = [];
+    // One list for enabled templates, another that includes the disabled templates.
+    this.enabledProjectTemplates = [];
+    this.allProjectTemplates = [];
     // If a repository is added or removed then update the template list on the next GetTemplates
     this.projectTemplatesNeedsRefresh = true;
     // If a repository is added or removed update the repository list
@@ -77,17 +79,17 @@ module.exports = class Templates {
 
   // TEMPLATES
 
-  async getTemplates(showEnabledOnly) {
-    let templates = this.projectTemplates;
+  async getTemplates(enabledOnly) {
     if (this.projectTemplatesNeedsRefresh) {
-      const repositories = (String(showEnabledOnly) === 'true')
-        ? await this.getEnabledRepositories()
-        : await this.getRepositories();
-      templates = await getTemplatesFromRepos(repositories);
-      this.projectTemplates = templates;
+      const enabledRepositories = await this.getEnabledRepositories();
+      const disabledRepositories = await this.getDisabledRepositories();
+      const newEnabledTemplates = await getTemplatesFromRepos(enabledRepositories);
+      const newDisabledTemplates = await getTemplatesFromRepos(disabledRepositories);
+      this.enabledProjectTemplates = newEnabledTemplates;
+      this.allProjectTemplates = newEnabledTemplates.concat(newDisabledTemplates);
       this.projectTemplatesNeedsRefresh = false;
     }
-    return templates;
+    return enabledOnly ? this.enabledProjectTemplates : this.allProjectTemplates;
   }
 
   async getTemplatesByStyle(projectStyle, showEnabledOnly = false) {
@@ -96,7 +98,7 @@ module.exports = class Templates {
   }
 
   async getAllTemplateStyles() {
-    const templates = await this.getTemplates(false, false);
+    const templates = await this.getTemplates(false);
     return getTemplateStyles(templates);
   }
 
@@ -114,6 +116,11 @@ module.exports = class Templates {
   async getEnabledRepositories() {
     const repositories = await this.getRepositories();
     return repositories.filter(repo => repo.enabled);
+  }
+
+  async getDisabledRepositories() {
+    const repositories = await this.getRepositories();
+    return repositories.filter(repo => !repo.enabled);
   }
 
   /**

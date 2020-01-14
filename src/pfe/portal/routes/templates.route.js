@@ -23,7 +23,8 @@ const log = new Logger(__filename);
  */
 router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
   const { templates: templateController } = req.cw_user;
-  const { showEnabledOnly, projectStyle } = req.query;
+  const projectStyle = req.query['projectStyle'];
+  const showEnabledOnly = req.query['showEnabledOnly'] === 'true';
   try {
     const templates = (projectStyle) 
       ? await templateController.getTemplatesByStyle(projectStyle, showEnabledOnly)
