@@ -108,7 +108,7 @@ module.exports = class User {
       await this.templates.initializeRepositoryList();
       log.info(`Initialising template list`);
       await this.templates.getTemplates(false);
-      log.info(`Default templates cached.`);
+      log.info(`Default templates cached`);
 
       // Connect up the UI Socket Authentication handler
       if (process.env.CODEWIND_AUTH_HOST) {
