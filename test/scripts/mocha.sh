@@ -16,6 +16,13 @@
 
 start=$(date +%F_%T)
 echo "Tests started at ${start}"
+
+cp -r ../docs ../src/pfe/portal/docs
+if [ $? != 0 ]; then
+    echo "Error copying docs directory to Portal directory (openapi.yaml)"
+    exit 1;
+fi
+
 node_modules/.bin/nyc node_modules/.bin/mocha ${@:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
 rc=$?
 end=$(date +%F_%T)
