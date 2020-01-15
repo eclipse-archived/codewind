@@ -175,9 +175,8 @@ async function uploadFile(req, res) {
       // req.body.msg is gzipped, therefore sanitization is not required and may modify a users files
       const zippedFile = buffer.Buffer.from(req.body.msg, "base64"); // eslint-disable-line microclimate-portal-eslint/sanitise-body-parameters
       const unzippedFile = await inflateAsync(zippedFile);
-      const fileToWrite = JSON.parse(unzippedFile.toString());
       const pathToWriteTo = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name, relativePathOfFile)
-      await fs.outputFile(pathToWriteTo, fileToWrite);
+      await fs.outputFile(pathToWriteTo, unzippedFile);
       if( mode !== undefined ) {
         await fs.chmod(pathToWriteTo, mode);
       }
