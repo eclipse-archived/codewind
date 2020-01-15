@@ -243,6 +243,10 @@ paths:
           $ref: '#/components/responses/400'
         409:
           description: The project path or name are already in use
+          content:
+            text/html:
+              schema:
+                type: string
         500:
           description: Any other error
 
@@ -291,6 +295,11 @@ paths:
       responses:
         200:
           description: The file upload was successful
+          content:
+            text/html:
+              schema:
+                type: string
+                example: OK
         404:
           description: Project with given projectID not found
         500:

@@ -22,7 +22,7 @@ chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
 describe('Bind projects tests', () => {
-    const projectName = `project-to-bind-${Date.now()}`;
+    const projectName = `test-projects-bind-${Date.now()}`;
     const pathToLocalRepo = path.join(TEMP_TEST_DIR, projectName);
     let projectID;
 
@@ -63,6 +63,7 @@ describe('Bind projects tests', () => {
 
             responses.forEach(res => {
                 res.should.have.status(200);
+                res.should.satisfyApiSpec;
             });
             const pathToUploadedFile = path.join('codewind-workspace', 'cw-temp', projectName, 'package.json');
             const uploadedFileExists = await containerService.fileExists(pathToUploadedFile);
@@ -75,12 +76,17 @@ describe('Bind projects tests', () => {
         });
         it('returns 409 when trying to bind a project that is already bound', async function() {
             const originalNumProjects = await projectService.countProjects();
-            await projectService.bindStart({
+            const res = await projectService.bindStart({
                 name: projectName,
                 language: 'nodejs',
                 projectType: 'nodejs',
                 path: pathToLocalRepo,
+                creationTime: Date.now(),
             });
+
+            res.should.have.status(409);
+            res.should.satisfyApiSpec;
+
             const finalNumProjects = await projectService.countProjects();
             finalNumProjects.should.equal(originalNumProjects);
         });
@@ -109,11 +115,11 @@ describe('Bind projects tests', () => {
     });
     describe('PUT /bind/upload', () => {
         describe('Failure Cases', () => {
-            it('returns 400 for a project that does not exist', async function() {
+            it('returns 404 for a project that does not exist', async function() {
                 this.timeout(testTimeout.short);
-                const invalidID = 'doesnotexist';
+                const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
                 const res = await projectService.uploadFile(
-                    invalidID,
+                    idMatchingNoProjects,
                     pathToLocalRepo,
                     'package.json',
                 );
@@ -123,10 +129,10 @@ describe('Bind projects tests', () => {
     });
     describe('POST /bind/end', () => {
         describe('Failure Cases', () => {
-            it('returns 400 for a project that does not exist', async function() {
+            it('returns 404 for a project that does not exist', async function() {
                 this.timeout(testTimeout.short);
-                const invalidID = 'doesnotexist';
-                const res = await projectService.bindEnd(invalidID);
+                const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
+                const res = await projectService.bindEnd(idMatchingNoProjects);
                 res.should.have.status(404);
             });
         });

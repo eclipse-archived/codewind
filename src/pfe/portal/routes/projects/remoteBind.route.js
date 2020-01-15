@@ -159,7 +159,7 @@ async function bindStart(req, res) {
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
-router.put('/api/v1/projects/:id/upload', uploadFile);
+router.put('/api/v1/projects/:id/upload', validateReq, uploadFile);
 
 async function uploadFile(req, res) {
   if (timersyncstart == 0) {
@@ -204,7 +204,7 @@ async function uploadFile(req, res) {
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
-router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
+router.post('/api/v1/projects/:id/upload/end', validateReq, async (req, res) => {
   const projectID = req.sanitizeParams('id');
   const keepFileList = req.sanitizeBody('fileList');
   const keepDirList = req.sanitizeBody('directoryList');
@@ -396,7 +396,7 @@ async function recursivelyListFilesOrDirectories(getDirectories, absolutePath, r
  * @return 404 if the project was not found
  * @return 500 if there was an error
  */
-router.post('/api/v1/projects/:id/bind/end', bindEnd);
+router.post('/api/v1/projects/:id/bind/end', validateReq, bindEnd);
 
 async function bindEnd(req, res) {
   const user = req.cw_user;
