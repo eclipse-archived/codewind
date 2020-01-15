@@ -60,9 +60,6 @@ pipeline {
                         # Run the unit test suite
                         echo "Portal unit tests"
 
-                        # Copy the docs into the portal directory
-                        cp -r $DIR/docs $DIR/src/pfe/portal/
-
                         npm run unittest
                         if [ $? -eq 0 ]; then
                             echo "+++   PORTAL UNIT TESTS COMPLETED SUCCESSFULLY   +++";
