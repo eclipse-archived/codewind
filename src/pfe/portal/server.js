@@ -244,7 +244,7 @@ async function main() {
     /* Proxy Performance container routes */
     app.use('/performance/*', pipePerfProxyReqsToPerfContainer);
 
-    app.use(bodyParser.json({limit: '1mb'}));
+    app.use(bodyParser.json({limit: '30mb'}));
     app.use(bodyParser.urlencoded({
       extended: false
     }));
