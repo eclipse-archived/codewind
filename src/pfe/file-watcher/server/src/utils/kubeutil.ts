@@ -291,12 +291,12 @@ export async function isContainerActive(containerName: string, projectInfo?: Pro
                     Object.keys(pod.status.containerStatuses).length > 0) {
                     for (const containerStatus of pod.status.containerStatuses) {
                         // Container state entries are running, terminated, waiting
-                        // Container waiting reasons are: ContainerCreating, CrashLoopBackOff, ErrImagePull, ImagePullBackOff
+                        // Container waiting reasons are: PodInitializing, ContainerCreating, CrashLoopBackOff, ErrImagePull, ImagePullBackOff
                         if (containerStatus.state && containerStatus.state.running) {
                             containerState = {state: ContainerStates.containerActive};
                         } else if (containerStatus.state && containerStatus.state.waiting &&
                             containerStatus.state.waiting.reason &&
-                            containerStatus.state.waiting.reason === "ContainerCreating") {
+                            (containerStatus.state.waiting.reason === "PodInitializing" || containerStatus.state.waiting.reason === "ContainerCreating")) {
                             containerState = {state: ContainerStates.containerStarting};
                         } else {
                             // No active pods or containers
