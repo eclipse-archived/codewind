@@ -18,58 +18,57 @@ pipeline {
         stage('Run Portal eslint and unit tests') {
             options {
                 timeout(time: 30, unit: 'MINUTES') 
+                retry(3)
             }
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
-                    retry(3) {
-                        sh '''#!/usr/bin/env bash
-                            DIR=`pwd`;
+                    sh '''#!/usr/bin/env bash
+                        DIR=`pwd`;
 
-                            echo "Starting unit tests for Portal..."
-                            export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
+                        echo "Starting unit tests for Portal..."
+                        export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
 
-                            # Install nvm to easily set version of node to use
-                            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-                            export NVM_DIR="$HOME/.nvm" 
-                            . $NVM_DIR/nvm.sh
-                            nvm i 10
+                        # Install nvm to easily set version of node to use
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                        export NVM_DIR="$HOME/.nvm" 
+                        . $NVM_DIR/nvm.sh
+                        nvm i 10
+                        
+                        # Run eslint on portal code
+                        cd $DIR/src/pfe/portal
+                        npm install
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        npm run eslint
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        # Run eslint on portal tests
+                        cd $DIR/test
+                        npm install
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        npm run eslint
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
                             
-                            # Run eslint on portal code
-                            cd $DIR/src/pfe/portal
-                            npm install
-                            if [ $? -ne 0 ]; then
-                                exit 1
-                            fi
+                        # Run the unit test suite
+                        echo "Portal unit tests"
 
-                            npm run eslint
-                            if [ $? -ne 0 ]; then
-                                exit 1
-                            fi
-
-                            # Run eslint on portal tests
-                            cd $DIR/test
-                            npm install
-                            if [ $? -ne 0 ]; then
-                                exit 1
-                            fi
-
-                            npm run eslint
-                            if [ $? -ne 0 ]; then
-                                exit 1
-                            fi
-                                
-                            # Run the unit test suite
-                            echo "Portal unit tests"
-
-                            npm run unittest
-                            if [ $? -eq 0 ]; then
-                                echo "+++   PORTAL UNIT TESTS COMPLETED SUCCESSFULLY   +++";
-                            else
-                                echo "+++   PORTAL UNIT TESTS FAILED   +++";
-                                exit 1;
-                            fi
-                            '''
-                    }
+                        npm run unittest
+                        if [ $? -eq 0 ]; then
+                            echo "+++   PORTAL UNIT TESTS COMPLETED SUCCESSFULLY   +++";
+                        else
+                            echo "+++   PORTAL UNIT TESTS FAILED   +++";
+                            exit 1;
+                        fi
+                        '''
                 }
             }
         }
@@ -77,44 +76,43 @@ pipeline {
         stage('Run Turbine unit test suite') {
             options {
                 timeout(time: 30, unit: 'MINUTES') 
+                retry(3)
             }
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
-                        retry(3) {
-                            sh '''#!/usr/bin/env bash
-                            DIR=`pwd`;
-                            echo "Starting unit tests for Turbine..."
-                            export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
-                            
-                            ARCH=`uname -m`;
-                            printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
+                        sh '''#!/usr/bin/env bash
+                        DIR=`pwd`;
+                        echo "Starting unit tests for Turbine..."
+                        export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
+                        
+                        ARCH=`uname -m`;
+                        printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
 
-                            # Install nvm to easily set version of node to use
-                            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-                            export NVM_DIR="$HOME/.nvm" 
-                            . $NVM_DIR/nvm.sh
-                            nvm i 10
+                        # Install nvm to easily set version of node to use
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                        export NVM_DIR="$HOME/.nvm" 
+                        . $NVM_DIR/nvm.sh
+                        nvm i 10
+                        
+                        # Run eslint on turbine code
+                        cd $DIR/src/pfe/file-watcher/server
+                        npm install
+                        
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
                             
-                            # Run eslint on turbine code
-                            cd $DIR/src/pfe/file-watcher/server
-                            npm install
-                            
-                            if [ $? -ne 0 ]; then
-                                exit 1
-                            fi
-                                
-                            # Run the unit test suite
-                            echo "Started running Turbine Unit Test Suite"
-                            npm run unit:test
-                            if [ $? -eq 0 ]; then
-                                echo "+++   TURBINE UNIT TESTS COMPLETED SUCCESSFULLY   +++";
-                            else
-                                echo "+++   TURBINE UNIT TESTS FAILED   +++";
-                                exit 1;
-                            fi
-                            '''
-                        }
+                        # Run the unit test suite
+                        echo "Started running Turbine Unit Test Suite"
+                        npm run unit:test
+                        if [ $? -eq 0 ]; then
+                            echo "+++   TURBINE UNIT TESTS COMPLETED SUCCESSFULLY   +++";
+                        else
+                            echo "+++   TURBINE UNIT TESTS FAILED   +++";
+                            exit 1;
+                        fi
+                        '''
                     }
                 }
             }
@@ -214,76 +212,75 @@ pipeline {
         stage('Start Codewind and run the API tests') {  
             options {
                 timeout(time: 2, unit: 'HOURS') 
+                retry(3)
             }   
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
-                        retry(3) {
-                            sh '''#!/usr/bin/env bash
-                            echo "Starting tests for Eclipse Codewind ..."
-                            export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
-                            mkdir -p $HOME/dc
-                            export PATH=$PATH:$HOME/dc/
-                            ARCH=`uname -m`;
-                            printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
-                            DIR=`pwd`;
+                        sh '''#!/usr/bin/env bash
+                        echo "Starting tests for Eclipse Codewind ..."
+                        export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
+                        mkdir -p $HOME/dc
+                        export PATH=$PATH:$HOME/dc/
+                        ARCH=`uname -m`;
+                        printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
+                        DIR=`pwd`;
 
-                            # Install nvm to easily set version of node to use
-                            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-                            export NVM_DIR="$HOME/.nvm" 
-                            . $NVM_DIR/nvm.sh
-                            nvm i 10
-                            
-                            # Install docker-compose
-                            curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o $HOME/dc/docker-compose
-                            if [ $? -ne 0 ]; then
-                                echo "Error downloading docker-compose"
-                                exit 1
-                            fi
-                            chmod +x $HOME/dc/docker-compose
+                        # Install nvm to easily set version of node to use
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                        export NVM_DIR="$HOME/.nvm" 
+                        . $NVM_DIR/nvm.sh
+                        nvm i 10
+                        
+                        # Install docker-compose
+                        curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o $HOME/dc/docker-compose
+                        if [ $? -ne 0 ]; then
+                            echo "Error downloading docker-compose"
+                            exit 1
+                        fi
+                        chmod +x $HOME/dc/docker-compose
 
-                            # Create codewind-workspace if it does not exist
-                            printf "\n\nCreating codewind-workspace\n"
-                            mkdir -m 777 -p $DIR/codewind-workspace
+                        # Create codewind-workspace if it does not exist
+                        printf "\n\nCreating codewind-workspace\n"
+                        mkdir -m 777 -p $DIR/codewind-workspace
 
-                            # Save Docker image ID of PFE to ensure we're not using the image from Dockerhub
-                            BUILT_PFE_IMAGE_ID=$(docker images --filter=reference=eclipse/codewind-pfe-amd64:latest --format "{{.ID}}")
-                            echo "PFE Image: $BUILT_PFE_IMAGE_ID"
+                        # Save Docker image ID of PFE to ensure we're not using the image from Dockerhub
+                        BUILT_PFE_IMAGE_ID=$(docker images --filter=reference=eclipse/codewind-pfe-amd64:latest --format "{{.ID}}")
+                        echo "PFE Image: $BUILT_PFE_IMAGE_ID"
 
-                            # Start Codewind
-                            sh $DIR/start.sh
-                            if [ $? -ne 0 ]; then
-                                echo "Error starting Codewind"
-                                exit 1
-                            fi
+                        # Start Codewind
+                        sh $DIR/start.sh
+                        if [ $? -ne 0 ]; then
+                            echo "Error starting Codewind"
+                            exit 1
+                        fi
 
-                            # Check that cwctl has not pulled down a new PFE image
-                            POST_START_IMAGE_ID=$(docker images --filter=reference=eclipse/codewind-pfe-amd64:latest --format "{{.ID}}")
-                            echo "PFE Container image: $POST_START_IMAGE_ID"
-                            if [ "$BUILT_PFE_IMAGE_ID" != "$POST_START_IMAGE_ID" ]; then
-                                echo "Error a new PFE image has been downloaded"
-                                echo "Built PFE image ID: $BUILT_PFE_IMAGE_ID"
-                                echo "Downloaded PFE image ID: $POST_START_IMAGE_ID"
-                                echo "Docker images"
-                                docker images
-                                echo "Docker ps"
-                                docker ps
-                                exit 1
-                            fi
+                        # Check that cwctl has not pulled down a new PFE image
+                        POST_START_IMAGE_ID=$(docker images --filter=reference=eclipse/codewind-pfe-amd64:latest --format "{{.ID}}")
+                        echo "PFE Container image: $POST_START_IMAGE_ID"
+                        if [ "$BUILT_PFE_IMAGE_ID" != "$POST_START_IMAGE_ID" ]; then
+                            echo "Error a new PFE image has been downloaded"
+                            echo "Built PFE image ID: $BUILT_PFE_IMAGE_ID"
+                            echo "Downloaded PFE image ID: $POST_START_IMAGE_ID"
+                            echo "Docker images"
+                            docker images
+                            echo "Docker ps"
+                            docker ps
+                            exit 1
+                        fi
 
-                            # Run the API tests now Portal has started
-                            cd $DIR/test/
-                            npm install 
-                            if [ $? -ne 0 ]; then
-                                exit 1
-                            fi
+                        # Run the API tests now Portal has started
+                        cd $DIR/test/
+                        npm install 
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
 
-                            npm run apitest
-                            if [ $? -ne 0 ]; then
-                                exit 1
-                            fi
-                            '''
-                        }
+                        npm run apitest
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+                        '''
                     }
                 }
             }
@@ -298,7 +295,10 @@ pipeline {
                     changeRequest()
                 }
             }
-            
+            options {
+                timeout(time: 30, unit: 'MINUTES') 
+                retry(3)
+            }   
             steps {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                     sh '''#!/usr/bin/env bash
