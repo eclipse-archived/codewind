@@ -200,7 +200,7 @@ module.exports = class LoadRunner {
       this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'preparing' });
 
       // start profiling if supported by current language
-      if (this.project.language == 'nodejs') {
+      if (this.project.language == 'nodejs' || this.project.language === 'javascript') {
         this.beginNodeProfiling();
       } else if (this.project.language == 'java' && this.project.projectType == 'liberty') {
         await this.beginJavaProfiling(loadConfig.maxSeconds);

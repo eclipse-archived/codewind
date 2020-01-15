@@ -114,6 +114,19 @@ describe('Project.js', () => {
                 const areMetricsAvailable = await project.checkIfMetricsAvailable();
                 areMetricsAvailable.should.be.false;
             });
+            it('Checks metrics for Javascript', async() => {
+                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'javascript', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
+                const packageJSONContents = {
+                    dependencies: {
+                        'appmetrics-dash': true,
+                    },
+                };
+                const packageJSONPath = path.join(project.projectPath(), 'package.json');
+                await fs.ensureFile(packageJSONPath);
+                await fs.writeJSON(packageJSONPath, packageJSONContents);
+                const areMetricsAvailable = await project.checkIfMetricsAvailable();
+                areMetricsAvailable.should.be.true;
+            });
             it('Checks metrics for Node.js', async() => {
                 const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'nodejs', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
                 const packageJSONContents = {

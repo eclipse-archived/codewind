@@ -69,7 +69,7 @@ const scrapeProjectData = async (appOrigin, projectLanguage) => {
   if (!latestProjectData.hasOwnProperty(appOrigin)) {
     latestProjectData[appOrigin] = {};
   }
-  if (projectLanguage === 'nodejs') {
+  if (projectLanguage === 'nodejs' || 'javascript') {
     return scrapeNodejsProjectData(appOrigin);
   }
   await repeatFunc(
