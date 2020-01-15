@@ -14,7 +14,6 @@ const fs = require('fs-extra');
 const { execSync } = require('child_process');
 const path = require('path');
 const rewire = require('rewire');
-const assert = require('assert');
 const yaml = require('js-yaml');
 const chai = require('chai');
 const chaiSubset = require('chai-subset');
@@ -40,7 +39,7 @@ const CODEWIND_YAML = {
 
 const TEMPLATES_PROVIDER = 'module.exports = { dummyFunction: function() {return "testString";} };';
 
-describe.only('Extension.js', () => {
+describe('Extension.js', () => {
     suppressLogOutput(Extension);
     const tempDir = `${__dirname}/extension_temp`;
     const codewindYamlPath = path.join(tempDir, 'codewind.yaml');
