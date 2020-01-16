@@ -481,7 +481,7 @@ function pingInTransitApplications(): void {
                                         newState = (stateInfo.isAppUp && projectInfo.sentProjectInfo) ? AppState.started : oldState;
                                     } else if (oldState === AppState.stopping && !stateInfo.isAppUp) {
                                         newState = AppState.stopped;
-                                    } else if ( oldState === AppState.starting ) {
+                                    } else if ( oldState === AppState.starting && pingCountLimit != -1 ) {
                                         // ping timeout, increment pingCount
                                         if (pingCountMap.get(projectID)) {
                                             pingCount++;
