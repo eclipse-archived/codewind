@@ -18,6 +18,7 @@ import * as projectExtensions from "../extensions/projectExtensions";
 import * as projectUtil from "./projectUtil";
 import { Operation } from "./operation";
 import * as io from "../utils/socket";
+import { AppState, ProjectState } from "../controllers/projectStatusController";
 const xss = require("xss"); // tslint:disable-line:no-require-imports
 
 export const specificationSettingMap = new Map<string, (args: any, operation: Operation) => any>();
@@ -164,6 +165,32 @@ const changeInternalPort = async function (applicationPort: string, operation: O
     if (projectInfo.appPorts[0] == applicationPort) {
         logger.logProjectInfo("The application port is already set to: " + applicationPort, projectID);
         return;
+    }
+
+    if (applicationPort == "-1") {
+        projectStatusController.appStateMap.delete(projectID);
+        const keyValuePair: UpdateProjectInfoPair = {
+            key: "appPorts",
+            value: applicationPort,
+            saveIntoJsonFile: true
+        };
+        projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
+        logger.logProjectInfo("The project has been updated", projectInfo.projectID);
+        logger.logProjectTrace(JSON.stringify(projectInfo), projectInfo.projectID);
+        const data: ProjectSettingsEvent = {
+            operationId: operation.operationId,
+            projectID: projectID,
+            status: "success",
+            ports: {
+                internalPort: applicationPort
+            }
+        };
+        io.emitOnListener("projectSettingsChanged", data);
+        return;
+    } else {
+        if ( projectStatusController.appStateMap.get(projectID) == undefined) {
+            projectStatusController.appStateMap.set(projectInfo.projectID, new ProjectState(AppState.unknown, undefined));
+        }
     }
 
     try {

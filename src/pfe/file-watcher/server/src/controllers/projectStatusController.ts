@@ -57,7 +57,7 @@ export const pingCountMap = new Map();
  * @class
  * @description The class representing the project states.
  */
-class ProjectState {
+export class ProjectState {
     state: any;
     msg: string;
     lastbuild?: number;
@@ -311,16 +311,17 @@ export async function updateProjectStatus(type: string, projectID: string, statu
  *
  * @param projectID <Required | String> - An alphanumeric identifier for a project.
  *
- * @returns void
+ * @returns Promise<void>
  */
-export function addProject(projectID: string): void {
+export async function addProject(projectID: string): Promise<void> {
+    const projectInfo = await projectUtil.getProjectInfo(projectID);
     if (!buildStateMap.has(projectID)) {
         buildStateMap.set(projectID, new ProjectState(BuildState.unknown, undefined));
     }
     if (!buildRequiredMap.has(projectID)) {
         buildRequiredMap.set(projectID, new ProjectState(false, undefined));
     }
-    if (!appStateMap.has(projectID)) {
+    if (!appStateMap.has(projectID) && !(projectInfo && projectInfo.appPorts && projectInfo.appPorts.indexOf("-1") > -1)) {
         appStateMap.set(projectID, new ProjectState(AppState.unknown, undefined));
     }
 }
@@ -351,7 +352,7 @@ export function deleteProject(projectID: string): void {
  */
 function initAppStateMap(): void {
     projectUtil.getAllProjectInfo((projectInfo: ProjectInfo) => {
-        if (projectInfo.projectID) {
+        if (projectInfo.projectID && !(projectInfo.appPorts && projectInfo.appPorts.indexOf("-1") > -1)) {
             logger.logProjectInfo("Initialize application state map for project: " + projectInfo.projectID, projectInfo.projectID);
             appStateMap.set(projectInfo.projectID, new ProjectState(AppState.unknown, undefined));
         }
@@ -481,7 +482,7 @@ function pingInTransitApplications(): void {
                                         newState = (stateInfo.isAppUp && projectInfo.sentProjectInfo) ? AppState.started : oldState;
                                     } else if (oldState === AppState.stopping && !stateInfo.isAppUp) {
                                         newState = AppState.stopped;
-                                    } else if ( oldState === AppState.starting && pingCountLimit != -1 ) {
+                                    } else if ( oldState === AppState.starting) {
                                         // ping timeout, increment pingCount
                                         if (pingCountMap.get(projectID)) {
                                             pingCount++;
