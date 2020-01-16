@@ -9,7 +9,7 @@
 #     IBM Corporation - initial API and implementation
 ################################################################################
 
-FROM node:12-alpine
+FROM ppc64le/node:12-alpine
 LABEL org.opencontainers.image.title="Codewind-Gatekeeper" org.opencontainers.image.description="Codewind Gatekeeper" \
       org.opencontainers.image.url="https://codewind.dev/" \
       org.opencontainers.image.source="https://github.com/eclipse/codewind"
