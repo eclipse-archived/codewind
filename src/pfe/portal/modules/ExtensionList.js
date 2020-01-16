@@ -139,7 +139,7 @@ module.exports = class ExtensionList {
    */
   remove(name) {
     if (!this._list.hasOwnProperty(name)) {
-      throw new ExtensionListError('NOT_FOUND',name);
+      throw new ExtensionListError('NOT_FOUND', name);
     } else {
       delete this._list[name];
     }
