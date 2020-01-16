@@ -99,7 +99,7 @@ async function uploadFiles(projectID, pathToDirToUpload) {
 
 async function uploadFile(projectID, pathToDirToUpload, pathFromDirToFile) {
     const filePath = path.join(pathToDirToUpload, pathFromDirToFile);
-    const fileContent = JSON.stringify(fs.readFileSync(filePath, 'utf-8'));
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
     const zippedContent = zlib.deflateSync(fileContent);
     const base64CompressedContent = zippedContent.toString('base64');
     const options = {
