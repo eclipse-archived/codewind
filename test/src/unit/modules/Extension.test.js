@@ -35,7 +35,6 @@ chai.should();
 describe('Extension.js', () => {
     suppressLogOutput(Extension);
     const tempDir = `${__dirname}/extension_temp`;
-    // const codewindYamlPath = path.join(tempDir, 'codewind.yaml');
     before(() => {
         fs.ensureDirSync(tempDir);
     });
