@@ -75,7 +75,7 @@ describe('Project.js', () => {
                 directory: 'directorythatisntname-id',
                 infLockFlag: false,
                 startMode: 'run',
-                projectType: 'docker',
+                projectType: 'liberty',
                 buildLogPath: '/codewind-workspace/.logs/my-java-project-9318ab10-fef9-11e9-8761-9bf62d92b58b-9318ab10-fef9-11e9-8761-9bf62d92b58b/docker.build.log',
                 state: 'open',
                 autoBuild: false,
@@ -509,6 +509,85 @@ describe('Project.js', () => {
             await project.updateMetricsDescription(testRun, description);
             const { desc: descPostChange } = await fs.readJSON(tempMetricsFile);
             descPostChange.should.equal(description);
+        });
+    });
+    describe('getProfilingByTime(timeOfTestRun)', () => {
+        it('Fails to get a profiling file using an invalid time stamp', () => {
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.loadTestPath = loadTestResources;
+            return project.getProfilingByTime('123')
+                .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
+                .and.be.an.instanceOf(ProjectMetricsError)
+                .and.have.property('code', 'NOT_FOUND');
+        });
+        it('Gets a profiling file using a valid time stamp (String)', async() => {
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.language = 'nodejs';
+            project.loadTestPath = loadTestResources;
+            const profilingFile = '20190326154749';
+            const profilingStream = await project.getProfilingByTime(profilingFile);
+            const actualProfilingFromFile = await fs.readJSON(path.join(loadTestResources, String(profilingFile), 'profiling.json'));
+            const bufferS = [];
+            let buffer = null;
+            profilingStream.on('data', function(data) {
+                bufferS.push(data);
+            });
+            profilingStream.on('end', function() {
+                buffer = Buffer.concat(bufferS);
+                const profilingOutput = JSON.parse(buffer);
+                profilingOutput.should.deep.equal(actualProfilingFromFile);
+            });
+        });
+        it('Gets a profiling file using a valid time stamp (Int)', async() => {
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.language = 'nodejs';
+            project.loadTestPath = loadTestResources;
+            const profilingFile = 20190326154749;
+            const profilingStream = await project.getProfilingByTime(profilingFile);
+            const actualProfilingFromFile = await fs.readJSON(path.join(loadTestResources, String(profilingFile), 'profiling.json'));
+            const bufferS = [];
+            let buffer = null;
+            profilingStream.on('data', function(data) {
+                bufferS.push(data);
+            });
+            profilingStream.on('end', function() {
+                buffer = Buffer.concat(bufferS);
+                const profilingOutput = JSON.parse(buffer);
+                profilingOutput.should.deep.equal(actualProfilingFromFile);
+            });
+        });
+    });
+    describe('getPathToProfilingFile(timeOfTestRun)', () => {
+        it('Fails to get a profiling.json path using an invalid time stamp', () => {
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.loadTestPath = loadTestResources;
+            return project.getPathToProfilingFile('123')
+                .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
+                .and.be.an.instanceOf(ProjectMetricsError)
+                .and.have.property('code', 'NOT_FOUND');
+        });
+        it('Gets a profiling.json path using a valid time stamp which is an existing filename', async() => {
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.loadTestPath = loadTestResources;
+            project.language = 'nodejs';
+            const profilingFilePath = await project.getPathToProfilingFile('20190326154749');
+            fs.existsSync(profilingFilePath).should.be.true;
+        });
+        it('Gets a profiling.json path using a valid time stamp which is larger than an existing filename', async() => {
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.loadTestPath = loadTestResources;
+            project.language = 'nodejs';
+            const profilingFilePath = await project.getPathToProfilingFile('30000000000000');
+            fs.existsSync(profilingFilePath).should.be.true;
+        });
+        it('Fails to get an .hcd path when java project pod is not running', () => {
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.loadTestPath = loadTestResources;
+            project.language = 'java';
+            project.getPathToProfilingFile('30000000000000')
+                .should.be.eventually.rejectedWith('Unable to perform docker cp for project')
+                .and.be.an.instanceOf(ProjectMetricsError)
+                .and.have.property('code', 'DOCKER_CP');
         });
     });
     describe('getComparison()', () => {

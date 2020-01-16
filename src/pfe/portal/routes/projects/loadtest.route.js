@@ -170,4 +170,34 @@ router.post('/api/v1/projects/:id/loadtest/config', validateReq, async function 
   }
 });
 
+/**
+ * Function to read the profiling data for a given project and test time
+ * @param id, the id of the project
+ * @param testRunTime, the timestamp of the load runner test
+ * @return 200 if project existed and the profiling data was found
+ * @return 400 if input is invalid
+ * @return 404 if project is not found
+ * @return 500 on internal error
+ */
+
+router.get('/api/v1/projects/:id/profiling/:testRunTime', validateReq, async function (req, res) {
+  try {
+    const user = req.cw_user;
+    const projectID = req.sanitizeParams('id');
+    const project = user.projectList.retrieveProject(projectID);
+    if (!project) {
+      res.status(404).send(`Unable to find project ${projectID}`);
+      return;
+    }
+    const testRunTime = req.sanitizeParams('testRunTime');
+    const profilingStream = await project.getProfilingByTime(testRunTime);
+    res.status(200)
+    profilingStream.on('end', () => res.end());
+    profilingStream.pipe(res);
+  } catch (err) {
+    log.error(err.info || err);
+    res.status(500).send(err.info || err);
+  }
+});
+
 module.exports = router;
