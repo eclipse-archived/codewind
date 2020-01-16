@@ -21,6 +21,19 @@
         },
         {
             "type": "node",
+            "request": "launch",
+            "name": "Mocha Current File",
+            "program": "${workspaceFolder}/test/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--colors",
+                "--timeout",
+                "999999",
+                "${file}",
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "node",
             "request": "attach",
             "name": "Attach to Codewind",
             "address": "127.0.0.1",
