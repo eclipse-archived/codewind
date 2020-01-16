@@ -243,6 +243,10 @@ paths:
           $ref: '#/components/responses/400'
         409:
           description: The project path or name are already in use
+          content:
+            text/html:
+              schema:
+                type: string
         500:
           description: Any other error
 
@@ -259,9 +263,13 @@ paths:
           required: true
           description: id of the project
       responses:
-        202:
+        200:
           description: >
-            Bind end request accepted. Will attempt to complete binding the Codewind project.
+            Bind end request accepted. Will complete binding the Codewind project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
         404:
           description: Project with given projectiD was not found.
         500:
@@ -287,6 +295,11 @@ paths:
       responses:
         200:
           description: The file upload was successful
+          content:
+            text/html:
+              schema:
+                type: string
+                example: OK
         404:
           description: Project with given projectID not found
         500:
@@ -1536,7 +1549,7 @@ components:
         projectType:
           $ref: '#/components/schemas/ProjectType'
         host:
-          type: integer
+          type: string
           example: localhost
         ports:
           type: object
@@ -1630,7 +1643,13 @@ components:
           example: "https://github.com/codewind-resources/pythonTemplate"
         projectType:
           type: string
-          example: "docker"
+          enum:
+            - docker
+            - liberty
+            - nodejs
+            - spring
+            - swift
+            - appsodyExtension
         source:
           type: string
           example: "Default Codewind Templates"

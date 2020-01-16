@@ -16,178 +16,108 @@ const git = require('simple-git/promise');
 const fs = require('fs-extra');
 const path = require('path');
 const zlib = require('zlib');
+const klawSync = require('klaw-sync');
 
 const reqService = require('./request.service');
 const SocketService = require('./socket.service');
-const containerService = require('./container.service');
-const { ADMIN_COOKIE, containerDir, templateOptions } = require('../config');
+const { ADMIN_COOKIE, templateOptions, TEMP_TEST_DIR } = require('../config');
 
 chai.should();
 const sleep = promisify(setTimeout);
-const isObject = (obj) => (!!obj && obj.constructor === Object);
 
 const fastestCreationOptions = {
     language: 'nodejs',
     framework: 'spring',
 };
 
-async function cloneAndBindAndBuildProject(projectName, projectType) {
-    const workspace = await findWorkspaceLocation();
-    const projectPath = `${workspace}/${projectName}`;
-    await cloneProject(templateOptions[projectType].url, projectPath);
-    
+/**
+ * Clone, bind and build one of our template projects
+ */
+async function createProjectFromTemplate(projectName, projectType) {
+    const { url, language } = templateOptions[projectType];
+
+    const projectPath = path.join(TEMP_TEST_DIR, projectName);
+    await cloneProject(url, projectPath);
+
     const res = await bindProject({
         name: projectName,
         path: projectPath,
-        language: templateOptions[projectType].language,
+        language,
         projectType,
         autoBuild: true,
+        creationTime: Date.now(),
     });
     return res.body.projectID;
 }
 
-async function cloneAndBindProject(projectName, projectType) {
-    const workspace = await findWorkspaceLocation();
-    const projectPath = `${workspace}/${projectName}`;
-    await cloneProject(templateOptions[projectType].url, projectPath);
-    
-    await validate(projectPath);
-    
-    const res = await bindProjectWithoutBuilding({
-        name: projectName,
-        path: projectPath,
-        language: templateOptions[projectType].language,
-        projectType,
-    });
-    return res.body.projectID;
+/**
+ * @param {JSON} [options] e.g. { name: 'example' }
+ * @param {number} [expectedResStatus] default 200
+ */
+async function bindProject(options) {
+    const resFromBindStart = await bindStart(options);
+    const { projectID } = resFromBindStart.body;
+    await uploadFiles(projectID, options.path);
+    const resFromBindEnd = await bindEnd(projectID);
+    return resFromBindEnd;
 }
 
-async function createProjectFromTemplate(options){
+function recursivelyGetAllPaths(inputPath) {
+    const paths = klawSync(inputPath,  { nodir: true });
+    const filePaths = paths.map((path) => path.path);
+    return filePaths;
+};
+
+async function bindStart(options) {
     const res = await reqService.chai
-        .post('/api/v1/projects')
-        .set('cookie', ADMIN_COOKIE)
+        .post('/api/v1/projects/bind/start')
+        .set('Cookie', ADMIN_COOKIE)
         .send(options);
     return res;
-}
+};
 
-/**
- * DEPRECATED
- * @param {JSON} [options] e.g. { name: 'example' }
- * @param {number} [expectedResStatus] default 202
- * @param {boolean} [awaitSocketConfirmation] false by default, so won't wait for projectStart. Set to true to make it wait until the project is starting
- */
-async function createProjectAndAwaitID(
-    options,
-    expectedResStatus = 202,
-    awaitSocketConfirmation = false,
-) {
-    const completeOptions = completeCreationOptions(options);
-    await createProject(completeOptions, expectedResStatus, awaitSocketConfirmation);
-    await awaitProject(completeOptions.name);
-    const projectID = await getProjectIdFromName(completeOptions.name);
-    return projectID;
-}
-
-/**
- * DEPRECATED - remove from here when removed from all test files
- * @param {JSON} [options] e.g. { name: 'example' }
- * @param {number} [expectedResStatus] default 202
- * @param {boolean} [awaitSocketConfirmation] false by default, so won't wait for projectStart. Set to true to make it wait until the project is starting
- */
-async function createProject(
-    options,
-    expectedResStatus = 202,
-    awaitSocketConfirmation = false,
-) {
-    const completeOptions = completeCreationOptions(options);
-    const req = () => reqService.chai
-        .post('/api/v1/projects')
-        .set('Cookie', ADMIN_COOKIE)
-        .send(completeOptions);
-    awaitSocketConfirmation
-        ? await reqService.makeReqAndAwaitSocketMsg(req, expectedResStatus, { msgType: 'projectStarting' })
-        : await reqService.makeReq(req, expectedResStatus);
-}
-
-/**
- * DEPRECATED - remove from here when removed from all test files
- * @param {JSON} [options] e.g. { name: 'example' }
- * @param {number} [expectedResStatus] default 202
- */
-async function createNonBuiltProject(
-    options,
-    expectedResStatus = 202,
-) {
-    const name = options.name;
-    const completeOptions = completeCreationOptions(options);
-    completeOptions.autoBuild = false;
-    const req = () => reqService.chai
-        .post('/api/v1/projects')
-        .set('Cookie', ADMIN_COOKIE)
-        .send(completeOptions);
-    await reqService.makeReqAndAwaitSocketMsg(req, expectedResStatus, { name, msgType: 'projectCreation' });
-    const projectID = await getProjectIdFromName(completeOptions.name);
-    return projectID;
-}
-
-/**
- * DEPRECATED - remove from here when removed from all test files
- * @param {JSON} [options]
- * @returns {JSON} JSON with 'name', 'language', and (if 'language' is Java) 'framework' fields set to default values if they were empty
- */
-function completeCreationOptions(options = {}) {
-    if (!isObject(options)) throw new Error(`'${options}' should be an object`);
-    if (options.extension) return options;
-
-    const completeOptions = { ...options };
-
-    completeOptions.name = options.name || generateUniqueName();
-    completeOptions.language = templateOptions[options.type].language;
-    completeOptions.url = templateOptions[options.type].url;
-    
-    return completeOptions;
-}
-
-async function validate(projectPath) {
+async function bindEnd(projectID) {
     const res = await reqService.chai
-        .post('/api/v1/validate')
-        .set('cookie', ADMIN_COOKIE)
-        .send({ projectPath });
-    return res;
-}
-
-/**
- * @param {JSON} [options] e.g. { name: 'example' }
- * @param {number} [expectedResStatus] default 202
- */
-async function bindProject(options, expectedResStatus = 202) {
-    const req = () => reqService.chai
-        .post('/api/v1/projects/bind')
+        .post(`/api/v1/projects/${projectID}/bind/end`)
         .set('Cookie', ADMIN_COOKIE)
-        .send(options);
-    const res = await reqService.makeReqAndAwaitSocketMsg(req, expectedResStatus, { msgType: 'projectBind' });
+        .send({ id: projectID });
     return res;
+};
+
+async function uploadFiles(projectID, pathToDirToUpload) {
+    const filePaths = recursivelyGetAllPaths(pathToDirToUpload);
+    const responses = [];
+    await Promise.all(
+        filePaths.map(async(filePath) => {
+            const pathFromDirToFile = path.relative(pathToDirToUpload, filePath);
+            const res = await uploadFile(projectID, pathToDirToUpload, pathFromDirToFile);
+            responses.push(res);
+        })
+    );
+    return responses;
 }
 
-
-async function bindProjectAndWaitForMsg(
-    options,
-    expectedResStatus = 202,
-) {
-    const req = () => {
-        return reqService.chai
-            .post('/api/v1/projects/bind')
-            .set('Cookie', ADMIN_COOKIE)
-            .send(options);
+async function uploadFile(projectID, pathToDirToUpload, pathFromDirToFile) {
+    const filePath = path.join(pathToDirToUpload, pathFromDirToFile);
+    const fileContent = JSON.stringify(fs.readFileSync(filePath, 'utf-8'));
+    const zippedContent = zlib.deflateSync(fileContent);
+    const base64CompressedContent = zippedContent.toString('base64');
+    const options = {
+        isDirectory: false,
+        mode: 420,
+        path: pathFromDirToFile,
+        msg: base64CompressedContent,
     };
-    const res = await reqService.makeReqAndAwaitSocketMsg(req, expectedResStatus, { msgType: 'projectCreation' });
+    const res = await uploadFileViaPfeApi(projectID, options);
     return res;
-}
+};
 
-function bindProjectWithoutBuilding(options) {
-    const newOptions = { ...options };
-    newOptions.autoBuild = false;
-    return bindProject(newOptions);
+async function uploadFileViaPfeApi(projectID, options) {
+    const res = await reqService.chai
+        .put(`/api/v1/projects/${projectID}/upload`)
+        .set('Cookie', ADMIN_COOKIE)
+        .send(options);
+    return res;
 }
 
 /**
@@ -216,9 +146,11 @@ function generateUniqueName(baseName = 'test') {
     return `${baseName}${uniqueNumbers}`;
 }
 
-function createProjects(optionsArray, expectedResStatus) {
+function createProjects(optionsArray) {
     if (!Array.isArray(optionsArray)) throw new Error(`'${optionsArray}' should be an array`);
-    const promises = optionsArray.map(options => createProject(options, expectedResStatus));
+    const promises = optionsArray.map(options =>
+        createProjectFromTemplate(options.projectName, options.projectType)
+    );
     return Promise.all(promises);
 }
 
@@ -249,13 +181,9 @@ function closeProject(
         : reqService.makeReq(req, expectedResStatus);
 }
 
-async function deleteProjectDir(projectName){
-    const workspace_location = await findWorkspaceLocation();
-    const projectPath = path.join(workspace_location, projectName);
-    // after is failing in jenkins with permission issues.  This is not
-    // actually part of the test, its us trying to be good and clean up   
-
-    //await fs.remove(projectPath);
+async function removeProject(pathToProjectDir, projectID){
+    fs.removeSync(pathToProjectDir);
+    await unbindProject(projectID);
 }
 
 /**
@@ -346,7 +274,7 @@ async function awaitProject(projectName) {
 
 async function awaitProjectStarted(projectID) {
     const socketService = await SocketService.createSocket();
-    const expectedSocketMsg = { 
+    const expectedSocketMsg = {
         projectID,
         msgType: 'projectStarted',
     };
@@ -356,7 +284,7 @@ async function awaitProjectStarted(projectID) {
 
 async function awaitProjectBuilding(projectID) {
     const socketService = await SocketService.createSocket();
-    const expectedSocketMsg = { 
+    const expectedSocketMsg = {
         projectID,
         msgType: 'projectBuilding',
     };
@@ -403,17 +331,6 @@ async function cloneProject(giturl, dest) {
     await git().clone(giturl, dest);
 }
 
-async function findWorkspaceLocation() {
-    const res = await reqService.chai
-        .get('/api/v1/environment')
-        .set('Cookie', ADMIN_COOKIE);
-    res.should.have.status(200);
-    res.should.have.ownProperty('body');
-    const { workspace_location } =  res.body;
-    await containerService.ensureDir(containerDir);
-    return workspace_location;
-}
-
 function readCwSettings(projectPath) {
     return fs.readJSONSync(`${projectPath}/.cw-settings`);
 }
@@ -439,12 +356,8 @@ async function notifyPfeOfFileChangesAndAwaitMsg(array, projectID) {
 module.exports = {
     fastestCreationOptions,
     generateUniqueName,
-    createNonBuiltProject,
-    createProjectAndAwaitID,
-    createProject,
     createProjects,
     createProjectFromTemplate,
-    completeCreationOptions,
     openProject,
     closeProject,
     restartProject,
@@ -461,16 +374,16 @@ module.exports = {
     cancelLoad,
     getLogStreams,
     startLogStreams,
-    validate,
     bindProject,
+    bindStart,
+    bindEnd,
+    uploadFiles,
+    uploadFile,
     unbindProject,
-    deleteProjectDir,
+    removeProject,
     buildProject,
     cloneProject,
-    findWorkspaceLocation,
     readCwSettings,
-    cloneAndBindAndBuildProject,
-    cloneAndBindProject,
-    bindProjectAndWaitForMsg,
+    createProjectFromTemplate,
     notifyPfeOfFileChangesAndAwaitMsg,
 };
