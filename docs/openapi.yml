@@ -521,6 +521,27 @@ paths:
         500:
           description: Internal error
 
+  /api/v1/projects/{id}/profiling/{testRunTime}:
+    get:
+      summary: Reads the load run data for the given timestamp
+      description: Reads and returns profiling.json for Node projects. Copies over health center data to pfe from Java projects and returns the file path.
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: id of project
+      responses:
+        200:
+          description: Successful read of load run data
+        400:
+          description: Incorrect parameters given
+        404:
+          description: Project not found
+        500:
+          description: Internal error
+
   /api/v1/projects/{id}/unbind:
       post:
         summary: Unbind a given project from codewind

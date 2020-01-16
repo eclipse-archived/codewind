@@ -33,6 +33,12 @@ function constructMessage(code, identifier, message) {
   case 'NOT_FOUND':
     output = `Unable to find metrics for project ${identifier}`;
     break;
+  case 'DOCKER_CP':
+    output = `Unable to perform docker cp for project ${identifier}`;
+    break;
+  case 'HCD_NOT_FOUND':
+    output = `Unable to find .hcd saved in project ${identifier}`
+    break;
   default:
     output = `Unknown project metrics error`;
   }
