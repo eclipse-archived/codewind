@@ -71,11 +71,6 @@ fi
 rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
 curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-9.9.9999.zip http://download.eclipse.org/codewind/codewind-odo-extension/master/latest/codewind-odo-extension-9.9.9999.zip
 
-# In case of ppc64le, download 'appsody' using ppc64le specific url and build 'appsody-controller' from source
-if [ "$ARCH" == "ppc64le" ]; then
-  $DIR/script/build-appsody-controller.sh
-fi
-
 # BUILD IMAGES
 # Uses a build file in each of the directories that we want to use
 echo -e "\n+++   BUILDING DOCKER IMAGES   +++\n";
