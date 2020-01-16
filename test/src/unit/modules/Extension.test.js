@@ -12,37 +12,30 @@ global.codewind = { RUNNING_IN_K8S: false };
 
 const fs = require('fs-extra');
 const { execSync } = require('child_process');
-const path = require('path');
 const rewire = require('rewire');
-const yaml = require('js-yaml');
 const chai = require('chai');
 const chaiSubset = require('chai-subset');
 const chaiAsPromised = require('chai-as-promised');
 
 const Extension = rewire('../../../../src/pfe/portal/modules/Extension');
 const { suppressLogOutput } = require('../../../modules/log.service');
+const { 
+    CODEWIND_YAML,
+    COMPLETE_CODEWIND_YAML,
+    createCodewindYamlFile,
+    deleteCodewindYamlFile,
+    createTemplatesProviderFile,
+    deleteTemplatesProviderFile,    
+} = require('../../../modules/extension.service');
 
 chai.use(chaiSubset);
 chai.use(chaiAsPromised);
 chai.should();
 
-const CODEWIND_YAML = {
-    name: 'dummyExtension',
-    version: 1,
-    description: 'dummy extension for testing',
-    projectType: 'dummyExtension',
-    commands: 'commands',
-    detection: 'package.json',
-    config: 'config',
-    templates: 'templates',
-};
-
-const TEMPLATES_PROVIDER = 'module.exports = { dummyFunction: function() {return "testString";} };';
-
 describe('Extension.js', () => {
     suppressLogOutput(Extension);
     const tempDir = `${__dirname}/extension_temp`;
-    const codewindYamlPath = path.join(tempDir, 'codewind.yaml');
+    // const codewindYamlPath = path.join(tempDir, 'codewind.yaml');
     before(() => {
         fs.ensureDirSync(tempDir);
     });
@@ -63,8 +56,7 @@ describe('Extension.js', () => {
     });
     describe('initialise()', () => {
         before(() => {
-            const codewindYamlFileContents = yaml.safeDump(CODEWIND_YAML);
-            fs.writeFileSync(codewindYamlPath, codewindYamlFileContents);
+            createCodewindYamlFile(tempDir, COMPLETE_CODEWIND_YAML);
         });
         it('Fails to find a codewind.yaml in the given directory', () => {
             const pathThatDoesNotExist = 'notapath';
@@ -80,11 +72,8 @@ describe('Extension.js', () => {
             }
         });
         describe('No templates are added to the extension as templatesProvider.js does not exist', () => {
-            const codewindYamlFileWithoutTemplates = { ...CODEWIND_YAML };
-            delete codewindYamlFileWithoutTemplates.templates;
             before(() => {
-                const codewindYamlFileContents = yaml.safeDump(codewindYamlFileWithoutTemplates);
-                fs.writeFileSync(codewindYamlPath, codewindYamlFileContents);
+                createCodewindYamlFile(tempDir);
             });
             it('leaves the templates field as null and does not add a templatesProvider field', async() => {
                 const extension = new Extension({ path: tempDir });
@@ -93,29 +82,25 @@ describe('Extension.js', () => {
                 extension.should.not.have.property('templatesProvider');
             });
             after(() => {
-                fs.removeSync(codewindYamlPath);
+                deleteCodewindYamlFile(tempDir);
             });
         });
         describe('templatesProvider.js exists', () => {
-            const codewindYamlFileWithoutTemplates = { ...CODEWIND_YAML };
-            delete codewindYamlFileWithoutTemplates.templates;
-            const templatesProviderPath = path.join(tempDir, 'templatesProvider.js');
             before(() => {
-                const codewindYamlFileContents = yaml.safeDump(codewindYamlFileWithoutTemplates);
-                fs.writeFileSync(codewindYamlPath, codewindYamlFileContents);
-                fs.writeFileSync(templatesProviderPath, TEMPLATES_PROVIDER);
+                createCodewindYamlFile(tempDir);
+                createTemplatesProviderFile(tempDir);
             });
             it('reads the templatesProvider.js file, requires it and can run the function given in it', async() => {
                 const extension = new Extension({ path: tempDir });
                 await extension.initialise();
                 extension.should.have.property('templatesProvider');
-                const templateProviderFunction = extension.templatesProvider.dummyFunction;
+                const templateProviderFunction = extension.templatesProvider.getRepositories;
                 templateProviderFunction.should.be.a('function');
-                templateProviderFunction().should.equal('testString');
+                templateProviderFunction().should.deep.equal([]);
             });
             after(() => {
-                fs.removeSync(templatesProviderPath);
-                fs.removeSync(codewindYamlPath);
+                deleteCodewindYamlFile(tempDir);
+                deleteTemplatesProviderFile(tempDir);
             }); 
         });
     });

@@ -23,7 +23,7 @@ const {
     defaultCodewindTemplates,
     sampleRepos,
     validUrlNotPointingToIndexJson,
-    templateRepositoryUrl,
+    templateRepositoryURL,
 } = require('../../modules/template.service');
 const { suppressLogOutput } = require('../../modules/log.service');
 const { testTimeout } = require('../../config');
@@ -692,10 +692,10 @@ describe('Templates.js', function() {
                 describe('(<validUrlPointingToIndexJson>, <validDesc>, <validName>)', function() {
                     it('succeeds', async function() {
                         this.timeout(testTimeout.short);
-                        const func = () => templateController.addRepository(templateRepositoryUrl, 'description', 'name');
+                        const func = () => templateController.addRepository(templateRepositoryURL, 'description', 'name');
                         await (func().should.not.be.rejected);
                         templateController.repositoryList.should.containSubset([{
-                            url: templateRepositoryUrl,
+                            url: templateRepositoryURL,
                             name: 'name',
                             description: 'description',
                             enabled: true,
@@ -711,10 +711,10 @@ describe('Templates.js', function() {
                     it('succeeds', async function() {
                         this.timeout(testTimeout.short);
                         const isRepoProtected = false;
-                        const func = () => templateController.addRepository(templateRepositoryUrl, 'description', 'name', isRepoProtected);
+                        const func = () => templateController.addRepository(templateRepositoryURL, 'description', 'name', isRepoProtected);
                         await (func().should.not.be.rejected);
                         templateController.repositoryList.should.containSubset([{
-                            url: templateRepositoryUrl,
+                            url: templateRepositoryURL,
                             name: 'name',
                             description: 'description',
                             enabled: true,
@@ -732,7 +732,7 @@ describe('Templates.js', function() {
                 describe('(<validUrl>, <ValidDesc>, <ValidName>)', function() {
                     it('succeeds, and allows the user to set the name and description', async function() {
                         this.timeout(testTimeout.short);
-                        const func = () => templateController.addRepository(templateRepositoryUrl, 'description', 'name', false);
+                        const func = () => templateController.addRepository(templateRepositoryURL, 'description', 'name', false);
                         await (func().should.not.be.rejected);
                         templateController.repositoryList.should.containSubset([{ ...sampleRepos.codewind,
                             name: 'name',
@@ -744,7 +744,7 @@ describe('Templates.js', function() {
                 describe('(repo with templates.json, <validUrl>, <NoDesc>, <NoName>)', function() {
                     it('succeeds, and gets the name and description from templates.json', async function() {
                         this.timeout(testTimeout.short);
-                        const func = () => templateController.addRepository(templateRepositoryUrl, '', '', false);
+                        const func = () => templateController.addRepository(templateRepositoryURL, '', '', false);
                         await (func().should.not.be.rejected);
                         templateController.repositoryList.should.containSubset([{ ...sampleRepos.codewind, protected: false }]);
                     });
@@ -936,7 +936,7 @@ describe('Templates.js', function() {
             });
             describe('when providers list valid repos', function() {
                 const validCodewindRepo = {
-                    url: templateRepositoryUrl,
+                    url: templateRepositoryURL,
                     description: 'The default set of templates for new projects in Codewind.',
                 };
                 before(() => {

@@ -17,7 +17,6 @@ const rewire = require('rewire');
 const chai = require('chai');
 const chaiSubset = require('chai-subset');
 const chaiAsPromised = require('chai-as-promised');
-const yaml = require('js-yaml');
 
 const Extension = rewire('../../../../src/pfe/portal/modules/Extension');
 const ExtensionList = rewire('../../../../src/pfe/portal/modules/ExtensionList');
@@ -26,10 +25,14 @@ const Templates = rewire('../../../../src/pfe/portal/modules/Templates');
 const { templateRepositoryURL } = require('./../../../modules/template.service');
 const { suppressLogOutput } = require('../../../modules/log.service');
 const { testTimeout } = require('../../../config');
+const { 
+    createCodewindYamlFile,
+    createTemplatesProviderFile,
+} = require('../../../modules/extension.service');
 
 chai.use(chaiSubset);
 chai.use(chaiAsPromised);
-chai.should();
+const should = chai.should();
 
 const EXTENSION_DIR =  `${__dirname}/extensionlist_temp`;
 
@@ -75,14 +78,14 @@ describe('ExtensionList.js', () => {
             extensionList._list.should.not.have.property('notanextension');
         });
         it('Loads an extension', async() => {
-            createDummyExtension('extension');
+            createCodewindYamlFile(path.join(EXTENSION_DIR, 'extension'), { name: 'extension' });
             const extensionList = new ExtensionList();
             await extensionList.initialise(EXTENSION_DIR, templateController);
             extensionList._list.should.have.property('extension');
         });
         it('Loads an extension which contains a template repository URL', async function() {
             this.timeout(testTimeout.short);
-            createDummyExtension('extensionWithURL', templateRepositoryURL);
+            createCodewindYamlFile(path.join(EXTENSION_DIR, 'extensionWithURL'), { name: 'extensionWithURL', templates: templateRepositoryURL });
             const extensionList = new ExtensionList();
             await extensionList.initialise(EXTENSION_DIR, templateController);
             extensionList._list.should.have.property('extensionWithURL');
@@ -94,29 +97,35 @@ describe('ExtensionList.js', () => {
         });
         it('Loads an extension which contains a templateProvider.js file and no template repository URL', async function() {
             this.timeout(testTimeout.short);
-            createDummyExtensionWithTemplateProvider('extensionWithTemplateProvider');
+            const extensionName = 'extensionWithTemplateProvider';
+            createCodewindYamlFile(path.join(EXTENSION_DIR, extensionName), { name: extensionName });
+            createTemplatesProviderFile(path.join(EXTENSION_DIR, extensionName));
             const extensionList = new ExtensionList();
+
             await extensionList.initialise(EXTENSION_DIR, templateController);
-            extensionList._list.should.have.property('extensionWithTemplateProvider');
+            extensionList._list.should.have.property(extensionName);
             const { extensionWithTemplateProvider } = extensionList._list;
             extensionWithTemplateProvider.should.not.have.property('templateProvider');
 
             // Ensure provider has been added
-            templateController.providers.should.have.property('extensionWithTemplateProvider');
+            templateController.providers.should.have.property(extensionName);
         });
         it('Loads an extension which contains both a template repository URL and a templateProvider.js file (ignores the templateProvider.js file)', async function() {
             this.timeout(testTimeout.short);
-            createDummyExtensionWithTemplateProvider('extensionWithBoth', templateRepositoryURL);
+            const extensionName = 'extensionWithBoth';
+            createCodewindYamlFile(path.join(EXTENSION_DIR, extensionName), { name: extensionName, templates: templateRepositoryURL });
+            createTemplatesProviderFile(path.join(EXTENSION_DIR, extensionName));
             const extensionList = new ExtensionList();
+
             await extensionList.initialise(EXTENSION_DIR, templateController);
-            extensionList._list.should.have.property('extensionWithBoth');
+            extensionList._list.should.have.property(extensionName);
             const { extensionWithBoth } = extensionList._list;
             
             // Ensure template repository has been added
             await templateController.getRepository(extensionWithBoth.templates).should.be.fulfilled;
 
             // Ensure provider has not been added
-            templateController.providers.should.not.have.property('extensionWithBoth');
+            templateController.providers.should.not.have.property(extensionName);
         });
     });
     describe('add(extension)', () => {
@@ -162,7 +171,8 @@ describe('ExtensionList.js', () => {
         it('Fails to remove an extension that does not exist', () => {
             const extensionList = new ExtensionList();
             const retrievedExtension = extensionList.retrieve('nonexsistant');
-            (typeof retrievedExtension).should.equal('undefined');
+            // eslint-disable-next-line no-undefined
+            should.equal(retrievedExtension, undefined);
         });
     });
     describe('getNames()', () => {
@@ -182,13 +192,12 @@ describe('ExtensionList.js', () => {
             names.length.should.equal(0);
         });
     });
-    describe.skip('getProjectTypes()', () => {
-        before(() => {
-
-        });
+    describe('getProjectTypes()', () => {
         it('Gets all the extension names in the ExtensionList', () => {
-            const extension1 = new Extension({ name: 'dummyextension1', projectType: 'codewind' });
-            const extension2 = new Extension({ name: 'dummyextension2', projectType: 'appsody' });
+            const extension1 = new Extension({ name: 'dummyextension1' });
+            extension1.projectType = 'codewind';
+            const extension2 = new Extension({ name: 'dummyextension2' });
+            extension2.projectType = 'appsody';
             const extensionList = new ExtensionList();
             extensionList.add(extension1);
             extensionList.add(extension2);
@@ -198,34 +207,93 @@ describe('ExtensionList.js', () => {
         });
         it('Gets an empty array when no Extensions exist in the ExtensionList', () => {
             const extensionList = new ExtensionList();
-            const names = extensionList.getNames();
-            names.length.should.equal(0);
+            const projectTypes = extensionList.getProjectTypes();
+            projectTypes.length.should.equal(0);
+        });
+    });
+    describe('getExtensionForProjectType(type)', () => {
+        it('Retrieves the Extension for a projectType that exists in the ExtensionList', () => {
+            const extension = new Extension({ name: 'dummyextension' });
+            extension.projectType = 'codewind';
+            const extensionList = new ExtensionList();
+            extensionList.add(extension);
+            const retrievedExtension = extensionList.getExtensionForProjectType('codewind');
+            retrievedExtension.should.have.property('name', 'dummyextension');
+        });
+        it('Gets null when no Extension with the wanted projectType exists in the ExtensionList', () => {
+            const extension = new Extension({ name: 'dummyextension' });
+            extension.projectType = 'codewind';
+            const extensionList = new ExtensionList();
+            extensionList.add(extension);
+            const retrievedExtension = extensionList.getExtensionForProjectType('invalidProjectType');
+            should.equal(retrievedExtension, null);
+        });
+    });
+    describe('getDetectionList()', () => {
+        it('Returns a list of all Extensions detections lists combined', () => {
+            const extension1 = new Extension({ name: 'node-ext' });
+            extension1.projectType = 'nodejs';
+            extension1.detection = 'package.json';
+
+            const extension2 = new Extension({ name: 'appsody-ext' });
+            extension2.projectType = 'appsody';
+            extension2.detection = 'appsody-config.yaml';
+
+            const extensionList = new ExtensionList();
+            extensionList.add(extension1);
+            extensionList.add(extension2);
+
+            const detectedList = extensionList.getDetectionList();
+            const expectedList = [
+                {
+                    file: 'package.json',
+                    type: 'nodejs',
+                },
+                {
+                    file: 'appsody-config.yaml',
+                    type: 'appsody',
+                },
+            ];
+            detectedList.should.deep.equal(expectedList);
+        });
+        it('Returns a single element as only one Extensions in the ExtensionList has detection and projectType fields', () => {
+            const extension1 = new Extension({ name: 'node-ext' });
+            extension1.projectType = 'nodejs';
+            extension1.detection = 'package.json';
+
+            const extension2 = new Extension({ name: 'appsody-ext' });
+
+            const extensionList = new ExtensionList();
+            extensionList.add(extension1);
+            extensionList.add(extension2);
+
+            const detectedList = extensionList.getDetectionList();
+            detectedList.length.should.equal(1);
+            detectedList.should.deep.equal([{
+                file: 'package.json',
+                type: 'nodejs',
+            }]);
+        });
+        it('Returns an empty array as no Extensions in the ExtensionList that contain detection fields', () => {
+            const extension = new Extension({ name: 'node-ext' });
+            extension.projectType = 'nodejs';
+            const extensionList = new ExtensionList();
+            extensionList.add(extension);
+            const detectedList = extensionList.getDetectionList();
+            detectedList.length.should.equal(0);
+        });
+        it('Returns an empty array as no Extensions in the ExtensionList that contain projectType fields', () => {
+            const extension = new Extension({ name: 'node-ext' });
+            extension.detection = 'package.json';
+            const extensionList = new ExtensionList();
+            extensionList.add(extension);
+            const detectedList = extensionList.getDetectionList();
+            detectedList.length.should.equal(0);
+        });
+        it('Returns an empty array as no Extensions exist in the ExtensionList', () => {
+            const extensionList = new ExtensionList();
+            const detectedList = extensionList.getDetectionList();
+            detectedList.length.should.equal(0);
         });
     });
 });
-
-function createDummyExtension(name, repositoryURL = false) {
-    // Create extension directory
-    const dir = path.join(EXTENSION_DIR, name);
-    fs.ensureDirSync(dir);
-
-    // Create codewind.yaml file
-    const codewindFileJson = {
-        name,
-        version: 1,
-        description: 'dummy extension for testing',
-        projectType: 'dummyExtension',
-    };
-    if (repositoryURL) {
-        codewindFileJson.templates = repositoryURL;
-    }
-    const codewindFileYaml = yaml.safeDump(codewindFileJson);
-    fs.writeFileSync(path.join(dir, 'codewind.yaml'), codewindFileYaml);
-}
-
-function createDummyExtensionWithTemplateProvider(name, repositoryURL = false) {
-    createDummyExtension(name, repositoryURL);
-    const getRepoFunc = 'getRepositories: () => { return []; }';
-    const templates_provider_content = `module.exports = { ${getRepoFunc} };`;
-    fs.writeFileSync(path.join(EXTENSION_DIR, name, 'templatesProvider.js'), templates_provider_content);
-}
