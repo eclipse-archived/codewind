@@ -100,7 +100,7 @@ function copyToPFE() {
 }
 
 function setup {
-    PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects"
+    PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects_local"
     DATE_NOW=$(date +"%d-%m-%Y")
     TIME_NOW=$(date +"%H.%M.%S")
     BUCKET_NAME=turbine-$TEST_TYPE-$TEST_SUITE
@@ -147,6 +147,9 @@ function setup {
 
         downloadCwctl
 
+        if [ $TEST_TYPE == "kube" ]; then
+            PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects_kube"
+        fi
         echo -e "${BLUE}>> Creating test projects directory ... ${RESET}"
         mkdir -p $PROJECT_DIR
         checkExitCode $? "Failed to create test projects directory."
