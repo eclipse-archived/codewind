@@ -34,34 +34,6 @@ Options:
 EOF
 }
 
-function run {
-    # Need to ensure Codewind container is up and running before running test cases
-    # Need to run 'run.sh' in Codewind home directory because 'run.sh' uses relative path to run other building scripts
-    if [ $TEST_TYPE == "local" ]; then
-        cd $CW_DIR
-        ./run.sh
-        cd -
-    elif [ $TEST_TYPE == "kube" ]; then
-        # Generate the Che Access Token for Che User Authentication
-        generateCheAccessToken
-
-        HTTPSTATUS=$(curl -si --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' $CHE_ENDPOINT/api/workspace/ | head -n 1 | cut -d ' ' -f2)
-        HTTPRESPONSE=$(curl -si --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' $CHE_ENDPOINT/api/workspace/ | tail -n 1)
-
-        if [ $HTTPSTATUS -ne 200 ]; then
-            echo -e "${RED}Failed to get the Codewind workspaces... ${RESET}\n"
-            exit 1
-        elif [[ $HTTPSTATUS -eq 200 && $HTTPRESPONSE ]]; then
-            if [[ ! $HTTPRESPONSE =~ codewind-turbine-test.*, ]]; then
-		        ./scripts/setup.sh -t $TEST_TYPE -f install
-	        fi
-        fi
-    fi
-
-    # Execute the tests
-    executeTests
-}
-
 function cleanRun {
     # Pre-test cleanup
     ./scripts/setup.sh -t $TEST_TYPE -f uninstall
@@ -85,14 +57,8 @@ function cleanRun {
         exit 1
     fi
 
-    # Run test cases
-    ./scripts/exec.sh -t $TEST_TYPE -s $TEST_SUITE -d $CLEAN_WORKSPACE
-    if [[ $? -eq 0 ]]; then
-        echo -e "${GREEN}\nFinished running tests. ${RESET}\n"
-    else
-        echo -e "${RED}\nThe test run has failed. ${RESET}\n"
-        exit 1
-    fi
+    # Execute the tests
+    executeTests
 
     # Post-test cleanup
     # Cronjob machines need to set up POST_CLEANUP=y to do post-test automation cleanup
@@ -226,12 +192,8 @@ if [[ $TEST_TYPE == "kube" ]]; then
     fi
 fi
 
-if [ $TEST_SUITE == "functional" ]; then
-    if [[ ($CLEAN_RUN == "y") ]]; then
-        cleanRun
-    else
-        run
-    fi
-elif [ $TEST_SUITE == "unit" ]; then
+if [[ $TEST_SUITE == "functional" && $CLEAN_RUN == "y" ]]; then
+    cleanRun
+else
     executeTests
 fi

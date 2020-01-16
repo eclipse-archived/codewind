@@ -2,3 +2,5 @@ cwctl
 cwctl_local
 cwctl_kube
 projects
+projects_local
+projects_kube
