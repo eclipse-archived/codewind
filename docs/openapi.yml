@@ -1725,12 +1725,12 @@ components:
     UploadEnd:
       type: object
       required:
-        - timestamp
+        - timeStamp
         - fileList
         - directoryList
         - modifiedList
       properties:
-        timestamp:
+        timeStamp:
           description: time since epoch of last upload
           type: number
           example: 157139320301
@@ -1745,6 +1745,7 @@ components:
         modifiedList:
           description: an array of files that have been modified since the last project upload
           type: array
+          nullable: true
           example: ["/project/modifiedfile1"]
 
     Upload:
