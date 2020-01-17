@@ -65,6 +65,8 @@ if [[ $MICROCLIMATE_WS_ORIGIN &&  "$APPDIR" == '/codewind-workspace'* ]]
 		if [ $? -eq 0 ]; then
 			echo -e "Copying over source files"
 			docker cp "$APP_DIRECTORY"/. $CONTAINER_NAME:$HOME/app
+			docker cp /tmp/libertyrepocache.zip $CONTAINER_NAME:/tmp
+			docker cp /tmp/localm2cache.zip $CONTAINER_NAME:/tmp
 		fi
 		echo "${OUTPUT_DOCKER_RUN}"
 
@@ -74,6 +76,8 @@ if [[ $MICROCLIMATE_WS_ORIGIN &&  "$APPDIR" == '/codewind-workspace'* ]]
 		if [ $? -eq 0 ]; then
 			echo -e "Copying over source files"
 			docker cp "$APP_DIRECTORY"/. $CONTAINER_NAME:$HOME/app
+			docker cp /tmp/libertyrepocache.zip $CONTAINER_NAME:/tmp
+			docker cp /tmp/localm2cache.zip $CONTAINER_NAME:/tmp
 		fi
 		echo "${OUTPUT_DOCKER_RUN}"
 fi

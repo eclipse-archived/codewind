@@ -20,6 +20,12 @@ MAVEN_BUILD=maven.build
 MAVEN_M2_CACHE=.m2/repository
 APP_DIR=$HOME/app
 
+if [[ "$IN_K8" == "true" ]]; then
+        MAVEN_REPO_CACHE_PATH=$APP_DIR/localm2cache.zip
+else
+        MAVEN_REPO_CACHE_PATH=/tmp/localm2cache.zip
+fi
+
 # Maven requires a JDK, the standard liberty image only includes a JRE
 export JAVA_HOME=$HOME/java
 
@@ -28,8 +34,8 @@ if [ ! -d $HOME/$MAVEN_M2_CACHE ]; then
 	cd $HOME
 
 	echo "Extracting maven m2 cache to $HOME"
-	$JAVA_HOME/bin/jar -xf $APP_DIR/localm2cache.zip
-	rm -rf $APP_DIR/localm2cache.zip
+	$JAVA_HOME/bin/jar -xf $MAVEN_REPO_CACHE_PATH
+	rm -rf $MAVEN_REPO_CACHE_PATH
 	echo "Finished extracting maven m2 cache to $HOME"
 fi
 
@@ -38,8 +44,8 @@ if [ -d $HOME/$MAVEN_M2_CACHE ]; then
 	echo "Maven m2 cache is set up for $LOGNAME"
 
 	# Remove maven m2 cache archive file if it still exists
-	if [ -f $APP_DIR/localm2cache.zip ]; then
-		rm -rf $APP_DIR/localm2cache.zip
+	if [ -f $MAVEN_REPO_CACHE_PATH ]; then
+		rm -rf $MAVEN_REPO_CACHE_PATH
 	fi
 else
 	echo "Maven m2 cache is not set up for $LOGNAME"
