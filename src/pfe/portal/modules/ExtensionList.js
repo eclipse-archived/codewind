@@ -102,18 +102,6 @@ module.exports = class ExtensionList {
   /**
    * Function to load an extension that exists in the extensions directory
    * @param extensionsPath, directory path of the extensions directory
-   * @return extensions
-   */
-  async loadExtensionsFromDisk(extensionsPath) {
-    const entries = await fs.readdir(extensionsPath);
-    const returnedObjects = await Promise.all(entries.map(entry => this.loadExtensionFromDisk(extensionsPath, entry)));
-    const extensions = returnedObjects.filter(Boolean);
-    return extensions;
-  }
-
-  /**
-   * Function to load an extension that exists in the extensions directory
-   * @param extensionsPath, directory path of the extensions directory
    * @param name, name of the extension and its directory
    * @return Extension or null if the Extension could not be initialised
    */
@@ -133,6 +121,18 @@ module.exports = class ExtensionList {
       // ignore so that we can try to add other extensions
     }
     return null;
+  }
+
+  /**
+   * Function to load an extension that exists in the extensions directory
+   * @param extensionsPath, directory path of the extensions directory
+   * @return extensions
+   */
+  async loadExtensionsFromDisk(extensionsPath) {
+    const entries = await fs.readdir(extensionsPath);
+    const returnedObjects = await Promise.all(entries.map(entry => this.loadExtensionFromDisk(extensionsPath, entry)));
+    const extensions = returnedObjects.filter(Boolean);
+    return extensions;
   }
 
   /**
