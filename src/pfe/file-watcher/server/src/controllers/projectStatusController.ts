@@ -473,7 +473,11 @@ function pingInTransitApplications(): void {
                                 let newMsg = stateInfo.error;
 
                                 let pingCount = pingCountMap.get(projectID);
-                                const pingCountLimit = projectInfo.statusPingTimeout;
+                                let pingCountLimit = projectInfo.statusPingTimeout;
+                                // quickfix for issue#1777
+                                if (projectInfo.projectType == "appsodyExtension") {
+                                    pingCountLimit = -1;
+                                }
 
                                 if (newMsg) { newMsg = newMsg.toString(); } // Convert from Error to string
                                 if (stateInfo.hasOwnProperty("isAppUp")) {
@@ -481,7 +485,7 @@ function pingInTransitApplications(): void {
                                         newState = (stateInfo.isAppUp && projectInfo.sentProjectInfo) ? AppState.started : oldState;
                                     } else if (oldState === AppState.stopping && !stateInfo.isAppUp) {
                                         newState = AppState.stopped;
-                                    } else if ( oldState === AppState.starting ) {
+                                    } else if ( oldState === AppState.starting && pingCountLimit != -1) {
                                         // ping timeout, increment pingCount
                                         if (pingCountMap.get(projectID)) {
                                             pingCount++;
@@ -495,6 +499,7 @@ function pingInTransitApplications(): void {
                                     newState = AppState.stopped;
                                     pingCountMap.delete(projectID);
                                 }
+
                                 // first time reach the timeout, will not emit the same message when timeout exceeds.
                                 if (pingCount == pingCountLimit) {
                                     const errMsg = (appStateMap.get(projectID).detailedAppStatus) ? appStateMap.get(projectID).detailedAppStatus.message : await locale.getTranslation("projectStatusController.pingTimeoutDefaultMessage");
