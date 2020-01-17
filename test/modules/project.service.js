@@ -153,6 +153,15 @@ async function unbindProject(projectID, expectedResStatus = 202) {
     return res;
 }
 
+/**
+ * For cleaning up PFE
+ */
+async function unbindAllProjects() {
+    const projectIds = await getProjectIDs();
+    const promises = projectIds.map(id => unbindProject(id));
+    await Promise.all(promises);
+}
+
 async function buildProject(projectID) {
     const res = await reqService.chai.post(`/api/v1/projects/${projectID}/build`)
         .set('Cookie', ADMIN_COOKIE)
@@ -401,6 +410,7 @@ module.exports = {
     uploadFiles,
     uploadFile,
     unbindProject,
+    unbindAllProjects,
     removeProject,
     buildProject,
     cloneProject,
