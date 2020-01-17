@@ -49,32 +49,6 @@ fi
 
 source $HOME/artifacts/envvars.sh
 $HOME/artifacts/server_setup.sh
-LIBERTY_REPO_CACHE=libertyrepocache
-APP_DIR=$HOME/app
-
-# If liberty feature cache doesn't exist then extract it
-if [ ! -d $HOME/artifacts/$LIBERTY_REPO_CACHE ]; then
-	cd $HOME/artifacts
-
-	echo "Extracting liberty feature cache to $HOME/artifacts"
-	$JAVA_HOME/bin/jar -xf $APP_DIR/libertyrepocache.zip
-	rm -rf $APP_DIR/libertyrepocache.zip
-	mkdir -p /opt/ibm/wlp/etc
-    cp $HOME/artifacts/repositories.properties /opt/ibm/wlp/etc/repositories.properties
-	echo "Finished extracting liberty feature cache to $HOME/artifacts"
-fi
-
-# Verify liberty feature cache
-if [ -d $HOME/artifacts/$LIBERTY_REPO_CACHE ]; then
-	echo "Liberty feature cache is set up"
-
-    # Remove liberty feature cache archive file if it still exists
-    if [ -f $APP_DIR/libertyrepocache.zip ]; then
-        rm -rf $APP_DIR/libertyrepocache.zip
-    fi
-else
-	echo "Liberty feature cache is not set up"
-fi
 
 # Use the server log messages for container logs
 mkdir -p $WLP_USER_DIR/servers/defaultServer/logs
