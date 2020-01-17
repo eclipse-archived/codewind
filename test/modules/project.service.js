@@ -18,33 +18,27 @@ const path = require('path');
 const zlib = require('zlib');
 const klawSync = require('klaw-sync');
 
+const { ADMIN_COOKIE, templateOptions } = require('../config');
 const reqService = require('./request.service');
 const SocketService = require('./socket.service');
-const { ADMIN_COOKIE, templateOptions, TEMP_TEST_DIR } = require('../config');
 
 chai.should();
 const sleep = promisify(setTimeout);
 
-const fastestCreationOptions = {
-    language: 'nodejs',
-    framework: 'spring',
-};
-
 /**
  * Clone, bind and build one of our template projects
  */
-async function createProjectFromTemplate(projectName, projectType) {
+async function createProjectFromTemplate(name, projectType, path, autoBuild = false) {
     const { url, language } = templateOptions[projectType];
 
-    const projectPath = path.join(TEMP_TEST_DIR, projectName);
-    await cloneProject(url, projectPath);
+    await cloneProject(url, path);
 
     const res = await bindProject({
-        name: projectName,
-        path: projectPath,
+        name,
+        path,
         language,
         projectType,
-        autoBuild: true,
+        autoBuild,
         creationTime: Date.now(),
     });
     return res.body.projectID;
@@ -98,26 +92,26 @@ async function uploadFiles(projectID, pathToDirToUpload) {
 }
 
 async function uploadFile(projectID, pathToDirToUpload, pathFromDirToFile) {
-    const filePath = path.join(pathToDirToUpload, pathFromDirToFile);
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const zippedContent = zlib.deflateSync(fileContent);
-    const base64CompressedContent = zippedContent.toString('base64');
+    const absoluteFilepath = path.join(pathToDirToUpload, pathFromDirToFile);
+    const base64CompressedContent = zipFileToBase64(absoluteFilepath);
     const options = {
         isDirectory: false,
         mode: 420,
         path: pathFromDirToFile,
         msg: base64CompressedContent,
     };
-    const res = await uploadFileViaPfeApi(projectID, options);
-    return res;
-};
-
-async function uploadFileViaPfeApi(projectID, options) {
     const res = await reqService.chai
         .put(`/api/v1/projects/${projectID}/upload`)
         .set('Cookie', ADMIN_COOKIE)
         .send(options);
     return res;
+};
+
+function zipFileToBase64(filepath) {
+    const fileContent = fs.readFileSync(filepath, 'utf-8');
+    const zippedContent = zlib.deflateSync(fileContent);
+    const base64CompressedContent = zippedContent.toString('base64');
+    return base64CompressedContent;
 }
 
 /**
@@ -354,7 +348,6 @@ async function notifyPfeOfFileChangesAndAwaitMsg(array, projectID) {
 
 
 module.exports = {
-    fastestCreationOptions,
     generateUniqueName,
     createProjects,
     createProjectFromTemplate,
