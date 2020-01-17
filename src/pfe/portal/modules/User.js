@@ -37,7 +37,9 @@ module.exports = class User {
 
   static async createUser(user_id, userString, workspace, uiSocket) {
     let user = new User(user_id, userString, workspace, uiSocket);
+    log.debug(`Initializing user ${user.user_id}`);
     await user.initialise();
+    log.debug(`User ${user.user_id} initialized`);
     return user;
   }
 
@@ -81,7 +83,16 @@ module.exports = class User {
       await this.createDirectories();
       this.projectList = new ProjectList();
       // Add the projectList to args
+      log.info(`Initialising existing projects for user ${this.user_id}`);
       await this.initialiseExistingProjects();
+      log.info(`Projects initialised for user ${this.user_id}`);
+      const projects = this.projectList.getAsArray();
+      if (projects.length > 0) {
+        log.debug(`Found ${projects.length} existing projects for user ${this.user_id}`);
+        log.debug(`Project list for user ${this.user_id}:\n\t${projects.map(project => project.name + ": " + project.projectID).join("\n\t")}`);
+      } else {
+        log.debug(`No existing projects found for user ${this.user_id}`);
+      }
 
       this.templates = new Templates(this.workspace);
 
@@ -89,6 +100,7 @@ module.exports = class User {
       this.extensionList = new ExtensionList();
 
       // Attempt to install built-in extension packages
+      log.info(`Installing extentions for user ${this.user_id}`);
       try {
         await this.extensionList.installBuiltInExtensions(this.directories.extensions);
       } catch (error) {
@@ -100,6 +112,8 @@ module.exports = class User {
       } catch (error) {
         log.error(`Codewind extensions failed to load. Error ${util.inspect(error)}`);
       }
+      log.info(`Extensions initialised for user ${this.user_id}.`)
+      log.debug(`Loaded extensions are:\n\t${this.extensionList.getNames().join(",\n\t")}`);
 
       // Initialise the list after we have created extensions as they may
       // add template repositories. The log messages allow us to confirm
@@ -107,8 +121,9 @@ module.exports = class User {
       log.info(`Initialising template repository list`);
       await this.templates.initializeRepositoryList();
       log.info(`Initialising template list`);
-      await this.templates.getTemplates(false);
+      const allTemplates = await this.templates.getTemplates(false);
       log.info(`Default templates cached`);
+      log.debug(`Default template list:\n\t${allTemplates.map(template=>template.label).join(",\n\t")}`);
 
       // Connect up the UI Socket Authentication handler
       if (process.env.CODEWIND_AUTH_HOST) {
@@ -120,9 +135,12 @@ module.exports = class User {
       }
 
       // Create the FileWatcher and LoadRunner classes for this user
+      log.debug(`Creating FileWatcher for user ${this.user_id}`);
       this.fw = new FileWatcher(this);
+      log.debug(`Creating LoadRunner for user ${this.user_id}`);
       this.loadRunner = new LoadRunner(this);
       this.fw.setLocale(["en"]);
+      log.info(`Starting existing projects for user ${this.user_id}`)
       this.startExistingProjects();
     } catch (err) {
       log.error(`Error initialising User`);
