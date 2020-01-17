@@ -94,13 +94,7 @@ class Logger {
   logResponse(req, res) {
     res.on('finish', () => {
       const route = `${req.method} ${req.path}`;
-      // We are removing credentials from req body because
-      // POST /api/v1/registrysecrets takes credentials in its body
-      // and we do not want to log this information to the PFE log
-      const {credentials, ...reqBodyWithoutCredentials} = res.req.body;
-      const reqBody = util.inspect(reqBodyWithoutCredentials);
-
-      this.log.trace(`responded to ${route} with status ${res.statusCode} and body ${reqBody}`);
+      this.log.trace(`responded to ${route} with status ${res.statusCode}`);
     });
   }
 }
