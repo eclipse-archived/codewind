@@ -13,6 +13,7 @@ node_modules/
 package-lock.json
 src/performance/webclient/build/
 test/coverage
+test/complete_nyc_coverage
 test/test-results.xml
 test/tmp.json
 test/resources/codewind-license-data/bin/*
@@ -26,3 +27,4 @@ src/keycloak/LICENSE
 src/keycloak/NOTICE.md
 src/gatekeeper/LICENSE
 src/gatekeeper/NOTICE.md
+codewind-pfe-test-sh-output.log

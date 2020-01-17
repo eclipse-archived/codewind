@@ -37,12 +37,13 @@
     "klaw-sync": "^6.0.0",
     "kubernetes-client": "^6.10.0",
     "license-checker": "^25.0.1",
+    "log4js": "^3.0.6",
     "mocha": "^6.2.0",
     "mocha-junit-reporter": "^1.17.0",
     "mocha-logger": "^1.0.6",
     "mocha-multi-reporters": "^1.1.7",
     "mocha-sinon": "^2.1.0",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "path": "^0.12.7",
     "read-each-line-sync": "^1.0.5",
     "rewire": "^4.0.1",
@@ -68,10 +69,14 @@
     "cwd": "../src/pfe/portal",
     "reporter": [
       "html",
-      "text",
       "text-summary"
     ],
     "report-dir": "../../../test/coverage",
-    "temp-directory": "../../../test/coverage/.nyc_output"
+    "temp-directory": "../../../test/coverage/.nyc_output",
+    "all": true,
+    "exclude": [
+      "docs/**",
+      "eslint-rules/**"
+    ]
   }
 }

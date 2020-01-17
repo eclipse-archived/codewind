@@ -7,14 +7,27 @@ fi
 
 # read and source the .env file
 env_file=./devbuild.env
+
 if [ -f $env_file ]; then
     set -o allexport
     source $env_file
     set +o allexport
 else
-    # by default fallback to production mode
+    # by default fallback to production mode and turn off code coverage
     NODE_ENV=production
+    ENABLE_CODE_COVERAGE=false
 fi
+
+# Overwrite env_file and default with exported environment variables if set
+if [ ! -z "$PFE_DEV_NODE_ENV" ]; then
+    NODE_ENV=$PFE_DEV_NODE_ENV
+fi
+
+if [ ! -z "$PFE_CODE_COVERAGE" ]; then
+    ENABLE_CODE_COVERAGE=$PFE_CODE_COVERAGE
+fi
+
+echo "Building PFE with NODE_ENV: $NODE_ENV"
 
 docker build -t eclipse/codewind-pfe-$(../../script/platform.sh) \
 --file $1 \
@@ -23,4 +36,5 @@ docker build -t eclipse/codewind-pfe-$(../../script/platform.sh) \
 --label "org.opencontainers.image.version=" \
 --build-arg IMAGE_BUILD_TIME=`date '+%Y%m%d-%H%M%S'` \
 --build-arg NODE_ENV=$NODE_ENV \
+--build-arg ENABLE_CODE_COVERAGE=$ENABLE_CODE_COVERAGE \
 .
