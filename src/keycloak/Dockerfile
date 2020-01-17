@@ -9,7 +9,7 @@
 #     IBM Corporation - initial API and implementation
 ################################################################################
 
-FROM jboss/keycloak:latest
+FROM jboss/keycloak:8.0.0
 
 LABEL org.opencontainers.image.title="Codewind-Keycloak" org.opencontainers.image.description="Codewind Keycloak" \
       org.opencontainers.image.url="https://codewind.dev/" \
