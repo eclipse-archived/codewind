@@ -88,7 +88,7 @@ function setupRegistrySecret() {
 }
 
 function createProject() {
-   ./$EXECUTABLE_NAME project create --url $1 $2
+   ./$EXECUTABLE_NAME project create --url $1 --path $2
 }
 
 function copyToPFE() {
