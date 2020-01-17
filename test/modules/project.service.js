@@ -17,7 +17,9 @@ const fs = require('fs-extra');
 const path = require('path');
 const zlib = require('zlib');
 const klawSync = require('klaw-sync');
+const globToRegExp = require('glob-to-regexp');
 
+const { projectTypeToIgnoredPaths } = require('../../src/pfe/portal/modules/utils/ignoredPaths');
 const { ADMIN_COOKIE, templateOptions } = require('../config');
 const reqService = require('./request.service');
 const SocketService = require('./socket.service');
@@ -51,7 +53,8 @@ async function createProjectFromTemplate(name, projectType, path, autoBuild = fa
 async function bindProject(options) {
     const resFromBindStart = await bindStart(options);
     const { projectID } = resFromBindStart.body;
-    await uploadFiles(projectID, options.path);
+    const { path, projectType } = options;
+    await uploadFiles(projectID, path, projectType);
     const resFromBindEnd = await bindEnd(projectID);
     return resFromBindEnd;
 }
@@ -78,17 +81,41 @@ async function bindEnd(projectID) {
     return res;
 };
 
-async function uploadFiles(projectID, pathToDirToUpload) {
-    const filePaths = recursivelyGetAllPaths(pathToDirToUpload);
-    const responses = [];
-    await Promise.all(
-        filePaths.map(async(filePath) => {
-            const pathFromDirToFile = path.relative(pathToDirToUpload, filePath);
-            const res = await uploadFile(projectID, pathToDirToUpload, pathFromDirToFile);
-            responses.push(res);
-        })
+async function uploadEnd(projectID, options) {
+    const res = await reqService.chai
+        .post(`/api/v1/projects/${projectID}/upload/end`)
+        .set('Cookie', ADMIN_COOKIE)
+        .send(options);
+    return res;
+};
+
+async function uploadFiles(projectID, pathToDirToUpload, projectType) {
+    const relativeFilepathsToUpload = getRelativeFilepathsToUpload(pathToDirToUpload, projectType);
+    const promises = relativeFilepathsToUpload.map(
+        pathFromDirToFile => uploadFile(projectID, pathToDirToUpload, pathFromDirToFile)
     );
+    const responses = await Promise.all(promises);
     return responses;
+}
+
+function getRelativeFilepathsToUpload(pathToDirToUpload, projectType) {
+    const filepaths = recursivelyGetAllPaths(pathToDirToUpload);
+    const relativeFilepaths = filepaths.map(
+        filePath => path.relative(pathToDirToUpload, filePath)
+    );
+    const relativeFilepathsToUpload = relativeFilepaths.filter(
+        filepath => !isIgnoredFilepath(filepath, projectType)
+    );
+    return relativeFilepathsToUpload;
+}
+
+function isIgnoredFilepath(relativeFilepath, projectType) {
+    const ignoredFilepaths = projectTypeToIgnoredPaths[projectType];
+    const regExpIgnoredFilepaths = ignoredFilepaths.map(path => globToRegExp(path));
+    const isIgnored = regExpIgnoredFilepaths.some(
+        ignoredPath => ignoredPath.test(`/${relativeFilepath}`)
+    );
+    return isIgnored;
 }
 
 async function uploadFile(projectID, pathToDirToUpload, pathFromDirToFile) {
@@ -370,6 +397,7 @@ module.exports = {
     bindProject,
     bindStart,
     bindEnd,
+    uploadEnd,
     uploadFiles,
     uploadFile,
     unbindProject,
