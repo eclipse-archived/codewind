@@ -75,7 +75,7 @@ describe("PFE - functional test", () => {
 });
 
 function runAllTests(): void {
-  genericSuite.runTest();
+  // genericSuite.runTest();
   for (const chosenTemplate of _.shuffle(Object.keys(projectTypes))) {
     for (const chosenProject of _.shuffle(projectTypes[chosenTemplate])) {
       if (process.env.TURBINE_PERFORMANCE_TEST) {
