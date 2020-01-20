@@ -22,6 +22,7 @@ const readFile = util.promisify(fs.readFile);
 const filesToCheck = {
   java : 'pom.xml',
   nodejs : 'package.json',
+  javascript : 'package.json',
   swift : 'Package.swift',
 }
 
@@ -48,7 +49,7 @@ async function doesMetricsPackageExist(pathOfFileToCheck, projectLanguage) {
   let metricsPackageExists = false; // default to appmetrics unavailable
   try {
     const fileToCheck = await readFile(pathOfFileToCheck, 'utf8');
-    if (projectLanguage === 'nodejs') {
+    if (projectLanguage === 'nodejs' || projectLanguage === 'javascript') {
       const packageJSON = JSON.parse(fileToCheck);
       // There might not be any dependencies
       if (packageJSON.dependencies) {

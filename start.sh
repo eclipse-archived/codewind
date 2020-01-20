@@ -57,13 +57,18 @@ else
 fi
 cd - 
 
+if [ -n "$LOG_LEVEL" ]; then
+  echo "Setting PFE logging to ${LOG_LEVEL}"
+  LOG_OPTION="--loglevel ${LOG_LEVEL}"
+fi
+
 # REMOVE PREVIOUS DOCKER PROCESSES FOR CODEWIND
 printf "\n\n${BLUE}REMOVING EXISTING CODEWIND DOCKER CONTAINERS $RESET\n";
 # Check for existing processes (stopped or running)
 $CWCTL stop-all
 
 printf "\n\n${BLUE}STARTING CODEWIND DOCKER CONTAINERS $RESET\n";
-$CWCTL start --debug
+$CWCTL $LOG_OPTION start --debug
 
 if [ $? -eq 0 ]; then
   printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";

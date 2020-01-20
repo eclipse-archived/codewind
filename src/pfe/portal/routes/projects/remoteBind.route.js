@@ -42,7 +42,7 @@ let timersyncend = 0;
  * @return 409 if the project path or name are already in use
  * @return 500 if there was an error
  */
-router.post('/api/v1/projects/bind/start', async function (req, res) {await bindStart(req, res)});
+router.post('/api/v1/projects/bind/start', validateReq, bindStart);
 
 async function bindStart(req, res) {
   timerbindstart = Date.now();
@@ -159,7 +159,7 @@ async function bindStart(req, res) {
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
-router.put('/api/v1/projects/:id/upload', async (req, res) => {await uploadFile(req,res)});
+router.put('/api/v1/projects/:id/upload', validateReq, uploadFile);
 
 async function uploadFile(req, res) {
   if (timersyncstart == 0) {
@@ -203,7 +203,7 @@ async function uploadFile(req, res) {
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
-router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
+router.post('/api/v1/projects/:id/upload/end', validateReq, async (req, res) => {
   const projectID = req.sanitizeParams('id');
   const keepFileList = req.sanitizeBody('fileList');
   const keepDirList = req.sanitizeBody('directoryList');
@@ -233,7 +233,7 @@ router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
           `${topLevelDirectories.join(', ')}`);
           await deletePathsInArray(pathToTempProj, topLevelDirectories);
           await deletePathsInArray(pathToProj, topLevelDirectories);
- 
+
         }
 
         // Delete by file
@@ -395,7 +395,7 @@ async function recursivelyListFilesOrDirectories(getDirectories, absolutePath, r
  * @return 404 if the project was not found
  * @return 500 if there was an error
  */
-router.post('/api/v1/projects/:id/bind/end', async function (req, res) {await bindEnd(req, res)});
+router.post('/api/v1/projects/:id/bind/end', validateReq, bindEnd);
 
 async function bindEnd(req, res) {
   const user = req.cw_user;
