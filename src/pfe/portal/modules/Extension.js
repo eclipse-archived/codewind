@@ -89,8 +89,7 @@ module.exports = class Extension {
       if (definition.hasOwnProperty('templates')) {
         // TODO: validate extension templates/devfiles URL
         this.templates = definition.templates;
-      }
-      else {
+      } else {
         const providerPath = path.join(this.path, 'templatesProvider.js');
         if (await fs.exists(providerPath))
           this.templatesProvider = require(providerPath);
