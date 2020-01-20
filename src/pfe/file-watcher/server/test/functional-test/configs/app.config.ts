@@ -51,9 +51,9 @@ export const extensionPaths: any = {
 
 export const projectTypes: any = {
     [codewindTemplates.default]: [
-        projecLanguges.liberty,
+        // projecLanguges.liberty,
         // projecLanguges.nodejs,
-        // projecLanguges.spring,
+        projecLanguges.spring,
         // projecLanguges.swift
     ],
     // [codewindTemplates.docker]: [

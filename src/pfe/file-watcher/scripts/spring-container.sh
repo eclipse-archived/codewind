@@ -18,7 +18,6 @@ CONTAINER_NAME=$5
 logName=$7
 START_MODE=$8
 DEBUG_PORT=$9
-MAVEN_M2_CACHE=.m2/repository
 FOLDER_NAME=${11}
 IMAGE_PUSH_REGISTRY=${12}
 MAVEN_SETTINGS=${13}
@@ -75,8 +74,8 @@ function create() {
 		echo "Stop watching flag found. Doing nothing.";
 	else
 		# If the maven m2 cache doesn't exist then pull it from dockerhub
-		if [ ! -d $MAVEN_M2_CACHE ]; then
-			if [ "$IN_K8" == "true" ]; then
+		if [ "$IN_K8" == "true" ]; then
+			if [ ! -f localm2cache.zip ]; then
 				echo "Pulling maven m2 cache image for $ROOT using buildah"
 				buildah pull ibmcom/codewind-java-project-cache > /dev/null
 				dockerPullExitCode=$?
@@ -95,7 +94,9 @@ function create() {
 				else
 					echo "Maven m2 cache cannot be retrieved for spring project $ROOT because the cache image could not be pulled using buildah"
 				fi
-			else
+			fi
+		else
+			if [ ! -f /tmp/localm2cache.zip ]; then
 				echo "Pulling maven m2 cache image for $ROOT using docker"
 				docker pull ibmcom/codewind-java-project-cache > /dev/null
 				dockerPullExitCode=$?
@@ -104,15 +105,16 @@ function create() {
 					echo "Finished pulling cache image for $ROOT using docker"
 					echo "Cache will be used for spring project $ROOT"
 					CACHE_CONTAINER_ID=$(docker create ibmcom/codewind-java-project-cache)
-					echo "Downloading maven m2 cache to $ROOT"
-					docker cp $CACHE_CONTAINER_ID:/cache/localm2cache.zip .
-					echo "Finished downloading maven m2 cache to $ROOT"	
+					echo "Downloading maven m2 cache to /tmp"
+					docker cp $CACHE_CONTAINER_ID:/cache/localm2cache.zip /tmp
+					echo "Finished downloading maven m2 cache to /tmp"	
 					docker rm -f $CACHE_CONTAINER_ID
 				else
 					echo "Maven m2 cache cannot be retrieved for spring project $ROOT because the cache image could not be pulled using docker"
 				fi
 			fi
 		fi
+		
 
 		if [ "$IN_K8" == "true" ]; then
 			deployK8
@@ -272,6 +274,7 @@ function dockerRun() {
 	if [ $? -eq 0 ]; then
 		echo -e "Copying over source files"
 		docker cp "$WORKSPACE/$projectName"/. $project:/root/app
+		docker cp /tmp/localm2cache.zip $project:/tmp
 	fi
 
 }
