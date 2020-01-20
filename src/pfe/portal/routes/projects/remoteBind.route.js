@@ -205,8 +205,8 @@ async function uploadFile(req, res) {
  */
 router.post('/api/v1/projects/:id/upload/end', async (req, res) => {
   const projectID = req.sanitizeParams('id');
-  const keepFileList = req.sanitizeBody('fileList');
-  const keepDirList = req.sanitizeBody('directoryList');
+  const keepFileList = req.sanitizeBody('fileList') || [];
+  const keepDirList = req.sanitizeBody('directoryList') || [];
   const modifiedList = req.sanitizeBody('modifiedList') || [];
   const timeStamp = req.sanitizeBody('timeStamp');
   const IFileChangeEvent = [];
