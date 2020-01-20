@@ -432,6 +432,8 @@ pipeline {
               echo "Removing docker-compose"
               rm -rf $HOME/dc
             '''
+            echo 'Clean up workspace'
+            deleteDir() /* clean up our workspace */
         }
         failure {
           sh '''#!/usr/bin/env bash
