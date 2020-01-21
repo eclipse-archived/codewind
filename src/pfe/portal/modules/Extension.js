@@ -91,7 +91,8 @@ module.exports = class Extension {
         this.templates = definition.templates;
       } else {
         const providerPath = path.join(this.path, 'templatesProvider.js');
-        if (await fs.exists(providerPath))
+        const providerExists = await fs.exists(providerPath)
+        if (providerExists)
           this.templatesProvider = require(providerPath);
       }
       if (definition.hasOwnProperty('config')) {
