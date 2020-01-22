@@ -17,10 +17,16 @@ pkill java
 # Run a maven build to generate the new jar
 cd /root/app
 
-if [ -f localm2cache.zip ]; then
+if [[ "$IN_K8" == "true" ]]; then
+        MAVEN_REPO_CACHE_PATH=/root/app/localm2cache.zip
+else
+        MAVEN_REPO_CACHE_PATH=/tmp/localm2cache.zip
+fi
+
+if [ -f $MAVEN_REPO_CACHE_PATH ]; then
     echo "Extracting maven m2 cache for $PROJECT_NAME"
-    $JAVA_HOME/bin/jar -xf localm2cache.zip
-    rm -f localm2cache.zip
+    $JAVA_HOME/bin/jar -xf $MAVEN_REPO_CACHE_PATH
+    rm -f $MAVEN_REPO_CACHE_PATH
     echo "Finished extracting maven m2 cache for $PROJECT_NAME"	
 fi
 

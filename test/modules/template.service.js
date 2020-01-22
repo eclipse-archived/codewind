@@ -98,9 +98,11 @@ const styledTemplates = {
     },
 };
 
+const templateRepositoryURL = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json';
+
 const sampleRepos = {
     codewind: {
-        url: 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json',
+        url: templateRepositoryURL,
         description: 'The default set of templates for new projects in Codewind.',
         enabled: true,
         protected: true,
@@ -226,6 +228,7 @@ function saveReposBeforeEachTestAndRestoreAfterEach() {
 module.exports = {
     defaultCodewindTemplates,
     styledTemplates,
+    templateRepositoryURL,
     sampleRepos,
     validUrlNotPointingToIndexJson,
     getTemplateRepos,

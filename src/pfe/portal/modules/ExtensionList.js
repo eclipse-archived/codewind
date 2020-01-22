@@ -90,33 +90,49 @@ module.exports = class ExtensionList {
    */
   async initialise(extensionsPath, templates) {
     try {
-      // Read the extensions directory, create and add extensions to the list
-      let entries = await fs.readdir(extensionsPath);
-      for (const entry of entries) {
-        try {
-          let fstats = await fs.lstat(path.join(extensionsPath, entry));
-          // Extensions are in sub-directories of the top-level extensions directory
-          if (fstats.isDirectory() && !entry.endsWith(suffixOld)) {
-            const extension = new Extension({path: path.join(extensionsPath, entry), name: entry});
-            await extension.initialise();
-            this.add(extension);
-            if (extension.templates) {
-              await templates.addRepository(extension.templates, extension.description);
-            } else if (extension.templatesProvider) {
-              templates.addProvider(extension.name, extension.templatesProvider);
-              delete extension.templatesProvider;
-            }
-          }
-        } catch (error) {
-          log.warn(error);
-          // ignore so that we can try to add other repos in the list
-        }
-      }
+      const extensions = await this.loadExtensionsFromDisk(extensionsPath);
+      await addExtensionsToTemplates(extensions, templates);
     } catch(err) {
       log.error('Error loading codewind extension:');
       log.error(err);
       throw new ExtensionListError('FAILED_TO_LOAD');
     }
+  }
+
+  /**
+   * Function to load an extension that exists in the extensions directory
+   * @param extensionsPath, directory path of the extensions directory
+   * @param name, name of the extension and its directory
+   * @return Extension or null if the Extension could not be initialised
+   */
+  async loadExtensionFromDisk(extensionsPath, name) {
+    try {
+      let fstats = await fs.lstat(path.join(extensionsPath, name));
+      // Extensions are in sub-directories of the top-level extensions directory
+      if (fstats.isDirectory() && !name.endsWith(suffixOld)) {
+        const extension = new Extension({ path: path.join(extensionsPath, name), name });
+        await extension.initialise();
+        this.add(extension);
+        log.info(`Extension ${name} successfully initialised`)
+        return extension;
+      }
+    } catch (error) {
+      log.warn(error);
+      // ignore so that we can try to add other extensions
+    }
+    return null;
+  }
+
+  /**
+   * Function to load an extension that exists in the extensions directory
+   * @param extensionsPath, directory path of the extensions directory
+   * @return extensions
+   */
+  async loadExtensionsFromDisk(extensionsPath) {
+    const entries = await fs.readdir(extensionsPath);
+    const returnedObjects = await Promise.all(entries.map(entry => this.loadExtensionFromDisk(extensionsPath, entry)));
+    const extensions = returnedObjects.filter(Boolean);
+    return extensions;
   }
 
   /**
@@ -139,7 +155,7 @@ module.exports = class ExtensionList {
    */
   remove(name) {
     if (!this._list.hasOwnProperty(name)) {
-      throw new ExtensionListError('NOT_FOUND',name);
+      throw new ExtensionListError('NOT_FOUND', name);
     } else {
       delete this._list[name];
     }
@@ -210,6 +226,30 @@ module.exports = class ExtensionList {
     }
     return array;
   }
+}
+
+
+/**
+ * Function to load an extension that exists in the extensions directory
+ * @param extensions, a list of extensions
+ * @param templates, reference to the templates registry
+ * @return Promise
+ */
+function addExtensionsToTemplates(extensions, templates) {
+  return Promise.all(extensions.map(async extension => {
+    try {
+      if (extension.templates) {
+        log.trace(`Adding Extension ${extension.name}'s repository into the templates`);
+        await templates.addRepository(extension.templates, extension.description);
+      } else if (extension.templatesProvider) {
+        log.trace(`Adding Extension ${extension.name}'s provider into the templates`);
+        templates.addProvider(extension.name, extension.templatesProvider);
+        delete extension.templatesProvider;
+      }
+    } catch (error) {
+      log.warn(error);
+    }
+  }));
 }
 
 /**

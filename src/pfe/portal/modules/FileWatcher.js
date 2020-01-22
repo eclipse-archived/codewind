@@ -168,7 +168,7 @@ module.exports = class FileWatcher {
         }
 
         case "projectCapabilitiesReady" : {
-          await this.handleFWProjectEvent('projectCapabilitiesReady', fwProject);
+          await this.handleCapabilitiesUpdated(fwProject);
           break;
         }
 
@@ -181,6 +181,20 @@ module.exports = class FileWatcher {
     });
   }
 
+  async handleCapabilitiesUpdated(fwProject) {
+    try {
+      const projectID = fwProject.projectID;
+      this.user.projectList.retrieveProject(projectID);
+      let projectUpdate = {
+        projectID: projectID,
+        capabilitiesReady: true
+      };
+      await this.user.projectList.updateProject(projectUpdate);
+      this.user.uiSocket.emit('projectChanged', projectUpdate);
+    } catch (err) {
+      log.error(err);
+    }
+  }
 
   async validateProject(project){
     const projectAction = {
@@ -533,6 +547,7 @@ module.exports = class FileWatcher {
         buildStatus: 'unknown',
         appStatus: 'unknown',
         state: Project.STATES.closed,
+        capabilitiesReady: false,
         detailedAppStatus: undefined
       }
       // Set the container key to '' as the container has stopped.
