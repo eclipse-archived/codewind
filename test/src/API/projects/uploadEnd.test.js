@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 IBM Corporation and others.
+ * Copyright (c) 2020 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -292,7 +292,6 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             this.timeout(testTimeout.short);
             const projectID = '00000000-0000-0000-0000-000000000000';
             const options = {
-                // fileList: validFileList,
                 directoryList: validDirList,
                 modifiedList: null,
                 timeStamp: Date.now(),
@@ -306,7 +305,6 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             const projectID = '00000000-0000-0000-0000-000000000000';
             const options = {
                 fileList: validFileList,
-                // directoryList: validDirList,
                 modifiedList: null,
                 timeStamp: Date.now(),
             };
@@ -320,7 +318,6 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             const options = {
                 fileList: validFileList,
                 directoryList: validDirList,
-                // modifiedList: null,
                 timeStamp: Date.now(),
             };
             const res = await projectService.uploadEnd(projectID, options);
@@ -334,7 +331,6 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
                 fileList: validFileList,
                 directoryList: validDirList,
                 modifiedList: null,
-                // timeStamp: Date.now(),
             };
             const res = await projectService.uploadEnd(projectID, options);
             res.should.have.status(400);
