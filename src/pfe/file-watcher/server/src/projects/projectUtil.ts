@@ -425,7 +425,7 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         const servicePort = parseInt(containerInfo.internalPort, 10);
 
                         // Expose an ingress for the project
-                        const baseURL = await kubeutil.exposeOverIngress(projectID, operation.projectInfo.isHttps, servicePort);
+                        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, operation.projectInfo.isHttps, servicePort);
 
                         // Set the appBaseURL to the ingress we exposed earlier
                         projectInfo.appBaseURL = baseURL;
@@ -1857,7 +1857,7 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
     const projectInfo = operation.projectInfo;
     const projectLocation = projectInfo.location;
     const projectID = projectInfo.projectID;
-    const projectName = projectInfo.projectName;
+    const projectName = projectLocation.split("/").pop();
     const keyValuePair: UpdateProjectInfoPair = {
         key: "buildRequest",
         value: false
@@ -1916,7 +1916,7 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
 
         // Expose an ingress for the project
         const servicePort = parseInt(containerInfo.internalPort, 10);
-        const baseURL = await kubeutil.exposeOverIngress(projectID, operation.projectInfo.isHttps, servicePort);
+        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, operation.projectInfo.isHttps, servicePort);
 
         // Set the appBaseURL to the ingress URL of the project
         const updatedProjectInfo: ProjectInfo = operation.projectInfo;
