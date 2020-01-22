@@ -79,4 +79,26 @@ router.post('/api/v1/imagepushregistry', validateReq, async function (req, res) 
   }
 });
 
+/**
+ * API Function to delete the Image Push Registry
+ */
+router.delete('/api/v1/imagepushregistry', validateReq, async function (req, res) {
+  let retval;
+  try {
+    let user = req.cw_user;
+    log.debug(`DELETE /api/v1/imagepushregistry called`);
+    const address = req.sanitizeBody('address');
+
+    retval = await user.removeImagePushRegistry(address); 
+    res.status(retval.statusCode).send(retval);   
+  } catch (error) {
+    log.error(error);
+    const workspaceSettings = {
+      statusCode: 500,
+      msg: error.message
+    }
+    res.status(500).send(workspaceSettings);
+  }
+});
+
 module.exports = router;
