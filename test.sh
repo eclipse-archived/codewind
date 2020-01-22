@@ -87,7 +87,7 @@ npm run test
 rc=$?;
 cd ..
 
-# Run coverage
+# Combine the code coverage the unit and API tests
 node ./test/scripts/generate_complete_coverage.js
 if [ $? -ne 0 ]; then
     printf "\n\n${RED}Code Coverage could not be generated${RESET}\n\n"
