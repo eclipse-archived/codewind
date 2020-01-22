@@ -121,6 +121,33 @@ export async function writeWorkspaceSettings(address: string, namespace: string)
     }
 }
 
+export async function removeImagePushRegistry(address: string): Promise<IWorkspaceSettingsSuccess | IWorkspaceSettingsFailure> {
+    const workspaceSettingsFile = constants.workspaceConstants.workspaceSettingsFile;
+    const workspaceSettingsInfo = await getWorkspaceSettingsInfo();
+
+    if (workspaceSettingsInfo["registryAddress"] == address) {
+        logger.logInfo("Removing the image push registry from the workspace settings for address: " + address);
+        workspaceSettingsInfo.registryAddress = "";
+        workspaceSettingsInfo.registryNamespace = "";
+    } else {
+        const msg = "Failed to remove the image push registry workspace settings. Could not find a registry for address : " + address;
+        logger.logError(msg);
+        return { statusCode: 400 , msg };
+    }
+
+    // Write the new settings, invalidate the cache and reload the cache since we no longer have file watch on the workspace settings file
+    const writeStatus = await utils.asyncWriteJSONFile(workspaceSettingsFile, workspaceSettingsInfo);
+    workspaceSettingsInfoCache = undefined;
+    await readWorkspaceSettings();
+
+    if (writeStatus) {
+        return { "statusCode": 200 };
+    } else {
+        const msg = "Codewind encountered an error when trying to write the workspace settings file";
+        return { statusCode: 500 , msg };
+    }
+}
+
 /**
  * @function
  * @description Load the workspace settings into cache if present in the workspace settings file

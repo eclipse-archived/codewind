@@ -673,6 +673,22 @@ module.exports = class User {
   }
 
   /**
+   * Function to remove Image Push Registry
+   */
+  async removeImagePushRegistry(address) {
+    let retval;
+    try {
+      log.info(`Removing Image Push Registry from the workspace settings file.`);
+      retval = await this.fw.removeImagePushRegistry(address);
+    } catch (err) {
+      log.error(`Error in removeImagePushRegistry`);
+      throw err;
+    }
+    log.debug(`removeImagePushRegistry return value: ` + JSON.stringify(retval));
+    return retval;
+  }
+
+  /**
    * Function to get test image push registry
    */
   async testImagePushRegistry(address, namespace) {

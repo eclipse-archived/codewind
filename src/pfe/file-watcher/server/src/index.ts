@@ -293,6 +293,20 @@ export default class Filewatcher {
      */
     writeWorkspaceSettings: (address: string, namespace: string) => Promise<any>;
 
+    /**
+     * @function
+     * @description Write the provided workspace settings to the workspace settings file.
+     * @param address  <Required | String>: Image Push Registry Address
+     * @example await filewatcher.removeImagePushRegistry("docker.io");
+     *
+     * @returns Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>
+     * Response codes:
+     *  @property 200: Successfully wrote the file
+     *  @property 500: Error when attempting to write the workspace settings file
+     *
+     */
+    removeImagePushRegistry: (address: string) => Promise<any>;
+
 
     /**
      * @function
@@ -672,6 +686,7 @@ export default class Filewatcher {
         this.setLoggingLevel = logger.setLoggingLevel;
         this.readWorkspaceSettings = workspaceSettings.readWorkspaceSettings;
         this.writeWorkspaceSettings = workspaceSettings.writeWorkspaceSettings;
+        this.removeImagePushRegistry = workspaceSettings.removeImagePushRegistry;
         this.testImagePushRegistry = workspaceSettings.testImagePushRegistry;
         this.registerListener = socket.registerListener;
         this.createProject = projectsController.createProject;
