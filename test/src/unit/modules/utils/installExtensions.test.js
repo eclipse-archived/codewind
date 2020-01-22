@@ -29,7 +29,7 @@ chai.should();
 
 const testDirectory = path.join(__dirname, 'installExtensionsTest');
 
-describe.only('installBuiltInExtensions.js', () => {
+describe('installBuiltInExtensions.js', () => {
     suppressLogOutput(installExtensions);
     before(() => {
         fs.ensureDirSync(testDirectory);
@@ -69,8 +69,7 @@ describe.only('installBuiltInExtensions.js', () => {
         });
         describe('Successfully installs a number of extensions', () => {
             const numberOfExtensionsToCreate = 5;
-            before(function() {
-                skipIfOnJenkins(this);
+            before(() => {
                 for (let i = 0; i < numberOfExtensionsToCreate; i++) {
                     const extensionName = `extension-${i}-${i}.0.0`;
                     const zipFileName = `${extensionName}.zip`;
@@ -83,8 +82,7 @@ describe.only('installBuiltInExtensions.js', () => {
                     fs.remove(filePath);
                 }
             });
-            it(`Installs ${numberOfExtensionsToCreate} extensions`, async function() {
-                skipIfOnJenkins(this);
+            it(`Installs ${numberOfExtensionsToCreate} extensions`, async() => {
                 await installBuiltInExtensions(targetDir, extensionDir).should.be.eventually.fulfilled;
                 const filesInTarDir = await fs.readdir(targetDir);
                 filesInTarDir.length.should.equal(numberOfExtensionsToCreate);
@@ -153,8 +151,7 @@ describe.only('installBuiltInExtensions.js', () => {
             const fileName = 'valid-extension';
             const zipFileName = 'valid-extension-1.0.0.zip';
             const zipFilePath = path.join(extensionDir, zipFileName);
-            before(function() {
-                skipIfOnJenkins(this);
+            before(() => {
                 // Create extension zip file
                 const filePath = path.join(extensionDir, fileName);
                 fs.ensureFileSync(filePath);
@@ -162,8 +159,7 @@ describe.only('installBuiltInExtensions.js', () => {
                 fs.existsSync(zipFilePath).should.be.true;
                 fs.remove(filePath);
             });
-            it('Successfully unzips an extension and moves it to the extension directory', async function() {
-                skipIfOnJenkins(this);
+            it('Successfully unzips an extension and moves it to the extension directory', async() => {
                 const file = await fs.stat(zipFilePath);
                 file.name = zipFileName;
                 await installBuiltInExtension(file, targetDir, extensionDir).should.eventually.be.fulfilled;
@@ -178,8 +174,7 @@ describe.only('installBuiltInExtensions.js', () => {
             const fileName = 'valid-extension';
             const zipFileName = 'valid-extension-1.0.0.zip';
             const zipFilePath = path.join(extensionDir, zipFileName);
-            before(function() {
-                skipIfOnJenkins(this);
+            before(() => {
                 // Create existing extension (directory with codewind.yaml)
                 createCodewindYamlFile(path.join(targetDir, fileName), { version: '2.0.0' });
                 
@@ -190,8 +185,7 @@ describe.only('installBuiltInExtensions.js', () => {
                 fs.existsSync(zipFilePath).should.be.true;
                 fs.remove(filePath);
             });
-            it('Does not unzip the extension as the existing extension has a higher version number than the new one', async function() {
-                skipIfOnJenkins(this);
+            it('Does not unzip the extension as the existing extension has a higher version number than the new one', async() => {
                 const file = await fs.stat(zipFilePath);
                 file.name = zipFileName;
                 await installBuiltInExtension(file, targetDir, extensionDir).should.eventually.be.fulfilled;
@@ -344,11 +338,4 @@ const assertExtensionIsNotInstalled = targetDir => {
     // targetDir should be empty if an extension has not been installed
     const files = fs.readdirSync(targetDir);
     files.length.should.equal(0);
-};
-
-const skipIfOnJenkins = thisContext => {
-    if ('JENKINS_HOME' in process.env) {
-        console.log(`On Jenkins: Skipping block in ${thisContext.test.fullTitle()} as it contains zip/unzip functions`);
-        thisContext.skip();
-    }
 };
