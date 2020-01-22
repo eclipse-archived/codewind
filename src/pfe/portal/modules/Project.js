@@ -666,7 +666,7 @@ module.exports = class Project {
    * @returns {String} an absolute path
    */
   resolveMonitorPath(path) {
-    return isAbsolute(path) ? path : join(this.pathToMonitor, path);
+    return isAbsolute(path) ? cwUtils.convertFromWindowsDriveLetter(path) : join(this.pathToMonitor, path);
   }
 }
 
