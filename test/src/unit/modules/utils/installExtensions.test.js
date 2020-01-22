@@ -29,7 +29,7 @@ chai.should();
 
 const testDirectory = path.join(__dirname, 'installExtensionsTest');
 
-describe('installBuiltInExtensions.js', () => {
+describe.only('installBuiltInExtensions.js', () => {
     suppressLogOutput(installExtensions);
     before(() => {
         fs.ensureDirSync(testDirectory);
@@ -88,6 +88,22 @@ describe('installBuiltInExtensions.js', () => {
                 await installBuiltInExtensions(targetDir, extensionDir).should.be.eventually.fulfilled;
                 const filesInTarDir = await fs.readdir(targetDir);
                 filesInTarDir.length.should.equal(numberOfExtensionsToCreate);
+            });
+        });
+        describe('Fails to install a number of extensions as they are no zip files', () => {
+            const numberOfExtensionsToCreate = 5;
+            before(function() {
+                for (let i = 0; i < numberOfExtensionsToCreate; i++) {
+                    const extensionName = `extension-${i}-${i}.0.0`;
+                    // Create extension zip file
+                    const filePath = path.join(extensionDir, extensionName);
+                    fs.ensureFileSync(filePath);
+                }
+            });
+            it(`Fails to install ${numberOfExtensionsToCreate} extensions`, async function() {
+                await installBuiltInExtensions(targetDir, extensionDir).should.be.eventually.fulfilled;
+                const filesInTarDir = await fs.readdir(targetDir);
+                filesInTarDir.length.should.equal(0);
             });
         });
     });
