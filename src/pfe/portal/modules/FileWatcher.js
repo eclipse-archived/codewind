@@ -628,9 +628,6 @@ module.exports = class FileWatcher {
       log.error(`Error in removeImagePushRegistry`);
       throw err;
     }
-    if (retval.statusCode != 200) {
-      throw new Error(`removeImagePushRegistry ${retval.statusCode}`);
-    }
     return retval;
   }
 

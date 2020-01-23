@@ -93,11 +93,11 @@ router.delete('/api/v1/imagepushregistry', validateReq, async function (req, res
     res.status(retval.statusCode).send(retval);   
   } catch (error) {
     log.error(error);
-    const workspaceSettings = {
+    const retval = {
       statusCode: 500,
       msg: error.message
     }
-    res.status(500).send(workspaceSettings);
+    res.status(500).send(retval);
   }
 });
 
