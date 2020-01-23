@@ -230,6 +230,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                                 handler: projectHandler
                             };
                             // for update operation
+                            await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, projectID, statusController.BuildState.inProgress, "action.calculateDifference");
                             await projectsController.addProjectToBuildQueue(project);
                         } else {
                             logger.logProjectInfo("Project "  + projectID + " build is in progress, set build request flag to true", projectID);
@@ -260,6 +261,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                                 handler: projectHandler
                             };
                             // for update operation
+                            await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, projectID, statusController.BuildState.inProgress, "action.calculateDifference");
                             await projectsController.addProjectToBuildQueue(project);
                         } else {
                             logger.logProjectInfo("Project "  + projectID + " build is in progress, set build request flag to true", projectID);
