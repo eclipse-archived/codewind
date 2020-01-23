@@ -295,17 +295,18 @@ export default class Filewatcher {
 
     /**
      * @function
-     * @description Write the provided workspace settings to the workspace settings file.
+     * @description Remove the image push registry from the workspace settings.
      * @param address  <Required | String>: Image Push Registry Address
      * @example await filewatcher.removeImagePushRegistry("docker.io");
      *
      * @returns Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>
      * Response codes:
-     *  @property 200: Successfully wrote the file
-     *  @property 500: Error when attempting to write the workspace settings file
+     *  @property 200: Successfully removed the image push registry
+     *  @property 400: Wrong request, no address found
+     *  @property 500: Error when attempting to remove the image push registry
      *
      */
-    removeImagePushRegistry: (address: string) => Promise<any>;
+    removeImagePushRegistry: (address: string) => Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure>;
 
 
     /**
