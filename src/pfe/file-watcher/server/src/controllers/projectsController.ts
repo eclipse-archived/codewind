@@ -269,6 +269,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                 settings.contextRoot = settings.contextRoot.replace(/^\/+/, "").replace(/\/+$/, "");
                 projectInfo.contextRoot = "/" + settings.contextRoot.trim();
             } else if (key == "healthCheck" && settings.healthCheck && settings.healthCheck.trim().length > 0) {
+                settings.healthCheck = settings.healthCheck.replace(/^\/+/, "").replace(/\/+$/, "");
                 projectInfo.healthCheck = "/" + settings.healthCheck.trim();
             } else if (key == "mavenProfiles") {
                 const mavenProfiles = settings.mavenProfiles;
