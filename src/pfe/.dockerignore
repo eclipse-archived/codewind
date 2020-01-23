@@ -1,4 +1,20 @@
+# Global ignores
 **/node_modules
+**/.gitignore
+**/.dockerignore
+**/README.md
+
+# File watcher ignores
+file-watcher/server/dist
+file-watcher/server/node_modules
 file-watcher/server/test
 file-watcher/server/coverage
 file-watcher/server/.nyc_output
+file-watcher/pomCache
+
+# Portal ignores
+portal/pushLocal.sh
+portal/sudoers
+portal/eslint-rules
+portal/.eslintignore
+portal/.eslintrc.json
