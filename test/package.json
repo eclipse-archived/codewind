@@ -4,9 +4,9 @@
   "description": "Test material for Codewind",
   "main": "index.js",
   "scripts": {
-    "test": "scripts/mocha.sh src/API src/unit",
+    "test": "ENABLE_COVERAGE=true scripts/mocha.sh src/API src/unit",
     "integrationtest": "scripts/mocha.sh src/integration",
-    "unittest": "scripts/mocha.sh src/unit",
+    "unittest": "ENABLE_COVERAGE=true scripts/mocha.sh src/unit",
     "apitest": "scripts/mocha.sh src/API",
     "eslint": "eslint src/**/*.js"
   },
@@ -45,6 +45,7 @@
     "mocha-multi-reporters": "^1.1.7",
     "mocha-sinon": "^2.1.0",
     "nyc": "^15.0.0",
+    "package.json": "^2.0.1",
     "path": "^0.12.7",
     "read-each-line-sync": "^1.0.5",
     "rewire": "^4.0.1",

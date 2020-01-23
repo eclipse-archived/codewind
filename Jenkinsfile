@@ -74,7 +74,7 @@ pipeline {
 
         stage('Run Turbine unit test suite') {
             options {
-                timeout(time: 30, unit: 'MINUTES') 
+                timeout(time: 30, unit: 'MINUTES')
             }
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
@@ -195,6 +195,22 @@ pipeline {
 
                             if [ $? -eq 0 ]; then
                                 echo "+++   SUCCESSFULLY BUILT $IMAGE_NAME   +++";
+
+                                echo -e "\n+++   RETAGGING $IMAGE_NAME TO HAVE TAG:':test' FOR TEST ONLY MODIFICATIONS +++\n";
+                                # Allows us to modify the Docker images for test only modifications
+                                # Such as telling PFE to run with Code Coverage generation enabled 
+                                # The original image (latest) will be the one that is pushed to Dockerhub
+
+                                if [ "$image" = "$PFE" ]; then
+                                    # Now overwrite the PFE image ':test' tag with new changes
+                                    echo -e "FROM eclipse/codewind-pfe-amd64:latest\nENV ENABLE_CODE_COVERAGE=true" >> pfe-test-dockerfile
+                                    cat pfe-test-dockerfile
+                                    docker build -t eclipse/codewind-pfe-amd64:test -f pfe-test-dockerfile .
+                                    rm pfe-test-dockerfile
+                                else
+                                    docker tag eclipse/codewind-${image}-${IMAGE_ARCH}:latest eclipse/codewind-${image}-${IMAGE_ARCH}:test
+                                fi
+
                             else
                                 echo "+++   FAILED TO BUILD $IMAGE_NAME - exiting.   +++";
                                 exit 12;
@@ -245,6 +261,9 @@ pipeline {
                         BUILT_PFE_IMAGE_ID=$(docker images --filter=reference=eclipse/codewind-pfe-amd64:latest --format "{{.ID}}")
                         echo "PFE Image: $BUILT_PFE_IMAGE_ID"
 
+                        # Set image tag to test
+                        export CWCTL_IMAGE_TAG=test
+
                         # Start Codewind
                         sh $DIR/start.sh
                         if [ $? -ne 0 ]; then
@@ -282,6 +301,33 @@ pipeline {
                 }
             }
         } 
+
+        stage('Output Code Coverage for PFE (Portal API and Unit tests, File-watcher Unit tests only)') {
+            options {
+                timeout(time: 30, unit: 'MINUTES')
+            }
+            steps {
+                withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
+                    withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
+                        sh '''#!/usr/bin/env bash
+                            DIR=`pwd`;
+
+                            docker image inspect eclipse/codewind-pfe-amd64:test -f '{{.Config.Env}}' | grep ENABLE_CODE_COVERAGE=true
+                            if [ $? -eq 0 ]; then
+                                echo "Code coverage enabled in eclipse/codewind-pfe-amd64:test (image)"
+                            fi
+
+                            docker inspect -f '{{.Config.Env}}' codewind-pfe | grep ENABLE_CODE_COVERAGE=true
+                            if [ $? -eq 0 ]; then
+                                echo "Code coverage enabled in codewind-pfe (container)"
+                            fi
+
+                            FW_COVERAGE_ENABLED=true node $DIR/test/scripts/generate_complete_coverage.js
+                            '''
+                    }
+                }
+            }
+        }
         
         stage('Publish Docker images') {
 
@@ -408,7 +454,7 @@ pipeline {
                   printf "\n${RED}Error removing docker network $RESET\n";
               fi
 
-              # Remove the default network 
+              # Remove the default network
               printf "\nRemoving docker network\n";
               docker network rm codewind_default
               if [ $? -eq 0 ]; then
