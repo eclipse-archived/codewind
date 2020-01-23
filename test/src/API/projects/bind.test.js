@@ -23,20 +23,20 @@ chai.should();
 
 describe('Bind projects tests', () => {
     const projectName = `test-projects-bind-${Date.now()}`;
-    const pathToLocalRepo = path.join(TEMP_TEST_DIR, projectName);
+    const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
     let projectID;
 
     before('use the git API to clone a project to disk, ready for upload to codewind', async function() {
         this.timeout(testTimeout.med);
         await projectService.cloneProject(
-            'https://github.com/microclimate-dev2ops/microclimateNodeTemplate.git',
-            pathToLocalRepo,
+            'https://github.com/codewind-resources/nodeExpressTemplate.git',
+            pathToLocalProject,
         );
     });
 
     after(async function() {
         this.timeout(testTimeout.med);
-        await projectService.removeProject(pathToLocalRepo, projectID);
+        await projectService.removeProject(pathToLocalProject, projectID);
     });
 
     describe('Complete bind (these `it` blocks depend on each other passing)', () => {
@@ -47,7 +47,7 @@ describe('Bind projects tests', () => {
                 name: projectName,
                 language: 'nodejs',
                 projectType: 'nodejs',
-                path: pathToLocalRepo,
+                path: pathToLocalProject,
                 creationTime: Date.now(),
             });
 
@@ -59,7 +59,7 @@ describe('Bind projects tests', () => {
         it('returns 200 for each file successfully uploaded to PFE', async function() {
             this.timeout(testTimeout.med);
 
-            const responses = await projectService.uploadFiles(projectID, pathToLocalRepo);
+            const responses = await projectService.uploadFiles(projectID, pathToLocalProject, 'nodejs');
 
             responses.forEach(res => {
                 res.should.have.status(200);
@@ -80,7 +80,7 @@ describe('Bind projects tests', () => {
                 name: projectName,
                 language: 'nodejs',
                 projectType: 'nodejs',
-                path: pathToLocalRepo,
+                path: pathToLocalProject,
                 creationTime: Date.now(),
             });
 
@@ -120,7 +120,7 @@ describe('Bind projects tests', () => {
                 const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
                 const res = await projectService.uploadFile(
                     idMatchingNoProjects,
-                    pathToLocalRepo,
+                    pathToLocalProject,
                     'package.json',
                 );
                 res.should.have.status(404);

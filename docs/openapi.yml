@@ -327,6 +327,11 @@ paths:
         200:
           description: >
             The project uploads completed successfully and it will now be built.
+          content:
+            text/html:
+              schema:
+                type: string
+                example: OK
         404:
           description: Project with given projectiD was not found.
         500:

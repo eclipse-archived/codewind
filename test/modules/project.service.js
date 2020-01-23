@@ -17,34 +17,30 @@ const fs = require('fs-extra');
 const path = require('path');
 const zlib = require('zlib');
 const klawSync = require('klaw-sync');
+const globToRegExp = require('glob-to-regexp');
 
+const { projectTypeToIgnoredPaths } = require('../../src/pfe/portal/modules/utils/ignoredPaths');
+const { ADMIN_COOKIE, templateOptions } = require('../config');
 const reqService = require('./request.service');
 const SocketService = require('./socket.service');
-const { ADMIN_COOKIE, templateOptions, TEMP_TEST_DIR } = require('../config');
 
 chai.should();
 const sleep = promisify(setTimeout);
 
-const fastestCreationOptions = {
-    language: 'nodejs',
-    framework: 'spring',
-};
-
 /**
  * Clone, bind and build one of our template projects
  */
-async function createProjectFromTemplate(projectName, projectType) {
+async function createProjectFromTemplate(name, projectType, path, autoBuild = false) {
     const { url, language } = templateOptions[projectType];
 
-    const projectPath = path.join(TEMP_TEST_DIR, projectName);
-    await cloneProject(url, projectPath);
+    await cloneProject(url, path);
 
     const res = await bindProject({
-        name: projectName,
-        path: projectPath,
+        name,
+        path,
         language,
         projectType,
-        autoBuild: true,
+        autoBuild,
         creationTime: Date.now(),
     });
     return res.body.projectID;
@@ -57,7 +53,8 @@ async function createProjectFromTemplate(projectName, projectType) {
 async function bindProject(options) {
     const resFromBindStart = await bindStart(options);
     const { projectID } = resFromBindStart.body;
-    await uploadFiles(projectID, options.path);
+    const { path, projectType } = options;
+    await uploadFiles(projectID, path, projectType);
     const resFromBindEnd = await bindEnd(projectID);
     return resFromBindEnd;
 }
@@ -84,40 +81,64 @@ async function bindEnd(projectID) {
     return res;
 };
 
-async function uploadFiles(projectID, pathToDirToUpload) {
-    const filePaths = recursivelyGetAllPaths(pathToDirToUpload);
-    const responses = [];
-    await Promise.all(
-        filePaths.map(async(filePath) => {
-            const pathFromDirToFile = path.relative(pathToDirToUpload, filePath);
-            const res = await uploadFile(projectID, pathToDirToUpload, pathFromDirToFile);
-            responses.push(res);
-        })
+async function uploadEnd(projectID, options) {
+    const res = await reqService.chai
+        .post(`/api/v1/projects/${projectID}/upload/end`)
+        .set('Cookie', ADMIN_COOKIE)
+        .send(options);
+    return res;
+};
+
+async function uploadFiles(projectID, pathToDirToUpload, projectType) {
+    const relativeFilepathsToUpload = getRelativeFilepathsToUpload(pathToDirToUpload, projectType);
+    const promises = relativeFilepathsToUpload.map(
+        pathFromDirToFile => uploadFile(projectID, pathToDirToUpload, pathFromDirToFile)
     );
+    const responses = await Promise.all(promises);
     return responses;
 }
 
+function getRelativeFilepathsToUpload(pathToDirToUpload, projectType) {
+    const filepaths = recursivelyGetAllPaths(pathToDirToUpload);
+    const relativeFilepaths = filepaths.map(
+        filePath => path.relative(pathToDirToUpload, filePath)
+    );
+    const relativeFilepathsToUpload = relativeFilepaths.filter(
+        filepath => !isIgnoredFilepath(filepath, projectType)
+    );
+    return relativeFilepathsToUpload;
+}
+
+function isIgnoredFilepath(relativeFilepath, projectType) {
+    const ignoredFilepaths = projectTypeToIgnoredPaths[projectType];
+    const regExpIgnoredFilepaths = ignoredFilepaths.map(path => globToRegExp(path));
+    const isIgnored = regExpIgnoredFilepaths.some(
+        ignoredPath => ignoredPath.test(`/${relativeFilepath}`)
+    );
+    return isIgnored;
+}
+
 async function uploadFile(projectID, pathToDirToUpload, pathFromDirToFile) {
-    const filePath = path.join(pathToDirToUpload, pathFromDirToFile);
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const zippedContent = zlib.deflateSync(fileContent);
-    const base64CompressedContent = zippedContent.toString('base64');
+    const absoluteFilepath = path.join(pathToDirToUpload, pathFromDirToFile);
+    const base64CompressedContent = zipFileToBase64(absoluteFilepath);
     const options = {
         isDirectory: false,
         mode: 420,
         path: pathFromDirToFile,
         msg: base64CompressedContent,
     };
-    const res = await uploadFileViaPfeApi(projectID, options);
-    return res;
-};
-
-async function uploadFileViaPfeApi(projectID, options) {
     const res = await reqService.chai
         .put(`/api/v1/projects/${projectID}/upload`)
         .set('Cookie', ADMIN_COOKIE)
         .send(options);
     return res;
+};
+
+function zipFileToBase64(filepath) {
+    const fileContent = fs.readFileSync(filepath, 'utf-8');
+    const zippedContent = zlib.deflateSync(fileContent);
+    const base64CompressedContent = zippedContent.toString('base64');
+    return base64CompressedContent;
 }
 
 /**
@@ -130,6 +151,15 @@ async function unbindProject(projectID, expectedResStatus = 202) {
         .set('Cookie', ADMIN_COOKIE);
     const res = await reqService.makeReqAndAwaitSocketMsg(req, expectedResStatus, { projectID, msgType: 'projectDeletion' });
     return res;
+}
+
+/**
+ * For cleaning up PFE
+ */
+async function unbindAllProjects() {
+    const projectIds = await getProjectIDs();
+    const promises = projectIds.map(id => unbindProject(id));
+    await Promise.all(promises);
 }
 
 async function buildProject(projectID) {
@@ -354,7 +384,6 @@ async function notifyPfeOfFileChangesAndAwaitMsg(array, projectID) {
 
 
 module.exports = {
-    fastestCreationOptions,
     generateUniqueName,
     createProjects,
     createProjectFromTemplate,
@@ -377,9 +406,11 @@ module.exports = {
     bindProject,
     bindStart,
     bindEnd,
+    uploadEnd,
     uploadFiles,
     uploadFile,
     unbindProject,
+    unbindAllProjects,
     removeProject,
     buildProject,
     cloneProject,

@@ -82,7 +82,7 @@ async function readFile(filePath) {
 };
 
 async function readJson(filePath) {
-    const fileData = await readFile(filePath, 'utf8');
+    const fileData = await readFile(filePath);
     return JSON.parse(fileData);
 };
 
