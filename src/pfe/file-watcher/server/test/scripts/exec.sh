@@ -45,7 +45,12 @@ function downloadCwctl() {
         extension="linux"
     fi
     echo "Extension is $extension"
-    curl -X GET http://download.eclipse.org/codewind/codewind-installer/master/latest/cwctl-$extension --output $EXECUTABLE_NAME
+    if [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
+        CWCTL_INSTALL_TARGET="$TURBINE_PERFORMANCE_TEST"
+    else
+        CWCTL_INSTALL_TARGET="master"
+    fi
+    curl -X GET http://download.eclipse.org/codewind/codewind-installer/$CWCTL_INSTALL_TARGET/latest/cwctl-$extension --output $EXECUTABLE_NAME
     checkExitCode $? "Failed to download latest installer."
 
     echo -e "${BLUE}>> Giving executable permission to installer ... ${RESET}"
