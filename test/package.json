@@ -45,7 +45,6 @@
     "mocha-multi-reporters": "^1.1.7",
     "mocha-sinon": "^2.1.0",
     "nyc": "^15.0.0",
-    "package.json": "^2.0.1",
     "path": "^0.12.7",
     "read-each-line-sync": "^1.0.5",
     "rewire": "^4.0.1",
