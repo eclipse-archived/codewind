@@ -54,8 +54,8 @@ mkdir -p target/liberty/wlp/usr/shared/resources
 
 function create() {
 	# If the zip file of liberty feature cache or maven m2 cache doesn't exist then pull it from dockerhub
-	if [ ! -f libertyrepocache.zip ] || [ ! -f localm2cache.zip ]; then
-		if [ "$IN_K8" == "true" ]; then
+	if [ "$IN_K8" == "true" ]; then
+		if [ ! -f libertyrepocache.zip ] || [ ! -f localm2cache.zip ]; then
 			echo "Pulling cache image for $ROOT using buildah"
 			buildah pull ibmcom/codewind-java-project-cache > /dev/null
 			dockerPullExitCode=$?
@@ -83,7 +83,9 @@ function create() {
 			else
 				echo "Cache cannot be retrieved for liberty project $ROOT because the cache image could not be pulled using buildah"
 			fi
-		else
+		fi
+	else
+		if [ ! -f /tmp/libertyrepocache.zip ] || [ ! -f /tmp/localm2cache.zip ]; then
 			echo "Pulling cache image for $ROOT using docker"
 			docker pull ibmcom/codewind-java-project-cache > /dev/null
 			dockerPullExitCode=$?
@@ -93,16 +95,18 @@ function create() {
 				echo "Cache will be used for liberty project $ROOT"
 				CACHE_CONTAINER_ID=$(docker create ibmcom/codewind-java-project-cache)
 
-				if [ ! -f libertyrepocache.zip ]; then
-					echo "Downloading liberty feature cache to $ROOT"
-					docker cp $CACHE_CONTAINER_ID:/cache/libertyrepocache.zip .
-					echo "Finished downloading liberty feature cache to $ROOT"
+				if [ ! -f /tmp/libertyrepocache.zip ]; then
+					echo "Downloading liberty feature cache to /tmp"
+					docker cp $CACHE_CONTAINER_ID:/cache/libertyrepocache.zip /tmp
+					echo "Finished downloading liberty feature cache to /tmp"
+					chown 1001 /tmp/libertyrepocache.zip
 				fi
 
-				if [ ! -f localm2cache.zip ]; then
-					echo "Downloading maven m2 cache to $ROOT"
-					docker cp $CACHE_CONTAINER_ID:/cache/localm2cache.zip .
-					echo "Finished downloading maven m2 cache to $ROOT"
+				if [ ! -f /tmp/localm2cache.zip ]; then
+					echo "Downloading maven m2 cache to /tmp"
+					docker cp $CACHE_CONTAINER_ID:/cache/localm2cache.zip /tmp
+					echo "Finished downloading maven m2 cache to /tmp"
+					chown 1001 /tmp/localm2cache.zip
 				fi
 		
 				docker rm -f $CACHE_CONTAINER_ID

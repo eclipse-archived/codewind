@@ -19,7 +19,6 @@ pipeline {
         stage('Run Portal eslint and unit tests') {
             options {
                 timeout(time: 30, unit: 'MINUTES') 
-                retry(3)
             }
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
@@ -77,7 +76,6 @@ pipeline {
         stage('Run Turbine unit test suite') {
             options {
                 timeout(time: 30, unit: 'MINUTES') 
-                retry(3)
             }
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
@@ -213,7 +211,6 @@ pipeline {
         stage('Start Codewind and run the API tests') {  
             options {
                 timeout(time: 2, unit: 'HOURS') 
-                retry(3)
             }   
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
@@ -433,6 +430,8 @@ pipeline {
               echo "Removing docker-compose"
               rm -rf $HOME/dc
             '''
+            echo 'Clean up workspace'
+            deleteDir() /* clean up our workspace */
         }
         failure {
           sh '''#!/usr/bin/env bash

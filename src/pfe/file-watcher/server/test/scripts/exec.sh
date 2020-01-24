@@ -72,10 +72,7 @@ function setupInternalRegistryCredentials() {
 
     ENCODED_TOKEN=$(oc get secret $(oc describe sa $REGISTRY_SECRET_USERNAME | tail -n 2 | head -n 1 | awk '{$1=$1};1') -o json | jq ".data.token")
     REGISTRY_SECRET_PASSWORD=$( node ./scripts/utils.js decode $ENCODED_TOKEN )
-    if [[ ($? -ne 0) ]]; then
-        echo -e "${RED}Test setup failed during Registry Secret's base64 credential decode. ${RESET}\n"
-        exit 1
-    fi
+    checkExitCode $? "Test setup failed during Registry Secret's base64 credential decode."
 }
 
 function setupRegistrySecret() {
@@ -84,17 +81,14 @@ function setupRegistrySecret() {
     fi
     echo -e "${BLUE}Setting up the Registry Secret ... ${RESET}"
     ENCODED_CREDENTIALS=$( node ./scripts/utils.js encode $REGISTRY_SECRET_USERNAME $REGISTRY_SECRET_PASSWORD )
-    if [[ ($? -ne 0) ]]; then
-        echo -e "${RED}Test setup failed during Registry Secret's base64 credential encode. ${RESET}\n"
-        exit 1
-    fi
+    checkExitCode $? "Test setup failed during Registry Secret's base64 credential encode."
 
     REGISTRY_SECRET_SETUP_CURL_API="curl -d '{\"address\": \"$REGISTRY_SECRET_ADDRESS\", \"credentials\": \"$ENCODED_CREDENTIALS\"}' -H \"Content-Type: application/json\" -X POST https://localhost:9191/api/v1/registrysecrets -k"
     kubectl exec -i $CODEWIND_POD_ID -- bash -c "$REGISTRY_SECRET_SETUP_CURL_API"
 }
 
 function createProject() {
-   ./$EXECUTABLE_NAME project create --url $1 $2
+   ./$EXECUTABLE_NAME project create --url $1 --path $2
 }
 
 function copyToPFE() {
@@ -106,7 +100,7 @@ function copyToPFE() {
 }
 
 function setup {
-    PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects"
+    PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects_local"
     DATE_NOW=$(date +"%d-%m-%Y")
     TIME_NOW=$(date +"%H.%M.%S")
     BUCKET_NAME=turbine-$TEST_TYPE-$TEST_SUITE
@@ -123,108 +117,123 @@ function setup {
 
     mkdir -p $TEST_OUTPUT_DIR
 
-    # Copy the test files to the PFE container/pod and run npm install
-    echo -e "${BLUE}Copying over the Filewatcher dir to the Codewind container/pod ... ${RESET}"
-    if [ $TEST_TYPE == "local" ]; then
-        CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
-        docker cp $TEST_DIR $CODEWIND_CONTAINER_ID:$TURBINE_DIR_CONTAINER \
-        && docker exec -i $CODEWIND_CONTAINER_ID bash -c "$TURBINE_NPM_INSTALL_CMD"
-    elif [ $TEST_TYPE == "kube" ]; then
-        CODEWIND_POD_ID=$(kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 | cut -d " " -f 1)
-        kubectl cp $TEST_DIR $CODEWIND_POD_ID:$TURBINE_DIR_CONTAINER \
-        && kubectl exec -i $CODEWIND_POD_ID -- bash -c "$TURBINE_NPM_INSTALL_CMD"
-    fi
-
-    if [[ ($? -ne 0) ]]; then
-        echo -e "${RED}Test setup failed. ${RESET}\n"
-        exit 1
-    fi
-
-    # Clean up workspace if needed
-    if [[ ($CLEAN_WORKSPACE == "y") ]]; then
+    if [ $TEST_SUITE == "functional" ]; then
+        # Copy the test files to the PFE container/pod and run npm install
+        echo -e "${BLUE}Copying over the Filewatcher dir to the Codewind container/pod ... ${RESET}"
         if [ $TEST_TYPE == "local" ]; then
-            echo -e "${BLUE}Cleaning up workspace. ${RESET}\n"
-            rm -rf $CW_DIR/codewind-workspace/*
+            CODEWIND_CONTAINER_ID=$(docker ps | grep codewind-pfe-amd64 | cut -d " " -f 1)
+            docker cp $TEST_DIR $CODEWIND_CONTAINER_ID:$TURBINE_DIR_CONTAINER \
+            && docker exec -i $CODEWIND_CONTAINER_ID bash -c "$TURBINE_NPM_INSTALL_CMD"
+        elif [ $TEST_TYPE == "kube" ]; then
+            CODEWIND_POD_ID=$(kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 | cut -d " " -f 1)
+            kubectl cp $TEST_DIR $CODEWIND_POD_ID:$TURBINE_DIR_CONTAINER \
+            && kubectl exec -i $CODEWIND_POD_ID -- bash -c "$TURBINE_NPM_INSTALL_CMD"
         fi
-    fi
+        checkExitCode $? "Test setup failed."
 
-    if [ $TEST_TYPE == "local" ]; then
-        PROJECT_PATH="/codewind-workspace"
-    elif [ $TEST_TYPE == "kube" ]; then
-        PROJECT_PATH=/projects
-    fi
+        # Clean up workspace if needed
+        if [[ ($CLEAN_WORKSPACE == "y") ]]; then
+            if [ $TEST_TYPE == "local" ]; then
+                echo -e "${BLUE}Cleaning up workspace. ${RESET}\n"
+                rm -rf $CW_DIR/codewind-workspace/*
+            fi
+        fi
 
-    downloadCwctl
+        if [ $TEST_TYPE == "local" ]; then
+            PROJECT_PATH="/codewind-workspace"
+        elif [ $TEST_TYPE == "kube" ]; then
+            PROJECT_PATH=/projects
+        fi
 
-    echo -e "${BLUE}>> Creating test projects directory ... ${RESET}"
-    mkdir -p $PROJECT_DIR
-    checkExitCode $? "Failed to create test projects directory."
+        downloadCwctl
 
-    CTR=0
-    # Read project git config
-    echo -e "${BLUE}Creating projects to $PROJECT_DIR. ${RESET}"
-    while IFS='\n' read -r LINE; do
-        PROJECT_CLONE[$CTR]=$LINE
-        let CTR++
-    done < "$PROJECTS_CLONE_DATA_FILE"
-    
-    # Clone projects to workspace
-    for i in "${PROJECT_CLONE[@]}"; do
-        PROJECT_NAME=$(echo $i | cut -d "=" -f 1)
-        PROJECT_URL=$(echo $i | cut -d "=" -f 2)
+        if [ $TEST_TYPE == "kube" ]; then
+            PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects_kube"
+        fi
+        echo -e "${BLUE}>> Creating test projects directory ... ${RESET}"
+        mkdir -p $PROJECT_DIR
+        checkExitCode $? "Failed to create test projects directory."
 
-        echo -e "${BLUE}>> Creating project $PROJECT_NAME from $PROJECT_URL in "$PROJECT_DIR/$PROJECT_NAME" ${RESET}"
-        createProject $PROJECT_URL "$PROJECT_DIR/$PROJECT_NAME"
-	    checkExitCode $? "Failed to created project $PROJECT_NAME."
+        CTR=0
+        # Read project git config
+        echo -e "${BLUE}Creating projects to $PROJECT_DIR. ${RESET}"
+        while IFS='\n' read -r LINE; do
+            PROJECT_CLONE[$CTR]=$LINE
+            let CTR++
+        done < "$PROJECTS_CLONE_DATA_FILE"
+        
+        # Clone projects to workspace
+        for i in "${PROJECT_CLONE[@]}"; do
+            PROJECT_NAME=$(echo $i | cut -d "=" -f 1)
+            PROJECT_URL=$(echo $i | cut -d "=" -f 2)
 
-        echo -e "${BLUE}>> Copying $PROJECT_NAME to PFE container ${RESET}"
-	    copyToPFE "$PROJECT_DIR/$PROJECT_NAME"
-	    checkExitCode $? "Failed to copy project to PFE container."
-    done
+            echo -e "${BLUE}>> Creating project $PROJECT_NAME from $PROJECT_URL in "$PROJECT_DIR/$PROJECT_NAME" ${RESET}"
+            createProject $PROJECT_URL "$PROJECT_DIR/$PROJECT_NAME"
+            checkExitCode $? "Failed to created project $PROJECT_NAME."
 
-    if [ $TEST_TYPE == "kube" ]; then
-        # Set up registry secrets (docker config) in PFE container/pod
-        setupRegistrySecret
+            echo -e "${BLUE}>> Copying $PROJECT_NAME to PFE container ${RESET}"
+            copyToPFE "$PROJECT_DIR/$PROJECT_NAME"
+            checkExitCode $? "Failed to copy project to PFE container."
+        done
+
+        if [ $TEST_TYPE == "kube" ]; then
+            # Set up registry secrets (docker config) in PFE container/pod
+            setupRegistrySecret
+        fi
+    elif [ $TEST_SUITE == "unit" ]; then
+        echo -e "${BLUE}Installing node modules...${RESET}"
+        cd $TURBINE_SERVER_DIR
+        npm install
+        checkExitCode $? "Failed to install node modules."
+        cd -
     fi
 }
 
 function run {
     TURBINE_EXEC_TEST_CMD="cd /file-watcher/server; ./test/scripts/keep-pod-alive.sh & JUNIT_REPORT_PATH=/test_output.xml IMAGE_PUSH_REGISTRY_ADDRESS=${REGISTRY_SECRET_ADDRESS} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} NAMESPACE=${NAMESPACE} TURBINE_PERFORMANCE_TEST=${TURBINE_PERFORMANCE_TEST} npm run $TEST_SUITE:test:xml; ps -ef | grep \"keep-pod-alive.sh\" | grep -v grep | awk '{print $2}' | xargs kill"
 
-    if [ $TEST_TYPE == "local" ]; then
-        if [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
-            echo -e "${BLUE}>> Creating data directory in PFE docker if it does not exist already ... ${RESET}"
-            docker exec -i $CODEWIND_CONTAINER_ID bash -c "$PERFORMANCE_TEST_DIR"
-            checkExitCode $? "Failed to create data directory in PFE docker."
+    if [ $TEST_SUITE == "functional" ]; then
+        if [ $TEST_TYPE == "local" ]; then
+            if [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
+                echo -e "${BLUE}>> Creating data directory in PFE docker if it does not exist already ... ${RESET}"
+                docker exec -i $CODEWIND_CONTAINER_ID bash -c "$PERFORMANCE_TEST_DIR"
+                checkExitCode $? "Failed to create data directory in PFE docker."
 
-            if [[ -f "$PERFORMANCE_DATA_DIR"/performance-data.json ]]; then
-                echo -e "${BLUE}>> Copying data.json file back to docker container ... ${RESET}"
-                docker cp "$PERFORMANCE_DATA_DIR"/performance-data.json $CODEWIND_CONTAINER_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST
-                checkExitCode $? "Failed to copy data.json file to docker container."
+                if [[ -f "$PERFORMANCE_DATA_DIR"/performance-data.json ]]; then
+                    echo -e "${BLUE}>> Copying data.json file back to docker container ... ${RESET}"
+                    docker cp "$PERFORMANCE_DATA_DIR"/performance-data.json $CODEWIND_CONTAINER_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST
+                    checkExitCode $? "Failed to copy data.json file to docker container."
+                fi
             fi
-        fi
 
-        docker exec -i $CODEWIND_CONTAINER_ID bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
-        docker cp $CODEWIND_CONTAINER_ID:/test_output.xml $TEST_OUTPUT
-    elif [ $TEST_TYPE == "kube" ]; then
-        if [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
-            echo -e "${BLUE}>> Creating data directory in PFE kube if it does not exist already ... ${RESET}"
-            kubectl exec -i $CODEWIND_POD_ID -- bash -c "$PERFORMANCE_TEST_DIR"
-            checkExitCode $? "Failed to create data directory in PFE kube."
+            docker exec -i $CODEWIND_CONTAINER_ID bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
+            docker cp $CODEWIND_CONTAINER_ID:/test_output.xml $TEST_OUTPUT
+        elif [ $TEST_TYPE == "kube" ]; then
+            if [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
+                echo -e "${BLUE}>> Creating data directory in PFE kube if it does not exist already ... ${RESET}"
+                kubectl exec -i $CODEWIND_POD_ID -- bash -c "$PERFORMANCE_TEST_DIR"
+                checkExitCode $? "Failed to create data directory in PFE kube."
 
-            if [[ -f "$PERFORMANCE_DATA_DIR"/performance-data.json ]]; then
-                echo -e "${BLUE}>> Copying data.json file back to docker container ... ${RESET}"
-                kubectl cp "$PERFORMANCE_DATA_DIR"/performance-data.json $CODEWIND_POD_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST
-                checkExitCode $? "Failed to copy data.json file to docker container."
+                if [[ -f "$PERFORMANCE_DATA_DIR"/performance-data.json ]]; then
+                    echo -e "${BLUE}>> Copying data.json file back to docker container ... ${RESET}"
+                    kubectl cp "$PERFORMANCE_DATA_DIR"/performance-data.json $CODEWIND_POD_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST
+                    checkExitCode $? "Failed to copy data.json file to docker container."
+                fi
             fi
-        fi
 
-        kubectl exec -i $CODEWIND_POD_ID -- bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
-        kubectl cp $CODEWIND_POD_ID:/test_output.xml $TEST_OUTPUT
+            kubectl exec -i $CODEWIND_POD_ID -- bash -c "$TURBINE_EXEC_TEST_CMD" | tee $TEST_LOG
+            kubectl cp $CODEWIND_POD_ID:/test_output.xml $TEST_OUTPUT
+        fi
+    elif [ $TEST_SUITE == "unit" ]; then
+        cd $TURBINE_SERVER_DIR
+        export JUNIT_REPORT_PATH=$TEST_OUTPUT
+        npm run $TEST_SUITE:test:xml | tee $TEST_LOG
+        checkExitCode $? "Failed on executing the Turbine unit tests."
+        cd -
     fi
     echo -e "${BLUE}Test logs available at: $TEST_LOG ${RESET}"
 
-    # Cronjob machines need to set up CRONJOB_RUN=y to push test restuls to dashboard
+    # Cronjob machines need to set up CRONJOB_RUN=y to push test results to dashboard
     if [[ (-n $CRONJOB_RUN) ]]; then
         echo -e "${BLUE}Upload test results to the test dashboard. ${RESET}\n"
         if [[ (-z $DASHBOARD_IP) ]]; then
@@ -264,7 +273,7 @@ while getopts "t:s:d:h" OPTION; do
         s)
             TEST_SUITE=$OPTARG
             # Check if test suite argument is corrent
-            if [[ ($TEST_SUITE != "functional") ]]; then
+            if [[ ($TEST_SUITE != "functional") && ($TEST_SUITE != "unit") ]]; then
                 echo -e "${RED}Test suite argument is not correct. ${RESET}\n"
                 usage
                 exit 1

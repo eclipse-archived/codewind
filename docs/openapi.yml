@@ -327,6 +327,11 @@ paths:
         200:
           description: >
             The project uploads completed successfully and it will now be built.
+          content:
+            text/html:
+              schema:
+                type: string
+                example: OK
         404:
           description: Project with given projectiD was not found.
         500:
@@ -1737,10 +1742,12 @@ components:
         fileList:
           description: an array of all files the project contains
           type: array
+          nullable: true
           example: ["/project/file1", "/project/file2", "project/modifiedfile1"]
         directoryList:
           description: an array of all directories the project contains
           type: array
+          nullable: true
           example: ["/project"]
         modifiedList:
           description: an array of files that have been modified since the last project upload

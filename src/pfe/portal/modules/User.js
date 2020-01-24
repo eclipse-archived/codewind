@@ -26,6 +26,7 @@ const RegistrySecretsError = require('./utils/errors/RegistrySecretsError.js');
 const FilewatcherError = require('./utils/errors/FilewatcherError');
 const log = new Logger('User.js');
 const util = require('util');
+const { installBuiltInExtensions } = require('./utils/installExtensions');
 
 /**
  * The User class
@@ -102,7 +103,7 @@ module.exports = class User {
       // Attempt to install built-in extension packages
       log.info(`Installing extentions for user ${this.user_id}`);
       try {
-        await this.extensionList.installBuiltInExtensions(this.directories.extensions);
+        await installBuiltInExtensions(this.directories.extensions);
       } catch (error) {
         log.error(`Failed to install built-in Codewind extensions. Error ${util.inspect(error)}`);
       }
@@ -469,6 +470,7 @@ module.exports = class User {
       projectID: projectID,
       status: 'success'
     };
+
     // Stop streaming the logs files.
     project.stopStreamingAllLogs();
     // If the project is closed or validating or of unknown language
@@ -548,6 +550,16 @@ module.exports = class User {
     } catch (err) {
       // Log file could be missing if the project never built.
     }
+
+    // Delete temp files from PFE's /codewind-workspace/cw-temp/<project> location
+    const cwTempPath = path.join(project.workspace, "cw-temp", project.directory);
+    try {
+      await cwUtils.forceRemove(cwTempPath);
+    } catch (err) {
+      log.error(`Unable to delete temp files from ${cwTempPath}`)
+      log.error(err);
+    }
+
   }
 
 

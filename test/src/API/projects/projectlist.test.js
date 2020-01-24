@@ -22,7 +22,7 @@ describe('Project-list tests', function() {
         let originalProjectIDs;
         let projectID;
         const projectName = `projectlist${Date.now()}`;
-        const pathToLocalRepo = path.join(TEMP_TEST_DIR, projectName);
+        const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
 
         it('should return a list of projectIDs', async function() {
             originalProjectIDs = await projectService.getProjectIDs();
@@ -31,7 +31,7 @@ describe('Project-list tests', function() {
 
         it('should create a project', async function() {
             this.timeout(testTimeout.med);
-            projectID = await projectService.createProjectFromTemplate(projectName, 'nodejs');
+            projectID = await projectService.createProjectFromTemplate(projectName, 'nodejs', pathToLocalProject);
         });
 
         it('should return the same list but now including the extra projectID', async function() {
@@ -41,7 +41,7 @@ describe('Project-list tests', function() {
 
         it('should delete the extra project', async function() {
             this.timeout(testTimeout.med);
-            await projectService.removeProject(pathToLocalRepo, projectID);
+            await projectService.removeProject(pathToLocalProject, projectID);
         });
 
         it('should return the original list of projectIDs', async function() {

@@ -66,7 +66,11 @@ if [ $? -ne 0 ]; then
 fi
 cd ../../..
 
-# Start microclimate.
+# Tell PFE to start with code coverage enabled
+export PFE_DEV_NODE_ENV=production # Don't install devDependencies for test
+export PFE_CODE_COVERAGE=true # Run with nyc code coverage enabled
+
+# Start Codewind
 ./run.sh;
 
 # Build the tests and run them against the portal.
@@ -83,9 +87,17 @@ npm run test
 rc=$?;
 cd ..
 
+# Combine the code coverage the unit and API tests
+node ./test/scripts/generate_complete_coverage.js
+if [ $? -ne 0 ]; then
+    printf "\n\n${RED}Code Coverage could not be generated${RESET}\n\n"
+fi
+
 # Output portal logs
 printf "\n${MAGENTA}********** codewind-pfe logs **********\n\n"
-docker logs codewind-pfe
+docker logs codewind-pfe > codewind-pfe-test-sh-output.log
+
+printf "\n\n\nCodewind logs outputted to $PWD/codewind-pfe-test-sh-output.log\n"
 printf "${RESET}"
 
 # Shutdown and cleanup.
