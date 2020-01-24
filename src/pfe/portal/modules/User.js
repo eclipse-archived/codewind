@@ -469,6 +469,15 @@ module.exports = class User {
       projectID: projectID,
       status: 'success'
     };
+
+    // Delete files from PFE's /codewind-workspace/cw-temp/<project> location
+    const cwTempPath = path.join(project.workspace, "cw-temp", project.directory);
+    try {
+      await cwUtils.forceRemove(cwTempPath);
+    } catch (err) {
+      log.info(`Unable to delete temp files from ${cwTempPath}`)
+    }
+
     // Stop streaming the logs files.
     project.stopStreamingAllLogs();
     // If the project is closed or validating or of unknown language
