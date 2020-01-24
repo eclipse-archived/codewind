@@ -311,6 +311,13 @@ pipeline {
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                         sh '''#!/usr/bin/env bash
                             DIR=`pwd`;
+                            export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
+
+                            # Install nvm to easily set version of node to use
+                            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                            export NVM_DIR="$HOME/.nvm" 
+                            . $NVM_DIR/nvm.sh
+                            nvm i 10
 
                             docker image inspect eclipse/codewind-pfe-amd64:test -f '{{.Config.Env}}' | grep ENABLE_CODE_COVERAGE=true
                             if [ $? -eq 0 ]; then
