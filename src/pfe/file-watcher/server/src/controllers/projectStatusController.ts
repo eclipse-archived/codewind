@@ -491,7 +491,7 @@ function pingInTransitApplications(): void {
                                             pingCount = 1;
                                         }
                                     }
-                                } else if (oldState === AppState.stopping && newMsg) {
+                                } else if (((oldState === AppState.stopping) || (oldState === AppState.starting)) && newMsg) {
                                     newState = AppState.stopped;
                                     pingCountMap.delete(projectID);
                                 }

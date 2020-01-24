@@ -36,3 +36,5 @@ export enum StartModes { run = "run", debug = "debug", debugNoInit = "debugNoIni
 export enum ControlCommands { stop = "stop", start = "start", restart = "restart" }
 
 export enum MavenFlags { profile = "-P ", properties = "-D " }
+
+export const serverLessAppPort = "-1";
