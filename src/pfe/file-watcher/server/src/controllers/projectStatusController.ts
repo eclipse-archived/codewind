@@ -18,6 +18,7 @@ import * as projectExtensions from "../extensions/projectExtensions";
 import { actionMap } from "../projects/actions";
 import { ContainerStates } from "../projects/constants";
 import { ProjectInfo } from "../projects/Project";
+import * as constants from "../projects/constants";
 
 export enum STATE_TYPES {
     appState = "appState",
@@ -491,7 +492,7 @@ function pingInTransitApplications(): void {
                                             pingCount = 1;
                                         }
                                     }
-                                } else if (((oldState === AppState.stopping) || (oldState === AppState.starting)) && newMsg) {
+                                } else if ((oldState === AppState.stopping) || (projectInfo.appPorts.includes(constants.serverLessAppPort)) && newMsg) {
                                     newState = AppState.stopped;
                                     pingCountMap.delete(projectID);
                                 }
