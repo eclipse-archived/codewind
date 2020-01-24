@@ -492,7 +492,7 @@ function pingInTransitApplications(): void {
                                             pingCount = 1;
                                         }
                                     }
-                                } else if ((oldState === AppState.stopping) || (projectInfo.appPorts.includes(constants.serverLessAppPort)) && newMsg) {
+                                } else if ((oldState === AppState.stopping) || (projectInfo.appPorts.includes(constants.disablePingPort)) && newMsg) {
                                     newState = AppState.stopped;
                                     pingCountMap.delete(projectID);
                                 }
