@@ -75,7 +75,7 @@
   },
   "projectUtil": {
     "projectInfoError": "could not retrieve project info",
-    "serverLessApp": "server less application detected. app status set to stopped",
+    "pingDisabled": "The port is set to {{disablePingPort}}, pinging is disabled and the app status is set to stopped.",
     "pingMessage": "Pinging http://{{ip}}:{{port}}{{- path}}",
     "defaultPingPathMessage": "Pinging http://{{ip}}:{{port}}{{- path}} and http://{{ip}}:{{port}}/",
     "appStatusError": {

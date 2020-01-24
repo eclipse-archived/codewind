@@ -196,7 +196,7 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             }
         }
 
-        if (isContainerRunning && !isApplicationPortExposed && applicationPort != constants.serverLessAppPort) {
+        if (isContainerRunning && !isApplicationPortExposed && applicationPort != constants.disablePingPort) {
             logger.logProjectInfo("The requested application port is not exposed: " + applicationPort, projectInfo.projectID);
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
