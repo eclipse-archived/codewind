@@ -987,7 +987,7 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
         }
 
         if (projectInfo.appPorts.includes(constants.serverLessAppPort)) {
-            logger.logInfo(`Found app port set to ${constants.serverLessAppPort} for server less project ${projectInfo.projectID}`);
+            logger.logProjectInfo(`App port set to ${constants.serverLessAppPort}. This indicates ${projectID} is a server less application.`, projectID);
             handler({ error: await locale.getTranslation("projectUtil.serverLessApp") });
             return;
         }
