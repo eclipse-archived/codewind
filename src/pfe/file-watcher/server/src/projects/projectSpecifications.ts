@@ -18,6 +18,7 @@ import * as projectExtensions from "../extensions/projectExtensions";
 import * as projectUtil from "./projectUtil";
 import { Operation } from "./operation";
 import * as io from "../utils/socket";
+import * as constants from "./constants";
 const xss = require("xss"); // tslint:disable-line:no-require-imports
 
 export const specificationSettingMap = new Map<string, (args: any, operation: Operation) => any>();
@@ -195,7 +196,7 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             }
         }
 
-        if (isContainerRunning && !isApplicationPortExposed) {
+        if (isContainerRunning && !isApplicationPortExposed && applicationPort != constants.serverLessAppPort) {
             logger.logProjectInfo("The requested application port is not exposed: " + applicationPort, projectInfo.projectID);
             const data: ProjectSettingsEvent = {
                 operationId: operation.operationId,
