@@ -11,26 +11,27 @@
 const express = require('express');
 const path = require('path');
 
+const Logger = require('../utils/Logger');
 const monitorService = require('./service');
 
 const router = express.Router();
+const log = new Logger(__filename);
 
 router.get('/', (req, res) => {
-    console.log('[GET /performance/monitor]');
     res.send(monitorService.getLatestProjectData(req.query.appOrigin));
 });
 
 router.post('/', async (req, res) => {
-    console.log('[POST /performance/monitor]');
     const { appOrigin, projectLanguage } = req.query;
-    res.send(`Polling ${appOrigin}`);
+    const msg = `Start scraping ${projectLanguage} project at ${appOrigin}`
+    res.send(msg);
+    log.info(msg);
     monitorService.resetProjectData(appOrigin);
     await monitorService.scrapeProjectData(appOrigin, projectLanguage);
-    console.log(`Finished scraping ${projectLanguage} project at ${appOrigin}`);
+    log.info(`Finished scraping ${projectLanguage} project at ${appOrigin}`);
 });
 
 router.get('/environment', async (req, res) => {
-    console.log('[GET /performance/monitor/environment]');
     const { appOrigin } = req.query;
     const envData = await monitorService.getEnvData(appOrigin);
     res.send(envData);
@@ -39,7 +40,6 @@ router.get('/environment', async (req, res) => {
 router.use('/dashboard', express.static(path.join(__dirname, 'public')));
 
 router.get('/dashboard/:projectLanguage', (req, res) => {
-    console.log('[GET /performance/codewind-metrics/dashboard]');
     const { projectLanguage } = req.params;
     res.sendFile(path.join(__dirname, 'public', `${projectLanguage}-metrics.html`));
 });

@@ -17,6 +17,8 @@ const express = require('express');
 require('express-async-errors');
 const bodyParser = require('body-parser');
 const childProcess = require('child_process');
+const Logger = require('./utils/Logger');
+
 const app = express();
 const serverPort = 9095;
 const server = app.listen(serverPort, () => console.log(`Performance server listening on port ${serverPort}!`))
@@ -24,6 +26,8 @@ const io = require('socket.io').listen(server);
 const path = require('path');
 
 const monitor = require('./monitor/route');
+
+const log = new Logger(__filename);
 
 var loadProcess;
 let projectURL;
@@ -33,6 +37,7 @@ const imageBuildTime = process.env.IMAGE_BUILD_TIME
 
 
 app.use(bodyParser.json());
+log.logAllApiCalls(app); // must be called after 'app.use(bodyParser)', and before 'app.use(router)'
 app.get('/', (req, res) => res.send('Performance Container is running...'));
 
 app.get('/health', (req, res) => res.json({ status: 'UP' }));
@@ -53,7 +58,6 @@ app.get('/performance/api/v1/environment', (req, res) => {
 * is already in progress, 500 if error
 */
 app.post('/api/v1/runload', async function (req, res) {
-    console.log("LoadRunner received load run request " + JSON.stringify(req.body));
     try {
         if (loadProcess) {
             // A run is already in progress
@@ -83,7 +87,6 @@ app.post('/api/v1/runload', async function (req, res) {
 * being run on that given project, 500 if error
 */
 app.post('/api/v1/cancelLoad', async function (req, res) {
-    console.log("LoadRunner received cancel request " + JSON.stringify(req.body));
     try {
         // Check url of project running load against url of cancel request
         if (req.body.url == projectURL) {
