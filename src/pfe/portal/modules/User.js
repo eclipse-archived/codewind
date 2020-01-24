@@ -26,7 +26,6 @@ const RegistrySecretsError = require('./utils/errors/RegistrySecretsError.js');
 const FilewatcherError = require('./utils/errors/FilewatcherError');
 const log = new Logger('User.js');
 const util = require('util');
-const { installBuiltInExtensions } = require('./utils/installExtensions');
 
 /**
  * The User class
@@ -103,7 +102,7 @@ module.exports = class User {
       // Attempt to install built-in extension packages
       log.info(`Installing extentions for user ${this.user_id}`);
       try {
-        await installBuiltInExtensions(this.directories.extensions);
+        await this.extensionList.installBuiltInExtensions(this.directories.extensions);
       } catch (error) {
         log.error(`Failed to install built-in Codewind extensions. Error ${util.inspect(error)}`);
       }
