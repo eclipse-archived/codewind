@@ -7,8 +7,6 @@
     "start": "./npm-start.sh",
     "prod": "node server.js",
     "dev": "nodemon --inspect=0.0.0.0:9777 server.js",
-    "coverage": "nyc node server.js",
-    "local": "node server.js --local",
     "eslint": "eslint .",
     "pushLocal": "npm run eslint && ./pushLocal.sh"
   },
@@ -59,6 +57,6 @@
     "eslint": "^5.16.0",
     "eslint-plugin-microclimate-portal-eslint": "file:eslint-rules",
     "nodemon": "^1.19.1",
-    "nyc": "^14.0.0"
+    "nyc": "^15.0.0"
   }
 }
