@@ -439,7 +439,8 @@ module.exports = class FileWatcher {
           projectWatchStateId: projectWatchStateId,
           projectID: projectID,
           pathToMonitor: pathToMonitor,
-          ignoredPaths: ignoredPaths
+          ignoredPaths: ignoredPaths,
+          refPaths: []
         }
         if (fwProject.refPaths) {
           data.refPaths = fwProject.refPaths.map((refPath) => {
@@ -481,6 +482,7 @@ module.exports = class FileWatcher {
         projectID: projectID,
         pathToMonitor: pathToMonitor,
         ignoredPaths: ignoredPaths,
+        refPaths: [],
         projectCreationTime: time
       }
       if (fwProject.refPaths) {

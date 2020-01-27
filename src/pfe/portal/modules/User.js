@@ -269,13 +269,13 @@ module.exports = class User {
           projectWatchStateId: project.projectWatchStateId,
           pathToMonitor: project.pathToMonitor,
           ignoredPaths: project.ignoredPaths,
+          refPaths: [],
           projectCreationTime: project.creationTime
         }
 
         // read ref paths file for additional refPaths to monitor
         const refPathsFile = await project.readRefPathsFile();
         if (refPathsFile.refPaths instanceof Array) {
-          projectUpdate.refPaths = [];
           refPathsFile.refPaths.forEach((refPath) => {
             if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
                 (typeof refPath.to === "string" && (refPath.to = refPath.to.trim()).length > 0)) {
@@ -565,7 +565,7 @@ module.exports = class User {
     }
 
     // Delete temp files from PFE's /codewind-workspace/cw-temp/<project> location
-    const cwTempPath = path.join(project.workspace, "cw-temp", project.directory);
+    const cwTempPath = path.join(global.codewind.CODEWIND_WORKSPACE, "cw-temp", project.directory);
     try {
       await cwUtils.forceRemove(cwTempPath);
     } catch (err) {
