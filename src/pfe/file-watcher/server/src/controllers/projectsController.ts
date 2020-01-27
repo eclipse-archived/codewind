@@ -1076,7 +1076,7 @@ export async function updateProjectInfo(projectID: string, keyValuePair: UpdateP
     }
 
     // remove case
-    if (!keyValuePair.value) {
+    if (typeof keyValuePair.value === "undefined" || keyValuePair.value === null) {
         delete projectInfo[keyValuePair.key];
     }
 
