@@ -565,7 +565,7 @@ module.exports = class User {
     }
 
     // Delete temp files from PFE's /codewind-workspace/cw-temp/<project> location
-    const cwTempPath = path.join(global.codewind.CODEWIND_WORKSPACE, "cw-temp", project.directory);
+    const cwTempPath = path.join(project.workspace, "cw-temp", project.directory);
     try {
       await cwUtils.forceRemove(cwTempPath);
     } catch (err) {
