@@ -517,6 +517,10 @@ paths:
         responses:
           202:
             description: if project deletion was accepted
+            content:
+              text/html:
+                schema:
+                  type: string
           404:
             description: if the project with id was not found
           409:
