@@ -306,38 +306,39 @@ pipeline {
                             TAG=$GIT_BRANCH
                         fi        
 
+                        echo "Skip publishing docker images for $GIT_BRANCH branch"
+
                         # Publish docker images with a filter for branch name
                         # Acceptable branch names: master, start with '<number>.<number>'
-                        if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
+                        # if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
+                            # declare -a DOCKER_IMAGE_ARRAY=("codewind-performance-amd64" 
+                                                        # "codewind-pfe-amd64" 
+                                                        # "codewind-keycloak-amd64"
+                                                        # "codewind-gatekeeper-amd64")
 
-                            declare -a DOCKER_IMAGE_ARRAY=("codewind-performance-amd64" 
-                                                        "codewind-pfe-amd64" 
-                                                        "codewind-keycloak-amd64"
-                                                        "codewind-gatekeeper-amd64")
+                            # chmod u+x ./script/publish.sh
 
-                            chmod u+x ./script/publish.sh
+                            # for i in "${DOCKER_IMAGE_ARRAY[@]}"
+                            # do
+                                # echo "Publishing $REGISTRY/$i:$TAG"
+                                # ./script/publish.sh $i $REGISTRY $TAG
+                            # done
 
-                            for i in "${DOCKER_IMAGE_ARRAY[@]}"
-                            do
-                                echo "Publishing $REGISTRY/$i:$TAG"
-                                ./script/publish.sh $i $REGISTRY $TAG
-                            done
+                            # if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
+                                # IFS='.' # set '.' as delimiter
+                                # read -ra TOKENS <<< "$GIT_BRANCH"    
+                                # IFS=' ' # reset delimiter
+                                # export TAG_CUMULATIVE=${TOKENS[0]}.${TOKENS[1]}
 
-                            if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
-                                IFS='.' # set '.' as delimiter
-                                read -ra TOKENS <<< "$GIT_BRANCH"    
-                                IFS=' ' # reset delimiter
-                                export TAG_CUMULATIVE=${TOKENS[0]}.${TOKENS[1]}
-
-                                for i in "${DOCKER_IMAGE_ARRAY[@]}"
-                                do
-                                    echo "Publishing $REGISTRY/$i:$TAG_CUMULATIVE"
-                                    ./script/publish.sh $i $REGISTRY $TAG_CUMULATIVE
-                                done
-                            fi
-                        else
-                            echo "Skip publishing docker images for $GIT_BRANCH branch"
-                        fi
+                                # for i in "${DOCKER_IMAGE_ARRAY[@]}"
+                                # do
+                                    # echo "Publishing $REGISTRY/$i:$TAG_CUMULATIVE"
+                                    # ./script/publish.sh $i $REGISTRY $TAG_CUMULATIVE
+                                # done
+                            # fi
+                        # else
+                            # echo "Skip publishing docker images for $GIT_BRANCH branch"
+                        # fi
                     '''
                 }
              }
