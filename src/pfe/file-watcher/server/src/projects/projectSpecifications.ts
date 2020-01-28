@@ -443,11 +443,10 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
     const data: ProjectSettingsEvent = {
         operationId: operation.operationId,
         projectID: projectID,
-        status: "success"
+        status: "success",
+        ignoredPaths: ignoredPaths,
+        refPaths: projectInfo.refPaths
     };
-    if (ignoredPaths) {
-        data.ignoredPaths = ignoredPaths;
-    }
 
     logger.logProjectInfo("The ignored path list for file watching was updated successfully.", projectID);
     io.emitOnListener("projectSettingsChanged", data);
@@ -521,6 +520,7 @@ const reconfigRefPathsForDaemon = async function (refPaths: RefPath[], operation
         operationId: operation.operationId,
         projectID: projectID,
         status: "success",
+        ignoredPaths: projectInfo.ignoredPaths,
         refPaths: refPaths
     };
 
