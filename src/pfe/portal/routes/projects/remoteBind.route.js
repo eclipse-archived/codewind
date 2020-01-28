@@ -199,7 +199,9 @@ async function uploadFile(req, res) {
  * @return 404 if project doesn't exist
  * @return 500 if internal error
  */
-router.post('/api/v1/projects/:id/upload/end', validateReq, async (req, res) => {
+router.post('/api/v1/projects/:id/upload/end', validateReq, uploadEnd);
+
+async function uploadEnd(req, res) {
   const projectID = req.sanitizeParams('id');
   const keepFileList = req.sanitizeBody('fileList') || [];
   const keepDirList = req.sanitizeBody('directoryList') || [];
@@ -245,20 +247,26 @@ router.post('/api/v1/projects/:id/upload/end', validateReq, async (req, res) => 
 
         res.sendStatus(200);
 
-        await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
-
-        if (project.injectMetrics) {
-          try {
-            await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
-          } catch (error) {
-            log.warn(error);
+        const wasProjectChanged = directoriesToDelete.length > 0
+          || filesToDelete.length > 0
+          || modifiedList.length > 0;
+        if (wasProjectChanged) {
+          await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
+  
+          if (project.injectMetrics) {
+            try {
+              await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
+            } catch (error) {
+              log.warn(error);
+            }
           }
+          await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
+          timersyncend = Date.now();
+          let timersynctime = (timersyncend - timersyncstart) / 1000;
+          log.info(`Total time to sync project ${project.name} to build container is ${timersynctime} seconds`);
+          timersyncstart = 0;
         }
-        await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
-        timersyncend = Date.now();
-        let timersynctime = (timersyncend - timersyncstart) / 1000;
-        log.info(`Total time to sync project ${project.name} to build container is ${timersynctime} seconds`);
-        timersyncstart = 0;
+
         let updatedProject = {
           projectID,
           creationTime: timeStamp
@@ -273,7 +281,7 @@ router.post('/api/v1/projects/:id/upload/end', validateReq, async (req, res) => 
     log.error(err);
     res.status(500).send(err);
   }
-});
+}
 
 function getPathsToDelete(existingPathArray, newPathArray) {
   const pathsToDeleteSet = new Set(existingPathArray);

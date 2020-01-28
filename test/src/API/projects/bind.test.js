@@ -149,7 +149,7 @@ describe('Bind projects tests', () => {
             });
         });
     });
-    describe('PUT /bind/upload', () => {
+    describe('PUT /upload', () => {
         describe('Failure Cases', () => {
             it('returns 404 for a project that does not exist', async function() {
                 this.timeout(testTimeout.short);
