@@ -43,8 +43,8 @@ describe('Projects API tests', function() {
         
         it('returns the project', async function() {
             const res = await projectService.getProject(projectID);
-            const { project } = res.body;
-            project.name.should.equal(projectName);
+            res.should.satisfyApiSpec;
+            res.body.name.should.equal(projectName);
         });
 
         it('deletes the extra project', async function() {
