@@ -1900,7 +1900,7 @@ components:
           type: array
           example: [ "/target", "/.m2", "*/.git/*" ]
         refPaths:
-          description: additional referenced paths to monitor
+          description: additional referenced paths outside of the project folder to monitor
           type: array
           items:
             $ref: '#/components/schemas/WatchListRefPath'
