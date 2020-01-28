@@ -116,11 +116,7 @@ async function bindStart(req, res) {
     if (err.code === 'INVALID_PROJECT_NAME'){
       res.status(400).send(err.info);
     } else {
-      let errorMessage = ""
-      if (err) {
-        errorMessage = err.info || err
-      }
-      res.status(500).send(`Project bind failed ${errorMessage}`);
+      res.status(500).send(`Project bind failed ${err.info || err}`);
     }
     log.error(err);
     return;
@@ -456,7 +452,9 @@ async function bindEnd(req, res) {
  * @return 404 if the project with id was not found
  * @return 409 if unbind was already in progress
  */
-router.post('/api/v1/projects/:id/unbind', validateReq, async function (req, res) {
+router.post('/api/v1/projects/:id/unbind', validateReq, unbind);
+
+async function unbind(req, res) {
   const user = req.cw_user;
   // Null checks on projectID done by validateReq.
   const projectID = req.sanitizeParams('id');
@@ -485,6 +483,6 @@ router.post('/api/v1/projects/:id/unbind', validateReq, async function (req, res
     user.uiSocket.emit('projectDeletion', data);
     log.error(`Error deleting project: ${util.inspect(data)}`);
   }
-});
+}
 
 module.exports = router;
