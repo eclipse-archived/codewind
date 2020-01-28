@@ -227,6 +227,16 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         logger.logProjectInfo("Initial start mode for project " + projectID + " is: " + startMode, projectID, projectName);
     }
 
+    const autoBuild = req.autoBuild;
+    if (autoBuild != undefined) {
+        if (typeof autoBuild != "boolean") {
+            const msg = "ERROR: autoBuild must be with type boolean" ;
+            return {  "statusCode": 400, "error": {"msg": msg }};
+        }
+        projectInfo.autoBuildEnabled = autoBuild;
+        logger.logProjectInfo("Initial autoBuildEnabled for project " + projectID + " is: " + autoBuild, projectID, projectName);
+    }
+
         // check if application port has been provided by Portal, if not, use the default app port of the project handler
         if (settings && settings.internalPort) {
             projectInfo.appPorts.push(settings.internalPort);
@@ -1194,6 +1204,7 @@ export interface ICreateProjectParams {
     startMode?: string;
     extension?: IProjectExtension;
     language?: string;
+    autoBuild?: boolean;
 }
 
 export interface IProjectExtension {
