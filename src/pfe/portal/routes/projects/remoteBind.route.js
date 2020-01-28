@@ -208,78 +208,89 @@ async function uploadEnd(req, res) {
   const modifiedList = req.sanitizeBody('modifiedList') || [];
   const timeStamp = req.sanitizeBody('timeStamp');
   const IFileChangeEvent = [];
-
   const user = req.cw_user;
+  
+  let project;
+  let pathToTempProj;
+  let directoriesToDelete;
+  let filesToDelete;
+  
   try {
     const project = user.projectList.retrieveProject(projectID);
-    if (project) {
-      const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
-      const tempProjectExists = await fs.pathExists(pathToTempProj);
-      if (modifiedList.length === 0 && !tempProjectExists) {
-        log.info('Temporary project directory doesn\'t exist and modified list is empty, not syncing any files');
-        res.status(404).send('No files have been synced');
-      } else {
-        const pathToProj = project.projectPath();
-
-        // Delete by directory
-        const currentDirectoryList = await recursivelyListFilesOrDirectories(true, pathToTempProj);
-        const directoriesToDelete = await getPathsToDelete(currentDirectoryList, keepDirList);
-        if (directoriesToDelete.length > 0) {
-          // Get the highest level directory
-          const topLevelDirectories = getTopLevelDirectories(directoriesToDelete);
-          log.info(`Removing locally deleted directories from project: ${project.name}, ID: ${project.projectID} - ` +
-          `${topLevelDirectories.join(', ')}`);
-          await deletePathsInArray(pathToTempProj, topLevelDirectories);
-          await deletePathsInArray(pathToProj, topLevelDirectories);
-
-        }
-
-        // Delete by file
-        const currentFileList = await recursivelyListFilesOrDirectories(false, pathToTempProj);
-        const filesToDelete = await getPathsToDelete(currentFileList, keepFileList);
-        if (filesToDelete.length > 0) {
-          log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
-          `${filesToDelete.join(', ')}`);
-          await deletePathsInArray(pathToTempProj, filesToDelete);
-          // remove the files from pfe container
-          await deletePathsInArray(pathToProj, filesToDelete);
-        }
-
-        res.sendStatus(200);
-
-        const wasProjectChanged = directoriesToDelete.length > 0
-          || filesToDelete.length > 0
-          || modifiedList.length > 0;
-        if (wasProjectChanged) {
-          await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
-  
-          if (project.injectMetrics) {
-            try {
-              await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
-            } catch (error) {
-              log.warn(error);
-            }
-          }
-          await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
-          timersyncend = Date.now();
-          let timersynctime = (timersyncend - timersyncstart) / 1000;
-          log.info(`Total time to sync project ${project.name} to build container is ${timersynctime} seconds`);
-          timersyncstart = 0;
-        }
-
-        let updatedProject = {
-          projectID,
-          creationTime: timeStamp
-        }
-        await user.projectList.updateProject(updatedProject);
-
-      }
-    } else {
+    if (!project) {
       res.sendStatus(404);
+      return;
     }
+      
+    pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
+    const tempProjectExists = await fs.pathExists(pathToTempProj);
+    if (modifiedList.length === 0 && !tempProjectExists) {
+      log.info('Temporary project directory doesn\'t exist and modified list is empty, not syncing any files');
+      res.status(404).send('No files have been synced');
+      return;
+    }
+    const pathToProj = project.projectPath();
+
+    // Delete by directory
+    const currentDirectoryList = await recursivelyListFilesOrDirectories(true, pathToTempProj);
+    directoriesToDelete = await getPathsToDelete(currentDirectoryList, keepDirList);
+    if (directoriesToDelete.length > 0) {
+      // Get the highest level directory
+      const topLevelDirectories = getTopLevelDirectories(directoriesToDelete);
+      log.info(`Removing locally deleted directories from project: ${project.name}, ID: ${project.projectID} - ` +
+      `${topLevelDirectories.join(', ')}`);
+      await deletePathsInArray(pathToTempProj, topLevelDirectories);
+      await deletePathsInArray(pathToProj, topLevelDirectories);
+    }
+
+    // Delete by file
+    const currentFileList = await recursivelyListFilesOrDirectories(false, pathToTempProj);
+    filesToDelete = await getPathsToDelete(currentFileList, keepFileList);
+    if (filesToDelete.length > 0) {
+      log.info(`Removing locally deleted files from project: ${project.name}, ID: ${project.projectID} - ` +
+      `${filesToDelete.join(', ')}`);
+      await deletePathsInArray(pathToTempProj, filesToDelete);
+      // remove the files from pfe container
+      await deletePathsInArray(pathToProj, filesToDelete);
+    }
+
+    res.sendStatus(200);
+    
   } catch (err) {
     log.error(err);
     res.status(500).send(err);
+    return;
+  }
+      
+  try {
+    const wasProjectChanged = directoriesToDelete.length > 0
+      || filesToDelete.length > 0
+      || modifiedList.length > 0;
+    if (wasProjectChanged) {
+      await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
+
+      if (project.injectMetrics) {
+        try {
+          await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
+        } catch (error) {
+          log.warn(error);
+        }
+      }
+      await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
+      timersyncend = Date.now();
+      let timersynctime = (timersyncend - timersyncstart) / 1000;
+      log.info(`Total time to sync project ${project.name} to build container is ${timersynctime} seconds`);
+      timersyncstart = 0;
+    }
+
+    let updatedProject = {
+      projectID,
+      creationTime: timeStamp
+    }
+    await user.projectList.updateProject(updatedProject);
+
+  } catch (err) {
+    log.error(err);
   }
 }
 
