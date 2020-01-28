@@ -204,7 +204,6 @@ pipeline {
                                 if [ "$image" = "$PFE" ]; then
                                     # Now overwrite the PFE image ':test' tag with new changes
                                     echo -e "FROM eclipse/codewind-pfe-amd64:latest\nENV ENABLE_CODE_COVERAGE=true" >> pfe-test-dockerfile
-                                    cat pfe-test-dockerfile
                                     docker build -t eclipse/codewind-pfe-amd64:test -f pfe-test-dockerfile .
                                     rm pfe-test-dockerfile
                                 else
