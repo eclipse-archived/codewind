@@ -216,7 +216,7 @@ async function uploadEnd(req, res) {
   let filesToDelete;
   
   try {
-    const project = user.projectList.retrieveProject(projectID);
+    project = user.projectList.retrieveProject(projectID);
     if (!project) {
       res.sendStatus(404);
       return;
