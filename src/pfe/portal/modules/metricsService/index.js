@@ -25,12 +25,16 @@ const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 const metricsCollectorInjectionFunctions = {
   nodejs: nodeMetricsService.injectMetricsCollectorIntoNodeProject,
   liberty: injectMetricsCollectorIntoLibertyProject,
+  // Open Liberty currently identifies as docker
+  docker: injectMetricsCollectorIntoLibertyProject,
   spring: injectMetricsCollectorIntoSpringProject,
 }
 
 const metricsCollectorRemovalFunctions = {
   nodejs: nodeMetricsService.removeMetricsCollectorFromNodeProject,
   liberty: removeMetricsCollectorFromLibertyProject,
+  // Open Liberty currently identifies as docker
+  docker: removeMetricsCollectorFromLibertyProject,
   spring: removeMetricsCollectorFromSpringProject,
 }
 
@@ -103,6 +107,7 @@ async function backUpFile(pathToOriginal, pathToBackup) {
 }
 
 async function injectMetricsCollectorIntoLibertyProject(projectDir) {
+  let jvmOptionsPresent = false;
   const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
   const pathToBackupJvmOptions = getPathToBackupJvmOptions(projectDir);
   if ((await fs.exists(pathToBackupPomXml)) || (await fs.exists(pathToBackupJvmOptions))) {
@@ -114,8 +119,11 @@ async function injectMetricsCollectorIntoLibertyProject(projectDir) {
   await injectMetricsCollectorIntoPomXml(pathToPomXml);
 
   const pathToJvmOptions = getPathToJvmOptions(projectDir);
-  await backUpFile(pathToJvmOptions, pathToBackupJvmOptions);
-  await injectMetricsCollectorIntoJvmOptions(pathToJvmOptions);
+  if (await fs.exists(pathToJvmOptions)) {
+    await backUpFile(pathToJvmOptions, pathToBackupJvmOptions);
+    jvmOptionsPresent = true;
+  }
+  await injectMetricsCollectorIntoJvmOptions(pathToJvmOptions, jvmOptionsPresent);
 }
 
 async function injectMetricsCollectorIntoSpringProject(projectDir) {
@@ -279,8 +287,11 @@ async function injectMetricsCollectorIntoPomXml(pathToPomXml) {
   await fs.writeFile(pathToPomXml, newPomXml);
 }
 
-async function injectMetricsCollectorIntoJvmOptions(pathToJvmOptions) {
-  const originalJvmOptions = await fs.readFile(pathToJvmOptions, 'utf8');
+async function injectMetricsCollectorIntoJvmOptions(pathToJvmOptions, jvmOptionsPresent) {
+  let originalJvmOptions = '';
+  if (jvmOptionsPresent) {
+    originalJvmOptions = await fs.readFile(pathToJvmOptions, 'utf8');
+  }
   const newJvmOptions = getNewContentsOfJvmOptions(originalJvmOptions);
   log.trace(`Injecting metrics collector into project's jvm.options, which is now ${util.inspect(newJvmOptions)}`);
   await fs.writeFile(pathToJvmOptions, newJvmOptions);
@@ -299,7 +310,7 @@ function getNewContentsOfPomXml(originalContents) {
 }
 
 function getNewContentsOfJvmOptions(originalContents) {
-  const injectionString = '-javaagent:resources/javametrics-agent.jar'
+  const injectionString = '-javaagent:\${server.config.dir}/resources/javametrics-agent.jar'
   if (originalContents.includes(injectionString)) {
     return originalContents;
   } 
@@ -378,6 +389,19 @@ function getNewPomXmlDependencies(originalDependencies) {
 function getNewPomXmlBuildPlugins(originalBuildPlugins) {
   let codewindExeNeeded, agentExeNeeded, restExeNeeded, asmExeNeeded, mavenDepPluginNeeded;
   codewindExeNeeded = agentExeNeeded = restExeNeeded = asmExeNeeded = mavenDepPluginNeeded = true;
+  let serverName = 'defaultServer';
+  let jvmOptionsFileNeeded = false;
+
+  const libertyPluginIndex = originalBuildPlugins.findIndex(plugin => {
+    return (plugin.artifactId[0] === 'liberty-maven-plugin');
+  });
+  if (libertyPluginIndex != -1) {
+    serverName = originalBuildPlugins[libertyPluginIndex].configuration[0].serverName[0];
+    let jvmOptionsFile = originalBuildPlugins[libertyPluginIndex].configuration[0].jvmOptionsFile;
+    if (!Array.isArray(jvmOptionsFile)) {
+      jvmOptionsFileNeeded = true;
+    }
+  }
   const mavenDepPluginIndex = originalBuildPlugins.findIndex(plugin => {
     return (plugin.artifactId[0] === 'maven-dependency-plugin');
   });
@@ -411,12 +435,12 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
     newExecutionArray.push(
       {
         id: [ 'copy-javametrics-codewind' ],
-        phase: [ 'package' ],
+        phase: [ 'prepare-package' ],
         goals: [ { goal: [ 'copy-dependencies' ] } ],
         configuration: [
           {
             stripVersion: [ 'true' ],
-            outputDirectory: [ '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins' ],
+            outputDirectory: [ '${project.build.directory}/liberty/wlp/usr/servers/' + serverName + '/dropins' ],
             includeArtifactIds: [ 'javametrics-codewind' ]
           }
         ]
@@ -427,12 +451,12 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
     newExecutionArray.push(
       {
         id: [ 'copy-javametrics-rest' ],
-        phase: [ 'package' ],
+        phase: [ 'prepare-package' ],
         goals: [ { goal: [ 'copy-dependencies' ] } ],
         configuration: [
           {
             stripVersion: [ 'true' ],
-            outputDirectory: [ '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/dropins' ],
+            outputDirectory: [ '${project.build.directory}/liberty/wlp/usr/servers/' + serverName + '/dropins' ],
             includeArtifactIds: [ 'javametrics-rest' ]
           }
         ]
@@ -443,12 +467,12 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
     newExecutionArray.push(
       {
         id: [ 'copy-javametrics-agent' ],
-        phase: [ 'package' ],
+        phase: [ 'prepare-package' ],
         goals: [ { goal: [ 'copy-dependencies' ] } ],
         configuration: [
           {
             stripVersion: [ 'true' ],
-            outputDirectory: [ '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/' ],
+            outputDirectory: [ '${project.build.directory}/liberty/wlp/usr/servers/' + serverName + '/resources/' ],
             includeArtifactIds: [ 'javametrics-agent' ]
           }
         ]
@@ -459,11 +483,11 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
     newExecutionArray.push(
       {
         id: [ 'copy-javametrics-asm' ],
-        phase: [ 'package' ],
+        phase: [ 'prepare-package' ],
         goals: [ { goal: [ 'copy-dependencies' ] } ],
         configuration: [
           {
-            outputDirectory: [ '${project.build.directory}/liberty/wlp/usr/servers/defaultServer/resources/asm' ],
+            outputDirectory: [ '${project.build.directory}/liberty/wlp/usr/servers/' + serverName + '/resources/asm' ],
             includeGroupIds: [ 'org.ow2.asm' ],
             includeArtifactIds: [ 'asm,asm-commons' ]
           }
@@ -471,7 +495,7 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
       }
     );
   }
-
+  let newBuildPlugins = undefined;
   if (mavenDepPluginNeeded) {
     const metricsCollectorBuildPlugin = {
       groupId: [ 'org.apache.maven.plugins' ],
@@ -483,20 +507,25 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
         }
       ]
     };
-    const newBuildPlugins = originalBuildPlugins.concat(metricsCollectorBuildPlugin);
-    return newBuildPlugins;
+    newBuildPlugins = originalBuildPlugins.concat(metricsCollectorBuildPlugin);
+  } else {
+    // insert new executions into existing plugin
+    let metricsCollectorBuildPlugin = deepClone(originalBuildPlugins[mavenDepPluginIndex]);
+    if (metricsCollectorBuildPlugin.executions) {
+      metricsCollectorBuildPlugin.executions[0].execution = metricsCollectorBuildPlugin.executions[0].execution.concat(newExecutionArray);
+    } else {
+      metricsCollectorBuildPlugin.executions = [ { execution: newExecutionArray } ];
+    }
+    newBuildPlugins = deepClone(originalBuildPlugins);
+    // replace original maven-dependency plugin with new one containing the new executions
+    newBuildPlugins.splice(mavenDepPluginIndex, 1, metricsCollectorBuildPlugin);
+  }
+  if (jvmOptionsFileNeeded) {
+    let libertyMavenPlugin = deepClone(originalBuildPlugins[libertyPluginIndex]);
+    libertyMavenPlugin.configuration[0].jvmOptionsFile = [ '${basedir}/src/main/liberty/config/jvm.options' ];
+    newBuildPlugins.splice(libertyPluginIndex, 1, libertyMavenPlugin);
   }
 
-  // insert new executions into existing plugin
-  let metricsCollectorBuildPlugin = deepClone(originalBuildPlugins[mavenDepPluginIndex]);
-  if (metricsCollectorBuildPlugin.executions) {
-    metricsCollectorBuildPlugin.executions[0].execution = metricsCollectorBuildPlugin.executions[0].execution.concat(newExecutionArray);
-  } else {
-    metricsCollectorBuildPlugin.executions = [ { execution: newExecutionArray } ];
-  }
-  let newBuildPlugins = deepClone(originalBuildPlugins);
-  // replace original maven-dependency plugin with new one containing the new executions
-  newBuildPlugins.splice(mavenDepPluginIndex, 1, metricsCollectorBuildPlugin);
   return newBuildPlugins;
 }
 
