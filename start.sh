@@ -62,13 +62,18 @@ if [ -n "$LOG_LEVEL" ]; then
   LOG_OPTION="--loglevel ${LOG_LEVEL}"
 fi
 
+if [ -n "$CWCTL_IMAGE_TAG" ]; then
+  echo "Setting image tag to ${CWCTL_IMAGE_TAG}"
+  IMAGE_TAG="--tag ${CWCTL_IMAGE_TAG}"
+fi
+
 # REMOVE PREVIOUS DOCKER PROCESSES FOR CODEWIND
 printf "\n\n${BLUE}REMOVING EXISTING CODEWIND DOCKER CONTAINERS $RESET\n";
 # Check for existing processes (stopped or running)
 $CWCTL stop-all
 
 printf "\n\n${BLUE}STARTING CODEWIND DOCKER CONTAINERS $RESET\n";
-$CWCTL $LOG_OPTION start --debug
+$CWCTL $LOG_OPTION start --debug $IMAGE_TAG
 
 if [ $? -eq 0 ]; then
   printf "\n\n${GREEN}SUCCESSFULLY STARTED CONTAINERS $RESET\n";

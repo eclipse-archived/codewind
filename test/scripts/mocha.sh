@@ -17,16 +17,25 @@
 start=$(date +%F_%T)
 echo "Tests started at ${start}"
 
+NYC_CMD=''
+if [ "$ENABLE_COVERAGE" = "true" ]; then
+    echo "Running with code coverage enabled"
+    NYC_CMD=node_modules/.bin/nyc
+fi
+
 cp -r ../docs ../src/pfe/portal/docs
 if [ $? != 0 ]; then
     echo "Error copying docs directory to Portal directory (openapi.yaml)"
     exit 1;
 fi
 
-node_modules/.bin/nyc node_modules/.bin/mocha ${@:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
+$NYC_CMD node_modules/.bin/mocha ${@:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
 rc=$?
 end=$(date +%F_%T)
 echo "\nTests finished at ${end}"
-echo "\nView coverage report in browser at ${PWD}/coverage/index.html\n"
+
+if [ "$ENABLE_COVERAGE" = "true" ]; then
+    echo "\nView coverage report in browser at ${PWD}/coverage/index.html\n"
+fi
 
 exit $rc

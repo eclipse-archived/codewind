@@ -26,6 +26,10 @@ const sleep = promisify(setTimeout);
 
 const CONTAINER_NAME = 'codewind-pfe';
 
+const PFE_DIR_ON_DISK = path.join(__dirname, '../../', './src/pfe');
+const PORTAL_DIR_ON_DISK = path.join(PFE_DIR_ON_DISK, '/portal');
+const FW_DIR_ON_DISK = path.join(PFE_DIR_ON_DISK, '/file-watcher');
+
 const PFE_ENV_REQUIRED_NAME = 'ENABLE_CODE_COVERAGE';
 const PFE_ENV_REQUIRED_VALUE = 'true';
 
@@ -40,13 +44,16 @@ const LOCAL_NYC_MERGED_JSON = path.join(MERGED_NYC_OUTPUT_DIR, 'localNYCCoverage
 
 const PORTAL_DIR_LOCATION_IN_CONTAINER = '/portal';
 const PORTAL_NYC_OUTPUT_DIR_LOCATION_IN_CONTAINER = path.join(PORTAL_DIR_LOCATION_IN_CONTAINER, '.nyc_output');
-const PORTAL_DIR_ON_DISK = path.join(__dirname, '../../', './src/pfe/portal');
+
+const FW_NYC_OUTPUT_DIR = path.join(FW_DIR_ON_DISK, 'server/.nyc_output');
+const FW_NYC_MERGED_JSON = path.join(MERGED_NYC_OUTPUT_DIR, 'filewatcherNYCCoverage.json');
+
 
 const NYC_CONFIG = {
-    cwd: PORTAL_DIR_ON_DISK,
+    cwd: PFE_DIR_ON_DISK,
     tempDir: MERGED_NYC_OUTPUT_DIR,
     reportDir: MERGED_NYC_COVERAGE_DIR,
-    reporter: ['html', 'text'], 
+    reporter: ['html', 'text', 'text-summary'], 
 };
 
 const main = async() => {
@@ -61,6 +68,13 @@ const main = async() => {
     await copyFileFromPFEContainer(PORTAL_NYC_OUTPUT_DIR_LOCATION_IN_CONTAINER, CONTAINER_NYC_OUTPUT_DIR);
     await mergeNYCOutputIntoJSON(CONTAINER_NYC_OUTPUT_DIR, CONTAINER_NYC_MERGED_JSON);
     await replaceStringInFile(CONTAINER_NYC_MERGED_JSON, PORTAL_DIR_LOCATION_IN_CONTAINER, PORTAL_DIR_ON_DISK);
+
+    const FW_COVERAGE_ENABLED = process.env.FW_COVERAGE_ENABLED;
+    const doesFWNYCOutputDirExist = await fs.pathExists(FW_NYC_OUTPUT_DIR);
+    log.debug(`FW Coverage: ${FW_COVERAGE_ENABLED}, FW NYC Output: ${doesFWNYCOutputDirExist}`);
+    if (FW_COVERAGE_ENABLED && FW_COVERAGE_ENABLED === 'true' && doesFWNYCOutputDirExist) {
+        await mergeNYCOutputIntoJSON(FW_NYC_OUTPUT_DIR, FW_NYC_MERGED_JSON);
+    }
 
     await createNYCReport();
 
@@ -137,6 +151,10 @@ const replaceStringInFile = async(filePath, oldString, newString) => {
 
 const mergeNYCOutputIntoJSON = async(nycOutputDir, nycJsonFile) => {
     log.info(`Merging ${nycOutputDir} into a single JSON file`);
+    const dirExists = await fs.pathExists(nycOutputDir);
+    if (!dirExists) throw new Error(`NYC output directory "${nycOutputDir}" does not exist`);
+    const files = await fs.readdir(nycOutputDir);
+    if (files.length === 0) throw new Error(`NYC output directory "${nycOutputDir}" is empty`);
     const nyc = new NYC(NYC_CONFIG);
     const map = await nyc.getCoverageMapFromAllCoverageFiles(nycOutputDir);
     return fs.writeJSON(nycJsonFile, map, 'utf8');
