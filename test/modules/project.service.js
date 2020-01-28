@@ -257,27 +257,12 @@ async function getWatchList() {
     return res.body.projects;
 }
 
-async function getProjectIdFromName(projectName) {
-    if (typeof projectName !== 'string') throw new Error(`'${projectName}' should be a string`);
-    const project = await getProjectByName(projectName);
-    const { projectID } = project;
-    return projectID;
-}
-async function getProjectByName(projectName) {
-    if (typeof projectName !== 'string') throw new Error(`'${projectName}' should be a string`);
-    const projects = await getProjects();
-    const project = projects.find(project => project.name === projectName);
-    return project;
-}
-
 async function getProject(id) {
     const req = () => reqService.chai
         .get(`/api/v1/projects/${id}`)
         .set('Cookie', ADMIN_COOKIE);
-    const res = await reqService.makeReq(req, 200);
-    const project = res.body;
-    if (!project || typeof project !== 'object') throw new Error(`'${project}' should be an object`);
-    return project;
+    const res = await reqService.makeReq(req);
+    return res;
 }
 
 async function getProjectIDs() {
@@ -294,12 +279,12 @@ async function countProjects() {
 /**
  * Waits indefinitely for GET project to succeed
  */
-async function awaitProject(projectName) {
-    const project = await getProjectByName(projectName);
+async function awaitProject(id) {
+    const project = await getProject(id);
     if (project) return true;
 
     await sleep(1000);
-    return awaitProject(projectName);
+    return awaitProject(id);
 }
 
 async function awaitProjectStarted(projectID) {
@@ -390,7 +375,6 @@ module.exports = {
     openProject,
     closeProject,
     restartProject,
-    getProjectIdFromName,
     getProjects,
     getWatchList,
     getProject,
