@@ -24,9 +24,6 @@ RUN curl -f -o buildah.rpm $BUILDAH_RPM
 RUN curl -f -o slirp4netns.rpm $SLIRP
 RUN curl -f -o libseccomp.rpm $LIBSEC
 
-# Download and set up Node 10.x RPM
-RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
-
 RUN yum install -y epel-release \
     && yum -y --enablerepo=epel install zip unzip sudo ca-certificates openssl nodejs slirp4netns.rpm libseccomp.rpm buildah.rpm \
     && yum clean all \
