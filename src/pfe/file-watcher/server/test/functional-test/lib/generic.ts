@@ -32,6 +32,14 @@ export async function testImagePushRegistry(pushRegistryAddress: string, pushReg
     return await filewatcher.testImagePushRegistry(pushRegistryAddress, pushRegistryNamespace, pullImage);
 }
 
+export async function writeWorkspaceSettings(address: string, namespace: string): Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure> {
+    return await filewatcher.writeWorkspaceSettings(address, namespace);
+}
+
+export async function removeImagePushRegistry(pushRegistryAddress: string): Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure> {
+    return await filewatcher.removeImagePushRegistry(pushRegistryAddress);
+}
+
 export async function imagePushRegistryStatus(request: workspaceSettings.IImagePushRegistryStatusParams): Promise<workspaceSettings.IImagePushRegistryStatusSuccess | workspaceSettings.IImagePushRegistryStatusFailure> {
     return await filewatcher.imagePushRegistryStatus(request);
 }

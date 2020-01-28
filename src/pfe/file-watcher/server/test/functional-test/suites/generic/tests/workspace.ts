@@ -41,6 +41,7 @@ export default class WorkspaceTest {
                 watcherChunkTimeout: 50000
             };
             let backupSettingsContent: any = {};
+            const self = this;
 
             before("read the settings file content and save it", async () => {
                 if (await fs.existsSync(settingsPath)) {
@@ -60,10 +61,17 @@ export default class WorkspaceTest {
                     expect(info.statusCode).to.equal(200);
                 }
             });
+            after("set and test image push registry for project tests", async function(): Promise<void> {
+                this.timeout(timeoutConfigs.testImagePushRegistryTimeout);
+                await self.setImagePushRegistry();
+                await self.testImagePushRegistry();
+            });
 
             this.runReadWorkspaceSettings(socket, settingsPath, settingsContent, backupSettingsPath);
             this.runImagePushRegistryStatus(socket);
             if (process.env.IN_K8) {
+                this.runSetImagePushRegistry();
+                this.runRemoveImagePushRegistry(settingsContent);
                 this.runTestImagePushRegistry(settingsContent);
             }
         });
@@ -220,9 +228,48 @@ export default class WorkspaceTest {
         });
     }
 
+    private runSetImagePushRegistry(): void {
+        describe("writeWorkspaceSettings function", () => {
+            const self = this;
+
+            before("remove image push registry", async function(): Promise<void> {
+                this.timeout(timeoutConfigs.testImagePushRegistryTimeout);
+                await self.removeImagePushRegistry();
+            });
+
+            it("with valid push registry", async () => {
+                await this.setImagePushRegistry();
+            }).timeout(timeoutConfigs.testImagePushRegistryTimeout);
+        });
+    }
+
+    private runRemoveImagePushRegistry(settingsContent: any): void {
+        describe("removeImagePushRegistry function", () => {
+            const self = this;
+
+            before("set image push registry", async function(): Promise<void> {
+                this.timeout(timeoutConfigs.testImagePushRegistryTimeout);
+                await self.setImagePushRegistry();
+            });
+
+            it("with invalid push registry", async () => {
+                const info: any = await genericLib.removeImagePushRegistry(settingsContent.registryAddress);
+                expect(info);
+                expect(info.statusCode);
+                expect(info.statusCode).to.equal(400);
+                expect(info["msg"]).to.equal(`Failed to remove the image push registry workspace settings. Could not find a registry for address : ${settingsContent.registryAddress}`);
+            }).timeout(timeoutConfigs.testImagePushRegistryTimeout);
+
+            it("with valid push registry", async () => {
+                await this.removeImagePushRegistry();
+            }).timeout(timeoutConfigs.testImagePushRegistryTimeout);
+        });
+    }
+
     private runTestImagePushRegistry(settingsContent: any): void {
         describe("testImagePushRegistry function", () => {
             const invalidPullImage = "someimage";
+            const self = this;
 
             it("with invalid push registry", async () => {
                 const info = await genericLib.testImagePushRegistry(settingsContent.registryAddress, settingsContent.registryNamespace);
@@ -258,15 +305,33 @@ export default class WorkspaceTest {
             }).timeout(timeoutConfigs.testImagePushRegistryTimeout);
 
             it("with valid push registry and default pull image", async () => {
-                const info = await genericLib.testImagePushRegistry(pfe_configs.imagePushRegistryAddress, pfe_configs.imagePushRegistryNamespace);
-                expect(info);
-                expect(info.statusCode);
-                expect(info.statusCode).to.equal(200);
-                expect(info.imagePushRegistryTest);
-                expect(info.imagePushRegistryTest).to.equal(true);
-                expect(info.msg);
-                expect(info.msg).to.equal(`Codewind projects on Kubernetes will build with the Image Push Registry: ${pfe_configs.imagePushRegistryAddress}/${pfe_configs.imagePushRegistryNamespace}`);
+                await self.testImagePushRegistry();
             }).timeout(timeoutConfigs.testImagePushRegistryTimeout);
         });
+    }
+
+    private async setImagePushRegistry(): Promise<void> {
+        const info = await genericLib.writeWorkspaceSettings(pfe_configs.imagePushRegistryAddress, pfe_configs.imagePushRegistryNamespace);
+        expect(info);
+        expect(info.statusCode);
+        expect(info.statusCode).to.equal(200);
+    }
+
+    private async removeImagePushRegistry(): Promise<void> {
+        const info = await genericLib.removeImagePushRegistry(pfe_configs.imagePushRegistryAddress);
+        expect(info);
+        expect(info.statusCode);
+        expect(info.statusCode).to.equal(200);
+    }
+
+    private async testImagePushRegistry(): Promise<void> {
+        const info = await genericLib.testImagePushRegistry(pfe_configs.imagePushRegistryAddress, pfe_configs.imagePushRegistryNamespace);
+        expect(info);
+        expect(info.statusCode);
+        expect(info.statusCode).to.equal(200);
+        expect(info.imagePushRegistryTest);
+        expect(info.imagePushRegistryTest).to.equal(true);
+        expect(info.msg);
+        expect(info.msg).to.equal(`Codewind projects on Kubernetes will build with the Image Push Registry: ${pfe_configs.imagePushRegistryAddress}/${pfe_configs.imagePushRegistryNamespace}`);
     }
 }
