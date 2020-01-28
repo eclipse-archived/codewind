@@ -42,7 +42,7 @@ export default class LocaleTest {
         it(combo + " => " + "locale: " + combinations[combo]["locale"], async () => {
           logMsg(this.testName, "it", `Beginning locale test for ${combo}`);
 
-          const info = await genericLib.setLocaleAPI(combinations[combo]["locale"]);
+          const info = await genericLib.setLocale(combinations[combo]["locale"]);
           logMsg(this.testName, "info", `Recieved locale information: ${JSON.stringify(info)}`);
           expect(info).to.deep.equal(combinations[combo]["result"]);
 

@@ -13,7 +13,7 @@ import { expect } from "chai";
 import * as _ from "lodash";
 
 import * as projectsController from "../../../../../src/controllers/projectsController";
-import { projectAction } from "../../../lib/project";
+import { performProjectAction } from "../../../lib/project";
 import { SocketIO } from "../../../lib/socket-io";
 
 import { codewindTemplates } from "../../../configs/app.config";
@@ -164,7 +164,7 @@ export function projectActionTest(socket: SocketIO, projData: projectsController
         it("set project action with undefined action type", async () => {
             const testData = _.cloneDeep(data);
             testData["action"] = "someAction";
-            const info: any = await projectAction(testData);
+            const info: any = await performProjectAction(testData);
             expect(info);
             expect(info.statusCode);
             expect(info.statusCode).to.equal(400);
@@ -231,7 +231,7 @@ export function projectActionTest(socket: SocketIO, projData: projectsController
             testData["startMode"] = mode;
         }
 
-        const info: any = await projectAction(testData);
+        const info: any = await performProjectAction(testData);
         expect(info);
 
         if (comboInUse["returnKeys"]) {
