@@ -9,18 +9,20 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-const cwUtils = require('./utils/sharedFunctions.js');
 const dateFormat = require('dateformat');
 const fs = require('fs-extra');
 const io = require('socket.io-client');
 const { promisify } = require('util');
-const mkDirAsync = promisify(fs.mkdir);
 const path = require('path');
 const http = require('http');
+
 const Logger = require('./utils/Logger');
-const log = new Logger('LoadRunner.js');
+const cwUtils = require('./utils/sharedFunctions');
 const docker = require('./utils/dockerFunctions');
-const LoadRunError = require('./utils/errors/LoadRunError.js');
+const LoadRunError = require('./utils/errors/LoadRunError');
+
+const mkDirAsync = promisify(fs.mkdir);
+const log = new Logger(__filename);
 
 /**
 * The LoadRunner class
@@ -218,7 +220,7 @@ module.exports = class LoadRunner {
       default:
         this.cancelProfiling();
         this.project = null;
-        log.error(`'portal/modules/LoadRunner.js: runLoad (${loadrunnerRes.statusCode} received)'`);
+        log.error(`runLoad (${loadrunnerRes.statusCode} received)'`);
       }
       return loadrunnerRes;
     }
@@ -537,7 +539,6 @@ module.exports = class LoadRunner {
       switch (loadrunnerRes.statusCode) {
       case 200:
       case 400: // no run in progress
-        // console.log(`portal/modules/LoadRunner.js: shutdown: (202 received)`);
         break;
       case 500:
         log.error(`shutdown: error sending cancel request (500 received)`);

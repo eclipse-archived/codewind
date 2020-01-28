@@ -380,15 +380,23 @@ paths:
               type: object
               properties:
                 description:
-                  description: "A description of the test"
-                  example: "A new load test"
+                  description: A description of the test
+                  example: A new load test
       responses:
         202:
           description: Request to run-load accepted
+          content:
+            text/html:
+              schema:
+                type: string
         404:
           description: Project not found
         409:
           description: Load test already in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodewindError'
         503:
           description: Project is not running
 
@@ -406,10 +414,18 @@ paths:
       responses:
         200:
           description: Successful
+          content:
+            text/html:
+              schema:
+                type: string
         404:
           description: Project with given projectID not found
         409:
           description: No run in progress for this project
+          content:
+            text/html:
+              schema:
+                type: string
         500:
           description: Internal error
 
@@ -1971,6 +1987,15 @@ components:
           type: array
           items:
             type: string
+    CodewindError:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
 
   responses:
     400:
