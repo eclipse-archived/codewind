@@ -11,12 +11,13 @@
 import * as locale from "../../../src/utils/locale";
 import * as projectsController from "../../../src/controllers/projectsController";
 import * as workspaceSettings from "../../../src/utils/workspaceSettings";
+import * as socket from "../../../src/utils/socket";
 
 import Filewatcher from "../../../src/index";
 
 const filewatcher = new Filewatcher();
 
-export async function setLocaleAPI(locale: any): Promise<locale.ISetLocaleSuccess | locale.ISetLocaleFailure> {
+export async function setLocale(locale: any): Promise<locale.ISetLocaleSuccess | locale.ISetLocaleFailure> {
     return await filewatcher.setLocale(locale);
 }
 
@@ -38,4 +39,8 @@ export async function imagePushRegistryStatus(request: workspaceSettings.IImageP
 
 export async function getProjectTypes(location?: string): Promise<projectsController.IGetProjectTypesSuccess | projectsController.IGetProjectTypesFailure> {
     return await filewatcher.getProjectTypes(location);
+}
+
+export function registerListener(listener: socket.FWEventHandler): void {
+    filewatcher.registerListener(listener);
 }

@@ -16,7 +16,7 @@ import fs from "fs";
 import ms from "ms";
 
 import * as projectsController from "../../../../../src/controllers/projectsController";
-import { projectSpecification, getApplicationContainerInfoInK8, getApplicationContainerInfo } from "../../../lib/project";
+import { reconfigProjectSpecification, getApplicationContainerInfoInK8, getApplicationContainerInfo } from "../../../lib/project";
 
 import * as app_configs from "../../../configs/app.config";
 import * as project_configs from "../../../configs/project.config";
@@ -242,7 +242,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
         it("set project specification without project id", async () => {
             const testData = _.cloneDeep(data);
             delete testData["projectID"];
-            const info: any = await projectSpecification(testData);
+            const info: any = await reconfigProjectSpecification(testData);
             expect(info);
             expect(info.statusCode);
             expect(info.error);
@@ -252,7 +252,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
 
         it("set project specification without project settings", async () => {
             const testData = _.cloneDeep(data);
-            const info: any = await projectSpecification(testData);
+            const info: any = await reconfigProjectSpecification(testData);
             expect(info);
             expect(info.statusCode);
             expect(info.error);
@@ -266,7 +266,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
             testData["settings"] = {
                 [invalidKey]: "someValue",
             };
-            const info: any = await projectSpecification(testData);
+            const info: any = await reconfigProjectSpecification(testData);
             expect(info);
             expect(info.statusCode);
             expect(info.statusCode).to.equal(202);
@@ -296,7 +296,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
             testData["settings"] = {
                 "internalPort": undefined
             };
-            const info: any = await projectSpecification(testData);
+            const info: any = await reconfigProjectSpecification(testData);
             expect(info);
             expect(info.statusCode);
             expect(info.statusCode).to.equal(202);
@@ -334,7 +334,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                     status: "failed",
                     error: `BAD_REQUEST: ${mavenSetting} must be a string array.`
                 };
-                const info: any = await projectSpecification(testData);
+                const info: any = await reconfigProjectSpecification(testData);
                 expect(info);
                 expect(info.statusCode);
                 expect(info.statusCode).to.equal(202);
@@ -433,7 +433,7 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                 comboInUse["result"][setting] = value;
             }
 
-            const info: any = await projectSpecification(testData);
+            const info: any = await reconfigProjectSpecification(testData);
             expect(info);
             expect(info.statusCode);
             expect(info.statusCode).to.equal(202);

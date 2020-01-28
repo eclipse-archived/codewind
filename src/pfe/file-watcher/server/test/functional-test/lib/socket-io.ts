@@ -7,9 +7,7 @@
  * US Government Users Restricted Rights - Use, duplication or disclosure
  * restricted by GSA ADP Schedule Contract with IBM Corp.
  *******************************************************************************/
-import Filewatcher from "../../../src/index";
-
-const filewatcher = new Filewatcher();
+import { registerListener } from "./generic";
 
 interface PFEEvent {
     eventName: string;
@@ -24,7 +22,7 @@ export class SocketIO {
     }
 
     registerListener(listenerName: string): any {
-        filewatcher.registerListener({
+        registerListener({
             name: listenerName,
             handleEvent: (event, eventData) => {
                 const thisEvent: PFEEvent = {

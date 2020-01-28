@@ -33,11 +33,11 @@ export async function getProjectCapabilities(projectID: string): Promise<project
   return await filewatcher.getProjectCapabilities(projectID);
 }
 
-export async function projectAction(req: projectsController.IProjectActionParams): Promise<projectsController.IProjectActionSuccess | projectsController.IProjectActionFailure> {
+export async function performProjectAction(req: projectsController.IProjectActionParams): Promise<projectsController.IProjectActionSuccess | projectsController.IProjectActionFailure> {
   return await filewatcher.performProjectAction(req);
 }
 
-export async function projectSpecification(req: projectsController.IProjectSpecificationParams): Promise<projectsController.IProjectSpecificationFailure | projectsController.IProjectSpecificationSuccess> {
+export async function reconfigProjectSpecification(req: projectsController.IProjectSpecificationParams): Promise<projectsController.IProjectSpecificationFailure | projectsController.IProjectSpecificationSuccess> {
   return await filewatcher.reconfigProjectSpecification(req);
 }
 
