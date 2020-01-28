@@ -37,7 +37,7 @@ describe('Template API tests', function() {
     // Save the state of the repos before any test and restore the exact state after
     saveReposBeforeTestAndRestoreAfter();
     describe('GET /api/v1/templates', function() {
-        before(async() => {
+        before(async function() {
             this.timeout(testTimeout.short);
             await setTemplateReposTo([
                 { ...sampleRepos.codewind },
