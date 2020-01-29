@@ -61,11 +61,13 @@ export default class WorkspaceTest {
                     expect(info.statusCode).to.equal(200);
                 }
             });
-            after("set and test image push registry for project tests", async function(): Promise<void> {
-                this.timeout(timeoutConfigs.testImagePushRegistryTimeout);
-                await self.setImagePushRegistry();
-                await self.testImagePushRegistry();
-            });
+            if (process.env.IN_K8) {
+                after("set and test image push registry for project tests", async function(): Promise<void> {
+                    this.timeout(timeoutConfigs.testImagePushRegistryTimeout);
+                    await self.setImagePushRegistry();
+                    await self.testImagePushRegistry();
+                });
+            }
 
             this.runReadWorkspaceSettings(socket, settingsPath, settingsContent, backupSettingsPath);
             this.runImagePushRegistryStatus(socket);
