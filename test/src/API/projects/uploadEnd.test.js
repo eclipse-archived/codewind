@@ -286,6 +286,36 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             dirExistsInPfeProjectDir.should.be.false;
         });
     });
+    
+    describe('Sync unchanged project (these `it` blocks depend on each other passing)', function() {
+        const projectName = `test-sync-unchanged-project-${Date.now()}`;
+        const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
+        let projectID;
+
+        before('create a sample project and bind to Codewind, without building', async function() {
+            this.timeout(testTimeout.med);
+            projectID = await projectService.createProjectFromTemplate(projectName, 'nodejs', pathToLocalProject);
+        });
+
+        after(async function() {
+            this.timeout(testTimeout.med);
+            await projectService.removeProject(pathToLocalProject, projectID);
+        });
+
+        it('returns 200 and does nothing else when POST upload/end is called', async function() {
+            this.timeout(testTimeout.med);
+            const options = {
+                fileList: validFileList,
+                directoryList: validDirList,
+                modifiedList: null,
+                timeStamp: Date.now(),
+            };
+            const res = await projectService.uploadEnd(projectID, options);
+
+            res.should.have.status(200);
+            res.should.satisfyApiSpec;
+        });
+    });
 
     describe('Fail cases for POST /upload/end', () => {
         it('returns 400 when req.body has no `fileList`', async function() {
@@ -298,6 +328,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             };
             const res = await projectService.uploadEnd(projectID, options);
             res.should.have.status(400);
+            res.text.should.equal('Error while validating request: request.body should have required property \'fileList\'');
         });
 
         it('returns 400 when req.body has no `directoryList`', async function() {
@@ -310,6 +341,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             };
             const res = await projectService.uploadEnd(projectID, options);
             res.should.have.status(400);
+            res.text.should.equal('Error while validating request: request.body should have required property \'directoryList\'');
         });
 
         it('returns 400 when req.body has no `modifiedList`', async function() {
@@ -322,6 +354,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             };
             const res = await projectService.uploadEnd(projectID, options);
             res.should.have.status(400);
+            res.text.should.equal('Error while validating request: request.body should have required property \'modifiedList\'');
         });
 
         it('returns 400 when req.body has no `timeStamp`', async function() {
@@ -334,6 +367,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             };
             const res = await projectService.uploadEnd(projectID, options);
             res.should.have.status(400);
+            res.text.should.equal('Error while validating request: request.body should have required property \'timeStamp\'');
         });
 
         it('returns 404 when the project does not exist', async function() {

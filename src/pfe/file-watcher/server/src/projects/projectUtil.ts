@@ -40,6 +40,7 @@ import { AppLog, BuildLog, BuildRequest, ProjectInfo, UpdateProjectInfoPair } fr
 import { projectConstants, ContainerStates, StartModes, MavenFlags } from "./constants";
 import * as locale from "../utils/locale";
 import { appStateMap, DetailedAppStatus } from "../controllers/projectStatusController";
+import * as constants from "./constants";
 
 const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
 const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
@@ -982,6 +983,11 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
         const projectInfo = await getProjectInfo(projectID, ignoreLog);
         if (!projectInfo) {
             handler({ error: await locale.getTranslation("projectUtil.projectInfoError") });
+            return;
+        }
+
+        if (projectInfo.appPorts.includes(constants.disablePingPort)) {
+            handler({ error: await locale.getTranslation("projectUtil.pingDisabled", { disablePingPort: constants.disablePingPort }) });
             return;
         }
 

@@ -10,6 +10,9 @@
  *******************************************************************************/
 const { getResData, makePostRequest } = require('../utils/request.service');
 const { repeatFunc, allPromisesSettled } = require('../utils/utils.service');
+const Logger = require('../utils/Logger');
+
+const log = new Logger(__filename);
 
 const numPolls = 1000; // maxPolls * pollInterval = 2000000ms of data ~= 33 mins
 const latestProjectData = {};
@@ -17,6 +20,7 @@ const latestProjectData = {};
 const getEnvData = (appOrigin) => getResData(appOrigin, '/metrics/environment');
 
 const getMetricsFromProject = async (appOrigin) => {
+  log.trace(`calling getMetricsFromProject(${appOrigin})`);
   const projectData = latestProjectData[appOrigin];
   if (!projectData.hasOwnProperty('metrics')) {
     projectData.metrics = {}
@@ -29,6 +33,9 @@ const getMetricsFromProject = async (appOrigin) => {
       getResData(appOrigin, '/metrics/codewind'),
   ]);
 
+  if (!metricsFromUser && !metricsFromCodewind) {
+    log.warn('no response from /metrics nor /metrics/codewind')
+  }
   projectData.metrics.fromUser = metricsFromUser;
   projectData.metrics.fromCodewind = metricsFromCodewind;
 };
@@ -51,6 +58,7 @@ const disableProfilingOnProject = async (appOrigin) => {
 };
 
 const scrapeNodejsProjectData = async (appOrigin) => {
+  log.trace(`calling scrapeNodejsProjectData(${appOrigin})`);
   await enableProfilingOnProject(appOrigin);
   await Promise.all([
     repeatFunc(
@@ -66,10 +74,11 @@ const scrapeNodejsProjectData = async (appOrigin) => {
 };
 
 const scrapeProjectData = async (appOrigin, projectLanguage) => {
+  log.trace(`calling scrapeProjectData(${appOrigin}, ${projectLanguage})`);
   if (!latestProjectData.hasOwnProperty(appOrigin)) {
     latestProjectData[appOrigin] = {};
   }
-  if (projectLanguage === 'nodejs' || 'javascript') {
+  if (['nodejs', 'javascript'].includes(projectLanguage)) {
     return scrapeNodejsProjectData(appOrigin);
   }
   await repeatFunc(

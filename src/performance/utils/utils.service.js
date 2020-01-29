@@ -9,6 +9,9 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const { promisify } = require('util');
+const Logger = require('./Logger')
+
+const log = new Logger(__filename);
 
 const wait = promisify(setTimeout);
 const repetitionInterval = 2000;
@@ -17,7 +20,7 @@ const repetitionInterval = 2000;
 // similar to https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled
 const allPromisesSettled = (promises) => Promise.all(
   promises.map(promise =>
-    promise.catch(err => console.log(err.message))
+    promise.catch(err => log.trace(err))
   )
 );
 

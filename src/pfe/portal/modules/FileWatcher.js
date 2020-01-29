@@ -619,6 +619,18 @@ module.exports = class FileWatcher {
     return retval;
   }
 
+  async removeImagePushRegistry(address) {
+    let retval;
+    try{
+      retval = await filewatcher.removeImagePushRegistry(address);
+      this.logFWReturnedMsg(retval);
+    } catch (err) {
+      log.error(`Error in removeImagePushRegistry`);
+      throw err;
+    }
+    return retval;
+  }
+
 
   /**
    * Function to shutdown the user's projects

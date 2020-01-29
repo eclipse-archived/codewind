@@ -517,6 +517,10 @@ paths:
         responses:
           202:
             description: if project deletion was accepted
+            content:
+              text/html:
+                schema:
+                  type: string
           404:
             description: if the project with id was not found
           409:
@@ -1490,6 +1494,62 @@ paths:
                     type: boolean
                     description: false if image push registry is invalid
                     example: false
+                  msg:
+                    type: string
+                    description: Message related to the request
+                    example: Reason for failure
+    delete:
+      summary: Remove the specified Image Push Registry address
+      description: >
+        Removes the Image Push Registry namespace for the specified address
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - address
+              properties:
+                address:
+                  type: string
+      responses:
+        200:
+          description: Successfully completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 200
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 400
+                  msg:
+                    type: string
+                    description: Message related to the request
+                    example: Reason for failure
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    description: The response status code
+                    example: 500
                   msg:
                     type: string
                     description: Message related to the request

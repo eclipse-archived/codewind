@@ -17,13 +17,19 @@ const express = require('express');
 require('express-async-errors');
 const bodyParser = require('body-parser');
 const childProcess = require('child_process');
-const app = express();
-const serverPort = 9095;
-const server = app.listen(serverPort, () => console.log(`Performance server listening on port ${serverPort}!`))
-const io = require('socket.io').listen(server);
+const Io = require('socket.io');
 const path = require('path');
+const { inspect } = require('util');
 
 const monitor = require('./monitor/route');
+const Logger = require('./utils/Logger');
+
+const log = new Logger(__filename);
+
+const app = express();
+const serverPort = 9095;
+const server = app.listen(serverPort, () => log.info(`Performance server listening on port ${serverPort}!`))
+const io = Io.listen(server);
 
 var loadProcess;
 let projectURL;
@@ -33,6 +39,7 @@ const imageBuildTime = process.env.IMAGE_BUILD_TIME
 
 
 app.use(bodyParser.json());
+log.logAllApiCalls(app); // must be called after 'app.use(bodyParser)', and before 'app.use(router)'
 app.get('/', (req, res) => res.send('Performance Container is running...'));
 
 app.get('/health', (req, res) => res.json({ status: 'UP' }));
@@ -53,26 +60,23 @@ app.get('/performance/api/v1/environment', (req, res) => {
 * is already in progress, 500 if error
 */
 app.post('/api/v1/runload', async function (req, res) {
-    console.log("LoadRunner received load run request " + JSON.stringify(req.body));
     try {
         if (loadProcess) {
-            // A run is already in progress
-            console.log('loadrunner/server.js: A load run is already in progress');
+            log.error('A load run is already in progress');
             res.status(409).send("A load run is already in progress");
             return;
         }
         if (!req.body.url) {
-            console.log('loadrunner/server.js: URL is required');
+            log.error('URL is required');
             res.status(500);
             return;
         }
         runLoad(req.body);
         projectURL = req.body.url;
-        // Send 'accepted'
         res.sendStatus(202);
     } catch (err) {
         res.status(500).send(err);
-        console.error(err);
+        log.error(err);
     }
 });
 
@@ -83,32 +87,31 @@ app.post('/api/v1/runload', async function (req, res) {
 * being run on that given project, 500 if error
 */
 app.post('/api/v1/cancelLoad', async function (req, res) {
-    console.log("LoadRunner received cancel request " + JSON.stringify(req.body));
     try {
-        // Check url of project running load against url of cancel request
         if (req.body.url == projectURL) {
             if (loadProcess) {
                 loadProcess.kill('SIGKILL');
                 res.sendStatus(200);
                 return;
             } else {
-                console.log('loadrunner/server.js: No run in progress');
+                log.error('No run in progress');
                 res.status(409).send("No run in progress");
             }
         } else {
-            console.log('loadrunner/server.js: No load is being run on this project')
-            res.status(409).send("No run in progress for this project");
+            const msg = 'No run in progress for this project'
+            log.error(msg)
+            res.status(409).send(msg);
             return;
         }
     } catch (err) {
         res.status(500).send(err);
-        console.error(err);
+        log.error(err);
     }
 });
 
 function runLoad(options) {
+    log.info('starting')
     io.emit('starting');
-    console.log('starting')
     var output = "";
     var errOutput = "";
     loadProcess = childProcess.spawn('node', ['runload.js', JSON.stringify(options)], { stdio: 'pipe' });
@@ -121,26 +124,26 @@ function runLoad(options) {
     });
     loadProcess.on('exit', (code, signal) => {
         loadProcess = null;
-        // Output to console any stray codes thrown back from the kill process signal
-        console.log('signal: ' + signal);
-        console.log('code: ' + code);
+        // Log any stray codes thrown back from the kill process signal
+        log.debug(`signal: ${signal}`);
+        log.debug(`code: ${code}`);
         if (signal === 9 || signal === 'SIGKILL') { // cancelled
+            log.info('cancelled');
             io.emit('cancelled');
-            console.log('cancelled');
         } else if (code != 0) { // error
+            log.error(`error ${errOutput}`);
             io.emit('error', errOutput);
-            console.log('error' + errOutput);
         } else { // success
+            log.debug(`data was ${output}`);
+            log.info('completed');
             io.emit('completed', output);
-            console.log('data was ' + output)
-            console.log('completed')
         }
     }).on('error', (err) => {
         loadProcess = null;
         io.emit('error', errOutput);
-        console.error(err);
+        log.error(err);
     });
-    console.log('loadProcess = ' + loadProcess)
+    log.debug(`loadProcess = ${inspect(loadProcess)}`);
 }
 
 /** React Performance Dashboard static files */

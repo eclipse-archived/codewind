@@ -12,6 +12,7 @@
 
 const chai = require('chai');
 const path = require('path');
+const fs = require('fs-extra');
 const chaiResValidator = require('chai-openapi-response-validator');
 
 const projectService = require('../../../modules/project.service');
@@ -34,12 +35,12 @@ describe('Bind projects tests', () => {
         );
     });
 
-    after(async function() {
+    after(function() {
         this.timeout(testTimeout.med);
-        await projectService.removeProject(pathToLocalProject, projectID);
+        fs.removeSync(pathToLocalProject);
     });
 
-    describe('Complete bind (these `it` blocks depend on each other passing)', () => {
+    describe('Complete bind and unbind (these `it` blocks depend on each other passing)', () => {
         it('returns 202 when starting the bind process', async function() {
             this.timeout(testTimeout.med);
 
@@ -53,6 +54,10 @@ describe('Bind projects tests', () => {
 
             res.should.have.status(202);
             res.should.satisfyApiSpec;
+            
+            const pathToPfeTempProjectDir = path.join('codewind-workspace', 'cw-temp', projectName);
+            const pfeTempProjectDirExists = await containerService.dirExists(pathToPfeTempProjectDir);
+            pfeTempProjectDirExists.should.be.true;
 
             projectID = res.body.projectID;
         });
@@ -70,11 +75,21 @@ describe('Bind projects tests', () => {
             uploadedFileExists.should.be.true;
         });
         it('returns 200 when ending the bind process', async function() {
+            this.timeout(testTimeout.short);
+            
             const res = await projectService.bindEnd(projectID);
             res.should.have.status(200);
             res.should.satisfyApiSpec;
+            
+            const pathToPfeTempProjectDir = path.join('codewind-workspace', 'cw-temp', projectName);
+            const pfeTempProjectDirExists = await containerService.dirExists(pathToPfeTempProjectDir);
+            pfeTempProjectDirExists.should.be.true;
+            
+            const pathToPfeProjectDir = path.join('codewind-workspace', projectName);
+            const pfeProjectDirExists = await containerService.dirExists(pathToPfeProjectDir);
+            pfeProjectDirExists.should.be.true;
         });
-        it('returns 409 when trying to bind a project that is already bound', async function() {
+        it('returns 409 when trying to bind a project with the same name', async function() {
             const originalNumProjects = await projectService.countProjects();
             const res = await projectService.bindStart({
                 name: projectName,
@@ -90,17 +105,35 @@ describe('Bind projects tests', () => {
             const finalNumProjects = await projectService.countProjects();
             finalNumProjects.should.equal(originalNumProjects);
         });
+        it('returns 202 when unbinding the project', async function() {
+            this.timeout(testTimeout.short);
+            
+            const res = await projectService.unbind(projectID);
+            res.should.have.status(202);
+            res.should.satisfyApiSpec;
+            
+            const pathToPfeTempProjectDir = path.join('codewind-workspace', 'cw-temp', projectName);
+            const pfeTempProjectDirExists = await containerService.dirExists(pathToPfeTempProjectDir);
+            pfeTempProjectDirExists.should.be.false;
+            
+            const pathToPfeProjectDir = path.join('codewind-workspace', projectName);
+            const pfeProjectDirExists = await containerService.dirExists(pathToPfeProjectDir);
+            pfeProjectDirExists.should.be.false;
+        });
     });
     describe('POST /bind/start', () => {
         describe('Failure Cases', () => {
             it('returns 400 if projectName is invalid', async function() {
                 this.timeout(testTimeout.short);
                 const res = await projectService.bindStart({
-                    name: '<',
+                    name: '&',
                     language: 'nodejs',
                     projectType: 'nodejs',
+                    path: 'valid/path',
+                    creationTime: Date.now(),
                 });
                 res.should.have.status(400);
+                res.body.message.should.equal('Project name is invalid: invalid characters : ["&"]');
             });
             it('returns 400 if projectType is invalid', async function() {
                 this.timeout(testTimeout.short);
@@ -108,12 +141,15 @@ describe('Bind projects tests', () => {
                     name: projectName,
                     language: 'nodejs',
                     projectType: 'invalid',
+                    path: 'valid/path',
+                    creationTime: Date.now(),
                 });
                 res.should.have.status(400);
+                res.text.should.equal('projects must specify a valid project type');
             });
         });
     });
-    describe('PUT /bind/upload', () => {
+    describe('PUT /upload', () => {
         describe('Failure Cases', () => {
             it('returns 404 for a project that does not exist', async function() {
                 this.timeout(testTimeout.short);
@@ -134,6 +170,18 @@ describe('Bind projects tests', () => {
                 const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
                 const res = await projectService.bindEnd(idMatchingNoProjects);
                 res.should.have.status(404);
+                res.text.should.equal(`Unable to find project ${idMatchingNoProjects}`);
+            });
+        });
+    });
+    describe('POST /unbind', () => {
+        describe('Failure Cases', () => {
+            it('returns 404 for a project that does not exist', async function() {
+                this.timeout(testTimeout.short);
+                const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
+                const res = await projectService.unbind(idMatchingNoProjects, 404);
+                res.should.have.status(404);
+                res.text.should.equal(`Unable to find project ${idMatchingNoProjects}`);
             });
         });
     });

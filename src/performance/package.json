@@ -18,6 +18,7 @@
     "express-async-errors": "^3.1.1",
     "keycloak-js": "^8.0.1",
     "loadtest": "^3.0.0",
+    "log4js": "^6.1.0",
     "nodemon": "^1.19.3",
     "parse-prometheus-text-format": "^1.1.1",
     "socket.io": "^2.0.3"

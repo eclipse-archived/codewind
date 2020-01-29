@@ -145,7 +145,7 @@ function zipFileToBase64(filepath) {
  * @param {JSON} [options] e.g. { name: 'example' }
  * @param {number} [expectedResStatus] default 202
  */
-async function unbindProject(projectID, expectedResStatus = 202) {
+async function unbind(projectID, expectedResStatus = 202) {
     const req = () => reqService.chai
         .post(`/api/v1/projects/${projectID}/unbind`)
         .set('Cookie', ADMIN_COOKIE);
@@ -158,7 +158,7 @@ async function unbindProject(projectID, expectedResStatus = 202) {
  */
 async function unbindAllProjects() {
     const projectIds = await getProjectIDs();
-    const promises = projectIds.map(id => unbindProject(id));
+    const promises = projectIds.map(id => unbind(id));
     await Promise.all(promises);
 }
 
@@ -213,7 +213,7 @@ function closeProject(
 
 async function removeProject(pathToProjectDir, projectID){
     fs.removeSync(pathToProjectDir);
-    await unbindProject(projectID);
+    await unbind(projectID);
 }
 
 /**
@@ -409,7 +409,7 @@ module.exports = {
     uploadEnd,
     uploadFiles,
     uploadFile,
-    unbindProject,
+    unbind,
     unbindAllProjects,
     removeProject,
     buildProject,

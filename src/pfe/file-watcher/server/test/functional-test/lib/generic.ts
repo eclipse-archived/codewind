@@ -11,12 +11,13 @@
 import * as locale from "../../../src/utils/locale";
 import * as projectsController from "../../../src/controllers/projectsController";
 import * as workspaceSettings from "../../../src/utils/workspaceSettings";
+import * as socket from "../../../src/utils/socket";
 
 import Filewatcher from "../../../src/index";
 
 const filewatcher = new Filewatcher();
 
-export async function setLocaleAPI(locale: any): Promise<locale.ISetLocaleSuccess | locale.ISetLocaleFailure> {
+export async function setLocale(locale: any): Promise<locale.ISetLocaleSuccess | locale.ISetLocaleFailure> {
     return await filewatcher.setLocale(locale);
 }
 
@@ -32,10 +33,22 @@ export async function testImagePushRegistry(pushRegistryAddress: string, pushReg
     return await filewatcher.testImagePushRegistry(pushRegistryAddress, pushRegistryNamespace, pullImage);
 }
 
+export async function writeWorkspaceSettings(address: string, namespace: string): Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure> {
+    return await filewatcher.writeWorkspaceSettings(address, namespace);
+}
+
+export async function removeImagePushRegistry(pushRegistryAddress: string): Promise<workspaceSettings.IWorkspaceSettingsSuccess | workspaceSettings.IWorkspaceSettingsFailure> {
+    return await filewatcher.removeImagePushRegistry(pushRegistryAddress);
+}
+
 export async function imagePushRegistryStatus(request: workspaceSettings.IImagePushRegistryStatusParams): Promise<workspaceSettings.IImagePushRegistryStatusSuccess | workspaceSettings.IImagePushRegistryStatusFailure> {
     return await filewatcher.imagePushRegistryStatus(request);
 }
 
 export async function getProjectTypes(location?: string): Promise<projectsController.IGetProjectTypesSuccess | projectsController.IGetProjectTypesFailure> {
     return await filewatcher.getProjectTypes(location);
+}
+
+export function registerListener(listener: socket.FWEventHandler): void {
+    filewatcher.registerListener(listener);
 }

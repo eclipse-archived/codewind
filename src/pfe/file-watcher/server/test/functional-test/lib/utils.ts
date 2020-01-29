@@ -19,7 +19,7 @@ import * as app_configs from "../configs/app.config";
 import * as pfe_configs from "../configs/pfe.config";
 import { SocketIO } from "./socket-io";
 import * as projectsController from "../../../src/controllers/projectsController";
-import { projectAction, updateStatus } from "./project";
+import { performProjectAction, updateStatus } from "./project";
 import { expect } from "chai";
 import * as project_configs from "../configs/project.config";
 import * as eventConfigs from "../configs/event.config";
@@ -142,7 +142,7 @@ export async function callProjectAction(action: string, startMode: string, socke
     };
     if (startMode) testData["startMode"] = startMode;
 
-    const info: any = await projectAction(testData);
+    const info: any = await performProjectAction(testData);
     expect(info);
 
     const targetEvents = checkEvent || [eventConfigs.events.statusChanged];

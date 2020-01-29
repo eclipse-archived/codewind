@@ -14,6 +14,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import AsyncLock from "async-lock";
+import rimraf from "rimraf";
 // local imports
 import { actionMap } from "../projects/actions";
 import * as projectSpecifications from "../projects/projectSpecifications";
@@ -269,6 +270,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
                 settings.contextRoot = settings.contextRoot.replace(/^\/+/, "").replace(/\/+$/, "");
                 projectInfo.contextRoot = "/" + settings.contextRoot.trim();
             } else if (key == "healthCheck" && settings.healthCheck && settings.healthCheck.trim().length > 0) {
+                settings.healthCheck = settings.healthCheck.replace(/^\/+/, "").replace(/\/+$/, "");
                 projectInfo.healthCheck = "/" + settings.healthCheck.trim();
             } else if (key == "mavenProfiles") {
                 const mavenProfiles = settings.mavenProfiles;
@@ -936,7 +938,7 @@ export function deleteFolder(dir: string): Promise<void> {
                 Promise.all(files.map((file) => {
                     return deleteFile(dir, file);
                 })).then(() => {
-                    fs.rmdir(dir, (err) => {
+                    rimraf(dir, (err) => {
                         if (err) {
                             return reject(err);
                         }

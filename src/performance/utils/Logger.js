@@ -11,8 +11,6 @@
 const log4js = require('log4js');
 const util = require('util');
 
-const LoggingError = require('./errors/LoggingError');
-
 const validLevels = ['error', 'warn', 'info', 'debug', 'trace'];
 const loggingLevel = process.env.LOG_LEVEL || 'info'; // Should be 'info' for production code.
 const contextName = 'context';
@@ -30,7 +28,9 @@ const config = {
 }
 
 function setLoggingLevel(level) {
-  if (!validLevels.includes(level)) throw new LoggingError('INVALID_LEVEL');
+  if (!validLevels.includes(level)) {
+    throw new Error(`${level} is not a valid level. Valid levels: ${validLevels}`);
+  } 
   config.categories.default.level = level;
   log4js.configure(config);
 }
@@ -42,7 +42,6 @@ function allLoggingLevels() {
     allLevels: validLevels,
   };
 }
-
 
 class Logger {
   constructor(context) {
