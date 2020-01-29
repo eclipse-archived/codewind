@@ -1193,11 +1193,11 @@ paths:
             type: string
           required: true
           description: projectWatchStateId represents a file watching client's current state. projectWatchStateId is generated and returned when first time calling the endpoint `GET /api/v1/projects/watchlist`. Additionally, if the ignored paths list for a project is changed, a new projectWatchStateId is generated and sent to file watchers via WebSocket event from `/websockets/file-changes/v1`
-        - name: clientUUID
+        - name: clientUuid
           in: query
           schema:
             type: string
-            format: uuid
+            pattern: ^[0-9a-f]{32}$
           required: true
           description: a unique id of the client
       requestBody:
