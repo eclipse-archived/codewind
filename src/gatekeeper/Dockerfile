@@ -8,15 +8,20 @@
 # Contributors:
 #     IBM Corporation - initial API and implementation
 ################################################################################
+FROM centos:8.1.1911
+RUN yum -y install nodejs \
+    && yum clean all \
+    && rm -rf /var/cache/yum
 
-FROM node:12-alpine
 LABEL org.opencontainers.image.title="Codewind-Gatekeeper" org.opencontainers.image.description="Codewind Gatekeeper" \
       org.opencontainers.image.url="https://codewind.dev/" \
       org.opencontainers.image.source="https://github.com/eclipse/codewind"
 
 EXPOSE 9096 9496
 
-RUN apk add --no-cache --update openssl
+RUN yum -y install openssl \
+    && yum clean all \
+    && rm -rf /var/cache/yum
 
 # Copy our license files into the new image
 COPY LICENSE NOTICE.md ./
