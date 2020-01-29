@@ -37,6 +37,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
         'chart/node/templates/service.yaml',
         'chart/node/values.yaml',
         'cli-config.yml',
+        'images/header-logo.svg',
         'nodemon.json',
         'package.json',
         'public/404.html',
@@ -60,6 +61,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
         'server/config',
         'server/routers',
         'test',
+        'images',
     ];
 
     describe('Sync modified file (these `it` blocks depend on each other passing)', function() {
