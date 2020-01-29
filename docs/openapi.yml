@@ -826,10 +826,31 @@ paths:
       responses:
         200:
           description: Successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - description
+                properties:
+                  description:
+                    type: string
+                additionalProperties: false
         400:
-          description: Project with given projectID not found
+          description: Request body missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageObject'
         404:
-          description: Load test results do not exist
+          description: Project or load test results do not exist
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/MessageObject'
+                  - $ref: '#/components/schemas/CodewindError'
+                 
         500:
           description: Internal error
     delete:
@@ -850,8 +871,18 @@ paths:
       responses:
         200:
           description: Successful
+          content:
+            text/html:
+              schema:
+                type: string
         404:
           description: Project or load test results do not exist
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/MessageObject'
+                  - $ref: '#/components/schemas/CodewindError'
         500:
           description: Internal error
 
@@ -2009,8 +2040,20 @@ components:
           type: array
           items:
             type: string
+    MessageObject:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+      additionalProperties: false
     CodewindError:
       type: object
+      required:
+        - name
+        - code
+        - message
       properties:
         name:
           type: string
