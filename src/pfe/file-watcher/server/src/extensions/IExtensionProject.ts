@@ -12,7 +12,7 @@
 
 import { Operation } from "../projects/operation";
 import { ProjectInfo, BuildLog, AppLog, ProjectCapabilities } from "../projects/Project";
-import * as projectEventsController from "../controllers/projectEventsController";
+import { IFileChangeEvent } from "../utils/fileChanges";
 
 /**
  * @interface
@@ -35,9 +35,9 @@ export interface IExtensionProject {
      * @description Update operation for the project.
      *
      * @param operation <Required | Operation> - The update operation.
-     * @param changedFiles <Optional | projectEventsController.IFileChangeEvent[]> - The file changed event array.
+     * @param changedFiles <Optional | IFileChangeEvent[]> - The file changed event array.
      */
-    update(operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): void;
+    update(operation: Operation, changedFiles?: IFileChangeEvent[]): void;
 
     /**
      * @function

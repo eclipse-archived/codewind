@@ -16,7 +16,7 @@ import { Operation } from "./operation";
 import { ProjectInfo, BuildLog, AppLog } from "./Project";
 import * as path from "path";
 import * as logHelper from "./logHelper";
-import * as projectEventsController from "../controllers/projectEventsController";
+import { IFileChangeEvent } from "../utils/fileChanges";
 
 export const requiredFiles = [ "/Dockerfile", "/Dockerfile-tools", "/Package.swift" ];
 
@@ -84,11 +84,11 @@ export function create(operation: Operation): void {
  * @description Update operation for a swift project.
  *
  * @param operation <Required | Operation> - The update operation.
- * @param changedFiles <Optional | projectEventsController.IFileChangeEvent[]> - The file changed event array.
+ * @param changedFiles <Optional | IFileChangeEvent[]> - The file changed event array.
  *
  * @returns void
  */
-export function update(operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): void {
+export function update(operation: Operation, changedFiles?: IFileChangeEvent[]): void {
     projectUtil.containerUpdate(operation, "/file-watcher/scripts/swift-container.sh", "update");
 }
 

@@ -27,10 +27,10 @@ import * as projectUtil from "../projects/projectUtil";
 import * as logHelper from "../projects/logHelper";
 import * as logger from "../utils/logger";
 import * as statusController from "./projectStatusController";
-import * as projectEventsController from "./projectEventsController";
 import * as projectExtensions from "../extensions/projectExtensions";
 import * as processManager from "../utils/processManager";
 import { Validator } from "../projects/Validator";
+import { changedFilesMap } from "../utils/fileChanges";
 
 
 interface ProjectInfoCache {
@@ -543,7 +543,7 @@ async function triggerBuild(project: BuildQueueType): Promise<void> {
 
         // Hand off operation to appropriate handler for execution
         logger.logProjectInfo(`Handing ${operationType} operation to the selected project handler`, projectID);
-        selectedProjectHandler.update(operation, projectEventsController.changedFilesMap.get(projectID));
+        selectedProjectHandler.update(operation, changedFilesMap.get(projectID));
     } else {
         return;
     }

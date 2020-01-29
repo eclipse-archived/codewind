@@ -18,11 +18,11 @@ import { Operation } from "./operation";
 import { ProjectInfo, BuildLog, AppLog, ProjectCapabilities, defaultProjectCapabilities } from "./Project";
 import { Validator } from "./Validator";
 import * as logHelper from "./logHelper";
-import * as projectEventsController from "../controllers/projectEventsController";
 import { IExtensionProject } from "../extensions/IExtensionProject";
 import * as processManager from "../utils/processManager";
 import * as logger from "../utils/logger";
 import { projectConstants, StartModes } from "./constants";
+import { IFileChangeEvent } from "../utils/fileChanges";
 
 /**
  * @interface
@@ -179,9 +179,9 @@ export class ShellExtensionProject implements IExtensionProject {
      * @description Update operation for the project.
      *
      * @param operation <Required | Operation> - The update operation.
-     * @param changedFiles <Optional | projectEventsController.IFileChangeEvent[]> - The file changed event array.
+     * @param changedFiles <Optional | IFileChangeEvent[]> - The file changed event array.
      */
-    update = (operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): void => {
+    update = (operation: Operation, changedFiles?: IFileChangeEvent[]): void => {
 
         // detectChangeByExtension may contain a list of files that should trigger a REBUILD
         if (changedFiles && Array.isArray(this.detectChangeByExtension)) {

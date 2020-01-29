@@ -23,6 +23,7 @@ import * as projectSpecifications  from "../projects/projectSpecifications";
 import AsyncLock from "async-lock";
 import * as workspaceSettings from "../utils/workspaceSettings";
 import * as utils from "../utils/utils";
+import { changedFilesMap, IFileChangeEvent } from "../utils/fileChanges";
 const lock = new AsyncLock();
 
 const fileStatAsync = promisify(fs.stat);
@@ -34,7 +35,6 @@ const fileStatAsync = promisify(fs.stat);
  * value: timer
  */
 export const timerMap: Map<string, NodeJS.Timer> = new Map<string, NodeJS.Timer>();
-export const changedFilesMap: Map<string, IFileChangeEvent[]> = new Map<string, IFileChangeEvent[]>();
 export const chunkRemainingMap: Map <string, ChunkRemainingMapValue[]> = new Map<string, ChunkRemainingMapValue[]>();
 
 const workspaceSettingsInfo =  workspaceSettings.workspaceSettingsInfoCache ? JSON.parse(workspaceSettings.workspaceSettingsInfoCache) : undefined;
@@ -304,13 +304,7 @@ export interface IUpdateProjectFailure {
     error: { msg: string };
 }
 
-export interface IFileChangeEvent {
-    path: string;
-    timestamp: number;
-    type: string;
-    directory: boolean;
-    content?: string;
-}
+
 export interface ChunkRemainingMapValue {
     timestamp: number;
     chunkRemaining: number;

@@ -16,12 +16,12 @@ import * as path from "path";
 import * as projectUtil from "./projectUtil";
 import * as processManager from "../utils/processManager";
 import * as logHelper from "./logHelper";
-import * as projectEventsController from "../controllers/projectEventsController";
 import * as logger from "../utils/logger";
 import { Operation } from "./operation";
 import { ProjectInfo, BuildLog, AppLog, ProjectCapabilities, defaultProjectCapabilities } from "./Project";
 import { Validator } from "./Validator";
 import { IExtensionProject } from "../extensions/IExtensionProject";
+import { IFileChangeEvent } from "../utils/fileChanges";
 
 // skeleton for the logs originated from the extension json
 const logsOrigin: logHelper.ILogTypes = {
@@ -111,9 +111,9 @@ export class OdoExtensionProject implements IExtensionProject {
      * @description Update operation for the project.
      *
      * @param operation <Required | Operation> - The update operation.
-     * @param changedFiles <Optional | projectEventsController.IFileChangeEvent[]> - The file changed event array.
+     * @param changedFiles <Optional | IFileChangeEvent[]> - The file changed event array.
      */
-    update = (operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): void => {
+    update = (operation: Operation, changedFiles?: IFileChangeEvent[]): void => {
         projectUtil.containerUpdate(operation, path.join(this.fullPath, "odo-extension-entrypoint.sh"), "update");
     }
 

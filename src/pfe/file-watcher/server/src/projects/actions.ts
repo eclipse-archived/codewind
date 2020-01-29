@@ -23,6 +23,7 @@ import * as statusController from "../controllers/projectStatusController";
 import * as utils from "../utils/utils";
 import { IProjectActionParams } from "../controllers/projectsController";
 import * as projectEventsController from "../controllers/projectEventsController";
+import { changedFilesMap } from "../utils/fileChanges";
 
 export const actionMap = new Map<string, (args: any) => any>();
 import AsyncLock from "async-lock";
@@ -158,7 +159,7 @@ async function enableAndBuild(projectInfo: ProjectInfo): Promise<void> {
                         };
                         // for update operation
                         await projectsController.addProjectToBuildQueue(project);
-                        projectEventsController.changedFilesMap.delete(projectID);
+                        changedFilesMap.delete(projectID);
                         clearInterval(intervaltimer);
                         done();
                     }, () => {
@@ -251,7 +252,7 @@ export const build = async function (args: IProjectActionParams): Promise<{ oper
                 await projectsController.addProjectToBuildQueue(project);
                 statusController.buildRequired(args.projectID, false);
                 // delete cache from the map, since a build is triggerred
-                projectEventsController.changedFilesMap.delete(args.projectID);
+                changedFilesMap.delete(args.projectID);
                 clearInterval(intervaltimer);
                 done();
             }, () => {
