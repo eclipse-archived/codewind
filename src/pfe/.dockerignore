@@ -15,6 +15,5 @@ file-watcher/pomCache
 # Portal ignores
 portal/pushLocal.sh
 portal/sudoers
-portal/eslint-rules
 portal/.eslintignore
 portal/.eslintrc.json
