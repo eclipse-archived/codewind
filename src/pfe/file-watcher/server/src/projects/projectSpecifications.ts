@@ -10,7 +10,7 @@
  *******************************************************************************/
 "use strict";
 import { StartModes } from "./constants";
-import { ProjectInfo, UpdateProjectInfoPair, ProjectSettingsEvent } from "./Project";
+import { ProjectInfo, UpdateProjectInfoPair, ProjectSettingsEvent, RefPath } from "./Project";
 import * as logger from "../utils/logger";
 import * as projectsController from "../controllers/projectsController";
 import * as projectStatusController from "../controllers/projectStatusController";
@@ -374,7 +374,7 @@ const changeContextRoot = async function(args: any, operation: Operation): Promi
  * @function
  * @description Reconfig the ignored files for a project.
  *
- * @param args <Required | Any> - Required arguments for reconfiguration of ignroed files.
+ * @param args <Required | Any> - Required arguments for reconfiguration of ignored files.
  *
  * @returns Promise<any>
  */
@@ -440,17 +440,94 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
         saveIntoJsonFile: true
     };
     await projectsController.updateProjectInfo(projectID, keyValuePair);
+    projectInfo.ignoredPaths = ignoredPaths;
 
     const data: ProjectSettingsEvent = {
         operationId: operation.operationId,
         projectID: projectID,
-        status: "success"
+        status: "success",
+        ignoredPaths: ignoredPaths,
+        refPaths: projectInfo.refPaths
     };
-    if (ignoredPaths) {
-        data.ignoredPaths = ignoredPaths;
-    }
 
     logger.logProjectInfo("The ignored path list for file watching was updated successfully.", projectID);
+    io.emitOnListener("projectSettingsChanged", data);
+};
+
+/**
+ * @function
+ * @description Reconfig the ref paths for a project.
+ *
+ * @param args <Required | Any> - Required arguments for reconfiguration of ref paths.
+ *
+ * @returns Promise<any>
+ */
+const reconfigRefPathsForDaemon = async function (refPaths: RefPath[], operation: Operation): Promise<any> {
+    const projectInfo: ProjectInfo = operation.projectInfo;
+    const projectID = projectInfo.projectID;
+
+    // if defined, do some checks, sanitized the input etc
+    if (refPaths) {
+        if (!(refPaths instanceof Array)) {
+            const errorMsg = "BAD_REQUEST: refPaths must be an array.";
+            logger.logProjectError("Failed to update ref path list for file watching: " + errorMsg, projectID);
+
+            const data: ProjectSettingsEvent = {
+                operationId: operation.operationId,
+                projectID: projectID,
+                refPaths: undefined,
+                status: "failed",
+                error: errorMsg
+            };
+            io.emitOnListener("projectSettingsChanged", data);
+            return;
+        }
+
+        // sanitize the input
+        const sanitized: RefPath[] = [];
+        refPaths.forEach((el) => {
+            const refPath = RefPath.createFrom(el);
+            if (refPath) {
+                sanitized.push(refPath);
+            }
+        });
+        refPaths = sanitized;
+        logger.logProjectInfo("Attempting to set the ref path list for file watching with: " + JSON.stringify(refPaths), projectID);
+
+        if (projectInfo.refPaths instanceof Array &&
+            projectInfo.refPaths.length === refPaths.length &&
+            // for every old ref saved in projectInfo, can find a new ref in refPaths where the from and to properties are equal
+            projectInfo.refPaths.every((oldRef) => {
+                return refPaths.findIndex(newRef => newRef.from === oldRef.from && newRef.to === oldRef.to) != -1;
+            })) {
+                logger.logProjectInfo("The ref path list for file watching is unchanged", projectID);
+                return;
+        }
+    }
+    // if undefined and previously it was also undefined, nothing changed
+    else if (!projectInfo.refPaths) {
+        logger.logProjectInfo("The ref path list for file watching is unchanged", projectID);
+        return;
+    }
+    // otherwise the property was removed
+
+    const keyValuePair: UpdateProjectInfoPair = {
+        key: "refPaths",
+        value: refPaths,
+        saveIntoJsonFile: true
+    };
+    await projectsController.updateProjectInfo(projectID, keyValuePair);
+    projectInfo.refPaths = refPaths;
+
+    const data: ProjectSettingsEvent = {
+        operationId: operation.operationId,
+        projectID: projectID,
+        status: "success",
+        ignoredPaths: projectInfo.ignoredPaths,
+        refPaths: refPaths
+    };
+
+    logger.logProjectInfo("The ref path list for file watching was updated successfully.", projectID);
     io.emitOnListener("projectSettingsChanged", data);
 };
 
@@ -911,6 +988,14 @@ export async function projectSpecificationHandler(projectID: string, settings: a
         }
     }
 
+    // handle keys that are removed
+    const removeKeys = ["refPaths"];
+    for (const key of removeKeys) {
+        if (!settings[key]) {
+            await specificationSettingMap.get(key)(undefined, operation);
+        }
+    }
+
     logger.logProjectTrace(`${projectID} Project settings API operation ID: ${operation.operationId}`, projectID);
     return { "operationId": operation.operationId };
 }
@@ -923,5 +1008,6 @@ specificationSettingMap.set("healthCheck", changeHealthCheck);
 specificationSettingMap.set("mavenProfiles", changeMavenProfiles);
 specificationSettingMap.set("mavenProperties", changeMavenProperties);
 specificationSettingMap.set("ignoredPaths", reconfigIgnoredFilesForDaemon);
+specificationSettingMap.set("refPaths", reconfigRefPathsForDaemon);
 specificationSettingMap.set("isHttps", reconfigWWWProtocol);
 specificationSettingMap.set("statusPingTimeout", changeStatusPingTimeout);

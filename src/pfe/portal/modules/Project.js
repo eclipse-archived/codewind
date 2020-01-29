@@ -10,7 +10,7 @@
  *******************************************************************************/
 
 const fs = require('fs-extra');
-const { join } = require('path');
+const { isAbsolute, join } = require('path');
 const uuidv1 = require('uuid/v1');
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
@@ -226,6 +226,19 @@ module.exports = class Project {
       currentSettings = await fs.readJson(settingsFile);
     }
     return currentSettings;
+  }
+
+  /**
+   * Function to read the project .cw-refpaths.json file
+   * @return the contents of the file is an object containing a refPaths array
+   */
+  async readRefPathsFile() {
+    const refPathsFile = join(this.projectPath(), '.cw-refpaths.json');
+    let refPaths;
+    if (await fs.pathExists(refPathsFile)) {
+      refPaths = await fs.readJson(refPathsFile, { throws: false });
+    }
+    return refPaths || {};
   }
 
   /**
@@ -642,6 +655,17 @@ module.exports = class Project {
     const filePath = join(this.loadTestPath, 'config.json');
     await fs.writeJson(filePath, config, {spaces: '  '});
     return config;
+  }
+
+  /**
+   * Resolves the given path against the project's monitor path.
+   * The path is unchanged if it is already absolute.
+   * 
+   * @param {String} path
+   * @returns {String} an absolute path
+   */
+  resolveMonitorPath(path) {
+    return isAbsolute(path) ? cwUtils.convertFromWindowsDriveLetter(path) : join(this.pathToMonitor, path);
   }
 }
 

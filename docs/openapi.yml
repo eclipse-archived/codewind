@@ -1919,6 +1919,11 @@ components:
           description: regex of paths to be ignored for changes
           type: array
           example: [ "/target", "/.m2", "*/.git/*" ]
+        refPaths:
+          description: additional referenced paths outside of the project folder to monitor
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchListRefPath'
         projectWatchStateId:
           description: projectWatchStateId represents a file watching client's current state. projectWatchStateId is generated and returned when first time calling the endpoint `GET /api/v1/projects/watchlist`. Additionally, if the ignored paths list for a project is changed, a new projectWatchStateId is generated and sent to file watchers via WebSocket event from `/websockets/file-changes/v1`
           type: string
@@ -1928,6 +1933,18 @@ components:
           description: the time in millisconds since epoch that the project was last updated in codewind
           type: number
           example: 1576080088223
+    WatchListRefPath:
+      type: object
+      required:
+        - from
+        - to
+      properties:
+        from:
+          description: absolute path to file on local machine
+          type: string
+        to:
+          description: relative path to root of project inside container
+          type: string
     FileChangeList:
         type: object
         required:
@@ -1965,6 +1982,7 @@ components:
           type: string
           example: "Codewind extension for knapp support"
         commands:
+          type: array
           items:
             $ref: '#/components/schemas/ExtensionCommand'
         detection:

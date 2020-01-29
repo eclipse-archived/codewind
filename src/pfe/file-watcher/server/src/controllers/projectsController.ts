@@ -10,7 +10,6 @@
  *******************************************************************************/
 "use strict";
 import { promisify } from "util";
-import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import AsyncLock from "async-lock";
@@ -20,7 +19,7 @@ import { actionMap } from "../projects/actions";
 import * as projectSpecifications from "../projects/projectSpecifications";
 import { Operation } from "../projects/operation";
 import * as localeTrans from "../utils/locale";
-import { AppLog, BuildLog, ProjectInfo, ProjectMetadata, ProjectCapabilities, UpdateProjectInfoPair } from "../projects/Project";
+import { AppLog, BuildLog, ProjectInfo, ProjectMetadata, ProjectCapabilities, RefPath, UpdateProjectInfoPair } from "../projects/Project";
 import * as io from "../utils/socket";
 import * as utils from "../utils/utils";
 import * as constants from "../projects/constants";
@@ -342,6 +341,24 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         }
     }
 
+    // read the .cw-refpaths.json file, will be {} if it doesn't exist
+    const refPathsFilePath = path.join(projectLocation, ".cw-refpaths.json");
+    const refPathsFile = await utils.asyncReadJSONFile(refPathsFilePath);
+    if (refPathsFile.refPaths instanceof Array) {
+        projectInfo.refPaths = [];
+        refPathsFile.refPaths.forEach((el: any) => {
+            const refPath = RefPath.createFrom(el);
+            if (refPath) {
+                projectInfo.refPaths.push(refPath);
+            }
+        });
+        if (projectInfo.refPaths.length == 0) {
+            logger.logProjectInfo("The refPaths array is empty, File-watcher will ignore the setting", projectID, projectName);
+        } else {
+            logger.logProjectInfo("refPaths after removing invalid entries: " + JSON.stringify(projectInfo.refPaths), projectID, projectName);
+        }
+    }
+
     // Ensure the project metadata directory is created
     const projectDir = getProjectMetadataById(projectID).dir;
     try {
@@ -500,6 +517,9 @@ async function triggerBuild(project: BuildQueueType): Promise<void> {
         projectID: projectID,
         ignoredPaths: projectInfo.ignoredPaths
     };
+    if (projectInfo.refPaths) {
+        eventData.refPaths = projectInfo.refPaths;
+    }
     io.emitOnListener("newProjectAdded", eventData);
 }
 
@@ -1055,6 +1075,11 @@ export async function updateProjectInfo(projectID: string, keyValuePair: UpdateP
         keyValuePair.saveIntoJsonFile = true;
     }
 
+    // remove case
+    if (typeof keyValuePair.value === "undefined" || keyValuePair.value === null) {
+        delete projectInfo[keyValuePair.key];
+    }
+
     try {
         await saveProjectInfo(projectID, projectInfo, keyValuePair.saveIntoJsonFile);
     } catch (err) {
@@ -1209,6 +1234,7 @@ export interface IProjectSettings {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     ignoredPaths?: string[];
+    refPaths?: RefPath[];
     isHttps?: boolean;
     statusPingTimeout?: string;
 }
@@ -1330,4 +1356,5 @@ export interface ICheckNewLogFileFailure {
 export interface NewProjectAddedEvent {
     projectID: string;
     ignoredPaths: string[];
+    refPaths?: RefPath[];
 }

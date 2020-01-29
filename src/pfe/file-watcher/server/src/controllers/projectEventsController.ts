@@ -22,11 +22,10 @@ import { UpdateProjectInfoPair, ProjectInfo } from "../projects/Project";
 import * as projectSpecifications  from "../projects/projectSpecifications";
 import AsyncLock from "async-lock";
 import * as workspaceSettings from "../utils/workspaceSettings";
-import { writeFile, ensureDir, rmdir, unlink } from "fs-extra";
+import * as utils from "../utils/utils";
 const lock = new AsyncLock();
 
 const fileStatAsync = promisify(fs.stat);
-const readFileAsync = promisify(fs.readFile);
 
 /**
  * @description
@@ -105,17 +104,31 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                     // Once we have all the necessary flags, dont process any more events
                     break;
                 }
-                if (eventArray[i].path && eventArray[i].path.includes(".cw-settings") && !isSettingFileChanged) {
+                if (eventArray[i].path &&
+                    (eventArray[i].path.includes(".cw-settings") || eventArray[i].path.includes(".cw-refpaths.json")) &&
+                    !isSettingFileChanged) {
                     isSettingFileChanged = true;
-                    logger.logProjectInfo("cw-settings file changed.", projectID);
-                    const settingsFilePath = path.join(projectInfo.location, ".cw-settings");
-                    const data = await readFileAsync(settingsFilePath, "utf8");
-                    const projectSettings = JSON.parse(data);
-                    projectSpecifications.projectSpecificationHandler(projectID, projectSettings);
                 } else if (eventArray[i].path && !eventArray[i].path.includes(".cw-settings") && shouldHandle(detectChangeByExtension, eventArray[i].path)) {
                     logger.logProjectInfo("Detected other file changes, Codewind will build the project", projectID);
                     isProjectBuildRequired = true;
                 }
+            }
+            if (isSettingFileChanged) {
+                logger.logProjectInfo("A Codewind settings file changed.", projectID);
+
+                // first read .cw-settings file
+                const settingsFilePath = path.join(projectInfo.location, ".cw-settings");
+                const projectSettings = await utils.asyncReadJSONFile(settingsFilePath);
+                delete projectSettings.refPaths; // this must come from the next file
+
+                // then read .cw-refpaths.json file
+                const refPathsFilePath = path.join(projectInfo.location, ".cw-refpaths.json");
+                const refPathsFile = await utils.asyncReadJSONFile(refPathsFilePath);
+                if (refPathsFile.refPaths) {
+                    projectSettings.refPaths = refPathsFile.refPaths;
+                }
+
+                projectSpecifications.projectSpecificationHandler(projectID, projectSettings);
             }
         } catch (err) {
             // Log the error and Codewind will proceed to re-build the project
