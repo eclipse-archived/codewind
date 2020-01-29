@@ -439,6 +439,7 @@ const reconfigIgnoredFilesForDaemon = async function (ignoredPaths: string[], op
         saveIntoJsonFile: true
     };
     await projectsController.updateProjectInfo(projectID, keyValuePair);
+    projectInfo.ignoredPaths = ignoredPaths;
 
     const data: ProjectSettingsEvent = {
         operationId: operation.operationId,
@@ -515,6 +516,7 @@ const reconfigRefPathsForDaemon = async function (refPaths: RefPath[], operation
         saveIntoJsonFile: true
     };
     await projectsController.updateProjectInfo(projectID, keyValuePair);
+    projectInfo.refPaths = refPaths;
 
     const data: ProjectSettingsEvent = {
         operationId: operation.operationId,

@@ -429,7 +429,7 @@ module.exports = class FileWatcher {
       const projectID = fwProject.projectID;
       const project = this.user.projectList.retrieveProject(projectID);
 
-      if (fwProject.ignoredPaths || fwProject.hasOwnProperty('refPaths') || event == "newProjectAdded") {
+      if (fwProject.ignoredPaths || event == "newProjectAdded") {
         // Send all file watcher clients project related data when a new project is added or ignored paths has changed
         const ignoredPaths = fwProject.ignoredPaths;
         const pathToMonitor = project.pathToMonitor;
