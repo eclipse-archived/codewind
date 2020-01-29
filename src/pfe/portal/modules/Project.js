@@ -262,7 +262,7 @@ module.exports = class Project {
     }
     try {
       // Strip out capabilitiesReady as this shouldn't persist
-      const {capabilitiesReady, ...updatedProject } = this
+      const {capabilitiesReady, detailedAppStatus,  ...updatedProject } = this
       await fs.writeJson(infFile, updatedProject, { spaces: '  ' });    
     } catch(err) {
       log.error(err);
