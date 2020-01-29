@@ -47,8 +47,8 @@ router.put('/api/v1/projects/:id/file-changes/:projectWatchStateId/status', vali
         projectWatchStateId: projectWatchStateId,
         status: status
       };
-      if (req.query && req.query.clientUUID) {
-        data.clientUUID = req.query.clientUUID;
+      if (req.query && req.query.clientUuid) {
+        data.clientUuid = req.query.clientUuid;
       }
       user.uiSocket.emit("projectWatchStatusChanged", data);
       log.info("Watch status for projectID " + data.projectID + ": " + data.status);

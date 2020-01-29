@@ -82,7 +82,7 @@ describe('watchList and file-changes route tests', function() {
             const req = () => reqService.chai
                 .put(`/api/v1/projects/${projectID}/file-changes/${projectWatchStateId}/status`)
                 .set('Cookie', ADMIN_COOKIE)
-                .query({ clientUUID: '99999999-9999-9999-9999-999999999999' });
+                .query({ clientUuid: '99999999-9999-9999-9999-999999999999' });
             const res = await reqService.makeReq(req);
             
             res.should.have.status(400);
@@ -95,7 +95,7 @@ describe('watchList and file-changes route tests', function() {
             const req = () => reqService.chai
                 .put(`/api/v1/projects/${idMatchingNoProjects}/file-changes/${projectWatchStateId}/status`)
                 .set('Cookie', ADMIN_COOKIE)
-                .query({ clientUUID: '99999999-9999-9999-9999-999999999999' })
+                .query({ clientUuid: '99999999-9999-9999-9999-999999999999' })
                 .send({ success: true });
 
             const res = await reqService.makeReq(req);
@@ -108,7 +108,7 @@ describe('watchList and file-changes route tests', function() {
             const req = () => reqService.chai
                 .put(`/api/v1/projects/${projectID}/file-changes/${projectWatchStateId}/status`)
                 .set('Cookie', ADMIN_COOKIE)
-                .query({ clientUUID: '99999999-9999-9999-9999-999999999999' })
+                .query({ clientUuid: '99999999-9999-9999-9999-999999999999' })
                 .send({ success: true });
 
             const res = await reqService.makeReq(req);
