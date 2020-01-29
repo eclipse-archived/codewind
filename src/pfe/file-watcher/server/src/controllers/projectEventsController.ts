@@ -150,6 +150,8 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
 
         logger.logProjectInfo("File change detected. Project will re-build.", projectID);
 
+        logger.logProjectInfo("Changed Files: " + generateChangeListSummaryForDebug(eventArray), projectID);
+
         await lock.acquire("changedFilesLock", done => {
             const oldChangedFiles: IFileChangeEvent[] = changedFilesMap.get(projectID);
             const newChangedFiles: IFileChangeEvent[] = oldChangedFiles ? oldChangedFiles.concat(eventArray) : eventArray;
@@ -281,6 +283,42 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
         return { "statusCode": 500, "error": {"msg": errorMsg }};
     }
     return { "statusCode": 202 };
+
+}
+
+function generateChangeListSummaryForDebug(entries: IFileChangeEvent[]): string {
+    let result = "[ ";
+
+    for (const entry of entries) {
+
+        if (entry.type === "CREATE") {
+            result += "+";
+        } else if (entry.type === "MODIFY") {
+            result += ">";
+        } else if (entry.type === "DELETE") {
+            result += "-";
+        } else {
+            result += "?";
+        }
+
+        let filename = entry.path;
+        const index = filename.lastIndexOf("/");
+        if (index !== -1) {
+            filename = filename.substring(index + 1);
+        }
+        result += filename + " ";
+
+        if (result.length > 256) {
+            break;
+        }
+    }
+
+    if (result.length > 256) {
+        result += " (...) ";
+    }
+    result += "]";
+
+    return result;
 
 }
 
