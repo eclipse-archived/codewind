@@ -53,10 +53,11 @@ else
   printf "\n\n${BLUE}BUILDING DOCKER IMAGES${RESET}\n\n";
 
   ./script/build.sh;
+  EC=$?
 
-  if [ $? -ne 0 ]; then
+  if [ $EC -ne 0 ]; then
     printf "\n${RED}FAILED TO BUILD\nExiting. $RESET";
-    exit $?
+    exit $EC
   else
     printf "\n${GREEN}ALL DOCKER IMAGES SUCCESSFULLY BUILT $RESET\n";
   fi
