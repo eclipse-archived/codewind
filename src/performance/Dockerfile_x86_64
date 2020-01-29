@@ -12,7 +12,7 @@
 ################################################################################
 # Multi stage DockerFile to build the performance UI and a Docker runtime image
 ################################################################################
-FROM centos:8 AS node-base
+FROM centos:8.1.1911 AS node-base
 RUN yum -y install nodejs \
     && yum clean all \
     && rm -rf /var/cache/yum

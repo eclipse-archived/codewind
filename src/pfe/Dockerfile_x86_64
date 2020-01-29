@@ -8,7 +8,7 @@
 # Contributors:
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
-FROM centos:8 AS codewind-pfe-base
+FROM centos:8.1.1911 AS codewind-pfe-base
 RUN yum -y install nodejs \
     && yum clean all \
     && rm -rf /var/cache/yum
@@ -131,5 +131,5 @@ ENV NODE_ENV=${NODE_ENV} \
     FORCE_COLOR=1 \
     LOG_LEVEL=info
 
-WORKDIR /
+r psWORKDIR /
 CMD [ "sh", "-c", " /file-watcher/scripts/root-watcher.sh ${HOST_WORKSPACE_DIRECTORY} ${CONTAINER_WORKSPACE_DIRECTORY} ; cd /portal ; npm start ;" ]

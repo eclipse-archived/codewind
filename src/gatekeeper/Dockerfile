@@ -8,7 +8,7 @@
 # Contributors:
 #     IBM Corporation - initial API and implementation
 ################################################################################
-FROM centos:8
+FROM centos:8.1.1911
 RUN yum -y install nodejs \
     && yum clean all \
     && rm -rf /var/cache/yum
