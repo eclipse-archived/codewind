@@ -133,11 +133,15 @@ paths:
       responses:
         200:
           description: Project successfully opened
+          content:
+            text/html:
+              schema:
+                type: string
         404:
-          description: Project with given projectID not found
+          $ref: '#/components/responses/ProjectNotFound'
 
   /api/v1/projects/{id}/close:
-    post:
+    put:
       summary: Send project close request
       description: >
         Project close is asynchronous. A return of 202 indicates that the request to close has been accepted.
@@ -152,10 +156,22 @@ paths:
       responses:
         202:
           description: Project close request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MsgObject'
         404:
-          description: Project with given projectID not found
+          description: Project Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MsgObject'
         409:
           description: Project is closing or closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MsgObject'
 
   /api/v1/projects/{id}/restart:
     post:
@@ -2009,6 +2025,14 @@ components:
           type: array
           items:
             type: string
+    MsgObject:
+      type: object
+      required:
+        - msg
+      properties:
+        msg:
+          type: string
+      additionalProperties: false
     CodewindError:
       type: object
       properties:
@@ -2036,5 +2060,11 @@ components:
       description: Internal error occurred.
       content:
         application/json:
+          schema:
+            type: string
+    ProjectNotFound:
+      description: Project not found
+      content:
+        text/html:
           schema:
             type: string

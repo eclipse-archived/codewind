@@ -184,12 +184,15 @@ function createProjects(optionsArray) {
     return Promise.all(promises);
 }
 
-function openProject(projectID, expectedResStatus = 200) {
-    if (typeof projectID !== 'string') throw new Error(`'${projectID}' should be a string`);
+function openProject(projectID, expectedResStatus) {
+    if (typeof projectID !== 'string') {
+        throw new Error(`'${projectID}' should be a string`);
+    }
     const req = () => reqService.chai
         .put(`/api/v1/projects/${projectID}/open`)
         .set('Cookie', ADMIN_COOKIE);
-    return reqService.makeReq(req, expectedResStatus);
+    const res = reqService.makeReq(req, expectedResStatus);
+    return res;
 }
 
 /**
@@ -199,16 +202,19 @@ function openProject(projectID, expectedResStatus = 200) {
  */
 function closeProject(
     projectID,
-    expectedResStatus = 202,
-    awaitSocketConfirmation = true
+    expectedResStatus,
+    awaitSocketConfirmation,
 ) {
-    if (typeof projectID !== 'string') throw new Error(`'${projectID}' should be a string`);
+    if (typeof projectID !== 'string') {
+        throw new Error(`'${projectID}' should be a string`);
+    }
     const req = () => reqService.chai
         .put(`/api/v1/projects/${projectID}/close`)
         .set('Cookie', ADMIN_COOKIE);
-    return awaitSocketConfirmation
+    const res = awaitSocketConfirmation
         ? reqService.makeReqAndAwaitSocketMsg(req, expectedResStatus, { projectID, msgType: 'projectClosed' })
         : reqService.makeReq(req, expectedResStatus);
+    return res;
 }
 
 async function removeProject(pathToProjectDir, projectID){
