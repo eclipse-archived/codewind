@@ -842,10 +842,31 @@ paths:
       responses:
         200:
           description: Successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - description
+                properties:
+                  description:
+                    type: string
+                additionalProperties: false
         400:
-          description: Project with given projectID not found
+          description: Request body missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageObject'
         404:
-          description: Load test results do not exist
+          description: Project or load test results do not exist
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/MessageObject'
+                  - $ref: '#/components/schemas/CodewindError'
+                 
         500:
           description: Internal error
     delete:
@@ -866,8 +887,18 @@ paths:
       responses:
         200:
           description: Successful
+          content:
+            text/html:
+              schema:
+                type: string
         404:
           description: Project or load test results do not exist
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/MessageObject'
+                  - $ref: '#/components/schemas/CodewindError'
         500:
           description: Internal error
 
@@ -1182,9 +1213,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/WatchList'
+                type: object
+                required:
+                  - projects
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WatchList'
         500:
           description: if an error occured
 
@@ -1204,11 +1240,11 @@ paths:
             type: string
           required: true
           description: projectWatchStateId represents a file watching client's current state. projectWatchStateId is generated and returned when first time calling the endpoint `GET /api/v1/projects/watchlist`. Additionally, if the ignored paths list for a project is changed, a new projectWatchStateId is generated and sent to file watchers via WebSocket event from `/websockets/file-changes/v1`
-        - name: clientUUID
+        - name: clientUuid
           in: query
           schema:
             type: string
-            format: uuid
+            pattern: ^[0-9a-f]{32}$
           required: true
           description: a unique id of the client
       requestBody:
@@ -2033,8 +2069,20 @@ components:
         msg:
           type: string
       additionalProperties: false
+    MessageObject:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+      additionalProperties: false
     CodewindError:
       type: object
+      required:
+        - name
+        - code
+        - message
       properties:
         name:
           type: string

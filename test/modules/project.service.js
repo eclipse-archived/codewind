@@ -259,8 +259,7 @@ async function getWatchList() {
         .get('/api/v1/projects/watchlist')
         .set('Cookie', ADMIN_COOKIE);
     const res = await reqService.makeReq(req, 200);
-    if (!Array.isArray(res.body.projects)) throw new Error(`'${res.body.projects}' should be an array`);
-    return res.body.projects;
+    return res;
 }
 
 async function getProject(id) {
