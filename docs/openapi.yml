@@ -1227,8 +1227,11 @@ paths:
         - name: clientUuid
           in: query
           schema:
-            type: string
-            pattern: ^[0-9a-f]{32}$
+            oneOf:
+              - type: string
+                format: uuid
+              - type: string
+                pattern: ^[0-9a-f]{32}$
           required: true
           description: a unique id of the client
       requestBody:
