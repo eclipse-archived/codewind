@@ -10,10 +10,12 @@
  *******************************************************************************/
 
 const express = require('express');
-const router = express.Router();
-const Logger = require('../../modules/utils/Logger');
-const log = new Logger(__filename);
 
+const { validateReq } = require('../../middleware/reqValidator');
+const Logger = require('../../modules/utils/Logger');
+
+const router = express.Router();
+const log = new Logger(__filename);
 
 /**
  * API Function to put the watch status of a project with a particular projectWatchStateId
@@ -23,18 +25,15 @@ const log = new Logger(__filename);
  * @return 400 if with bad request
  * @return 500 if there was an error
  */
-router.put('/api/v1/projects/:id/file-changes/:projectWatchStateId/status', function (req, res) {
+router.put('/api/v1/projects/:id/file-changes/:projectWatchStateId/status', validateReq, function (req, res) {
   try {
     const user = req.cw_user;
     const projectID = req.sanitizeParams('id');
+    const success = req.sanitizeBody('success');
     const projectWatchStateId = req.sanitizeParams('projectWatchStateId');
     let status;
-    if (req.sanitizeBody('success')!= undefined) {
-      status = req.sanitizeBody('success') ?  "success" : "failed" ;
-    }
-    if (!projectID || !status || !projectWatchStateId) {
-      res.status(400).send("Missing required parameter, projectID, projectWatchStateId and status are required to be provided. ");
-      return;
+    if (success != undefined) {
+      status = success ?  "success" : "failed";
     }
     const project = user.projectList.retrieveProject(projectID);
     if (!project) {
@@ -48,8 +47,8 @@ router.put('/api/v1/projects/:id/file-changes/:projectWatchStateId/status', func
         projectWatchStateId: projectWatchStateId,
         status: status
       };
-      if (req.query && req.query.clientUUID) {
-        data.clientUUID = req.query.clientUUID;
+      if (req.query && req.query.clientUuid) {
+        data.clientUuid = req.query.clientUuid;
       }
       user.uiSocket.emit("projectWatchStatusChanged", data);
       log.info("Watch status for projectID " + data.projectID + ": " + data.status);
@@ -60,24 +59,5 @@ router.put('/api/v1/projects/:id/file-changes/:projectWatchStateId/status', func
     res.status(500).send(err);
   }
 });
-
-
-/**
- * API Function to post the changedFiles
- * @param id the projectID
- * @param msg the body message, contains changedFiles event array
- * @param timestamp (query param) the timestamp of this event
- * @return 200 if operation success
- * @return 400 if with bad request
- * @return 500 if there was an error
- */
-router.post('/api/v1/projects/:id/file-changes', async function (req, res) {
-
-  // This api no longer required to be called by the filewatcher-demon
-  // changing this code to do nothing until the filewacther-demon has been
-  // updated to no longer call this
-  res.sendStatus(200);
-  
-})
 
 module.exports = router;
