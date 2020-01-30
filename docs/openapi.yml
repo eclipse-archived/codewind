@@ -358,6 +358,10 @@ paths:
                 $ref: '#/components/schemas/Project'
         404:
           description: The project was not found
+          content:
+            text/html:
+              schema:
+                type: string
         500:
           description: Any other error
 
