@@ -23,7 +23,7 @@ import { StartModes, ControlCommands } from "./constants";
 import * as locale from "../utils/locale";
 import * as logger from "../utils/logger";
 import * as logHelper from "./logHelper";
-import * as projectEventsController from "../controllers/projectEventsController";
+import { IFileChangeEvent } from "../utils/fileChanges";
 
 const readFileAsync = promisify(fs.readFile);
 
@@ -92,11 +92,11 @@ export function create(operation: Operation): void {
  * @description Update operation for a spring project.
  *
  * @param operation <Required | Operation> - The update operation.
- * @param changedFiles <Optional | projectEventsController.IFileChangeEvent[]> - The file changed event array.
+ * @param changedFiles <Optional | IFileChangeEvent[]> - The file changed event array.
  *
  * @returns void
  */
-export function update(operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): void {
+export function update(operation: Operation, changedFiles?: IFileChangeEvent[]): void {
     projectUtil.containerUpdate(operation, "/file-watcher/scripts/spring-container.sh", "update");
 }
 

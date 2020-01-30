@@ -12,6 +12,7 @@ import * as project from "../../../src/projects/Project";
 import * as projectsController from "../../../src/controllers/projectsController";
 import * as projectStatusController from "../../../src/controllers/projectStatusController";
 import * as projectEventsController from "../../../src/controllers/projectEventsController";
+import { IFileChangeEvent } from "../../../src/utils/fileChanges";
 
 import * as dockerUtil from "../../../src/utils/dockerutil";
 import * as kubeUtil from "../../../src/utils/kubeutil";
@@ -65,6 +66,6 @@ export async function checkNewLogFile(projectID: string, type: string): Promise<
   return await filewatcher.checkNewLogFile(projectID, type);
 }
 
-export async function updateProjectForNewChange(projectID: string, timestamp: number,  chunkNum: number, chunk_total: number, eventArray: projectEventsController.IFileChangeEvent[]): Promise<projectEventsController.IUpdateProjectSuccess | projectEventsController.IUpdateProjectFailure> {
+export async function updateProjectForNewChange(projectID: string, timestamp: number,  chunkNum: number, chunk_total: number, eventArray: IFileChangeEvent[]): Promise<projectEventsController.IUpdateProjectSuccess | projectEventsController.IUpdateProjectFailure> {
   return await filewatcher.updateProjectForNewChange(projectID, timestamp, chunkNum, chunk_total, eventArray);
 }

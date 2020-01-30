@@ -23,6 +23,7 @@ import * as projectSpecifications  from "../projects/projectSpecifications";
 import AsyncLock from "async-lock";
 import * as workspaceSettings from "../utils/workspaceSettings";
 import * as utils from "../utils/utils";
+import { changedFilesMap, IFileChangeEvent } from "../utils/fileChanges";
 const lock = new AsyncLock();
 
 const fileStatAsync = promisify(fs.stat);
@@ -34,7 +35,6 @@ const fileStatAsync = promisify(fs.stat);
  * value: timer
  */
 export const timerMap: Map<string, NodeJS.Timer> = new Map<string, NodeJS.Timer>();
-export const changedFilesMap: Map<string, IFileChangeEvent[]> = new Map<string, IFileChangeEvent[]>();
 export const chunkRemainingMap: Map <string, ChunkRemainingMapValue[]> = new Map<string, ChunkRemainingMapValue[]>();
 
 const workspaceSettingsInfo =  workspaceSettings.workspaceSettingsInfoCache ? JSON.parse(workspaceSettings.workspaceSettingsInfoCache) : undefined;
@@ -225,7 +225,13 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                     if (projectInfo.autoBuildEnabled) {
                         if (!statusController.isBuildInProgressOrQueued(projectID)) {
                             const operation = new projectOperation.Operation("update", projectInfo);
-                            projectHandler.update(operation, changedFilesMap.get(projectInfo.projectID));
+                            const project: projectsController.BuildQueueType = {
+                                operation: operation,
+                                handler: projectHandler
+                            };
+                            // for update operation
+                            await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, projectID, statusController.BuildState.inProgress, "");
+                            await projectsController.addProjectToBuildQueue(project);
                         } else {
                             logger.logProjectInfo("Project "  + projectID + " build is in progress, set build request flag to true", projectID);
                             const keyValuePair: UpdateProjectInfoPair = {
@@ -250,7 +256,13 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                     if (projectInfo.autoBuildEnabled) {
                         if (!statusController.isBuildInProgressOrQueued(projectID)) {
                             const operation = new projectOperation.Operation("update", projectInfo);
-                            projectHandler.update(operation, changedFilesMap.get(projectInfo.projectID));
+                            const project: projectsController.BuildQueueType = {
+                                operation: operation,
+                                handler: projectHandler
+                            };
+                            // for update operation
+                            await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, projectID, statusController.BuildState.inProgress, "action.calculateDifference");
+                            await projectsController.addProjectToBuildQueue(project);
                         } else {
                             logger.logProjectInfo("Project "  + projectID + " build is in progress, set build request flag to true", projectID);
                             const keyValuePair: UpdateProjectInfoPair = {
@@ -292,13 +304,7 @@ export interface IUpdateProjectFailure {
     error: { msg: string };
 }
 
-export interface IFileChangeEvent {
-    path: string;
-    timestamp: number;
-    type: string;
-    directory: boolean;
-    content?: string;
-}
+
 export interface ChunkRemainingMapValue {
     timestamp: number;
     chunkRemaining: number;

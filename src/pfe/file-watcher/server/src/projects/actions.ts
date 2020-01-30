@@ -23,6 +23,7 @@ import * as statusController from "../controllers/projectStatusController";
 import * as utils from "../utils/utils";
 import { IProjectActionParams } from "../controllers/projectsController";
 import * as projectEventsController from "../controllers/projectEventsController";
+import { changedFilesMap } from "../utils/fileChanges";
 
 export const actionMap = new Map<string, (args: any) => any>();
 import AsyncLock from "async-lock";
@@ -146,15 +147,19 @@ async function enableAndBuild(projectInfo: ProjectInfo): Promise<void> {
                 await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, projectID, statusController.BuildState.inProgress, "action.calculateDifference");
                 const intervaltimer = setInterval(() => {
                     // wait till no expected incoming chunks in order to get a full fileChanged array
-                    lock.acquire(["chunkRemainingLock", "changedFilesLock"], done => {
+                    lock.acquire(["chunkRemainingLock", "changedFilesLock"], async done => {
                         const chunkRemainingArray = projectEventsController.chunkRemainingMap.get(projectID);
                         if (chunkRemainingArray && chunkRemainingArray.length > 0) {
                             done();
                             return;
                         }
-                        const changedFiles = projectEventsController.changedFilesMap.get(projectID);
-                        projectHandler.update(operation, changedFiles);
-                        projectEventsController.changedFilesMap.delete(projectID);
+                        const project: projectsController.BuildQueueType = {
+                            operation: operation,
+                            handler: projectHandler
+                        };
+                        // for update operation
+                        await projectsController.addProjectToBuildQueue(project);
+                        changedFilesMap.delete(projectID);
                         clearInterval(intervaltimer);
                         done();
                     }, () => {
@@ -239,11 +244,15 @@ export const build = async function (args: IProjectActionParams): Promise<{ oper
                 }
                 const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
                 projectInfo.forceAction = "REBUILD";
-                const changedFiles = projectEventsController.changedFilesMap.get(args.projectID);
-                projectHandler.update(operation, changedFiles);
+                const project: projectsController.BuildQueueType = {
+                    operation: operation,
+                    handler: projectHandler
+                };
+                // for update operation
+                await projectsController.addProjectToBuildQueue(project);
                 statusController.buildRequired(args.projectID, false);
                 // delete cache from the map, since a build is triggerred
-                projectEventsController.changedFilesMap.delete(args.projectID);
+                changedFilesMap.delete(args.projectID);
                 clearInterval(intervaltimer);
                 done();
             }, () => {

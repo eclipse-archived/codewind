@@ -18,11 +18,12 @@ import { ProjectInfo, BuildLog, AppLog } from "./Project";
 import { Validator } from "./Validator";
 import * as logHelper from "./logHelper";
 import * as projectEventsController from "../controllers/projectEventsController";
+import { IFileChangeEvent } from "../utils/fileChanges";
 
 interface ProjectExtension {
     supportedType: string;
     create(operation: Operation): void;
-    update(operation: Operation, changedFiles: projectEventsController.IFileChangeEvent[]): void;
+    update(operation: Operation, changedFiles: IFileChangeEvent[]): void;
     typeMatches(location: string): Promise<boolean>;
     getLogs(type: string, logDirectory: string, projectID: string, containerName: string): Promise<Array<AppLog | BuildLog>>;
     validate(operation: Operation): void;
@@ -99,11 +100,11 @@ export class DockerProject implements ProjectExtension {
      * @description Update operation for docker projects.
      *
      * @param operation <Required | Operation> - The update operation.
-     * @param changedFiles <Optional | projectEventsController.IFileChangeEvent[]> - The file changed event array.
+     * @param changedFiles <Optional | IFileChangeEvent[]> - The file changed event array.
      *
      * @returns Promise<void>
      */
-    async update(operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): Promise<void> {
+    async update(operation: Operation, changedFiles?: IFileChangeEvent[]): Promise<void> {
         try {
             await projectUtil.buildAndRun(operation, "update");
         } catch (err) {
