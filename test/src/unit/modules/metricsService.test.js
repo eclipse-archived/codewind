@@ -52,7 +52,7 @@ describe('metricsService/index.js', () => {
     const pathToJvmOptions = path.join(projectDir, 'src', 'main', 'liberty', 'config', 'jvm.options');
     const pathToBackupJvmOptions = path.join(projectDir, 'src', 'main', 'liberty', 'config', 'backupJvm.options');
     const originalJvmOptions = 'foobar';
-    const expectedJvmOptions = `${originalJvmOptions}\n-javaagent:resources/javametrics-agent.jar`;
+    const expectedJvmOptions = `-javaagent:/config/resources/javametrics-agent.jar\n${originalJvmOptions}`;
 
     const pathToPomXmlsForLiberty = path.join(testResourcesDir, 'liberty', 'pom.xml');
     const pathToOriginalPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'withoutCollector.xml');
@@ -353,7 +353,7 @@ describe('metricsService/index.js', () => {
 
         describe('getNewContentsOfJvmOptions(existingContents)', () => {
             it('returns the existing contents when they already contain our metrics collector', () => {
-                const originalJvmOptions = '-Xmx1024M\n-javaagent:resources/javametrics-agent.jar';
+                const originalJvmOptions = '-javaagent:/config/resources/javametrics-agent.jar\n-Xmx1024M';
                 const funcToTest = metricsService.__get__('getNewContentsOfJvmOptions');
                 const output = funcToTest(originalJvmOptions);
                 output.should.equal(originalJvmOptions);

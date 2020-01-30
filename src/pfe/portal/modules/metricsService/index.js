@@ -77,12 +77,16 @@ async function removeMetricsCollectorFromPomXml(projectDir) {
 
 async function removeMetricsCollectorFromJvmOptions(projectDir) {
   const pathToBackupJvmOptions = getPathToBackupJvmOptions(projectDir);
-  const backupJvmOptions = await fs.readFile(pathToBackupJvmOptions);
-
   const pathToJvmOptions = getPathToJvmOptions(projectDir);
-  await fs.writeFile(pathToJvmOptions, backupJvmOptions);
-  log.debug(`Restored project's jvm.options to ${util.inspect(backupJvmOptions)}`);
-  await fs.remove(pathToBackupJvmOptions);
+  if (await fs.exists(pathToBackupJvmOptions)) {
+    const backupJvmOptions = await fs.readFile(pathToBackupJvmOptions);
+    await fs.writeFile(pathToJvmOptions, backupJvmOptions);
+    log.debug(`Restored project's jvm.options to ${util.inspect(backupJvmOptions)}`);
+    await fs.remove(pathToBackupJvmOptions);
+  } else {
+    log.debug(`No backup jvm.options. Deleting ${pathToJvmOptions}`);
+    await fs.remove(pathToJvmOptions);
+  }
 }
 
 async function removeMetricsCollectorFromSpringProject(projectDir) {
@@ -310,11 +314,18 @@ function getNewContentsOfPomXml(originalContents) {
 }
 
 function getNewContentsOfJvmOptions(originalContents) {
-  const injectionString = '-javaagent:\${server.config.dir}/resources/javametrics-agent.jar'
-  if (originalContents.includes(injectionString)) {
+  const injectionPrefix = '-javaagent:'
+  const injectionSuffix = 'javametrics-agent.jar'
+  const originalContentLines = originalContents.split('\n')
+  const injectionIndex = originalContentLines.findIndex(line => {
+    return line.startsWith(injectionPrefix) && line.endsWith(injectionSuffix);
+  });
+  if (injectionIndex != -1) {
+    // javametrics-agent.jar already being loaded as agent
     return originalContents;
-  } 
-  const newJvmOptions = `${originalContents}\n${injectionString}`;
+  }
+  // construct and inject default javametrics-agent location
+  const newJvmOptions = `${injectionPrefix}/config/resources/${injectionSuffix}\n${originalContents}`;
   return newJvmOptions;
 }
 
@@ -396,8 +407,11 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
     return (plugin.artifactId[0] === 'liberty-maven-plugin');
   });
   if (libertyPluginIndex != -1) {
-    serverName = originalBuildPlugins[libertyPluginIndex].configuration[0].serverName[0];
-    let jvmOptionsFile = originalBuildPlugins[libertyPluginIndex].configuration[0].jvmOptionsFile;
+    const serverNameArray = originalBuildPlugins[libertyPluginIndex].configuration[0].serverName;
+    if (Array.isArray(serverNameArray)) {
+      serverName = serverNameArray[0];
+    }
+    const jvmOptionsFile = originalBuildPlugins[libertyPluginIndex].configuration[0].jvmOptionsFile;
     if (!Array.isArray(jvmOptionsFile)) {
       jvmOptionsFileNeeded = true;
     }
@@ -495,7 +509,7 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
       }
     );
   }
-  let newBuildPlugins = undefined;
+  let newBuildPlugins;
   if (mavenDepPluginNeeded) {
     const metricsCollectorBuildPlugin = {
       groupId: [ 'org.apache.maven.plugins' ],
