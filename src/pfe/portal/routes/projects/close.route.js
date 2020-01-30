@@ -31,15 +31,15 @@ router.put('/api/v1/projects/:id/close', async function (req, res) {
     // client error cases
     if (!project) {
       const msg = `Unable to find project ${id}`;
+      log.error(msg);
       res.status(404).send({ msg });
-      log.debug(msg);
       return;
     }
     const projectDetails = `project ${project.name} (${id})`;
     if (project.isClosing() || project.isClosed()) {
       const msg = (project.isClosing() ? `Already closing ${projectDetails}` : `${projectDetails} is already closed`);
+      log.error(msg);
       res.status(409).send({ msg });
-      log.warn(msg);
       return;
     }
 
@@ -49,8 +49,8 @@ router.put('/api/v1/projects/:id/close', async function (req, res) {
       action: Project.STATES.closing
     });
     const msg = `Now trying to close ${projectDetails}`;
-    res.status(202).send({ msg });
     log.debug(msg);
+    res.status(202).send({ msg });
     await user.closeProject(project);
 
   } catch (err) {
