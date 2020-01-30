@@ -346,10 +346,6 @@ async function cloneProject(giturl, dest) {
     await git().clone(giturl, dest);
 }
 
-function readCwSettings(projectPath) {
-    return fs.readJSONSync(`${projectPath}/.cw-settings`);
-}
-
 async function notifyPfeOfFileChangesAndAwaitMsg(array, projectID) {
     const deflateAsync = promisify(zlib.deflate);
     const str = JSON.stringify(array);
@@ -398,7 +394,5 @@ module.exports = {
     removeProject,
     buildProject,
     cloneProject,
-    readCwSettings,
-    createProjectFromTemplate,
     notifyPfeOfFileChangesAndAwaitMsg,
 };
