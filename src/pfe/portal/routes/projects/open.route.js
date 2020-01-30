@@ -22,7 +22,9 @@ const log = new Logger(__filename);
  * @return 200 if project was successfully opened
  * @return 404 if project is not found
  */
-router.put('/api/v1/projects/:id/open', async function (req, res) {
+router.put('/api/v1/projects/:id/open', openProject);
+
+async function openProject(req, res) {
   try {
     const user = req.cw_user;
     const id = req.sanitizeParams('id');
@@ -47,6 +49,6 @@ router.put('/api/v1/projects/:id/open', async function (req, res) {
     log.error(err);
     res.status(500).send(err);
   }
-});
+}
 
 module.exports = router;
