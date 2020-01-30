@@ -147,13 +147,6 @@ module.exports = class Project {
   }
 
 
-  toJSON() {
-    // Exclude properties that we don't want to write to the .info file on disk. The
-    // ... spread syntax means that cloneObj gets all the rest of the properties
-    const { logStreams, loadInProgress, loadConfig, ...cloneObj } = this;
-    return cloneObj;
-  }
-
   async checkIfMetricsAvailable() {
     let isMetricsAvailable;
     // hardcoding a return of true for appsody projects until we have a better
@@ -261,8 +254,8 @@ module.exports = class Project {
       throw new ProjectError('LOCK_FAILURE', this.name);
     }
     try {
-      // Strip out capabilitiesReady as this shouldn't persist
-      const {capabilitiesReady, detailedAppStatus,  ...updatedProject } = this
+      // Strip out properties that shouldn't persist in the .inf file
+      const {capabilitiesReady, detailedAppStatus, logStreams, loadInProgress, loadConfig, operation, ...updatedProject } = this
       await fs.writeJson(infFile, updatedProject, { spaces: '  ' });    
     } catch(err) {
       log.error(err);
