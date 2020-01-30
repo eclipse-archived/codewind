@@ -11,6 +11,8 @@
 
 // TODO create the file watcher container in this file
 const path = require('path');
+const { inspect } = require('util');
+
 const Project = require('./Project');
 const Logger = require('./utils/Logger');
 const FilewatcherError = require('./utils/errors/FilewatcherError');
@@ -18,7 +20,8 @@ const ProjectListError = require('./utils/errors/ProjectListError');
 const WebSocket = require('./WebSocket');
 const crypto = require('crypto');
 const fw = require('file-watcher');
-const log = new Logger('FileWatcher.js');
+
+const log = new Logger(__filename);
 const filewatcher = new fw();
 let updateTimerStart = 0;
 
@@ -91,8 +94,7 @@ module.exports = class FileWatcher {
               WebSocket.watchListChanged(data);
               await this.handleProjectDeleted(fwProject, project);
             } else {
-              log.error(`Unexpected project deletion event for: ${fwProject.projectID}:`);
-              log.error(fwProject);
+              log.error(`Unexpected project deletion event for: ${fwProject.projectID}: ${inspect(fwProject)}`);
             }
           } catch (err) {
             let data = {
@@ -100,9 +102,8 @@ module.exports = class FileWatcher {
               status: 'failure',
               error: err.message
             }
+            log.error(`Error deleting project ${fwProject.projectID}: ${inspect(err)}`);
             this.user.uiSocket.emit('projectDeletion', data);
-            log.error(`Error deleting project ${fwProject.projectID}`);
-            log.error(err);
           }
           break;
         }
@@ -227,8 +228,7 @@ module.exports = class FileWatcher {
   }
 
   logFWReturnedMsg(msg) {
-    log.debug("Received filewatcher module response: ")
-    log.debug(JSON.stringify(msg));
+    log.debug(`Received filewatcher module response: ${inspect(msg)}`)
   }
 
 
