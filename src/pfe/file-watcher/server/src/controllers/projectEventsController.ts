@@ -153,6 +153,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
         logger.logProjectInfo("Changed Files: " + generateChangeListSummaryForDebug(eventArray), projectID);
 
         await lock.acquire("changedFilesLock", done => {
+            logger.logProjectTrace("Setting new changed files in the changedFilesMap... ", projectID);
             const oldChangedFiles: IFileChangeEvent[] = changedFilesMap.get(projectID);
             const newChangedFiles: IFileChangeEvent[] = oldChangedFiles ? oldChangedFiles.concat(eventArray) : eventArray;
             changedFilesMap.set(projectID, newChangedFiles);
@@ -215,16 +216,20 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
 
             if (newChunkRemaining == 0) {
                 // this is the last chunk for this timestamp, check if still waiting for other chunks for other timestamps
+                logger.logProjectTrace("Received last chunk for timestamp " + timestamp + " , checking if still waiting for other chunks for other timestamps... ", projectID);
                 let shouldTriggerBuild = true;
                 if (chunkRemainingMap.size != 0) {
                     const chunkRemainingArray = chunkRemainingMap.get(projectID);
                     if (chunkRemainingArray && chunkRemainingArray.length > 0) {
                         // still waiting for some chunks
+                        logger.logProjectTrace("Still waiting for other chunks... ", projectID);
                         shouldTriggerBuild = false;
                     }
                 }
                 if (shouldTriggerBuild) {
+                    logger.logProjectInfo("Received all chunks", projectID);
                     if (projectInfo.autoBuildEnabled) {
+                        logger.logProjectInfo("Proceeding the build... ", projectID);
                         if (!statusController.isBuildInProgressOrQueued(projectID)) {
                             const operation = new projectOperation.Operation("update", projectInfo);
                             projectHandler.update(operation, changedFilesMap.get(projectInfo.projectID));
@@ -248,8 +253,10 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
             }
 
             const timer = setTimeout(async () => {
+                logger.logProjectInfo("Timeout for waiting incomming chunks has been reached. ", projectID);
                 try {
                     if (projectInfo.autoBuildEnabled) {
+                        logger.logProjectInfo("Proceeding the build... ", projectID);
                         if (!statusController.isBuildInProgressOrQueued(projectID)) {
                             const operation = new projectOperation.Operation("update", projectInfo);
                             projectHandler.update(operation, changedFilesMap.get(projectInfo.projectID));
