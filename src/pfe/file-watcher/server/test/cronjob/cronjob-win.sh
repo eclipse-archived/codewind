@@ -17,6 +17,8 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
+source ./scripts/utils.sh
+
 cd /c
 TEST_WD=$(pwd)
 
@@ -85,17 +87,6 @@ while getopts "i:r:b:c:h" OPTION; do
 done
 
 echo -e "${GREEN}✔ Setting up test from $TEST_WD ... ${RESET}\n"
-
-function checkExitCode() {
-	exit_code=$1
-	error_msg=$2
-	if [[ $exit_code -eq 0 ]]; then
-		echo -e "${GREEN}✔ Done. ${RESET}\n"
-	else
-		echo -e "${RED}✖ $error_msg  ${RESET}\n"
-		exit 1
-	fi
-}
 
 function createProject() {
    ./$EXECUTABLE_NAME project create --url $1 --path $2

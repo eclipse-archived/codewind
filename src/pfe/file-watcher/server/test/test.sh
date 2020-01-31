@@ -12,6 +12,7 @@ TEST_SUITE="functional"
 POST_CLEANUP="n"
 CLEAN_RUN="n"
 CLEAN_WORKSPACE="n"
+CWCTL_PROJ="y"
 
 source ./scripts/utils.sh
 
@@ -25,6 +26,7 @@ function usage {
     cat <<EOF
 Usage: $me: [-<option letter> <option value> | -h]
 Options:
+    -o # Deploy PFE and create projects on local disk - 'y' or 'n' - Default: 'y'
     -t # Test type, currently supports 'local' or 'kube' - Optional
     -s # Test suite, currently supports 'functional' - Optional
     -p # Post cleanup, post test cleanup for cronjob, currently supports 'y' or 'n' - Optional
@@ -35,26 +37,28 @@ EOF
 }
 
 function cleanRun {
-    # Pre-test cleanup
-    ./scripts/setup.sh -t $TEST_TYPE -f uninstall
-    if [[ $? -eq 0 ]]; then
-        echo -e "${GREEN}Pre-test cleanup was successful. ${RESET}\n"
-    else
-        echo -e "${RED}Pre-test cleanup failed. ${RESET}\n"
-        exit 1
-    fi
+    if [[ ($CWCTL_PROJ == "y" && $TEST_TYPE == "kube") || ($CWCTL_PROJ == "n") ]]; then
+        # Pre-test cleanup
+        ./scripts/setup.sh -t $TEST_TYPE -f uninstall
+        if [[ $? -eq 0 ]]; then
+            echo -e "${GREEN}Pre-test cleanup was successful. ${RESET}\n"
+        else
+            echo -e "${RED}Pre-test cleanup failed. ${RESET}\n"
+            exit 1
+        fi
 
-    # Sleep for a few secs for Pods and PVs to free up
-    echo -e "${BLUE}Sleeping for 20s to allow the workspace removal to take down Pods and PVs ${RESET}\n"
-    sleep 20
+        # Sleep for a few secs for Pods and PVs to free up
+        echo -e "${BLUE}Sleeping for 20s to allow the workspace removal to take down Pods and PVs ${RESET}\n"
+        sleep 20
 
-    # Set up test automation
-    ./scripts/setup.sh -t $TEST_TYPE -f install
-    if [[ $? -eq 0 ]]; then
-        echo -e "${GREEN}Test automation setup was successful. ${RESET}\n"
-    else
-        echo -e "${RED}Test automation setup failed. ${RESET}\n"
-        exit 1
+        # Set up test automation
+        ./scripts/setup.sh -t $TEST_TYPE -f install
+        if [[ $? -eq 0 ]]; then
+            echo -e "${GREEN}Test automation setup was successful. ${RESET}\n"
+        else
+            echo -e "${RED}Test automation setup failed. ${RESET}\n"
+            exit 1
+        fi
     fi
 
     # Execute the tests
@@ -84,7 +88,7 @@ function executeTests {
     fi
 }
 
-while getopts "t:s:p:c:d:h" OPTION; do
+while getopts "t:s:p:c:d:o:h" OPTION; do
     case "$OPTION" in
         t) 
             TEST_TYPE=$OPTARG
@@ -131,12 +135,25 @@ while getopts "t:s:p:c:d:h" OPTION; do
                 exit 1
             fi
             ;;
+        o)
+            CWCTL_PROJ=$OPTARG
+            # Check if clean workspace argument is correct
+            if [[ ($CWCTL_PROJ != "y") && ($CWCTL_PROJ != "n") ]]; then
+                echo -e "${RED}Create projects with cwctl argument is not correct. ${RESET}\n"
+                usage
+                exit 1
+            fi
+            ;;
         *)
             usage
             exit 0
             ;;
     esac
 done
+
+if [[ $CWCTL_PROJ == "y" ]]; then
+    ./scripts/create-project.sh
+fi
 
 # Log in to the OKD cluster with default credentials
 if [[ $TEST_TYPE == "kube" ]]; then

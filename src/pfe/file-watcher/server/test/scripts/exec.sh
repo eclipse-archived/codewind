@@ -12,6 +12,8 @@ CW_DIR=$(pwd)
 cd -
 WEBSERVER_FILE="$CW_DIR/src/pfe/file-watcher/server/test/scripts/webserver.sh"
 
+source ./scripts/utils.sh
+
 function usage {
     me=$(basename $0)
     cat <<EOF
@@ -22,40 +24,6 @@ Options:
     -d # Clean workspace, currently supports 'y' or 'n' - Mandatory
     -h # Display the man page
 EOF
-}
-
-function checkExitCode() {
-	exit_code=$1
-	error_msg=$2
-	if [[ $exit_code -eq 0 ]]; then
-		echo -e "${GREEN}✔ Done. ${RESET}\n"
-	else
-		echo -e "${RED}✖ $error_msg  ${RESET}\n"
-		exit 1
-	fi
-}
-
-function downloadCwctl() {
-    echo -e "${BLUE}>> Downloading latest installer ... ${RESET}"
-    EXECUTABLE_NAME="cwctl_"$TEST_TYPE
-    HOST_OS=$(uname -a)
-    if [[ "$HOST_OS" =~ "Darwin" ]]; then
-        extension="macos"
-    elif [[ "$HOST_OS" =~ "Linux" ]]; then
-        extension="linux"
-    fi
-    echo "Extension is $extension"
-    if [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
-        CWCTL_INSTALL_TARGET="$TURBINE_PERFORMANCE_TEST"
-    else
-        CWCTL_INSTALL_TARGET="master"
-    fi
-    curl -X GET http://download.eclipse.org/codewind/codewind-installer/$CWCTL_INSTALL_TARGET/latest/cwctl-$extension --output $EXECUTABLE_NAME
-    checkExitCode $? "Failed to download latest installer."
-
-    echo -e "${BLUE}>> Giving executable permission to installer ... ${RESET}"
-    chmod +x $EXECUTABLE_NAME
-    checkExitCode $? "Failed to give correct permission to run installer."
 }
 
 function setupInternalRegistryCredentials() {
@@ -105,7 +73,6 @@ function copyToPFE() {
 }
 
 function setup {
-    PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects_local"
     DATE_NOW=$(date +"%d-%m-%Y")
     TIME_NOW=$(date +"%H.%M.%S")
     BUCKET_NAME=turbine-$TEST_TYPE-$TEST_SUITE
@@ -150,36 +117,7 @@ function setup {
             PROJECT_PATH=/projects
         fi
 
-        downloadCwctl
-
-        if [ $TEST_TYPE == "kube" ]; then
-            PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects_kube"
-        fi
-        echo -e "${BLUE}>> Creating test projects directory ... ${RESET}"
-        mkdir -p $PROJECT_DIR
-        checkExitCode $? "Failed to create test projects directory."
-
-        CTR=0
-        # Read project git config
-        echo -e "${BLUE}Creating projects to $PROJECT_DIR. ${RESET}"
-        while IFS='\n' read -r LINE; do
-            PROJECT_CLONE[$CTR]=$LINE
-            let CTR++
-        done < "$PROJECTS_CLONE_DATA_FILE"
-        
-        # Clone projects to workspace
-        for i in "${PROJECT_CLONE[@]}"; do
-            PROJECT_NAME=$(echo $i | cut -d "=" -f 1)
-            PROJECT_URL=$(echo $i | cut -d "=" -f 2)
-
-            echo -e "${BLUE}>> Creating project $PROJECT_NAME from $PROJECT_URL in "$PROJECT_DIR/$PROJECT_NAME" ${RESET}"
-            createProject $PROJECT_URL "$PROJECT_DIR/$PROJECT_NAME"
-            checkExitCode $? "Failed to created project $PROJECT_NAME."
-
-            echo -e "${BLUE}>> Copying $PROJECT_NAME to PFE container ${RESET}"
-            copyToPFE "$PROJECT_DIR/$PROJECT_NAME"
-            checkExitCode $? "Failed to copy project to PFE container."
-        done
+        copyToPFE "$PROJECT_DIR/*"
 
         if [ $TEST_TYPE == "kube" ]; then
             # Set up registry secrets (docker config) in PFE container/pod
@@ -248,10 +186,6 @@ function run {
         $WEBSERVER_FILE $TEST_RUNS_DATE_DIR > /dev/null
         curl --header "Content-Type:text/xml" --data-binary @$TEST_OUTPUT --insecure "https://$DASHBOARD_IP/postxmlresult/$BUCKET_NAME/test" > /dev/null
     fi
-
-    echo -e "${BLUE}>> Cleaning up test projects ... ${RESET}"
-	rm -rf $PROJECT_DIR
-	checkExitCode $? "Failed to clean up test directory."
 
     if [ $TEST_TYPE == "local" ] & [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
         echo -e "${BLUE}>> Copy back data.json file back to host VM ... ${RESET}"
