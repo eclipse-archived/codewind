@@ -131,6 +131,7 @@ describe('Load Runner Tests', function() {
                     this.timeout(testTimeout.short);
                     const res = await writeToLoadTestConfig('falseID', configOptions);
                     res.should.have.status(404);
+                    res.should.satisfyApiSpec;
                 });
             });
         });
@@ -146,6 +147,7 @@ describe('Load Runner Tests', function() {
                 this.timeout(testTimeout.short);
                 const res = await readLoadTestConfig('falseID');
                 res.should.have.status(404);
+                res.should.satisfyApiSpec;
             });
         });
     });
@@ -155,12 +157,14 @@ describe('Load Runner Tests', function() {
             this.timeout(testTimeout.short);
             const res = await projectService.runLoad('invalidID');
             res.should.have.status(404);
+            res.should.satisfyApiSpec;
         });
 
         it('fails with 404 to cancel load on a project with an invalid id', async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.cancelLoad('invalidID');
             res.should.have.status(404);
+            res.should.satisfyApiSpec;
         });
 
         it('returns 202 and starts running load against a project', async function() {
@@ -184,7 +188,7 @@ describe('Load Runner Tests', function() {
             res.should.satisfyApiSpec;
         });
 
-        it("fails with 404 to cancel load that isn't being run", async function() {
+        it("fails with 409 to cancel load that isn't being run", async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.cancelLoad(projectID);
             res.should.have.status(409);

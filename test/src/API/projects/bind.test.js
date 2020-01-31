@@ -160,6 +160,7 @@ describe('Bind projects tests', () => {
                     'package.json',
                 );
                 res.should.have.status(404);
+                res.should.satisfyApiSpec;
             });
         });
     });
@@ -170,6 +171,7 @@ describe('Bind projects tests', () => {
                 const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
                 const res = await projectService.bindEnd(idMatchingNoProjects);
                 res.should.have.status(404);
+                res.should.satisfyApiSpec;
                 res.text.should.equal(`Unable to find project ${idMatchingNoProjects}`);
             });
         });
@@ -181,6 +183,7 @@ describe('Bind projects tests', () => {
                 const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
                 const res = await projectService.unbind(idMatchingNoProjects, 404);
                 res.should.have.status(404);
+                res.should.satisfyApiSpec;
                 res.text.should.equal(`Unable to find project ${idMatchingNoProjects}`);
             });
         });
