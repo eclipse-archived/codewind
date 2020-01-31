@@ -10,7 +10,8 @@ cd ../../../../../
 CW_DIR=$(pwd)
 cd -
 
-PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
+export PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
+export PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects"
 
 # Function to get the che and keycloak endpoint
 function getEndpoints() {

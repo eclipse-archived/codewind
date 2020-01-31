@@ -74,11 +74,8 @@ function install {
 function uninstall {
     if [ $TEST_TYPE == "local" ]; then
         $CW_DIR/stop.sh
-
-        if [[ $? -ne 0 ]]; then
-            echo -e "${RED}Cleanup is failed. ${RESET}\n"
-            exit 1
-        fi
+        checkExitCode $? "PFE cleanup failed."
+        docker volume rm -f codewind_cw-workspace
     elif [ $TEST_TYPE == "kube" ]; then
         # Generate the Che Access Token for Che User Authentication
         generateCheAccessToken

@@ -10,7 +10,6 @@ RESET='\033[0m'
 source ./scripts/utils.sh
 WEBSERVER_FILE="$CW_DIR/src/pfe/file-watcher/server/test/scripts/webserver.sh"
 
-
 function usage {
     me=$(basename $0)
     cat <<EOF
@@ -62,11 +61,13 @@ function createProject() {
 }
 
 function copyToPFE() {
+    echo -e "${BLUE}>> Copying entire projects dir to PFE for $TEST_TYPE to $2 ... ${RESET}"
     if [ $TEST_TYPE == "local" ]; then
-        docker cp $1 $CODEWIND_CONTAINER_ID:"$PROJECT_PATH"
+        docker cp $1 $CODEWIND_CONTAINER_ID:$2
     elif [ $TEST_TYPE == "kube" ]; then
-        kubectl cp $1 $CODEWIND_POD_ID:"$PROJECT_PATH"
+        kubectl cp $1 $CODEWIND_POD_ID:$2
     fi
+    checkExitCode $? "Failed to copy projects from $1 to $2 in PFE."
 }
 
 function setup {
@@ -113,7 +114,7 @@ function setup {
             PROJECT_PATH=/projects
         fi
 
-        copyToPFE "$PROJECT_DIR/*"
+        copyToPFE "$PROJECT_DIR/." "$PROJECT_PATH"
 
         if [ $TEST_TYPE == "kube" ]; then
             # Set up registry secrets (docker config) in PFE container/pod

@@ -25,7 +25,7 @@ function buildPFE() {
 
 function downloadCwctl() {
     echo -e "${BLUE}>> Downloading latest installer ... ${RESET}"
-    EXECUTABLE_NAME="cwctl_"$TEST_TYPE
+    EXECUTABLE_NAME="cwctl"
     HOST_OS=$(uname -a)
     if [[ "$HOST_OS" =~ "Darwin" ]]; then
         extension="macos"
@@ -53,7 +53,6 @@ function createProject() {
 buildPFE
 downloadCwctl
 
-export PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects_$TEST_TYPE"
 echo -e "${BLUE}>> Creating test projects directory ... ${RESET}"
 rm -rf $PROJECT_DIR
 mkdir -p $PROJECT_DIR
