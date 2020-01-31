@@ -51,6 +51,7 @@ function createProject() {
 }
 
 buildPFE
+downloadCwctl
 
 export PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects_$TEST_TYPE"
 echo -e "${BLUE}>> Creating test projects directory ... ${RESET}"

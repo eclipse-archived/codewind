@@ -14,7 +14,6 @@ CLEAN_RUN="n"
 CLEAN_WORKSPACE="n"
 CWCTL_PROJ="y"
 
-
 # Set up variables
 source ./scripts/utils.sh
 
@@ -150,6 +149,7 @@ done
 
 if [[ $CWCTL_PROJ == "y" ]]; then
     ./scripts/create-project.sh
+    checkExitCode $? "Failed to create projects."
 fi
 
 # Log in to the OKD cluster with default credentials
