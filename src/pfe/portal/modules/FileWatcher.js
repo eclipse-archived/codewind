@@ -243,7 +243,8 @@ module.exports = class FileWatcher {
       location: project.projectPath(false),
       applicationPort: project.applicationPort,
       settings: settingsFileContents,
-      language: project.language
+      language: project.language,
+      autoBuild: project.autoBuild
     };
 
     log.info(`Calling createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
