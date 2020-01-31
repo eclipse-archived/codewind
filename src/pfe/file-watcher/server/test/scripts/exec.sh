@@ -61,7 +61,7 @@ function createProject() {
 }
 
 function copyToPFE() {
-    echo -e "${BLUE}>> Copying entire projects dir to PFE for $TEST_TYPE to $2 ... ${RESET}"
+    echo -e "${BLUE}>> Copying project dir from $1 to $2 ... ${RESET}"
     if [ $TEST_TYPE == "local" ]; then
         docker cp $1 $CODEWIND_CONTAINER_ID:$2
     elif [ $TEST_TYPE == "kube" ]; then
@@ -110,11 +110,14 @@ function setup {
 
         if [ $TEST_TYPE == "local" ]; then
             PROJECT_PATH="/codewind-workspace"
+            copyToPFE "$PROJECT_DIR/." "$PROJECT_PATH"
         elif [ $TEST_TYPE == "kube" ]; then
-            PROJECT_PATH=/projects
+            PROJECT_PATH="/projects"
+            ## for kube we need to loop over the projects dir to copy because kube cp does not support bulk copy
+            for testprojectdir in $PROJECT_DIR/*; do
+                copyToPFE "$testprojectdir" "$PROJECT_PATH"
+            done
         fi
-
-        copyToPFE "$PROJECT_DIR/." "$PROJECT_PATH"
 
         if [ $TEST_TYPE == "kube" ]; then
             # Set up registry secrets (docker config) in PFE container/pod
