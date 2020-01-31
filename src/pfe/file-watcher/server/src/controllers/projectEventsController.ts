@@ -227,9 +227,9 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                     }
                 }
                 if (shouldTriggerBuild) {
-                    logger.logProjectInfo("Received all chunks", projectID);
+                    logger.logProjectInfo("Received all chunks.", projectID);
                     if (projectInfo.autoBuildEnabled) {
-                        logger.logProjectInfo("Proceeding the build... ", projectID);
+                        logger.logProjectInfo("Auto build is enabled, build proceeding...", projectID);
                         if (!statusController.isBuildInProgressOrQueued(projectID)) {
                             const operation = new projectOperation.Operation("update", projectInfo);
                             projectHandler.update(operation, changedFilesMap.get(projectInfo.projectID));
@@ -244,6 +244,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                         }
                         // remove the cache in memory
                         changedFilesMap.delete(projectID);
+                        logger.logProjectTrace("Removing project " + projectID + " from changedFilesMap.", projectID);
                     }
                     timerMap.delete(projectID);
                     chunkRemainingMap.delete(projectID);
@@ -256,7 +257,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                 logger.logProjectInfo("Timeout for waiting incomming chunks has been reached. ", projectID);
                 try {
                     if (projectInfo.autoBuildEnabled) {
-                        logger.logProjectInfo("Proceeding the build... ", projectID);
+                        logger.logProjectInfo("Auto build is enabled, build proceeding...", projectID);
                         if (!statusController.isBuildInProgressOrQueued(projectID)) {
                             const operation = new projectOperation.Operation("update", projectInfo);
                             projectHandler.update(operation, changedFilesMap.get(projectInfo.projectID));
@@ -271,6 +272,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                         }
                         // remove the cache in memory
                         changedFilesMap.delete(projectID);
+                        logger.logProjectTrace("Removing project " + projectID + " from changedFilesMap.", projectID);
                     }
                     timerMap.delete(projectID);
                     chunkRemainingMap.delete(projectID);
