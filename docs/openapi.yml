@@ -217,7 +217,7 @@ paths:
         400:
           description: Invalid request
         404:
-          description: Project with given projectID not found
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Internal error
 
@@ -295,7 +295,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Project'
         404:
-          description: Project with given projectiD was not found.
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Any other error
 
@@ -325,7 +325,7 @@ paths:
                 type: string
                 example: OK
         404:
-          description: Project with given projectID not found
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Any other error
 
@@ -357,7 +357,7 @@ paths:
                 type: string
                 example: OK
         404:
-          description: Project with given projectiD was not found.
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Any other error
 
@@ -381,11 +381,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Project'
         404:
-          description: The project was not found
-          content:
-            text/html:
-              schema:
-                type: string
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Any other error
 
@@ -418,7 +414,7 @@ paths:
               schema:
                 type: string
         404:
-          description: Project not found
+          $ref: '#/components/responses/ProjectNotFound'
         409:
           description: Load test already in progress
           content:
@@ -447,7 +443,7 @@ paths:
               schema:
                 type: string
         404:
-          description: Project with given projectID not found
+          $ref: '#/components/responses/ProjectNotFound'
         409:
           description: No run in progress for this project
           content:
@@ -517,7 +513,7 @@ paths:
         400:
           description: Incorrect parameters given
         404:
-          description: Project with given projectID not found
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Internal error
 
@@ -541,7 +537,7 @@ paths:
         400:
           description: Incorrect parameters given
         404:
-          description: Project not found
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Internal error
 
@@ -566,7 +562,7 @@ paths:
                 schema:
                   type: string
           404:
-            description: if the project with id was not found
+            $ref: '#/components/responses/ProjectNotFound'
           409:
             description: if unbind was already in progress
 

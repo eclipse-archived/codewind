@@ -383,6 +383,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             };
             const res = await projectService.uploadEnd(idMatchingNoProjects, options);
             res.should.have.status(404);
+            res.should.satisfyApiSpec;
         });
     });
 });
