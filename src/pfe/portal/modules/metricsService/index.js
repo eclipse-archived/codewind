@@ -298,7 +298,7 @@ async function injectMetricsCollectorIntoJvmOptions(pathToJvmOptions, jvmOptions
   }
   const newJvmOptions = getNewContentsOfJvmOptions(originalJvmOptions);
   log.trace(`Injecting metrics collector into project's jvm.options, which is now ${util.inspect(newJvmOptions)}`);
-  await fs.writeFile(pathToJvmOptions, newJvmOptions);
+  await fs.outputFile(pathToJvmOptions, newJvmOptions);
 }
 
 function getNewContentsOfPomXml(originalContents) {
