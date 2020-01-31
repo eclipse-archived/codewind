@@ -23,7 +23,7 @@ chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
 describe('Project Build Tests', function() {
-    const projectName = `test-project-build${Date.now()}`;
+    const projectName = `test-project-build-${Date.now()}`;
     const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
     let projectID;
 

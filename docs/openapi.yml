@@ -216,8 +216,19 @@ paths:
           description: Successfully initiated restart
         400:
           description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodewindError'
         404:
-          $ref: '#/components/responses/ProjectNotFound'
+          description: Project Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MsgObject'
+            text/html:
+              schema:
+                type: string
         500:
           description: Internal error
 
