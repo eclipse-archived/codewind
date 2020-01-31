@@ -141,6 +141,8 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
                         fileContent[projectTemplate][projectLang][chosenTimestamp][`${type.toLowerCase()}-${file}`] = totalTestTime;
                         await fs.writeFileSync(dataFile, JSON.stringify(fileContent));
                     }
+
+                    await utils.setBuildStatus(projData, projectTemplate, projectLang);
                 }).timeout(timeoutConfigs.createTestTimeout);
             }
         }
