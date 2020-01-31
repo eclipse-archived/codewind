@@ -51,6 +51,8 @@ const pingInterval = 10000;
 const inTransitPingInterval = 2000;
 export const pingCountMap = new Map();
 
+const troubleShootLink = "https://www.eclipse.org/codewind/troubleshooting.html#checking-the-application-and-build-statuses";
+
 // Keep track of project status.  The type parameter is used to determine the type of the status
 // such as application state or build status.
 
@@ -530,10 +532,13 @@ function pingInTransitApplications(): void {
                                         data.detailedAppStatus = detailedAppStatus;
                                         pingCountMap.delete(projectID);
                                     } else if (newState === AppState.starting && pingCount == pingCountLimit) {
+                                        const troubleShootLinkLabel = await locale.getTranslation("projectStatusController.linkLabel");
                                         detailedAppStatus = {
                                             severity: "WARN",
                                             message: newMsg,
-                                            notify: true
+                                            notify: true,
+                                            linkLabel: troubleShootLinkLabel,
+                                            link: troubleShootLink
                                         };
                                         data.detailedAppStatus = detailedAppStatus;
                                     }
