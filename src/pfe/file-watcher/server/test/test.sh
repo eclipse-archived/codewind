@@ -91,7 +91,7 @@ function executeTests {
 while getopts "t:s:p:c:d:o:h" OPTION; do
     case "$OPTION" in
         t) 
-            TEST_TYPE=$OPTARG
+            export TEST_TYPE=$OPTARG
             # Check if test type argument is correct
             if [[ ($TEST_TYPE != "local") && ($TEST_TYPE != "kube") ]]; then
                 echo -e "${RED}Test type argument is not correct. ${RESET}\n"
