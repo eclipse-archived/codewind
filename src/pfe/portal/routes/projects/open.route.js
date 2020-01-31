@@ -22,15 +22,17 @@ const log = new Logger(__filename);
  * @return 200 if project was successfully opened
  * @return 404 if project is not found
  */
-router.put('/api/v1/projects/:id/open', async function (req, res) {
+router.put('/api/v1/projects/:id/open', openProject);
+
+async function openProject(req, res) {
   try {
     const user = req.cw_user;
     const id = req.sanitizeParams('id');
     const project = user.projectList.retrieveProject(id);
     if (!project) {
       const msg = `Unable to find project ${id}`;
+      log.error(msg);
       res.status(404).send(msg);
-      log.warn(msg);
     } else {
       let updatedProject = {
         projectID: id,
@@ -39,14 +41,14 @@ router.put('/api/v1/projects/:id/open', async function (req, res) {
       }
       updatedProject = await user.projectList.updateProject(updatedProject);
       const msg = `Project ${project.name} (${id}) opened. Will now build and run it`;
-      res.status(200).send(msg);
       log.debug(msg);
+      res.status(200).send(msg);
       await user.buildAndRunProject(updatedProject);
     }
   } catch (err) {
-    res.status(500).send(err);
     log.error(err);
+    res.status(500).send(err);
   }
-});
+}
 
 module.exports = router;
