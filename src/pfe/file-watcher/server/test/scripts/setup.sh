@@ -6,12 +6,8 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
-source ./scripts/utils.sh
-
 # Set up variables
-cd ../../../../../
-CW_DIR=$(pwd)
-cd -
+source ./scripts/utils.sh
 
 function usage {
     me=$(basename $0)
@@ -78,11 +74,8 @@ function install {
 function uninstall {
     if [ $TEST_TYPE == "local" ]; then
         $CW_DIR/stop.sh
-
-        if [[ $? -ne 0 ]]; then
-            echo -e "${RED}Cleanup is failed. ${RESET}\n"
-            exit 1
-        fi
+        checkExitCode $? "PFE cleanup failed."
+        docker volume rm -f codewind_cw-workspace
     elif [ $TEST_TYPE == "kube" ]; then
         # Generate the Che Access Token for Che User Authentication
         generateCheAccessToken
