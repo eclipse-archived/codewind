@@ -51,9 +51,9 @@ RUN curl -f -o buildah.rpm $BUILDAH_RPM \
     && cp -r /tmp/$OPENJ9_JRE /opt/java/jre \
     && rm -rf /tmp/$OPENJ9_JRE /tmp/OpenJDK8U-jre_x64_linux_openj9_8u222b10_openj9-0.15.1.tar.gz \
 # Install the latest version of yq
-    && LATEST_RELEASE=$(curl -L -s -H 'Accept: application/json' https://github.com/mikefarah/yq/releases/latest) \
-    && LATEST_VERSION=$(echo $LATEST_RELEASE | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/') \
-    && curl -sL -O https://github.com/mikefarah/yq/releases/download/$LATEST_VERSION/yq_linux_amd64 \
+    && YQ_VERSION=2.4.1 \
+    && curl -sL -O https://github.com/mikefarah/yq/releases/download/$YQ_VERSION/yq_linux_amd64 \
+    && echo '754c6e6a7ef92b00ef73b8b0bb1d76d651e04d26aa6c6625e272201afa889f8b  yq_linux_amd64' | sha256sum -c - \
     && mv ./yq_linux_amd64 /usr/local/bin/yq \
     && chmod +x /usr/local/bin/yq \
 # Install kubectl
