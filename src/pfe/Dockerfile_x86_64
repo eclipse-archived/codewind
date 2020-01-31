@@ -106,7 +106,7 @@ FROM codewind-pfe-base
 COPY --from=codewind-pfe-portal /portal /portal
 WORKDIR /portal
 
-ARG NODE_ENV
+ARG NODE_ENV=production
 
 RUN NODE_ENV=${NODE_ENV} npm ci \
     && npm cache clean -f
@@ -126,8 +126,10 @@ RUN mv /portal/LICENSE /portal/NOTICE.md / \
 EXPOSE 9090
 
 ARG IMAGE_BUILD_TIME
+ARG ENABLE_CODE_COVERAGE=false
 ENV NODE_ENV=${NODE_ENV} \
     IMAGE_BUILD_TIME=${IMAGE_BUILD_TIME} \
+    ENABLE_CODE_COVERAGE=${ENABLE_CODE_COVERAGE} \
     FORCE_COLOR=1 \
     LOG_LEVEL=info
 
