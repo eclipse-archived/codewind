@@ -162,10 +162,10 @@ async function unbindAllProjects() {
     await Promise.all(promises);
 }
 
-async function buildProject(projectID) {
+async function buildProject(projectID, action) {
     const res = await reqService.chai.post(`/api/v1/projects/${projectID}/build`)
         .set('Cookie', ADMIN_COOKIE)
-        .send({ action: 'build' });
+        .send({ action });
     return res;
 }
 

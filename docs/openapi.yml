@@ -111,12 +111,20 @@ paths:
                 action:
                   description: 'Action for build'
                   type: string
-                  enum: ['build', 'enableautobuild, disableautobuild']
+                  enum: [build, enableautobuild, disableautobuild]
       responses:
         202:
           description: Build successful
+          content:
+            text/html:
+              schema:
+                type: string
         400:
-          description: Project with given projectID not found
+          description: Unknown action or Project not found
+          content:
+            text/html:
+              schema:
+                type: string
         500:
           description: Internal error
 
