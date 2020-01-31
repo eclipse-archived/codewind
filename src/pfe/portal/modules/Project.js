@@ -11,9 +11,9 @@
 
 const fs = require('fs-extra');
 const { extname, isAbsolute, join } = require('path');
-const { exec } = require('child_process');
-const { promisify } = require('util');
 const uuidv1 = require('uuid/v1');
+const util = require('util')
+const exec = util.promisify(require('child_process').exec);
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
 
@@ -451,9 +451,9 @@ module.exports = class Project {
       return pathToProfilingJson;
     } else if (this.language == 'java') {
       try {
-        await promisify(exec(`docker cp ${this.containerId}:${join('/', 'home', 'default', 'app', 'load-test', timeOfTestRun)} ../codewind-workspace/${this.name}/load-test/`))
+        await exec(`docker cp ${this.containerId}:${join('/', 'home', 'default', 'app', 'load-test', timeOfTestRun)} ../codewind-workspace/${this.name}/load-test/`);
       } catch (error) {
-        throw new ProjectMetricsError('DOCKER_CP', this.name, error.message)
+        throw new ProjectMetricsError('DOCKER_CP', this.name, error.message);
       }
       if (await isHcdSaved(pathToLoadTestDir)) {
         return pathToLoadTestDir
