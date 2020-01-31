@@ -25,16 +25,14 @@ const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 const metricsCollectorInjectionFunctions = {
   nodejs: nodeMetricsService.injectMetricsCollectorIntoNodeProject,
   liberty: injectMetricsCollectorIntoLibertyProject,
-  // Open Liberty currently identifies as docker
-  docker: injectMetricsCollectorIntoLibertyProject,
+  openLiberty: injectMetricsCollectorIntoLibertyProject,
   spring: injectMetricsCollectorIntoSpringProject,
 }
 
 const metricsCollectorRemovalFunctions = {
   nodejs: nodeMetricsService.removeMetricsCollectorFromNodeProject,
   liberty: removeMetricsCollectorFromLibertyProject,
-  // Open Liberty currently identifies as docker
-  docker: removeMetricsCollectorFromLibertyProject,
+  openLiberty: removeMetricsCollectorFromLibertyProject,
   spring: removeMetricsCollectorFromSpringProject,
 }
 

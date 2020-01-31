@@ -185,7 +185,7 @@ describe('metricsService/index.js', () => {
                     fs.removeSync(pathToJvmOptions);
                 });
                 it(`injects metrics collector into the project's jvm.options and pom.xml, and saves backups`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('docker', projectDir);
+                    await metricsService.injectMetricsCollectorIntoProject('openLiberty', projectDir);
 
                     const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
                     outputJvmOptions.should.equal(expectedNewJvmOptions);
@@ -207,7 +207,7 @@ describe('metricsService/index.js', () => {
                     fs.removeSync(pathToBackupJvmOptions);
                 });
                 it(`throws a useful error`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('docker', projectDir)
+                    await metricsService.injectMetricsCollectorIntoProject('openLiberty', projectDir)
                         .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
 
                     fs.readFileSync(pathToJvmOptions, 'utf8')
@@ -321,7 +321,7 @@ describe('metricsService/index.js', () => {
                 fs.removeSync(pathToBackupJvmOptions);
             });
             it(`removes metrics collector from the project's jvm.options and pom.xml`, async() => {
-                await metricsService.removeMetricsCollectorFromProject('docker', projectDir);
+                await metricsService.removeMetricsCollectorFromProject('openLiberty', projectDir);
 
                 fs.pathExistsSync(pathToJvmOptions).should.be.false;
                 fs.pathExistsSync(pathToBackupJvmOptions).should.be.false;
