@@ -10,7 +10,9 @@
  *******************************************************************************/
 
 const fs = require('fs-extra');
-const { isAbsolute, join } = require('path');
+const { extname, isAbsolute, join } = require('path');
+const { exec } = require('child_process');
+const { promisify } = require('util');
 const uuidv1 = require('uuid/v1');
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
@@ -358,6 +360,20 @@ module.exports = class Project {
   /**
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
    */
+  async getProfilingByTime(timeOfTestRun) {
+    const pathToProfilingFile = await this.getPathToProfilingFile(timeOfTestRun);
+    let profiling;
+    if (this.language == 'nodejs') {
+      profiling = await fs.readJson(pathToProfilingFile);
+    } else if (this.language == 'java') {
+      profiling = pathToProfilingFile;
+    }
+    return profiling;
+  } 
+
+  /**
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
   async deleteMetrics(timeOfTestRun) {
     let pathToLoadTestDir = null;
     try {
@@ -418,6 +434,33 @@ module.exports = class Project {
     }
     const pathToMetricsJson = join(pathToLoadTestDir, 'metrics.json');
     return pathToMetricsJson;
+  }
+
+  /**
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  async getPathToProfilingFile(timeOfTestRun) {
+    let pathToLoadTestDir;
+    try {
+      pathToLoadTestDir = await this.getPathToLoadTestDir(timeOfTestRun);
+    } catch (err) {
+      pathToLoadTestDir = await this.getClosestPathToLoadTestDir(timeOfTestRun);
+    }
+    if (this.language == 'nodejs') {
+      const pathToProfilingJson = join(pathToLoadTestDir, 'profiling.json');
+      return pathToProfilingJson;
+    } else if (this.language == 'java') {
+      try {
+        await promisify(exec(`docker cp ${this.containerId}:${join('/', 'home', 'default', 'app', 'load-test', timeOfTestRun)} ../codewind-workspace/${this.name}/load-test/`))
+      } catch (error) {
+        throw new ProjectMetricsError('DOCKER_CP', this.name, error.message)
+      }
+      if (await isHcdSaved(pathToLoadTestDir)) {
+        return pathToLoadTestDir
+      }
+      throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
+    }
+    return null
   }
 
   /**
@@ -660,6 +703,19 @@ module.exports = class Project {
   resolveMonitorPath(path) {
     return isAbsolute(path) ? cwUtils.convertFromWindowsDriveLetter(path) : join(this.pathToMonitor, path);
   }
+}
+
+/**
+ * @param {string} pathToLoadTestDir
+ */
+async function isHcdSaved(pathToLoadTestDir) {
+  const files = await fs.readdir(pathToLoadTestDir);
+  for (let i = 0; i < files.length; i++) {
+    if (extname(files[i]) == '.hcd') {
+      return true
+    }
+  }
+  return false
 }
 
 /**

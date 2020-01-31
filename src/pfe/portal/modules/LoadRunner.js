@@ -299,10 +299,34 @@ module.exports = class LoadRunner {
     const command = `export javapid=(\`pidof java\`); java -jar $JAVA_HOME/jre/lib/ext/healthcenter.jar ID=\${javapid[-1]} level=headless -Dcom.ibm.java.diagnostics.healthcenter.headless.run.number.of.runs=1 -Dcom.ibm.java.diagnostics.healthcenter.headless.run.duration=${durationInMins} -Dcom.ibm.java.diagnostics.healthcenter.headless.output.directory=${loadTestDir} -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.memorycounters=off -Dcom.ibm.diagnostics.healthcenter.data.cpu=off -Dcom.ibm.diagnostics.healthcenter.data.environment=off -Dcom.ibm.diagnostics.healthcenter.data.locking=off -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.threads=off`;
 
     await docker.exec(this.project, ['bash', '-c', command]);
+
+    const projectID = this.project.projectID;
+
+    let options = {
+      host: "localhost",
+      port: 9090,
+      path: `/api/v1/projects/${projectID}/profiling/${this.metricsFolder}`,
+      method: 'GET',
+    };
+    
+    setTimeout(() => this.getJavaHealthCenterData(options, projectID, this.metricsFolder), duration * 1000);
+  }
+
+  async getJavaHealthCenterData(options, projectID, timestamp) {
+    const apiOptions = options;
+    const res = await cwUtils.asyncHttpRequest(apiOptions);
+    if (res.statusCode !== 200) {
+      log.info(`.hcd file not found. Trying again.`);
+      setTimeout(() => this.getJavaHealthCenterData(apiOptions, projectID, timestamp), 3000);
+    } else {
+      log.info(".hcd copied to PFE");
+      const data = { projectID: projectID,  status: 'hcdReady', hcdPath: res.body, timestamp: timestamp};
+      this.user.uiSocket.emit('runloadStatusChanged', data);
+    }
   }
 
   async getLibertyJavaVersion() {
-    const libertyLogPath = '/logs/messages.log'
+    const libertyLogPath = '/logs/messages.log';
     const logFile = await docker.readFile(this.project, libertyLogPath);
 
     let logFileLines = logFile.split('\n');
@@ -445,9 +469,8 @@ module.exports = class LoadRunner {
       if (this.collectionUri !== null) {
         this.recordCollection();
       }
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' , timestamp: this.metricsFolder});
       this.endProfiling();
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
-      this.project = null;
     });
   }
 
@@ -491,20 +514,23 @@ module.exports = class LoadRunner {
    * Save profiling samples to disk in the metrics folder.
    * The samples are written to a file as a JSON array of samples.
    */
-  endProfiling() {
+  async endProfiling() {
 
     if (this.profilingSocket !== null) {
-      this.profilingSocket.emit('disableprofiling');
-      this.profilingSocket.disconnect();
-      fs.writeJson(this.workingDir + '/profiling.json', this.profilingSamples, { spaces: '  ' }, function (err) {
+      await fs.writeJson(this.workingDir + '/profiling.json', this.profilingSamples, { spaces: '  ' }, function (err) {
         if (err) {
           log.error('endProfiling: Error writing profiling samples');
           log.error(err);
         }
       });
+      const data = { projectID: this.project.projectID,  status: 'profilingReady' , timestamp: this.metricsFolder }
+      this.user.uiSocket.emit('runloadStatusChanged', data);
+      this.profilingSocket.emit('disableprofiling');
+      this.profilingSocket.disconnect();
       this.profilingSocket = null;
       this.profilingSamples = null;
     }
+    this.project = null;
   }
 
   cancelProfiling() {
