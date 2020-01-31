@@ -10,6 +10,8 @@ cd ../../../../../
 CW_DIR=$(pwd)
 cd -
 
+PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
+
 # Function to get the che and keycloak endpoint
 function getEndpoints() {
     echo -e "${BLUE}Getting che endpoints${RESET}\n"

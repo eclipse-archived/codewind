@@ -7,12 +7,9 @@ BLUE='\033[0;36m'
 RESET='\033[0m'
 
 # Set up variables
-cd ../../../../../
-CW_DIR=$(pwd)
-cd -
+source ./scripts/utils.sh
 WEBSERVER_FILE="$CW_DIR/src/pfe/file-watcher/server/test/scripts/webserver.sh"
 
-source ./scripts/utils.sh
 
 function usage {
     me=$(basename $0)
@@ -82,7 +79,6 @@ function setup {
     TEST_RUNS_DATE_DIR=~/test_results/$DATE_NOW
     TEST_OUTPUT_DIR=$TEST_RUNS_DATE_DIR/$TEST_TYPE/$TEST_SUITE/$TIME_NOW
     TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
-    PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
     TURBINE_NPM_INSTALL_CMD="cd /file-watcher/server; npm install --only=dev"
     PERFORMANCE_TEST_DIR="mkdir -p /file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST"

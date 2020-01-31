@@ -6,12 +6,8 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
-source ./scripts/utils.sh
-
 # Set up variables
-cd ../../../../../
-CW_DIR=$(pwd)
-cd -
+source ./scripts/utils.sh
 
 function usage {
     me=$(basename $0)

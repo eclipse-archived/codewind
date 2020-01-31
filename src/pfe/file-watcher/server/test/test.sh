@@ -14,12 +14,9 @@ CLEAN_RUN="n"
 CLEAN_WORKSPACE="n"
 CWCTL_PROJ="y"
 
-source ./scripts/utils.sh
 
 # Set up variables
-cd ../../../../../
-CW_DIR=$(pwd)
-cd -
+source ./scripts/utils.sh
 
 function usage {
     me=$(basename $0)
