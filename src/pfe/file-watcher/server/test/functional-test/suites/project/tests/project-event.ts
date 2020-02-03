@@ -30,11 +30,10 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
             socket.clearEvents();
         });
 
-        const chunk = Math.random() * 1000;
         const data: any = {
             "projectID": projData.projectID,
             "timestamp": Date.now(),
-            "chunk": chunk,
+            "chunk": 1,
             "chunk_total": 1,
             "eventArray": []
         };
