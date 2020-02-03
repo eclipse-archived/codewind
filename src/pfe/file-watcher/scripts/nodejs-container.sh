@@ -433,6 +433,9 @@ elif [ "$COMMAND" == "update" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
 			$IMAGE_COMMAND exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
 			$util updateAppState $PROJECT_ID $APP_STATE_STARTING
+		else
+			echo "Build succeeded, setting build status to success"
+			$util updateBuildState $PROJECT_ID $BUILD_STATE_SUCCESS " "
 		fi
 	fi
 
