@@ -48,17 +48,26 @@ describe('metricsService/index.js', () => {
     const pathToTestPomXml = path.join(projectDir, 'pom.xml');
     const pathToTestBackupPomXml = path.join(projectDir, 'backupPom.xml');
 
-    // liberty
+    // liberty & open liberty
     const pathToJvmOptions = path.join(projectDir, 'src', 'main', 'liberty', 'config', 'jvm.options');
     const pathToBackupJvmOptions = path.join(projectDir, 'src', 'main', 'liberty', 'config', 'backupJvm.options');
     const originalJvmOptions = 'foobar';
-    const expectedJvmOptions = `${originalJvmOptions}\n-javaagent:resources/javametrics-agent.jar`;
+    const expectedJvmOptions = `-javaagent:/config/resources/javametrics-agent.jar\n${originalJvmOptions}`;
 
+    // liberty
     const pathToPomXmlsForLiberty = path.join(testResourcesDir, 'liberty', 'pom.xml');
     const pathToOriginalPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'withoutCollector.xml');
     const pathToExpectedPomXmlForLiberty = path.join(pathToPomXmlsForLiberty, 'withCollector.xml');
     let originalPomXmlForLiberty;
     let expectedPomXmlForLiberty;
+
+    // open liberty
+    const pathToPomXmlsForOpenLiberty = path.join(testResourcesDir, 'openLiberty', 'pom.xml');
+    const pathToOriginalPomXmlForOpenLiberty = path.join(pathToPomXmlsForOpenLiberty, 'withoutCollector.xml');
+    const pathToExpectedPomXmlForOpenLiberty = path.join(pathToPomXmlsForOpenLiberty, 'withCollector.xml');
+    const expectedNewJvmOptions = `-javaagent:/config/resources/javametrics-agent.jar\n`;
+    let originalPomXmlForOpenLiberty;
+    let expectedPomXmlForOpenLiberty;
 
     // spring
     const pathToJavaProjectSrcFiles = path.join(projectDir, 'src', 'main', 'java');
@@ -82,6 +91,9 @@ describe('metricsService/index.js', () => {
     before(async() => {
         originalPomXmlForLiberty = await readXml(pathToOriginalPomXmlForLiberty);
         expectedPomXmlForLiberty = await readXml(pathToExpectedPomXmlForLiberty);
+
+        originalPomXmlForOpenLiberty = await readXml(pathToOriginalPomXmlForOpenLiberty);
+        expectedPomXmlForOpenLiberty = await readXml(pathToExpectedPomXmlForOpenLiberty);
 
         originalPomXmlForSpring = await readXml(pathToOriginalPomXmlForSpring);
         expectedPomXmlForSpring = await readXml(pathToExpectedPomXmlForSpring);
@@ -163,6 +175,49 @@ describe('metricsService/index.js', () => {
                         .should.deep.equal(originalPomXmlForLiberty);
                     (await readXml(pathToTestPomXml))
                         .should.deep.equal(originalPomXmlForLiberty);
+                });
+            });
+        });
+        describe(`('openLiberty', <goodProjectDir>)`, () => {
+            describe('project files not already backed up (i.e. we have not injected metrics collector)', () => {
+                beforeEach(() => {
+                    fs.outputFileSync(pathToTestPomXml, fs.readFileSync(pathToOriginalPomXmlForOpenLiberty));
+                    fs.removeSync(pathToJvmOptions);
+                });
+                it(`injects metrics collector into the project's jvm.options and pom.xml, and saves backups`, async() => {
+                    await metricsService.injectMetricsCollectorIntoProject('openLiberty', projectDir);
+
+                    const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
+                    outputJvmOptions.should.equal(expectedNewJvmOptions);
+                    const outputBackupJvmOptions = fs.pathExistsSync(pathToBackupJvmOptions);
+                    outputBackupJvmOptions.should.be.false;
+
+                    const outputPomXml = await readXml(pathToTestPomXml);
+                    outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForOpenLiberty);
+                    const outputBackupPomXml = await readXml(pathToTestBackupPomXml);
+                    outputBackupPomXml.should.deep.equal(originalPomXmlForOpenLiberty);
+                });
+            });
+            describe('project files already backed up (i.e. we have already injected metrics collector)', () => {
+                beforeEach(() => {
+                    fs.outputFileSync(pathToTestPomXml, fs.readFileSync(pathToOriginalPomXmlForOpenLiberty));
+                    fs.outputFileSync(pathToTestBackupPomXml, fs.readFileSync(pathToOriginalPomXmlForOpenLiberty));
+
+                    fs.outputFileSync(pathToJvmOptions, expectedNewJvmOptions);
+                    fs.removeSync(pathToBackupJvmOptions);
+                });
+                it(`throws a useful error`, async() => {
+                    await metricsService.injectMetricsCollectorIntoProject('openLiberty', projectDir)
+                        .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
+
+                    fs.readFileSync(pathToJvmOptions, 'utf8')
+                        .should.equal(expectedNewJvmOptions);
+                    fs.pathExistsSync(pathToBackupJvmOptions).should.be.false;
+
+                    (await readXml(pathToTestPomXml))
+                        .should.deep.equal(originalPomXmlForOpenLiberty);
+                    (await readXml(pathToTestPomXml))
+                        .should.deep.equal(originalPomXmlForOpenLiberty);
                 });
             });
         });
@@ -257,6 +312,25 @@ describe('metricsService/index.js', () => {
                 fs.existsSync(pathToTestBackupPomXml).should.be.false;
             });
         });
+        describe(`('openLiberty', <goodProjectDir>)`, () => {
+            beforeEach(() => {
+                fs.outputFileSync(pathToTestPomXml, fs.readFileSync(pathToExpectedPomXmlForOpenLiberty));
+                fs.outputFileSync(pathToTestBackupPomXml, fs.readFileSync(pathToOriginalPomXmlForOpenLiberty));
+
+                fs.outputFileSync(pathToJvmOptions, expectedNewJvmOptions);
+                fs.removeSync(pathToBackupJvmOptions);
+            });
+            it(`removes metrics collector from the project's jvm.options and pom.xml`, async() => {
+                await metricsService.removeMetricsCollectorFromProject('openLiberty', projectDir);
+
+                fs.pathExistsSync(pathToJvmOptions).should.be.false;
+                fs.pathExistsSync(pathToBackupJvmOptions).should.be.false;
+
+                const outputPomXml = await readXml(pathToTestPomXml);
+                outputPomXml.should.deep.equal(originalPomXmlForOpenLiberty);
+                fs.pathExistsSync(pathToTestBackupPomXml).should.be.false;
+            });
+        });
         describe(`('spring', <goodProjectDir>)`, () => {
             beforeEach(() => {
                 fs.outputFileSync(pathToTestPomXml, fs.readFileSync(pathToExpectedPomXmlForSpring));
@@ -333,9 +407,9 @@ describe('metricsService/index.js', () => {
             afterEach(() => {
                 fs.removeSync(projectDir);
             });
-            it(`injects metrics collector into the project's pom.xml`, async() => {
+            it(`injects metrics collector into the project's jvm.options`, async() => {
                 const funcToTest = metricsService.__get__('injectMetricsCollectorIntoJvmOptions');
-                await funcToTest(pathToJvmOptions);
+                await funcToTest(pathToJvmOptions, true);
 
                 const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
                 outputJvmOptions.should.equal(expectedJvmOptions);
@@ -353,7 +427,7 @@ describe('metricsService/index.js', () => {
 
         describe('getNewContentsOfJvmOptions(existingContents)', () => {
             it('returns the existing contents when they already contain our metrics collector', () => {
-                const originalJvmOptions = '-Xmx1024M\n-javaagent:resources/javametrics-agent.jar';
+                const originalJvmOptions = '-javaagent:/config/resources/javametrics-agent.jar\n-Xmx1024M';
                 const funcToTest = metricsService.__get__('getNewContentsOfJvmOptions');
                 const output = funcToTest(originalJvmOptions);
                 output.should.equal(originalJvmOptions);
@@ -423,7 +497,7 @@ describe('metricsService/index.js', () => {
                     execution: [
                         {
                             id: [ 'copy-javametrics-codewind' ],
-                            phase: [ 'package' ],
+                            phase: [ 'prepare-package' ],
                             goals: [ { goal: [ 'copy-dependencies' ] } ],
                             configuration: [
                                 {
@@ -437,7 +511,7 @@ describe('metricsService/index.js', () => {
                         },
                         {
                             id: [ 'copy-javametrics-rest' ],
-                            phase: [ 'package' ],
+                            phase: [ 'prepare-package' ],
                             goals: [ { goal: [ 'copy-dependencies' ] } ],
                             configuration: [
                                 {
@@ -451,7 +525,7 @@ describe('metricsService/index.js', () => {
                         },
                         {
                             id: [ 'copy-javametrics-agent' ],
-                            phase: [ 'package' ],
+                            phase: [ 'prepare-package' ],
                             goals: [ { goal: [ 'copy-dependencies' ] } ],
                             configuration: [
                                 {
@@ -465,7 +539,7 @@ describe('metricsService/index.js', () => {
                         },
                         {
                             id: [ 'copy-javametrics-asm' ],
-                            phase: [ 'package' ],
+                            phase: [ 'prepare-package' ],
                             goals: [ { goal: [ 'copy-dependencies' ] } ],
                             configuration: [
                                 {
@@ -569,6 +643,51 @@ describe('metricsService/index.js', () => {
                         metricsCollectorBuildPlugin,
                     ]);
                 });
+            });
+        });
+    });
+    describe('openLiberty', () => {
+        describe('injectMetricsCollectorIntoOpenLibertyProject(projectDir)', () => {
+            beforeEach(() => {
+                fs.outputFileSync(pathToTestPomXml, fs.readFileSync(pathToOriginalPomXmlForOpenLiberty));
+                fs.outputFileSync(pathToJvmOptions, originalJvmOptions);
+            });
+            afterEach(() => {
+                fs.removeSync(projectDir);
+            });
+            it(`injects metrics collector into the project's jvm.options and pom.xml`, async() => {
+                const funcToTest = metricsService.__get__('injectMetricsCollectorIntoLibertyProject');
+                await funcToTest(projectDir);
+
+                const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
+                outputJvmOptions.should.equal(expectedJvmOptions);
+
+                const outputPomXml = await readXml(pathToTestPomXml);
+                outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForOpenLiberty);
+            });
+        });
+
+        describe('injectMetricsCollectorIntoPomXml(pathToPomXml)', () => {
+            beforeEach(() => {
+                fs.outputFileSync(pathToTestPomXml, fs.readFileSync(pathToOriginalPomXmlForOpenLiberty));
+            });
+            afterEach(() => {
+                fs.removeSync(projectDir);
+            });
+            it(`injects metrics collector into the project's pom.xml`, async() => {
+                const funcToTest = metricsService.__get__('injectMetricsCollectorIntoPomXml');
+                await funcToTest(pathToTestPomXml);
+
+                const outputPomXml = await readXml(pathToTestPomXml);
+                outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForOpenLiberty);
+            });
+        });
+
+        describe('getNewContentsOfPomXml(originalContents)', () => {
+            it('returns an object representing a pom.xml injected with metrics collector', () => {
+                const funcToTest = metricsService.__get__('getNewContentsOfPomXml');
+                const output = funcToTest(originalPomXmlForOpenLiberty);
+                output.should.deep.equalInAnyOrder(expectedPomXmlForOpenLiberty);
             });
         });
     });
@@ -706,7 +825,6 @@ describe('metricsService/index.js', () => {
                 });
             });
         });
-
     });
 });
 

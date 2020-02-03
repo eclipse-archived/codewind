@@ -149,7 +149,7 @@
                 <executions>
                     <execution>
                         <id>copy-javametrics-codewind</id>
-                        <phase>package</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>
@@ -161,7 +161,7 @@
                     </execution>
                     <execution>
                         <id>copy-javametrics-rest</id>
-                        <phase>package</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>
@@ -173,7 +173,7 @@
                     </execution>
                     <execution>
                         <id>copy-javametrics-agent</id>
-                        <phase>package</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>
@@ -185,7 +185,7 @@
                     </execution>
                     <execution>
                         <id>copy-javametrics-asm</id>
-                        <phase>package</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>
