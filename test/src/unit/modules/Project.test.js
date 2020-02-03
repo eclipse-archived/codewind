@@ -86,6 +86,27 @@ describe('Project.js', () => {
             project.directory.should.not.equal(`${name}-${projectID}`);
         });
     });
+    describe('toJSON()', () => {
+        it('Checks that toJSON removes fields which shouldn\'t be written to .info file on disk', () => {
+            const obj = {
+                logStreams: 'logstream',
+                loadInProgress: true,
+                loadConfig: 'someconfig',
+            };
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.should.containSubset({ name: 'dummy' });
+            project.should.not.containSubset(obj);
+
+            project.logStreams = obj.logStreams;
+            project.loadInProgress = obj.loadInProgress;
+            project.loadConfig = obj.loadConfig;
+
+            project.should.containSubset(obj);
+
+            const json = project.toJSON();
+            json.should.not.containSubset(obj);
+        });
+    });
     describe('checkIfMetricsAvailable()', () => {
         describe('Checks if metrics are available for normal projects', () => {
             it('Generic project with no language', async() => {

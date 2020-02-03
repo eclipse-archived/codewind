@@ -269,9 +269,8 @@ module.exports = class Project {
       throw new ProjectError('LOCK_FAILURE', this.name);
     }
     try {
-      // Strip out properties that shouldn't persist in the .inf file
-      const {capabilitiesReady, detailedAppStatus, logStreams, loadInProgress, loadConfig, operation, ...updatedProject } = this
-      await fs.writeJson(infFile, updatedProject, { spaces: '  ' });    
+      // Fields that shouldn't be persisted are stripped out by toJSON() below.
+      await fs.writeJson(infFile, this, { spaces: '  ' });
     } catch(err) {
       log.error(err);
     } finally {
@@ -279,6 +278,13 @@ module.exports = class Project {
     }
     // May return before we've finished writing.
     return this;
+  }
+
+  toJSON() {
+    // Strip out fields we don't want to save in the .inf file or log in debug if we print the project object.
+    // (This is our guard against trying to write circular references.)
+    const { capabilitiesReady, detailedAppStatus, logStreams, loadInProgress, loadConfig, operation, ...filteredProject } = this;
+    return filteredProject;
   }
 
   /**
