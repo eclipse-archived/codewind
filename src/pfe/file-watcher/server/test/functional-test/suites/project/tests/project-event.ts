@@ -35,7 +35,7 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
             "projectID": projData.projectID,
             "timestamp": Date.now(),
             "chunk": chunk,
-            "chunk_total": chunk + Math.random() * 100,
+            "chunk_total": 1,
             "eventArray": []
         };
 
