@@ -34,7 +34,7 @@ export enum codewindTemplates {
     odo = "odo"
 }
 
-export enum projecLanguges {
+export enum projectLanguges {
     go = "go",
     lagom = "lagom",
     liberty = "liberty",
@@ -51,34 +51,34 @@ export const extensionPaths: any = {
 
 export const projectTypes: any = {
     [codewindTemplates.default]: [
-        projecLanguges.liberty,
-        projecLanguges.nodejs,
-        projecLanguges.spring,
-        projecLanguges.swift
+        projectLanguges.liberty,
+        projectLanguges.nodejs,
+        projectLanguges.spring,
+        projectLanguges.swift
     ],
     [codewindTemplates.docker]: [
-        projecLanguges.go,
-        projecLanguges.lagom,
-        projecLanguges.python
+        projectLanguges.go,
+        projectLanguges.lagom,
+        projectLanguges.python
     ],
     [codewindTemplates.odo]: process.env.IN_K8 ? [
-        projecLanguges.nodejs,
-        projecLanguges.perl,
-        projecLanguges.python
+        projectLanguges.nodejs,
+        projectLanguges.perl,
+        projectLanguges.python
     ] : []
 };
 
 export const templateNames: any = {
     [codewindTemplates.default] : {
-        [projecLanguges.liberty]: "javamicroprofiletemplate",
-        [projecLanguges.nodejs]: "node",
-        [projecLanguges.spring]: "springjavatemplate",
-        [projecLanguges.swift]: "swifttemplate",
+        [projectLanguges.liberty]: "javamicroprofiletemplate",
+        [projectLanguges.nodejs]: "node",
+        [projectLanguges.spring]: "springjavatemplate",
+        [projectLanguges.swift]: "swifttemplate",
     },
     [codewindTemplates.docker]: {
-        [projecLanguges.go]: "gotemplate",
-        [projecLanguges.lagom]: "lagomjavatemplate",
-        [projecLanguges.python]: "pythontemplate",
+        [projectLanguges.go]: "gotemplate",
+        [projectLanguges.lagom]: "lagomjavatemplate",
+        [projectLanguges.python]: "pythontemplate",
     }
 };
 
