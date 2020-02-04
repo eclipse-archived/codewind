@@ -37,10 +37,15 @@ async function inject(req, res) {
     }
 
     const projectDir = path.join(project.workspace, project.directory);
+    let projType = project.projectType;
+    if (project.projectType === 'docker' && project.language === 'java') {
+      projType = 'openLiberty'
+      // this is the best we can do at the moment
+    }
     if (injectMetrics) {
-      await metricsService.injectMetricsCollectorIntoProject(project.projectType, projectDir);
+      await metricsService.injectMetricsCollectorIntoProject(projType, projectDir);
     } else {
-      await metricsService.removeMetricsCollectorFromProject(project.projectType, projectDir);
+      await metricsService.removeMetricsCollectorFromProject(projType, projectDir);
     }
 
     await user.projectList.updateProject({

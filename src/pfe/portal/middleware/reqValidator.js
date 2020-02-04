@@ -21,7 +21,12 @@ function validateReq(req, res, next) {
   const pathInOpenapiFormat = req.baseUrl + getRouteInOpenapiFormat(req);
   const methodInOpenapiFormat = req.method.toLowerCase();
   const validationFunction = validator.validate(methodInOpenapiFormat, pathInOpenapiFormat);
-  validationFunction(req, res, next);
+  validationFunction(req, res, (err) => {
+    if (err) {
+      err.customLogMsg = `[${req.method} ${req.route.path}] ${err.message}`;
+    }
+    next(err);
+  });
 }
 
 function getRouteInOpenapiFormat(req) {

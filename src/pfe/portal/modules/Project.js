@@ -10,8 +10,10 @@
  *******************************************************************************/
 
 const fs = require('fs-extra');
-const { join } = require('path');
+const { extname, isAbsolute, join } = require('path');
 const uuidv1 = require('uuid/v1');
+const util = require('util')
+const exec = util.promisify(require('child_process').exec);
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
 
@@ -147,13 +149,6 @@ module.exports = class Project {
   }
 
 
-  toJSON() {
-    // Exclude properties that we don't want to write to the .info file on disk. The
-    // ... spread syntax means that cloneObj gets all the rest of the properties
-    const { logStreams, loadInProgress, loadConfig, ...cloneObj } = this;
-    return cloneObj;
-  }
-
   async checkIfMetricsAvailable() {
     let isMetricsAvailable;
     // hardcoding a return of true for appsody projects until we have a better
@@ -229,6 +224,19 @@ module.exports = class Project {
   }
 
   /**
+   * Function to read the project .cw-refpaths.json file
+   * @return the contents of the file is an object containing a refPaths array
+   */
+  async readRefPathsFile() {
+    const refPathsFile = join(this.projectPath(), '.cw-refpaths.json');
+    let refPaths;
+    if (await fs.pathExists(refPathsFile)) {
+      refPaths = await fs.readJson(refPathsFile, { throws: false });
+    }
+    return refPaths || {};
+  }
+
+  /**
    * Function to generate the project information file
    * @return this, the project object
    */
@@ -261,9 +269,8 @@ module.exports = class Project {
       throw new ProjectError('LOCK_FAILURE', this.name);
     }
     try {
-      // Strip out capabilitiesReady as this shouldn't persist
-      const {capabilitiesReady, ...updatedProject } = this
-      await fs.writeJson(infFile, updatedProject, { spaces: '  ' });    
+      // Fields that shouldn't be persisted are stripped out by toJSON() below.
+      await fs.writeJson(infFile, this, { spaces: '  ' });
     } catch(err) {
       log.error(err);
     } finally {
@@ -271,6 +278,13 @@ module.exports = class Project {
     }
     // May return before we've finished writing.
     return this;
+  }
+
+  toJSON() {
+    // Strip out fields we don't want to save in the .inf file or log in debug if we print the project object.
+    // (This is our guard against trying to write circular references.)
+    const { capabilitiesReady, detailedAppStatus, logStreams, loadInProgress, loadConfig, operation, ...filteredProject } = this;
+    return filteredProject;
   }
 
   /**
@@ -352,6 +366,20 @@ module.exports = class Project {
   /**
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
    */
+  async getProfilingByTime(timeOfTestRun) {
+    const pathToProfilingFile = await this.getPathToProfilingFile(timeOfTestRun);
+    let profiling;
+    if (this.language == 'nodejs') {
+      profiling = await fs.readJson(pathToProfilingFile);
+    } else if (this.language == 'java') {
+      profiling = pathToProfilingFile;
+    }
+    return profiling;
+  } 
+
+  /**
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
   async deleteMetrics(timeOfTestRun) {
     let pathToLoadTestDir = null;
     try {
@@ -412,6 +440,33 @@ module.exports = class Project {
     }
     const pathToMetricsJson = join(pathToLoadTestDir, 'metrics.json');
     return pathToMetricsJson;
+  }
+
+  /**
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  async getPathToProfilingFile(timeOfTestRun) {
+    let pathToLoadTestDir;
+    try {
+      pathToLoadTestDir = await this.getPathToLoadTestDir(timeOfTestRun);
+    } catch (err) {
+      pathToLoadTestDir = await this.getClosestPathToLoadTestDir(timeOfTestRun);
+    }
+    if (this.language == 'nodejs') {
+      const pathToProfilingJson = join(pathToLoadTestDir, 'profiling.json');
+      return pathToProfilingJson;
+    } else if (this.language == 'java') {
+      try {
+        await exec(`docker cp ${this.containerId}:${join('/', 'home', 'default', 'app', 'load-test', timeOfTestRun)} ../codewind-workspace/${this.name}/load-test/`);
+      } catch (error) {
+        throw new ProjectMetricsError('DOCKER_CP', this.name, error.message);
+      }
+      if (await isHcdSaved(pathToLoadTestDir)) {
+        return pathToLoadTestDir
+      }
+      throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
+    }
+    return null
   }
 
   /**
@@ -643,6 +698,30 @@ module.exports = class Project {
     await fs.writeJson(filePath, config, {spaces: '  '});
     return config;
   }
+
+  /**
+   * Resolves the given path against the project's monitor path.
+   * The path is unchanged if it is already absolute.
+   * 
+   * @param {String} path
+   * @returns {String} an absolute path
+   */
+  resolveMonitorPath(path) {
+    return isAbsolute(path) ? cwUtils.convertFromWindowsDriveLetter(path) : join(this.pathToMonitor, path);
+  }
+}
+
+/**
+ * @param {string} pathToLoadTestDir
+ */
+async function isHcdSaved(pathToLoadTestDir) {
+  const files = await fs.readdir(pathToLoadTestDir);
+  for (let i = 0; i < files.length; i++) {
+    if (extname(files[i]) == '.hcd') {
+      return true
+    }
+  }
+  return false
 }
 
 /**

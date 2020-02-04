@@ -20,7 +20,7 @@ import { ContainerStates } from "./constants";
 import { ProjectCapabilities, defaultProjectCapabilities } from  "./Project";
 import { StartModes, ControlCommands } from "./constants";
 import * as logHelper from "./logHelper";
-import * as projectEventsController from "../controllers/projectEventsController";
+import { IFileChangeEvent } from "../utils/fileChanges";
 
 export const requiredFiles = [ "/Dockerfile", "/package.json"];
 const capabilities = new ProjectCapabilities([StartModes.run, StartModes.debugNoInit], [ControlCommands.restart]);
@@ -84,11 +84,11 @@ export function create(operation: Operation): void {
  * @description Update operation for a nodejs project.
  *
  * @param operation <Required | Operation> - The update operation.
- * @param changedFiles <Optional | projectEventsController.IFileChangeEvent[]> - The file changed event array.
+ * @param changedFiles <Optional | IFileChangeEvent[]> - The file changed event array.
  *
  * @returns void
  */
-export function update(operation: Operation, changedFiles?: projectEventsController.IFileChangeEvent[]): void {
+export function update(operation: Operation, changedFiles?: IFileChangeEvent[]): void {
     projectUtil.containerUpdate(operation, "/file-watcher/scripts/nodejs-container.sh", "update");
 }
 

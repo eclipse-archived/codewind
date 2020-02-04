@@ -20,6 +20,7 @@ import * as workspaceSettings from "./utils/workspaceSettings";
 import * as socket from "./utils/socket";
 import fs from "fs";
 import * as constants from "./projects/constants";
+import { IFileChangeEvent } from "./utils/fileChanges";
 
 const existsAsync = promisify(fs.exists);
 const mkDirAsync = promisify(fs.mkdir);
@@ -678,7 +679,7 @@ export default class Filewatcher {
      *  @property 500: Retrieving start modes failed due to an internal error
      *
      */
-    updateProjectForNewChange: (projectID: string, timestamp: number, chunk: number, chunk_total: number, eventArray: projectEventsController.IFileChangeEvent[]) => Promise<projectEventsController.IUpdateProjectSuccess | projectEventsController.IUpdateProjectFailure>;
+    updateProjectForNewChange: (projectID: string, timestamp: number, chunk: number, chunk_total: number, eventArray: IFileChangeEvent[]) => Promise<projectEventsController.IUpdateProjectSuccess | projectEventsController.IUpdateProjectFailure>;
 
     constructor() {
         this.createProjectsDataDir();

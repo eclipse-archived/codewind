@@ -10,6 +10,7 @@
  *******************************************************************************/
 const express = require('express');
 
+const { validateReq } = require('../../middleware/reqValidator');
 const Logger = require('../../modules/utils/Logger');
 
 const router = express.Router();
@@ -22,7 +23,9 @@ const log = new Logger(__filename);
  * @return 400 if project is not found
  * @return 500 on internal error
  */
-router.post('/api/v1/projects/:id/build', async function (req, res) {
+router.post('/api/v1/projects/:id/build', validateReq, buildProject);
+
+async function buildProject(req, res) {
   try {
     const id = req.sanitizeParams('id');
     const user = req.cw_user;
@@ -30,24 +33,23 @@ router.post('/api/v1/projects/:id/build', async function (req, res) {
     const action = req.sanitizeBody('action');
     if (!project) {
       res.status(400).send(`Unable to find project ${id}`);
+      return;
     }
-    else if (project.isClosed() || project.isClosing() || project.isDeleting()) {
+    
+    if (project.isClosed() || project.isClosing() || project.isDeleting()) {
       const msg = `Cannot perform build action ${action} on ${project.name} because it is in state ${project.state}.`;
       res.status(400).send(msg);
-      log.debug(msg);
+      log.error(msg);
+      return;
     }
-    else {
-      if (['build', 'enableautobuild', 'disableautobuild'].includes(action)) {
-        res.status(202).send(`Trying to build project ${id} with action ${action}`);
-        await user.buildProject(project, action);
-      } else {
-        res.status(400).send(`Unknown action: ${action}`);
-      }
-    }
+    
+    res.status(202).send(`Trying to build project ${id} with action ${action}`);
+    await user.buildProject(project, action);
+    
   } catch (err) {
     log.error(err);
     res.status(500).send(err);
   }
-});
+}
 
 module.exports = router;

@@ -17,7 +17,8 @@
                 "--recursive",
                 "--exit",
             ],
-            "internalConsoleOptions": "openOnSessionStart"
+            "internalConsoleOptions": "openOnSessionStart",
+            "cwd": "${workspaceFolder}/test"
         },
         {
             "type": "node",
@@ -30,6 +31,7 @@
                 "999999",
                 "${file}",
             ],
+            "internalConsoleOptions": "openOnSessionStart",
             "cwd": "${workspaceRoot}"
         },
         {

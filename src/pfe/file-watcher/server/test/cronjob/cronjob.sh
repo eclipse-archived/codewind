@@ -11,6 +11,9 @@ CW_DIR=~/codewind
 CW_TEST_DIR=$CW_DIR/src/pfe/file-watcher/server/test
 CODEWIND_REPO=git@github.com:eclipse/codewind.git
 TEST_BRANCH="master"
+CWCTL_PROJ="y"
+POST_CLEANUP="n"
+CLEAN_RUN="n"
 
 # Make all options mandatory to ensure cronjob admin knows what exectly each cronjob does, it's for debug purpose
 function usage {
@@ -18,6 +21,7 @@ function usage {
     cat <<EOF
 Usage: $me: [-<option letter> <option value> | -h]
 Options:
+    -o # Deploy PFE and create projects on local disk - 'y' or 'n' - Default: 'y'
     -t # Test type, currently supports 'local' or 'kube' - Mandatory
     -s # Test suite, currently supports 'functional' - Mandatory
     -p # Post cleanup, post test automation cleanup for cronjob, currently supports 'y' or 'n' - Mandatory
@@ -27,7 +31,7 @@ Options:
 EOF
 }
 
-while getopts "t:s:p:c:h" OPTION; do
+while getopts "t:s:p:c:b:o:h" OPTION; do
     case "$OPTION" in
         t) 
             TEST_TYPE=$OPTARG
@@ -68,6 +72,15 @@ while getopts "t:s:p:c:h" OPTION; do
         b) 
             TEST_BRANCH=$OPTARG
             ;;
+        o)
+            CWCTL_PROJ=$OPTARG
+            # Check if clean workspace argument is correct
+            if [[ ($CWCTL_PROJ != "y") && ($CWCTL_PROJ != "n") ]]; then
+                echo -e "${RED}Create projects with cwctl argument is not correct. ${RESET}\n"
+                usage
+                exit 1
+            fi
+            ;;
         *)
             usage
             exit 0
@@ -86,16 +99,7 @@ rm -rf $CW_DIR \
 && git clone $CODEWIND_REPO -b "$TEST_BRANCH" \
 && cd $CW_TEST_DIR
 
-if [[ ($TEST_TYPE == "both") ]]; then
-    ./test.sh -t "local" -s $TEST_SUITE -p $POST_CLEANUP -c $CLEAN_RUN & \
-    echo -e "${BLUE}Triggered local $TEST_SUITE suite as cronjob. ${RESET}\n"
-
-    ./test.sh -t "kube" -s $TEST_SUITE -p $POST_CLEANUP -c $CLEAN_RUN & \
-    echo -e "${BLUE}Triggered kube $TEST_SUITE suite as cronjob. ${RESET}\n"
-else
-    ./test.sh -t $TEST_TYPE -s $TEST_SUITE -p $POST_CLEANUP -c $CLEAN_RUN \
-    && rm -rf $CW_DIR
-fi
+./test.sh -t $TEST_TYPE -s $TEST_SUITE -p $POST_CLEANUP -c $CLEAN_RUN -o $CWCTL_PROJ  && rm -rf $CW_DIR
 
 if [[ ($? -ne 0) ]]; then
     echo -e "${RED}Cronjob has failed. ${RESET}\n"

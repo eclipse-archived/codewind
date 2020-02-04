@@ -263,14 +263,27 @@ module.exports = class User {
           const watchStateId = crypto.randomBytes(16).toString("hex");
           const projectUpdate = { projectID: project.projectID, projectWatchStateId: watchStateId };
           await this.projectList.updateProject(projectUpdate);
-        } 
+        }
         let projectUpdate = {
           projectID: project.projectID,
           projectWatchStateId: project.projectWatchStateId,
           pathToMonitor: project.pathToMonitor,
           ignoredPaths: project.ignoredPaths,
+          refPaths: [],
           projectCreationTime: project.creationTime
         }
+
+        // read ref paths file for additional refPaths to monitor
+        const refPathsFile = await project.readRefPathsFile();
+        if (refPathsFile.refPaths instanceof Array) {
+          refPathsFile.refPaths.forEach((refPath) => {
+            if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
+                (typeof refPath.to === "string" && (refPath.to = refPath.to.trim()).length > 0)) {
+                  projectUpdate.refPaths.push({ from: project.resolveMonitorPath(refPath.from), to: refPath.to });
+            }
+          });
+        }
+
         watchList.projects.push(projectUpdate);
       }
     }

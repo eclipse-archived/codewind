@@ -30,6 +30,7 @@ export interface ProjectInfo {
     mavenProfiles?: string[];
     mavenProperties?: string[];
     ignoredPaths?: string[];
+    refPaths?: RefPath[];
     extensionID?: string;
     language?: string;
     isHttps?: boolean;
@@ -93,10 +94,32 @@ export interface ProjectSettingsEvent {
     contextRoot?: String;
     healthCheck?: string;
     ignoredPaths?: string[];
+    refPaths?: RefPath[];
     mavenProfiles?: string[];
     mavenProperties?: string[];
     isHttps?: boolean;
     statusPingTimeout?: number;
+}
+
+export class RefPath {
+
+    from: string;
+    to: string;
+
+    private constructor(from: string, to: string) {
+        this.from = from;
+        this.to = to;
+    }
+
+    static createFrom(refPath: any): RefPath {
+
+        if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
+            (typeof refPath.to === "string" && (refPath.to = refPath.to.trim()).length > 0)) {
+            return new RefPath(refPath.from, refPath.to);
+        }
+
+        return undefined;
+    }
 }
 
 /**

@@ -111,12 +111,20 @@ paths:
                 action:
                   description: 'Action for build'
                   type: string
-                  enum: ['build', 'enableautobuild, disableautobuild']
+                  enum: [build, enableautobuild, disableautobuild]
       responses:
         202:
           description: Build successful
+          content:
+            text/html:
+              schema:
+                type: string
         400:
-          description: Project with given projectID not found
+          description: Unknown action or Project not found
+          content:
+            text/html:
+              schema:
+                type: string
         500:
           description: Internal error
 
@@ -133,11 +141,15 @@ paths:
       responses:
         200:
           description: Project successfully opened
+          content:
+            text/html:
+              schema:
+                type: string
         404:
-          description: Project with given projectID not found
+          $ref: '#/components/responses/ProjectNotFound'
 
   /api/v1/projects/{id}/close:
-    post:
+    put:
       summary: Send project close request
       description: >
         Project close is asynchronous. A return of 202 indicates that the request to close has been accepted.
@@ -152,10 +164,22 @@ paths:
       responses:
         202:
           description: Project close request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MsgObject'
         404:
-          description: Project with given projectID not found
+          description: Project Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MsgObject'
         409:
           description: Project is closing or closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MsgObject'
 
   /api/v1/projects/{id}/restart:
     post:
@@ -193,7 +217,7 @@ paths:
         400:
           description: Invalid request
         404:
-          description: Project with given projectID not found
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Internal error
 
@@ -271,7 +295,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Project'
         404:
-          description: Project with given projectiD was not found.
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Any other error
 
@@ -301,7 +325,7 @@ paths:
                 type: string
                 example: OK
         404:
-          description: Project with given projectID not found
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Any other error
 
@@ -333,7 +357,7 @@ paths:
                 type: string
                 example: OK
         404:
-          description: Project with given projectiD was not found.
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Any other error
 
@@ -357,7 +381,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Project'
         404:
-          description: The project was not found
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Any other error
 
@@ -380,15 +404,23 @@ paths:
               type: object
               properties:
                 description:
-                  description: "A description of the test"
-                  example: "A new load test"
+                  description: A description of the test
+                  example: A new load test
       responses:
         202:
           description: Request to run-load accepted
+          content:
+            text/html:
+              schema:
+                type: string
         404:
-          description: Project not found
+          $ref: '#/components/responses/ProjectNotFound'
         409:
           description: Load test already in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodewindError'
         503:
           description: Project is not running
 
@@ -406,10 +438,18 @@ paths:
       responses:
         200:
           description: Successful
+          content:
+            text/html:
+              schema:
+                type: string
         404:
-          description: Project with given projectID not found
+          $ref: '#/components/responses/ProjectNotFound'
         409:
           description: No run in progress for this project
+          content:
+            text/html:
+              schema:
+                type: string
         500:
           description: Internal error
 
@@ -473,7 +513,7 @@ paths:
         400:
           description: Incorrect parameters given
         404:
-          description: Project with given projectID not found
+          $ref: '#/components/responses/ProjectNotFound'
         500:
           description: Internal error
 
@@ -494,6 +534,27 @@ paths:
             application/json:
               schema:
                $ref: '#/components/schemas/LoadrunnerConfig'
+        400:
+          description: Incorrect parameters given
+        404:
+          $ref: '#/components/responses/ProjectNotFound'
+        500:
+          description: Internal error
+
+  /api/v1/projects/{id}/profiling/{testRunTime}:
+    get:
+      summary: Reads the load run data for the given timestamp
+      description: Reads and returns profiling.json for Node projects. Copies over health center data to pfe from Java projects and returns the file path.
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: id of project
+      responses:
+        200:
+          description: Successful read of load run data
         400:
           description: Incorrect parameters given
         404:
@@ -522,7 +583,7 @@ paths:
                 schema:
                   type: string
           404:
-            description: if the project with id was not found
+            $ref: '#/components/responses/ProjectNotFound'
           409:
             description: if unbind was already in progress
 
@@ -806,10 +867,31 @@ paths:
       responses:
         200:
           description: Successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - description
+                properties:
+                  description:
+                    type: string
+                additionalProperties: false
         400:
-          description: Project with given projectID not found
+          description: Request body missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageObject'
         404:
-          description: Load test results do not exist
+          description: Project or load test results do not exist
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/MessageObject'
+                  - $ref: '#/components/schemas/CodewindError'
+                 
         500:
           description: Internal error
     delete:
@@ -830,8 +912,18 @@ paths:
       responses:
         200:
           description: Successful
+          content:
+            text/html:
+              schema:
+                type: string
         404:
           description: Project or load test results do not exist
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/MessageObject'
+                  - $ref: '#/components/schemas/CodewindError'
         500:
           description: Internal error
 
@@ -1146,9 +1238,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/WatchList'
+                type: object
+                required:
+                  - projects
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WatchList'
         500:
           description: if an error occured
 
@@ -1168,11 +1265,14 @@ paths:
             type: string
           required: true
           description: projectWatchStateId represents a file watching client's current state. projectWatchStateId is generated and returned when first time calling the endpoint `GET /api/v1/projects/watchlist`. Additionally, if the ignored paths list for a project is changed, a new projectWatchStateId is generated and sent to file watchers via WebSocket event from `/websockets/file-changes/v1`
-        - name: clientUUID
+        - name: clientUuid
           in: query
           schema:
-            type: string
-            format: uuid
+            oneOf:
+              - type: string
+                format: uuid
+              - type: string
+                pattern: ^[0-9a-f]{32}$
           required: true
           description: a unique id of the client
       requestBody:
@@ -1903,6 +2003,11 @@ components:
           description: regex of paths to be ignored for changes
           type: array
           example: [ "/target", "/.m2", "*/.git/*" ]
+        refPaths:
+          description: additional referenced paths outside of the project folder to monitor
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchListRefPath'
         projectWatchStateId:
           description: projectWatchStateId represents a file watching client's current state. projectWatchStateId is generated and returned when first time calling the endpoint `GET /api/v1/projects/watchlist`. Additionally, if the ignored paths list for a project is changed, a new projectWatchStateId is generated and sent to file watchers via WebSocket event from `/websockets/file-changes/v1`
           type: string
@@ -1912,6 +2017,18 @@ components:
           description: the time in millisconds since epoch that the project was last updated in codewind
           type: number
           example: 1576080088223
+    WatchListRefPath:
+      type: object
+      required:
+        - from
+        - to
+      properties:
+        from:
+          description: absolute path to file on local machine
+          type: string
+        to:
+          description: relative path to root of project inside container
+          type: string
     FileChangeList:
         type: object
         required:
@@ -1949,6 +2066,7 @@ components:
           type: string
           example: "Codewind extension for knapp support"
         commands:
+          type: array
           items:
             $ref: '#/components/schemas/ExtensionCommand'
         detection:
@@ -1971,6 +2089,35 @@ components:
           type: array
           items:
             type: string
+    MsgObject:
+      type: object
+      required:
+        - msg
+      properties:
+        msg:
+          type: string
+      additionalProperties: false
+    MessageObject:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+      additionalProperties: false
+    CodewindError:
+      type: object
+      required:
+        - name
+        - code
+        - message
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
 
   responses:
     400:
@@ -1989,5 +2136,11 @@ components:
       description: Internal error occurred.
       content:
         application/json:
+          schema:
+            type: string
+    ProjectNotFound:
+      description: Project not found
+      content:
+        text/html:
           schema:
             type: string

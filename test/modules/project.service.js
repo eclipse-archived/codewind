@@ -162,10 +162,10 @@ async function unbindAllProjects() {
     await Promise.all(promises);
 }
 
-async function buildProject(projectID) {
+async function buildProject(projectID, action) {
     const res = await reqService.chai.post(`/api/v1/projects/${projectID}/build`)
         .set('Cookie', ADMIN_COOKIE)
-        .send({ action: 'build' });
+        .send({ action });
     return res;
 }
 
@@ -184,12 +184,15 @@ function createProjects(optionsArray) {
     return Promise.all(promises);
 }
 
-function openProject(projectID, expectedResStatus = 200) {
-    if (typeof projectID !== 'string') throw new Error(`'${projectID}' should be a string`);
+function openProject(projectID, expectedResStatus) {
+    if (typeof projectID !== 'string') {
+        throw new Error(`'${projectID}' should be a string`);
+    }
     const req = () => reqService.chai
         .put(`/api/v1/projects/${projectID}/open`)
         .set('Cookie', ADMIN_COOKIE);
-    return reqService.makeReq(req, expectedResStatus);
+    const res = reqService.makeReq(req, expectedResStatus);
+    return res;
 }
 
 /**
@@ -199,16 +202,19 @@ function openProject(projectID, expectedResStatus = 200) {
  */
 function closeProject(
     projectID,
-    expectedResStatus = 202,
-    awaitSocketConfirmation = true
+    expectedResStatus,
+    awaitSocketConfirmation,
 ) {
-    if (typeof projectID !== 'string') throw new Error(`'${projectID}' should be a string`);
+    if (typeof projectID !== 'string') {
+        throw new Error(`'${projectID}' should be a string`);
+    }
     const req = () => reqService.chai
         .put(`/api/v1/projects/${projectID}/close`)
         .set('Cookie', ADMIN_COOKIE);
-    return awaitSocketConfirmation
+    const res = awaitSocketConfirmation
         ? reqService.makeReqAndAwaitSocketMsg(req, expectedResStatus, { projectID, msgType: 'projectClosed' })
         : reqService.makeReq(req, expectedResStatus);
+    return res;
 }
 
 async function removeProject(pathToProjectDir, projectID){
@@ -253,31 +259,15 @@ async function getWatchList() {
         .get('/api/v1/projects/watchlist')
         .set('Cookie', ADMIN_COOKIE);
     const res = await reqService.makeReq(req, 200);
-    if (!Array.isArray(res.body.projects)) throw new Error(`'${res.body.projects}' should be an array`);
-    return res.body.projects;
-}
-
-async function getProjectIdFromName(projectName) {
-    if (typeof projectName !== 'string') throw new Error(`'${projectName}' should be a string`);
-    const project = await getProjectByName(projectName);
-    const { projectID } = project;
-    return projectID;
-}
-async function getProjectByName(projectName) {
-    if (typeof projectName !== 'string') throw new Error(`'${projectName}' should be a string`);
-    const projects = await getProjects();
-    const project = projects.find(project => project.name === projectName);
-    return project;
+    return res;
 }
 
 async function getProject(id) {
     const req = () => reqService.chai
         .get(`/api/v1/projects/${id}`)
         .set('Cookie', ADMIN_COOKIE);
-    const res = await reqService.makeReq(req, 200);
-    const project = res.body;
-    if (!project || typeof project !== 'object') throw new Error(`'${project}' should be an object`);
-    return project;
+    const res = await reqService.makeReq(req);
+    return res;
 }
 
 async function getProjectIDs() {
@@ -294,12 +284,12 @@ async function countProjects() {
 /**
  * Waits indefinitely for GET project to succeed
  */
-async function awaitProject(projectName) {
-    const project = await getProjectByName(projectName);
+async function awaitProject(id) {
+    const project = await getProject(id);
     if (project) return true;
 
     await sleep(1000);
-    return awaitProject(projectName);
+    return awaitProject(id);
 }
 
 async function awaitProjectStarted(projectID) {
@@ -361,10 +351,6 @@ async function cloneProject(giturl, dest) {
     await git().clone(giturl, dest);
 }
 
-function readCwSettings(projectPath) {
-    return fs.readJSONSync(`${projectPath}/.cw-settings`);
-}
-
 async function notifyPfeOfFileChangesAndAwaitMsg(array, projectID) {
     const deflateAsync = promisify(zlib.deflate);
     const str = JSON.stringify(array);
@@ -390,7 +376,6 @@ module.exports = {
     openProject,
     closeProject,
     restartProject,
-    getProjectIdFromName,
     getProjects,
     getWatchList,
     getProject,
@@ -414,7 +399,5 @@ module.exports = {
     removeProject,
     buildProject,
     cloneProject,
-    readCwSettings,
-    createProjectFromTemplate,
     notifyPfeOfFileChangesAndAwaitMsg,
 };
