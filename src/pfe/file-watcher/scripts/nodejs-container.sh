@@ -423,8 +423,8 @@ elif [ "$COMMAND" == "update" ]; then
 				echo "Build succeeded, setting build status to success"
 				$util updateBuildState $PROJECT_ID $BUILD_STATE_SUCCESS " "
 			else
-				echo "Noderun failed to start, setting build status to failed"
-				$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "Noderun failed to start"
+				echo "Nodemon has failed to start, setting build status to failed"
+				$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.nodemonFailedStart"
 			fi
 			$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 		fi
@@ -443,8 +443,8 @@ elif [ "$COMMAND" == "update" ]; then
 				echo "Build succeeded, setting build status to success"
 				$util updateBuildState $PROJECT_ID $BUILD_STATE_SUCCESS " "
 			else
-				echo "Noderun failed to start, setting build status to failed"
-				$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "Noderun failed to start"
+				echo "Nodemon has failed to start, setting build status to failed"
+				$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.nodemonFailedStart"
 			fi
 			$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 		else
