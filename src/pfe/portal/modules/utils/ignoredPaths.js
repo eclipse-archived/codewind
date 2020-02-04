@@ -1,26 +1,29 @@
-const dockerIgnoredPaths = ["/.project", "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913", "/load-test*",
-  "*/.dockerignore", "*/.gitignore", "*/*~", "/.settings"];
+const defaultIgnoredPaths = ["*/.idea/*", "*.iml", "/.project", "/load-test*", "*/*.swp", "*/*.swx", 
+  "*/.gitignore", "*/node_modules*", "*/4913", "*/.git/*", "*/.DS_Store", 
+  "*/.dockerignore", "*/*~", "/.settings"];
 
-const swiftIgnoredPaths = ["/.project", "/LICENSE", "/Package.resolved", "README.rtf", "/debian", "/manifest.yml", "/load-test*",
+const dockerIgnoredPaths = [...defaultIgnoredPaths];
+
+const swiftIgnoredPaths = [...defaultIgnoredPaths, "/LICENSE", "/Package.resolved", "README.rtf", "/debian", "/manifest.yml", 
   "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.bluemix", "/iterative-dev.sh", "/terraform",
   ".swift-version", "/.build-ubuntu", "/.cfignore", "/.swiftservergenerator-project", "/.yo-rc.json",
-  "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913", "*/.dockerignore",
-  "*/.gitignore", "*/*~", "/.settings"];
-
-const nodeIgnoredPaths =  ["/.project", "/run-dev", "/run-debug", "/package-lock.json*", "/nodejs_restclient.log", "/nodejs_dc.log",
-  "/manifest.yml", "/idt.js", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore", "/load-test*",
-  "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913", "*/.dockerignore", "*/.gitignore",
+  "*/.DS_Store", "*/.dockerignore",
   "*/*~", "/.settings"];
 
-const springIgnoredPaths = ["/.project", "/target", "/Dockerfile-tools",
-  "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.m2", "/load-test*",
-  "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx",
-  "*/4913", "*/.dockerignore", "*/.gitignore", "*/*~", "/.settings", "/localm2cache.zip"];
+const nodeIgnoredPaths =  [...defaultIgnoredPaths, "/run-dev", "/run-debug", "/package-lock.json*", "/nodejs_restclient.log", "/nodejs_dc.log",
+  "/manifest.yml", "/idt.js", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore", 
+  "*/.DS_Store", "*/.dockerignore",
+  "*/*~", "/.settings"];
 
-const libertyIgnoredPaths = ["/.project", "/Dockerfile-tools", "/target",
-  "/mc-target", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore", "/load-test*",
-  "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913", "*/.dockerignore",
-  "*/.gitignore", "*/*~", "/.settings", "/localm2cache.zip", "/libertyrepocache.zip"];
+const springIgnoredPaths = [...defaultIgnoredPaths, "/target", "/Dockerfile-tools",
+  "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.m2", 
+  "*/.DS_Store",
+  "*/.dockerignore", "*/*~", "/.settings", "/localm2cache.zip"];
+
+const libertyIgnoredPaths = [...defaultIgnoredPaths, "/Dockerfile-tools", "/target",
+  "/mc-target", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore", 
+  "*/.DS_Store", "*/.dockerignore",
+  "*/*~", "/.settings", "/localm2cache.zip", "/libertyrepocache.zip"];
 
 const projectTypeToIgnoredPaths = {
   'swift': swiftIgnoredPaths,
