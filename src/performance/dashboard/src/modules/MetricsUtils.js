@@ -15,6 +15,7 @@
  */
 let getLanguageCounters = function (appMetricsName) {
     switch (appMetricsName) {
+        case "javascript": 
         case "nodejs": {
             return {
                 HTTP_AVERAGE_RESPONSE: 'averageResponseTime',
@@ -40,6 +41,7 @@ let getLanguageCounters = function (appMetricsName) {
             }
         }
         default: {
+            console.error(`Unable to determine counter names for ${appMetricsName}`);
             return {
                 HTTP_AVERAGE_RESPONSE: undefined,
                 HTTP_HITS: undefined,

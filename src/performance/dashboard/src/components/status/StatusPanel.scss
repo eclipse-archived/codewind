@@ -1,0 +1,28 @@
+/*******************************************************************************
+* Copyright (c) 2020 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+******************************************************************************/
+
+.StatusPanelWarning {
+    padding: 7px;
+    margin: 20px;
+    color: #f1c21b;
+    border: 1px dashed #f1c21d;
+    text-align: center;
+    line-height: 20px;
+}
+
+.StatusPanelMessage {
+    padding: 10px;
+    margin: 20px;
+    background-color: #da1e28;
+    color: white;
+    font-weight: bold;
+}
+

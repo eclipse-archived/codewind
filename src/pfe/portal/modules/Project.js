@@ -188,6 +188,7 @@ module.exports = class Project {
       metricsContextRoot = 'javametrics';
       break;
     case 'nodejs':
+    case 'javascript':
       metricsContextRoot = 'appmetrics';
       break;
     case 'swift':
