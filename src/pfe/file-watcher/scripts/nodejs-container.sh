@@ -419,6 +419,13 @@ elif [ "$COMMAND" == "update" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
 
 			$IMAGE_COMMAND exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
+			if [[ $? -eq 0 ]]; then
+				echo "Build succeeded, setting build status to success"
+				$util updateBuildState $PROJECT_ID $BUILD_STATE_SUCCESS " "
+			else
+				echo "Build failed, setting build status to failed"
+				$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED " "
+			fi
 			$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 		fi
 	else
@@ -432,6 +439,13 @@ elif [ "$COMMAND" == "update" ]; then
 			$IMAGE_COMMAND exec $project /scripts/noderun.sh stop
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
 			$IMAGE_COMMAND exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
+			if [[ $? -eq 0 ]]; then
+				echo "Build succeeded, setting build status to success"
+				$util updateBuildState $PROJECT_ID $BUILD_STATE_SUCCESS " "
+			else
+				echo "Build failed, setting build status to failed"
+				$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED " "
+			fi
 			$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 		else
 			echo "Build succeeded, setting build status to success"
