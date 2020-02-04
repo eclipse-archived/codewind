@@ -273,7 +273,7 @@ async function uploadEnd(req, res) {
 
       if (project.injectMetrics) {
         try {
-          await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
+          await metricsService.injectMetricsCollectorIntoProject(project.projectType, project.language, path.join(project.workspace, project.directory));
         } catch (error) {
           log.warn(error);
         }
@@ -431,7 +431,7 @@ async function bindEnd(req, res) {
 
     if (project.injectMetrics) {
       try {
-        await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
+        await metricsService.injectMetricsCollectorIntoProject(project.projectType, project.language, path.join(project.workspace, project.directory));
       } catch (error) {
         log.warn(error);
       }
