@@ -6,24 +6,16 @@ const dockerIgnoredPaths = [...defaultIgnoredPaths];
 
 const swiftIgnoredPaths = [...defaultIgnoredPaths, "/LICENSE", "/Package.resolved", "README.rtf", "/debian", "/manifest.yml", 
   "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.bluemix", "/iterative-dev.sh", "/terraform",
-  ".swift-version", "/.build-ubuntu", "/.cfignore", "/.swiftservergenerator-project", "/.yo-rc.json",
-  "*/.DS_Store", "*/.dockerignore",
-  "*/*~", "/.settings"];
+  ".swift-version", "/.build-ubuntu", "/.cfignore", "/.swiftservergenerator-project", "/.yo-rc.json"];
 
 const nodeIgnoredPaths =  [...defaultIgnoredPaths, "/run-dev", "/run-debug", "/package-lock.json*", "/nodejs_restclient.log", "/nodejs_dc.log",
-  "/manifest.yml", "/idt.js", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore", 
-  "*/.DS_Store", "*/.dockerignore",
-  "*/*~", "/.settings"];
+  "/manifest.yml", "/idt.js", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore"];
 
 const springIgnoredPaths = [...defaultIgnoredPaths, "/target", "/Dockerfile-tools",
-  "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.m2", 
-  "*/.DS_Store",
-  "*/.dockerignore", "*/*~", "/.settings", "/localm2cache.zip"];
+  "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.m2", "/localm2cache.zip"];
 
 const libertyIgnoredPaths = [...defaultIgnoredPaths, "/Dockerfile-tools", "/target",
-  "/mc-target", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore", 
-  "*/.DS_Store", "*/.dockerignore",
-  "*/*~", "/.settings", "/localm2cache.zip", "/libertyrepocache.zip"];
+  "/mc-target", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore", "/localm2cache.zip", "/libertyrepocache.zip"];
 
 const projectTypeToIgnoredPaths = {
   'swift': swiftIgnoredPaths,
