@@ -209,9 +209,11 @@
 
     function updateGraphs(metrics) {
       const time = Date.now();
+      const usedNative = 0;
+      const usedHeapAfterGC = 0;
       const cpuData = { time };
       const gcData = { time };
-      const memPoolsData = { time };
+      const memPoolsData = { time, usedNative, usedHeapAfterGC };
       const httpRequestData = { time };
       for (const metric of metrics) {
         const metricsObj = metric.metrics[0];
@@ -227,9 +229,8 @@
           const correctMetricsObj = metric.metrics.find(obj => obj.labels.name === 'global');
           gcData.gcTime = correctMetricsObj.value;
 
-        } else if (['base_memory_usedHeap_bytes', 'process_heap_memory_used_bytes'].includes(metric.name)) {
-          memPoolsData.usedHeap = metricValue;
-           memPoolsData.usedHeap = metricValue;
+        } else if (['base_memory_usedHeap_bytes', 'process_heap_memory_used_bytes', 'base:memory_used_heap_bytes'].includes(metric.name)) {
+          memPoolsData.usedHeap = metricValue * 0.5;
         } else if (metric.name === 'process_native_memory_used_bytes') {
           memPoolsData.usedNative = metricValue;
         } else if (metric.name === 'process_heap_memory_used_after_GC_bytes') {
