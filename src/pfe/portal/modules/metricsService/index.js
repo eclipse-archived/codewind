@@ -36,20 +36,30 @@ const metricsCollectorRemovalFunctions = {
   spring: removeMetricsCollectorFromSpringProject,
 }
 
-async function injectMetricsCollectorIntoProject(projectType, projectDir) {
-  if (!metricsCollectorInjectionFunctions.hasOwnProperty(projectType)) {
-    throw new Error(`Injection of metrics collector is not supported for projects of type '${projectType}'`);
+async function identifyProject(projectType, projectLanguage) {
+  if (projectType === 'docker' && projectLanguage === 'java') {
+    return 'openLiberty';
+    // this is the best we can do at the moment
   }
-  await metricsCollectorInjectionFunctions[projectType](projectDir);
-  log.debug(`Successfully injected metrics collector into ${projectType} project`);
+  return projectType
 }
 
-async function removeMetricsCollectorFromProject(projectType, projectDir) {
-  if (!metricsCollectorRemovalFunctions.hasOwnProperty(projectType)) {
-    throw new Error(`Injection of metrics collector is not supported for projects of type '${projectType}'`);
+async function injectMetricsCollectorIntoProject(projectType, projectLanguage, projectDir) {
+  let projType = await identifyProject(projectType, projectLanguage);
+  if (!metricsCollectorInjectionFunctions.hasOwnProperty(projType)) {
+    throw new Error(`Injection of metrics collector is not supported for projects of type '${projType}'`);
   }
-  await metricsCollectorRemovalFunctions[projectType](projectDir);
-  log.debug(`Successfully removed metrics collector from ${projectType} project`);
+  await metricsCollectorInjectionFunctions[projType](projectDir);
+  log.debug(`Successfully injected metrics collector into ${projType} project`);
+}
+
+async function removeMetricsCollectorFromProject(projectType, projectLanguage, projectDir) {
+  let projType = await identifyProject(projectType, projectLanguage);
+  if (!metricsCollectorRemovalFunctions.hasOwnProperty(projType)) {
+    throw new Error(`Injection of metrics collector is not supported for projects of type '${projType}'`);
+  }
+  await metricsCollectorRemovalFunctions[projType](projectDir);
+  log.debug(`Successfully removed metrics collector from ${projType} project`);
 }
 
 const getPathToPomXml = (projectDir) => path.join(projectDir, 'pom.xml');
