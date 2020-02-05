@@ -55,7 +55,7 @@ const MAX_BUILDS = parseInt(process.env.MC_MAX_BUILDS) || 3;
 const BUILD_KEY = "projectStatusController.buildRank";
 
 // timeout to ping build projects
-setInterval(checkBuildQueue, 5000);
+setInterval(checkBuildQueue, constants.buildQueueInterval);
 
 /**
  * @see [[Filewatcher.getProjectTypes]]
