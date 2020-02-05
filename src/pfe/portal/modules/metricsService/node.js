@@ -55,7 +55,7 @@ function getNewContentsOfPackageJson(originalContentsOfPackageJson) {
   newContentsOfPackageJson.scripts.start = getNewStartScript(originalContentsOfPackageJson.scripts.start);
   newContentsOfPackageJson.dependencies = {
     ...newContentsOfPackageJson.dependencies,
-    'appmetrics-codewind': '^0.1.0',
+    'appmetrics-codewind': '^0.2.0',
   }
   return newContentsOfPackageJson;
 }
