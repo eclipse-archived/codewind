@@ -17,3 +17,7 @@ src/gatekeeper/** @markcor11 @tobespc
 src/keycloak/** @markcor11 @tobespc 
 src/performance/** @markcor11 @tobespc 
 test/** @stalleyj @tobespc
+
+# Dockerfiles
+# Notify regarding Dockerfile changes for PPC
+**/Dockerfile* @vrushaliinamdar @seth-priya
