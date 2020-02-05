@@ -38,7 +38,8 @@ router.get('/api/v1/environment', async (req, res) => {
       image_build_time: process.env.IMAGE_BUILD_TIME,
       workspace_location: process.env.HOST_WORKSPACE_DIRECTORY,
       os_platform: process.env.HOST_OS || 'Linux',
-      tekton_dashboard: tektonDashboard
+      tekton_dashboard: tektonDashboard,
+      namespace: process.env.KUBE_NAMESPACE
     }
     res.status(200).send(envData);
   } catch (err) {

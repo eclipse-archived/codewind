@@ -84,6 +84,7 @@ export interface ProjectEvent {
     appBaseURL?: string;
     compositeAppName?: string;
     statusPingTimeout?: string;
+    namespace?: string;
 }
 
 export interface ProjectLog {
@@ -437,6 +438,7 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                     logger.logProjectError(err, projectID, projectName);
                     projectInfo.error = err;
                 }
+                projectInfo.namespace = process.env.KUBE_NAMESPACE;
                 io.emitOnListener(event, projectInfo);
                 keyValuePair.key = "sentProjectInfo";
                 keyValuePair.value = true;
@@ -1937,6 +1939,7 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
     keyValuePair.key = "sentProjectInfo";
     keyValuePair.value = true;
     await projectsController.updateProjectInfo(projectID, keyValuePair);
+    projectEvent.namespace = process.env.KUBE_NAMESPACE;
 
     io.emitOnListener(event, projectEvent);
     logger.logProjectInfo("Emitted event: " + event + "\n" + JSON.stringify(projectEvent), projectID, projectName);
