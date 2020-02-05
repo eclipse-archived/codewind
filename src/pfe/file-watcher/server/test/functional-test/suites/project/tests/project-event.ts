@@ -22,6 +22,7 @@ import * as utils from "../../../lib/utils";
 import * as eventConfigs from "../../../configs/event.config";
 import * as project_configs from "../../../configs/project.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
+import { projectLanguges } from "../../../configs/app.config";
 import { fail } from "assert";
 
 export function projectEventTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
@@ -77,7 +78,7 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
                     }
 
                     const fileToChange = file;
-                    const pathFileToChange = path.join(projData.location, fileToChange);
+                    const pathFileToChange = projectLang.toLowerCase() === projectLanguges.lagom ? path.join(projData.location, "hello-impl", fileToChange) : path.join(projData.location, fileToChange);
 
                     if (file.toLowerCase() === "dockerfile") {
                         const dockerFileContents = await fs.readFileSync(pathFileToChange).toString();

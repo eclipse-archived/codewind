@@ -17,7 +17,7 @@ import * as nodeProject from "../../../src/projects/nodejsProject";
 import * as springProject from "../../../src/projects/springProject";
 import * as swiftProject from "../../../src/projects/swiftProject";
 
-import { codewindTemplates, projecLanguges } from "./app.config";
+import { codewindTemplates, projectLanguges } from "./app.config";
 
 /**
  * Please note: This is the project config file. The configs are set in the order of template -> projectLang in an object. If a key is missing by default it means that specific functionality for that key is not supported.
@@ -27,33 +27,33 @@ import { codewindTemplates, projecLanguges } from "./app.config";
 // We currently need to do that because project that relies on script and IDC code does not follow the typescript code and need to be manually reset.
 export const needManualReset: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.liberty]: {
+        [projectLanguges.liberty]: {
             "appStatus": true,
             "buildStatus": true
         },
-        [projecLanguges.nodejs]: {
+        [projectLanguges.nodejs]: {
             "appStatus": true,
             "buildStatus": true
         },
-        [projecLanguges.spring]: {
+        [projectLanguges.spring]: {
             "appStatus": true,
             "buildStatus": true,
         },
-        [projecLanguges.swift]: {
+        [projectLanguges.swift]: {
             "appStatus": false,
             "buildStatus": true
         }
     },
     [codewindTemplates.odo]: {
-        [projecLanguges.nodejs]: {
+        [projectLanguges.nodejs]: {
             "appStatus": false,
             "buildStatus": true
         },
-        [projecLanguges.perl]: {
+        [projectLanguges.perl]: {
             "appStatus": false,
             "buildStatus": true
         },
-        [projecLanguges.python]: {
+        [projectLanguges.python]: {
             "appStatus": false,
             "buildStatus": true
         }
@@ -63,54 +63,54 @@ export const needManualReset: any = {
 // project specific capability settings: start modes and control commands
 export const projectCapabilities: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.liberty]: {
+        [projectLanguges.liberty]: {
             "local": {
                 "startModes": ["run", "debug"],
                 "controlCommands": ["restart"]
             },
             "kube": project.defaultProjectCapabilities
         },
-        [projecLanguges.nodejs]: {
+        [projectLanguges.nodejs]: {
             "local": {
                 "startModes": ["run", "debugNoInit"],
                 "controlCommands": ["restart"]
             },
             "kube": project.defaultProjectCapabilities
         },
-        [projecLanguges.spring]: {
+        [projectLanguges.spring]: {
             "local": {
                 "startModes": ["run", "debug", "debugNoInit"],
                 "controlCommands": ["restart"]
             },
             "kube": project.defaultProjectCapabilities
         },
-        [projecLanguges.swift]: {
+        [projectLanguges.swift]: {
             "local": project.defaultProjectCapabilities,
             "kube": project.defaultProjectCapabilities
         }
     },
     [codewindTemplates.docker]: {
-        [projecLanguges.go]: {
+        [projectLanguges.go]: {
             "local": project.defaultProjectCapabilities,
             "kube": project.defaultProjectCapabilities
         },
-        [projecLanguges.lagom]: {
+        [projectLanguges.lagom]: {
             "local": project.defaultProjectCapabilities,
             "kube": project.defaultProjectCapabilities
         },
-        [projecLanguges.python]: {
+        [projectLanguges.python]: {
             "local": project.defaultProjectCapabilities,
             "kube": project.defaultProjectCapabilities
         }
     },
     [codewindTemplates.odo]: {
-        [projecLanguges.nodejs]: {
+        [projectLanguges.nodejs]: {
             "kube": project.defaultProjectCapabilities
         },
-        [projecLanguges.perl]: {
+        [projectLanguges.perl]: {
             "kube": project.defaultProjectCapabilities
         },
-        [projecLanguges.python]: {
+        [projectLanguges.python]: {
             "kube": project.defaultProjectCapabilities
         }
     }
@@ -119,7 +119,7 @@ export const projectCapabilities: any = {
 // auto build enable/disable event capabilities: some projects emit the project changed event and some don't do anything
 export const autoBuildEventCapabailities: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.nodejs]: true,
+        [projectLanguges.nodejs]: true,
     }
 };
 
@@ -129,26 +129,26 @@ export const startModes: Array<string> = ["run", "debug", "debugNoInit"];
 // project specific restart capabilities depending on the above start modes
 export const restartCapabilities: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.liberty]: [startModes[0], startModes[1]],
-        [projecLanguges.nodejs]: [startModes[0], startModes[2]],
-        [projecLanguges.spring]: startModes,
+        [projectLanguges.liberty]: [startModes[0], startModes[1]],
+        [projectLanguges.nodejs]: [startModes[0], startModes[2]],
+        [projectLanguges.spring]: startModes,
     }
 };
 
 // project specific debug capabilities
 export const debugCapabilities: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.liberty]: true,
-        [projecLanguges.nodejs]: true,
-        [projecLanguges.spring]: true,
+        [projectLanguges.liberty]: true,
+        [projectLanguges.nodejs]: true,
+        [projectLanguges.spring]: true,
     }
 };
 
 // project specific maven profile capabilities
 export const mavenProfileCapabilities: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.liberty]: true,
-        [projecLanguges.spring]: true,
+        [projectLanguges.liberty]: true,
+        [projectLanguges.spring]: true,
     }
 };
 
@@ -158,7 +158,7 @@ export const randomDebugPort = "1000";
 // default context roots for projects
 export const defaultContextRoot: any = {
     [codewindTemplates.docker]: {
-        [projecLanguges.lagom]: "/api/hello/you"
+        [projectLanguges.lagom]: "/api/hello/you"
     }
 };
 
@@ -168,33 +168,33 @@ export const defaultHealthCheckEndPoint = "/";
 // project specific setting for projects that only expose one app port
 export const oneExposedPortOnly: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.liberty]: {
+        [projectLanguges.liberty]: {
             "local": false,
             "kube": false
         },
-        [projecLanguges.nodejs]: {
+        [projectLanguges.nodejs]: {
             "local": false,
             "kube": true
         },
-        [projecLanguges.spring]: {
+        [projectLanguges.spring]: {
             "local": false,
             "kube": true
         },
-        [projecLanguges.swift]: {
+        [projectLanguges.swift]: {
             "local": true,
             "kube": true
         }
     },
     [codewindTemplates.docker]: {
-        [projecLanguges.go]: {
+        [projectLanguges.go]: {
             "local": true,
             "kube": true
         },
-        [projecLanguges.lagom]: {
+        [projectLanguges.lagom]: {
             "local": false,
             "kube": true
         },
-        [projecLanguges.python]: {
+        [projectLanguges.python]: {
             "local": true,
             "kube": true
         }
@@ -204,46 +204,46 @@ export const oneExposedPortOnly: any = {
 // project specific setting for default app ports
 export const defaultInternalPorts: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.liberty]: libertyProject.getDefaultAppPort(),
-        [projecLanguges.nodejs]: nodeProject.getDefaultAppPort(),
-        [projecLanguges.spring]: springProject.getDefaultAppPort(),
-        [projecLanguges.swift]: swiftProject.getDefaultAppPort()
+        [projectLanguges.liberty]: libertyProject.getDefaultAppPort(),
+        [projectLanguges.nodejs]: nodeProject.getDefaultAppPort(),
+        [projectLanguges.spring]: springProject.getDefaultAppPort(),
+        [projectLanguges.swift]: swiftProject.getDefaultAppPort()
     },
     [codewindTemplates.docker]: {
-        [projecLanguges.go]: "8000",
-        [projecLanguges.lagom]: "9000",
-        [projecLanguges.python]: "5000",
+        [projectLanguges.go]: "8000",
+        [projectLanguges.lagom]: "9000",
+        [projectLanguges.python]: "5000",
     }
 };
 
 // project specific setting for default app debug ports
 export const defaultInternalDebugPorts: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.liberty]: libertyProject.getDefaultDebugPort(),
-        [projecLanguges.nodejs]: nodeProject.getDefaultDebugPort(),
-        [projecLanguges.spring]: springProject.getDefaultDebugPort(),
+        [projectLanguges.liberty]: libertyProject.getDefaultDebugPort(),
+        [projectLanguges.nodejs]: nodeProject.getDefaultDebugPort(),
+        [projectLanguges.spring]: springProject.getDefaultDebugPort(),
     }
 };
 
 // project specific settings to mark the main files
 export const filesToUpdate: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.liberty]: ["Dockerfile", "src/main/java/application/rest/v1/Example.java"],
-        [projecLanguges.nodejs]: ["Dockerfile", "server/server.js"],
-        [projecLanguges.spring]: ["Dockerfile", "src/main/java/application/rest/v1/Example.java"],
-        [projecLanguges.swift]: ["Dockerfile", "Sources/Application/Routes/HealthRoutes.swift"],
+        [projectLanguges.liberty]: ["Dockerfile", "src/main/java/application/rest/v1/Example.java"],
+        [projectLanguges.nodejs]: ["Dockerfile", "server/server.js"],
+        [projectLanguges.spring]: ["Dockerfile", "src/main/java/application/rest/v1/Example.java"],
+        [projectLanguges.swift]: ["Dockerfile", "Sources/Application/Routes/HealthRoutes.swift"],
     },
     [codewindTemplates.docker]: {
-        [projecLanguges.go]: ["Dockerfile", "main.go"],
-        [projecLanguges.lagom]: ["Dockerfile",
+        [projectLanguges.go]: ["Dockerfile", "main.go"],
+        [projectLanguges.lagom]: ["Dockerfile",
             "hello-api/src/main/java/com/example/rp/test/lagomendpoints/api/HelloService.java",
             "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloModule.java",
             "hello-impl/src/main/java/com/example/rp/test/lagomendpoints/impl/HelloServiceImpl.java"],
-        [projecLanguges.python]: ["Dockerfile", "app.py"],
+        [projectLanguges.python]: ["Dockerfile", "app.py"],
     },
     [codewindTemplates.odo]: {
-        [projecLanguges.nodejs]: ["server.js"],
-        [projecLanguges.perl]: ["index.pl"],
-        [projecLanguges.python]: ["wsgi.py"]
+        [projectLanguges.nodejs]: ["server.js"],
+        [projectLanguges.perl]: ["index.pl"],
+        [projectLanguges.python]: ["wsgi.py"]
     }
 };
