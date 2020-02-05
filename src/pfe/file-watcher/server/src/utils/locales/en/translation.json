@@ -69,7 +69,7 @@
     "appErrorWhenStopping": "An error occurred while the application was stopping. Check the application logs for details.",
     "pingTimeout": "Timeout: {{- pingMessage}}. The application is taking longer than expected to start. Please check the application logs for problems and ensure the project's 'healthCheck' setting is correct. Last error message received: {{- errMsg}}", 
     "pingTimeoutDefaultMessage": "Failed to ping application.",
-    "linkLabel": "Troubleshooting status"
+    "linkLabel": "Application status troubleshooting information"
   },
   "quickfix": {
     "generateMissingFilesName": "Generate missing files",

@@ -19,6 +19,7 @@ import { actionMap } from "../projects/actions";
 import { ContainerStates } from "../projects/constants";
 import { ProjectInfo } from "../projects/Project";
 import * as constants from "../projects/constants";
+import * as crypto from "crypto";
 
 export enum STATE_TYPES {
     appState = "appState",
@@ -67,6 +68,7 @@ class ProjectState {
     appImageLastBuild?: string;
     buildImageLastBuild?: string;
     detailedAppStatus?: DetailedAppStatus;
+    notificationID?: string;
 
     /**
      * @constructor
@@ -78,8 +80,9 @@ class ProjectState {
      * @param appImageLastBuild <Optional | String> - The last app image info.
      * @param buildImageLastBuild <Optional | String> - The last build image info.
      * @param detailedAppStatus <Optional | DetailedAppStatus> - The detailed app status to update.
+     * @param notificationID <Optional | String> - Notification ID for IDE.
      */
-    constructor(state: any, msg: string, lastbuild?: number, appImageLastBuild?: string, buildImageLastBuild?: string, detailedAppStatus?: DetailedAppStatus) {
+    constructor(state: any, msg: string, lastbuild?: number, appImageLastBuild?: string, buildImageLastBuild?: string, detailedAppStatus?: DetailedAppStatus, notificationID?: string) {
         this.state = state;
         this.msg = msg;
         if (lastbuild)
@@ -90,6 +93,8 @@ class ProjectState {
             this.buildImageLastBuild = buildImageLastBuild;
         if (detailedAppStatus)
             this.detailedAppStatus = detailedAppStatus;
+        if (notificationID)
+            this.notificationID = notificationID;
     }
 
     /**
@@ -232,10 +237,11 @@ export async function updateProjectStatus(type: string, projectID: string, statu
                 data.detailedAppStatus = {
                     severity: "ERROR",
                     message: newError,
-                    notify: false
+                    notify: false,
+                    notificationID: ""
                 };
             }
-            appStateMap.set(projectID, new ProjectState(newState, newError, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus ));
+            appStateMap.set(projectID, new ProjectState(newState, newError, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
 
             io.emitOnListener("projectStatusChanged", data);
         }
@@ -426,6 +432,7 @@ function pingApplications(): void {
 
                         // Update the state only if it has changed
                         if (newState != oldState) {
+                            const newNotificationID = "";
                             logger.logProjectInfo("pingApplications: Application state for project " + projectID + " has changed from " + oldState + " to " + newState, projectID);
                             const data: any = {
                                 projectID: projectID,
@@ -435,11 +442,12 @@ function pingApplications(): void {
                                 data.detailedAppStatus = {
                                     severity: "INFO",
                                     message: "",
-                                    notify: false
+                                    notify: false,
+                                    notificationID: newNotificationID
                                 };
                                 pingCountMap.delete(projectID);
                             }
-                            appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
+                            appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus, newNotificationID));
                             io.emitOnListener("projectStatusChanged", data);
                         }
                     }
@@ -472,6 +480,7 @@ function pingInTransitApplications(): void {
                                     return;
                                 }
                                 const oldMsg = appStateMap.get(projectID).msg;
+                                const oldNotificationID = appStateMap.get(projectID).notificationID;
                                 let newState = oldState;
                                 let newMsg = stateInfo.error;
 
@@ -511,7 +520,8 @@ function pingInTransitApplications(): void {
                                     detailedAppStatus = {
                                         severity: "ERROR",
                                         message: newMsg,
-                                        notify: false
+                                        notify: false,
+                                        notificationID: ""
                                     };
                                     appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
                                 }
@@ -523,27 +533,35 @@ function pingInTransitApplications(): void {
                                         projectID: projectID,
                                         appStatus: newState
                                     };
+                                    let newNotificationID = "";
                                     if (newState === AppState.started) {
                                         detailedAppStatus = {
                                             severity: "INFO",
                                             message: "",
-                                            notify: false
+                                            notify: false,
+                                            notificationID: newNotificationID
                                         };
                                         data.detailedAppStatus = detailedAppStatus;
                                         pingCountMap.delete(projectID);
                                     } else if (newState === AppState.starting && pingCount == pingCountLimit) {
                                         const troubleShootLinkLabel = await locale.getTranslation("projectStatusController.linkLabel");
+                                        if ( !oldNotificationID ) {
+                                            newNotificationID = crypto.randomBytes(16).toString("hex");
+                                        } else {
+                                            newNotificationID = oldNotificationID;
+                                        }
                                         detailedAppStatus = {
                                             severity: "WARN",
                                             message: newMsg,
                                             notify: true,
+                                            notificationID: newNotificationID,
                                             linkLabel: troubleShootLinkLabel,
                                             link: troubleShootLink
                                         };
                                         data.detailedAppStatus = detailedAppStatus;
                                     }
                                     io.emitOnListener("projectStatusChanged", data);
-                                    appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
+                                    appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus, newNotificationID));
 
                                 }
                             }
@@ -554,6 +572,7 @@ function pingInTransitApplications(): void {
                         // The container is stopped so change the application state to stopped
                         if (appStateMap.get(projectID)) {
                             const oldState = appStateMap.get(projectID).state;
+                            const oldNotificationID = appStateMap.get(projectID).notificationID;
                             if (oldState !== AppState.starting && oldState !== AppState.stopping) {
                                 return;
                             }
@@ -565,12 +584,19 @@ function pingInTransitApplications(): void {
                             if (oldState === AppState.starting) {
                                 // If the container stopped while the application was starting up then something went wrong
                                 data.appErrorStatus = "projectStatusController.appStatusContainerStopped";
+                                let newNotificationID = "";
+                                if ( !oldNotificationID ) {
+                                    newNotificationID = crypto.randomBytes(16).toString("hex");
+                                } else {
+                                    newNotificationID = oldNotificationID;
+                                }
                                 data.detailedAppStatus = {
                                     severity: "ERROR",
                                     message: data.appErrorStatus,
-                                    notify: true
+                                    notify: true,
+                                    notificationID: newNotificationID
                                 };
-                                appStateMap.set(projectID, new ProjectState(AppState.stopped, data.appErrorStatus, undefined, undefined, undefined, data.detailedAppStatus));
+                                appStateMap.set(projectID, new ProjectState(AppState.stopped, data.appErrorStatus, undefined, undefined, undefined, data.detailedAppStatus, newNotificationID));
                                 data.detailedAppStatus.message =  await locale.getTranslation(data.detailedAppStatus.message);
                             } else {
                                 appStateMap.set(projectID, new ProjectState(AppState.stopped, undefined));
@@ -610,7 +636,8 @@ function pingInTransitApplications(): void {
                                 detailedAppStatus: {
                                     severity: "ERROR",
                                     message: newMsg,
-                                    notify: false
+                                    notify: false,
+                                    notificationID: ""
                                 }
                             };
                             io.emitOnListener("projectStatusChanged", data);
@@ -731,8 +758,6 @@ export async function waitForApplicationState(projectID: string, appState: AppSt
     }, inTransitPingInterval);
 }
 
-
-
 export interface IUpdateStatusParams {
     projectID: string;
     type: string;
@@ -742,6 +767,7 @@ export interface IUpdateStatusParams {
     detailedBuildStatus?: string;
     appImageLastBuild?: string;
     buildImageLastBuild?: string;
+    notificationID?: string;
 }
 
 export interface IUpdateStatusSuccess {
@@ -752,8 +778,12 @@ export interface IUpdateStatusFailure {
     statusCode: 400 | 404;
     error: { msg: string };
 }
+
 export interface DetailedAppStatus {
     severity: "INFO" | "WARN" | "ERROR";
     message: string;
     notify: boolean;
+    notificationID?: string;
+    linkLabel?: string;
+    link?: string;
   }

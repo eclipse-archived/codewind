@@ -2129,7 +2129,8 @@ export async function updateDetailedAppStatus(projectID: string, ip: string, por
     pingPathEvent = {
         severity: "INFO",
         message: pingMessage,
-        notify: false
+        notify: false,
+        notificationID: ""
     };
 
     if (oldState === AppState.starting) {
