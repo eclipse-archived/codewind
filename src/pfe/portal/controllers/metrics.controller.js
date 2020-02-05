@@ -68,8 +68,7 @@ async function syncProjectFilesIntoBuildContainer(project, user){
   const globalProjectPath = path.join(project.workspace, project.name);
   const projectRoot = cwUtils.getProjectSourceRoot(project);
   if (project.buildStatus != "inProgress") {
-    if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
-      (!project.extension || !project.extension.config.needsMount)) {
+    if (!global.codewind.RUNNING_IN_K8S) {
       await cwUtils.copyProjectContents(
         project,
         globalProjectPath,
