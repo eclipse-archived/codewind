@@ -368,13 +368,9 @@ module.exports = class Project {
    */
   async getProfilingByTime(timeOfTestRun) {
     const pathToProfilingFile = await this.getPathToProfilingFile(timeOfTestRun);
-    let profiling;
-    if (this.language == 'nodejs') {
-      profiling = await fs.readJson(pathToProfilingFile);
-    } else if (this.language == 'java') {
-      profiling = pathToProfilingFile;
-    }
-    return profiling;
+    const profilingStream = await fs.createReadStream(pathToProfilingFile);
+    log.info(`Returning profiling file stream ${pathToProfilingFile} for ${this.name}`)
+    return profilingStream;
   } 
 
   /**
@@ -454,15 +450,24 @@ module.exports = class Project {
     }
     if (this.language == 'nodejs') {
       const pathToProfilingJson = join(pathToLoadTestDir, 'profiling.json');
-      return pathToProfilingJson;
+      if (await fs.exists(pathToProfilingJson)) {
+        return pathToProfilingJson; 
+      }
+      throw new ProjectMetricsError('PROFILING_NOT_FOUND', this.name, `profiling.json was not found for load run ${timeOfTestRun}`);
     } else if (this.language == 'java') {
+      let fileName = await isHcdSaved(pathToLoadTestDir)
+      if (fileName !== false) {
+        return join(pathToLoadTestDir, fileName)
+      }
       try {
         await exec(`docker cp ${this.containerId}:${join('/', 'home', 'default', 'app', 'load-test', timeOfTestRun)} ../codewind-workspace/${this.name}/load-test/`);
       } catch (error) {
         throw new ProjectMetricsError('DOCKER_CP', this.name, error.message);
       }
-      if (await isHcdSaved(pathToLoadTestDir)) {
-        return pathToLoadTestDir
+      log.info(`${this.name} profiling data from run ${timeOfTestRun} saved to pfe`)
+      fileName = await isHcdSaved(pathToLoadTestDir)
+      if (fileName !== false) {
+        return join(pathToLoadTestDir, fileName)
       }
       throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
     }
@@ -718,7 +723,7 @@ async function isHcdSaved(pathToLoadTestDir) {
   const files = await fs.readdir(pathToLoadTestDir);
   for (let i = 0; i < files.length; i++) {
     if (extname(files[i]) == '.hcd') {
-      return true
+      return files[i];
     }
   }
   return false

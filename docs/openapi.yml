@@ -544,14 +544,21 @@ paths:
   /api/v1/projects/{id}/profiling/{testRunTime}:
     get:
       summary: Reads the load run data for the given timestamp
-      description: Reads and returns profiling.json for Node projects. Copies over health center data to pfe from Java projects and returns the file path.
+      description: Reads profiling data from pfe and returns a stream of the file. For java projects, this first copies profiling data
+        from the project pod to PFE.
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           schema:
             type: string
           required: true
           description: id of project
+        - in: path
+          schema:
+            type: string
+          name: testRunTime
+          required: true
+          description: Time of loadtest run
       responses:
         200:
           description: Successful read of load run data

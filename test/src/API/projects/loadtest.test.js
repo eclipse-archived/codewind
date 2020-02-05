@@ -194,26 +194,6 @@ describe('Load Runner Tests', function() {
             res.should.have.status(409);
         });
     });
-
-    describe('retrieve profiling data (GET/profiling/:testRunTime', function() {
-        it('returns fails with 404 to GET/profiling/:testRunTime when project does not exist', async function() {
-            this.timeout(testTimeout.short);
-            const res = await getProfilingData('falseID', 0);
-            res.should.have.status(404);
-        });
-
-        it('returns fails with 500 to GET/profiling/:testRunTime when timestamp is invalid', async function() {
-            this.timeout(testTimeout.short);
-            const res = await getProfilingData(projectID, 'invalid');
-            res.should.have.status(500);
-        });
-
-        it('returns fails with 500 to GET/profiling/:testRunTime when load run at timestamp does not exist', async function() {
-            this.timeout(testTimeout.short);
-            const res = await getProfilingData(projectID, 0);
-            res.should.have.status(500);
-        });
-    });
 });
 
 async function writeToLoadTestConfig(projectID, configOptions) {
@@ -238,10 +218,3 @@ function modifyOptions(options, newOptions) {
     });
     return modifiedOptions;
 };
-
-async function getProfilingData(projectID, timestamp) {
-    const res = await reqService.chai
-        .get(`/api/v1/projects/${projectID}/profiling/${timestamp}`)
-        .set('cookie', ADMIN_COOKIE);
-    return res;
-}

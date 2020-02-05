@@ -190,8 +190,10 @@ router.get('/api/v1/projects/:id/profiling/:testRunTime', validateReq, async fun
       return;
     }
     const testRunTime = req.sanitizeParams('testRunTime');
-    const newProfiling = await project.getProfilingByTime(testRunTime);
-    res.status(200).send(newProfiling);
+    const profilingStream = await project.getProfilingByTime(testRunTime);
+    res.status(200)
+    profilingStream.on('end', () => res.end());
+    profilingStream.pipe(res);
   } catch (err) {
     log.error(err.info || err);
     res.status(500).send(err.info || err);
