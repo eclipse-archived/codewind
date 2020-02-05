@@ -32,7 +32,8 @@
       "odoBuildPushInProgressMsg": "Building and deploying odo component",
       "odoBuildPushFailMsg": "Failed to build or deploy odo component",
       "odoBuildUrlInProgressMsg": "Creating URL for odo component",
-      "odoBuildUrlFailMsg": "Fail to create URL for odo component"
+      "odoBuildUrlFailMsg": "Fail to create URL for odo component",
+      "nodemonFailedStart": "Nodemon has failed to start"
   },
   "buildApplicationTask": {
     "pomChangeDetected": "pom.xml change detected, running clean build",
