@@ -272,8 +272,13 @@ async function uploadEnd(req, res) {
       await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
 
       if (project.injectMetrics) {
+        const projectDir = path.join(project.workspace, project.directory);
+        if (modifiedList.includes("pom.xml")) {
+          // we'll need to inject this new pom.xml; to do this, remove the backup pom.
+          await metricsService.deleteBackupPomXml(projectDir);
+        }
         try {
-          await metricsService.injectMetricsCollectorIntoProject(project.projectType, project.language, path.join(project.workspace, project.directory));
+          await metricsService.injectMetricsCollectorIntoProject(project.projectType, project.language, projectDir);
         } catch (error) {
           log.warn(error);
         }

@@ -97,6 +97,13 @@ async function removeMetricsCollectorFromJvmOptions(projectDir) {
   }
 }
 
+async function deleteBackupPomXml(projectDir) {
+  const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
+  if (await fs.exists(pathToBackupPomXml)) {
+    await fs.remove(pathToBackupPomXml);
+  }
+}
+
 async function removeMetricsCollectorFromSpringProject(projectDir) {
   await removeMetricsCollectorFromPomXml(projectDir);
   await removeMetricsCollectorFromMainAppClassFile(projectDir);
@@ -122,7 +129,7 @@ async function injectMetricsCollectorIntoLibertyProject(projectDir) {
   let jvmOptionsPresent = false;
   const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
   const pathToBackupJvmOptions = getPathToBackupJvmOptions(projectDir);
-  if ((await fs.exists(pathToBackupPomXml)) || (await fs.exists(pathToBackupJvmOptions))) {
+  if (await fs.exists(pathToBackupPomXml)) {
     throw new Error('project files already backed up (i.e. we have already injected metrics collector)');
   }
 
@@ -141,7 +148,7 @@ async function injectMetricsCollectorIntoLibertyProject(projectDir) {
 async function injectMetricsCollectorIntoSpringProject(projectDir) {
   const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
   const pathToBackupMainAppClassFile = getPathToBackupMainAppClassFile(projectDir);
-  if ((await fs.exists(pathToBackupPomXml)) || (await fs.exists(pathToBackupMainAppClassFile))) {
+  if (await fs.exists(pathToBackupPomXml)) {
     throw new Error('project files already backed up (i.e. we have already injected metrics collector)');
   }
 
@@ -555,4 +562,5 @@ module.exports = {
   injectMetricsCollectorIntoProject,
   removeMetricsCollectorFromProject,
   metricsCollectorInjectionFunctions,
+  deleteBackupPomXml,
 }
