@@ -55,7 +55,9 @@ async function inject(req, res) {
 
     res.sendStatus(202);
 
+
     await syncProjectFilesIntoBuildContainer(project, user);
+
   } catch (err) {
     log.error(err);
     res.status(500).send(err.info || err.message);
@@ -66,11 +68,13 @@ async function syncProjectFilesIntoBuildContainer(project, user){
   const globalProjectPath = path.join(project.workspace, project.name);
   const projectRoot = cwUtils.getProjectSourceRoot(project);
   if (project.buildStatus != "inProgress") {
-    await cwUtils.copyProjectContents(
-      project,
-      globalProjectPath,
-      projectRoot
-    );
+    if (!global.codewind.RUNNING_IN_K8S) {
+      await cwUtils.copyProjectContents(
+        project,
+        globalProjectPath,
+        projectRoot
+      );
+    }
     await user.buildProject(project, "build");
   } else {
     // if a build is in progress, wait 5 seconds and try again
