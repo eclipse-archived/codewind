@@ -169,13 +169,14 @@ function deployK8() {
 	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project $PROJECT_ID
 
 	# Add the iterative-dev functionality to the chart
-	/file-watcher/scripts/kubeScripts/add-iterdev-to-chart.sh $deploymentFile "$projectName" "/scripts/new_entrypoint.sh"
+	/file-watcher/scripts/kubeScripts/add-iterdev-to-chart.sh $deploymentFile "$projectName" "/scripts/new_entrypoint.sh" $LOG_FOLDER
 
 	# Push app container image to docker registry if one is set up
 	if [[ ! -z $IMAGE_PUSH_REGISTRY ]]; then
-		# If there's an existing failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
-		if [ "$( helm list --failed -q | grep $project )" ]; then
+		# If there's an existing Helm release or a failed Helm release, delete it. See https://github.com/helm/helm/issues/3353
+		if [ "$( helm list | grep $project )" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
+			echo "Deleting Helm release $project"
 			helm delete $project
 		fi
 
