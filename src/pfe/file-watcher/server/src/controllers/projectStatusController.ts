@@ -68,7 +68,6 @@ class ProjectState {
     appImageLastBuild?: string;
     buildImageLastBuild?: string;
     detailedAppStatus?: DetailedAppStatus;
-    notificationID?: string;
 
     /**
      * @constructor
@@ -80,9 +79,8 @@ class ProjectState {
      * @param appImageLastBuild <Optional | String> - The last app image info.
      * @param buildImageLastBuild <Optional | String> - The last build image info.
      * @param detailedAppStatus <Optional | DetailedAppStatus> - The detailed app status to update.
-     * @param notificationID <Optional | String> - Notification ID for IDE.
      */
-    constructor(state: any, msg: string, lastbuild?: number, appImageLastBuild?: string, buildImageLastBuild?: string, detailedAppStatus?: DetailedAppStatus, notificationID?: string) {
+    constructor(state: any, msg: string, lastbuild?: number, appImageLastBuild?: string, buildImageLastBuild?: string, detailedAppStatus?: DetailedAppStatus) {
         this.state = state;
         this.msg = msg;
         if (lastbuild)
@@ -93,8 +91,6 @@ class ProjectState {
             this.buildImageLastBuild = buildImageLastBuild;
         if (detailedAppStatus)
             this.detailedAppStatus = detailedAppStatus;
-        if (notificationID)
-            this.notificationID = notificationID;
     }
 
     /**
@@ -479,7 +475,10 @@ function pingInTransitApplications(): void {
                                     return;
                                 }
                                 const oldMsg = appStateMap.get(projectID).msg;
-                                const oldNotificationID = appStateMap.get(projectID).notificationID;
+                                let oldNotificationID = "";
+                                if ( appStateMap.get(projectID).detailedAppStatus ) {
+                                    oldNotificationID = appStateMap.get(projectID).detailedAppStatus.notificationID;
+                                }
                                 let newState = oldState;
                                 let newMsg = stateInfo.error;
 
@@ -556,7 +555,7 @@ function pingInTransitApplications(): void {
                                         data.detailedAppStatus = detailedAppStatus;
                                     }
                                     io.emitOnListener("projectStatusChanged", data);
-                                    appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus, newNotificationID));
+                                    appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (detailedAppStatus) ? detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
 
                                 }
                             }
@@ -567,7 +566,10 @@ function pingInTransitApplications(): void {
                         // The container is stopped so change the application state to stopped
                         if (appStateMap.get(projectID)) {
                             const oldState = appStateMap.get(projectID).state;
-                            const oldNotificationID = appStateMap.get(projectID).notificationID;
+                            let oldNotificationID = "";
+                            if ( appStateMap.get(projectID).detailedAppStatus ) {
+                                oldNotificationID = appStateMap.get(projectID).detailedAppStatus.notificationID;
+                            }
                             if (oldState !== AppState.starting && oldState !== AppState.stopping) {
                                 return;
                             }
@@ -586,7 +588,7 @@ function pingInTransitApplications(): void {
                                     notify: true,
                                     notificationID: newNotificationID
                                 };
-                                appStateMap.set(projectID, new ProjectState(AppState.stopped, data.appErrorStatus, undefined, undefined, undefined, data.detailedAppStatus, newNotificationID));
+                                appStateMap.set(projectID, new ProjectState(AppState.stopped, data.appErrorStatus, undefined, undefined, undefined, data.detailedAppStatus));
                                 data.detailedAppStatus.message =  await locale.getTranslation(data.detailedAppStatus.message);
                             } else {
                                 appStateMap.set(projectID, new ProjectState(AppState.stopped, undefined));
