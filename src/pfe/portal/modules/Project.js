@@ -10,8 +10,10 @@
  *******************************************************************************/
 
 const fs = require('fs-extra');
-const { join } = require('path');
+const { extname, join } = require('path');
 const uuidv1 = require('uuid/v1');
+const util = require('util')
+const exec = util.promisify(require('child_process').exec);
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
 
@@ -352,6 +354,16 @@ module.exports = class Project {
   /**
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
    */
+  async getProfilingByTime(timeOfTestRun) {
+    const pathToProfilingFile = await this.getPathToProfilingFile(timeOfTestRun);
+    const profilingStream = await fs.createReadStream(pathToProfilingFile);
+    log.info(`Returning profiling file stream ${pathToProfilingFile} for ${this.name}`)
+    return profilingStream;
+  } 
+
+  /**
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
   async deleteMetrics(timeOfTestRun) {
     let pathToLoadTestDir = null;
     try {
@@ -412,6 +424,42 @@ module.exports = class Project {
     }
     const pathToMetricsJson = join(pathToLoadTestDir, 'metrics.json');
     return pathToMetricsJson;
+  }
+
+  /**
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  async getPathToProfilingFile(timeOfTestRun) {
+    let pathToLoadTestDir;
+    try {
+      pathToLoadTestDir = await this.getPathToLoadTestDir(timeOfTestRun);
+    } catch (err) {
+      pathToLoadTestDir = await this.getClosestPathToLoadTestDir(timeOfTestRun);
+    }
+    if (this.language == 'nodejs') {
+      const pathToProfilingJson = join(pathToLoadTestDir, 'profiling.json');
+      if (await fs.exists(pathToProfilingJson)) {
+        return pathToProfilingJson; 
+      }
+      throw new ProjectMetricsError('PROFILING_NOT_FOUND', this.name, `profiling.json was not found for load run ${timeOfTestRun}`);
+    } else if (this.language == 'java') {
+      let fileName = await isHcdSaved(pathToLoadTestDir)
+      if (fileName !== false) {
+        return join(pathToLoadTestDir, fileName)
+      }
+      try {
+        await exec(`docker cp ${this.containerId}:${join('/', 'home', 'default', 'app', 'load-test', timeOfTestRun)} ../codewind-workspace/${this.name}/load-test/`);
+      } catch (error) {
+        throw new ProjectMetricsError('DOCKER_CP', this.name, error.message);
+      }
+      log.info(`${this.name} profiling data from run ${timeOfTestRun} saved to pfe`)
+      fileName = await isHcdSaved(pathToLoadTestDir)
+      if (fileName !== false) {
+        return join(pathToLoadTestDir, fileName)
+      }
+      throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
+    }
+    return null
   }
 
   /**
@@ -643,6 +691,19 @@ module.exports = class Project {
     await fs.writeJson(filePath, config, {spaces: '  '});
     return config;
   }
+}
+
+/**
+ * @param {string} pathToLoadTestDir
+ */
+async function isHcdSaved(pathToLoadTestDir) {
+  const files = await fs.readdir(pathToLoadTestDir);
+  for (let i = 0; i < files.length; i++) {
+    if (extname(files[i]) == '.hcd') {
+      return files[i];
+    }
+  }
+  return false
 }
 
 /**

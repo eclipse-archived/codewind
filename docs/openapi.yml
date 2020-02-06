@@ -483,6 +483,34 @@ paths:
         500:
           description: Internal error
 
+  /api/v1/projects/{id}/profiling/{testRunTime}:
+    get:
+      summary: Reads the load run data for the given timestamp
+      description: Reads profiling data from pfe and returns a stream of the file. For java projects, this first copies profiling data
+        from the project pod to PFE.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: id of project
+        - in: path
+          schema:
+            type: string
+          name: testRunTime
+          required: true
+          description: Time of loadtest run
+      responses:
+        200:
+          description: Successful read of load run data
+        400:
+          description: Incorrect parameters given
+        404:
+          description: Project not found
+        500:
+          description: Internal error
+
   /api/v1/projects/{id}/unbind:
       post:
         summary: Unbind a given project from codewind
