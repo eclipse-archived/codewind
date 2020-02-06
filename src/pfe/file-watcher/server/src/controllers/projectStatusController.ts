@@ -432,7 +432,6 @@ function pingApplications(): void {
 
                         // Update the state only if it has changed
                         if (newState != oldState) {
-                            const newNotificationID = "";
                             logger.logProjectInfo("pingApplications: Application state for project " + projectID + " has changed from " + oldState + " to " + newState, projectID);
                             const data: any = {
                                 projectID: projectID,
@@ -443,11 +442,11 @@ function pingApplications(): void {
                                     severity: "INFO",
                                     message: "",
                                     notify: false,
-                                    notificationID: newNotificationID
+                                    notificationID: ""
                                 };
                                 pingCountMap.delete(projectID);
                             }
-                            appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus, newNotificationID));
+                            appStateMap.set(projectID, new ProjectState(newState, newMsg, undefined, undefined, undefined, (data.detailedAppStatus) ? data.detailedAppStatus : appStateMap.get(projectID).detailedAppStatus));
                             io.emitOnListener("projectStatusChanged", data);
                         }
                     }
@@ -545,11 +544,7 @@ function pingInTransitApplications(): void {
                                         pingCountMap.delete(projectID);
                                     } else if (newState === AppState.starting && pingCount == pingCountLimit) {
                                         const troubleShootLinkLabel = await locale.getTranslation("projectStatusController.linkLabel");
-                                        if ( !oldNotificationID ) {
-                                            newNotificationID = crypto.randomBytes(16).toString("hex");
-                                        } else {
-                                            newNotificationID = oldNotificationID;
-                                        }
+                                        newNotificationID = oldNotificationID ? oldNotificationID : crypto.randomBytes(16).toString("hex");
                                         detailedAppStatus = {
                                             severity: "WARN",
                                             message: newMsg,
@@ -584,12 +579,7 @@ function pingInTransitApplications(): void {
                             if (oldState === AppState.starting) {
                                 // If the container stopped while the application was starting up then something went wrong
                                 data.appErrorStatus = "projectStatusController.appStatusContainerStopped";
-                                let newNotificationID = "";
-                                if ( !oldNotificationID ) {
-                                    newNotificationID = crypto.randomBytes(16).toString("hex");
-                                } else {
-                                    newNotificationID = oldNotificationID;
-                                }
+                                const newNotificationID = oldNotificationID ? oldNotificationID : crypto.randomBytes(16).toString("hex");
                                 data.detailedAppStatus = {
                                     severity: "ERROR",
                                     message: data.appErrorStatus,
