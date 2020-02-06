@@ -275,13 +275,11 @@ pipeline {
                         # Publish docker images with a filter for branch name
                         # Acceptable branch names: master, start with '<number>.<number>'
                         if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
-                            #declare -a DOCKER_IMAGE_ARRAY=("eclipse/codewind-performance-amd64" 
-                            #                            "eclipse/codewind-pfe-amd64" 
-                            #                            "eclipse/codewind-keycloak-amd64"
-                            #                            "eclipse/codewind-gatekeeper-amd64")
+                            declare -a DOCKER_IMAGE_ARRAY=("eclipse/codewind-performance-amd64" 
+                                                        "eclipse/codewind-pfe-amd64" 
+                                                        "eclipse/codewind-keycloak-amd64"
+                                                        "eclipse/codewind-gatekeeper-amd64")
                             
-                            declare -a DOCKER_IMAGE_ARRAY=("eclipse/codewind-pfe-amd64")
-
                             for i in "${DOCKER_IMAGE_ARRAY[@]}"
                             do
                                 if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
