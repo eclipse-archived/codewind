@@ -199,7 +199,7 @@ module.exports = class LoadRunner {
         }
       }
 
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'preparing' });
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'preparing', timestamp: this.metricsFolder });
 
       // start profiling if supported by current language
       if (this.project.language == 'nodejs' || this.project.language === 'javascript') {
@@ -210,7 +210,7 @@ module.exports = class LoadRunner {
 
       //  Start collection on metrics endpoint (this must be started AFTER java profiling since java profiling will restart the liberty server)
       this.collectionUri = await this.createCollection();
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'starting' });
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'starting', timestamp: this.metricsFolder });
 
       // Send the load run request to the loadrunner microservice
       let loadrunnerRes = await cwUtils.asyncHttpRequest(options, loadConfig);
@@ -298,7 +298,11 @@ module.exports = class LoadRunner {
 
     const command = `export javapid=(\`pidof java\`); java -jar $JAVA_HOME/jre/lib/ext/healthcenter.jar ID=\${javapid[-1]} level=headless -Dcom.ibm.java.diagnostics.healthcenter.headless.run.number.of.runs=1 -Dcom.ibm.java.diagnostics.healthcenter.headless.run.duration=${durationInMins} -Dcom.ibm.java.diagnostics.healthcenter.headless.output.directory=${loadTestDir} -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.memorycounters=off -Dcom.ibm.diagnostics.healthcenter.data.cpu=off -Dcom.ibm.diagnostics.healthcenter.data.environment=off -Dcom.ibm.diagnostics.healthcenter.data.locking=off -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.threads=off`;
 
-    await docker.exec(this.project, ['bash', '-c', command]);
+    try {
+      await docker.exec(this.project, ['bash', '-c', command]); 
+    } catch (error) {
+      log.error(error)
+    }
 
     const projectID = this.project.projectID;
 
@@ -309,18 +313,22 @@ module.exports = class LoadRunner {
       method: 'GET',
     };
     
-    setTimeout(() => this.getJavaHealthCenterData(options, projectID, this.metricsFolder), duration * 1000);
+    setTimeout(() => this.getJavaHealthCenterData(options, projectID, this.metricsFolder, 1), duration * 1000);
   }
 
-  async getJavaHealthCenterData(options, projectID, timestamp) {
+  async getJavaHealthCenterData(options, projectID, timestamp, counter) {
+    if (counter > 20) {
+      log.error("Failed to save .hcd file");
+      return;
+    }
     const apiOptions = options;
     const res = await cwUtils.asyncHttpRequest(apiOptions);
     if (res.statusCode !== 200) {
-      log.info(`.hcd file not found. Trying again.`);
-      setTimeout(() => this.getJavaHealthCenterData(apiOptions, projectID, timestamp), 3000);
+      log.info(`.hcd file not found, trying again. Attempt ${counter}/20`);
+      setTimeout(() => this.getJavaHealthCenterData(apiOptions, projectID, timestamp, counter + 1), 3000);
     } else {
       log.info(".hcd copied to PFE");
-      const data = { projectID: projectID,  status: 'hcdReady', hcdPath: res.body, timestamp: timestamp};
+      const data = { projectID: projectID,  status: 'hcdReady', timestamp: timestamp};
       this.user.uiSocket.emit('runloadStatusChanged', data);
     }
   }
@@ -453,13 +461,13 @@ module.exports = class LoadRunner {
 
     this.socket.on('started', () => {
       log.info(`Load run on project ${this.project.projectID} started`);
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started' });
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started', timestamp: this.metricsFolder });
     });
 
     this.socket.on('cancelled', () => {
       log.info(`Load run on project ${this.project.projectID} cancelled`);
       this.cancelProfiling();
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled' });
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled', timestamp: this.metricsFolder });
       this.project = null;
     });
 

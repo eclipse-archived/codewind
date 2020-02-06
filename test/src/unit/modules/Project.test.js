@@ -538,18 +538,36 @@ describe('Project.js', () => {
             project.language = 'nodejs';
             project.loadTestPath = loadTestResources;
             const profilingFile = '20190326154749';
-            const profilingTypes = await project.getProfilingByTime(profilingFile);
-            const actualProfilingFromFile = await fs.readJSON(path.join(loadTestResources, profilingFile, 'profiling.json'));
-            profilingTypes.should.deep.equal(actualProfilingFromFile);
+            const profilingStream = await project.getProfilingByTime(profilingFile);
+            const actualProfilingFromFile = await fs.readJSON(path.join(loadTestResources, String(profilingFile), 'profiling.json'));
+            const bufferS = [];
+            let buffer = null;
+            profilingStream.on('data', function(data) {
+                bufferS.push(data);
+            });
+            profilingStream.on('end', function() {
+                buffer = Buffer.concat(bufferS);
+                const profilingOutput = JSON.parse(buffer);
+                profilingOutput.should.deep.equal(actualProfilingFromFile);
+            });
         });
         it('Gets a profiling file using a valid time stamp (Int)', async() => {
             const project = createDefaultProjectAndCheckIsAnObject();
             project.language = 'nodejs';
             project.loadTestPath = loadTestResources;
             const profilingFile = 20190326154749;
-            const profilingTypes = await project.getProfilingByTime(profilingFile);
+            const profilingStream = await project.getProfilingByTime(profilingFile);
             const actualProfilingFromFile = await fs.readJSON(path.join(loadTestResources, String(profilingFile), 'profiling.json'));
-            profilingTypes.should.deep.equal(actualProfilingFromFile);
+            const bufferS = [];
+            let buffer = null;
+            profilingStream.on('data', function(data) {
+                bufferS.push(data);
+            });
+            profilingStream.on('end', function() {
+                buffer = Buffer.concat(bufferS);
+                const profilingOutput = JSON.parse(buffer);
+                profilingOutput.should.deep.equal(actualProfilingFromFile);
+            });
         });
     });
     describe('getPathToProfilingFile(timeOfTestRun)', () => {

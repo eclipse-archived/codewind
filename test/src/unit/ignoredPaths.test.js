@@ -8,12 +8,22 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
 *******************************************************************************/
-const { projectTypeToIgnoredPaths } = require('../../../src/pfe/portal/modules/utils/ignoredPaths');
+const rewire = require('rewire');
+const ignoredPaths = rewire('../../../src/pfe/portal/modules/utils/ignoredPaths');
+const { projectTypeToIgnoredPaths } = ignoredPaths;
 
 const chai = require('chai');
 chai.should();
 
 describe('ignoredPaths.js', () => {
+    it('checks that all projectTypes return the default values', () => {
+        const defaultIgnoredPaths = ignoredPaths.__get__('defaultIgnoredPaths');
+        ['docker', 'swift', 'nodejs', 'liberty', 'spring'].forEach(type => {
+            const ignoredPaths = projectTypeToIgnoredPaths[type];
+            ignoredPaths.should.be.an('array');
+            ignoredPaths.should.include.members(defaultIgnoredPaths);
+        });
+    });
     it('returns array for docker projectType', () => {
         const ignoredPaths = projectTypeToIgnoredPaths['docker'];
         ignoredPaths.should.be.an('array');
@@ -25,7 +35,7 @@ describe('ignoredPaths.js', () => {
         ignoredPaths.should.include('.swift-version');
     });
     it('returns array for nodejs projectType', () => {
-        const ignoredPaths = projectTypeToIgnoredPaths['swift'];
+        const ignoredPaths = projectTypeToIgnoredPaths['nodejs'];
         ignoredPaths.should.be.an('array');
         ignoredPaths.should.include('*/node_modules*');
     });

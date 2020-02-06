@@ -99,7 +99,7 @@ rm -rf $CW_DIR \
 && git clone $CODEWIND_REPO -b "$TEST_BRANCH" \
 && cd $CW_TEST_DIR
 
-./test.sh -t $TEST_TYPE -s $TEST_SUITE -p $POST_CLEANUP -c $CLEAN_RUN -o $CWCTL_PROJ  && rm -rf $CW_DIR
+./test.sh -t $TEST_TYPE -s $TEST_SUITE -p $POST_CLEANUP -c $CLEAN_RUN -o $CWCTL_PROJ
 
 if [[ ($? -ne 0) ]]; then
     echo -e "${RED}Cronjob has failed. ${RESET}\n"

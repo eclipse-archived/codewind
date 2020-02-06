@@ -39,6 +39,9 @@ function constructMessage(code, identifier, message) {
   case 'HCD_NOT_FOUND':
     output = `Unable to find .hcd saved in project ${identifier}`
     break;
+  case 'PROFILING_NOT_FOUND':
+    output = `Unable to find profiling.json saved in project ${identifier}`;
+    break;
   default:
     output = `Unknown project metrics error`;
   }

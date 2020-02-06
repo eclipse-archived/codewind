@@ -14,7 +14,7 @@
  * maven.build -> maven build log file
  * app.compile -> app compilation log file
  */
-import { codewindTemplates, projecLanguges } from "./app.config";
+import { codewindTemplates, projectLanguges } from "./app.config";
 
 export enum log_names {
     dockerBuild = "docker.build.log",
@@ -62,7 +62,7 @@ const defaultODOLogs = {
 
 export const logFileMappings: any = {
     [codewindTemplates.default]: {
-        [projecLanguges.liberty]: {
+        [projectLanguges.liberty]: {
             [logTypes.build]: [{
                 "origin": logOrigins.container,
                 "files": [log_names.mavenBuild]
@@ -78,7 +78,7 @@ export const logFileMappings: any = {
                 "files": [log_names.libertyConsole, log_names.libertyMessages]
             }]
         },
-        [projecLanguges.nodejs]: {
+        [projectLanguges.nodejs]: {
             [logTypes.build]: [{
                 "origin": logOrigins.workspace,
                 "files": [log_names.dockerBuild]
@@ -88,7 +88,7 @@ export const logFileMappings: any = {
                 "files": [log_names.application]
             }]
         },
-        [projecLanguges.spring]: {
+        [projectLanguges.spring]: {
             [logTypes.build]: [{
                 "origin": logOrigins.container,
                 "files": [log_names.mavenBuild]
@@ -101,7 +101,7 @@ export const logFileMappings: any = {
                 "files": [log_names.application]
             }]
         },
-        [projecLanguges.swift]: {
+        [projectLanguges.swift]: {
             [logTypes.build]: [{
                 "origin": logOrigins.workspace,
                 "files": process.env.IN_K8 ? [log_names.appCompile, log_names.dockerApp] : [log_names.dockerApp, log_names.appCompile, log_names.dockerBuild]
@@ -113,13 +113,13 @@ export const logFileMappings: any = {
         }
     },
     [codewindTemplates.docker]: {
-        [projecLanguges.go]:  defaultDockerLogs,
-        [projecLanguges.lagom]: defaultDockerLogs,
-        [projecLanguges.python]: defaultDockerLogs
+        [projectLanguges.go]:  defaultDockerLogs,
+        [projectLanguges.lagom]: defaultDockerLogs,
+        [projectLanguges.python]: defaultDockerLogs
     },
     [codewindTemplates.odo]: {
-        [projecLanguges.nodejs]: defaultODOLogs,
-        [projecLanguges.perl]: defaultODOLogs,
-        [projecLanguges.python]: defaultODOLogs
+        [projectLanguges.nodejs]: defaultODOLogs,
+        [projectLanguges.perl]: defaultODOLogs,
+        [projectLanguges.python]: defaultODOLogs
     },
 };

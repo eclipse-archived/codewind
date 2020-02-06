@@ -30,7 +30,7 @@ import * as statusController from "./projectStatusController";
 import * as projectExtensions from "../extensions/projectExtensions";
 import * as processManager from "../utils/processManager";
 import { Validator } from "../projects/Validator";
-import { changedFilesMap } from "../utils/fileChanges";
+import { changedFilesMap, IFileChangeEvent } from "../utils/fileChanges";
 
 
 interface ProjectInfoCache {
@@ -482,8 +482,8 @@ async function checkBuildQueue(): Promise<void> {
 
                 logger.logDebug("Metadata for next build: " + JSON.stringify(buildToBeTriggered));
 
-                triggerBuild(buildToBeTriggered);
                 runningBuilds.push(buildToBeTriggered);
+                triggerBuild(buildToBeTriggered, changedFilesMap.get(buildToBeTriggered.operation.projectInfo.projectID));
             }
         }
         done();
@@ -508,7 +508,7 @@ async function checkBuildQueue(): Promise<void> {
  *
  * @returns Promise<void>
  */
-async function triggerBuild(project: BuildQueueType): Promise<void> {
+async function triggerBuild(project: BuildQueueType, changedFiles?: IFileChangeEvent[]): Promise<void> {
     const projectInfo = project.operation.projectInfo;
 
     const projectID = projectInfo.projectID;
@@ -553,7 +553,7 @@ async function triggerBuild(project: BuildQueueType): Promise<void> {
 
         // Hand off operation to appropriate handler for execution
         logger.logProjectInfo(`Handing ${operationType} operation to the selected project handler`, projectID);
-        selectedProjectHandler.update(operation, changedFilesMap.get(projectID));
+        selectedProjectHandler.update(operation, changedFiles);
     } else {
         return;
     }
