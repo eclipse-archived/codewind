@@ -235,7 +235,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
             socket.clearEvents();
         });
 
-        afterEach("remove build from running queue", async () => {
+        afterEach("remove build from running queue", async function (): Promise<void> {
+            this.timeout(timeoutConfigs.defaultInterval);
             await utils.setBuildStatus(projData, projectTemplate, projectLang);
         });
 

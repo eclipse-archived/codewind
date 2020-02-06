@@ -38,3 +38,5 @@ export enum ControlCommands { stop = "stop", start = "start", restart = "restart
 export enum MavenFlags { profile = "-P ", properties = "-D " }
 
 export const disablePingPort = "-1";
+
+export const buildQueueInterval = 5000;

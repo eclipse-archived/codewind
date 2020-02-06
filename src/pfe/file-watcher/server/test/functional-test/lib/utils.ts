@@ -212,6 +212,7 @@ export async function setBuildStatus(projData: projectsController.ICreateProject
         });
         expect(info);
         expect(info.statusCode).to.equal(200);
+        await delay(timeoutConfigs.buildQueueInterval);
     }
 }
 
