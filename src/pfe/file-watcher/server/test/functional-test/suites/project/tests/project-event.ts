@@ -78,7 +78,7 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
                     }
 
                     const fileToChange = file;
-                    const pathFileToChange = projectLang.toLowerCase() === projectLanguges.lagom ? path.join(projData.location, "hello-impl", fileToChange) : path.join(projData.location, fileToChange);
+                    const pathFileToChange = projectLang.toLowerCase() === projectLanguges.lagom && type.toLowerCase() === "create" ? path.join(projData.location, "hello-impl", fileToChange) : path.join(projData.location, fileToChange);
 
                     if (file.toLowerCase() === "dockerfile") {
                         const dockerFileContents = await fs.readFileSync(pathFileToChange).toString();
