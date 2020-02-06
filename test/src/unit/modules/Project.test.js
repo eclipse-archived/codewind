@@ -643,9 +643,9 @@ describe('Project.js', () => {
 
             const expectedConfig = {
                 path: '/',
-                requestsPerSecond: '100',
-                concurrency: '20',
-                maxSeconds: '20',
+                requestsPerSecond: '1',
+                concurrency: '1',
+                maxSeconds: '180',
             };
             config.should.deep.equal(expectedConfig);
             fs.existsSync(path.join(tempLoadDir, 'config.json')).should.be.true;
@@ -718,9 +718,9 @@ describe('Project.js', () => {
             const config = await fs.readJson(configPath);
             const expectedConfig = {
                 path: '/',
-                requestsPerSecond: '100',
-                concurrency: '20',
-                maxSeconds: '20',
+                requestsPerSecond: '1',
+                concurrency: '1',
+                maxSeconds: '180',
             };
             config.should.deep.equal(expectedConfig);
         });
