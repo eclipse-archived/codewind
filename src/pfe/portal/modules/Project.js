@@ -694,9 +694,9 @@ module.exports = class Project {
     }
     let config = {
       path: contextRoot,
-      requestsPerSecond: "100",
-      concurrency: "20",
-      maxSeconds: "20"
+      requestsPerSecond: "1",
+      concurrency: "1",
+      maxSeconds: "180"
     };
     await fs.ensureDir(this.loadTestPath);
     const filePath = join(this.loadTestPath, 'config.json');
