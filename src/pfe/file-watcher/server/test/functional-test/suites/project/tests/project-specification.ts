@@ -26,11 +26,14 @@ import { SocketIO } from "../../../lib/socket-io";
 import { fail } from "assert";
 import { Operation } from "../../../../../src/projects/operation";
 import * as projectUtil from "../../../../../src/projects/projectUtil";
+import * as constants from "../../../../../src/projects/constants";
 
 import * as utils from "../../../lib/utils";
 
 export function projectSpecificationTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
     describe("projectSpecification function", () => {
+        const cwSettingsPath = path.join(projData.location, ".cw-settings");
+
         const data: any = {
             "projectID": projData.projectID
         };
@@ -322,6 +325,61 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                 fail(`failed to find ${targetEvent} for project specific setting`);
             }
         }).timeout(timeoutConfigs.defaultTimeout);
+
+        it(`set internalPort to ${constants.disablePingPort} in .cw-settings file to check for serverless app`, async () => {
+            let events, eventDatas;
+
+            const projectInfo = await projectUtil.getProjectInfo(projData.projectID);
+            await projectUtil.getContainerInfo(projectInfo, true);
+            const containerName = await projectUtil.getContainerName(projectInfo);
+            const operation = new Operation("", projectInfo);
+            operation.containerName = containerName;
+            const containerInfo: any = process.env.IN_K8 ? await getApplicationContainerInfoInK8(projectInfo, operation) : await getApplicationContainerInfo(projectInfo, containerName);
+            const currentInternalPort = containerInfo.internalPort;
+
+            events = [eventConfigs.events.settingsChanged, eventConfigs.events.statusChanged];
+            eventDatas = [{
+                "projectID": projData.projectID,
+                "status": "success",
+                "ports": {
+                    "internalPort": `${constants.disablePingPort}`,
+                }
+            }, {"projectID": projData.projectID, "appStatus": "stopped"}];
+            await reconfigProjectSettings("internalPort", constants.disablePingPort, events, eventDatas);
+
+            events = [eventConfigs.events.settingsChanged, eventConfigs.events.statusChanged];
+            eventDatas = [{
+                "projectID": projData.projectID,
+                "status": "success",
+                "ports": {
+                    "internalPort": currentInternalPort,
+                }
+            }, {"projectID": projData.projectID, "appStatus": "started"}];
+            await reconfigProjectSettings("internalPort", currentInternalPort, events, eventDatas);
+        }).timeout(timeoutConfigs.defaultTimeout);
+
+        async function reconfigProjectSettings(key: string, value: string, events: Array<string>, eventDatas: Array<any>): Promise<void> {
+            const testData = _.cloneDeep(data);
+            testData["settings"] = {
+                [key]: value
+            };
+            const info: any = await reconfigProjectSpecification(testData);
+            expect(info);
+            expect(info.statusCode);
+            expect(info.statusCode).to.equal(202);
+            expect(info.operationId);
+
+            for (const event of events) {
+                const index = events.indexOf(event);
+                const eventFound = await utils.waitForEvent(socket, event, eventDatas[index], Object.keys(eventDatas[index]));
+                if (eventFound) {
+                    expect(eventFound);
+                    expect(eventFound.eventName);
+                    expect(eventFound.eventName).to.equal(event);
+                    expect(eventFound.eventData);
+                }
+            }
+        }
 
         for (const mavenSetting of mavenSettings) {
             it(`set project specification with numeric ${mavenSetting} array`, async () => {
@@ -620,13 +678,11 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
         }
 
         async function readCwSettings(): Promise<any> {
-            const cwSettingsPath = path.join(projData.location, ".cw-settings");
             const cwSettings = JSON.parse(await fs.readFileSync(cwSettingsPath, "utf-8"));
             return cwSettings;
         }
 
         async function writeCwSettings(settings: any): Promise<void> {
-            const cwSettingsPath = path.join(projData.location, ".cw-settings");
             return await fs.writeFileSync(cwSettingsPath, JSON.stringify(settings));
         }
     });
