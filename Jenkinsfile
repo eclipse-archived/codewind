@@ -289,19 +289,19 @@ pipeline {
                                 docker push $i:${TAG:-latest}
                             done
 
-                            if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
-                                IFS='.' # set '.' as delimiter
-                                read -ra TOKENS <<< "$GIT_BRANCH"    
-                                IFS=' ' # reset delimiter
-                                export TAG_CUMULATIVE=${TOKENS[0]}.${TOKENS[1]}
+                            #if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
+                            #    IFS='.' # set '.' as delimiter
+                            #    read -ra TOKENS <<< "$GIT_BRANCH"    
+                            #    IFS=' ' # reset delimiter
+                            #    export TAG_CUMULATIVE=${TOKENS[0]}.${TOKENS[1]}
 
-                                for i in "${DOCKER_IMAGE_ARRAY[@]}"
-                                do
-                                    docker tag $i $i:${TAG_CUMULATIVE:-latest}
-                                    echo "Publishing $i:$TAG_CUMULATIVE"
-                                    docker push $i:${TAG_CUMULATIVE:-latest}
-                                done
-                            fi
+                            #    for i in "${DOCKER_IMAGE_ARRAY[@]}"
+                            #    do
+                            #        docker tag $i $i:${TAG_CUMULATIVE:-latest}
+                            #        echo "Publishing $i:$TAG_CUMULATIVE"
+                            #        docker push $i:${TAG_CUMULATIVE:-latest}
+                            #    done
+                            #fi
                         else
                             echo "Skip publishing docker images for $GIT_BRANCH branch"
                         fi
