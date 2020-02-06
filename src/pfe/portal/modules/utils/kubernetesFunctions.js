@@ -15,6 +15,8 @@ const client = new Client({ config: config.getInCluster(), version: '1.9'});
 const K8S_NAME_SPACE = process.env.KUBE_NAMESPACE || 'default';
 const Logger = require('../utils/Logger');
 const log = new Logger('kubernetesFunctions.js');
+const { promisify } = require('util');
+const exec = promisify(require('child_process').exec);
 
 const { spawn } = require('child_process');
 
@@ -47,3 +49,13 @@ module.exports.spawnContainerProcess = function spawnContainerProcess(project, c
   return spawn('/usr/local/bin/kubectl', cmdArray);
 }
 
+module.exports.copyFileFromContainer = async function copyFileFromContainer(project, destinationPath, projectRoot, relativePathOfFile) {
+  const kubeCommand = `kubectl cp ${K8S_NAME_SPACE}/${project.podName}:${projectRoot}/${relativePathOfFile} ${destinationPath}`;
+  log.debug(`[kubectl cp command] ${kubeCommand}`);
+  try {
+    await exec(kubeCommand); 
+  } catch (error) {
+    log.error(`copyFileFromContainer: Error copying file ${relativePathOfFile} from ${project.podName}`);
+    throw(error);
+  }
+}

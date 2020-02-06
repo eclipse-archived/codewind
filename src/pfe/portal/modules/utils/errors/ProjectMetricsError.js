@@ -42,6 +42,9 @@ function constructMessage(code, identifier, message) {
   case 'PROFILING_NOT_FOUND':
     output = `Unable to find profiling.json saved in project ${identifier}`;
     break;
+  case 'STREAM_FAILED':
+    output = `Unable to create read stream for file ${identifier}`;
+    break;
   default:
     output = `Unknown project metrics error`;
   }

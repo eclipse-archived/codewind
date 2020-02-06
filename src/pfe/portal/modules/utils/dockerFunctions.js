@@ -128,6 +128,17 @@ module.exports.copyFile = async function copyFile(project, fileToCopy, projectRo
   await exec(dockerCommand);
 }
 
+module.exports.copyFileFromContainer = async function copyFile(project, destinationPath, projectRoot, relativePathOfFile) {
+  const dockerCommand = `docker cp ${project.containerId}:${projectRoot}/${relativePathOfFile} ${destinationPath}`;
+  log.info(`[docker cp command] ${dockerCommand}`);
+  try {
+    await exec(dockerCommand); 
+  } catch (error) {
+    log.error(`copyFileFromContainer: Error copying file ${relativePathOfFile} from ${project.containerId}`);
+    throw(error);
+  }
+}
+
 module.exports.deleteFile = async function deleteFile(project, projectRoot, relativePathOfFile) {
   const dockerCommand = `docker exec ${project.containerId} rm -rf ${projectRoot}/${relativePathOfFile}`;
   log.debug(`[docker rm command] ${dockerCommand}`);
