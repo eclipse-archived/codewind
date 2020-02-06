@@ -22,8 +22,8 @@ import * as eventConfigs from "../../../configs/event.config";
 import * as timeoutConfigs from "../../../configs/timeout.config";
 import { fail } from "assert";
 
-export function logsTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-    describe("getProjectLogs function", () => {
+export function logsTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+    (runOnly ? describe.only : describe)("getProjectLogs function", () => {
         it("get project logs with missing id", async () => {
             const info: any = await getProjectLogs(undefined);
             expect(info);
@@ -61,7 +61,7 @@ export function logsTest(socket: SocketIO, projData: projectsController.ICreateP
         }).timeout(timeoutConfigs.defaultTimeout);
     });
 
-    describe("checkNewLogFile function", () => {
+    (runOnly ? describe.only : describe)("checkNewLogFile function", () => {
         const combinations: any = {
             "combo1": {
                 "projectID": undefined,

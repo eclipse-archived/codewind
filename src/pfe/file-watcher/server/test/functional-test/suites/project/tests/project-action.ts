@@ -24,7 +24,7 @@ import { fail } from "assert";
 
 import * as utils from "../../../lib/utils";
 
-export function projectActionTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
+export function projectActionTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
     const data: any = {
         action: "restart",
         projectType: projData.projectType,
@@ -127,7 +127,7 @@ export function projectActionTest(socket: SocketIO, projData: projectsController
         });
     }
 
-    describe("projectAction function", () => {
+    (runOnly ? describe.only : describe)("projectAction function", () => {
         afterEach("clear socket events", () => {
             socket.clearEvents();
         });
