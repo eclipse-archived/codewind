@@ -38,9 +38,16 @@ const STATES = {
   deleting: 'deleting'
 };
 
-const APP_MONITOR_DASH_LOCATIONS = {
+const METRICS_DASH_HOST = {
   project: 'project',
   performanceContainer: 'performanceContainer',
+};
+
+const pathsToUserHostedMetricsDashboards = {
+  nodejs: 'appmetrics-dash',
+  javascript: 'appmetrics-dash',
+  java: 'javametrics-dash',
+  swift: 'swiftmetrics-dash',
 };
 
 const METRIC_TYPES = ['cpu', 'gc', 'memory', 'http']
@@ -106,6 +113,11 @@ module.exports = class Project {
     // Initialise the project type
     this.projectType = args.projectType;
 
+    // For metrics purposes, we treat java docker project as open liberty projects
+    this.isOpenLiberty = (this.projectType === 'docker' && this.language === 'java');
+    this.canMetricsBeInjected = this.isOpenLiberty
+      || metricsService.metricsCollectorInjectionFunctions.hasOwnProperty(this.projectType);
+
     log.info(`Project ${this.name} initializing (project type: ${this.projectType}, projectID: ${this.projectID})`);
 
     // This is used to delete the log file when the project is deleted.
@@ -154,53 +166,40 @@ module.exports = class Project {
     return {}
   }
 
-  isOpenLiberty() {
-    return (this.projectType === 'docker' && this.language === 'java');
-  }
-  
-  async shouldShowAppMonitorDashHostedOnUserProject() {
-    const shouldShowUserDash = !this.injectMetrics && (await this.checkIfMetricsAvailable());
-    return shouldShowUserDash;
-  }
-  
-  async shouldShowAppMonitorAndPerformanceDashboards() {
-    const shouldShowDashboards = this.injectMetrics || this.isOpenLiberty() || (await this.checkIfMetricsAvailable());
-    return shouldShowDashboards;
-  }
-  
-  async getPathToPerfDashboard() {
-    const shouldShowPerfDash = await this.shouldShowAppMonitorAndPerformanceDashboards();
-    return shouldShowPerfDash
+  async getPerfDashPath() {
+    const isPerfDashAvailable = this.injectMetrics || this.isOpenLiberty || (await this.checkIfMetricsAvailable());
+    return isPerfDashAvailable
       ? `/performance/charts?project=${this.projectID}`
       : null;
   }
   
-  async getLocationOfAppMonitorDashboard() {
-    if (!await this.shouldShowAppMonitorAndPerformanceDashboards()) {
+  async getMetricsDashHost() {
+    const isMetricsDashAvailable = this.injectMetrics || this.isOpenLiberty || (await this.checkIfMetricsAvailable());
+    if (!isMetricsDashAvailable) {
       return null;
     }
     
-    const shouldShowAppMonitorDashHostedOnUserProject = await this.shouldShowAppMonitorDashHostedOnUserProject()
-    return shouldShowAppMonitorDashHostedOnUserProject
-      ? APP_MONITOR_DASH_LOCATIONS.project
-      : APP_MONITOR_DASH_LOCATIONS.performanceContainer;
+    const shouldShowMetricsDashHostedOnProject = !this.injectMetrics && (await this.checkIfMetricsAvailable());
+    return shouldShowMetricsDashHostedOnProject
+      ? METRICS_DASH_HOST.project
+      : METRICS_DASH_HOST.performanceContainer;
   }
   
-  async getPathToAppMonitorDashboard() {
-    const locationOfAppMonitorDashboard = await this.getLocationOfAppMonitorDashboard();
-    if (!locationOfAppMonitorDashboard) {
+  async getMetricsDashPath() {
+    const metricsDashHost = await this.getMetricsDashHost();
+    if (!metricsDashHost) {
       return null;
     }
     
-    if (locationOfAppMonitorDashboard === APP_MONITOR_DASH_LOCATIONS.project) {
-      return `${metricsService.pathsToUserHostedMonitorDashboards[this.language]}?theme=dark`;
+    if (metricsDashHost === METRICS_DASH_HOST.project) {
+      return `${pathsToUserHostedMetricsDashboards[this.language]}?theme=dark`;
     }
-    
-    if (locationOfAppMonitorDashboard === APP_MONITOR_DASH_LOCATIONS.performanceContainer) {
+
+    if (metricsDashHost === METRICS_DASH_HOST.performanceContainer) {
       return `/performance/monitor/dashboard/${this.language}?theme=dark&projectID=${this.projectID}`
     }
     
-    throw new Error(`unknown locationOfAppMonitorDashboard: ${locationOfAppMonitorDashboard}`);
+    throw new Error(`unknown metricsDashHost: ${metricsDashHost}`);
   }
 
   async checkIfMetricsAvailable() {
