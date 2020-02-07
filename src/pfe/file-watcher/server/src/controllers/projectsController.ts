@@ -475,6 +475,8 @@ async function checkBuildQueue(): Promise<void> {
 
             // if we have space for builds to trigger, trigger the build, remove it from the queue, increase the number of builds in progress and push it on to in progress array
             if (runningBuilds.length < MAX_BUILDS) {
+                logger.logDebug("Space available to trigger the next build");
+
                 // only push to running build queue if the running build queue doesn't already have the same project building
                 const firstBuildInQueue = buildQueue[0];
                 const uniqueBuildsRunning = runningBuilds.filter((project: BuildQueueType) => {
@@ -483,9 +485,7 @@ async function checkBuildQueue(): Promise<void> {
                 }).length === 0;
 
                 if (uniqueBuildsRunning) {
-                    logger.logDebug("All builds in the running queue are unique. Progressing to add it to the queue.");
-
-                    logger.logDebug("Space available to trigger the next build");
+                    logger.logDebug("All builds in the running queue are unique. Adding next build to the queue.");
 
                     // remove the first project off the queue
                     const buildToBeTriggered = buildQueue.shift();
@@ -495,8 +495,12 @@ async function checkBuildQueue(): Promise<void> {
                     runningBuilds.push(buildToBeTriggered);
                     triggerBuild(buildToBeTriggered, changedFilesMap.get(buildToBeTriggered.operation.projectInfo.projectID));
                 } else {
-                    logger.logDebug("Next build to be triggered already exists in current running queue. Skipping adding to the queue.");
-                    return;
+                    logger.logDebug("Next build to be triggered already exists in the running queue. Skip adding it and move it to the end of the build queue.");
+                    // we move the first element in the build queue to the last
+                    // this is done because: e.g if we have 3 builds in the running = [p1,p2,p3] and 3 builds in the waiting queue = [p3,p4,p5]. Now the next build on the queue is p3, however, p3 is the running build queue - so we will skip adding it to the running build queue.
+                    // If e.g p2 finishes before p3, build running queue becomes = [p1, p3]. Now we have a space in the running queue but we can't utilize that spot because the first project in the build queue is p3.
+                    // So we remove the first project and add it at the back of the queue making space for the next project to be added to the running builds queue (e.g in this example p4 will be added to the running builds queue and it will look like [p1, p3, p4]
+                    buildQueue.push(buildQueue.shift());
                 }
             }
         }
@@ -582,10 +586,12 @@ async function triggerBuild(project: BuildQueueType, changedFiles?: IFileChangeE
 function checkInProgressBuilds(): void {
     lock.acquire("runningBuildsLock", async done => {
         // we must assert here that the running builds queue is always unique
-        logger.assert(runningBuilds.filter((project: BuildQueueType) => {
-            const projectID = project.operation.projectInfo.projectID;
-            return projectID === buildQueue[0].operation.projectInfo.projectID;
-        }).length === 0, "Builds in running queue must be unique");
+        if (buildQueue.length > 0) {
+            logger.assert(runningBuilds.filter((project: BuildQueueType) => {
+                const projectID = project.operation.projectInfo.projectID;
+                return projectID === buildQueue[0].operation.projectInfo.projectID;
+            }).length === 0, "Builds in running queue must be unique");
+        }
 
         // filter out all projects that are completed and reduce the build in progress by 1 for each such project
         runningBuilds = runningBuilds.filter((project: BuildQueueType) => {
