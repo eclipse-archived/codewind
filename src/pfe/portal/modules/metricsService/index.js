@@ -36,13 +36,6 @@ const metricsCollectorRemovalFunctions = {
   spring: removeMetricsCollectorFromSpringProject,
 }
 
-const pathsToUserHostedMonitorDashboards = {
-  nodejs: 'appmetrics-dash',
-  javascript: 'appmetrics-dash',
-  java: 'javametrics-dash',
-  swift: 'swiftmetrics-dash',
-};
-
 async function injectMetricsCollectorIntoProject(projectType, projectDir) {
   if (!metricsCollectorInjectionFunctions.hasOwnProperty(projectType)) {
     throw new Error(`Injection of metrics collector is not supported for projects of type '${projectType}'`);
@@ -551,4 +544,5 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
 module.exports = {
   injectMetricsCollectorIntoProject,
   removeMetricsCollectorFromProject,
+  metricsCollectorInjectionFunctions,
 }

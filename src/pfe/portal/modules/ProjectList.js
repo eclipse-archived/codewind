@@ -10,7 +10,6 @@
  *******************************************************************************/
 
 const ProjectListError = require('./utils/errors/ProjectListError');
-const metricsService = require('./metricsService');
 
 const Logger = require('./utils/Logger');
 
@@ -90,23 +89,17 @@ module.exports = class ProjectList {
     if (!project) {
       return;
     }
-    const canMetricsBeInjected = metricsService.canMetricsBeInjected(project);
-    const haveMetricsBeenInjected = project.injectMetrics;
-    const locationOfAppMonitorDashboard = await project.getLocationOfAppMonitorDashboard();
-    const pathToAppMonitorDashboard = await project.getPathToAppMonitorDashboard();
-    const pathToPerfDashboard = await project.getPathToPerfDashboard();
-  
     const projectWithMetricsInfo = { 
       ...project,
       injection: {
-        injectable: canMetricsBeInjected,
-        injected: haveMetricsBeenInjected,
+        injectable: project.canMetricsBeInjected,
+        injected: project.injectMetrics,
       },
       appMonitor: {
-        dashboardLocation: locationOfAppMonitorDashboard,
-        pathToDashboard: pathToAppMonitorDashboard,
+        hosting: await project.getMetricsDashHost(),
+        path: await project.getMetricsDashPath(),
       },
-      perfDashboard: pathToPerfDashboard,
+      perfDashboardPath: await project.getPerfDashPath(),
     };
     
     return projectWithMetricsInfo;  
