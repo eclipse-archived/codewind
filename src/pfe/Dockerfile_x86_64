@@ -56,10 +56,10 @@ ENV JAVA_HOME=/opt/java/jre \
     PATH=/opt/java/jre/bin:$PATH \
     HELM_HOME=/root/.helm
 
-# Install the latest version of yq
-RUN LATEST_RELEASE=$(curl -L -s -H 'Accept: application/json' https://github.com/mikefarah/yq/releases/latest) \
-    && LATEST_VERSION=$(echo $LATEST_RELEASE | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/') \
-    && curl -sL -O https://github.com/mikefarah/yq/releases/download/$LATEST_VERSION/yq_linux_amd64 \
+# Install yq 2.4.1
+RUN YQ_VERSION=2.4.1 \
+    && curl -sL -O https://github.com/mikefarah/yq/releases/download/$YQ_VERSION/yq_linux_amd64 \
+    && echo '754c6e6a7ef92b00ef73b8b0bb1d76d651e04d26aa6c6625e272201afa889f8b  yq_linux_amd64' | sha256sum -c - \
     && mv ./yq_linux_amd64 /usr/local/bin/yq \
     && chmod +x /usr/local/bin/yq
 
