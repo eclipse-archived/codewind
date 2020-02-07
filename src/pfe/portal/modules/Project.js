@@ -23,6 +23,7 @@ const ProjectError = require('./utils/errors/ProjectError');
 const ProjectMetricsError = require('./utils/errors/ProjectMetricsError');
 const Logger = require('./utils/Logger');
 const LogStream = require('./LogStream');
+const metricsService = require('./metricsService');
 
 const log = new Logger(__filename);
 
@@ -35,6 +36,11 @@ const STATES = {
   validating: 'validating',
   closing: 'closing',
   deleting: 'deleting'
+};
+
+const APP_MONITOR_DASH_LOCATIONS = {
+  project: 'project',
+  performanceContainer: 'performanceContainer',
 };
 
 const METRIC_TYPES = ['cpu', 'gc', 'memory', 'http']
@@ -148,6 +154,54 @@ module.exports = class Project {
     return {}
   }
 
+  isOpenLiberty() {
+    return (this.projectType === 'docker' && this.language === 'java');
+  }
+  
+  async shouldShowAppMonitorDashHostedOnUserProject() {
+    const shouldShowUserDash = !this.injectMetrics && (await this.checkIfMetricsAvailable());
+    return shouldShowUserDash;
+  }
+  
+  async shouldShowAppMonitorAndPerformanceDashboards() {
+    const shouldShowDashboards = this.injectMetrics || this.isOpenLiberty() || (await this.checkIfMetricsAvailable());
+    return shouldShowDashboards;
+  }
+  
+  async getPathToPerfDashboard() {
+    const shouldShowPerfDash = await this.shouldShowAppMonitorAndPerformanceDashboards();
+    return shouldShowPerfDash
+      ? `/performance/charts?project=${this.projectID}`
+      : null;
+  }
+  
+  async getLocationOfAppMonitorDashboard() {
+    if (!await this.shouldShowAppMonitorAndPerformanceDashboards()) {
+      return null;
+    }
+    
+    const shouldShowAppMonitorDashHostedOnUserProject = await this.shouldShowAppMonitorDashHostedOnUserProject()
+    return shouldShowAppMonitorDashHostedOnUserProject
+      ? APP_MONITOR_DASH_LOCATIONS.project
+      : APP_MONITOR_DASH_LOCATIONS.performanceContainer;
+  }
+  
+  async getPathToAppMonitorDashboard() {
+    const locationOfAppMonitorDashboard = await this.getLocationOfAppMonitorDashboard();
+    if (!locationOfAppMonitorDashboard) {
+      return null;
+    }
+    
+    if (locationOfAppMonitorDashboard === APP_MONITOR_DASH_LOCATIONS.project) {
+      return `${metricsService.pathsToUserHostedMonitorDashboards[this.language]}?theme=dark`;
+    }
+    
+    if (locationOfAppMonitorDashboard === APP_MONITOR_DASH_LOCATIONS.performanceContainer) {
+      return `/performance/monitor/dashboard/${this.language}?theme=dark&projectID=${this.projectID}`
+    }
+    
+    throw new Error(`unknown locationOfAppMonitorDashboard: ${locationOfAppMonitorDashboard}`);
+  }
 
   async checkIfMetricsAvailable() {
     let isMetricsAvailable;

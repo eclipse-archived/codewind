@@ -522,9 +522,11 @@ module.exports = class FileWatcher {
       if(error) {
         results.error = error;
       }
-      let updatedProject = await this.user.projectList.updateProject(projectUpdate);
+      const { projectList } = this.user;
+      const updatedProject = await projectList.updateProject(projectUpdate);
+      const projectWithMetricsInfo = await projectList.retrieveProjectWithMetricsInfo(updatedProject.projectID);
       // remove fields which are not required by the UI
-      const { logStreams, ...projectInfoForUI } = updatedProject
+      const { logStreams, ...projectInfoForUI } = projectWithMetricsInfo;
       this.user.uiSocket.emit(event, { ...results, ...projectInfoForUI })
       if (fwProject.buildStatus === 'inProgress') {
         // Reset build logs.
