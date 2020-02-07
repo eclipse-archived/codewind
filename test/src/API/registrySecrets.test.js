@@ -38,10 +38,15 @@ describe('Registry Secrets route tests', function() {
     const docker_registry_file = '/root/.docker/config.json';
     const docker_registry_secret_garbage_json = {
         auths: {
-            'https://index.docker.io/v1/':{
+            'https://index.docker.io/v1/': {
                 username: 'garbage',
                 password: 'garbage',
                 auth: 'garbage',
+            },
+            garbageaddress2: {
+                username: 'garbageusername',
+                password: 'garbagepassword',
+                auth: 'garbageauth',
             },
         },
     };
@@ -76,6 +81,20 @@ describe('Registry Secrets route tests', function() {
             const res = await getRegistrySecrets();
             res.should.have.status(200);
             res.body.should.be.an('array').to.have.lengthOf(0);
+        });
+
+        it('should return the right number of secrets from the registry file', async function() {
+            this.timeout(testTimeout.med);
+
+            // create a docker registry with the garbage content
+            const docker_registry_secret_garbage_content = JSON.stringify(docker_registry_secret_garbage_json);
+            const docker_registry_secret_garbage_file = path.join(os.tmpdir(), 'config.json');
+            fs.writeFileSync(docker_registry_secret_garbage_file, docker_registry_secret_garbage_content, 'utf8');
+            await containerService.copyTo(docker_registry_secret_garbage_file, docker_registry_file);
+
+            const res = await getRegistrySecrets();
+            res.should.have.status(200);
+            res.body.should.be.an('array').to.have.lengthOf(2);
         });
 
         it('should throw an error for a bad docker registry file', async function() {
@@ -274,7 +293,7 @@ describe('Registry Secrets route tests', function() {
 
             const res = await removeRegistrySecret(dockerAddress);
             res.should.have.status(200);
-            res.body.should.be.an('array').to.have.lengthOf(0);
+            res.body.should.be.an('array').to.have.lengthOf(1);
         });
     });
 });
