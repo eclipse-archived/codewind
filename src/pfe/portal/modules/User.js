@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 IBM Corporation and others.
+ * Copyright (c) 2019, 2020 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -733,7 +733,13 @@ module.exports = class User {
    * This API function is needed in local because some project stacks pull images from private registries like Appsody.
    */
   async setupRegistrySecret(credentials, address) {
-    const credentialsJSON = JSON.parse(Buffer.from(credentials, "base64").toString());
+    let credentialsJSON;
+    try {
+      credentialsJSON = JSON.parse(Buffer.from(credentials, "base64").toString());
+    } catch (err) {
+      log.error("Error parsing the invalid encoded JSON credentials");
+      throw new RegistrySecretsError("INVALID_ENCODED_CREDENTIALS", "for address " + address);
+    }
     if (credentialsJSON.username == undefined || credentialsJSON.password == undefined) {
       throw new RegistrySecretsError("INVALID_ENCODED_CREDENTIALS", "for address " + address);
     }
