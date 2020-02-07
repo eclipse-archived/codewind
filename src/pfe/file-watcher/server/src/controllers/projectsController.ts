@@ -475,15 +475,29 @@ async function checkBuildQueue(): Promise<void> {
 
             // if we have space for builds to trigger, trigger the build, remove it from the queue, increase the number of builds in progress and push it on to in progress array
             if (runningBuilds.length < MAX_BUILDS) {
-                logger.logDebug("Space available to trigger the next build");
+                // only push to running build queue if the running build queue doesn't already have the same project building
+                const firstBuildInQueue = buildQueue[0];
+                const uniqueBuildsRunning = runningBuilds.filter((project: BuildQueueType) => {
+                    const projectID = project.operation.projectInfo.projectID;
+                    return projectID === firstBuildInQueue.operation.projectInfo.projectID;
+                }).length === 0;
 
-                // remove the first project off the queue
-                const buildToBeTriggered = buildQueue.shift();
+                if (uniqueBuildsRunning) {
+                    logger.logDebug("All builds in the running queue are unique. Progressing to add it to the queue.");
 
-                logger.logDebug("Metadata for next build: " + JSON.stringify(buildToBeTriggered));
+                    logger.logDebug("Space available to trigger the next build");
 
-                runningBuilds.push(buildToBeTriggered);
-                triggerBuild(buildToBeTriggered, changedFilesMap.get(buildToBeTriggered.operation.projectInfo.projectID));
+                    // remove the first project off the queue
+                    const buildToBeTriggered = buildQueue.shift();
+
+                    logger.logDebug("Metadata for next build: " + JSON.stringify(buildToBeTriggered));
+
+                    runningBuilds.push(buildToBeTriggered);
+                    triggerBuild(buildToBeTriggered, changedFilesMap.get(buildToBeTriggered.operation.projectInfo.projectID));
+                } else {
+                    logger.logDebug("Next build to be triggered already exists in current running queue. Skipping adding to the queue.");
+                    return;
+                }
             }
         }
         done();
@@ -567,6 +581,12 @@ async function triggerBuild(project: BuildQueueType, changedFiles?: IFileChangeE
  */
 function checkInProgressBuilds(): void {
     lock.acquire("runningBuildsLock", async done => {
+        // we must assert here that the running builds queue is always unique
+        logger.assert(runningBuilds.filter((project: BuildQueueType) => {
+            const projectID = project.operation.projectInfo.projectID;
+            return projectID === buildQueue[0].operation.projectInfo.projectID;
+        }).length === 0, "Builds in running queue must be unique");
+
         // filter out all projects that are completed and reduce the build in progress by 1 for each such project
         runningBuilds = runningBuilds.filter((project: BuildQueueType) => {
             const projectID = project.operation.projectInfo.projectID;
