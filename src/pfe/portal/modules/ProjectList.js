@@ -10,8 +10,11 @@
  *******************************************************************************/
 
 const ProjectListError = require('./utils/errors/ProjectListError');
+const metricsService = require('./metricsService');
+
 const Logger = require('./utils/Logger');
-const log = new Logger('ProjectList.js');
+
+const log = new Logger(__filename);
 
 // list of properties that must never be changed once created
 const keysOfConstantProperties = ['codewindVersion', 'projectID'];
@@ -80,6 +83,33 @@ module.exports = class ProjectList {
    */
   retrieveProject(id) {
     return (this._list.hasOwnProperty(id) ? this._list[id] : undefined);
+  }
+
+  async retrieveProjectWithMetricsInfo(projectID) {
+    const project = this.retrieveProject(projectID);
+    if (!project) {
+      return;
+    }
+    const canMetricsBeInjected = metricsService.canMetricsBeInjected(project);
+    const haveMetricsBeenInjected = project.injectMetrics;
+    const locationOfAppMonitorDashboard = await project.getLocationOfAppMonitorDashboard();
+    const pathToAppMonitorDashboard = await project.getPathToAppMonitorDashboard();
+    const pathToPerfDashboard = await project.getPathToPerfDashboard();
+  
+    const projectWithMetricsInfo = { 
+      ...project,
+      injection: {
+        injectable: canMetricsBeInjected,
+        injected: haveMetricsBeenInjected,
+      },
+      appMonitor: {
+        dashboardLocation: locationOfAppMonitorDashboard,
+        pathToDashboard: pathToAppMonitorDashboard,
+      },
+      perfDashboard: pathToPerfDashboard,
+    };
+    
+    return projectWithMetricsInfo;  
   }
 
   /**
