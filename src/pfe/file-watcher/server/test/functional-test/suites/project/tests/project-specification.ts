@@ -327,6 +327,8 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
         }).timeout(timeoutConfigs.defaultTimeout);
 
         it(`set internalPort to ${constants.disablePingPort} in .cw-settings file to check for serverless app`, async () => {
+            if (projectTemplate === app_configs.codewindTemplates.odo) return; // internal port settings are not available for odo projects
+
             let events, eventDatas;
 
             const projectInfo = await projectUtil.getProjectInfo(projData.projectID);
