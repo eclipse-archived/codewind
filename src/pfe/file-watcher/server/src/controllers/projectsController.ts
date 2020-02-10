@@ -55,7 +55,7 @@ const MAX_BUILDS = parseInt(process.env.MC_MAX_BUILDS) || 3;
 const BUILD_KEY = "projectStatusController.buildRank";
 
 // timeout to ping build projects
-setInterval(checkBuildQueue, constants.buildQueueInterval);
+setInterval(checkBuildQueue, 5000);
 
 /**
  * @see [[Filewatcher.getProjectTypes]]
@@ -456,7 +456,7 @@ export async function addProjectToBuildQueue(project: BuildQueueType): Promise<v
 
 /**
  * @function
- * @description Check the build queue periodically (every 5 seconds) and once a project has been created.
+ * @description Check the build queue periodically (every 5 seconds). This function makes sure that all builds in the running queue and build queue are unique so that no one project can be in the same queue more than once at any given time. Builds are only pushed into the running queue when there is space for it and meets the uniqueness criteria.
  *
  * @returns void
  */
