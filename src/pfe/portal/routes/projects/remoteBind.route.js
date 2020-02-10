@@ -254,6 +254,8 @@ async function uploadEnd(req, res) {
       await deletePathsInArray(pathToProj, filesToDelete);
     }
 
+    await project.checkIfMetricsAvailable();
+
     res.sendStatus(200);
     
   } catch (err) {
@@ -439,6 +441,8 @@ async function bindEnd(req, res) {
     let totalbindtime = (timerbindend - timerbindstart) / 1000;
     log.info(`Total time to bind project ${project.name} is ${totalbindtime} seconds`);
     timersyncstart = 0;
+
+    await project.checkIfMetricsAvailable();
 
     let updatedProject = {
       projectID,
