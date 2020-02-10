@@ -442,6 +442,8 @@ async function bindEnd(req, res) {
     log.info(`Total time to bind project ${project.name} is ${totalbindtime} seconds`);
     timersyncstart = 0;
 
+    await project.checkIfMetricsAvailable();
+
     let updatedProject = {
       projectID,
       state: Project.STATES.open,
