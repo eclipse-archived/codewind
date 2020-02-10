@@ -94,7 +94,7 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
                 isOpenLiberty: false,
                 metricsDashboard: {
                     hosting: 'project',
-                    path: `/appmetrics-dash?theme=dark`,
+                    path: `/appmetrics-dash/?theme=dark`,
                 },
                 perfDashboardPath: `/performance/charts?project=${projectID}`,
             });
@@ -154,7 +154,7 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
                 isOpenLiberty: false,
                 metricsDashboard: {
                     hosting: 'project',
-                    path: `/javametrics-dash?theme=dark`,
+                    path: `/javametrics-dash/?theme=dark`,
                 },
                 perfDashboardPath: `/performance/charts?project=${projectID}`,
             });

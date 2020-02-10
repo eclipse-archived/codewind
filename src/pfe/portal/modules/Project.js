@@ -192,7 +192,7 @@ module.exports = class Project {
     }
     
     if (metricsDashHost === METRICS_DASH_HOST.project) {
-      return `/${pathsToUserHostedMetricsDashboards[this.language]}?theme=dark`;
+      return `/${pathsToUserHostedMetricsDashboards[this.language]}/?theme=dark`;
     }
 
     if (metricsDashHost === METRICS_DASH_HOST.performanceContainer) {
