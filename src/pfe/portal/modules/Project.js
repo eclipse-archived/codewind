@@ -166,33 +166,33 @@ module.exports = class Project {
     return {}
   }
 
-  async getPerfDashPath() {
-    const isPerfDashAvailable = this.injectMetrics || this.isOpenLiberty || (await this.checkIfMetricsAvailable());
+  getPerfDashPath() {
+    const isPerfDashAvailable = this.injectMetrics || this.isOpenLiberty || this.metricsAvailable;
     return isPerfDashAvailable
       ? `/performance/charts?project=${this.projectID}`
       : null;
   }
   
-  async getMetricsDashHost() {
-    const isMetricsDashAvailable = this.injectMetrics || this.isOpenLiberty || (await this.checkIfMetricsAvailable());
+  getMetricsDashHost() {
+    const isMetricsDashAvailable = this.injectMetrics || this.isOpenLiberty || this.metricsAvailable;
     if (!isMetricsDashAvailable) {
       return null;
     }
     
-    const shouldShowMetricsDashHostedOnProject = !this.injectMetrics && (await this.checkIfMetricsAvailable());
+    const shouldShowMetricsDashHostedOnProject = !this.injectMetrics && this.metricsAvailable;
     return shouldShowMetricsDashHostedOnProject
       ? METRICS_DASH_HOST.project
       : METRICS_DASH_HOST.performanceContainer;
   }
   
-  async getMetricsDashPath() {
-    const metricsDashHost = await this.getMetricsDashHost();
+  getMetricsDashPath() {
+    const metricsDashHost = this.getMetricsDashHost();
     if (!metricsDashHost) {
       return null;
     }
     
     if (metricsDashHost === METRICS_DASH_HOST.project) {
-      return `${pathsToUserHostedMetricsDashboards[this.language]}?theme=dark`;
+      return `/${pathsToUserHostedMetricsDashboards[this.language]}?theme=dark`;
     }
 
     if (metricsDashHost === METRICS_DASH_HOST.performanceContainer) {

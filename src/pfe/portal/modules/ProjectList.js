@@ -81,28 +81,28 @@ module.exports = class ProjectList {
    * @return the requested project
    */
   retrieveProject(id) {
-    return (this._list.hasOwnProperty(id) ? this._list[id] : undefined);
-  }
-
-  async retrieveProjectWithMetricsInfo(projectID) {
-    const project = this.retrieveProject(projectID);
+    const project = (this._list.hasOwnProperty(id) ? this._list[id] : undefined);
     if (!project) {
       return;
     }
-    const projectWithMetricsInfo = { 
-      ...project,
-      injection: {
-        injectable: project.canMetricsBeInjected,
-        injected: project.injectMetrics,
-      },
-      appMonitor: {
-        hosting: await project.getMetricsDashHost(),
-        path: await project.getMetricsDashPath(),
-      },
-      perfDashboardPath: await project.getPerfDashPath(),
+    project.injection = {
+      injectable: project.canMetricsBeInjected,
+      injected: project.injectMetrics,
     };
-    
-    return projectWithMetricsInfo;  
+    project.metricsDashboard = {
+      hosting: project.getMetricsDashHost(),
+      path: project.getMetricsDashPath(),
+    };
+    project.perfDashboardPath = project.getPerfDashPath();
+
+    return project;  
+  }
+
+  retrieveProjects() {
+    const projects = Object.values(this._list).map(
+      project => this.retrieveProject(project.projectID)
+    );
+    return projects;
   }
 
   /**
@@ -133,7 +133,7 @@ module.exports = class ProjectList {
     }
     this._list[updatedProject.projectID] = currentProject;
     await this._list[updatedProject.projectID].writeInformationFile();
-    return this._list[updatedProject.projectID];
+    return this.retrieveProject(updatedProject.projectID);
   }
 
   /**
