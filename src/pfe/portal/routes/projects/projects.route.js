@@ -41,8 +41,8 @@ router.get('/api/v1/projects/:id', (req, res) => {
 router.get('/api/v1/projects', (req, res) => {
   try {
     const user = req.cw_user;
-    const list = user.projectList.getAsArray();
-    res.status(200).send(list);
+    const projects = user.projectList.retrieveProjects();
+    res.status(200).send(projects);
   } catch (err) {
     log.error(err);
     res.status(500).send(err);
