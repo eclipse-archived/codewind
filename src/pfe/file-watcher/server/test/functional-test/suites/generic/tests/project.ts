@@ -30,8 +30,8 @@ export default class ProjectTest {
         });
     }
 
-    private runGetProjectTypes(): void {
-        describe("getProjectTypes function", () => {
+    private runGetProjectTypes(runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)("getProjectTypes function", () => {
             it("get project type without a location", async () => {
                 const info: any = await genericLib.getProjectTypes();
                 expect(info);
