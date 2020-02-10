@@ -33,13 +33,17 @@ const sleep = promisify(setTimeout);
 async function createProjectFromTemplate(name, projectType, path, autoBuild = false) {
     const { url, language } = templateOptions[projectType];
 
+    const pfeProjectType = (projectType === 'openliberty')
+        ? 'docker'
+        : projectType;
+
     await cloneProject(url, path);
 
     const res = await bindProject({
         name,
         path,
         language,
-        projectType,
+        projectType: pfeProjectType,
         autoBuild,
         creationTime: Date.now(),
     });
