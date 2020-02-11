@@ -17,7 +17,7 @@ const { suppressLogOutput } = require('../../../modules/log.service');
 
 chai.should();
 
-describe.only('metrics.controller.js', () => {
+describe('metrics.controller.js', () => {
     suppressLogOutput(metricsController);
     describe('inject(req, res)', () => {
         it('returns 404 if the specified project does not exist', async() => {

@@ -125,11 +125,10 @@ describe('metricsService/index.js', () => {
                     fs.outputJSONSync(pathToBackupPackageJson, packageJsonWithoutCollector);
                     fs.outputJSONSync(pathToPackageJson, packageJsonWithoutCollector);
                 });
-                it(`throws a useful error`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('nodejs', 'nodejs', projectDir)
-                        .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
+                it(`should re-inject without error`, async() => {
+                    await metricsService.injectMetricsCollectorIntoProject('nodejs', 'nodejs', projectDir);
 
-                    fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithoutCollector);
+                    fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithCollector);
                     fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(packageJsonWithoutCollector);
                 });
             });
@@ -162,19 +161,18 @@ describe('metricsService/index.js', () => {
                     fs.outputFileSync(pathToJvmOptions, originalJvmOptions);
                     fs.outputFileSync(pathToBackupJvmOptions, originalJvmOptions);
                 });
-                it(`throws a useful error`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('liberty', 'java', projectDir)
-                        .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
+                it(`should re-inject without error`, async() => {
+                    await metricsService.injectMetricsCollectorIntoProject('liberty', 'java', projectDir);
 
-                    fs.readFileSync(pathToJvmOptions, 'utf8')
-                        .should.equal(originalJvmOptions);
-                    fs.readFileSync(pathToBackupJvmOptions, 'utf8')
-                        .should.equal(originalJvmOptions);
+                    const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
+                    outputJvmOptions.should.equal(expectedJvmOptions);
+                    const outputBackupJvmOptions = fs.readFileSync(pathToBackupJvmOptions, 'utf8');
+                    outputBackupJvmOptions.should.deep.equal(originalJvmOptions);
 
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForLiberty);
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForLiberty);
+                    const outputPomXml = await readXml(pathToTestPomXml);
+                    outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForLiberty);
+                    const outputBackupPomXml = await readXml(pathToTestBackupPomXml);
+                    outputBackupPomXml.should.deep.equal(originalPomXmlForLiberty);
                 });
             });
         });
@@ -206,18 +204,18 @@ describe('metricsService/index.js', () => {
                     fs.outputFileSync(pathToJvmOptions, expectedNewJvmOptions);
                     fs.removeSync(pathToBackupJvmOptions);
                 });
-                it(`throws a useful error`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('docker', 'java', projectDir)
-                        .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
+                it(`should re-inject without error`, async() => {
+                    await metricsService.injectMetricsCollectorIntoProject('docker', 'java', projectDir);
 
-                    fs.readFileSync(pathToJvmOptions, 'utf8')
-                        .should.equal(expectedNewJvmOptions);
-                    fs.pathExistsSync(pathToBackupJvmOptions).should.be.false;
+                    const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
+                    outputJvmOptions.should.equal(expectedNewJvmOptions);
+                    const outputBackupJvmOptions = fs.pathExistsSync(pathToBackupJvmOptions);
+                    outputBackupJvmOptions.should.be.true;
 
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForOpenLiberty);
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForOpenLiberty);
+                    const outputPomXml = await readXml(pathToTestPomXml);
+                    outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForOpenLiberty);
+                    const outputBackupPomXml = await readXml(pathToTestBackupPomXml);
+                    outputBackupPomXml.should.deep.equal(originalPomXmlForOpenLiberty);
                 });
             });
         });
@@ -249,19 +247,18 @@ describe('metricsService/index.js', () => {
                     fs.outputFileSync(pathToMainAppClassFile, originalMainAppClassFile);
                     fs.outputFileSync(pathToBackupMainAppClassFile, originalMainAppClassFile);
                 });
-                it(`throws a useful error`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('spring', 'java', projectDir)
-                        .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
+                it(`should re-inject without error`, async() => {
+                    await metricsService.injectMetricsCollectorIntoProject('spring', 'java', projectDir);
 
-                    fs.readFileSync(pathToMainAppClassFile, 'utf8')
-                        .should.equal(originalMainAppClassFile);
-                    fs.readFileSync(pathToBackupMainAppClassFile, 'utf8')
-                        .should.equal(originalMainAppClassFile);
+                    const outputClassFile = fs.readFileSync(pathToMainAppClassFile, 'utf8');
+                    outputClassFile.should.equal(expectedMainAppClassFile);
+                    const outputBackupClassFile = fs.readFileSync(pathToBackupMainAppClassFile, 'utf8');
+                    outputBackupClassFile.should.deep.equal(originalMainAppClassFile);
 
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForSpring);
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForSpring);
+                    const outputPomXml = await readXml(pathToTestPomXml);
+                    outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForSpring);
+                    const outputBackupPomXml = await readXml(pathToTestBackupPomXml);
+                    outputBackupPomXml.should.deep.equal(originalPomXmlForSpring);
                 });
             });
         });
