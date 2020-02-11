@@ -23,6 +23,7 @@ const ProjectError = require('./utils/errors/ProjectError');
 const ProjectMetricsError = require('./utils/errors/ProjectMetricsError');
 const Logger = require('./utils/Logger');
 const LogStream = require('./LogStream');
+const metricsService = require('./metricsService');
 
 const log = new Logger(__filename);
 
@@ -35,6 +36,18 @@ const STATES = {
   validating: 'validating',
   closing: 'closing',
   deleting: 'deleting'
+};
+
+const METRICS_DASH_HOST = {
+  project: 'project',
+  performanceContainer: 'performanceContainer',
+};
+
+const pathsToUserHostedMetricsDashboards = {
+  nodejs: 'appmetrics-dash',
+  javascript: 'appmetrics-dash',
+  java: 'javametrics-dash',
+  swift: 'swiftmetrics-dash',
 };
 
 const METRIC_TYPES = ['cpu', 'gc', 'memory', 'http']
@@ -100,6 +113,11 @@ module.exports = class Project {
     // Initialise the project type
     this.projectType = args.projectType;
 
+    // For metrics purposes, we treat java docker project as open liberty projects
+    this.isOpenLiberty = (this.projectType === 'docker' && this.language === 'java');
+    this.canMetricsBeInjected = this.isOpenLiberty
+      || metricsService.metricsCollectorInjectionFunctions.hasOwnProperty(this.projectType);
+
     log.info(`Project ${this.name} initializing (project type: ${this.projectType}, projectID: ${this.projectID})`);
 
     // This is used to delete the log file when the project is deleted.
@@ -148,6 +166,41 @@ module.exports = class Project {
     return {}
   }
 
+  getPerfDashPath() {
+    const isPerfDashAvailable = this.injectMetrics || this.isOpenLiberty || this.metricsAvailable;
+    return isPerfDashAvailable
+      ? `/performance/charts?project=${this.projectID}`
+      : null;
+  }
+  
+  getMetricsDashHost() {
+    const isMetricsDashAvailable = this.injectMetrics || this.isOpenLiberty || this.metricsAvailable;
+    if (!isMetricsDashAvailable) {
+      return null;
+    }
+    
+    const shouldShowMetricsDashHostedOnProject = !this.injectMetrics && this.metricsAvailable;
+    return shouldShowMetricsDashHostedOnProject
+      ? METRICS_DASH_HOST.project
+      : METRICS_DASH_HOST.performanceContainer;
+  }
+  
+  getMetricsDashPath() {
+    const metricsDashHost = this.getMetricsDashHost();
+    if (!metricsDashHost) {
+      return null;
+    }
+    
+    if (metricsDashHost === METRICS_DASH_HOST.project) {
+      return `/${pathsToUserHostedMetricsDashboards[this.language]}/?theme=dark`;
+    }
+
+    if (metricsDashHost === METRICS_DASH_HOST.performanceContainer) {
+      return `/performance/monitor/dashboard/${this.language}?theme=dark&projectID=${this.projectID}`
+    }
+    
+    throw new Error(`unknown metricsDashHost: ${metricsDashHost}`);
+  }
 
   async checkIfMetricsAvailable() {
     let isMetricsAvailable;
@@ -694,9 +747,9 @@ module.exports = class Project {
     }
     let config = {
       path: contextRoot,
-      requestsPerSecond: "100",
-      concurrency: "20",
-      maxSeconds: "20"
+      requestsPerSecond: "1",
+      concurrency: "1",
+      maxSeconds: "180"
     };
     await fs.ensureDir(this.loadTestPath);
     const filePath = join(this.loadTestPath, 'config.json');

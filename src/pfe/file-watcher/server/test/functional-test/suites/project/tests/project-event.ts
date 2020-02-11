@@ -25,8 +25,8 @@ import * as timeoutConfigs from "../../../configs/timeout.config";
 import { projectLanguges } from "../../../configs/app.config";
 import { fail } from "assert";
 
-export function projectEventTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-    describe("updateProjectForNewChange function", () => {
+export function projectEventTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+    (runOnly ? describe.only : describe)("updateProjectForNewChange function", () => {
         afterEach("clear socket events", () => {
             socket.clearEvents();
         });
@@ -78,7 +78,7 @@ export function projectEventTest(socket: SocketIO, projData: projectsController.
                     }
 
                     const fileToChange = file;
-                    const pathFileToChange = projectLang.toLowerCase() === projectLanguges.lagom ? path.join(projData.location, "hello-impl", fileToChange) : path.join(projData.location, fileToChange);
+                    const pathFileToChange = projectLang.toLowerCase() === projectLanguges.lagom && type.toLowerCase() === "create" ? path.join(projData.location, "hello-impl", fileToChange) : path.join(projData.location, fileToChange);
 
                     if (file.toLowerCase() === "dockerfile") {
                         const dockerFileContents = await fs.readFileSync(pathFileToChange).toString();

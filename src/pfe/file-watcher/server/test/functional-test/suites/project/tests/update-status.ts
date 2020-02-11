@@ -24,14 +24,15 @@ import { fail } from "assert";
 import * as utils from "../../../lib/utils";
 import { codewindTemplates } from "../../../configs/app.config";
 
-export function updateStatusTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-    describe("updateStatus function", () => {
+export function updateStatusTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+    (runOnly ? describe.only : describe)("updateStatus function", () => {
         const projectID = projData.projectID;
         const data: any = {
             "projectID": projectID,
         };
 
-        afterEach("remove build from running queue", async () => {
+        afterEach("remove build from running queue", async function (): Promise<void> {
+            this.timeout(timeoutConfigs.defaultInterval);
             await utils.setBuildStatus(projData, projectTemplate, projectLang);
         });
 
@@ -118,7 +119,8 @@ export function updateStatusTest(socket: SocketIO, projData: projectsController.
                     await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
                 });
 
-                after("remove build from running queue", async () => {
+                after("remove build from running queue", async function (): Promise<void> {
+                    this.timeout(timeoutConfigs.defaultInterval);
                     await utils.setBuildStatus(projData, projectTemplate, projectLang);
                 });
 

@@ -329,7 +329,9 @@ function updateMemPoolsData(mempoolsRequest) {
   d.used = +d.usedHeap / (1024 * 1024);
   d.native = +d.usedNative / (1024 * 1024);
   d.aftergc = +d.usedHeapAfterGC / (1024 * 1024);
-  d.total = d.used + d.native;
+  if (d.native > 0) {
+    d.total = d.used + d.native;
+  }
   mempoolsData.push(d);
   if (mempoolsData.length === 2) {
     // second data point - remove "No Data Available" label
@@ -348,7 +350,11 @@ function updateMemPoolsData(mempoolsRequest) {
     return d.date;
   }));
   mempools_yScale.domain([0, Math.ceil(d3.extent(mempoolsData, function(d) {
-    return d.total;
+    if (d.total && !Number.isNaN(d.total)) {
+      return d.total;
+    } else {
+      return d.used;
+    }
   })[1] / 100) * 100]);
   mempools_xAxis.tickFormat(getTimeFormat());
   // Select the section we want to apply our changes to

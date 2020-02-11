@@ -216,32 +216,38 @@
       for (const metric of metrics) {
         const metricsObj = metric.metrics[0];
         const metricValue = metricsObj.value;
+        let numMetricValue = metricValue * 1;
+        if (Number.isNaN(numMetricValue)) {
+          numMetricValue = 0;
+        }
         if (['base:cpu_process_cpu_load_percent', 'base_cpu_processCpuLoad_percent', 'process_cpu_used_ratio '].includes(metric.name)) {
-          cpuData.process = metricValue;
+          cpuData.process = numMetricValue;
         } else if (['base:cpu_system_load_average', 'base_cpu_systemLoadAverage', 'os_cpu_used_ratio'].includes(metric.name)) { // ignored if -1 (not available)
-          cpuData.system = metricValue;
+          cpuData.system = numMetricValue;
 
         } else if (['base:gc_global_time_seconds', 'time_in_gc_percentage'].includes(metric.name)) {
-          gcData.gcTime = metricValue;
+          gcData.gcTime = numMetricValue;
         } else if (['base_gc_time_seconds'].includes(metric.name)) {
           const correctMetricsObj = metric.metrics.find(obj => obj.labels.name === 'global');
           gcData.gcTime = correctMetricsObj.value;
+          if (Number.isNaN(gcData.gcTime)) {
+            gcData.gcTime = 0;
+        }
 
-        } else if (['base_memory_usedHeap_bytes', 'process_heap_memory_used_bytes'].includes(metric.name)) {
-          memPoolsData.usedHeap = metricValue;
-           memPoolsData.usedHeap = metricValue;
+        } else if (['base_memory_usedHeap_bytes', 'process_heap_memory_used_bytes', 'base:memory_used_heap_bytes'].includes(metric.name)) {
+          memPoolsData.usedHeap = numMetricValue;
         } else if (metric.name === 'process_native_memory_used_bytes') {
-          memPoolsData.usedNative = metricValue;
+          memPoolsData.usedNative = numMetricValue;
         } else if (metric.name === 'process_heap_memory_used_after_GC_bytes') {
-          memPoolsData.usedHeapAfterGC = metricValue;
+          memPoolsData.usedHeapAfterGC = numMetricValue;
         } else if (metric.name === 'http_requests_duration_max_microseconds') {
-          httpRequestData.longest = metricValue;
+          httpRequestData.longest = numMetricValue;
           // only ever one url
           httpRequestData.url = metric.metrics[0].labels.handler;
         } else if (metric.name === 'http_requests_duration_average_microseconds') {
-          httpRequestData.average = metricValue;
+          httpRequestData.average = numMetricValue;
         } else if (metric.name === 'http_requests_total') {
-          httpRequestData.total = metricValue;
+          httpRequestData.total = numMetricValue;
         }
       }
 

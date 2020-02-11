@@ -544,4 +544,5 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
 module.exports = {
   injectMetricsCollectorIntoProject,
   removeMetricsCollectorFromProject,
+  metricsCollectorInjectionFunctions,
 }
