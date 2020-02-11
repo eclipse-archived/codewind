@@ -31,7 +31,8 @@ export function updateStatusTest(socket: SocketIO, projData: projectsController.
             "projectID": projectID,
         };
 
-        afterEach("remove build from running queue", async () => {
+        afterEach("remove build from running queue", async function (): Promise<void> {
+            this.timeout(timeoutConfigs.defaultInterval);
             await utils.setBuildStatus(projData, projectTemplate, projectLang);
         });
 
@@ -118,7 +119,8 @@ export function updateStatusTest(socket: SocketIO, projData: projectsController.
                     await utils.callProjectAction(action, mode, socket, projData, targetEvents, targetEventDatas);
                 });
 
-                after("remove build from running queue", async () => {
+                after("remove build from running queue", async function (): Promise<void> {
+                    this.timeout(timeoutConfigs.defaultInterval);
                     await utils.setBuildStatus(projData, projectTemplate, projectLang);
                 });
 

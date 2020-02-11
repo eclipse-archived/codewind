@@ -10,9 +10,11 @@
  *******************************************************************************/
 
 import ms from "ms";
+import * as constants from "../../../src/projects/constants";
 
 export const defaultTimeout = ms("5m");
-export const defaultInterval = ms("5s");
+export const defaultInterval = ms("10s");
+export const buildQueueInterval = constants.buildQueueInterval + 2000; // 2 additional seconds on top of the regular build queue interval to wait for the build queue to be cleared
 
 export const createTestTimeout = ms("20m");
 export const deleteTestTimeout = ms("1m");
