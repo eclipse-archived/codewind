@@ -79,8 +79,8 @@ export default class WorkspaceTest {
         });
     }
 
-    private runReadWorkspaceSettings(socket: SocketIO, settingsPath: string, settingsContent: any, backupSettingsPath: string): void {
-        describe("readWorkspaceSettings function", () => {
+    private runReadWorkspaceSettings(socket: SocketIO, settingsPath: string, settingsContent: any, backupSettingsPath: string, runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)("readWorkspaceSettings function", () => {
             after("clear socket events for create test", () => {
                 socket.clearEvents();
             });
@@ -163,8 +163,8 @@ export default class WorkspaceTest {
         });
     }
 
-    private runImagePushRegistryStatus(socket: SocketIO): void {
-        describe("imagePushRegistryStatus function", () => {
+    private runImagePushRegistryStatus(socket: SocketIO, runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)("imagePushRegistryStatus function", () => {
             const deploymentRegistryRequest = {
                 "projectID": "1234",
                 "detailedImagePushRegistryStatus": "some status"
@@ -230,8 +230,8 @@ export default class WorkspaceTest {
         });
     }
 
-    private runSetImagePushRegistry(): void {
-        describe("writeWorkspaceSettings function", () => {
+    private runSetImagePushRegistry(runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)("writeWorkspaceSettings function", () => {
             const self = this;
 
             before("remove image push registry", async function(): Promise<void> {
@@ -245,8 +245,8 @@ export default class WorkspaceTest {
         });
     }
 
-    private runRemoveImagePushRegistry(settingsContent: any): void {
-        describe("removeImagePushRegistry function", () => {
+    private runRemoveImagePushRegistry(settingsContent: any, runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)("removeImagePushRegistry function", () => {
             const self = this;
 
             before("set image push registry", async function(): Promise<void> {
@@ -268,8 +268,8 @@ export default class WorkspaceTest {
         });
     }
 
-    private runTestImagePushRegistry(settingsContent: any): void {
-        describe("testImagePushRegistry function", () => {
+    private runTestImagePushRegistry(settingsContent: any, runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)("testImagePushRegistry function", () => {
             const invalidPullImage = "someimage";
             const self = this;
 

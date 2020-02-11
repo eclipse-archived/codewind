@@ -46,8 +46,8 @@ export default class DeleteTest {
         });
     }
 
-    private runDeleteWithMissingProjectID(): void {
-        it("delete a project with missing id", async () => {
+    private runDeleteWithMissingProjectID(runOnly?: boolean): void {
+        (runOnly ? it.only : it)("delete a project with missing id", async () => {
             const invalidId: any = undefined;
             const info: any = await deleteProject(invalidId);
             expect(info).to.exist;
@@ -59,8 +59,8 @@ export default class DeleteTest {
         });
     }
 
-    private runDeleteWithInvalidProjectID(): void {
-        it("delete a project with invalid id", async () => {
+    private runDeleteWithInvalidProjectID(runOnly?: boolean): void {
+        (runOnly ? it.only : it)("delete a project with invalid id", async () => {
             const invalidId = "invalidId";
             const info: any = await deleteProject(invalidId);
             expect(info).to.exist;
@@ -72,8 +72,8 @@ export default class DeleteTest {
         });
     }
 
-    private runDeleteWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-        it("delete project", async () => {
+    private runDeleteWithValidData(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+        (runOnly ? it.only : it)("delete project", async () => {
             const odoDeploymentConfigSelector = `cw-${appConfigs.projectPrefix}${projectTemplate}-${projectLang}-app`;
 
             process.env.IN_K8 ? (projectTemplate === appConfigs.codewindTemplates.odo ? await utils.checkForKubeResources("deploymentconfig", odoDeploymentConfigSelector, ["pods"]) : await utils.checkForKubeResources("projectID", projData.projectID)) : await utils.checkForDockerResources(projData.projectID);

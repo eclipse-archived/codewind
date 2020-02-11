@@ -44,8 +44,8 @@ export default class ProjectTest {
         });
     }
 
-    private runProjectCapabilityTest(projectID: string, projectTemplate: string, projectLang: string): void {
-        describe("getProjectCapabilities function", () => {
+    private runProjectCapabilityTest(projectID: string, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+        (runOnly ? describe.only : describe)("getProjectCapabilities function", () => {
             it("get project capability with undefined project id", async () => {
                 const info: any = await getProjectCapabilities(undefined);
                 expect(info);
@@ -67,23 +67,23 @@ export default class ProjectTest {
         });
     }
 
-    private runProjectActionTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-        projectActionTest(socket, projData, projectTemplate, projectLang);
+    private runProjectActionTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+        projectActionTest(socket, projData, projectTemplate, projectLang, runOnly);
     }
 
-    private runProjectSpecificationTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-        projectSpecificationTest(socket, projData, projectTemplate, projectLang);
+    private runProjectSpecificationTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+        projectSpecificationTest(socket, projData, projectTemplate, projectLang, runOnly);
     }
 
-    private runProjectLogsTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-        logsTest(socket, projData, projectTemplate, projectLang);
+    private runProjectLogsTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+        logsTest(socket, projData, projectTemplate, projectLang, runOnly);
     }
 
-    private runUpdateStatusTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-        updateStatusTest(socket, projData, projectTemplate, projectLang);
+    private runUpdateStatusTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+        updateStatusTest(socket, projData, projectTemplate, projectLang, runOnly);
     }
 
-    private runProjectEventTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-        projectEventTest(socket, projData, projectTemplate, projectLang);
+    private runProjectEventTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+        projectEventTest(socket, projData, projectTemplate, projectLang, runOnly);
     }
 }

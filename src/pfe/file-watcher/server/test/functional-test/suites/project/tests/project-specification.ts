@@ -30,10 +30,9 @@ import * as constants from "../../../../../src/projects/constants";
 
 import * as utils from "../../../lib/utils";
 
-export function projectSpecificationTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-    describe("projectSpecification function", () => {
+export function projectSpecificationTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+    (runOnly ? describe.only : describe)("projectSpecification function", () => {
         const cwSettingsPath = path.join(projData.location, ".cw-settings");
-
         const data: any = {
             "projectID": projData.projectID
         };

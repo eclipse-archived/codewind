@@ -25,8 +25,8 @@ import * as timeoutConfigs from "../../../configs/timeout.config";
 import { projectLanguges } from "../../../configs/app.config";
 import { fail } from "assert";
 
-export function projectEventTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-    describe("updateProjectForNewChange function", () => {
+export function projectEventTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+    (runOnly ? describe.only : describe)("updateProjectForNewChange function", () => {
         afterEach("clear socket events", () => {
             socket.clearEvents();
         });

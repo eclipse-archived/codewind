@@ -24,8 +24,8 @@ import { fail } from "assert";
 import * as utils from "../../../lib/utils";
 import { codewindTemplates } from "../../../configs/app.config";
 
-export function updateStatusTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string): void {
-    describe("updateStatus function", () => {
+export function updateStatusTest(socket: SocketIO, projData: projectsController.ICreateProjectParams, projectTemplate: string, projectLang: string, runOnly?: boolean): void {
+    (runOnly ? describe.only : describe)("updateStatus function", () => {
         const projectID = projData.projectID;
         const data: any = {
             "projectID": projectID,
