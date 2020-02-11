@@ -229,6 +229,7 @@ async function uploadEnd(req, res) {
       res.status(404).send('No files have been synced');
       return;
     }
+
     const pathToProj = project.projectPath();
 
     // Delete by directory
@@ -254,13 +255,27 @@ async function uploadEnd(req, res) {
       await deletePathsInArray(pathToProj, filesToDelete);
     }
 
+    await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
+
     await project.checkIfMetricsAvailable();
+
+    if (project.injectMetrics) {
+      try {
+        await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
+      } catch (error) {
+        log.warn(error);
+      }
+    }
 
     res.sendStatus(200);
     
   } catch (err) {
     log.error(err);
-    res.status(500).send(err);
+    if (err.code === 'BUILD_FILE_MISSING') {
+      res.status(400).send(err.info || err);
+    } else {
+      res.status(500).send(err);
+    }
     return;
   }
       
@@ -269,15 +284,6 @@ async function uploadEnd(req, res) {
       || filesToDelete.length > 0
       || modifiedList.length > 0;
     if (wasProjectChanged) {
-      await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
-
-      if (project.injectMetrics) {
-        try {
-          await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
-        } catch (error) {
-          log.warn(error);
-        }
-      }
       await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
       timersyncend = Date.now();
       let timersynctime = (timersyncend - timersyncstart) / 1000;
