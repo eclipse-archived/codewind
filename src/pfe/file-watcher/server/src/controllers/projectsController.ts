@@ -49,7 +49,7 @@ const fileStatAsync = promisify(fs.stat);
 
 const projectInfoCache = {} as ProjectInfoCache;
 
-let buildQueue: Array<BuildQueueType> = [];
+const buildQueue: Set<BuildQueueType> = new Set();
 let runningBuilds: Array<BuildQueueType> = [];
 const MAX_BUILDS = parseInt(process.env.MC_MAX_BUILDS) || 3;
 const BUILD_KEY = "projectStatusController.buildRank";
@@ -434,14 +434,12 @@ export async function addProjectToBuildQueue(project: BuildQueueType): Promise<v
 
     await lock.acquire("buildQueueLock", done => {
         // Check if project is already in the build queue, if it is then no need to add it
-        target = buildQueue.find((item) => {
-            return item.operation.projectInfo.projectID === project.operation.projectInfo.projectID;
-        });
-        if (target) {
+        if (buildQueue.has(project)) {
+            target = project;
             logger.logProjectInfo("The project is already in the build queue so it won't be added again", project.operation.projectInfo.projectID);
         } else {
             logger.logProjectInfo("Pushing project to build queue", project.operation.projectInfo.projectID);
-            buildQueue.push(project);
+            buildQueue.add(project);
         }
         done();
     }, async () => {
@@ -466,7 +464,7 @@ async function checkBuildQueue(): Promise<void> {
         // assert the builds in progress is always between 0 to MAX_BUILDS inclusive
         logger.assert(runningBuilds.length >= 0 && runningBuilds.length <= MAX_BUILDS, "Builds in progress must be between [0, MAX_BUILDS]");
         // if we have builds in the queue
-        buildQueueLength = buildQueue.length;
+        buildQueueLength = buildQueue.size;
         if (buildQueueLength > 0) {
             logger.logDebug("Found at least one build in the queue");
 
@@ -478,29 +476,28 @@ async function checkBuildQueue(): Promise<void> {
                 logger.logDebug("Space available to trigger the next build");
 
                 // only push to running build queue if the running build queue doesn't already have the same project building
-                const firstBuildInQueue = buildQueue[0];
+                const nextBuildInQueue = buildQueue.values().next().value;
                 const uniqueBuildsRunning = runningBuilds.filter((project: BuildQueueType) => {
                     const projectID = project.operation.projectInfo.projectID;
-                    return projectID === firstBuildInQueue.operation.projectInfo.projectID;
+                    return projectID === nextBuildInQueue.operation.projectInfo.projectID;
                 }).length === 0;
 
                 if (uniqueBuildsRunning) {
                     logger.logDebug("All builds in the running queue are unique. Adding next build to the queue.");
 
-                    // remove the first project off the queue
-                    const buildToBeTriggered = buildQueue.shift();
+                    logger.logDebug("Metadata for next build: " + JSON.stringify(nextBuildInQueue));
 
-                    logger.logDebug("Metadata for next build: " + JSON.stringify(buildToBeTriggered));
+                    buildQueue.delete(nextBuildInQueue);
+                    runningBuilds.push(nextBuildInQueue);
 
-                    runningBuilds.push(buildToBeTriggered);
-                    triggerBuild(buildToBeTriggered, changedFilesMap.get(buildToBeTriggered.operation.projectInfo.projectID));
+                    triggerBuild(nextBuildInQueue, changedFilesMap.get(nextBuildInQueue.operation.projectInfo.projectID));
                 } else {
                     logger.logDebug("Next build to be triggered already exists in the running queue. Skip adding it and move it to the end of the build queue.");
                     // we move the first element in the build queue to the last
                     // this is done because: e.g if we have 3 builds in the running = [p1,p2,p3] and 3 builds in the waiting queue = [p3,p4,p5]. Now the next build on the queue is p3, however, p3 is the running build queue - so we will skip adding it to the running build queue.
                     // If e.g p2 finishes before p3, build running queue becomes = [p1, p3]. Now we have a space in the running queue but we can't utilize that spot because the first project in the build queue is p3.
                     // So we remove the first project and add it at the back of the queue making space for the next project to be added to the running builds queue (e.g in this example p4 will be added to the running builds queue and it will look like [p1, p3, p4]
-                    buildQueue.push(buildQueue.shift());
+                    buildQueue.add(nextBuildInQueue);
                 }
             }
         }
@@ -585,12 +582,6 @@ async function triggerBuild(project: BuildQueueType, changedFiles?: IFileChangeE
  */
 function checkInProgressBuilds(): void {
     lock.acquire("runningBuildsLock", async done => {
-        // we must assert here that the running builds queue is always unique
-        // we do this by converting the running build queue into a set and making sure the length matches
-        if (buildQueue.length > 0) {
-            logger.assert(new Set(runningBuilds).size === runningBuilds.length, "Builds in running queue must be unique");
-        }
-
         // filter out all projects that are completed and reduce the build in progress by 1 for each such project
         runningBuilds = runningBuilds.filter((project: BuildQueueType) => {
             const projectID = project.operation.projectInfo.projectID;
@@ -627,13 +618,13 @@ function checkInProgressBuilds(): void {
 async function emitProjectRanks(): Promise<void> {
     logger.logTrace("Emitting project ranks");
     await lock.acquire("buildQueueLock", async done => {
-        buildQueue = buildQueue.filter(temp => {
-            return temp != undefined;
-        });
-        buildQueue.forEach( async (project, index) => {
+        // convert the build queue set into an inplace array for project rank emition that relies on the element index
+        // sets are not great for storing elements in any order, so this is required for the project ranks which relies on position
+        const buildQueueArray = [...buildQueue];
+        buildQueueArray.forEach( async (project, index) => {
             if (project) {
                 const rank = index + 1;
-                const length = buildQueue.length;
+                const length = buildQueueArray.length;
                 const rankStr = rank + "/" + length;
                 logger.logProjectTrace("Setting rank for projectID " + project.operation.projectInfo.projectID + ": " + rankStr, project.operation.projectInfo.projectID);
                 await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.queued, BUILD_KEY, undefined, undefined, await localeTrans.getTranslation(BUILD_KEY, { rank: rankStr.toString() }));
@@ -696,24 +687,27 @@ export async function deleteProject(projectID: string): Promise<IDeleteProjectSu
 
         let initialLength = 0;
         await lock.acquire("buildQueueLock", async done => {
-            initialLength = buildQueue.length;
+            initialLength = buildQueue.size;
             // remove the project from build queue only if the project deleted hasn't been started yet and update the other project ranks
-            buildQueue = buildQueue.filter((project: BuildQueueType) => {
-                if (project.operation.projectInfo.projectID === projectID) {
-                    logger.logProjectInfo("Removing " + projectID + " from build queue due to a delete request", projectID, projectName);
+            // we need to first find the project to delete by looping through the build queue set
+            let buildToRemove = undefined;
+            buildQueue.forEach((buildQueueItem: BuildQueueType) => {
+                if (buildQueueItem.operation.projectInfo.projectID === projectID) {
+                    buildToRemove = buildQueueItem;
                     deleteQueuedBuildOccured = true;
-                    return false;
-                } else {
-                    return true;
                 }
             });
+            if (buildToRemove && deleteQueuedBuildOccured) {
+                logger.logProjectInfo("Removing " + projectID + " from build queue due to a delete request", projectID, projectName);
+                buildQueue.delete(buildToRemove);
+            }
             done();
         }, () => {
             // buildQueueLock release
             // if a delete occured for a queued build, we need to restore the rank of the rest of the builds in queue
             if (deleteQueuedBuildOccured) {
                 emitProjectRanks();
-                logger.assert((initialLength - buildQueue.length) === 1, "If project was deleted, the difference in build queue length should be exactly one");
+                logger.assert((initialLength - buildQueue.size) === 1, "If project was deleted, the difference in build queue length should be exactly one");
             }
         }, {});
 
@@ -824,7 +818,7 @@ export async function shutdown(): Promise<IShutdownSuccess | IShutdownFailure> {
         // clear build queue before shutdowning down all projects
         // by setting the original array length to 0 to avoid creating a new empty array
         await lock.acquire(["buildQueueLock", "runningBuildsLock"], done => {
-            buildQueue.length = 0;
+            buildQueue.clear();
             runningBuilds.length = 0;
             done();
         }, () => {
