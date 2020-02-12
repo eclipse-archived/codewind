@@ -64,6 +64,9 @@ while :; do
         --release-branch=?*)
         RELEASE_BRANCH=${1#*=}
         ;;
+        --environment=?*)
+        TEST_ENV=${1#*=}
+        ;;
         --clean-run=?*)
         CLEAN_RUN=${1#*=}
         ;;
@@ -90,15 +93,23 @@ rm -rf $CW_DIR \
 DATE_NOW=$(date +"%d-%m-%Y")
 TIME_NOW=$(date +"%H.%M.%S")
 PERFORMANCE_RUN_LOG="performance-run.log"
-PERFORMANCE_RUN_DIR=~/performance_test_logs/$TEST_ENV/$DATE_NOW/$TIME_NOW/
+PERFORMANCE_RUN_DIR=~/performance_test_logs/$TEST_ENV/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW/
 
 mkdir -p $PERFORMANCE_RUN_DIR
 
+echo -e "${BLUE}Kicking off perfomance test run for $TEST_ENV test ... ${RESET}"
 ./performance-run.sh --environment=$TEST_ENV --repo=$RELEASE_REPO --release=$RELEASE_BRANCH --clean-run=$CLEAN_RUN --post-clean=$POST_CLEANUP --iterations=${ITERATIONS} |& tee "$PERFORMANCE_RUN_DIR/$PERFORMANCE_RUN_LOG"
-
-cp -r "$PERFORMANCE_DATA_DIR"/$RELEASE_REPO/* $PERFORMANCE_RUN_DIR
 
 if [[ ($? -ne 0) ]]; then
     echo -e "${RED}Cronjob has failed. ${RESET}\n"
+    exit 1
+fi
+
+DATA_SRC_DIR="$PERFORMANCE_DATA_DIR/$TEST_ENV/$RELEASE_BRANCH"
+echo -e "${BLUE}Copying over performance data from $DATA_SRC_DIR to $PERFORMANCE_RUN_DIR  ... ${RESET}"
+cp -r $DATA_SRC_DIR/* $PERFORMANCE_RUN_DIR
+
+if [[ ($? -ne 0) ]]; then
+    echo -e "${RED}Failed to copy data. Please check the source directory for data in $PERFORMANCE_DATA_DIR/$RELEASE_BRANCH ${RESET}\n"
     exit 1
 fi
