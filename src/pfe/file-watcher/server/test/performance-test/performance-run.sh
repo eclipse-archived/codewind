@@ -82,17 +82,13 @@ while :; do
     shift
 done
 
-if [[ "$TEST_ENV" != "local" ] || [ "$TEST_ENV" != "kube" ]]; then
-    displayMsg 1 "Test can only be ran on local or kube environment" true
+if [ "$TEST_ENV" != "local" ] && [ "$TEST_ENV" != "kube" ]; then
+    checkExitCode 1 "Test can only be ran on local or kube environment" true
 fi
 
 # in local we don't need a clean run from the test as it is done as a pre setup for the performance test
 if [ "$CLEAN_RUN" == "y" ] && [ "$TEST_ENV" == "local" ]; then
     CLEAN_RUN="n"
-fi
-
-if [ "$TEST_ENV" == "kube" ] && [ -z "$USER_DEVFILE" ]; then
-    displayMsg 1 "User devfile is a required parameter on kube" true
 fi
 
 export TURBINE_PERFORMANCE_TEST=${RELEASE_BRANCH}
@@ -102,17 +98,17 @@ if [[ $CONVERT_ONLY == false ]]; then
     echo -e "${CYAN}> Cloning release branch ${RESET}"
     rm -rf $RELEASE_DIR
     git clone $CODEWIND_REPO -b "$RELEASE_BRANCH" $RELEASE_DIR
-    displayMsg $? "Failed to clone from release branch." true
+    checkExitCode $? "Failed to clone from release branch." true
 
     echo -e "${CYAN}> Creating data directory ${RESET}"
     TARGET_DIR="$CURR_DIR/data/$TEST_ENV/$RELEASE_BRANCH"
     rm -rf $TARGET_DIR
     mkdir -p $TARGET_DIR
-    displayMsg $? "Failed to create data directory." true
+    checkExitCode $? "Failed to create data directory." true
 
     echo -e "${CYAN}> Switching to release directory ${RESET}"
     cd "$CURR_DIR/$RELEASE_DIR/$TEST_PATH"
-    displayMsg $? "Failed to switch release directory." true
+    checkExitCode $? "Failed to switch release directory." true
 
     for run in $(seq 1 $ITERATIONS);
     do
@@ -120,7 +116,7 @@ if [[ $CONVERT_ONLY == false ]]; then
 
         echo -e "${CYAN}> Cleaning up docker ${RESET}"
         docker system prune -af
-        displayMsg $? "Failed to clean up docker." true
+        checkExitCode $? "Failed to clean up docker." true
 
         PERFORMANCE_DATA_DIR=${TARGET_DIR} NAMESPACE=${NAMESPACE} CLUSTER_IP=${CLUSTER_IP} CLUSTER_PORT=${CLUSTER_PORT} CLUSTER_USER=${CLUSTER_USER} CLUSTER_PASSWORD=${CLUSTER_PASSWORD} CLUSTER_PASSWORD=${CLUSTER_PORT} USER_DEVFILE=${USER_DEVFILE} REGISTRY_SECRET_ADDRESS=${REGISTRY_SECRET_ADDRESS} REGISTRY_SECRET_USERNAME=${REGISTRY_SECRET_USERNAME} REGISTRY_SECRET_PASSWORD=${REGISTRY_SECRET_PASSWORD} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} INTERNAL_REGISTRY=${INTERNAL_REGISTRY} ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN
     done
@@ -130,37 +126,37 @@ cd $CURR_DIR
 
 echo -e "${CYAN}> Checking for virtualenv ${RESET}"
 virtualenv --version > /dev/null 2>&1
-displayMsg $? "Missing virtualenv command. Please install and try again." true
+checkExitCode $? "Missing virtualenv command. Please install and try again." true
 
 echo -e "${CYAN}> Checking for python ${RESET}"
 python --version > /dev/null 2>&1
-displayMsg $? "Missing python command. Please install and try again." true
+checkExitCode $? "Missing python command. Please install and try again." true
 
 echo -e "${CYAN}> Checking for pip ${RESET}"
 pip > /dev/null 2>&1
-displayMsg $? "Missing pip command. Please install and try again." true
+checkExitCode $? "Missing pip command. Please install and try again." true
 
 echo -e "${CYAN}> Creating python virtual environment ${RESET}"
 virtualenv venv -p $(which python) > /dev/null 2>&1
-displayMsg $? "Failed to create up python virtual environment. Please try again." true
+checkExitCode $? "Failed to create up python virtual environment. Please try again." true
 
 echo -e "${CYAN}> Activating python virtual environment ${RESET}"
 source venv/bin/activate > /dev/null 2>&1
-displayMsg $? "Failed to activate up python virtual environment. Please try again." true
+checkExitCode $? "Failed to activate up python virtual environment. Please try again." true
 
 echo -e "${CYAN}> Installing required python dependencies: pandas ${RESET}"
 pip install pandas > /dev/null 2>&1
-displayMsg $? "Failed to install pandas module. Please try again." true
+checkExitCode $? "Failed to install pandas module. Please try again." true
 
 echo -e "${CYAN}> Installing required python dependencies: numpy ${RESET}"
 pip install numpy > /dev/null 2>&1
-displayMsg $? "Failed to install numpy module. Please try again." true
+checkExitCode $? "Failed to install numpy module. Please try again." true
 
 echo -e "${CYAN}> Running data analyzer script ${RESET}"
 PY_FILE="analyze-data.py"
 python $PY_FILE
-displayMsg $? "Failed to run python script. Please install and try again." true
+checkExitCode $? "Failed to run python script. Please install and try again." true
 
 echo -e "${CYAN}> Deactivating python virtual environment ${RESET}"
 deactivate venv > /dev/null 2>&1
-displayMsg $? "Failed to deactivate up python virtual environment. Please try again." true
+checkExitCode $? "Failed to deactivate up python virtual environment. Please try again." true

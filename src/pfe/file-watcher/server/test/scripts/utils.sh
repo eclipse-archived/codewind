@@ -36,11 +36,15 @@ function generateCheAccessToken {
 function checkExitCode() {
 	exit_code=$1
 	error_msg=$2
+    exit=$3
+
 	if [[ $exit_code -eq 0 ]]; then
 		echo -e "${GREEN}✔ Done. ${RESET}\n"
 	else
 		echo -e "${RED}✖ $error_msg  ${RESET}\n"
-		exit 1
+		if [[ $exit == true ]]; then
+            exit 1
+        fi
 	fi
 }
 
