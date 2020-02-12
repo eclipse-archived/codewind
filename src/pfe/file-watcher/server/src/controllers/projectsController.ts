@@ -586,11 +586,9 @@ async function triggerBuild(project: BuildQueueType, changedFiles?: IFileChangeE
 function checkInProgressBuilds(): void {
     lock.acquire("runningBuildsLock", async done => {
         // we must assert here that the running builds queue is always unique
+        // we do this by converting the running build queue into a set and making sure the length matches
         if (buildQueue.length > 0) {
-            logger.assert(runningBuilds.filter((project: BuildQueueType) => {
-                const projectID = project.operation.projectInfo.projectID;
-                return projectID === buildQueue[0].operation.projectInfo.projectID;
-            }).length === 0, "Builds in running queue must be unique");
+            logger.assert(new Set(runningBuilds).size === runningBuilds.length, "Builds in running queue must be unique");
         }
 
         // filter out all projects that are completed and reduce the build in progress by 1 for each such project
