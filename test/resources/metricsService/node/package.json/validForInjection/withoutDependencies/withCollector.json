@@ -7,6 +7,6 @@
         "debug": "node --inspect=0.0.0.0:9229 $npm_package_config_entrypoint"
     },
     "dependencies": {
-        "appmetrics-codewind": "^0.1.0"
+        "appmetrics-codewind": "^0.2.0"
     }
 }
