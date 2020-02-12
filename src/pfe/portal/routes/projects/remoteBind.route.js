@@ -466,7 +466,7 @@ async function bindEnd(req, res) {
     user.uiSocket.emit('projectBind', data);
     
     if (err.code === 'BUILD_FILE_MISSING') {
-      res.status(422).send(data.error);
+      res.status(400).send(data.error);
     } else {
       res.status(500).send(data.error);
     }

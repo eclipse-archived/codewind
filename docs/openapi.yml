@@ -294,9 +294,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Project'
-        422:
+        400:
           description: >
-            Request is well-formed but there is a problem with the project bound
+            Malformed request or missing project build-file
           content:
             application/json:
               schema:

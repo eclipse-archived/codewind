@@ -135,7 +135,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
             fs.removeSync(pathToPackageJson);
         });
 
-        it('returns 422 and fails to bind project to Codewind', async function() {
+        it('returns 400 and fails to bind project to Codewind', async function() {
             this.timeout(testTimeout.med);
 
             const resToBind = await projectService.bindProject({
@@ -145,7 +145,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'nodejs',
                 creationTime: Date.now(),
             });
-            resToBind.should.have.status(422);
+            resToBind.should.have.status(400);
             resToBind.should.satisfyApiSpec;
             resToBind.body.should.deep.equal({
                 name: 'MetricsStatusError',
