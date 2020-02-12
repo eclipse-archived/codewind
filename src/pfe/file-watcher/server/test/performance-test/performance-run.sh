@@ -18,18 +18,20 @@ YELLOW='\e[33m'
 MAGENTA='\e[35m'
 RESET='\033[0m'
 
+source ../scripts/utils.sh
+
 CURR_DIR=$(pwd)
 
 CLEAN_RUN="n"
 POST_CLEAN="n"
 RELEASE_BRANCH="master"
 TEST_ENV="local"
-ITERATIONS=10
+ITERATIONS=3
 CONVERT_ONLY=false
 
 CODEWIND_REPO=git@github.com:eclipse/codewind.git
 RELEASE_DIR="performance-test-codewind"
-USER_DEVFILE=
+USER_DEVFILE=${USER_DEVFILE}
 TEST_PATH="src/pfe/file-watcher/server/test"
 
 function usage {
@@ -38,30 +40,14 @@ function usage {
 Usage: $me: [-<option letter> <option value> | -h]
 Options:
     --clean-run         To perform a clean run. Default: n
-    --devfile           The devfile to set the workspace on kube with. Required if environment is "kube"
     --environment       The test environment. Default: local
     --post-clean        To perform a post clean up. Default: n 
     --release           The release branch to use. Default: master
-    --iterations        Number of iterations to run the performance test. Default: 10
+    --iterations        Number of iterations to run the performance test. Default: 3
     --report-only       Convert data to csv only. Will not run performance test and use existing data json on path. Default: false
     --repo              The upstream repo to use. Default: git@github.com:eclipse/codewind.git
     -h | --help         Display the man page
 EOF
-}
-
-function displayMsg() {
-	exit_code=$1
-	error_msg=$2
-    exit=$3
-
-	if [[ $exit_code -eq 0 ]]; then
-		echo -e "${GREEN}✔ Done. ${RESET}\n"
-	else
-		echo -e "${RED}✖ $error_msg  ${RESET}\n"
-		if [[ $exit == true ]]; then
-            exit 1
-        fi
-	fi
 }
 
 while :; do
@@ -87,9 +73,6 @@ while :; do
         --repo=?*)
         CODEWIND_REPO=${1#*=}
         ;;
-        --devfile=?*)
-        USER_DEVFILE=${1#*=}
-        ;;
         -h|--help)
         usage
         exit
@@ -99,13 +82,17 @@ while :; do
     shift
 done
 
+if [[ "$TEST_ENV" != "local" ] || [ "$TEST_ENV" != "kube" ]]; then
+    displayMsg 1 "Test can only be ran on local or kube environment" true
+fi
+
 # in local we don't need a clean run from the test as it is done as a pre setup for the performance test
 if [ "$CLEAN_RUN" == "y" ] && [ "$TEST_ENV" == "local" ]; then
     CLEAN_RUN="n"
 fi
 
 if [ "$TEST_ENV" == "kube" ] && [ -z "$USER_DEVFILE" ]; then
-    displayMsg 1 "User devfile is a required parameter on kube". true
+    displayMsg 1 "User devfile is a required parameter on kube" true
 fi
 
 export TURBINE_PERFORMANCE_TEST=${RELEASE_BRANCH}
@@ -135,7 +122,7 @@ if [[ $CONVERT_ONLY == false ]]; then
         docker system prune -af
         displayMsg $? "Failed to clean up docker." true
 
-        PERFORMANCE_DATA_DIR=${TARGET_DIR} NAMESPACE=${NAMESPACE} CLUSTER_IP=${CLUSTER_IP} CLUSTER_PORT=${CLUSTER_PORT} CLUSTER_USER=${CLUSTER_USER} CLUSTER_PASSWORD=${CLUSTER_PASSWORD} ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN
+        PERFORMANCE_DATA_DIR=${TARGET_DIR} NAMESPACE=${NAMESPACE} CLUSTER_IP=${CLUSTER_IP} CLUSTER_PORT=${CLUSTER_PORT} CLUSTER_USER=${CLUSTER_USER} CLUSTER_PASSWORD=${CLUSTER_PASSWORD} CLUSTER_PASSWORD=${CLUSTER_PORT} USER_DEVFILE=${USER_DEVFILE} REGISTRY_SECRET_ADDRESS=${REGISTRY_SECRET_ADDRESS} REGISTRY_SECRET_USERNAME=${REGISTRY_SECRET_USERNAME} REGISTRY_SECRET_PASSWORD=${REGISTRY_SECRET_PASSWORD} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} INTERNAL_REGISTRY=${INTERNAL_REGISTRY} ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN
     done
 fi
 
