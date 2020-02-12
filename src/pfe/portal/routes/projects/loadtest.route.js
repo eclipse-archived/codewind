@@ -39,6 +39,8 @@ router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res
     try {
       if ( !project.ports || project.state !== 'open' ) {
         throw new LoadRunError("PROJECT_NOT_OPEN", `For project (${project.projectID})`);
+      } else if ( project.appStatus !== 'started' ) {
+        throw new LoadRunError(LoadRunError.PROJECT_NOT_RUNNING, `For project (${project.projectID})`);
       }
     } catch (err) {
       res.status(503).send(err.info);
