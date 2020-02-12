@@ -107,11 +107,11 @@ describe('Project.js', () => {
             json.should.not.containSubset(obj);
         });
     });
-    describe('checkIfMetricsAvailable()', () => {
+    describe('isMetricsAvailable()', () => {
         describe('Checks if metrics are available for normal projects', () => {
             it('Generic project with no language', async() => {
                 const project = createDefaultProjectAndCheckIsAnObject();
-                const areMetricsAvailable = await project.checkIfMetricsAvailable();
+                const areMetricsAvailable = await project.isMetricsAvailable();
                 areMetricsAvailable.should.be.false;
             });
             it('Checks metrics for Javascript', async() => {
@@ -124,7 +124,7 @@ describe('Project.js', () => {
                 const packageJSONPath = path.join(project.projectPath(), 'package.json');
                 await fs.ensureFile(packageJSONPath);
                 await fs.writeJSON(packageJSONPath, packageJSONContents);
-                const areMetricsAvailable = await project.checkIfMetricsAvailable();
+                const areMetricsAvailable = await project.isMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Node.js', async() => {
@@ -137,7 +137,7 @@ describe('Project.js', () => {
                 const packageJSONPath = path.join(project.projectPath(), 'package.json');
                 await fs.ensureFile(packageJSONPath);
                 await fs.writeJSON(packageJSONPath, packageJSONContents);
-                const areMetricsAvailable = await project.checkIfMetricsAvailable();
+                const areMetricsAvailable = await project.isMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Java', async() => {
@@ -145,7 +145,7 @@ describe('Project.js', () => {
                 const pomXmlPath = path.join(project.projectPath(), 'pom.xml');
                 await fs.ensureFile(pomXmlPath);
                 await fs.writeFile(pomXmlPath, 'javametrics');
-                const areMetricsAvailable = await project.checkIfMetricsAvailable();
+                const areMetricsAvailable = await project.isMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Swift', async() => {
@@ -153,7 +153,7 @@ describe('Project.js', () => {
                 const packageSwiftPath = path.join(project.projectPath(), 'Package.swift');
                 await fs.ensureFile(packageSwiftPath);
                 await fs.writeFile(packageSwiftPath, 'SwiftMetrics.git');
-                const areMetricsAvailable = await project.checkIfMetricsAvailable();
+                const areMetricsAvailable = await project.isMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
         });
@@ -161,25 +161,25 @@ describe('Project.js', () => {
             it('Checks metrics for Appsody: Node.js', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'nodejs', locOnDisk: '/Documents/projectDir/' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                const areMetricsAvailable = await project.checkIfMetricsAvailable();
+                const areMetricsAvailable = await project.isMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Appsody: Java', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'java', locOnDisk: '/Documents/projectDir/' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                const areMetricsAvailable = await project.checkIfMetricsAvailable();
+                const areMetricsAvailable = await project.isMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Appsody: Swift', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'swift', locOnDisk: '/Documents/projectDir/' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                const areMetricsAvailable = await project.checkIfMetricsAvailable();
+                const areMetricsAvailable = await project.isMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
             it('Checks metrics for Appsody: Invalid Language', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'invalid', locOnDisk: '/Documents/projectDir/' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                const areMetricsAvailable = await project.checkIfMetricsAvailable();
+                const areMetricsAvailable = await project.isMetricsAvailable();
                 areMetricsAvailable.should.be.false;
             });
         });

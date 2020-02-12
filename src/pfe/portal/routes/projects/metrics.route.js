@@ -74,8 +74,8 @@ router.get('/api/v1/projects/:id/metrics/status', async function (req, res) {
       res.status(404).send({ message });
       return;
     }
-    const isMetricsAvailable = await project.checkIfMetricsAvailable();
-    res.status(200).send({ metricsAvailable: isMetricsAvailable });
+    const metricsAvailable = await project.isMetricsAvailable();
+    res.status(200).send({ metricsAvailable });
   } catch (err) {
     log.error(err.info || err);
     if (err.code === 'BUILD_FILE_MISSING') {

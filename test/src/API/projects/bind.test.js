@@ -64,7 +64,7 @@ describe('Bind projects tests', () => {
         it('returns 200 for each file successfully uploaded to PFE', async function() {
             this.timeout(testTimeout.med);
 
-            const responses = await projectService.uploadFiles(projectID, pathToLocalProject, 'nodejs');
+            const responses = await projectService.uploadAllFiles(projectID, pathToLocalProject, 'nodejs');
 
             responses.forEach(res => {
                 res.should.have.status(200);
