@@ -24,11 +24,13 @@ const log = new Logger(__filename);
  * @return 500 if internal error
  */
 async function inject(req, res) {
+  let project;
+  let user;
   try {
     const projectID = req.sanitizeParams('id');
     const injectMetrics = req.sanitizeBody('enable');
-    const user = req.cw_user;
-    const project = user.projectList.retrieveProject(projectID);
+    user = req.cw_user;
+    project = user.projectList.retrieveProject(projectID);
     if (!project) {
       const message = `Unable to find project ${projectID}`;
       log.error(message);
@@ -54,13 +56,16 @@ async function inject(req, res) {
     });
 
     res.sendStatus(202);
-
-
-    await syncProjectFilesIntoBuildContainer(project, user);
-
   } catch (err) {
     log.error(err);
     res.status(500).send(err.info || err.message);
+    return;
+  }
+
+  try {
+    await syncProjectFilesIntoBuildContainer(project, user);
+  } catch (err) {
+    log.error(err);
   }
 }
 
