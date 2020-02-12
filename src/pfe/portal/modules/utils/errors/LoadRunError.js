@@ -24,6 +24,7 @@ module.exports.RESULTS_DIR_FAILED = "RESULTS_DIR_FAILED";
 module.exports.RUN_IN_PROGRESS = "RUN_IN_PROGRESS";
 module.exports.NO_RUN_IN_PROGRESS = "NO_RUN_IN_PROGRESS";
 module.exports.CONNECTION_FAILED = "CONNECTION_FAILED";
+module.exports.PROJECT_NOT_RUNNING = "PROJECT_NOT_RUNNING";
 /**
  * Function to construct an error message based on the given error code
  * @param code, the error code to create the message from
@@ -46,6 +47,9 @@ function constructMessage(code, message) {
     break;
   case "CONNECTION_FAILED":
     output = `Load Runner service is not available.`;
+    break;
+  case "PROJECT_NOT_RUNNING":
+    output = `Unable to run load against project. Project is not running.`;
     break;
   default:
     output = `Load run error occurred.`;
