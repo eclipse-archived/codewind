@@ -155,6 +155,83 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
         });
     });
 
+    describe('Java Liberty project with javametrics-dash', function() {
+        const projectName = `test-liberty-project-metrics-java-dash-${Date.now()}`;
+        const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
+        let projectID;
+
+        before('git clone project to disk', async function() {
+            this.timeout(testTimeout.med);
+            await projectService.cloneProject(
+                templateOptions['liberty'].url,
+                pathToLocalProject,
+            );
+        });
+
+        after(async function() {
+            this.timeout(testTimeout.med);
+            await projectService.removeProject(pathToLocalProject, projectID);
+        });
+
+        it('returns 200 and { metricsAvailable: true } when binding project to Codewind', async function() {
+            this.timeout(testTimeout.med);
+
+            const { body: project } = await projectService.bindProject({
+                name: projectName,
+                path: pathToLocalProject,
+                language: 'java',
+                projectType: 'liberty',
+                creationTime: Date.now(),
+            });
+            project.metricsAvailable.should.be.true;
+
+            const res = await getMetricsStatus(project.projectID);
+            res.should.have.status(200);
+            res.body.metricsAvailable.should.be.true;
+
+            // save projectID for cleanup
+            projectID = project.projectID;
+        });
+    });
+
+    describe('Java Open Liberty project without javametrics-dash', function() {
+        const projectName = `test-openliberty-project-metrics-no-java-dash-${Date.now()}`;
+        const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
+        let projectID;
+
+        before('git clone project to disk', async function() {
+            this.timeout(testTimeout.med);
+            await projectService.cloneProject(
+                templateOptions['openliberty'].url,
+                pathToLocalProject,
+            );
+        });
+
+        after(async function() {
+            this.timeout(testTimeout.med);
+            await projectService.removeProject(pathToLocalProject, projectID);
+        });
+
+        it('returns 200 and { metricsAvailable: false } when binding project to Codewind', async function() {
+            this.timeout(testTimeout.med);
+
+            const { body: project } = await projectService.bindProject({
+                name: projectName,
+                path: pathToLocalProject,
+                language: 'java',
+                projectType: 'docker',
+                creationTime: Date.now(),
+            });
+            project.metricsAvailable.should.be.false;
+
+            const res = await getMetricsStatus(project.projectID);
+            res.should.have.status(200);
+            res.body.metricsAvailable.should.be.false;
+
+            // save projectID for cleanup
+            projectID = project.projectID;
+        });
+    });
 });
 
 function getMetricsStatus(projectID) {
