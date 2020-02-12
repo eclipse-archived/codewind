@@ -185,7 +185,6 @@ module.exports = class FileWatcher {
   async handleCapabilitiesUpdated(fwProject) {
     try {
       const projectID = fwProject.projectID;
-      this.user.projectList.retrieveProject(projectID);
       let projectUpdate = {
         projectID: projectID,
         capabilitiesReady: true
