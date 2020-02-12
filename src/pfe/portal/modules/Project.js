@@ -322,8 +322,10 @@ module.exports = class Project {
       throw new ProjectError('LOCK_FAILURE', this.name);
     }
     try {
-      // Fields that shouldn't be persisted are stripped out by toJSON() below.
-      await fs.writeJson(infFile, this, { spaces: '  ' });
+      // Fields that shouldn't be persisted to .inf files are stripped out by filterNonPersistentFields below.
+      // Fields that can't be converted to JSON (because e.g. they contain circular refs) are filtered out by toJSON().
+      // Important: toJSON() works if the object is returned over REST or dumped in a debug message.
+      await fs.writeJson(infFile, this, { spaces: '  ', replacer: Project.filterNonPersistentFields });
     } catch(err) {
       log.error(err);
     } finally {
@@ -334,10 +336,19 @@ module.exports = class Project {
   }
 
   toJSON() {
-    // Strip out fields we don't want to save in the .inf file or log in debug if we print the project object.
+    // Strip out fields we don't want to attempt to turn into JSON.
     // (This is our guard against trying to write circular references.)
-    const { capabilitiesReady, detailedAppStatus, logStreams, loadInProgress, loadConfig, operation, ...filteredProject } = this;
+    const { logStreams, loadInProgress, loadConfig, operation, ...filteredProject } = this;
     return filteredProject;
+  }
+
+  static filterNonPersistentFields(key, value) {
+    // Strip out fields we don't want to save in the .inf file.
+    const nonPersistentFields = ["capabilitiesReady", "detailedAppStatus"];
+    if (nonPersistentFields.includes(key)) {
+      return undefined;
+    }
+    return value;
   }
 
   /**
