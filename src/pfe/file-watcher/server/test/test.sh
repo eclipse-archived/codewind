@@ -14,8 +14,11 @@ CLEAN_RUN="n"
 CLEAN_WORKSPACE="n"
 CWCTL_PROJ="y"
 
-# Set up variables
-source ./scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+INITIAL_DIR=$(pwd)
+
+source $DIR/scripts/utils.sh
+cd $INITIAL_DIR
 
 function usage {
     me=$(basename $0)

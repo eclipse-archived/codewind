@@ -18,7 +18,11 @@ BLUE='\033[0;36m'
 RESET='\033[0m'
 
 # Set up variables
-source ./scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+INITIAL_DIR=$(pwd)
+
+source $DIR/utils.sh
+cd $INITIAL_DIR
 
 # Set up default options value for test
 TEST_TYPE="local"

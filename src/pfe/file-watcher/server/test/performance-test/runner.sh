@@ -1,6 +1,6 @@
 #!/bin/bash
 #*******************************************************************************
-# Copyright (c) 2019 IBM Corporation and others.
+# Copyright (c) 2020 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v2.0
 # which accompanies this distribution, and is available at
@@ -18,60 +18,53 @@ YELLOW='\e[33m'
 MAGENTA='\e[35m'
 RESET='\033[0m'
 
-source ../scripts/utils.sh
-
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 CURR_DIR=$(pwd)
 
+source $DIR/../scripts/utils.sh
+cd $CURR_DIR
+
+TEST_ENV="local"
 CLEAN_RUN="n"
 POST_CLEAN="n"
-RELEASE_BRANCH="master"
-TEST_ENV="local"
+CREATE_PROJECT_FLAG="y"
 ITERATIONS=3
 CONVERT_ONLY=false
-
-CODEWIND_REPO=git@github.com:eclipse/codewind.git
-RELEASE_DIR="performance-test-codewind"
-USER_DEVFILE=${USER_DEVFILE}
-TEST_PATH="src/pfe/file-watcher/server/test"
 
 function usage {
     me=$(basename $0)
     cat <<EOF
 Usage: $me: [-<option letter> <option value> | -h]
 Options:
-    --clean-run         To perform a clean run. Default: n
-    --environment       The test environment. Default: local
-    --post-clean        To perform a post clean up. Default: n 
-    --release           The release branch to use. Default: master
-    --iterations        Number of iterations to run the performance test. Default: 3
+    --environment       The test environment to run in - default: local
+    --clean-run         Flag to enable a clean test run - default: n
+    --post-clean        Flag to perform a post clean up - default: n
+    --create-projects   Flag to perform a post clean up - default: y
+    --iterations        Number of iterations to evaluate the performance on - default: 3
     --report-only       Convert data to csv only. Will not run performance test and use existing data json on path. Default: false
-    --repo              The upstream repo to use. Default: git@github.com:eclipse/codewind.git
     -h | --help         Display the man page
 EOF
 }
 
 while :; do
     case $1 in
+        --environment=?*)
+        TEST_ENV=${1#*=}
+        ;;
         --clean-run=?*)
         CLEAN_RUN=${1#*=}
         ;;
         --post-clean=?*)
         POST_CLEAN=${1#*=}
         ;;
-        --release=?*)
-        RELEASE_BRANCH=${1#*=}
-        ;;
-        --environment=?*)
-        TEST_ENV=${1#*=}
+        --create-projects=?*)
+        CREATE_PROJECT_FLAG=${1#*=}
         ;;
         --iterations=?*)
         ITERATIONS=${1#*=}
         ;;
         --report-only)
         CONVERT_ONLY=true
-        ;;
-        --repo=?*)
-        CODEWIND_REPO=${1#*=}
         ;;
         -h|--help)
         usage
@@ -82,26 +75,26 @@ while :; do
     shift
 done
 
-if [ "$TEST_ENV" != "local" ] && [ "$TEST_ENV" != "kube" ]; then
-    checkExitCode 1 "Test can only be ran on local or kube environment" true
+if [ -z $DATE_NOW ]; then
+    export DATE_NOW=$(date +"%d-%m-%Y")
 fi
-
-# in local we don't need a clean run from the test as it is done as a pre setup for the performance test
-if [ "$CLEAN_RUN" == "y" ] && [ "$TEST_ENV" == "local" ]; then
-    CLEAN_RUN="n"
+if [ -z $TIME_NOW ]; then
+    export TIME_NOW=$(date +"%H.%M.%S")
 fi
+LOGS_DATA_DIR=~/performance_test_logs/$TEST_ENV/$TURBINE_PERFORMANCE_TEST/$DATE_NOW/$TIME_NOW/
+mkdir -p $LOGS_DATA_DIR
 
-export TURBINE_PERFORMANCE_TEST=${RELEASE_BRANCH}
-export TEST_TYPE=${TEST_ENV}
+TARGET_DIR="$CURR_DIR/data/$TEST_ENV/$TURBINE_PERFORMANCE_TEST"
+export TEST_TYPE=$TEST_ENV
 
 if [[ $CONVERT_ONLY == false ]]; then
-    echo -e "${CYAN}> Cloning release branch ${RESET}"
-    rm -rf $RELEASE_DIR
-    git clone $CODEWIND_REPO -b "$RELEASE_BRANCH" $RELEASE_DIR
-    checkExitCode $? "Failed to clone from release branch." true
+    if [ "$TEST_ENV" != "local" ] && [ "$TEST_ENV" != "kube" ]; then
+        checkExitCode 1 "Test can only be ran on local or kube environment" true
+    fi
+
+    echo -e "${CYAN}> This performance run is for $TEST_ENV test environment and will run for $ITERATIONS iteration(s) ${RESET}"
 
     echo -e "${CYAN}> Creating data directory ${RESET}"
-    TARGET_DIR="$CURR_DIR/data/$TEST_ENV/$RELEASE_BRANCH"
     rm -rf $TARGET_DIR
     mkdir -p $TARGET_DIR
     checkExitCode $? "Failed to create data directory." true
@@ -111,15 +104,23 @@ if [[ $CONVERT_ONLY == false ]]; then
     checkExitCode $? "Failed to switch release directory." true
 
     for run in $(seq 1 $ITERATIONS);
-    do
-        echo -e "${CYAN}> Iteration: $run ${RESET}"
-
-        echo -e "${CYAN}> Cleaning up docker ${RESET}"
-        docker system prune -af
-        checkExitCode $? "Failed to clean up docker." true
-
-        PERFORMANCE_DATA_DIR=${TARGET_DIR} NAMESPACE=${NAMESPACE} CLUSTER_IP=${CLUSTER_IP} CLUSTER_PORT=${CLUSTER_PORT} CLUSTER_USER=${CLUSTER_USER} CLUSTER_PASSWORD=${CLUSTER_PASSWORD} CLUSTER_PASSWORD=${CLUSTER_PORT} USER_DEVFILE=${USER_DEVFILE} REGISTRY_SECRET_ADDRESS=${REGISTRY_SECRET_ADDRESS} REGISTRY_SECRET_USERNAME=${REGISTRY_SECRET_USERNAME} REGISTRY_SECRET_PASSWORD=${REGISTRY_SECRET_PASSWORD} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} INTERNAL_REGISTRY=${INTERNAL_REGISTRY} ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN
-    done
+        do
+            echo -e "${CYAN}> Iteration: $run ${RESET}"
+            # for the first iteration, we only do a clean run and no post clean
+            if [[ $run -eq 1 ]]; then
+                CLEAN_RUN="y"
+                POST_CLEAN="n"
+            elif [[ $run -eq $ITERATIONS ]]; then
+            # for the last iteration, we only do a post clean and no clean run
+                CLEAN_RUN="n"
+                POST_CLEAN="y"
+            else
+            # for all other iteration, we do no clean run or post clean
+                CLEAN_RUN="n"
+                POST_CLEAN="n"
+            fi
+            USE_PERFORMANCE_CWCTL=${USE_PERFORMANCE_CWCTL} PERFORMANCE_DATA_DIR=${TARGET_DIR} NAMESPACE=${NAMESPACE} CLUSTER_IP=${CLUSTER_IP} CLUSTER_PORT=${CLUSTER_PORT} CLUSTER_USER=${CLUSTER_USER} CLUSTER_PASSWORD=${CLUSTER_PASSWORD} CLUSTER_PORT=${CLUSTER_PORT} USER_DEVFILE=${USER_DEVFILE} REGISTRY_SECRET_ADDRESS=${REGISTRY_SECRET_ADDRESS} REGISTRY_SECRET_USERNAME=${REGISTRY_SECRET_USERNAME} REGISTRY_SECRET_PASSWORD=${REGISTRY_SECRET_PASSWORD} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} INTERNAL_REGISTRY=${INTERNAL_REGISTRY} ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN -o $CREATE_PROJECT_FLAG |& tee "$LOGS_DATA_DIR/iteration-$run.log"
+        done
 fi
 
 cd $CURR_DIR
@@ -155,8 +156,16 @@ checkExitCode $? "Failed to install numpy module. Please try again." true
 echo -e "${CYAN}> Running data analyzer script ${RESET}"
 PY_FILE="analyze-data.py"
 python $PY_FILE
-checkExitCode $? "Failed to run python script. Please install and try again." true
+checkExitCode $? "Failed to run python script. Data is saved under codewind clone. Please fix the issue and try again with --report-only flag to generate the report."
 
 echo -e "${CYAN}> Deactivating python virtual environment ${RESET}"
 deactivate venv > /dev/null 2>&1
 checkExitCode $? "Failed to deactivate up python virtual environment. Please try again." true
+
+echo -e "${BLUE}Copying over performance data from $TARGET_DIR to $LOGS_DATA_DIR  ... ${RESET}"
+cp -r $TARGET_DIR/* $LOGS_DATA_DIR
+
+if [[ ($? -ne 0) ]]; then
+    echo -e "${RED}Failed to copy data. Please check the source directory for data in $TARGET_DIR ${RESET}\n"
+    exit 1
+fi

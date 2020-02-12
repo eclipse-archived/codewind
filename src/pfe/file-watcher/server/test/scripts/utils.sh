@@ -6,9 +6,14 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
-cd ../../../../../
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+INITIAL_DIR=$(pwd)
+
+cd $DIR
+cd ../../../../../../
+
 CW_DIR=$(pwd)
-cd -
+cd $INITIAL_DIR
 
 export PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
 export PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects"

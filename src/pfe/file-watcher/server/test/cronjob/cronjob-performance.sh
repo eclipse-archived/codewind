@@ -85,31 +85,32 @@ while :; do
     shift
 done
 
-
 rm -rf $CW_DIR \
 && git clone $UPSTREAM_REPO -b "$UPSTREAM_BRANCH" \
 && cd $CW_TEST_DIR
 
-DATE_NOW=$(date +"%d-%m-%Y")
-TIME_NOW=$(date +"%H.%M.%S")
-PERFORMANCE_RUN_LOG="performance-run.log"
-PERFORMANCE_RUN_DIR=~/performance_test_logs/$TEST_ENV/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW/
+export DATE_NOW=$(date +"%d-%m-%Y")
+export TIME_NOW=$(date +"%H.%M.%S")
+PERFORMANCE_RUN_LOG="performance-run-cron.log"
 
-mkdir -p $PERFORMANCE_RUN_DIR
+TEE_FILE_ARG=""
+if [[ $TEST_ENV == "both" ]]; then
+    for testEnv in "local" "kube";
+        do
+            FOLDER_ARG=~/performance_test_logs/$testEnv/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
+            mkdir -p $FOLDER_ARG
+            TEE_FILE_ARG="$TEE_FILE_ARG $FOLDER_ARG/$PERFORMANCE_RUN_LOG"
+        done
+else
+    FOLDER_ARG=~/performance_test_logs/$TEST_ENV/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
+    mkdir -p $FOLDER_ARG
+    TEE_FILE_ARG="$TEE_FILE_ARG $FOLDER_ARG/$PERFORMANCE_RUN_LOG"
+fi
 
 echo -e "${BLUE}Kicking off perfomance test run for $TEST_ENV test ... ${RESET}"
-./performance-run.sh --environment=$TEST_ENV --repo=$RELEASE_REPO --release=$RELEASE_BRANCH --clean-run=$CLEAN_RUN --post-clean=$POST_CLEANUP --iterations=${ITERATIONS} |& tee "$PERFORMANCE_RUN_DIR/$PERFORMANCE_RUN_LOG"
+./test.sh --environment=$TEST_ENV --repo=$RELEASE_REPO --release=$RELEASE_BRANCH --clean-run=$CLEAN_RUN --post-clean=$POST_CLEANUP --iterations=${ITERATIONS} |& tee $TEE_FILE_ARG
 
 if [[ ($? -ne 0) ]]; then
     echo -e "${RED}Cronjob has failed. ${RESET}\n"
-    exit 1
-fi
-
-DATA_SRC_DIR="$PERFORMANCE_DATA_DIR/$TEST_ENV/$RELEASE_BRANCH"
-echo -e "${BLUE}Copying over performance data from $DATA_SRC_DIR to $PERFORMANCE_RUN_DIR  ... ${RESET}"
-cp -r $DATA_SRC_DIR/* $PERFORMANCE_RUN_DIR
-
-if [[ ($? -ne 0) ]]; then
-    echo -e "${RED}Failed to copy data. Please check the source directory for data in $PERFORMANCE_DATA_DIR/$RELEASE_BRANCH ${RESET}\n"
     exit 1
 fi

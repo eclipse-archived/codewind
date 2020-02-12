@@ -10,17 +10,23 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
-source ./scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+INITIAL_DIR=$(pwd)
+
+source $DIR/utils.sh
+cd $INITIAL_DIR
 
 function buildPFE() {
-    echo -e "${BLUE}>> Building PFE on local ... ${RESET}"
+    echo -e "${BLUE}>> Building PFE on local ... $CW_DIR ${RESET}"
     cd $CW_DIR
+
+    $CW_DIR/stop.sh
+    checkExitCode $? "Codewind failed to stop." true
+
     $CW_DIR/run.sh
-    cd -
-    if [[ $? -ne 0 ]]; then
-        echo -e "${RED}Codewind setup has failed. ${RESET}\n"
-        exit 1
-    fi
+    checkExitCode $? "Codewind failed to start." true
+
+    cd $INITIAL_DIR
 }
 
 function downloadCwctl() {
@@ -33,12 +39,17 @@ function downloadCwctl() {
         extension="linux"
     fi
     echo "Extension is $extension"
-    if [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
+    if [ ! -z $USE_PERFORMANCE_CWCTL ]; then
         CWCTL_INSTALL_TARGET="$TURBINE_PERFORMANCE_TEST"
     else
         CWCTL_INSTALL_TARGET="master"
     fi
-    curl -X GET http://download.eclipse.org/codewind/codewind-installer/$CWCTL_INSTALL_TARGET/latest/cwctl-$extension --output $EXECUTABLE_NAME
+    if [ ! -z $EXECUTABLE_PATH ]; then
+        curl -X GET http://download.eclipse.org/codewind/codewind-installer/$CWCTL_INSTALL_TARGET/latest/cwctl-$extension --output $EXECUTABLE_PATH/$EXECUTABLE_NAME
+    else
+        curl -X GET http://download.eclipse.org/codewind/codewind-installer/$CWCTL_INSTALL_TARGET/latest/cwctl-$extension --output $EXECUTABLE_NAME
+    fi
+    
     checkExitCode $? "Failed to download latest installer."
 
     echo -e "${BLUE}>> Giving executable permission to installer ... ${RESET}"

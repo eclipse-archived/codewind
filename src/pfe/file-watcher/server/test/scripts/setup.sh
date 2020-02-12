@@ -7,7 +7,11 @@ BLUE='\033[0;36m'
 RESET='\033[0m'
 
 # Set up variables
-source ./scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+INITIAL_DIR=$(pwd)
+
+source $DIR/utils.sh
+cd $INITIAL_DIR
 
 function usage {
     me=$(basename $0)
@@ -27,7 +31,7 @@ function install {
     if [ $TEST_TYPE == "local" ]; then
         cd $CW_DIR
         $CW_DIR/run.sh
-        cd -
+        cd $INITIAL_DIR
         if [[ $? -ne 0 ]]; then
             echo -e "${RED}Codewind setup has failed. ${RESET}\n"
             exit 1
@@ -79,6 +83,8 @@ function uninstall {
     elif [ $TEST_TYPE == "kube" ]; then
         # Generate the Che Access Token for Che User Authentication
         generateCheAccessToken
+
+        echo "CHE ACCESS TOKEN IS: $CHE_ACCESS_TOKEN"
 
         # Get the Codewind Workspace ID
         CW_POD="$( kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 )"
