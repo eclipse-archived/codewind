@@ -162,6 +162,9 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
             // changedFilesLock release
         }, {});
 
+        // Waits for all chunks before triggering a build. Once it receives a new chunk, it will reset the timer.
+        // If all chunks have been received, triggers the build immediately.
+        // The timer waits for expected incoming chunks, if no new chunks received for this project within the timeout, an update build is triggerred.
         await lock.acquire(["chunkRemainingLock", "timerLock", "changedFilesLock"], async done => {
             let newChunkRemaining;
             if (chunk_total == 1) {
@@ -252,6 +255,7 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                         changedFilesMap.delete(projectID);
                         logger.logProjectTrace("Removing project " + projectID + " from changedFilesMap.", projectID);
                     }
+                    // A build getting triggerred. Delete the project from the timerMap
                     timerMap.delete(projectID);
                     chunkRemainingMap.delete(projectID);
                     done();
@@ -259,8 +263,9 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                 }
             }
 
+            // Set timer, if no more chunks received within timeout, assume incoming chunks are lost, proceed the build
             const timer = setTimeout(async () => {
-                logger.logProjectInfo("Timeout for waiting incomming chunks has been reached. ", projectID);
+                logger.logProjectInfo("Timeout for waiting incoming chunks has been reached. ", projectID);
                 try {
                     if (projectInfo.autoBuildEnabled) {
                         logger.logProjectInfo("Auto build is enabled, build proceeding...", projectID);
@@ -286,12 +291,14 @@ export async function updateProjectForNewChange(projectID: string, timestamp: nu
                         changedFilesMap.delete(projectID);
                         logger.logProjectTrace("Removing project " + projectID + " from changedFilesMap.", projectID);
                     }
+                    // A build getting triggerred. Delete the project from the timerMap
                     timerMap.delete(projectID);
                     chunkRemainingMap.delete(projectID);
                 } catch (err) {
                     logger.logProjectError("Failed to set timeout for project update.", projectID);
                 }
             }, timeout);
+            // New chunk received, no build getting triggerred. Reset timer
             timerMap.set(projectID, timer);
             done();
         }, () => {
