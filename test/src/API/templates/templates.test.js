@@ -12,6 +12,7 @@
 const chai = require('chai');
 const chaiResValidator = require('chai-openapi-response-validator');
 const chaiSubset = require('chai-subset');
+const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 
 const {
     defaultCodewindTemplates,
@@ -31,6 +32,8 @@ const { pathToApiSpec, testTimeout } = require('../../../config');
 
 chai.should();
 chai.use(chaiSubset);
+chai.use(deepEqualInAnyOrder);
+
 chai.use(chaiResValidator(pathToApiSpec));
 
 describe('Template API tests', function() {
@@ -168,7 +171,7 @@ describe('Template API tests', function() {
     describe('DELETE /api/v1/templates/repositories', function() {
         it('DELETE should try to remove a template repository that doesn\'t exist', async function() {
             this.timeout(testTimeout.short);
-            const res = await deleteTemplateRepo('http://something.com/index.json');            
+            const res = await deleteTemplateRepo('http://something.com/index.json');
             res.should.have.status(404);
         });
     });
@@ -187,7 +190,7 @@ describe('Template API tests', function() {
             const { body: templates } = await getTemplates();
             originalTemplates = templates;
             originalNumTemplates = templates.length;
-            
+
         });
         it('DELETE /api/v1/templates should remove a template repository', async function() {
             this.timeout(testTimeout.short);
@@ -214,7 +217,7 @@ describe('Template API tests', function() {
             this.timeout(testTimeout.short);
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.deep.equal(originalTemplates);
+            res.body.should.deep.equalInAnyOrder(originalTemplates);
             res.body.length.should.equal(originalNumTemplates);
         });
     });
