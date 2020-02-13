@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #*******************************************************************************
 # Copyright (c) 2019 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
@@ -118,7 +118,7 @@ elif [[ "$COMMAND" == "isActive" ]]; then
                     exit 0
                 fi
             fi
-            (( TIMEOUT++ ))
+            TIMEOUT=`expr "$TIMEOUT" + 1`
             sleep 1
         done
         echo "Could not find a running node/nodemon process. Try restarting the processes by toggling the auto build preference."
