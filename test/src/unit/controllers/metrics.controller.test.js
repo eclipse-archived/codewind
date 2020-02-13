@@ -71,7 +71,7 @@ describe('metrics.controller.js', () => {
             res.status.should.be.calledOnceWith(500);
             res.send.args[0][0].should.equal('Injection of metrics collector is not supported for projects of type \'unsupportedProjectType\'');
         });
-        it('returns 500 and does not update the project.inf if our server errors while removing metrics collector from project', async() => {
+        it('returns 202 and does not respond twice if our server errors while syncing project files into build container', async() => {
             const request = {
                 sanitizeParams: () => 'goodProjectID',
                 sanitizeBody: () => false,
@@ -79,20 +79,31 @@ describe('metrics.controller.js', () => {
                     projectList: {
                         retrieveProject: () => ({
                             workspace: 'test',
-                            directory: 'projectDir',
-                            projectType: 'unsupportedProjectType',
+                            directory: 'projectDir', 
+                            projectType: 'nodejs',
                         }),
-                        updateProject: () => { throw new Error('we should not update the project.inf'); },
+                        updateProject: () => {},
                     },
                 },
             };
             const req = mockReq(request);
             const res = mockRes();
+            const mockedFunctions = {
+                metricsService: {
+                    injectMetricsCollectorIntoProject: () => {},
+                    removeMetricsCollectorFromProject: () => {},
+                },
+                syncProjectFilesIntoBuildContainer: () => { 
+                    throw new Error('we should not respond with 500 after this error'); 
+                },
+            };
 
-            await metricsController.inject(req, res);
+            await metricsController.__with__(mockedFunctions)(
+                () => metricsController.inject(req, res)
+            );
 
-            res.status.should.be.calledOnceWith(500);
-            res.send.args[0][0].should.equal('Injection of metrics collector is not supported for projects of type \'unsupportedProjectType\'');
+            res.sendStatus.should.be.calledOnceWith(202);
+            res.status.should.not.be.calledWith(500);
         });
         it('returns 202 and injects metrics collector into project build container if we provide a good request', async() => {
             const request = {
