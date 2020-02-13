@@ -613,18 +613,14 @@ function checkInProgressBuilds(): void {
 async function emitProjectRanks(): Promise<void> {
     logger.logTrace("Emitting project ranks");
     await lock.acquire("buildQueueLock", async done => {
-        // convert the build queue set into an inplace array for project rank emition that relies on the element index
-        // sets are not great for storing elements in any order, so this is required for the project ranks which relies on position
-        const buildQueueArray = [...buildQueue];
-        buildQueueArray.forEach( async (project, index) => {
-            if (project) {
-                const rank = index + 1;
-                const length = buildQueueArray.length;
-                const rankStr = rank + "/" + length;
-                logger.logProjectTrace("Setting rank for projectID " + project.operation.projectInfo.projectID + ": " + rankStr, project.operation.projectInfo.projectID);
-                await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.queued, BUILD_KEY, undefined, undefined, await localeTrans.getTranslation(BUILD_KEY, { rank: rankStr.toString() }));
-            }
-        });
+        const buildQueueIterator = buildQueue.values();
+        const buildQueueSize = buildQueue.size;
+        for (let rank = 1; rank <= buildQueueSize; rank++) {
+            const project: BuildQueueType = buildQueueIterator.next().value;
+            const rankStr = `${rank}/${buildQueueSize}`;
+            logger.logProjectTrace("Setting rank for projectID " + project.operation.projectInfo.projectID + ": " + rankStr, project.operation.projectInfo.projectID);
+            await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.queued, BUILD_KEY, undefined, undefined, await localeTrans.getTranslation(BUILD_KEY, { rank: rankStr.toString() }));
+        }
         done();
     }, () => {
             // buildQueueLock release
