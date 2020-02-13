@@ -185,14 +185,17 @@ paths:
     post:
       summary: Restart a project
       description: >
-        There are 3 start modes ('run', 'debug', and 'debugNoInit'). 3 project types that can be restarted.
+        There are 3 start modes ('run', 'debug', and 'debugNoInit').
+        3 project types can be restarted.
+
         Microprofile can start in run or debug mode.
         If restarted in debug mode, it will hang in the starting state until debugger attaches.
+
         Spring can start in run, debug or debugNoInit modes.
         If restarted in debug mode, it will hang in the starting state until debugger attaches.
         To start normally but allow a debugger to connect later use debugNoInit.
-        Node can start in run, debug or debugNoInit modes.
-        Both debug modes are treated equally.
+
+        Node can start in run or debugNoInit modes.
       parameters:
       - name: id
         in: path
@@ -216,8 +219,18 @@ paths:
           description: Successfully initiated restart
         400:
           description: Invalid request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/CodewindError'
+                  - type: string
         404:
-          $ref: '#/components/responses/ProjectNotFound'
+          description: Project Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MsgObject'
         500:
           description: Internal error
 

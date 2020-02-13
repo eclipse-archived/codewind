@@ -230,23 +230,26 @@ async function removeProject(pathToProjectDir, projectID){
  *
  * @param {String} projectID
  * @param {String} [startMode] "run", "debug", and "debugNoInit" are permitted startModes
- * @param {number} [expectedResStatus] default 202
+ * @param {number} [expectedResStatus] e.g. 202
  * @param {boolean} [awaitSocketConfirmation] false by default, so won't wait for projectStart. Set to true to make it wait until the project is starting
  */
 function restartProject(
     projectID,
-    startMode = 'run',
-    expectedResStatus = 202,
+    startMode,
+    expectedResStatus,
     awaitSocketConfirmation = false
 ) {
-    if (typeof projectID !== 'string') throw new Error(`'${projectID}' should be a string`);
+    if (typeof projectID !== 'string') {
+        throw new Error(`'${projectID}' should be a string`);
+    }
     const req = () => reqService.chai
         .post(`/api/v1/projects/${projectID}/restart`)
         .set('Cookie', ADMIN_COOKIE)
         .send({ startMode });
-    return awaitSocketConfirmation
+    const res = awaitSocketConfirmation
         ? reqService.makeReqAndAwaitSocketMsg(req, expectedResStatus, { projectID, msgType: 'projectStarting' })
         : reqService.makeReq(req, expectedResStatus);
+    return res;
 }
 
 async function getProjects() {
