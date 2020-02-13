@@ -423,6 +423,10 @@ paths:
                 $ref: '#/components/schemas/CodewindError'
         503:
           description: Project is not running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodewindError'
 
   /api/v1/projects/{id}/loadtest/cancel:
     post:
@@ -449,7 +453,7 @@ paths:
           content:
             text/html:
               schema:
-                type: string
+                $ref: '#/components/schemas/CodewindError'
         500:
           description: Internal error
 
