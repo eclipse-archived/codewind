@@ -1220,13 +1220,20 @@ paths:
                 - level
               properties:
                 level:
-                  type: string
-                  enum: ['trace', 'debug', 'info', 'warn', 'error']
+                  $ref: '#/components/schemas/PfeLogLevel'
       responses:
         200:
           description: Successful
+          content:
+            text/html:
+              schema:
+                type: string
         400:
           description: Bad request
+          content:
+            text/html:
+              schema:
+                type: string
         500:
           description: Internal Error
     get:
@@ -1238,18 +1245,19 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - currentLevel
+                  - defaultLevel
+                  - allLevels
                 properties:
                   currentLevel:
-                    type: string
-                    example: 'debug'
+                    $ref: '#/components/schemas/PfeLogLevel'
                   defaultLevel:
-                    type: string
-                    example: 'info'
+                    $ref: '#/components/schemas/PfeLogLevel'
                   allLevels:
                     type: array
                     items:
-                      type: string
-                      example: ['trace', 'debug', 'info', 'warn', 'error']
+                      $ref: '#/components/schemas/PfeLogLevel'
         500:
           description: Internal Error
 
@@ -2142,6 +2150,9 @@ components:
           type: string
         message:
           type: string
+    PfeLogLevel:
+      type: string
+      enum: ['trace', 'debug', 'info', 'warn', 'error']
 
   responses:
     400:
