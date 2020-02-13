@@ -46,7 +46,7 @@ pipeline {
                             exit 1
                         fi
 
-                        # Run eslint on portal tests
+                        # Run  eslint on portal tests
                         cd $DIR/test
                         npm install
                         if [ $? -ne 0 ]; then
