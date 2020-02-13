@@ -700,10 +700,10 @@ export async function deleteProject(projectID: string): Promise<IDeleteProjectSu
 
         await lock.acquire("runningBuildsLock", async done => {
             // remove the project from in-progress queue only if the project deleted was in the in-progress build
-            runningBuilds.forEach((buildQueueItem: BuildQueueType) => {
-                if (buildQueueItem.operation.projectInfo.projectID === projectID) {
+            runningBuilds.forEach((runningQueueItem: BuildQueueType) => {
+                if (runningQueueItem.operation.projectInfo.projectID === projectID) {
                     logger.logProjectInfo("Removing " + projectID + " from running builds due to a delete request", projectID, projectName);
-                    runningBuilds.delete(buildQueueItem);
+                    runningBuilds.delete(runningQueueItem);
                 }
             });
             done();
