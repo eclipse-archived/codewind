@@ -11,6 +11,7 @@
 import { expect } from "chai";
 import * as path from "path";
 import * as fs from "fs";
+import ms from "ms";
 
 import * as workspaceSettings from "../../../../server/src/utils/workspaceSettings";
 import * as constants from "../../../../server/src/projects/constants";
@@ -80,7 +81,7 @@ export function workspaceSettingsTestModule(): void {
                 } else {
                     expect(actualResult).to.deep.equal(expectedResult);
                 }
-            });
+            }).timeout(ms("5s"));
         }
     });
 
