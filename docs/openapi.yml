@@ -307,6 +307,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Project'
+        400:
+          description: >
+            Malformed request or missing project build-file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodewindError'
         404:
           $ref: '#/components/responses/ProjectNotFound'
         500:

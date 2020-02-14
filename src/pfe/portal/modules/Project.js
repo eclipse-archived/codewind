@@ -202,17 +202,13 @@ module.exports = class Project {
     throw new Error(`unknown metricsDashHost: ${metricsDashHost}`);
   }
 
-  async checkIfMetricsAvailable() {
-    let isMetricsAvailable;
+  async isMetricsAvailable() {
     // hardcoding a return of true for appsody projects until we have a better
     // way of detecting appsody has the dashboard dependency
     if (this.projectType === "appsodyExtension" && (this.language === 'nodejs' || this.language === 'java' || this.language === 'swift')) {
-      isMetricsAvailable = true;
-    } else {
-      isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath(false), this.language);
-    }
-    this.metricsAvailable = isMetricsAvailable;
-    await this.writeInformationFile();
+      return true;
+    } 
+    const isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath(false), this.language);
     return isMetricsAvailable;
   }
 

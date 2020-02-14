@@ -254,8 +254,6 @@ async function uploadEnd(req, res) {
       await deletePathsInArray(pathToProj, filesToDelete);
     }
 
-    await project.checkIfMetricsAvailable();
-
     res.sendStatus(200);
     
   } catch (err) {
@@ -287,7 +285,8 @@ async function uploadEnd(req, res) {
 
     let updatedProject = {
       projectID,
-      creationTime: timeStamp
+      creationTime: timeStamp,
+      metricsAvailable: await project.isMetricsAvailable(),
     }
     await user.projectList.updateProject(updatedProject);
 
@@ -442,19 +441,20 @@ async function bindEnd(req, res) {
     log.info(`Total time to bind project ${project.name} is ${totalbindtime} seconds`);
     timersyncstart = 0;
 
-    await project.checkIfMetricsAvailable();
-
     let updatedProject = {
       projectID,
       state: Project.STATES.open,
-      startMode: 'run' // always use 'run' mode for new or recently re-opened projects
+      startMode: 'run', // always use 'run' mode for new or recently re-opened projects
+      metricsAvailable: await project.isMetricsAvailable(),
     }
     user.uiSocket.emit('projectStatusChanged', updatedProject);
     await user.projectList.updateProject(updatedProject);
     await user.buildAndRunProject(project);
+
     res.status(200).send(project);
     user.uiSocket.emit('projectBind', { status: 'success', ...project });
     log.info(`Successfully created project - name: ${project.name}, ID: ${project.projectID}`);
+
   } catch (err) {
     log.error(`Project creation failed for project ${project.name}. Error: ${util.inspect(err)}`);
     const data = {
@@ -464,7 +464,13 @@ async function bindEnd(req, res) {
       error: err.info || err
     }
     user.uiSocket.emit('projectBind', data);
-    res.status(500).send(data.error);
+    
+    if (err.code === 'BUILD_FILE_MISSING') {
+      res.status(400).send(data.error);
+    } else {
+      res.status(500).send(data.error);
+    }
+    await user.deleteProjectFiles(project);
   }
 }
 

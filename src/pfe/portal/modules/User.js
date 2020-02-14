@@ -343,12 +343,6 @@ module.exports = class User {
   async createProject(projectJson) {
     let project = new Project(projectJson, projectJson.workspace);
     this.projectList.addProject(project);
-    // If checkIfMetricsAvailable errors, it should not break project creation
-    // try {
-    //   await project.checkIfMetricsAvailable();
-    // } catch (err) {
-    //   log.error(err);
-    // }
     await project.writeInformationFile();
     return project;
   }
@@ -545,8 +539,9 @@ module.exports = class User {
     try {
       // Remove project meta inf
       await fs.unlink(`${this.directories.workspace}.projects/${project.projectID}.inf`);
-      log.info(`Removing project directory at ${project.location}`);
-      await cwUtils.forceRemove(project.location);
+      const projectPath = project.projectPath();
+      log.info(`Removing project directory at ${projectPath}`);
+      await cwUtils.forceRemove(projectPath);
     } catch (err) {
       // Make sure both these operations complete, we will throw an error later on if
       // the files failed to delete.

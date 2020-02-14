@@ -27,6 +27,48 @@ const SocketService = require('./socket.service');
 chai.should();
 const sleep = promisify(setTimeout);
 
+// These are for the nodejs template at https://github.com/codewind-resources/nodeExpressTemplate
+const defaultNodeProjectFileList = [
+    '.cw-settings',
+    '.dockerignore',
+    '.gitignore',
+    'Dockerfile',
+    'Dockerfile-tools',
+    'chart/node/Chart.yaml',
+    'chart/node/templates/basedeployment.yaml',
+    'chart/node/templates/deployment.yaml',
+    'chart/node/templates/hpa.yaml',
+    'chart/node/templates/istio.yaml',
+    'chart/node/templates/service.yaml',
+    'chart/node/values.yaml',
+    'cli-config.yml',
+    'images/header-logo.svg',
+    'nodemon.json',
+    'package.json',
+    'public/404.html',
+    'public/500.html',
+    'public/index.html',
+    'server/config/local.json',
+    'server/routers/codewind.js',
+    'server/routers/health.js',
+    'server/routers/index.js',
+    'server/routers/public.js',
+    'server/server.js',
+    'test/test-demo.js',
+    'test/test-server.js',
+];
+const defaultNodeProjectDirList = [
+    'chart',
+    'chart/node',
+    'chart/node/templates',
+    'public',
+    'server',
+    'server/config',
+    'server/routers',
+    'test',
+    'images',
+];
+
 /**
  * Clone, bind and build one of our template projects
  */
@@ -58,9 +100,36 @@ async function bindProject(options) {
     const resFromBindStart = await bindStart(options);
     const { projectID } = resFromBindStart.body;
     const { path, projectType } = options;
-    await uploadFiles(projectID, path, projectType);
+    await uploadAllFiles(projectID, path, projectType);
     const resFromBindEnd = await bindEnd(projectID);
     return resFromBindEnd;
+}
+
+async function syncFiles(
+    projectID,
+    pathToLocalProject,
+    pathsFromDirToModifiedFiles,
+    fileList,
+    directoryList,
+) {
+    const responsesToUploadFile = await uploadFiles(
+        projectID,
+        pathToLocalProject,
+        pathsFromDirToModifiedFiles,
+    );
+     
+    responsesToUploadFile.forEach(res => {
+        res.should.have.status(200);
+    });
+    
+    const options = {
+        fileList,
+        directoryList,
+        modifiedList: pathsFromDirToModifiedFiles,
+        timeStamp: Date.now(),
+    };
+    const resToUploadEnd = await uploadEnd(projectID, options);
+    return resToUploadEnd;
 }
 
 function recursivelyGetAllPaths(inputPath) {
@@ -93,8 +162,12 @@ async function uploadEnd(projectID, options) {
     return res;
 };
 
-async function uploadFiles(projectID, pathToDirToUpload, projectType) {
+function uploadAllFiles(projectID, pathToDirToUpload, projectType) {
     const relativeFilepathsToUpload = getRelativeFilepathsToUpload(pathToDirToUpload, projectType);
+    return uploadFiles(projectID, pathToDirToUpload, relativeFilepathsToUpload);
+}
+
+async function uploadFiles(projectID, pathToDirToUpload, relativeFilepathsToUpload) {
     const promises = relativeFilepathsToUpload.map(
         pathFromDirToFile => uploadFile(projectID, pathToDirToUpload, pathFromDirToFile)
     );
@@ -380,6 +453,9 @@ module.exports = {
     generateUniqueName,
     createProjects,
     createProjectFromTemplate,
+    syncFiles,
+    defaultNodeProjectFileList,
+    defaultNodeProjectDirList,
     openProject,
     closeProject,
     restartProject,
@@ -399,7 +475,7 @@ module.exports = {
     bindStart,
     bindEnd,
     uploadEnd,
-    uploadFiles,
+    uploadAllFiles,
     uploadFile,
     unbind,
     unbindAllProjects,
