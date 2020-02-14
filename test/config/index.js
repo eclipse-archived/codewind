@@ -57,19 +57,16 @@ const templateOptions = {
         name: 'nodeExpressTemplate',
         url: 'https://github.com/codewind-resources/nodeExpressTemplate',
         language: 'nodejs',
-        metricsAvailable: true,
     },
     liberty: {
         name: 'javaMicroProfileTemplate',
         url: 'https://github.com/codewind-resources/javaMicroProfileTemplate',
         language: 'java',
-        metricsAvailable: true,
     },
     spring: {
         name: 'springJavaTemplate',
         url: 'https://github.com/codewind-resources/springJavaTemplate',
         language: 'java',
-        metricsAvailable: true,
     },
     docker: {
         name: 'pythonTemplate',
@@ -80,13 +77,11 @@ const templateOptions = {
         name: 'swiftTemplate',
         url: 'https://github.com/codewind-resources/swiftTemplate',
         language: 'swift',
-        metricsAvailable: true,
     },
     go: {
         name: 'goTemplate',
         url: 'https://github.com/codewind-resources/goTemplate',
         language: 'go',
-        metricsAvailable: false,
     },
     lagom: {
         name: 'javaLagomTemplate',

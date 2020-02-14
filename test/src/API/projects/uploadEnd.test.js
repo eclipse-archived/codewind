@@ -22,47 +22,8 @@ chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
 describe('Sync tests (POST projects/{id}/upload/end)', () => {
-    // These are for the nodejs template at https://github.com/codewind-resources/nodeExpressTemplate
-    const validFileList = [
-        '.cw-settings',
-        '.dockerignore',
-        '.gitignore',
-        'Dockerfile',
-        'Dockerfile-tools',
-        'chart/node/Chart.yaml',
-        'chart/node/templates/basedeployment.yaml',
-        'chart/node/templates/deployment.yaml',
-        'chart/node/templates/hpa.yaml',
-        'chart/node/templates/istio.yaml',
-        'chart/node/templates/service.yaml',
-        'chart/node/values.yaml',
-        'cli-config.yml',
-        'images/header-logo.svg',
-        'nodemon.json',
-        'package.json',
-        'public/404.html',
-        'public/500.html',
-        'public/index.html',
-        'server/config/local.json',
-        'server/routers/codewind.js',
-        'server/routers/health.js',
-        'server/routers/index.js',
-        'server/routers/public.js',
-        'server/server.js',
-        'test/test-demo.js',
-        'test/test-server.js',
-    ];
-    const validDirList = [
-        'chart',
-        'chart/node',
-        'chart/node/templates',
-        'public',
-        'server',
-        'server/config',
-        'server/routers',
-        'test',
-        'images',
-    ];
+    const validFileList = projectService.defaultNodeProjectFileList;
+    const validDirList = projectService.defaultNodeProjectDirList;
 
     describe('Sync modified file (these `it` blocks depend on each other passing)', function() {
         const projectName = `test-sync-modified-file-${Date.now()}`;
