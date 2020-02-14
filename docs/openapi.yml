@@ -640,13 +640,23 @@ paths:
             application/json:
               schema:
                 type: array
+                minItems: 4
+                maxItems: 4
+                uniqueItems: true
                 items:
-                  type: object
-                  example: { "type" : "cpu", "delta" : {"systemMean" : 1.352, "systemPeak" : 1.956, "processMean" : -7.334, "processPeak"  : -9.469} }
+                  $ref: '#/components/schemas/LoadRunMetric'
         404:
           description: Specified project doesn't exist, or snapshot is not available (e.g. less than two runs collected for the project)
-        500:
-          description: Internal error occurred
+          content:
+            text/html:
+              schema:
+                type: string
+        422:
+          description: Specified project doesn't exist, or snapshot is not available (e.g. less than two runs collected for the project)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodewindError'
 
   /api/v1/projects/{id}/logs:
     get:
@@ -2012,6 +2022,53 @@ components:
               example: { id: 1, message: 'codewind' }
             - type: string
               example: "{ id: 1, message: 'codewind'}"
+
+    LoadRunMetric:
+      type: object
+      required:
+        - type
+        - delta
+      properties:
+        type:
+          type: string
+          enum:
+            - cpu
+            - gc
+            - memory
+            - http
+        delta:
+          oneOf:
+            - type: string
+              enum: ['Data unavailable']
+            - type: object
+              minProperties: 1
+              properties:
+                systemMean:
+                  type: number
+                systemPeak:
+                  type: number
+                processMean:
+                  type: number
+                processPeak:
+                  type: number
+                gcTime:
+                  type: number
+                usedHeapAfterGCPeak:
+                  type: number
+                usedNativePeak:
+                  type: number
+                avergaeHttpResponseTime:
+                  type: number
+      example: >
+        {
+          "type": "cpu",
+          "delta": {
+            "systemMean": 1.352,
+            "systemPeak" : 1.956,
+            "processMean" : -7.334,
+            "processPeak"  : -9.469
+          }
+        }
 
     LogDetails:
       type: object
