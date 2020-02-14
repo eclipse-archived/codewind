@@ -21,7 +21,7 @@ chai.should();
 
 describe('Load Runner Tests', function() {
     const projectName = `test-loadrunner-${Date.now()}`;
-    const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);       
+    const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
     let projectID;
     
     before('create a sample project and bind to Codewind, without building', async function() {
@@ -168,16 +168,14 @@ describe('Load Runner Tests', function() {
         });
 
         /**
-         * Test currently disabled. Test project is not bound to Codewind and will not run a load test.
+         * Test disabled because we don't wait for test project to run, so PFE rejects requests to run load.
          */
-        /*
-        it('returns 202 and starts running load against a project', async function() {
+        it.skip('returns 202 and starts running load against a project', async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.runLoad(projectID, 'Load test run to test running load against a project.');
             res.should.have.status(202);
             res.should.satisfyApiSpec;
         });
-        */
 
         it('fails with 503 to run load when load is already running', async function() {
             this.timeout(testTimeout.short);
