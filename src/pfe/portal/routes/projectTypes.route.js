@@ -47,7 +47,7 @@ function sanitizeProjectType(array, type) {
 }
 
 async function getProjectTypes(provider, sourceId) {
-  
+
   const projectTypes = [];
 
   // get projectTypes from extension provider
@@ -85,13 +85,13 @@ router.get('/api/v1/project-types', async (req, res) => {
   try {
     const templates = await user.templates.getTemplates(true);
     for (const template of templates) {
-      
+
       const projectType = template.projectType;
       const extension = user.extensionList.getExtensionForProjectType(projectType)
-      
+
       if (extension) {
         const sourceId = template.sourceId;
-        const key = `${projectType}/${sourceId}` 
+        const key = `${projectType}/${sourceId}`
         // only need to get project types from extension once
         if (seenProjectTypes[key])
           continue;
@@ -111,7 +111,7 @@ router.get('/api/v1/project-types', async (req, res) => {
           projectTypes.push(type);
           seenProjectTypes[projectType] = type;
         }
-        
+
         addLanguage(seenProjectTypes[projectType], template.language);
       }
     }
