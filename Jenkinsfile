@@ -3,8 +3,8 @@ pipeline {
     agent {
         label "docker-build"
     }
-    
-    triggers {	
+
+    triggers {
       issueCommentTrigger('trigger_build')
       upstream(upstreamProjects: "Codewind/codewind-odo-extension/${env.BRANCH_NAME},Codewind/codewind-appsody-extension/${env.BRANCH_NAME}", threshold: hudson.model.Result.SUCCESS)
     }
@@ -17,7 +17,7 @@ pipeline {
     stages {
         stage('Run Portal eslint and unit tests') {
             options {
-                timeout(time: 30, unit: 'MINUTES') 
+                timeout(time: 30, unit: 'MINUTES')
             }
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]) {
@@ -29,10 +29,10 @@ pipeline {
 
                         # Install nvm to easily set version of node to use
                         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-                        export NVM_DIR="$HOME/.nvm" 
+                        export NVM_DIR="$HOME/.nvm"
                         . $NVM_DIR/nvm.sh
                         nvm i 10
-                        
+
                         # Run eslint on portal code
                         cd $DIR/src/pfe/portal
                         npm install
@@ -56,7 +56,7 @@ pipeline {
                         if [ $? -ne 0 ]; then
                             exit 1
                         fi
-                            
+
                         # Run the unit test suite
                         echo "Portal unit tests"
 
@@ -83,24 +83,24 @@ pipeline {
                         DIR=`pwd`;
                         echo "Starting unit tests for Turbine..."
                         export PATH=$PATH:/home/jenkins/.jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/node_js/bin/
-                        
+
                         ARCH=`uname -m`;
                         printf "\n\n${MAGENTA}Platform: $ARCH ${RESET}\n"
 
                         # Install nvm to easily set version of node to use
                         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-                        export NVM_DIR="$HOME/.nvm" 
+                        export NVM_DIR="$HOME/.nvm"
                         . $NVM_DIR/nvm.sh
                         nvm i 10
-                        
+
                         # Run eslint on turbine code
                         cd $DIR/src/pfe/file-watcher/server
                         npm install
-                        
+
                         if [ $? -ne 0 ]; then
                             exit 1
                         fi
-                            
+
                         # Run the unit test suite
                         echo "Started running Turbine Unit Test Suite"
                         npm run unit:test
@@ -119,8 +119,8 @@ pipeline {
         stage('Build Docker images') {
             steps {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
-                    
-                    // NOTE: change of this sh call should be in sync with './script/build.sh'. 
+
+                    // NOTE: change of this sh call should be in sync with './script/build.sh'.
                     sh '''#!/usr/bin/env bash
                         # Docker system prune
                         echo "Docker system prune ..."
@@ -131,7 +131,7 @@ pipeline {
                         df -lh
 
                         echo "Starting build for Eclipse Codewind ..."
-                        
+
                         DIR=`pwd`;
                         SRC_DIR=$DIR/src;
                         PFE=pfe
@@ -157,7 +157,7 @@ pipeline {
                             cp $DIR/.env ${SRC_DIR}/${PFE}/file-watcher/scripts/.env
                         fi
 
-                        # Copy the license files to the portal, performance, keycloak and gatekeeper 
+                        # Copy the license files to the portal, performance, keycloak and gatekeeper
                         cp -r $DIR/LICENSE ${SRC_DIR}/pfe/portal/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/pfe/portal/
                         cp -r $DIR/LICENSE ${SRC_DIR}/performance/
@@ -166,7 +166,7 @@ pipeline {
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/keycloak/
                         cp -r $DIR/LICENSE ${SRC_DIR}/gatekeeper/
                         cp -r $DIR/NOTICE.md ${SRC_DIR}/gatekeeper/
-                        
+
                         # Copy the docs into portal
                         cp -r $DIR/docs ${SRC_DIR}/pfe/portal/
 
@@ -204,7 +204,7 @@ pipeline {
                             exit 1
                         fi
 
-                        curl -Lfo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-$VERSION.zip http://download.eclipse.org/codewind/codewind-odo-extension/$CHANGE_TARGET/latest/codewind-odo-extension-$VERSION.zip
+                        curl -Lfo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-$VERSION.zip http://download.eclipse.org/codewind/codewind-odo-extension/$BRANCH/latest/codewind-odo-extension-$VERSION.zip
                         if [ $? -ne 0 ]; then
                             echo "Error downloading odo extension"
                             exit 1
@@ -226,7 +226,7 @@ pipeline {
 
                                 echo -e "\n+++   RETAGGING $IMAGE_NAME TO HAVE TAG:':test' FOR TEST ONLY MODIFICATIONS +++\n";
                                 # Allows us to modify the Docker images for test only modifications
-                                # Such as telling PFE to run with Code Coverage generation enabled 
+                                # Such as telling PFE to run with Code Coverage generation enabled
                                 # The original image (latest) will be the one that is pushed to Dockerhub
 
                                 if [ "$image" = "$PFE" ]; then
@@ -249,11 +249,11 @@ pipeline {
                 }
             }
         }
-        
-        stage('Start Codewind and run the API tests') {  
+
+        stage('Start Codewind and run the API tests') {
             options {
-                timeout(time: 2, unit: 'HOURS') 
-            }   
+                timeout(time: 2, unit: 'HOURS')
+            }
             steps {
                 withEnv(["PATH=$PATH:~/.local/bin;NOBUILD=true"]){
                     withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
@@ -268,10 +268,10 @@ pipeline {
 
                         # Install nvm to easily set version of node to use
                         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-                        export NVM_DIR="$HOME/.nvm" 
+                        export NVM_DIR="$HOME/.nvm"
                         . $NVM_DIR/nvm.sh
                         nvm i 10
-                        
+
                         # Install docker-compose
                         curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o $HOME/dc/docker-compose
                         if [ $? -ne 0 ]; then
@@ -314,7 +314,7 @@ pipeline {
 
                         # Run the API tests now Portal has started
                         cd $DIR/test/
-                        npm install 
+                        npm install
                         if [ $? -ne 0 ]; then
                             exit 1
                         fi
@@ -327,7 +327,7 @@ pipeline {
                     }
                 }
             }
-        } 
+        }
 
         stage('Output Code Coverage for PFE (Portal API and Unit tests, File-watcher Unit tests only)') {
             options {
@@ -342,7 +342,7 @@ pipeline {
 
                             # Install nvm to easily set version of node to use
                             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-                            export NVM_DIR="$HOME/.nvm" 
+                            export NVM_DIR="$HOME/.nvm"
                             . $NVM_DIR/nvm.sh
                             nvm i 10
 
@@ -362,7 +362,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Publish Docker images') {
 
             // This when clause disables PR build uploads; you may comment this out if you want your build uploaded.
@@ -373,9 +373,9 @@ pipeline {
                 }
             }
             options {
-                timeout(time: 30, unit: 'MINUTES') 
+                timeout(time: 30, unit: 'MINUTES')
                 retry(3)
-            }   
+            }
             steps {
                 withDockerRegistry([url: 'https://index.docker.io/v1/', credentialsId: 'docker.com-bot']) {
                     sh '''#!/usr/bin/env bash
@@ -386,14 +386,14 @@ pipeline {
                             TAG="latest"
                         else
                             TAG=$GIT_BRANCH
-                        fi        
+                        fi
 
                         # Publish docker images with a filter for branch name
                         # Acceptable branch names: master, start with '<number>.<number>'
                         if [[ $GIT_BRANCH == "master" ]] || [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
 
-                            declare -a DOCKER_IMAGE_ARRAY=("eclipse/codewind-performance-amd64" 
-                                                        "eclipse/codewind-pfe-amd64" 
+                            declare -a DOCKER_IMAGE_ARRAY=("eclipse/codewind-performance-amd64"
+                                                        "eclipse/codewind-pfe-amd64"
                                                         "eclipse/codewind-keycloak-amd64"
                                                         "eclipse/codewind-gatekeeper-amd64")
 
@@ -408,7 +408,7 @@ pipeline {
 
                             if [[ $GIT_BRANCH =~ ^([0-9]+\\.[0-9]+) ]]; then
                                 IFS='.' # set '.' as delimiter
-                                read -ra TOKENS <<< "$GIT_BRANCH"    
+                                read -ra TOKENS <<< "$GIT_BRANCH"
                                 IFS=' ' # reset delimiter
                                 export TAG_CUMULATIVE=${TOKENS[0]}.${TOKENS[1]}
 
@@ -425,13 +425,13 @@ pipeline {
                     '''
                 }
              }
-        } 
+        }
     }
 
     post {
         always {
            sh '''#!/usr/bin/env bash
-  
+
               # Output portal logs
               printf "\n********** codewind-pfe logs **********\n\n"
               docker logs codewind-pfe
