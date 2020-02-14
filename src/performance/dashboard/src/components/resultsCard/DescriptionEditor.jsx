@@ -98,10 +98,9 @@ class DescriptionEditor extends React.Component {
       */
     async handleDescSave() {
         const projectid = this.props.projectID;
-        const formattedTime = formatDateToString(this.props.snapshotTime);
         this.setState({ isBeingSaved: true, editMode: false });
         try {
-            const result = await fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectid}/metrics/${formattedTime}`, {
+            const result = await fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectid}/metrics/${this.props.snapshotID}`, {
                 method: 'put',
                 headers: {
                     'Accept': 'application/json',
@@ -194,7 +193,7 @@ class DescriptionEditor extends React.Component {
 
 DescriptionEditor.propTypes = {
     projectID: PropTypes.string.isRequired, // projectID
-    snapshotTime: PropTypes.number.isRequired, // start time of the snapshot
+    snapshotID: PropTypes.string.isRequired, // ID the snapshot
     text: PropTypes.string,
     alwaysShowEditIcon: PropTypes.bool.isRequired // should the edit icon be visible
 }
