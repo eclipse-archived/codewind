@@ -204,7 +204,7 @@ pipeline {
                             exit 1
                         fi
 
-                        curl -Lfo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-$VERSION.zip http://download.eclipse.org/codewind/codewind-odo-extension/$CHANGE_TARGET/latest/codewind-odo-extension-$VERSION.zip
+                        curl -Lfo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-$VERSION.zip http://download.eclipse.org/codewind/codewind-odo-extension/$BRANCH/latest/codewind-odo-extension-$VERSION.zip
                         if [ $? -ne 0 ]; then
                             echo "Error downloading odo extension"
                             exit 1
