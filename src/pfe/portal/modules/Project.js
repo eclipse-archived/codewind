@@ -314,6 +314,7 @@ module.exports = class Project {
         await cwUtils.timeout(1);
       }
     }
+    console.log('\n[RW] count: ' + count);
     if (!haveLock) {
       throw new ProjectError('LOCK_FAILURE', this.name);
     }
@@ -324,11 +325,8 @@ module.exports = class Project {
       await fs.writeJson(infFile, this, { spaces: '  ', replacer: Project.filterNonPersistentFields });
     } catch(err) {
       log.error(err);
-    } finally {
-      this.infLockFlag = false;
     }
-    // May return before we've finished writing.
-    return this;
+    this.infLockFlag = false;
   }
 
   toJSON() {

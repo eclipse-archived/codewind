@@ -912,11 +912,15 @@ export function getProjectMetadataById(projectID: string): ProjectMetadata {
  * @returns Promise<any>
  */
 export async function getProjectInfoFromFile(infoFile: string, ignoreLog?: boolean): Promise<any> {
+    console.log("\n\n[FW getProjectInfoFromFile]");
+    console.log(projectInfoCache[infoFile]);
     if (projectInfoCache[infoFile]) {
+        console.log("[getProjectInfoFromFile] project.inf cached");
         return JSON.parse(projectInfoCache[infoFile]);
     }
     let data: string;
     try {
+        console.log("[getProjectInfoFromFile] project.inf not cached");
         data = await readFileAsync(infoFile, "utf8");
     } catch (err) {
         if (!ignoreLog) {

@@ -49,7 +49,7 @@ function constructMessage(code, identifier, message) {
     output = `Failed to read load-test directories`;
     break;
   case 'LOCK_FAILURE':
-    output = `Unable to obtain lock for project in file for project ${identifier}.`;
+    output = `Unable to obtain lock on project.inf file for project ${identifier}.`;
     break;
   case 'NOT_ENOUGH_SNAPSHOTS':
     output = `Unable to find two snapshots for project ${identifier}`;
