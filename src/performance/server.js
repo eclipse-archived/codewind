@@ -110,7 +110,7 @@ app.post('/api/v1/cancelLoad', async function (req, res) {
 });
 
 function runLoad(options) {
-    log.info('starting')
+    log.info(`starting loadrun with options : ${JSON.stringify(options)}`);
     io.emit('starting');
     var output = "";
     var errOutput = "";
@@ -134,8 +134,7 @@ function runLoad(options) {
             log.error(`error ${errOutput}`);
             io.emit('error', errOutput);
         } else { // success
-            log.debug(`data was ${output}`);
-            log.info('completed');
+            log.info(`completed - loadrun summary : ${output}`);
             io.emit('completed', output);
         }
     }).on('error', (err) => {
