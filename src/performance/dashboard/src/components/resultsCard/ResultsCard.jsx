@@ -102,7 +102,7 @@ export default class ResultsCard extends Component {
                     </div>
                 </div>
                 <div className='metrics-description'>
-                    <DescriptionEditor projectID={this.props.projectID} text={snapshot.desc} snapshotTime={snapshot.time} alwaysShowEditIcon={true} />
+                    <DescriptionEditor projectID={this.props.projectID} text={snapshot.desc} snapshotID={snapshot.id} alwaysShowEditIcon={true} />
                 </div>
                 <div className='metrics-container'>
                     <div className='metrics-types'>

@@ -226,7 +226,7 @@ class RunTestHistory extends Component {
                                                 <TableCell key={cell.id}>
                                                     {
                                                         cell.info.header === 'desc' ?
-                                                            <DescriptionEditor projectID={this.props.projectID} text={cell.value} snapshotTime={parseInt(row.id)} alwaysShowEditIcon={false} />
+                                                            <DescriptionEditor projectID={this.props.projectID} text={cell.value} snapshotID={row.id} alwaysShowEditIcon={false} />
                                                             :
                                                             <Fragment>{this.getCellValue(row, cell)}</Fragment>
                                                     }
