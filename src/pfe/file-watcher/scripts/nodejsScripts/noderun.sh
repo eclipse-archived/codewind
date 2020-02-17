@@ -30,7 +30,7 @@ cd /app
 
 readCache() {
     if [ -f $CACHE_FILE ]; then
-       PID=$(awk -F 'pid=' 'NF>0 { print $2 }' $CACHE_FILE)
+       PID=$(awk -F 'pid=' 'NF>0 { print $2 }' $CACHE_FILE |  tr -d '[:space:]')
     fi
     echo "Read in PID $PID from cache"
 }
@@ -91,22 +91,24 @@ if [ "$COMMAND" = "start" ]; then
     writeCache $PID
 elif [ "$COMMAND" = "stop" ]; then
     readCache $PID
-    # stop $PID
-    # writeCache $PID
+    stop $PID
+    writeCache $PID
 elif [ "$COMMAND" = "isActive" ]; then
     readCache $PID
     if [ -n $PID ]; then
         TIMEOUT=0
         until [ $TIMEOUT -eq 10 ]; do
-            ps -p $PID
-            if [ $? -eq 0 ]; then
+            PS_DIR="/proc/$PID"
+            if [ -d $PS_DIR ]; then
                 # Check if using nodemon
-                ps -o cmd -p $PID | grep nodemon
+                cat $PS_DIR/cmdline | grep nodemon
                 if [ $? -eq 0 ]; then
                     # The nodemon process stays around even when there is an error so check for PID
                     # as the parent process id as well
-                    ps --ppid $PID
-                    if [ $? -eq 0 ]; then
+                    # ps --ppid $PID
+                    PARENT_PROCESS_ID=$(awk -F 'PPid:' 'NF>0 { print $2 }' $PS_DIR/status |  tr -d '[:space:]')
+                    echo "Parent process ID: $PARENT_PROCESS_ID"
+                    if [ -d /proc/$PARENT_PROCESS_ID ]; then
                         exit 0
                     fi
                 else
