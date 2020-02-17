@@ -28,6 +28,7 @@ import ResultsCard from '../components/resultsCard/ResultsCard';
 import ResultsCard_Blank from '../components/resultsCard/ResultsCard_Blank';
 import RunTestHistory from '../components/runTestHistory/RunTestHistory';
 import SocketContext from '../utils/sockets/SocketContext';
+import StatusPanel from '../components/status/StatusPanel';
 import * as MetricsUtils from '../modules/MetricsUtils';
 
 import './PagePerformance.scss';
@@ -170,6 +171,7 @@ class PagePerformance extends React.Component {
                         </div>
                     </div>
                 </div>
+                <StatusPanel projectID={this.props.projectID} />
                 <div className='results-row' role="complementary" aria-label="Result Summaries">
                     <div className='results-cards'>
                         <div className='results-card_1'>

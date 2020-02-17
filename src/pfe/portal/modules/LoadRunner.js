@@ -42,8 +42,43 @@ module.exports = class LoadRunner {
     this.socket = io(`http://${this.hostname}:${this.port}`, { timeout: 5000, autoConnect: false });
     this.collectionUri = null;
     this.profilingSocket = null;
+    this.metricsFeatures = {};
     this.createSocketEvents();
     this.connectIfAvailable();
+  }
+
+  // Fetch the supported metrics features from the project
+  async fetchProjectMetricsFeatures() {
+    log.info("Fetching project metrics features")
+    const metricsContextRoot = this.project.getMetricsContextRoot();
+    let options = {
+      host: this.project.host,
+      port: this.project.getPort(),
+      path: `/${metricsContextRoot}/api/v1/collections/features`,
+      method: 'GET',
+    }
+
+    // when available get the connection details from the project service
+    if (this.project.kubeServiceHost && this.project.kubeServicePort ) {
+      options.host = this.project.kubeServiceHost;
+      options.port = this.project.kubeServicePort;
+    }
+
+    log.info(`Connection options:  ${JSON.stringify(options)}`);
+    try {
+      const featureRequest = await cwUtils.asyncHttpRequest(options);
+      log.info(`Status code = ${featureRequest.statusCode}`);
+      if (featureRequest.statusCode == 200) {
+        this.metricsFeatures = JSON.parse(featureRequest.body);
+        log.info(`Metrics features are : ${JSON.stringify( this.metricsFeatures )}`);
+      } else {
+        this.metricsFeatures = {};
+        log.error(`Unable to fetch project metrics features. HTTP Status code : ${featureRequest.statusCode}`);
+      }
+    } catch (err) {
+      this.metricsFeatures = {};
+      log.error(`Unable to get project metrics features: ${JSON.stringify(err)}`);
+    }
   }
 
   /**
@@ -51,7 +86,7 @@ module.exports = class LoadRunner {
    *
    * @returns collection URI (eg 'collections/0')
    */
-  async createCollection() {
+  async createCollection(seconds) {
     const metricsContextRoot = this.project.getMetricsContextRoot();
 
     let collection = null;
@@ -59,8 +94,15 @@ module.exports = class LoadRunner {
       let options = {
         host: this.project.host,
         port: this.project.getPort(),
-        path: `/${metricsContextRoot}/api/v1/collections/`,
+        path: `/${metricsContextRoot}/api/v1/collections`,
         method: 'POST',
+      }
+
+      // If the project metrics support timed metrics set a fixed time recording
+      if (this.metricsFeatures && this.metricsFeatures.timedMetrics) {
+        options.path = `/${metricsContextRoot}/api/v1/collections/${seconds}`
+      } else {
+        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'app-is-using-old-metrics' });
       }
 
       // when available get the connection details from the project service
@@ -69,7 +111,7 @@ module.exports = class LoadRunner {
         options.port = this.project.kubeServicePort;
       }
 
-      log.info(`createCollection: ${this.project.projectID}, ${options.host}, ${options.port}, ${metricsContextRoot}`);
+      log.info(`createCollection: ID:${this.project.projectID}, Host:${options.host}, Port:${options.port}, Path:${options.path}`);
 
       let metricsRes = await cwUtils.asyncHttpRequest(options);
       log.debug('createCollection: metricsRes.statusCode=' + metricsRes.statusCode);
@@ -118,10 +160,15 @@ module.exports = class LoadRunner {
       options.port = this.project.kubeServicePort;
     }
 
+    if (this.metricsFeatures && this.metricsFeatures.timedMetrics) {
+      options.path = '/' + this.project.getMetricsContextRoot() + `/api/v1/` + this.collectionUri + "/stashed";
+    }
+
     try {
       // Get the metrics collection
       let metricsRes = await cwUtils.asyncHttpRequest(options);
       let metricsJson = "";
+      log.info(`Requested metrics from project container reported : ${metricsRes.statusCode}`);
       switch (metricsRes.statusCode) {
       case 200:
         metricsJson = JSON.parse(metricsRes.body);
@@ -142,18 +189,20 @@ module.exports = class LoadRunner {
       log.error(err);
     }
 
-    // Attempt to delete the collection
-    options.method = 'DELETE';
-    http.request(options, function (res) {
-      if (res.statusCode == 204) {
-        log.info('recordCollection: Metrics collection deleted');
-      } else {
-        log.error('recordCollection: Unable to delete metrics collection: ' + res.statusCode);
-      }
-    }).on('error', function (err) {
-      log.error('recordCollection: Unable to delete metrics collection');
-      log.error(err);
-    }).end();
+    // If appmetrics does not support timed collections (which get auto delete when published), delete them now.
+    if (!this.metricsFeatures || !this.metricsFeatures.timedMetrics) {
+      options.method = 'DELETE';
+      http.request(options, function (res) {
+        if (res.statusCode == 204) {
+          log.info('recordCollection: Metrics collection deleted');
+        } else {
+          log.error('recordCollection: Unable to delete metrics collection: ' + res.statusCode);
+        }
+      }).on('error', function (err) {
+        log.error('recordCollection: Unable to delete metrics collection');
+        log.error(err);
+      }).end();
+    }
   }
 
 
@@ -192,6 +241,9 @@ module.exports = class LoadRunner {
       // Update project endpoints
       await this.project.getProjectKubeService();
 
+      // Update metrics features
+      await this.fetchProjectMetricsFeatures();
+
       if (this.project.git) {
         const hasChanges = await this.project.git.hasChanges();
         if (!hasChanges) {
@@ -209,7 +261,7 @@ module.exports = class LoadRunner {
       }
 
       //  Start collection on metrics endpoint (this must be started AFTER java profiling since java profiling will restart the liberty server)
-      this.collectionUri = await this.createCollection();
+      this.collectionUri = await this.createCollection(loadConfig.maxSeconds);
       this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'starting', timestamp: this.metricsFolder });
 
       // Send the load run request to the loadrunner microservice
