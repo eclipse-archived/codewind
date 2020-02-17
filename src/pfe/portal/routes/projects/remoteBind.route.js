@@ -270,8 +270,11 @@ async function uploadEnd(req, res) {
       await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
 
       if (project.injectMetrics) {
+        const projectDir = path.join(project.workspace, project.directory);
         try {
-          await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
+          // We will have replaced any injected files with their original version when we did
+          // cwUtils.copyProject above. We must re-inject metrics here before building.
+          await metricsService.injectMetricsCollectorIntoProject(project.projectType, project.language, projectDir);
         } catch (error) {
           log.warn(error);
         }
@@ -430,7 +433,7 @@ async function bindEnd(req, res) {
 
     if (project.injectMetrics) {
       try {
-        await metricsService.injectMetricsCollectorIntoProject(project.projectType, path.join(project.workspace, project.directory));
+        await metricsService.injectMetricsCollectorIntoProject(project.projectType, project.language, path.join(project.workspace, project.directory));
       } catch (error) {
         log.warn(error);
       }

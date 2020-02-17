@@ -12,9 +12,6 @@ const getPathToBackupPackageJson = (projectDir) => path.join(projectDir, 'backup
 
 async function injectMetricsCollectorIntoNodeProject(projectDir) {
   const pathToBackupPackageJson = getPathToBackupPackageJson(projectDir);
-  if (await fs.exists(pathToBackupPackageJson)) {
-    throw new Error('project files already backed up (i.e. we have already injected metrics collector)');
-  }
 
   const pathToPackageJson = getPathToPackageJson(projectDir);
   if (!(await fs.exists(pathToPackageJson))) {
@@ -23,7 +20,8 @@ async function injectMetricsCollectorIntoNodeProject(projectDir) {
   const originalContentsOfPackageJson = await fs.readJSON(pathToPackageJson);
 
   validatePackageJson(originalContentsOfPackageJson);
-  await fs.writeJSON(pathToBackupPackageJson, originalContentsOfPackageJson, { spaces: 2 });
+
+  await fs.copy(pathToPackageJson, pathToBackupPackageJson);
 
   const newContentsOfPackageJson = getNewContentsOfPackageJson(originalContentsOfPackageJson);
   log.trace(`Injecting metrics collector into project's package.json, which is now ${ util.inspect(newContentsOfPackageJson) }`);
@@ -40,13 +38,12 @@ function validatePackageJson(packageJson) {
 
 async function removeMetricsCollectorFromNodeProject(projectDir) {
   const pathToBackupPackageJson = getPathToBackupPackageJson(projectDir);
-  const backupPackageJson = await fs.readJSON(pathToBackupPackageJson);
-
   const pathToPackageJson = getPathToPackageJson(projectDir);
-  await fs.writeJSON(pathToPackageJson, backupPackageJson, { spaces: 2 });
-  log.trace(`Restored project's package.json to ${ util.inspect(backupPackageJson) }`);
 
+  await fs.copy(pathToBackupPackageJson, pathToPackageJson);
+  log.trace(`Restored project's package.json from ${pathToBackupPackageJson}`);
   await fs.remove(pathToBackupPackageJson);
+
 }
 
 function getNewContentsOfPackageJson(originalContentsOfPackageJson) {

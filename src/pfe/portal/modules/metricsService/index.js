@@ -36,20 +36,30 @@ const metricsCollectorRemovalFunctions = {
   spring: removeMetricsCollectorFromSpringProject,
 }
 
-async function injectMetricsCollectorIntoProject(projectType, projectDir) {
-  if (!metricsCollectorInjectionFunctions.hasOwnProperty(projectType)) {
-    throw new Error(`Injection of metrics collector is not supported for projects of type '${projectType}'`);
+async function identifyProject(projectType, projectLanguage) {
+  if (projectType === 'docker' && projectLanguage === 'java') {
+    return 'openLiberty';
+    // this is the best we can do at the moment
   }
-  await metricsCollectorInjectionFunctions[projectType](projectDir);
-  log.debug(`Successfully injected metrics collector into ${projectType} project`);
+  return projectType
 }
 
-async function removeMetricsCollectorFromProject(projectType, projectDir) {
-  if (!metricsCollectorRemovalFunctions.hasOwnProperty(projectType)) {
-    throw new Error(`Injection of metrics collector is not supported for projects of type '${projectType}'`);
+async function injectMetricsCollectorIntoProject(projectType, projectLanguage, projectDir) {
+  let projType = await identifyProject(projectType, projectLanguage);
+  if (!metricsCollectorInjectionFunctions.hasOwnProperty(projType)) {
+    throw new Error(`Injection of metrics collector is not supported for projects of type '${projType}'`);
   }
-  await metricsCollectorRemovalFunctions[projectType](projectDir);
-  log.debug(`Successfully removed metrics collector from ${projectType} project`);
+  await metricsCollectorInjectionFunctions[projType](projectDir);
+  log.debug(`Successfully injected metrics collector into ${projType} project`);
+}
+
+async function removeMetricsCollectorFromProject(projectType, projectLanguage, projectDir) {
+  let projType = await identifyProject(projectType, projectLanguage);
+  if (!metricsCollectorRemovalFunctions.hasOwnProperty(projType)) {
+    throw new Error(`Injection of metrics collector is not supported for projects of type '${projType}'`);
+  }
+  await metricsCollectorRemovalFunctions[projType](projectDir);
+  log.debug(`Successfully removed metrics collector from ${projType} project`);
 }
 
 const getPathToPomXml = (projectDir) => path.join(projectDir, 'pom.xml');
@@ -65,11 +75,9 @@ async function removeMetricsCollectorFromLibertyProject(projectDir) {
 
 async function removeMetricsCollectorFromPomXml(projectDir) {
   const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
-  const backupPomXml = await fs.readFile(pathToBackupPomXml);
-
   const pathToPomXml = getPathToPomXml(projectDir);
-  await fs.writeFile(pathToPomXml, backupPomXml);
-  log.debug(`Restored project's pom.xml to ${util.inspect(backupPomXml)}`);
+  await fs.copy(pathToBackupPomXml, pathToPomXml)
+  log.debug(`Restored project's pom.xml from ${util.inspect(pathToBackupPomXml)}`);
   await fs.remove(pathToBackupPomXml);
 }
 
@@ -77,9 +85,8 @@ async function removeMetricsCollectorFromJvmOptions(projectDir) {
   const pathToBackupJvmOptions = getPathToBackupJvmOptions(projectDir);
   const pathToJvmOptions = getPathToJvmOptions(projectDir);
   if (await fs.exists(pathToBackupJvmOptions)) {
-    const backupJvmOptions = await fs.readFile(pathToBackupJvmOptions);
-    await fs.writeFile(pathToJvmOptions, backupJvmOptions);
-    log.debug(`Restored project's jvm.options to ${util.inspect(backupJvmOptions)}`);
+    await fs.copy(pathToBackupJvmOptions, pathToJvmOptions);
+    log.debug(`Restored project's jvm.options from ${util.inspect(pathToBackupJvmOptions)}`);
     await fs.remove(pathToBackupJvmOptions);
   } else {
     log.debug(`No backup jvm.options. Deleting ${pathToJvmOptions}`);
@@ -97,50 +104,42 @@ const getPathToBackupMainAppClassFile = (projectDir) => path.join(projectDir, 'c
 async function removeMetricsCollectorFromMainAppClassFile(projectDir) {
   const pathToMainAppClassFile = await getPathToMainAppClassFile(projectDir);
   const pathToBackupClassFile = getPathToBackupMainAppClassFile(projectDir);
-  const backupClassFile = await fs.readFile(pathToBackupClassFile);
-  await fs.writeFile(pathToMainAppClassFile, backupClassFile);
-  log.debug(`Restored project's main app class file to ${util.inspect(backupClassFile)}`);
+  await fs.copy(pathToBackupClassFile, pathToMainAppClassFile);
+  log.debug(`Restored project's main app class file from ${util.inspect(pathToBackupClassFile)}`);
   await fs.remove(pathToBackupClassFile);
-}
-
-async function backUpFile(pathToOriginal, pathToBackup) {
-  const originalFileData = await fs.readFile(pathToOriginal);
-  await fs.outputFile(pathToBackup, originalFileData);
 }
 
 async function injectMetricsCollectorIntoLibertyProject(projectDir) {
   let jvmOptionsPresent = false;
-  const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
-  const pathToBackupJvmOptions = getPathToBackupJvmOptions(projectDir);
-  if ((await fs.exists(pathToBackupPomXml)) || (await fs.exists(pathToBackupJvmOptions))) {
-    throw new Error('project files already backed up (i.e. we have already injected metrics collector)');
-  }
 
   const pathToPomXml = getPathToPomXml(projectDir);
-  await backUpFile(pathToPomXml, pathToBackupPomXml);
+  const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
+  await fs.remove(pathToBackupPomXml);
+  await fs.copy(pathToPomXml, pathToBackupPomXml);
   await injectMetricsCollectorIntoPomXml(pathToPomXml);
 
   const pathToJvmOptions = getPathToJvmOptions(projectDir);
+  const pathToBackupJvmOptions = getPathToBackupJvmOptions(projectDir);
+  await fs.remove(pathToBackupJvmOptions);
   if (await fs.exists(pathToJvmOptions)) {
-    await backUpFile(pathToJvmOptions, pathToBackupJvmOptions);
+    await fs.copy(pathToJvmOptions, pathToBackupJvmOptions);
     jvmOptionsPresent = true;
   }
   await injectMetricsCollectorIntoJvmOptions(pathToJvmOptions, jvmOptionsPresent);
 }
 
 async function injectMetricsCollectorIntoSpringProject(projectDir) {
-  const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
-  const pathToBackupMainAppClassFile = getPathToBackupMainAppClassFile(projectDir);
-  if ((await fs.exists(pathToBackupPomXml)) || (await fs.exists(pathToBackupMainAppClassFile))) {
-    throw new Error('project files already backed up (i.e. we have already injected metrics collector)');
-  }
 
   const pathToPomXml = getPathToPomXml(projectDir);
-  await backUpFile(pathToPomXml, pathToBackupPomXml);
+  const pathToBackupPomXml = getPathToBackupPomXml(projectDir);
+  await fs.remove(pathToBackupPomXml);
+  await fs.copy(pathToPomXml, pathToBackupPomXml);
   await injectMetricsCollectorIntoPomXmlForSpring(pathToPomXml);
 
   const pathToMainAppClassFile = await getPathToMainAppClassFile(projectDir);
-  await backUpFile(pathToMainAppClassFile, pathToBackupMainAppClassFile);
+  const pathToBackupMainAppClassFile = getPathToBackupMainAppClassFile(projectDir);
+  await fs.remove(pathToBackupMainAppClassFile);
+  await fs.copy(pathToMainAppClassFile, pathToBackupMainAppClassFile);
   await injectMetricsCollectorIntoMainAppClassFile(pathToMainAppClassFile);
 }
 

@@ -104,7 +104,7 @@ describe('metricsService/index.js', () => {
         // console.log(util.inspect(expectedPomXmlForLiberty, { showHidden: false, depth: null }));
     });
 
-    describe('injectMetricsCollectorIntoProject(projectType, projectDir)', () => {
+    describe('injectMetricsCollectorIntoProject(projectType, project.language, projectDir)', () => {
         afterEach(() => {
             fs.removeSync(projectDir);
         });
@@ -114,7 +114,7 @@ describe('metricsService/index.js', () => {
                     fs.outputJSONSync(pathToPackageJson, packageJsonWithoutCollector);
                 });
                 it(`injects metrics collector into the project's package.json, and saves a back up`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('nodejs', projectDir);
+                    await metricsService.injectMetricsCollectorIntoProject('nodejs', 'nodejs', projectDir);
 
                     fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithCollector);
                     fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(packageJsonWithoutCollector);
@@ -125,11 +125,10 @@ describe('metricsService/index.js', () => {
                     fs.outputJSONSync(pathToBackupPackageJson, packageJsonWithoutCollector);
                     fs.outputJSONSync(pathToPackageJson, packageJsonWithoutCollector);
                 });
-                it(`throws a useful error`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('nodejs', projectDir)
-                        .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
+                it(`should re-inject without error`, async() => {
+                    await metricsService.injectMetricsCollectorIntoProject('nodejs', 'nodejs', projectDir);
 
-                    fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithoutCollector);
+                    fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithCollector);
                     fs.readJSONSync(pathToBackupPackageJson).should.deep.equal(packageJsonWithoutCollector);
                 });
             });
@@ -141,7 +140,7 @@ describe('metricsService/index.js', () => {
                     fs.outputFileSync(pathToJvmOptions, originalJvmOptions);
                 });
                 it(`injects metrics collector into the project's jvm.options and pom.xml, and saves backups`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('liberty', projectDir);
+                    await metricsService.injectMetricsCollectorIntoProject('liberty', 'java', projectDir);
 
                     const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
                     outputJvmOptions.should.equal(expectedJvmOptions);
@@ -162,19 +161,18 @@ describe('metricsService/index.js', () => {
                     fs.outputFileSync(pathToJvmOptions, originalJvmOptions);
                     fs.outputFileSync(pathToBackupJvmOptions, originalJvmOptions);
                 });
-                it(`throws a useful error`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('liberty', projectDir)
-                        .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
+                it(`should re-inject without error`, async() => {
+                    await metricsService.injectMetricsCollectorIntoProject('liberty', 'java', projectDir);
 
-                    fs.readFileSync(pathToJvmOptions, 'utf8')
-                        .should.equal(originalJvmOptions);
-                    fs.readFileSync(pathToBackupJvmOptions, 'utf8')
-                        .should.equal(originalJvmOptions);
+                    const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
+                    outputJvmOptions.should.equal(expectedJvmOptions);
+                    const outputBackupJvmOptions = fs.readFileSync(pathToBackupJvmOptions, 'utf8');
+                    outputBackupJvmOptions.should.deep.equal(originalJvmOptions);
 
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForLiberty);
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForLiberty);
+                    const outputPomXml = await readXml(pathToTestPomXml);
+                    outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForLiberty);
+                    const outputBackupPomXml = await readXml(pathToTestBackupPomXml);
+                    outputBackupPomXml.should.deep.equal(originalPomXmlForLiberty);
                 });
             });
         });
@@ -185,7 +183,7 @@ describe('metricsService/index.js', () => {
                     fs.removeSync(pathToJvmOptions);
                 });
                 it(`injects metrics collector into the project's jvm.options and pom.xml, and saves backups`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('openLiberty', projectDir);
+                    await metricsService.injectMetricsCollectorIntoProject('openLiberty', 'java', projectDir);
 
                     const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
                     outputJvmOptions.should.equal(expectedNewJvmOptions);
@@ -206,18 +204,18 @@ describe('metricsService/index.js', () => {
                     fs.outputFileSync(pathToJvmOptions, expectedNewJvmOptions);
                     fs.removeSync(pathToBackupJvmOptions);
                 });
-                it(`throws a useful error`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('openLiberty', projectDir)
-                        .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
+                it(`should re-inject without error`, async() => {
+                    await metricsService.injectMetricsCollectorIntoProject('docker', 'java', projectDir);
 
-                    fs.readFileSync(pathToJvmOptions, 'utf8')
-                        .should.equal(expectedNewJvmOptions);
-                    fs.pathExistsSync(pathToBackupJvmOptions).should.be.false;
+                    const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
+                    outputJvmOptions.should.equal(expectedNewJvmOptions);
+                    const outputBackupJvmOptions = fs.pathExistsSync(pathToBackupJvmOptions);
+                    outputBackupJvmOptions.should.be.true;
 
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForOpenLiberty);
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForOpenLiberty);
+                    const outputPomXml = await readXml(pathToTestPomXml);
+                    outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForOpenLiberty);
+                    const outputBackupPomXml = await readXml(pathToTestBackupPomXml);
+                    outputBackupPomXml.should.deep.equal(originalPomXmlForOpenLiberty);
                 });
             });
         });
@@ -228,7 +226,7 @@ describe('metricsService/index.js', () => {
                     fs.outputFileSync(pathToMainAppClassFile, originalMainAppClassFile);
                 });
                 it(`injects metrics collector into the project's main app class file and pom.xml`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('spring', projectDir);
+                    await metricsService.injectMetricsCollectorIntoProject('spring', 'java', projectDir);
 
                     const outputClassFile = fs.readFileSync(pathToMainAppClassFile, 'utf8');
                     outputClassFile.should.equal(expectedMainAppClassFile);
@@ -249,19 +247,18 @@ describe('metricsService/index.js', () => {
                     fs.outputFileSync(pathToMainAppClassFile, originalMainAppClassFile);
                     fs.outputFileSync(pathToBackupMainAppClassFile, originalMainAppClassFile);
                 });
-                it(`throws a useful error`, async() => {
-                    await metricsService.injectMetricsCollectorIntoProject('spring', projectDir)
-                        .should.be.eventually.rejectedWith('project files already backed up (i.e. we have already injected metrics collector');
+                it(`should re-inject without error`, async() => {
+                    await metricsService.injectMetricsCollectorIntoProject('spring', 'java', projectDir);
 
-                    fs.readFileSync(pathToMainAppClassFile, 'utf8')
-                        .should.equal(originalMainAppClassFile);
-                    fs.readFileSync(pathToBackupMainAppClassFile, 'utf8')
-                        .should.equal(originalMainAppClassFile);
+                    const outputClassFile = fs.readFileSync(pathToMainAppClassFile, 'utf8');
+                    outputClassFile.should.equal(expectedMainAppClassFile);
+                    const outputBackupClassFile = fs.readFileSync(pathToBackupMainAppClassFile, 'utf8');
+                    outputBackupClassFile.should.deep.equal(originalMainAppClassFile);
 
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForSpring);
-                    (await readXml(pathToTestPomXml))
-                        .should.deep.equal(originalPomXmlForSpring);
+                    const outputPomXml = await readXml(pathToTestPomXml);
+                    outputPomXml.should.deep.equalInAnyOrder(expectedPomXmlForSpring);
+                    const outputBackupPomXml = await readXml(pathToTestBackupPomXml);
+                    outputBackupPomXml.should.deep.equal(originalPomXmlForSpring);
                 });
             });
         });
@@ -270,13 +267,13 @@ describe('metricsService/index.js', () => {
                 fs.outputJSONSync(pathToPackageJson, packageJsonWithoutCollector);
             });
             it(`throws a useful error`, () => {
-                const funcToTest = () => metricsService.injectMetricsCollectorIntoProject('unsupportedProjectType', projectDir);
+                const funcToTest = () => metricsService.injectMetricsCollectorIntoProject('unsupportedProjectType', 'unknown', projectDir);
                 return funcToTest().should.be.rejectedWith(`Injection of metrics collector is not supported for projects of type 'unsupportedProjectType'`);
             });
         });
     });
 
-    describe('removeMetricsCollectorFromProject(projectType, projectDir)', () => {
+    describe('removeMetricsCollectorFromProject(projectType, projectLanguage, projectDir)', () => {
         afterEach(() => {
             fs.removeSync(projectDir);
         });
@@ -286,7 +283,7 @@ describe('metricsService/index.js', () => {
                 fs.outputJSONSync(pathToBackupPackageJson, packageJsonWithoutCollector);
             });
             it(`removes metrics collector from the project's package.json`, async() => {
-                await metricsService.removeMetricsCollectorFromProject('nodejs', projectDir);
+                await metricsService.removeMetricsCollectorFromProject('nodejs', 'nodejs', projectDir);
 
                 fs.readJSONSync(pathToPackageJson).should.deep.equal(packageJsonWithoutCollector);
                 fs.existsSync(pathToBackupPackageJson).should.be.false;
@@ -301,7 +298,7 @@ describe('metricsService/index.js', () => {
                 fs.outputFileSync(pathToBackupJvmOptions, originalJvmOptions);
             });
             it(`removes metrics collector from the project's jvm.options and pom.xml`, async() => {
-                await metricsService.removeMetricsCollectorFromProject('liberty', projectDir);
+                await metricsService.removeMetricsCollectorFromProject('liberty', 'java', projectDir);
 
                 const outputJvmOptions = fs.readFileSync(pathToJvmOptions, 'utf8');
                 outputJvmOptions.should.equal(originalJvmOptions);
@@ -321,7 +318,7 @@ describe('metricsService/index.js', () => {
                 fs.removeSync(pathToBackupJvmOptions);
             });
             it(`removes metrics collector from the project's jvm.options and pom.xml`, async() => {
-                await metricsService.removeMetricsCollectorFromProject('openLiberty', projectDir);
+                await metricsService.removeMetricsCollectorFromProject('docker', 'java', projectDir);
 
                 fs.pathExistsSync(pathToJvmOptions).should.be.false;
                 fs.pathExistsSync(pathToBackupJvmOptions).should.be.false;
@@ -340,7 +337,7 @@ describe('metricsService/index.js', () => {
                 fs.outputFileSync(pathToBackupMainAppClassFile, originalMainAppClassFile);
             });
             it(`removes metrics collector from the project's main app class file and pom.xml`, async() => {
-                await metricsService.removeMetricsCollectorFromProject('spring', projectDir);
+                await metricsService.removeMetricsCollectorFromProject('spring', 'java', projectDir);
 
                 const outputClassFile = fs.readFileSync(pathToMainAppClassFile, 'utf8');
                 outputClassFile.should.equal(originalMainAppClassFile);
@@ -357,7 +354,7 @@ describe('metricsService/index.js', () => {
                 fs.outputJSONSync(pathToBackupPackageJson, packageJsonWithoutCollector);
             });
             it(`throws a useful error`, () => {
-                const funcToTest = () => metricsService.removeMetricsCollectorFromProject('unsupportedProjectType', projectDir);
+                const funcToTest = () => metricsService.removeMetricsCollectorFromProject('unsupportedProjectType', 'unknown', projectDir);
                 return funcToTest().should.be.rejectedWith(`Injection of metrics collector is not supported for projects of type 'unsupportedProjectType'`);
             });
         });
