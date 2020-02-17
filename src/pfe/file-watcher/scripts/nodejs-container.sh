@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #*******************************************************************************
 # Copyright (c) 2019 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
