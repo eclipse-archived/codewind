@@ -16,10 +16,18 @@
  *    const containerInfo = await containerService.awaitContainer(projectName, projectID);
  *    const projectInf = await containerService.awaitProjectInfFile(projectID);
  */
+const path = require('path');
+const fs = require('fs-extra');
 const { promisify } = require('util');
 const { exec } = require('child-process-promise');
 
-const { WORKSPACE_DIR, USING_K8S, containerDir, dir } = require('../../config');
+const { 
+    WORKSPACE_DIR,
+    USING_K8S,
+    containerDir,
+    dir,
+    TEMP_TEST_DIR,
+} = require('../../config');
 const environment = USING_K8S ? 'k8s' : 'docker';
 const helperService = require(`./${environment}.service`);
 
@@ -96,6 +104,18 @@ async function readDir(dirPath) {
     return fileList.trim().split('\n');
 };
 
+async function writeFile(filePath, contents) {
+    const pathToTmpFile = path.join(TEMP_TEST_DIR, `${Date.now()}`);
+    fs.writeFileSync(pathToTmpFile, contents);
+    await copyTo(pathToTmpFile, filePath);
+}
+
+async function writeJson(filePath, contents) {
+    const pathToTmpFile = path.join(TEMP_TEST_DIR, `${Date.now()}`);
+    fs.writeJsonSync(pathToTmpFile, contents);
+    await copyTo(pathToTmpFile, filePath);
+}
+
 async function getArchitecture() {
     const architecture = (await exec(`${EXEC_COMMAND} uname -m`)).stdout;
     return architecture.toString().trim();
@@ -107,7 +127,8 @@ async function getArchitecture() {
  */
 async function getProjectInfJSON(projectID) {
     const filepath = `${WORKSPACE_DIR}/.projects/${projectID}.inf`;
-    return JSON.parse(await readFile(filepath));
+    const json = await readJson(filepath);
+    return json;
 }
 
 /**
@@ -116,7 +137,8 @@ async function getProjectInfJSON(projectID) {
  */
 async function getCWSettingsJSON(projectName) {
     const filepath = `${WORKSPACE_DIR}/${projectName}/.cw-settings`;
-    return JSON.parse(await readFile(filepath));
+    const json = await readJson(filepath);
+    return json;
 }
 
 /**
@@ -237,6 +259,8 @@ module.exports = {
     readFile,
     readJson,
     readDir,
+    writeFile,
+    writeJson,
     getArchitecture,
     getProjectInfJSON,
     getCWSettingsJSON,
