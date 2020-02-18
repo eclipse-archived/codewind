@@ -152,7 +152,7 @@ export function workspaceSettingsTestModule(): void {
                 } else {
                     expect(actualResult).to.deep.equal(expectedResult);
                 }
-            });
+            }).timeout(ms("5s"));
         }
     });
 
@@ -180,7 +180,7 @@ export function workspaceSettingsTestModule(): void {
             it(combo + " => data: " + data, async() => {
                 const actualResult = await workspaceSettings.imagePushRegistryStatus(data);
                 expect(actualResult.statusCode).to.equal(expectedResult);
-            });
+            }).timeout(ms("5s"));;
         }
     });
 }

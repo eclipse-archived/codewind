@@ -10,6 +10,7 @@
  *******************************************************************************/
 import { expect } from "chai";
 import * as path from "path";
+import ms from "ms";
 
 import * as projectSettings from "../../../src/projects/projectSpecifications";
 import * as socket from "../../../src/utils/socket";
@@ -129,7 +130,7 @@ export function projectSettingsTestModule(): void {
 
                 await projectSettings.projectSpecificationHandler(projectID, internalDebugPortSettings);
                 expect(internalDebugPortStatus).to.equal(expectedResult);
-            });
+            }).timeout(ms("5s"));;
         }
     });
 
@@ -181,7 +182,7 @@ export function projectSettingsTestModule(): void {
                 await projectSettings.projectSpecificationHandler(projectID, internalPortSettings);
                 expect(internalPortStatus).to.equal(expectedResult);
                 expect(internalPortValue).to.equal(expectedPortValue);
-            });
+            }).timeout(ms("5s"));
         }
     });
 
@@ -235,7 +236,7 @@ export function projectSettingsTestModule(): void {
 
                 await projectSettings.projectSpecificationHandler(projectID, contextSettings);
                 expect(contextRootStatus).to.equal(expectedResult);
-            });
+            }).timeout(ms("5s"));
         }
     });
 
@@ -289,7 +290,7 @@ export function projectSettingsTestModule(): void {
 
                 await projectSettings.projectSpecificationHandler(projectID, healthSettings);
                 expect(healthCheckStatus).to.equal(expectedResult);
-            });
+            }).timeout(ms("5s"));
         }
     });
 
@@ -337,7 +338,7 @@ export function projectSettingsTestModule(): void {
 
                 await projectSettings.projectSpecificationHandler(projectID, statusPingTimeoutSettings);
                 expect(statusPingTimeoutValue).to.equal(expectedResult);
-            });
+            }).timeout(ms("5s"));;
         }
     });
 
@@ -416,7 +417,7 @@ export function projectSettingsTestModule(): void {
 
                 await projectSettings.projectSpecificationHandler(projectID, mavenProfilesSettings);
                 expect(mavenProfilesStatus).to.equal(expectedResult);
-            });
+            }).timeout(ms("5s"));
         }
     });
 
@@ -494,7 +495,7 @@ export function projectSettingsTestModule(): void {
 
                 await projectSettings.projectSpecificationHandler(projectID, mavenPropertiesSettings);
                 expect(mavenPropertiesStatus).to.equal(expectedResult);
-            });
+            }).timeout(ms("5s"));
         }
     });
 
@@ -546,7 +547,7 @@ export function projectSettingsTestModule(): void {
 
                 await projectSettings.projectSpecificationHandler(projectID, ignoredPathsSettings);
                 expect(ignoredPathsStatus).to.equal(expectedResult);
-            });
+            }).timeout(ms("5s"));
         }
     });
 
@@ -594,7 +595,7 @@ export function projectSettingsTestModule(): void {
 
                 await projectSettings.projectSpecificationHandler(projectID, projectSpecificationHandlerSetting);
                 expect(projectSettingsStatus).to.equal(expectedResult);
-            });
+            }).timeout(ms("5s"));
         }
     });
 }
