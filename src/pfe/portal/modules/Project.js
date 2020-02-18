@@ -12,8 +12,6 @@
 const fs = require('fs-extra');
 const { extname, isAbsolute, join } = require('path');
 const uuidv1 = require('uuid/v1');
-const util = require('util')
-const exec = util.promisify(require('child_process').exec);
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
 
@@ -429,8 +427,13 @@ module.exports = class Project {
    */
   async getProfilingByTime(timeOfTestRun) {
     const pathToProfilingFile = await this.getPathToProfilingFile(timeOfTestRun);
-    const profilingStream = await fs.createReadStream(pathToProfilingFile);
-    log.info(`Returning profiling file stream ${pathToProfilingFile} for ${this.name}`)
+    let profilingStream;
+    try {
+      profilingStream = fs.createReadStream(pathToProfilingFile);
+    } catch (error) {
+      throw new ProjectMetricsError("STREAM_FAILED", pathToProfilingFile, error.message);
+    }
+    log.info(`Returning profiling file stream ${pathToProfilingFile} for ${this.name}`);
     return profilingStream;
   } 
 
@@ -503,12 +506,7 @@ module.exports = class Project {
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
    */
   async getPathToProfilingFile(timeOfTestRun) {
-    let pathToLoadTestDir;
-    try {
-      pathToLoadTestDir = await this.getPathToLoadTestDir(timeOfTestRun);
-    } catch (err) {
-      pathToLoadTestDir = await this.getClosestPathToLoadTestDir(timeOfTestRun);
-    }
+    const pathToLoadTestDir = join(this.loadTestPath, String(timeOfTestRun));
     if (this.language == 'nodejs') {
       const pathToProfilingJson = join(pathToLoadTestDir, 'profiling.json');
       if (await fs.exists(pathToProfilingJson)) {
@@ -520,12 +518,15 @@ module.exports = class Project {
       if (fileName !== false) {
         return join(pathToLoadTestDir, fileName)
       }
+      const projectRoot = join("home", "default", "app");
+      const relativePathToFile = join("load-test", timeOfTestRun);
       try {
-        await exec(`docker cp ${this.containerId}:${join('/', 'home', 'default', 'app', 'load-test', timeOfTestRun)} ../codewind-workspace/${this.name}/load-test/`);
+        log.info(`Copying profiling folder for ${this.name} load run ${timeOfTestRun}`)
+        await cwUtils.copyFileFromContainer(this, this.loadTestPath, projectRoot, relativePathToFile);
       } catch (error) {
         throw new ProjectMetricsError('DOCKER_CP', this.name, error.message);
       }
-      log.info(`${this.name} profiling data from run ${timeOfTestRun} saved to pfe`)
+      log.info(`${this.name} profiling folder from run ${timeOfTestRun} saved to pfe`)
       fileName = await isHcdSaved(pathToLoadTestDir)
       if (fileName !== false) {
         return join(pathToLoadTestDir, fileName)
@@ -781,6 +782,11 @@ module.exports = class Project {
  * @param {string} pathToLoadTestDir
  */
 async function isHcdSaved(pathToLoadTestDir) {
+  try {
+    await fs.access(pathToLoadTestDir);
+  } catch (error) {
+    return false;
+  }
   const files = await fs.readdir(pathToLoadTestDir);
   for (let i = 0; i < files.length; i++) {
     if (extname(files[i]) == '.hcd') {

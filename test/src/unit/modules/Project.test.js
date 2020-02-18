@@ -528,7 +528,7 @@ describe('Project.js', () => {
         it('Fails to get a profiling file using an invalid time stamp', () => {
             const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
-            return project.getProfilingByTime('123')
+            project.getProfilingByTime('123456')
                 .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
                 .and.be.an.instanceOf(ProjectMetricsError)
                 .and.have.property('code', 'NOT_FOUND');
@@ -574,7 +574,8 @@ describe('Project.js', () => {
         it('Fails to get a profiling.json path using an invalid time stamp', () => {
             const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
-            return project.getPathToProfilingFile('123')
+            project.language = 'nodejs';
+            project.getPathToProfilingFile('123')
                 .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
                 .and.be.an.instanceOf(ProjectMetricsError)
                 .and.have.property('code', 'NOT_FOUND');
@@ -584,13 +585,6 @@ describe('Project.js', () => {
             project.loadTestPath = loadTestResources;
             project.language = 'nodejs';
             const profilingFilePath = await project.getPathToProfilingFile('20190326154749');
-            fs.existsSync(profilingFilePath).should.be.true;
-        });
-        it('Gets a profiling.json path using a valid time stamp which is larger than an existing filename', async() => {
-            const project = createDefaultProjectAndCheckIsAnObject();
-            project.loadTestPath = loadTestResources;
-            project.language = 'nodejs';
-            const profilingFilePath = await project.getPathToProfilingFile('30000000000000');
             fs.existsSync(profilingFilePath).should.be.true;
         });
         it('Fails to get an .hcd path when java project pod is not running', () => {

@@ -341,48 +341,46 @@ module.exports = class LoadRunner {
     // For Java Liberty restart the server in preparation for profiling
     if (this.project.language == 'java' && this.project.projectType == 'liberty') {
       log.info(`beginJavaProfiling: Stopping liberty server`); 
-      await docker.exec(this.project, ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `]);
+      const stopCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `];
+      await cwUtils.spawnContainerProcess(this.project, stopCommand);
       await this.waitForHealth(false);
       log.info(`beginJavaProfiling: Starting liberty server`); 
-      await docker.exec(this.project, ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start;`]);
+      const startCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start; `];
+      await cwUtils.spawnContainerProcess(this.project, startCommand);
       await this.waitForHealth(true);
     }
 
-    const command = `export javapid=(\`pidof java\`); java -jar $JAVA_HOME/jre/lib/ext/healthcenter.jar ID=\${javapid[-1]} level=headless -Dcom.ibm.java.diagnostics.healthcenter.headless.run.number.of.runs=1 -Dcom.ibm.java.diagnostics.healthcenter.headless.run.duration=${durationInMins} -Dcom.ibm.java.diagnostics.healthcenter.headless.output.directory=${loadTestDir} -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.memorycounters=off -Dcom.ibm.diagnostics.healthcenter.data.cpu=off -Dcom.ibm.diagnostics.healthcenter.data.environment=off -Dcom.ibm.diagnostics.healthcenter.data.locking=off -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.threads=off`;
-
+    const healthCentercommand = `export javapid=(\`pidof java\`); java -jar $JAVA_HOME/jre/lib/ext/healthcenter.jar ID=\${javapid[-1]} level=headless -Dcom.ibm.java.diagnostics.healthcenter.headless.run.number.of.runs=1 -Dcom.ibm.java.diagnostics.healthcenter.headless.run.duration=${durationInMins} -Dcom.ibm.java.diagnostics.healthcenter.headless.output.directory=${loadTestDir} -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.memorycounters=off -Dcom.ibm.diagnostics.healthcenter.data.cpu=off -Dcom.ibm.diagnostics.healthcenter.data.environment=off -Dcom.ibm.diagnostics.healthcenter.data.locking=off -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.threads=off`;
+    const healthCenterArray = ['bash', '-c', healthCentercommand];
     try {
-      await docker.exec(this.project, ['bash', '-c', command]); 
+      await cwUtils.spawnContainerProcess(this.project, healthCenterArray);
     } catch (error) {
       log.error(error)
     }
 
-    const projectID = this.project.projectID;
-
-    let options = {
-      host: "localhost",
-      port: 9090,
-      path: `/api/v1/projects/${projectID}/profiling/${this.metricsFolder}`,
-      method: 'GET',
-    };
-    
-    setTimeout(() => this.getJavaHealthCenterData(options, projectID, this.metricsFolder, 1), duration * 1000);
+    setTimeout(() => this.getJavaHealthCenterData(1), duration * 1000);
   }
 
-  async getJavaHealthCenterData(options, projectID, timestamp, counter) {
+  async getJavaHealthCenterData(counter) {
     if (counter > 20) {
-      log.error("Failed to save .hcd file");
+      log.error("getJavaHealthCenterData: Failed to save .hcd file");
       return;
     }
-    const apiOptions = options;
-    const res = await cwUtils.asyncHttpRequest(apiOptions);
-    if (res.statusCode !== 200) {
-      log.info(`.hcd file not found, trying again. Attempt ${counter}/20`);
-      setTimeout(() => this.getJavaHealthCenterData(apiOptions, projectID, timestamp, counter + 1), 3000);
-    } else {
-      log.info(".hcd copied to PFE");
-      const data = { projectID: projectID,  status: 'hcdReady', timestamp: timestamp};
-      this.user.uiSocket.emit('runloadStatusChanged', data);
+    try {
+      await this.project.getProfilingByTime(this.metricsFolder);
+    } catch (error) {
+      log.error(error);
+      if (this.project !== null) {
+        log.info(`getJavaHealthCenterData: .hcd file not found, trying again. Attempt ${counter}/20`);
+        setTimeout(() => this.getJavaHealthCenterData(counter + 1), 3000);
+      } else {
+        log.warn("getJavaHealthCenterData: Project was made null before .hcd could be found.")
+      }
+      return;
     }
+    log.info("getJavaHealthCenterData: .hcd copied to PFE");
+    const data = { projectID: this.project.projectID,  status: 'hcdReady', timestamp: this.metricsFolder};
+    this.user.uiSocket.emit('runloadStatusChanged', data);
   }
 
   async getLibertyJavaVersion() {
@@ -575,7 +573,6 @@ module.exports = class LoadRunner {
    * The samples are written to a file as a JSON array of samples.
    */
   async endProfiling() {
-
     if (this.profilingSocket !== null) {
       await fs.writeJson(this.workingDir + '/profiling.json', this.profilingSamples, { spaces: '  ' }, function (err) {
         if (err) {
@@ -583,14 +580,15 @@ module.exports = class LoadRunner {
           log.error(err);
         }
       });
+      log.info(`profiling.json saved for project ${this.project.name}`);
       const data = { projectID: this.project.projectID,  status: 'profilingReady' , timestamp: this.metricsFolder }
       this.user.uiSocket.emit('runloadStatusChanged', data);
       this.profilingSocket.emit('disableprofiling');
       this.profilingSocket.disconnect();
       this.profilingSocket = null;
       this.profilingSamples = null;
+      this.project = null;
     }
-    this.project = null;
   }
 
   cancelProfiling() {
