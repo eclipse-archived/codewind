@@ -104,11 +104,11 @@ const sampleRepos = {
     // Name and description for this repo are from https://github.com/codewind-resources/codewind-templates/blob/master/devfiles/templates.json
     codewind: {
         url: templateRepositoryURL,
-        description: 'Default templates',
+        description: 'The default set of templates for new projects in Codewind.',
         enabled: true,
         protected: true,
         projectStyles: ['Codewind'],
-        name: 'The default set of templates for new projects in Codewind.',
+        name: 'Default templates',
     },
 };
 
