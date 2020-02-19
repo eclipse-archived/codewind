@@ -96,13 +96,13 @@ To run only specific project types, comment out the unwanted project types in **
 
 ## Debugging tests
 
-All test logs are stored in the user root directory `~/test_results/`.
+All test logs are stored in the user root directory `$HOME/.codewindtest/turbine/test_results/`.
 
-- To access `local` functional test result, go under `~/test_results/local/functional/` followed by the date the test was ran, followed by the time the test was run and the test run log would be stored under `local-functional-test.log`.
+- To access `local` functional test result, go under `$HOME/.codewindtest/turbine/test_results/local/functional/` followed by the date the test was ran, followed by the time the test was run and the test run log would be stored under `local-functional-test.log`.
 
-- To access `kube` functional test result, go under `~/test_results/kube/functional/` followed by the date the test was ran, followed by the time the test was run and the test run log would be stored under `kube-functional-test.log`.
+- To access `kube` functional test result, go under `$HOME/.codewindtest/turbine/test_results/kube/functional/` followed by the date the test was ran, followed by the time the test was run and the test run log would be stored under `kube-functional-test.log`.
 
-- To access `unit` test result, go under `~/test_results/unit/` followed by the date the test was ran, followed by the time the test was run and the test run log would be stored under `unit-test.log`.
+- To access `unit` test result, go under `$HOME/.codewindtest/turbine/test_results/unit/` followed by the date the test was ran, followed by the time the test was run and the test run log would be stored under `unit-test.log`.
 
 ## Test Reports
 

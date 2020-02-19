@@ -111,9 +111,9 @@ if [[ $CONVERT_ONLY == false ]]; then
     if [ "$TEST_ENV" == "both" ]; then
         for testEnv in "local" "kube";
             do
-                echo -e "${CYAN}> Kicked off run for $testEnv. Tail logs to see progress from "$LOGS_DATA_DIR/performance-run-$testEnv.log" ${RESET}"
                 LOGS_DATA_DIR=$TEST_INFO_DIR/performance-test-data/$testEnv/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
                 mkdir -p $LOGS_DATA_DIR
+                echo -e "${CYAN}> Kicked off run for $testEnv. Tail logs to see progress from "$LOGS_DATA_DIR/performance-run-$testEnv.log" ${RESET}"
                 ./runner.sh --environment=$testEnv --iterations=$ITERATIONS --clean-run=$CLEAN_RUN --post-clean=$POST_CLEAN --create-projects=n > "$LOGS_DATA_DIR/performance-run-$testEnv.log" &
             done
     else

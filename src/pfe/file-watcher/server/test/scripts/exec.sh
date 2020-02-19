@@ -82,7 +82,7 @@ function setup {
     TURBINE_SERVER_DIR=$CW_DIR/src/pfe/file-watcher/server
     TEST_DIR=$TURBINE_SERVER_DIR/test
     TURBINE_DIR_CONTAINER=/file-watcher/server
-    TEST_RUNS_DATE_DIR=~/test_results/$DATE_NOW
+    TEST_RUNS_DATE_DIR=$TEST_INFO_DIR/test_results/$DATE_NOW
     TEST_OUTPUT_DIR=$TEST_RUNS_DATE_DIR/$TEST_TYPE/$TEST_SUITE/$TIME_NOW
     TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log

@@ -176,6 +176,6 @@ if [ -e "$CSV_BASELINE_DIR/$CSV_FILENAME" ]; then
     checkExitCode $? "Failed to compare csv from baseline "$COMPARE_FILEPATH_LOCAL" to comparable "$LOGS_DATA_DIR/$CSV_FILE"" true
 fi
 
-echo -e "${BLUE}Copying over performance data csv to $CSV_BASELINE_DIR ... ${RESET}"
-cp "$LOGS_DATA_DIR/$CSV_FILE" $CSV_BASELINE_DIR
+echo -e "${BLUE}Copying over performance data csv from "$LOGS_DATA_DIR/$CSV_FILE" to $CSV_BASELINE_DIR ... ${RESET}"
+cp "$LOGS_DATA_DIR/$CSV_FILE" $CSV_BASELINE_DIR/
 checkExitCode $? "Failed to copy performance data csv. Please check the source directory for data in "$LOGS_DATA_DIR/$CSV_FILE"" true

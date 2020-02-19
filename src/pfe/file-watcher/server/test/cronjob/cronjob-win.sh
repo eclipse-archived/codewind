@@ -36,7 +36,7 @@ PROJECTS_CLONE_DATA_FILE="$TEST_DIR/resources/projects-clone-data"
 
 DATE_NOW=$(date +"%d-%m-%Y")
 TIME_NOW=$(date +"%H.%M.%S")
-TEST_OUTPUT_DIR=~/test_results/$DATE_NOW/$TIME_NOW
+TEST_OUTPUT_DIR=$HOME/.codewindtest/turbine/test_results/$DATE_NOW/$TIME_NOW
 TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
 TEST_LOG=$TEST_OUTPUT_DIR/windows-functional-test.log
 
