@@ -32,7 +32,7 @@ const log = new Logger(__filename);
 * One per User
 */
 module.exports = class LoadRunner {
-  constructor(user) {
+  constructor(user) {  // TODO: just pass in uiSocket
     this.user = user;
     this.hostname = process.env.CODEWIND_PERFORMANCE_SERVICE ? process.env.CODEWIND_PERFORMANCE_SERVICE : "codewind-performance"
     this.port = '9095';
@@ -397,8 +397,7 @@ module.exports = class LoadRunner {
     let now = new Date();
     this.metricsFolder = dateFormat(now, 'yyyymmddHHMMss');
 
-    let loadTestDir = path.join(this.project.projectPath(false), 'load-test');
-    this.workingDir = path.join(loadTestDir, this.metricsFolder);
+    this.workingDir = path.join(this.project.loadTestDir, this.metricsFolder);
     log.debug(this.workingDir);
 
     try {
