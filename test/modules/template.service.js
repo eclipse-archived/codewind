@@ -101,13 +101,14 @@ const styledTemplates = {
 const templateRepositoryURL = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json';
 
 const sampleRepos = {
+    // Name and description for this repo are from https://github.com/codewind-resources/codewind-templates/blob/master/devfiles/templates.json
     codewind: {
         url: templateRepositoryURL,
-        description: 'The default set of templates for new projects in Codewind.',
+        description: 'Default templates',
         enabled: true,
         protected: true,
         projectStyles: ['Codewind'],
-        name: 'Default templates',
+        name: 'The default set of templates for new projects in Codewind.',
     },
 };
 
@@ -181,15 +182,11 @@ async function getTemplates(queryParams) {
  * @param {[JSON]} repoList
  */
 async function setTemplateReposTo(repoList) {
-    const reposToDelete = (await getTemplateRepos()).body;
+    const { body: reposToDelete } = await getTemplateRepos();
     if (reposToDelete.length > 0) {
-        await Promise.all(reposToDelete.map(repo =>
-            deleteTemplateRepo(repo.url)
-        ));
+        await Promise.all(reposToDelete.map(repo => deleteTemplateRepo(repo.url)));
     }
-    await Promise.all(repoList.map(repo =>
-        addTemplateRepo(repo)
-    ));
+    await Promise.all(repoList.map(repo => addTemplateRepo(repo)));
 }
 
 async function getTemplateStyles() {
@@ -225,6 +222,24 @@ function saveReposBeforeEachTestAndRestoreAfterEach() {
     });
 }
 
+function setupReposAndTemplatesForTesting() {
+    // Removes all repos that already exist and replaces them with ones for testing
+    let originalTemplateRepos;
+    before(async function() {
+        this.timeout(testTimeout.short);
+        // Save original repositories
+        const { body: getBody } = await getTemplateRepos();
+        originalTemplateRepos = getBody;
+        await setTemplateReposTo([sampleRepos.codewind]);
+    });
+    after(async function() {
+        this.timeout(testTimeout.short);
+
+        // Restore orignal list
+        await setTemplateReposTo(originalTemplateRepos);
+    });
+}
+
 module.exports = {
     defaultCodewindTemplates,
     styledTemplates,
@@ -242,4 +257,5 @@ module.exports = {
     getTemplateStyles,
     saveReposBeforeTestAndRestoreAfter,
     saveReposBeforeEachTestAndRestoreAfterEach,
+    setupReposAndTemplatesForTesting,
 };
