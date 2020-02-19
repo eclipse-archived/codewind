@@ -196,16 +196,6 @@ module.exports = class FileWatcher {
     }
   }
 
-  async validateProject(project){
-    const projectAction = {
-      action: 'validate',
-      projectID: project.projectID,
-      projectType: project.projectType,
-      location: project.projectPath(false)
-    };
-    await this.performProjectActionRequest(projectAction);
-  }
-
   async buildProject(project, buildAction){
     const projectAction = {
       action: buildAction,

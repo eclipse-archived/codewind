@@ -25,9 +25,6 @@ const metricsService = require('./metricsService');
 
 const log = new Logger(__filename);
 
-// Declaring STATES here makes it accessible in this file.
-// We add it to the exported Project class so it can be
-// reached by users of the Project class.
 const STATES = {
   closed: 'closed',
   open: 'open',
@@ -67,14 +64,9 @@ module.exports = class Project {
     this.name = args.name;
     this.codewindVersion = args.codewindVersion || process.env.CODEWIND_VERSION;
     this.language = args.language;
-    this.validate = args.validate;
     this.creationTime = args.creationTime;
 
     if (args.contextRoot) this.contextRoot = args.contextRoot;
-    if (args.framework) this.framework = args.framework;
-    if (args.services) this.services = args.services;
-    if (args.gitURL) this.gitURL = args.gitURL;
-    if (args.validate) this.validate = args.validate;
     if (args.extension) this.extension = args.extension;
 
     // locOnDisk is used by the UI and needs to match what it sees.
@@ -95,10 +87,7 @@ module.exports = class Project {
     this.host = args.host || '';
     this.ports = args.ports || {};
 
-    // workspace is the parent directory of the project
-    // NOT the global.codewind.CODEWIND_WORKSPACE we store
-    // project.inf and log files in.
-    this.workspace = args.workspace || workspace;
+    this.workspace = args.workspace;
     this.directory = args.directory || this.name;
     this.infLockFlag = false;
 
