@@ -8,8 +8,6 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-const path = require('path');
-
 const metricsService = require('../modules/metricsService');
 const Logger = require('../modules/utils/Logger');
 const cwUtils = require('../modules/utils/sharedFunctions');
