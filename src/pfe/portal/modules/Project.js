@@ -339,7 +339,11 @@ module.exports = class Project {
 
   static filterNonPersistentFields(key, value) {
     // Strip out fields we don't want to save in the .inf file.
-    const nonPersistentFields = ["capabilitiesReady", "detailedAppStatus"];
+    const nonPersistentFields = [
+      'capabilitiesReady',
+      'detailedAppStatus',
+      'infLockFlag'
+    ];
     if (nonPersistentFields.includes(key)) {
       return undefined;
     }
