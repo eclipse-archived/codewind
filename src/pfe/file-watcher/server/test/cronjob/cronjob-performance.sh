@@ -97,12 +97,12 @@ TEE_FILE_ARG=""
 if [[ $TEST_ENV == "both" ]]; then
     for testEnv in "local" "kube";
         do
-            FOLDER_ARG=~/performance_test_logs/$testEnv/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
+            FOLDER_ARG=$HOME/.codewindtest/turbine/performance-test-data/$testEnv/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
             mkdir -p $FOLDER_ARG
             TEE_FILE_ARG="$TEE_FILE_ARG $FOLDER_ARG/$PERFORMANCE_RUN_LOG"
         done
 else
-    FOLDER_ARG=~/performance_test_logs/$TEST_ENV/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
+    FOLDER_ARG=$HOME/.codewindtest/turbine/performance-test-data/$TEST_ENV/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
     mkdir -p $FOLDER_ARG
     TEE_FILE_ARG="$TEE_FILE_ARG $FOLDER_ARG/$PERFORMANCE_RUN_LOG"
 fi

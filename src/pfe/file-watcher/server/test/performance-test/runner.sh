@@ -81,7 +81,7 @@ fi
 if [ -z $TIME_NOW ]; then
     export TIME_NOW=$(date +"%H.%M.%S")
 fi
-LOGS_DATA_DIR=~/performance_test_logs/$TEST_ENV/$TURBINE_PERFORMANCE_TEST/$DATE_NOW/$TIME_NOW/
+LOGS_DATA_DIR=$TEST_INFO_DIR/performance-test-data/$TEST_ENV/$TURBINE_PERFORMANCE_TEST/$DATE_NOW/$TIME_NOW
 mkdir -p $LOGS_DATA_DIR
 
 TARGET_DIR="$CURR_DIR/data/$TEST_ENV/$TURBINE_PERFORMANCE_TEST"
@@ -162,10 +162,20 @@ echo -e "${CYAN}> Deactivating python virtual environment ${RESET}"
 deactivate venv > /dev/null 2>&1
 checkExitCode $? "Failed to deactivate up python virtual environment. Please try again." true
 
-echo -e "${BLUE}Copying over performance data from $TARGET_DIR to $LOGS_DATA_DIR  ... ${RESET}"
-cp -r $TARGET_DIR/* $LOGS_DATA_DIR
+echo -e "${BLUE}Copying over performance data from $TARGET_DIR to $LOGS_DATA_DIR ... ${RESET}"
+cp -r $TARGET_DIR/* $LOGS_DATA_DIR/
+checkExitCode $? "Failed to copy data. Please check the source directory for data in $TARGET_DIR" true
 
-if [[ ($? -ne 0) ]]; then
-    echo -e "${RED}Failed to copy data. Please check the source directory for data in $TARGET_DIR ${RESET}\n"
-    exit 1
+CSV_FILENAME="$TEST_ENV-$TURBINE_PERFORMANCE_TEST"-performance-data.csv
+CSV_BASELINE_DIR=$TEST_INFO_DIR/performance-test-baseline/$TEST_ENV/$TURBINE_PERFORMANCE_TEST
+mkdir -p $CSV_BASELINE_DIR
+
+if [ -e "$CSV_BASELINE_DIR/$CSV_FILENAME" ]; then
+    echo -e "${BLUE}Comparing csv paths for $TEST_ENV local with baseline file "$COMPARE_FILEPATH_LOCAL" ... ${RESET}"
+    ./compare-csv.sh --baseline-file="$CSV_BASELINE_DIR/$CSV_FILENAME" --comparable-file="$LOGS_DATA_DIR/$CSV_FILE" --save="$LOGS_DATA_DIR/data-comparison.log"
+    checkExitCode $? "Failed to compare csv from baseline "$COMPARE_FILEPATH_LOCAL" to comparable "$LOGS_DATA_DIR/$CSV_FILE"" true
 fi
+
+echo -e "${BLUE}Copying over performance data csv to $CSV_BASELINE_DIR ... ${RESET}"
+cp "$LOGS_DATA_DIR/$CSV_FILE" $CSV_BASELINE_DIR
+checkExitCode $? "Failed to copy performance data csv. Please check the source directory for data in "$LOGS_DATA_DIR/$CSV_FILE"" true

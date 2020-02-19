@@ -112,12 +112,12 @@ if [[ $CONVERT_ONLY == false ]]; then
         for testEnv in "local" "kube";
             do
                 echo -e "${CYAN}> Kicked off run for $testEnv. Tail logs to see progress from "$LOGS_DATA_DIR/performance-run-$testEnv.log" ${RESET}"
-                LOGS_DATA_DIR=~/performance_test_logs/$testEnv/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
+                LOGS_DATA_DIR=$TEST_INFO_DIR/performance-test-data/$testEnv/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
                 mkdir -p $LOGS_DATA_DIR
                 ./runner.sh --environment=$testEnv --iterations=$ITERATIONS --clean-run=$CLEAN_RUN --post-clean=$POST_CLEAN --create-projects=n > "$LOGS_DATA_DIR/performance-run-$testEnv.log" &
             done
     else
-        LOGS_DATA_DIR=~/performance_test_logs/$TEST_ENV/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
+        LOGS_DATA_DIR=$TEST_INFO_DIR/performance-test-data/$TEST_ENV/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
         mkdir -p $LOGS_DATA_DIR
         ./runner.sh --environment=$TEST_ENV --iterations=$ITERATIONS --clean-run=$CLEAN_RUN --post-clean=$POST_CLEAN --create-projects=n |& tee "$LOGS_DATA_DIR/performance-run-$TEST_ENV.log"
     fi

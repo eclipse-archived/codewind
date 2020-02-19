@@ -17,6 +17,7 @@ cd $INITIAL_DIR
 
 export PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
 export PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects"
+export TEST_INFO_DIR="$HOME/.codewindtest/turbine"
 
 # Function to get the che and keycloak endpoint
 function getEndpoints() {
