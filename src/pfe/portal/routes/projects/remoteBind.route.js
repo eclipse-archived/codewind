@@ -429,13 +429,16 @@ async function bindEnd(req, res) {
     // now move temp project to real project
     await cwUtils.copyProject(pathToCopy, project.projectPath(), getMode(project));
 
-    if (project.injectMetrics) {
-      try {
+    try {
+      // Now the files are in the container check whether it is an OpenLiberty project
+      await project.setOpenLiberty();
+      if (project.injectMetrics) {
         await metricsService.injectMetricsCollectorIntoProject(project.projectType, project.language, project.projectPath());
-      } catch (error) {
-        log.warn(error);
       }
+    } catch (error) {
+      log.warn(error);
     }
+
     // debug logic to identify bind time
     timerbindend = Date.now();
     let totalbindtime = (timerbindend - timerbindstart) / 1000;
