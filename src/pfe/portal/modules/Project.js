@@ -59,7 +59,7 @@ const CW_SETTINGS_PROPERTIES = [
  */
 module.exports = class Project {
 
-  constructor(args, workspace) {
+  constructor(args) {
     this.projectID = args.projectID || uuidv1();
     this.name = args.name;
     this.codewindVersion = args.codewindVersion || process.env.CODEWIND_VERSION;

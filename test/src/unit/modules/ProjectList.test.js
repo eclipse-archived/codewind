@@ -49,10 +49,11 @@ describe('ProjectList.js', () => {
     describe('addProject(project)', () => {
         it('Creates a new Project and adds it to the ProjectList', () => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project);
             const { list } = projectList;
             list.should.not.eql({});
@@ -61,10 +62,11 @@ describe('ProjectList.js', () => {
         });
         it('Throws an error as the project already exists', () => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project);
             const { list } = projectList;
             list.should.not.eql({});
@@ -78,10 +80,11 @@ describe('ProjectList.js', () => {
     describe('projectNameExists(name)', () => {
         it('Returns true as project name exists', () => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project);
             const exists = projectList.projectNameExists('newdummyproject');
             exists.should.be.true;
@@ -93,10 +96,11 @@ describe('ProjectList.js', () => {
         });
         it('Returns false as a project with the name "random" is not in the ProjectList', () => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project);
             const exists = projectList.projectNameExists('random');
             exists.should.be.false;
@@ -105,10 +109,11 @@ describe('ProjectList.js', () => {
     describe('removeProject(id)', () => {
         it('Removes a project from the ProjectList', () => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project);
             const { list } = projectList;
             list.should.have.property(project.projectID);
@@ -128,10 +133,11 @@ describe('ProjectList.js', () => {
     describe('retrieveProject(id)', () => {
         it('Retrieves a project that exists', () => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project);
             const { list } = projectList;
             list.should.have.property(project.projectID);
@@ -164,10 +170,11 @@ describe('ProjectList.js', () => {
         });
         it('Updates a project by adding new field', async() => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project);
 
             const updatedProject = { ...project };
@@ -187,10 +194,11 @@ describe('ProjectList.js', () => {
         });
         it('Updates a project by changing an existing field', async() => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project);
 
             const updatedProject = { ...project };
@@ -210,10 +218,11 @@ describe('ProjectList.js', () => {
         });
         it('Updates a project\'s host to "ingress_host" and appStatus to "started"', async() => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project);
       // CHE_INGRESS_HOST is set when appStatus is set to started
             process.env.CHE_INGRESS_HOST = 'ingress_host';
@@ -254,10 +263,11 @@ describe('ProjectList.js', () => {
         });
         it('Reloads a project by reading from its .cw-settings file. A field found in .cw-settings is added to the project object', async() => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'reloadNewField', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'reloadNewField',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
 
       // Create .inf file
             const projectInfPath = path.join(
@@ -283,10 +293,11 @@ describe('ProjectList.js', () => {
         });
         it("Reloads a project by reading from its .cw-settings file and ignores the projectID property (Don't overwrite projectID)", async() => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'reloadProjectID', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'reloadProjectID',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
 
       // Create .inf file
             const projectInfPath = path.join(
@@ -321,10 +332,11 @@ describe('ProjectList.js', () => {
         });
         it('Deletes a property (key) from a Project and writes to the .inf file', async() => {
             const projectList = new ProjectList();
-            const project = new Project(
-                { name: 'dummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project = new Project({
+                name: 'dummyproject',
+                locOnDisk: '/Documents/projectDir/' ,
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             project.should.haveOwnProperty('name').and.equal('dummyproject');
 
       // Create .inf file
@@ -360,15 +372,17 @@ describe('ProjectList.js', () => {
         });
         it('Gets the projectList as an array (2 elements)', () => {
             const projectList = new ProjectList();
-            const project1 = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project1 = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project1);
-            const project2 = new Project(
-                { name: 'newdummyproject', locOnDisk: '/Documents/projectDir/' },
-                global.codewind.CODEWIND_WORKSPACE
-            );
+            const project2 = new Project({
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: global.codewind.CODEWIND_WORKSPACE,
+            });
             projectList.addProject(project2);
             Object.keys(projectList.list).length.should.equal(2);
 

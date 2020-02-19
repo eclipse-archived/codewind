@@ -47,8 +47,10 @@ describe('Project.js', () => {
     describe('new Project()', () => {
         it('Initialises a new Project with minimal arguments', () => {
             const project = new Project({
-                name: 'newdummyproject', locOnDisk: '/Documents/projectDir/',
-            }, './someworkspace');
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: './someworkspace',
+            });
             project.should.be.an('object');
             project.should.have.property('projectID').to.be.a('string');
             project.should.have.property('name');
@@ -803,7 +805,10 @@ describe('Project.js', () => {
 });
 
 function createProjectAndCheckIsAnObject(options, workspace) {
-    const project = new Project(options, workspace);
+    const project = new Project({
+        ...options,
+        workspace,
+    });
     project.should.be.an('object');
     return project;
 }
