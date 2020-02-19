@@ -57,6 +57,8 @@ const mockRepos = {
 };
 const mockRepoList = Object.values(mockRepos);
 describe('Templates.js', function() {
+    // Set the default timeout for all tests
+    this.timeout(testTimeout.short);
     suppressLogOutput(Templates);
     describe('Class functions', function() {
         describe('initializeRepositoryList()', function() {

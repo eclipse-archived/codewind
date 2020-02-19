@@ -25,7 +25,7 @@ const Templates = rewire('../../../../src/pfe/portal/modules/Templates');
 const { templateRepositoryURL } = require('./../../../modules/template.service');
 const { suppressLogOutput } = require('../../../modules/log.service');
 const { testTimeout } = require('../../../config');
-const { 
+const {
     createCodewindYamlFile,
     createTemplatesProviderFile,
 } = require('../../../modules/extension.service');
@@ -36,7 +36,9 @@ const should = chai.should();
 
 const EXTENSION_DIR =  `${__dirname}/extensionlist_temp`;
 
-describe('ExtensionList.js', () => {
+describe('ExtensionList.js', function() {
+    // Set the default timeout for all tests
+    this.timeout(testTimeout.short);
     suppressLogOutput(Extension);
     suppressLogOutput(ExtensionList);
     suppressLogOutput(Templates);
