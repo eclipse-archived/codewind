@@ -88,10 +88,11 @@ module.exports = class Project {
     this.ports = args.ports || {};
 
     this.workspace = args.workspace;
+    this.projectPath = join(this.workspace, this.name);
     this.directory = args.directory || this.name;
     this.infLockFlag = false;
 
-    this.loadTestPath = join(workspace, this.name, 'load-test');
+    this.loadTestPath = join(this.projectPath, 'load-test');
 
     if (this.language === 'java') {
       this.startMode = args.startMode || 'run';
@@ -195,7 +196,7 @@ module.exports = class Project {
     if (this.projectType === "appsodyExtension" && (this.language === 'nodejs' || this.language === 'java' || this.language === 'swift')) {
       return true;
     } 
-    const isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath(false), this.language);
+    const isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath, this.language);
     return isMetricsAvailable;
   }
 
@@ -236,23 +237,11 @@ module.exports = class Project {
   }
 
   /**
-   * Function to return the full path to the project directory.
-   * @arg inPortal true if we want the location in the portal container (with username)
-   * @return the path to the project directory.
-   */
-  projectPath(_) {
-    // this.workspace will include the user directory if we are in multi-user.
-    // Codewind workspace is hardcoded in filewatcherDeployment.js
-    // return (inPortal ? this.workspace + this.directory :  `/codewind-workspace/${this.directory}` );
-    return join(this.workspace, this.directory);
-  }
-
-  /**
    * Function to read the project .cw-settings file
    * @return the contents of the file as an object containing key-value pairs
    */
   async readSettingsFile() {
-    const settingsFile = join(this.projectPath(), '.cw-settings');
+    const settingsFile = join(this.projectPath, '.cw-settings');
     let currentSettings = {};
     if (await fs.pathExists(settingsFile)) {
       currentSettings = await fs.readJson(settingsFile);
@@ -265,7 +254,7 @@ module.exports = class Project {
    * @return the contents of the file is an object containing a refPaths array
    */
   async readRefPathsFile() {
-    const refPathsFile = join(this.projectPath(), '.cw-refpaths.json');
+    const refPathsFile = join(this.projectPath, '.cw-refpaths.json');
     let refPaths;
     if (await fs.pathExists(refPathsFile)) {
       refPaths = await fs.readJson(refPathsFile, { throws: false });

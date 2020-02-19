@@ -270,7 +270,7 @@ describe('ProjectList.js', () => {
             fs.existsSync(projectInfPath).should.be.true;
 
       // Create .cw-settings file
-            const settingsFilePath = path.join(project.projectPath(), '.cw-settings');
+            const settingsFilePath = path.join(project.projectPath, '.cw-settings');
             fs.existsSync(settingsFilePath).should.be.false;
             await fs.ensureFile(settingsFilePath);
             await fs.writeJSON(settingsFilePath, { newField: 'NEW' });
@@ -299,7 +299,7 @@ describe('ProjectList.js', () => {
             fs.existsSync(projectInfPath).should.be.true;
 
       // Create .cw-settings file
-            const settingsFilePath = path.join(project.projectPath(), '.cw-settings');
+            const settingsFilePath = path.join(project.projectPath, '.cw-settings');
             fs.existsSync(settingsFilePath).should.be.false;
             await fs.ensureFile(settingsFilePath);
             await fs.writeJSON(settingsFilePath, { projectID: '123' });

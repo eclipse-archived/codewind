@@ -38,7 +38,7 @@ async function inject(req, res) {
       return;
     }
 
-    const projectDir = path.join(project.workspace, project.directory);
+    const projectDir = project.projectPath;
     if (injectMetrics) {
       await metricsService.injectMetricsCollectorIntoProject(project.projectType, project.language, projectDir);
     } else {
@@ -65,7 +65,7 @@ async function inject(req, res) {
 }
 
 async function syncProjectFilesIntoBuildContainer(project, user){
-  const globalProjectPath = path.join(project.workspace, project.name);
+  const globalProjectPath = project.projectPath;
   const projectRoot = cwUtils.getProjectSourceRoot(project);
   if (project.buildStatus != "inProgress") {
     if (!global.codewind.RUNNING_IN_K8S) {

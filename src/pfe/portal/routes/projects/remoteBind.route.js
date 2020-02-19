@@ -124,7 +124,7 @@ async function bindStart(req, res) {
 
   try {
     let tempDirName = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE);
-    let dirName = path.join(newProject.workspace, newProject.name);
+    let dirName = newProject.projectPath;
     await fs.mkdir(dirName);
     let tempProjPath = path.join(tempDirName, newProject.name);
     await fs.mkdir(tempProjPath);
@@ -229,7 +229,7 @@ async function uploadEnd(req, res) {
       res.status(404).send('No files have been synced');
       return;
     }
-    const pathToProj = project.projectPath();
+    const pathToProj = project.projectPath;
 
     // Delete by directory
     const currentDirectoryList = await recursivelyListFilesOrDirectories(true, pathToTempProj);
@@ -267,10 +267,10 @@ async function uploadEnd(req, res) {
       || filesToDelete.length > 0
       || modifiedList.length > 0;
     if (wasProjectChanged) {
-      await cwUtils.copyProject(pathToTempProj, path.join(project.workspace, project.directory), getMode(project));
+      await cwUtils.copyProject(pathToTempProj, project.projectPath, getMode(project));
 
       if (project.injectMetrics) {
-        const projectDir = path.join(project.workspace, project.directory);
+        const projectDir = project.projectPath;
         try {
           // We will have replaced any injected files with their original version when we did
           // cwUtils.copyProject above. We must re-inject metrics here before building.
@@ -339,7 +339,7 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
   // If the current project is being built, we do not want to copy the files as this will
   // interfere with the current build
   if (project.buildStatus != "inProgress") {
-    const globalProjectPath = path.join(project.workspace, project.name);
+    const globalProjectPath = project.projectPath;
     // We now need to remove any files that have been deleted from the global workspace
     await Promise.all(filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(globalProjectPath, oldFile))));
     let projectRoot = cwUtils.getProjectSourceRoot(project);
@@ -429,11 +429,11 @@ async function bindEnd(req, res) {
     }
     const pathToCopy = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     // now move temp project to real project
-    await cwUtils.copyProject(pathToCopy, path.join(project.workspace, project.directory), getMode(project));
+    await cwUtils.copyProject(pathToCopy, project.projectPath, getMode(project));
 
     if (project.injectMetrics) {
       try {
-        await metricsService.injectMetricsCollectorIntoProject(project.projectType, project.language, path.join(project.workspace, project.directory));
+        await metricsService.injectMetricsCollectorIntoProject(project.projectType, project.language, project.projectPath);
       } catch (error) {
         log.warn(error);
       }
