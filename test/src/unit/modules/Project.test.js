@@ -289,7 +289,7 @@ describe('Project.js', () => {
             const project = createDefaultProjectAndCheckIsAnObject();
             project.infLockFlag = true;
             return project.writeInformationFile()
-                .should.be.eventually.rejectedWith(`Unable to obtain lock for project in file for project ${project.name}.`)
+                .should.be.eventually.rejectedWith(`Unable to obtain lock for project inf file for project ${project.name}.`)
                 .and.be.an.instanceOf(ProjectError)
                 .and.have.property('code', 'LOCK_FAILURE');
 
