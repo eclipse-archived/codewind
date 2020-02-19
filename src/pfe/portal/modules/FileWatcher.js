@@ -236,7 +236,7 @@ module.exports = class FileWatcher {
       autoBuild: project.autoBuild
     };
 
-    log.info(`Calling createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
+    log.info(`Calling filewatcher.createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
     let retval;
     try {
       retval = await filewatcher.createProject(projectAction);
