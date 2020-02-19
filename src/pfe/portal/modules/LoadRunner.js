@@ -350,8 +350,14 @@ module.exports = class LoadRunner {
       await this.waitForHealth(true);
     }
 
+    const mkdirCommand = `mkdir -p ${loadTestDir}`;
+    const mkdirArray = ['bash', '-c', mkdirCommand];
+    
+    await cwUtils.spawnContainerProcess(this.project, mkdirArray);
+
     const healthCentercommand = `export javapid=(\`pidof java\`); java -jar $JAVA_HOME/jre/lib/ext/healthcenter.jar ID=\${javapid[-1]} level=headless -Dcom.ibm.java.diagnostics.healthcenter.headless.run.number.of.runs=1 -Dcom.ibm.java.diagnostics.healthcenter.headless.run.duration=${durationInMins} -Dcom.ibm.java.diagnostics.healthcenter.headless.output.directory=${loadTestDir} -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.memorycounters=off -Dcom.ibm.diagnostics.healthcenter.data.cpu=off -Dcom.ibm.diagnostics.healthcenter.data.environment=off -Dcom.ibm.diagnostics.healthcenter.data.locking=off -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.threads=off`;
     const healthCenterArray = ['bash', '-c', healthCentercommand];
+
     try {
       await cwUtils.spawnContainerProcess(this.project, healthCenterArray);
     } catch (error) {
@@ -381,6 +387,7 @@ module.exports = class LoadRunner {
     log.info("getJavaHealthCenterData: .hcd copied to PFE");
     const data = { projectID: this.project.projectID,  status: 'hcdReady', timestamp: this.metricsFolder};
     this.user.uiSocket.emit('runloadStatusChanged', data);
+    this.project = null;
   }
 
   async getLibertyJavaVersion() {
