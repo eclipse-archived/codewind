@@ -50,7 +50,8 @@ router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res
         user.runLoad(project, description);
         res.status(202).send("");
       } else {
-        res.status(409).send("Load run in progress");
+        const err = new LoadRunError("RUN_IN_PROGRESS", `For project ${project.projectID}`);
+        res.status(409).send(err.info);
       }
       return;
     } catch(err) {
@@ -59,6 +60,7 @@ router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res
     }
   }
 });
+
 
 /**
 * API function to cancel load against a given project
