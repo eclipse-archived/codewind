@@ -267,7 +267,7 @@ async function uploadEnd(req, res) {
       || filesToDelete.length > 0
       || modifiedList.length > 0;
     if (wasProjectChanged) {
-      const { projectPath } = project;
+      const projectPath = project.projectPath();
       await cwUtils.copyProject(pathToTempProj, projectPath, getMode(project));
 
       if (project.injectMetrics) {
