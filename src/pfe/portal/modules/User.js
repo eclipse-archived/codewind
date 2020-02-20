@@ -154,10 +154,6 @@ module.exports = class User {
    */
   async runLoad(project, description) {
     log.debug("runLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
-    // If load in progress, throw an error
-    if (project.loadInProgress) {
-      throw new LoadRunError("RUN_IN_PROGRESS", `For project ${project.projectID}`);
-    }
     project.loadInProgress = true;
     try {
       let config = await project.getLoadTestConfig();
@@ -176,12 +172,11 @@ module.exports = class User {
       let url = projectProtocol  + projectHost + ":" + projectPort + config.path;
       config.url = url;
       project.loadConfig = config;
-      log.info(`Running load for project: ${project.projectID} config: ${JSON.stringify(config)}`);
+      log.info(`Requesting load on project: ${project.projectID} config: ${JSON.stringify(config)}`);
       const runLoadResp = await this.loadRunner.runLoad(config, project, description);
       return runLoadResp;
     } catch (err) {
       // Reset run load flag and config in the project, and re-throw the error
-      project.loadInProgress = false;
       project.loadConfig = null;
       throw err;
     }
@@ -192,15 +187,15 @@ module.exports = class User {
    */
   async cancelLoad(project) {
     log.debug("cancelLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
-
+    this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelling' });
     if (project.loadInProgress) {
       project.loadInProgress = false;
       log.debug("Cancelling load for config: " + JSON.stringify(project.loadConfig));
-      this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelling' });
       let cancelLoadResp = await this.loadRunner.cancelRunLoad(project.loadConfig);
       this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
       return cancelLoadResp;
     }
+    this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
     throw new LoadRunError("NO_RUN_IN_PROGRESS", `For project ${project.projectID}`);
   }
 
