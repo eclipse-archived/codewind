@@ -50,7 +50,8 @@ const log = new Logger(__filename);
         user.runLoad(project, description);
         res.status(202).send("");
       } else {
-        res.status(409).send("Load run in progress");
+        const err = new LoadRunError("RUN_IN_PROGRESS", `For project ${project.projectID}`);
+        res.status(409).send(err.info);
       }
       return;
     } catch(err) {
