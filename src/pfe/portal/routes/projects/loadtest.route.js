@@ -48,9 +48,8 @@ router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res
     }
 
     try {
-      let runLoadResp = await user.runLoad(project, description);
-      // Response logic completed in ..docker/loadrunner/server.js
-      res.status(runLoadResp.statusCode).send(runLoadResp.body);
+      user.runLoad(project, description);
+      res.status(202).send("");
     } catch(err) {
       log.error(err);
       if (err.code == LoadRunError.RUN_IN_PROGRESS) {
