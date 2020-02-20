@@ -122,17 +122,15 @@ function cleanRun {
 
     # Execute the tests
     executeTests
+}
 
-    # Post-test cleanup
-    # Cronjob machines need to set up POST_CLEANUP=y to do post-test automation cleanup
-    if [[ $POST_CLEANUP == "y" ]]; then
-        ./scripts/setup.sh -t $TEST_TYPE -f uninstall
-        if [[ $? -eq 0 ]]; then
-            echo -e "${GREEN}Post-test cleanup was successful. ${RESET}\n"
-        else
-            echo -e "${RED}Post-test cleanup failed. ${RESET}\n"
-            exit 1
-        fi
+function postClean {
+    ./scripts/setup.sh -t $TEST_TYPE -f uninstall
+    if [[ $? -eq 0 ]]; then
+        echo -e "${GREEN}Post-test cleanup was successful. ${RESET}\n"
+    else
+        echo -e "${RED}Post-test cleanup failed. ${RESET}\n"
+        exit 1
     fi
 }
 
@@ -205,4 +203,10 @@ if [[ $TEST_SUITE == "functional" && $CLEAN_RUN == "y" ]]; then
     cleanRun
 else
     executeTests
+fi
+
+if [[ $POST_CLEANUP == "y" ]]; then
+    # Post-test cleanup
+    # Cronjob machines need to set up POST_CLEANUP=y to do post-test automation cleanup
+    postClean
 fi

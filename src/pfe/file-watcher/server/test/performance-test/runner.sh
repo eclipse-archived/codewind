@@ -106,18 +106,12 @@ if [[ $CONVERT_ONLY == false ]]; then
     for run in $(seq 1 $ITERATIONS);
         do
             echo -e "${CYAN}> Iteration: $run ${RESET}"
-            # for the first iteration, we only do a clean run and no post clean
-            if [[ $run -eq 1 ]]; then
-                CLEAN_RUN="y"
-                POST_CLEAN="n"
-            elif [[ $run -eq $ITERATIONS ]]; then
-            # for the last iteration, we only do a post clean and no clean run
-                CLEAN_RUN="n"
-                POST_CLEAN="y"
-            else
-            # for all other iteration, we do no clean run or post clean
-                CLEAN_RUN="n"
-                POST_CLEAN="n"
+            if [ $TEST_ENV == "local" ] && [ $CLEAN_RUN == "y" ]; then
+                echo -e "${CYAN}> Cleaning up docker ${RESET}"
+                docker system df
+                docker system prune -a --volumes -f
+                docker builder prune -a -f
+                docker system df
             fi
             USE_PERFORMANCE_CWCTL=${USE_PERFORMANCE_CWCTL} PERFORMANCE_DATA_DIR=${TARGET_DIR} NAMESPACE=${NAMESPACE} CLUSTER_IP=${CLUSTER_IP} CLUSTER_PORT=${CLUSTER_PORT} CLUSTER_USER=${CLUSTER_USER} CLUSTER_PASSWORD=${CLUSTER_PASSWORD} CLUSTER_PORT=${CLUSTER_PORT} USER_DEVFILE=${USER_DEVFILE} REGISTRY_SECRET_ADDRESS=${REGISTRY_SECRET_ADDRESS} REGISTRY_SECRET_USERNAME=${REGISTRY_SECRET_USERNAME} REGISTRY_SECRET_PASSWORD=${REGISTRY_SECRET_PASSWORD} IMAGE_PUSH_REGISTRY_NAMESPACE=${IMAGE_PUSH_REGISTRY_NAMESPACE} INTERNAL_REGISTRY=${INTERNAL_REGISTRY} ./test.sh -t $TEST_ENV -s functional -c $CLEAN_RUN -p $POST_CLEAN -o $CREATE_PROJECT_FLAG |& tee "$LOGS_DATA_DIR/iteration-$run.log"
         done

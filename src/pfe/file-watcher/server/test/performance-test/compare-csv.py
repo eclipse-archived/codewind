@@ -86,7 +86,7 @@ else:
         if (counter == 0):
             print(">> Found no discrepancy between the two runs.");
 
-        reportCardStr = " Report Card ";
+        reportCardStr = " Report Card: {} {} ".format(projectType, projectLanguage);
         print("\n" + "*" * 10 + reportCardStr + "*" * 10 + "\n");
 
         print(">> Found {} improved cases".format(goodCounter));

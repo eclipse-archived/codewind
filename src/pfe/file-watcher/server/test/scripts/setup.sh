@@ -72,6 +72,12 @@ function install {
     fi
 }
 
+function checkForCodewindPod {
+    echo -e "${BLUE}Checking for codewind pod ... ${RESET}\n"
+    CW_POD="$( kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 )"
+    echo -e "${BLUE}Codewind Pod: $CW_POD ${RESET}\n"
+}
+
 # Uninstall function does the following things
 # 1 Remove Codewind and Codewind app containers
 # 2 Remove Codewind and Codewind app images
@@ -84,11 +90,8 @@ function uninstall {
         # Generate the Che Access Token for Che User Authentication
         generateCheAccessToken
 
-        echo "CHE ACCESS TOKEN IS: $CHE_ACCESS_TOKEN"
-
         # Get the Codewind Workspace ID
-        CW_POD="$( kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 )"
-        echo -e "${BLUE}Codewind Pod: $CW_POD ${RESET}\n"
+        checkForCodewindPod
         if [[ $CW_POD =~ codewindWorkspace=.*, ]]; then
             RE_RESULT=${BASH_REMATCH}
             WORKSPACE_ID=$(echo $RE_RESULT | cut -d "=" -f 2 | cut -d "," -f 1)
@@ -114,6 +117,13 @@ function uninstall {
             fi
 
             echo -e "${GREEN}Codewind should be removed momentarily... ${RESET}\n"
+
+            while [[ ! -z $CW_POD ]] || ![[ $CW_POD =~ "Terminating" ]];
+            do
+                sleep 5s
+                checkForCodewindPod
+            done
+
         else
             echo -e "${BLUE}No Codewind pod found ${BLUE}\n"
         fi
