@@ -10,6 +10,7 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
+from __future__ import division
 import sys
 import os
 import pandas as pd
@@ -60,9 +61,11 @@ else:
     for columnName in columNames:
         projectType = columnName.split("-")[0];
         projectLanguage = columnName.split("-")[-1];
-        print("> Generating report for {} {} project:".format(projectType, projectLanguage));
+        print("> Generating report for {} {} project:\n".format(projectType, projectLanguage));
 
         counter=0;
+        goodCounter=0;
+        badCounter=0;
 
         for rowName in rowNames:
             baselineValue = baselineDf.loc[rowName, columnName];
@@ -73,12 +76,28 @@ else:
                 difference = round((baselineValue-comparableValue)/(baselineValue) * 100, 2);
                 if (difference >= 0 and difference >= threshold):
                     counter = counter + 1;
-                    print(">> \u2191 Improvement in run of {} by {}% [{} -> {}]".format(rowName, difference, baselineValue, comparableValue));
+                    goodCounter = goodCounter + 1;
+                    print(">> Improvement in run of {} by {}% [{} -> {}]".format(rowName, difference, baselineValue, comparableValue));
                 elif (difference < 0 and abs(difference) >= threshold):
                     counter = counter + 1;
-                    print(">> \u2193 Deteriorated in run of {} by {}% [{} -> {}]".format(rowName, abs(difference), baselineValue, comparableValue));
+                    badCounter = badCounter + 1;
+                    print(">> Deteriorated in run of {} by {}% [{} -> {}]".format(rowName, abs(difference), baselineValue, comparableValue));
 
         if (counter == 0):
             print(">> Found no discrepancy between the two runs.");
 
-        print("> Completed report for {} {} project.\n".format(projectType, projectLanguage));
+        reportCardStr = " Report Card ";
+        print("\n" + "*" * 10 + reportCardStr + "*" * 10 + "\n");
+
+        print(">> Found {} improved cases".format(goodCounter));
+        print(">> Found {} deteriorated cases".format(badCounter));
+
+        if ((goodCounter+badCounter) > 0):
+            improvedRate = goodCounter / (goodCounter+badCounter);
+            print(">> Improvement rate: {}%".format(round(improvedRate, 2) * 100));
+
+            deterioratedRate = badCounter / (goodCounter+badCounter);
+            print(">> Deterioration rate: {}%".format(round(deterioratedRate, 2) * 100));
+
+        print("\n" + "*" * 10 + "*" * len(reportCardStr) + "*" * 10 + "\n");
+

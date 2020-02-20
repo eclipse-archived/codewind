@@ -171,11 +171,13 @@ CSV_BASELINE_DIR=$TEST_INFO_DIR/performance-test-baseline/$TEST_ENV/$TURBINE_PER
 mkdir -p $CSV_BASELINE_DIR
 
 if [ -e "$CSV_BASELINE_DIR/$CSV_FILENAME" ]; then
-    echo -e "${BLUE}Comparing csv paths for $TEST_ENV local with baseline file "$COMPARE_FILEPATH_LOCAL" ... ${RESET}"
-    ./compare-csv.sh --baseline-file="$CSV_BASELINE_DIR/$CSV_FILENAME" --comparable-file="$LOGS_DATA_DIR/$CSV_FILE" --save="$LOGS_DATA_DIR/data-comparison.log"
-    checkExitCode $? "Failed to compare csv from baseline "$COMPARE_FILEPATH_LOCAL" to comparable "$LOGS_DATA_DIR/$CSV_FILE"" true
+    echo -e "${BLUE}Comparing csv paths for $TEST_ENV local with baseline file "$CSV_BASELINE_DIR/$CSV_FILENAME" ... ${RESET}"
+    ./compare-csv.sh --baseline-file="$CSV_BASELINE_DIR/$CSV_FILENAME" --comparable-file="$LOGS_DATA_DIR/$CSV_FILENAME" --save="$LOGS_DATA_DIR/performance-report.txt"
+    checkExitCode $? "Failed to compare csv from baseline "$CSV_BASELINE_DIR/$CSV_FILENAME" to comparable "$LOGS_DATA_DIR/$CSV_FILENAME"" true
 fi
 
-echo -e "${BLUE}Copying over performance data csv from "$LOGS_DATA_DIR/$CSV_FILE" to $CSV_BASELINE_DIR ... ${RESET}"
-cp "$LOGS_DATA_DIR/$CSV_FILE" $CSV_BASELINE_DIR/
-checkExitCode $? "Failed to copy performance data csv. Please check the source directory for data in "$LOGS_DATA_DIR/$CSV_FILE"" true
+if [ "$NEW_BASELINE" == "y" ]; then
+    echo -e "${BLUE}Copying over performance data csv from "$LOGS_DATA_DIR/$CSV_FILENAME" to $CSV_BASELINE_DIR ... ${RESET}"
+    cp -r "$LOGS_DATA_DIR/$CSV_FILENAME" $CSV_BASELINE_DIR/
+    checkExitCode $? "Failed to copy performance data csv. Please check the source directory for data in "$LOGS_DATA_DIR/$CSV_FILENAME"" true
+fi
