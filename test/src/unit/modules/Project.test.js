@@ -235,6 +235,13 @@ describe('Project.js', () => {
             metricsRoot.should.equal('');
         });
     });
+    describe('projectPath()', () => {
+        it('Checks that projectPath() is workspace+directory', () => {
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', directory: 'directory', locOnDisk: '/Documents/projectDir/' }, 'workspace');
+            const projectPath = project.projectPath();
+            projectPath.should.equal(path.join('workspace', 'directory'));
+        });
+    });
     describe('readSettingsFile()', () => {
         it('Returns a blank object is returned if the settings file does not exist', async() => {
             const project = createDefaultProjectAndCheckIsAnObject();
