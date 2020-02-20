@@ -27,7 +27,7 @@ const log = new Logger(__filename);
   * 202 on success, 404 if project id does not exist, 400 if options are invalid or a run
   * is already in progress, 500 if error
   */
-router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res){
+router.post('/api/v1/projects/:id/loadtest', validateReq, function(req,res){
   const user = req.cw_user;
   const projectID = req.sanitizeParams('id');
   let project = user.projectList.retrieveProject(projectID);
@@ -51,7 +51,7 @@ router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res
         res.status(202).send("");
       } else {
         const err = new LoadRunError("RUN_IN_PROGRESS", `For project ${project.projectID}`);
-        res.status(409).send(err.info);
+        res.status(409).send(err.info || err);
       }
       return;
     } catch(err) {
