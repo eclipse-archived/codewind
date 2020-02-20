@@ -46,7 +46,8 @@ router.post('/api/v1/projects/:id/loadtest', validateReq, function(req,res){
     }
 
     try {
-      if (project.loadInProgress == undefined || project.loadInProgress == false) {
+      log.info(`LoadTest route: loadInProgres = ${project.loadInProgress}`);
+      if (project.loadInProgress == undefined || !project.loadInProgress) {
         user.runLoad(project, description);
         res.status(202).send("");
       } else {
