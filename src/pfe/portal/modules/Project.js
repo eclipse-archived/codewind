@@ -62,19 +62,14 @@ const CW_SETTINGS_PROPERTIES = [
  */
 module.exports = class Project {
 
-  constructor(args, workspace) {
+  constructor(args) {
     this.projectID = args.projectID || uuidv1();
     this.name = args.name;
     this.codewindVersion = args.codewindVersion || process.env.CODEWIND_VERSION;
     this.language = args.language;
-    this.validate = args.validate;
     this.creationTime = args.creationTime;
 
     if (args.contextRoot) this.contextRoot = args.contextRoot;
-    if (args.framework) this.framework = args.framework;
-    if (args.services) this.services = args.services;
-    if (args.gitURL) this.gitURL = args.gitURL;
-    if (args.validate) this.validate = args.validate;
     if (args.extension) this.extension = args.extension;
 
     // locOnDisk is used by the UI and needs to match what it sees.
@@ -95,14 +90,11 @@ module.exports = class Project {
     this.host = args.host || '';
     this.ports = args.ports || {};
 
-    // workspace is the parent directory of the project
-    // NOT the global.codewind.CODEWIND_WORKSPACE we store
-    // project.inf and log files in.
-    this.workspace = args.workspace || workspace;
+    this.workspace = args.workspace;
     this.directory = args.directory || this.name;
     this.infLockFlag = false;
 
-    this.loadTestPath = join(workspace, this.name, 'load-test');
+    this.loadTestPath = join(this.workspace, this.name, 'load-test');
 
     if (this.language === 'java') {
       this.startMode = args.startMode || 'run';
@@ -206,7 +198,7 @@ module.exports = class Project {
     if (this.projectType === "appsodyExtension" && (this.language === 'nodejs' || this.language === 'java' || this.language === 'swift')) {
       return true;
     } 
-    const isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath(false), this.language);
+    const isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath(), this.language);
     return isMetricsAvailable;
   }
 
@@ -247,14 +239,10 @@ module.exports = class Project {
   }
 
   /**
-   * Function to return the full path to the project directory.
-   * @arg inPortal true if we want the location in the portal container (with username)
+   * Function to return the path to the project directory
    * @return the path to the project directory.
    */
-  projectPath(_) {
-    // this.workspace will include the user directory if we are in multi-user.
-    // Codewind workspace is hardcoded in filewatcherDeployment.js
-    // return (inPortal ? this.workspace + this.directory :  `/codewind-workspace/${this.directory}` );
+  projectPath() {
     return join(this.workspace, this.directory);
   }
 
@@ -289,8 +277,7 @@ module.exports = class Project {
    * @return this, the project object
    */
   async writeInformationFile() {
-    let infFileDirectory = join(global.codewind.CODEWIND_WORKSPACE, '/.projects');
-    
+    let infFileDirectory = join(global.codewind.CODEWIND_WORKSPACE, '.projects');
     let infFile = join(infFileDirectory, `${this.projectID}.inf`);
     await fs.ensureDir(infFileDirectory);
 

@@ -404,8 +404,7 @@ module.exports = class LoadRunner {
     let now = new Date();
     this.metricsFolder = dateFormat(now, 'yyyymmddHHMMss');
 
-    let loadTestDir = path.join(this.project.projectPath(false), 'load-test');
-    this.workingDir = path.join(loadTestDir, this.metricsFolder);
+    this.workingDir = path.join(this.project.loadTestPath, this.metricsFolder);
     log.debug(this.workingDir);
 
     try {

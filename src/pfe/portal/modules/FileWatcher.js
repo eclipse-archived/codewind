@@ -196,16 +196,6 @@ module.exports = class FileWatcher {
     }
   }
 
-  async validateProject(project){
-    const projectAction = {
-      action: 'validate',
-      projectID: project.projectID,
-      projectType: project.projectType,
-      location: project.projectPath(false)
-    };
-    await this.performProjectActionRequest(projectAction);
-  }
-
   async buildProject(project, buildAction){
     const projectAction = {
       action: buildAction,
@@ -239,14 +229,14 @@ module.exports = class FileWatcher {
       extension: project.extension,
       contextroot: project.contextRoot,
       startMode: project.startMode,
-      location: project.projectPath(false),
+      location: project.projectPath(),
       applicationPort: project.applicationPort,
       settings: settingsFileContents,
       language: project.language,
       autoBuild: project.autoBuild
     };
 
-    log.info(`Calling createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
+    log.info(`Calling filewatcher.createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
     let retval;
     try {
       retval = await filewatcher.createProject(projectAction);

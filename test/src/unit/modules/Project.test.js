@@ -47,8 +47,10 @@ describe('Project.js', () => {
     describe('new Project()', () => {
         it('Initialises a new Project with minimal arguments', () => {
             const project = new Project({
-                name: 'newdummyproject', locOnDisk: '/Documents/projectDir/',
-            }, './someworkspace');
+                name: 'newdummyproject',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: './someworkspace',
+            });
             project.should.be.an('object');
             project.should.have.property('projectID').to.be.a('string');
             project.should.have.property('name');
@@ -233,11 +235,11 @@ describe('Project.js', () => {
             metricsRoot.should.equal('');
         });
     });
-    describe('projectPath(_)', () => {
+    describe('projectPath()', () => {
         it('Checks that projectPath() is workspace+directory', () => {
-            const project = createProjectAndCheckIsAnObject({ name: 'dummy', directory: 'directory', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
+            const project = createProjectAndCheckIsAnObject({ name: 'dummy', directory: 'directory', locOnDisk: '/Documents/projectDir/' }, 'workspace');
             const projectPath = project.projectPath();
-            projectPath.should.equal(path.join(global.codewind.CODEWIND_WORKSPACE, 'directory'));
+            projectPath.should.equal(path.join('workspace', 'directory'));
         });
     });
     describe('readSettingsFile()', () => {
@@ -810,7 +812,10 @@ describe('Project.js', () => {
 });
 
 function createProjectAndCheckIsAnObject(options, workspace) {
-    const project = new Project(options, workspace);
+    const project = new Project({
+        ...options,
+        workspace,
+    });
     project.should.be.an('object');
     return project;
 }
