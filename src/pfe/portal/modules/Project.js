@@ -239,7 +239,7 @@ module.exports = class Project {
   }
 
   /**
-  projectPath() {
+   * Function to return the path to the project directory
    * @return the path to the project directory.
    */
   projectPath() {
