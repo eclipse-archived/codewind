@@ -160,6 +160,10 @@ describe('Template API tests', function() {
                         protected: false,
                     };
                     const res = await addTemplateRepo(repoToAdd);
+                    // const res1 =  await getTemplateRepos();
+                    // res1.should.have.status(200).and.satisfyApiSpec;
+                    // const res2 = await getTemplateRepos();
+                    // res2.should.have.status(200).and.satisfyApiSpec;
                     res.should.have.status(200).and.satisfyApiSpec;
                     res.body.should.deep.containSubset([repoToAdd]);
                     res.body.length.should.equal(originalTemplateReposLength + 1);

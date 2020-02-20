@@ -181,13 +181,14 @@ async function getTemplates(queryParams) {
  * @param {[JSON]} repoList
  */
 async function setTemplateReposTo(repoList) {
+    const ignoreDefaultAppsodyRepo = repo => (repo.id !== 'incubator' && repo.projectStyles.includes('Appsody'));
     const reposToDelete = (await getTemplateRepos()).body;
     if (reposToDelete.length > 0) {
-        await Promise.all(reposToDelete.map(repo =>
+        await Promise.all(reposToDelete.filter(ignoreDefaultAppsodyRepo).map(repo =>
             deleteTemplateRepo(repo.url)
         ));
     }
-    await Promise.all(repoList.map(repo =>
+    await Promise.all(repoList.filter(ignoreDefaultAppsodyRepo).map(repo =>
         addTemplateRepo(repo)
     ));
 }

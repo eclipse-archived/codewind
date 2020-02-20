@@ -58,9 +58,12 @@ module.exports = class Templates {
     this.repositoryFile = path.join(workspace, '.config/repository_list.json');
     this.repositoryList = DEFAULT_REPOSITORY_LIST;
     this.providers = {};
+
+    this._lock = false;
   }
 
   async initializeRepositoryList() {
+    this._lock = true;
     try {
       let repositories = [...this.repositoryList];
       const repositoryFileExists = await cwUtils.fileExists(this.repositoryFile);
@@ -71,24 +74,40 @@ module.exports = class Templates {
       repositories = await updateRepoListWithReposFromProviders(this.providers, repositories, this.repositoryFile);
       repositories = await fetchAllRepositoryDetails(repositories);
       this.repositoryList = repositories;
+      await this.updateTemplates();
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
     } catch (err) {
       log.error(`Error initializing repository list: ${err}`);
     }
+    this._lock = false;
+  }
+
+  isLocked() {
+    return this._lock;
+  }
+  
+  lock() {
+    log.info('locked');
+    this._lock = true;
+  }
+  
+  unlock() {
+    log.info('unlocked');
+    this._lock = false;
   }
 
   // TEMPLATES
 
   async getTemplates(enabledOnly) {
-    if (this.projectTemplatesNeedsRefresh) {
-      const enabledRepositories = await this.getEnabledRepositories();
-      const disabledRepositories = await this.getDisabledRepositories();
-      const newEnabledTemplates = await getTemplatesFromRepos(enabledRepositories);
-      const newDisabledTemplates = await getTemplatesFromRepos(disabledRepositories);
-      this.enabledProjectTemplates = newEnabledTemplates;
-      this.allProjectTemplates = newEnabledTemplates.concat(newDisabledTemplates);
-      this.projectTemplatesNeedsRefresh = false;
-    }
+    // if (this.projectTemplatesNeedsRefresh) {
+    //   const enabledRepositories = await this.getEnabledRepositories();
+    //   const disabledRepositories = await this.getDisabledRepositories();
+    //   const newEnabledTemplates = await getTemplatesFromRepos(enabledRepositories);
+    //   const newDisabledTemplates = await getTemplatesFromRepos(disabledRepositories);
+    //   this.enabledProjectTemplates = newEnabledTemplates;
+    //   this.allProjectTemplates = newEnabledTemplates.concat(newDisabledTemplates);
+    //   this.projectTemplatesNeedsRefresh = false;
+    // }
     return enabledOnly ? this.enabledProjectTemplates : this.allProjectTemplates;
   }
 
@@ -104,12 +123,12 @@ module.exports = class Templates {
 
   // REPOSITORIES
 
-  async getRepositories() {
-    if (this.projectRepositoriesNeedsRefresh) {
-      // eslint-disable-next-line require-atomic-updates
-      this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
-      this.projectRepositoriesNeedsRefresh = false;
-    }
+  getRepositories() {
+    // if (this.projectRepositoriesNeedsRefresh) {
+    //   // eslint-disable-next-line require-atomic-updates
+    //   this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
+    //   this.projectRepositoriesNeedsRefresh = false;
+    // }
     return this.repositoryList;
   }
 
@@ -122,7 +141,121 @@ module.exports = class Templates {
     const repositories = await this.getRepositories();
     return repositories.filter(repo => !repo.enabled);
   }
+  
+  async updateTemplates() {
+    const enabledRepositories = await this.getEnabledRepositories();
+    const disabledRepositories = await this.getDisabledRepositories();
+    const newEnabledTemplates = await getTemplatesFromRepos(enabledRepositories);
+    const newDisabledTemplates = await getTemplatesFromRepos(disabledRepositories);
+    this.enabledProjectTemplates = newEnabledTemplates;
+    this.allProjectTemplates = newEnabledTemplates.concat(newDisabledTemplates);
+  }
 
+  /**
+   * Add a repository to the list of template repositories.
+   */
+  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
+    // let url;
+    const repositories = await this.getRepositories();
+    const url = await this.validateRepository(repoUrl, repositories);
+
+    let newRepo = {
+      id: uuidv5(url, uuidv5.URL),
+      name: repoName,
+      url,
+      description: repoDescription,
+      enabled: true,
+    }
+    newRepo = await fetchRepositoryDetails(newRepo);
+    if (isRepoProtected !== undefined) {
+      newRepo.protected = isRepoProtected;
+    }
+
+    // TODO move this try catch into addRepositoryToProviders
+    try {
+      await this.addRepositoryToProviders(newRepo);
+    }
+    catch (err) {
+      throw new TemplateError('ADD_TO_PROVIDER_FAILURE', url, err.message);
+    }
+
+    this.repositoryList.push(newRepo);
+    
+    // Update repositories
+    try {
+      const currentRepoList = [...this.repositoryList];
+      this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, currentRepoList, this.repositoryFile);
+    }
+    catch (err) {
+      // rollback
+      this.repositoryList = this.repositoryList.filter(repo => repo.url !== url);
+      this.removeRepositoryFromProviders(newRepo).catch(error => log.warn(error.message));
+      throw err;
+    }
+
+    // writeRepositoryList regardless of whether it has been updated with the data from providers
+    await writeRepositoryList(this.repositoryFile, this.repositoryList);
+    
+    this.updateTemplates();
+  }
+  
+  // Move this to functions + add test
+  // eslint-disable-next-line class-methods-use-this
+  async validateRepository(repoUrl, repositories) {
+    let url;
+    try {
+      url = new URL(repoUrl).href;
+    } catch (error) {
+      if (error.message.includes('Invalid URL')) {
+        throw new TemplateError('INVALID_URL', repoUrl);
+      }
+      throw error;
+    }
+    
+    if (repositories.find(repo => repo.url === repoUrl)) {
+      throw new TemplateError('DUPLICATE_URL', repoUrl);
+    }
+
+    if (!(await doesURLPointToIndexJSON(url))) {
+      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', url);
+    }
+    
+    return url;
+  }
+
+  async deleteRepository(repoUrl) {
+    let deleted;
+    const repositoryList = this.repositoryList.filter((repo) => {
+      if (repo.url === repoUrl) {
+        deleted = repo;
+        return false;
+      }
+      return true;
+    });
+    this.getRepository(repoUrl)
+    if (deleted) {
+      await this.removeRepositoryFromProviders(deleted);
+      this.repositoryList = repositoryList;
+      try {
+        const currentRepoList = [...this.repositoryList];
+        this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, currentRepoList, this.repositoryFile);
+      }
+      catch (err) {
+        // rollback
+        this.repositoryList.push(deleted);
+        this.addRepositoryToProviders(deleted).catch(error => log.warn(error.message));
+        throw err;
+      }
+    } else {
+      throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
+    }
+    
+    // writeRepositoryList regardless of whether it has been updated with the data from providers
+    await writeRepositoryList(this.repositoryFile, this.repositoryList);
+    
+    this.updateTemplates();
+  }
+  
   /**
    * @param {String} url
    * @return {JSON} reference to the repo object in this.repositoryList
@@ -183,86 +316,6 @@ module.exports = class Templates {
         status: 500,
         error: error.message,
       };
-    }
-  }
-
-  /**
-   * Add a repository to the list of template repositories.
-   */
-  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
-    let url;
-    try {
-      url = new URL(repoUrl).href;
-    } catch (error) {
-      if (error.message.includes('Invalid URL')) {
-        throw new TemplateError('INVALID_URL', repoUrl);
-      }
-      throw error;
-    }
-    const repositories = await this.getRepositories();
-    if (repositories.find(repo => repo.url === repoUrl)) {
-      throw new TemplateError('DUPLICATE_URL', repoUrl);
-    }
-
-    if (!(await doesURLPointToIndexJSON(url))) {
-      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', url);
-    }
-
-    let newRepo = {
-      id: uuidv5(url, uuidv5.URL),
-      name: repoName,
-      url,
-      description: repoDescription,
-      enabled: true,
-    }
-    newRepo = await fetchRepositoryDetails(newRepo);
-    if (isRepoProtected !== undefined) {
-      newRepo.protected = isRepoProtected;
-    }
-
-    try {
-      await this.addRepositoryToProviders(newRepo);
-    }
-    catch (err) {
-      throw new TemplateError('ADD_TO_PROVIDER_FAILURE', url, err.message);
-    }
-    this.repositoryList.push(newRepo);
-    try {
-      await writeRepositoryList(this.repositoryFile, this.repositoryList);
-      this.projectTemplatesNeedsRefresh = true;
-    }
-    catch (err) {
-      // rollback
-      this.repositoryList = this.repositoryList.filter(repo => repo.url !== url);
-      this.removeRepositoryFromProviders(newRepo).catch(error => log.warn(error.message));
-      throw err;
-    }
-  }
-
-  async deleteRepository(repoUrl) {
-    let deleted;
-    const repositoryList = this.repositoryList.filter((repo) => {
-      if (repo.url === repoUrl) {
-        deleted = repo;
-        return false;
-      }
-      return true;
-    });
-    if (deleted) {
-      await this.removeRepositoryFromProviders(deleted);
-      this.repositoryList = repositoryList;
-      try {
-        await writeRepositoryList(this.repositoryFile, this.repositoryList);
-        this.projectTemplatesNeedsRefresh = true;
-      }
-      catch (err) {
-        // rollback
-        this.repositoryList.push(deleted);
-        this.addRepositoryToProviders(deleted).catch(error => log.warn(error.message));
-        throw err;
-      }
-    } else {
-      throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
     }
   }
 

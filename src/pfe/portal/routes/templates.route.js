@@ -45,11 +45,11 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
  * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
  */
-router.get('/api/v1/templates/repositories', async (req, res, _next) => {
+router.get('/api/v1/templates/repositories', verifyLock, async (req, res, _next) => {
   await sendRepositories(req, res, _next);
 });
 
-router.post('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
+router.post('/api/v1/templates/repositories', validateReq, verifyLock, async (req, res, _next) => {
   const { templates: templatesController } = req.cw_user;
   const repositoryName = req.sanitizeBody('name')
   const repositoryUrl = req.sanitizeBody('url');
@@ -57,14 +57,20 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
   const isRepoProtected = req.sanitizeBody('protected');
 
   try {
+    // LOCK HERE
+    templatesController.lock();
     await templatesController.addRepository(
       repositoryUrl,
       repositoryDescription,
       repositoryName,
       isRepoProtected
     );
+    // UNLOCK HERE
+    templatesController.unlock();
     await sendRepositories(req, res, _next);
   } catch (error) {
+    // UNLOCK HERE 
+    templatesController.unlock();
     log.error(error);
     const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON', 'ADD_TO_PROVIDER_FAILURE'];
     if (error instanceof TemplateError && knownErrorCodes.includes(error.code)) {
@@ -75,13 +81,19 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
   }
 });
 
-router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
+router.delete('/api/v1/templates/repositories', validateReq, verifyLock, async (req, res, _next) => {
   const { templates: templatesController } = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
   try {
+    // LOCK HERE
+    templatesController.lock();
     await templatesController.deleteRepository(repositoryUrl);
+    templatesController.unlock();
+    // UNLOCK HERE
     await sendRepositories(req, res, _next);
   } catch (error) {
+    // UNLOCK HERE
+    templatesController.unlock();
     log.error(error);
     if (error instanceof TemplateError && error.code === 'REPOSITORY_DOES_NOT_EXIST') {
       res.status(404).send(error.message);
@@ -114,3 +126,14 @@ router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
 });
 
 module.exports = router;
+
+
+function verifyLock(req, res, _next) {
+  const { templates: templatesController } = req.cw_user;
+  const locked = templatesController.isLocked();
+  log.info(`Template locked = ${locked}`);
+  if (locked) {
+    return res.status(409).send('template lock hit, they are currently being updated');
+  }
+  return _next();
+}
