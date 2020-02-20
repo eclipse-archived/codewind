@@ -25,6 +25,9 @@ const metricsService = require('./metricsService');
 
 const log = new Logger(__filename);
 
+// Declaring STATES here makes it accessible in this file.
+// We add it to the exported Project class so it can be
+// reached by users of the Project class.
 const STATES = {
   closed: 'closed',
   open: 'open',
@@ -235,6 +238,10 @@ module.exports = class Project {
     return metricsContextRoot;
   }
 
+  /**
+  projectPath() {
+   * @return the path to the project directory.
+   */
   projectPath() {
     return join(this.workspace, this.directory);
   }
