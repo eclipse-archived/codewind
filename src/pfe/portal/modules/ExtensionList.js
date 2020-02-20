@@ -182,19 +182,23 @@ module.exports = class ExtensionList {
  * @param templates, reference to the templates registry
  * @return Promise
  */
-function addExtensionsToTemplates(extensions, templates) {
-  return Promise.all(extensions.map(async extension => {
+async function addExtensionsToTemplates(extensions, templates) {
+  // Use a for loop rather than .map and Promise.all as we need these to happen one after the other
+  // so that there will not be a conflict with the Templates lock
+  for (const extension of extensions) {
     try {
       if (extension.templates) {
         log.trace(`Adding Extension ${extension.name}'s repository into the templates`);
+        // eslint-disable-next-line no-await-in-loop
         await templates.addRepository(extension.templates, extension.description);
       } else if (extension.templatesProvider) {
         log.trace(`Adding Extension ${extension.name}'s provider into the templates`);
-        templates.addProvider(extension.name, extension.templatesProvider);
+        // eslint-disable-next-line no-await-in-loop
+        await templates.addProvider(extension.name, extension.templatesProvider);
         delete extension.templatesProvider;
       }
     } catch (error) {
       log.warn(error);
     }
-  }));
+  }
 }

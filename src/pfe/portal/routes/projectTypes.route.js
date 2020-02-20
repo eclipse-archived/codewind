@@ -11,9 +11,12 @@
 const express = require('express');
 
 const Logger = require('../modules/utils/Logger');
+const TemplateError = require('../modules/utils/errors/TemplateError');
 
 const router = express.Router();
 const log = new Logger(__filename);
+
+const TEMPLATES_LOCKED_STATUS_CODE = 423;
 
 function sanitizeProjectType(array, type) {
 
@@ -79,15 +82,15 @@ function addLanguage(projectType, language) {
  * @return JSON array with the list of supported project types
  */
 router.get('/api/v1/project-types', async (req, res) => {
-  const user = req.cw_user;
+  const { templates: templateController, extensionList } = req.cw_user;
   const projectTypes = [];
   const seenProjectTypes = {};
   try {
-    const templates = await user.templates.getTemplates(true);
+    const templates = await templateController.getTemplates(true);
     for (const template of templates) {
 
       const projectType = template.projectType;
-      const extension = user.extensionList.getExtensionForProjectType(projectType)
+      const extension = extensionList.getExtensionForProjectType(projectType)
 
       if (extension) {
         const sourceId = template.sourceId;
@@ -95,7 +98,7 @@ router.get('/api/v1/project-types', async (req, res) => {
         // only need to get project types from extension once
         if (seenProjectTypes[key])
           continue;
-        const types = await getProjectTypes(user.templates.providers[extension.name], sourceId);
+        const types = await getProjectTypes(templateController.providers[extension.name], sourceId);
         projectTypes.push(...types);
         seenProjectTypes[key] = true;
       }
@@ -119,6 +122,10 @@ router.get('/api/v1/project-types', async (req, res) => {
     res.status(200).send(projectTypes);
   } catch (err) {
     log.error(err);
+    if (err instanceof TemplateError && err.code === 'LOCKED') {
+      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
+      return;
+    }
     res.status(500).send(err);
   }
 });

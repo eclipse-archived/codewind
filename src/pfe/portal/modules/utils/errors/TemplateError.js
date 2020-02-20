@@ -45,6 +45,9 @@ function constructMessage(code, identifier, message) {
   case 'REPOSITORY_DOES_NOT_EXIST':
     output = `${identifier} does not exist`;
     break;
+  case 'LOCKED':
+    output = `_lock is already set to true`;
+    break;
   default:
     output = 'Unknown template error';
   }

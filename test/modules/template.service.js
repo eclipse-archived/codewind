@@ -11,6 +11,8 @@
 const { ADMIN_COOKIE, testTimeout } = require('../config');
 const reqService = require('./request.service');
 
+const templateRepositoryURL = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json';
+
 const defaultCodewindTemplates = [
     {
         label: 'Go',
@@ -19,6 +21,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/goTemplate',
         projectType: 'docker',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Lagom Java',
@@ -27,6 +30,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/lagomJavaTemplate',
         projectType: 'docker',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Node.js Express',
@@ -35,6 +39,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/nodeExpressTemplate',
         projectType: 'nodejs',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Open Liberty',
@@ -43,6 +48,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/openLibertyTemplate',
         projectType: 'docker',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Python',
@@ -51,6 +57,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/pythonTemplate',
         projectType: 'docker',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Spring Boot®',
@@ -59,6 +66,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/springJavaTemplate',
         projectType: 'spring',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Swift',
@@ -67,6 +75,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/swiftTemplate',
         projectType: 'swift',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'WebSphere Liberty MicroProfile®',
@@ -75,6 +84,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/javaMicroProfileTemplate',
         projectType: 'liberty',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
 ];
 
@@ -97,8 +107,6 @@ const styledTemplates = {
         projectStyle: 'Appsody',
     },
 };
-
-const templateRepositoryURL = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json';
 
 const sampleRepos = {
     codewind: {
@@ -181,13 +189,14 @@ async function getTemplates(queryParams) {
  * @param {[JSON]} repoList
  */
 async function setTemplateReposTo(repoList) {
+    const ignoreDefaultAppsodyRepo = repo => (!('id' in repo) || repo.id !== 'incubator');
     const reposToDelete = (await getTemplateRepos()).body;
     if (reposToDelete.length > 0) {
-        await Promise.all(reposToDelete.map(repo =>
+        await Promise.all(reposToDelete.filter(ignoreDefaultAppsodyRepo).map(repo =>
             deleteTemplateRepo(repo.url)
         ));
     }
-    await Promise.all(repoList.map(repo =>
+    await Promise.all(repoList.filter(ignoreDefaultAppsodyRepo).map(repo =>
         addTemplateRepo(repo)
     ));
 }
@@ -225,6 +234,24 @@ function saveReposBeforeEachTestAndRestoreAfterEach() {
     });
 }
 
+function setupReposAndTemplatesForTesting() {
+    // Removes all repos that already exist and replaces them with ones for testing
+    let originalTemplateRepos;
+    before(async function() {
+        this.timeout(testTimeout.med);
+        // Save original repositories
+        const { body: getBody } = await getTemplateRepos();
+        originalTemplateRepos = getBody;
+        await setTemplateReposTo([sampleRepos.codewind]);
+    });
+    after(async function() {
+        this.timeout(testTimeout.med);
+
+        // Restore orignal list
+        await setTemplateReposTo(originalTemplateRepos);
+    });
+}
+
 module.exports = {
     defaultCodewindTemplates,
     styledTemplates,
@@ -242,4 +269,5 @@ module.exports = {
     getTemplateStyles,
     saveReposBeforeTestAndRestoreAfter,
     saveReposBeforeEachTestAndRestoreAfterEach,
+    setupReposAndTemplatesForTesting,
 };
