@@ -9,10 +9,11 @@
 *     IBM Corporation - initial API and implementation
 ******************************************************************************/
 
-import React, { Fragment } from 'react'
-import PropTypes from 'prop-types'
+import React, { Fragment } from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import IconRun from '@carbon/icons-react/es/play--filled/16'
+import queryString from 'query-string';
+import IconRun from '@carbon/icons-react/es/play--filled/16';
 import IconStop from '@carbon/icons-react/lib/close--outline/16';
 import { Button, InlineLoading } from 'carbon-components-react';
 import { SocketEvents } from '../../utils/sockets/SocketEvents';
@@ -51,6 +52,11 @@ class ActionRunLoad extends React.Component {
     componentDidMount() {
         this.props.socket.on(SocketEvents.RUNLOAD_STATUS_CHANGED, data => {
             if (data.projectID === this.props.projectID) {
+
+                if (queryString.parse(location.search).debugsocket) {
+                    console.log("SocketIO RX: ", data);
+                }
+
                 switch (data.status) {
                     case 'preparing': {
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Preparing...' });
@@ -62,17 +68,32 @@ class ActionRunLoad extends React.Component {
                     }
                     case 'started': {
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Running...' });
+                        this.startCountdown();
                         break;
                     }
                     case 'completed': {
                         // after receiving a loadrun completion message,  wait a bit,  then reset the button back to ready
+                        this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Completed...' });
                         let nextData = data;
                         nextData.status = 'idle';
-                        setTimeout(() => this.setState({ loadRunStatus: nextData }), 2000);
+                        setTimeout(() => this.setState({ loadRunStatus: nextData }), 3000);
+                        break;
+                    }
+                    case 'cancelling': {
+                        this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Cancelling...' });
+                        break;
+                    }
+                    case 'cancelled': {
+                        this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Cancelled...' });
+                        let nextData = data;
+                        nextData.status = 'idle';
+                        setTimeout(() => this.setState({ loadRunStatus: nextData }), 2000); 
                         break;
                     }
                     default: {
-                        this.setState({ loadRunStatus: data });
+                        if (queryString.parse(location.search).debugsocket) {
+                            console.log("Ignoring UISocket RX: ",data);
+                        }
                     }
                 }
             }
@@ -83,13 +104,13 @@ class ActionRunLoad extends React.Component {
     * Ask API to start a new test
     */
     handleRunTestDlgStart(descriptionText) {
+        this.setState({ showModalRunTest: false, loadRunStatus: { status: 'requesting' },  inlineTextLabel: 'Requesting...' });
         let instance = this;
         this.requestRunLoad(descriptionText).then(function (result) {
-            instance.setState({ showModalRunTest: false, inlineTextLabel: 'Running...' });
             switch (result.status) {
                 case 202: {
                     // success - request to start load accepted;
-                    instance.startCountdown();
+                    instance.setState({ loadRunStatus: { status: 'requested' }, inlineTextLabel: 'Requested...' });
                     break;
                 }
                 case 503: {
@@ -112,7 +133,7 @@ class ActionRunLoad extends React.Component {
     /**
      * Send a post to the metric/runload api to start a new load test. 
      * An optional description parameter can be provided.
-     * @param {string} desc 
+     * @param {string} desc
      */
     // eslint-disable-next-line class-methods-use-this
     async requestRunLoad(desc) {
@@ -128,7 +149,6 @@ class ActionRunLoad extends React.Component {
     }
 
     async handleCancelLoad() {
-        this.setState({ inlineTextLabel: "Cancelling..." });
         try {
             const response = await fetch(`${AppConstants.API_SERVER}/api/v1/projects/${this.props.projectID}/loadtest/cancel`,
                 {
@@ -136,9 +156,9 @@ class ActionRunLoad extends React.Component {
                     headers: { "Content-Type": "application/json" }
                 });
             const reply = await response;
-            this.setState({ inlineTextLabel: "Cancelled" });
+            console.error("Cancel accepted")
         } catch (err) {
-            this.setState({ inlineTextLabel: "Cancel failed" });
+            console.error("Cancel failed:",err);
         }
     }
 
@@ -152,7 +172,7 @@ class ActionRunLoad extends React.Component {
 
     showStartTestNotificationFail(err) {
         this.setState(
-            { showNotificationRunTestFail: true, notificationError: err },
+            { showNotificationRunTestFail: true, notificationError: err,  loadRunStatus: { status: '' } },
             () => setTimeout(() => this.setState({ showNotificationRunTestFail: false }), 5000)
         );
     }
@@ -177,10 +197,10 @@ class ActionRunLoad extends React.Component {
 
     render() {
         const { showNotificationRunTestFail, loadRunStatus, inlineTextLabel, timeRemaining } = this.state;
-        let loadRunPreparing = loadRunStatus.status === 'preparing';
-        let loadRunStarting = loadRunStatus.status === 'starting';
-        let loadRunActive = loadRunStatus.status === 'started';
-        let loadRunSuccess = loadRunStatus.status === 'completed';
+
+        let loadRunCompleted = loadRunStatus.status === 'completed';
+        const options = ['preparing', 'starting', 'started', 'completed', 'requesting', 'requested', 'cancelling', 'cancelled']
+        const showBusy = options.includes(loadRunStatus.status)
 
         let inlineTextLabelFormatted = (timeRemaining !== 0) ? `${inlineTextLabel}${timeRemaining}` : `${inlineTextLabel}`
 
@@ -189,10 +209,10 @@ class ActionRunLoad extends React.Component {
                 <RunTestNotificationFail notification={showNotificationRunTestFail} titleMessage={'Request Failed!'} notificationError={this.state.notificationError} />
                 <div className="ActionRunLoad">
                     {
-                        (loadRunActive || loadRunSuccess || loadRunPreparing || loadRunStarting) ? (
+                        (showBusy) ? (
                             <Fragment>
                                 <div style={{ display: 'inline-block', verticalAlign: "middle" }}>
-                                    <InlineLoading style={{ marginLeft: '1rem' }} description={inlineTextLabelFormatted} success={loadRunSuccess} />
+                                    <InlineLoading style={{ marginLeft: '1rem' }} description={inlineTextLabelFormatted} success={loadRunCompleted} />
                                 </div>
                                 <div style={{ display: 'inline-block', verticalAlign: "middle", float: 'right' }}>
                                     <Button onClick={() => this.handleCancelLoad()} style={{ verticalAlign: "middle", padding: 0, margin: 0 }} renderIcon={IconStop} kind="ghost" small iconDescription="Stop the load run"></Button>
@@ -228,7 +248,7 @@ const ActionRunLoadWithSocket = props => (
 ActionRunLoad.propTypes = {
     projectID: PropTypes.string.isRequired,
     small: PropTypes.bool, // show small button
-    kind: PropTypes.string // button kind eg: 'ghost'    
+    kind: PropTypes.string // button kind eg: 'ghost'
 }
 
 

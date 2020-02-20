@@ -481,6 +481,7 @@ module.exports = class LoadRunner {
     */
     this.socket.on('disconnect', () => {
       log.info('Loadrunner has disconnected')
+      this.project.loadInProgress = false; 
       // If this.up is false we're already trying to reconnect
       if (this.up) {
         // socket.io-client will automatically reconnect and trigger the connect event.
