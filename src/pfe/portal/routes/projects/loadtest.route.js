@@ -46,15 +46,16 @@ router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res
     }
 
     try {
-      user.runLoad(project, description);
-      res.status(202).send("");
+      if (project.loadInProgress == undefined || project.loadInProgress == false) {
+        user.runLoad(project, description);
+        res.status(202).send("");
+      } else {
+        res.status(409).send("Load run in progress");
+      }
+      return;
     } catch(err) {
       log.error(err);
-      if (err.code == LoadRunError.RUN_IN_PROGRESS) {
-        res.status(409).send(err.info);
-      } else {
-        res.status(500).send(err.info || err);
-      }
+      res.status(500).send(err.info || err);
     }
   }
 });
