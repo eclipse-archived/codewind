@@ -508,6 +508,7 @@ module.exports = class LoadRunner {
     */
     this.socket.on('error', (err) => {
       log.error('LoadRunner socket error');
+      this.project.loadInProgress = false; 
       log.error(err);
       // If this.up is false we're already trying to reconnect
       if (this.up) {
