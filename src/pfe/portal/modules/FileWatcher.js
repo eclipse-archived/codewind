@@ -229,7 +229,7 @@ module.exports = class FileWatcher {
       extension: project.extension,
       contextroot: project.contextRoot,
       startMode: project.startMode,
-      location: project.projectPath,
+      location: project.projectPath(),
       applicationPort: project.applicationPort,
       settings: settingsFileContents,
       language: project.language,

@@ -517,7 +517,7 @@ module.exports = class User {
     try {
       // Remove project meta inf
       await fs.unlink(`${this.directories.workspace}.projects/${project.projectID}.inf`);
-      const projectPath = project.projectPath;
+      const projectPath = project.projectPath();
       log.info(`Removing project directory at ${projectPath}`);
       await cwUtils.forceRemove(projectPath);
     } catch (err) {
