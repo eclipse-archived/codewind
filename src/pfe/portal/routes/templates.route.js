@@ -21,12 +21,12 @@ const log = new Logger(__filename);
  * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
  */
-router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
+router.get('/api/v1/templates', validateReq, verifyLock, async (req, res, _next) => {
   const { templates: templateController } = req.cw_user;
   const projectStyle = req.query['projectStyle'];
   const showEnabledOnly = req.query['showEnabledOnly'] === 'true';
   try {
-    const templates = (projectStyle) 
+    const templates = (projectStyle)
       ? await templateController.getTemplatesByStyle(projectStyle, showEnabledOnly)
       : await templateController.getTemplates(showEnabledOnly);
     if (templates.length == 0) {
@@ -45,9 +45,7 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
  * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
  */
-router.get('/api/v1/templates/repositories', verifyLock, async (req, res, _next) => {
-  await sendRepositories(req, res, _next);
-});
+router.get('/api/v1/templates/repositories', verifyLock, sendRepositories);
 
 router.post('/api/v1/templates/repositories', validateReq, verifyLock, async (req, res, _next) => {
   const { templates: templatesController } = req.cw_user;
@@ -109,7 +107,7 @@ async function sendRepositories(req, res, _next) {
   res.status(200).json(repositoryList);
 }
 
-router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, res) => {
+router.patch('/api/v1/batch/templates/repositories', validateReq, verifyLock, async (req, res) => {
   const { templates: templatesController } = req.cw_user;
   const requestedOperations = req.body;
   const operationResults = await templatesController.batchUpdate(requestedOperations);
@@ -119,7 +117,7 @@ router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, re
 /**
  * @return {[String]} the list of template styles
  */
-router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
+router.get('/api/v1/templates/styles', validateReq, verifyLock, async (req, res, _next) => {
   const { templates: templatesController } = req.cw_user;
   const styles = await templatesController.getAllTemplateStyles();
   res.status(200).json(styles);
@@ -131,7 +129,6 @@ module.exports = router;
 function verifyLock(req, res, _next) {
   const { templates: templatesController } = req.cw_user;
   const locked = templatesController.isLocked();
-  log.info(`Template locked = ${locked}`);
   if (locked) {
     return res.status(409).send('template lock hit, they are currently being updated');
   }
