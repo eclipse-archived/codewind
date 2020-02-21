@@ -200,14 +200,14 @@ describe('Template API tests', function() {
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.not.deep.include(originalTemplates);
             res.body.length.should.be.below(originalNumTemplates);
-        });*/
+        });
         it('POST /api/v1/templates should re-add the deleted template repository', async function() {
             this.timeout(testTimeout.short);
             const res = await addTemplateRepo(repo);
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.containSubset([repo]);
             res.body.length.should.equal(originalTemplateRepos.length);
-        });
+        });*/
         it('GET /api/v1/templates should return the original templates', async function() {
             this.timeout(testTimeout.short);
             const res = await getTemplates();
