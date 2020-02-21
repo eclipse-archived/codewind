@@ -58,6 +58,9 @@ else:
     columNames = list(baselineDf.columns);
     rowNames = list(baselineDf.index.values);
 
+    improvedCases = []
+    deterioratedCases = []
+
     for columnName in columNames:
         projectType = columnName.split("-")[0];
         projectLanguage = columnName.split("-")[-1];
@@ -77,11 +80,13 @@ else:
                 if (difference >= 0 and difference >= threshold):
                     counter = counter + 1;
                     goodCounter = goodCounter + 1;
-                    print(">> Improvement in run of {} by {}% [{} -> {}]".format(rowName, difference, baselineValue, comparableValue));
+                    improvedCases.append("{} {} {} by {}% [{}s -> {}s]".format(projectType, projectLanguage, rowName, difference, baselineValue, comparableValue));
+                    print(">> Improvement in run of {} by {}% [{}s -> {}s]".format(rowName, difference, baselineValue, comparableValue));
                 elif (difference < 0 and abs(difference) >= threshold):
                     counter = counter + 1;
                     badCounter = badCounter + 1;
-                    print(">> Deteriorated in run of {} by {}% [{} -> {}]".format(rowName, abs(difference), baselineValue, comparableValue));
+                    deterioratedCases.append("{} {} {} by {}% [{}s -> {}s]".format(projectType, projectLanguage, rowName, abs(difference), baselineValue, comparableValue));
+                    print(">> Deteriorated in run of {} by {}% [{}s -> {}s]".format(rowName, abs(difference), baselineValue, comparableValue));
 
         if (counter == 0):
             print(">> Found no discrepancy between the two runs.");
@@ -101,3 +106,11 @@ else:
 
         print("\n" + "*" * 10 + "*" * len(reportCardStr) + "*" * 10 + "\n");
 
+    overallReportCard = " Overall Report Card "
+    print("\n" + "*" * 10 + overallReportCard + "*" * 10 + "\n");
+    print("> Improved cases:\n");
+    print("\n".join(improvedCases));
+    print("\n");
+    print("> Deteriorated cases:\n");
+    print("\n".join(deterioratedCases));
+    print("\n" + "*" * 10 + "*" * len(overallReportCard) + "*" * 10 + "\n");
