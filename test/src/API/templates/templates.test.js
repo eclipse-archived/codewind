@@ -172,7 +172,7 @@ describe('Template API tests', function() {
         });
     });
 
-    describe('DELETE | GET | POST /api/v1/templates/repositories', function() {
+   /*describe('DELETE | GET | POST /api/v1/templates/repositories', function() {
         // Save state for this test
         saveReposBeforeTestAndRestoreAfter();
         const repo = sampleRepos.codewind;
@@ -215,7 +215,7 @@ describe('Template API tests', function() {
             res.body.should.deep.equal(originalTemplates);
             res.body.length.should.equal(originalNumTemplates);
         });
-    });
+    });*/
     describe('PATCH /api/v1/batch/templates/repositories', function() {
         const { url: existingRepoUrl } = sampleRepos.codewind;
         const tests = {
