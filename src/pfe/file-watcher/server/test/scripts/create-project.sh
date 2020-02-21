@@ -17,7 +17,7 @@ source $DIR/utils.sh
 cd $INITIAL_DIR
 
 function buildPFE() {
-    echo -e "${BLUE}>> Building PFE on local ... $CW_DIR ${RESET}"
+    echo -e "${BLUE}>> Building PFE on local ... ${RESET}"
     cd $CW_DIR
 
     $CW_DIR/stop.sh
