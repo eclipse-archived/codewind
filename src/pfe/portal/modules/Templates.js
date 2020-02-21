@@ -57,12 +57,11 @@ module.exports = class Templates {
     this.repositoryFile = path.join(workspace, '.config/repository_list.json');
     this.repositoryList = DEFAULT_REPOSITORY_LIST;
     this.providers = {};
-
-    this._lock = false;
+    this.unlock();
   }
 
   async initializeRepositoryList() {
-    this._lock = true;
+    this.lock();
     try {
       let repositories = [...this.repositoryList];
       const repositoryFileExists = await cwUtils.fileExists(this.repositoryFile);
@@ -78,7 +77,7 @@ module.exports = class Templates {
     } catch (err) {
       log.error(`Error initializing repository list: ${err}`);
     }
-    this._lock = false;
+    this.unlock();
   }
 
   isLocked() {
@@ -96,17 +95,7 @@ module.exports = class Templates {
   }
 
   // TEMPLATES
-
-  async getTemplates(enabledOnly) {
-    // if (this.projectTemplatesNeedsRefresh) {
-    //   const enabledRepositories = await this.getEnabledRepositories();
-    //   const disabledRepositories = await this.getDisabledRepositories();
-    //   const newEnabledTemplates = await getTemplatesFromRepos(enabledRepositories);
-    //   const newDisabledTemplates = await getTemplatesFromRepos(disabledRepositories);
-    //   this.enabledProjectTemplates = newEnabledTemplates;
-    //   this.allProjectTemplates = newEnabledTemplates.concat(newDisabledTemplates);
-    //   this.projectTemplatesNeedsRefresh = false;
-    // }
+  getTemplates(enabledOnly) {
     return enabledOnly ? this.enabledProjectTemplates : this.allProjectTemplates;
   }
 
@@ -123,11 +112,6 @@ module.exports = class Templates {
   // REPOSITORIES
 
   getRepositories() {
-    // if (this.projectRepositoriesNeedsRefresh) {
-    //   // eslint-disable-next-line require-atomic-updates
-    //   this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, this.repositoryList, this.repositoryFile);
-    //   this.projectRepositoriesNeedsRefresh = false;
-    // }
     return this.repositoryList;
   }
 
@@ -255,8 +239,7 @@ module.exports = class Templates {
     }
     try {
       const repo = await this.getRepository(url);
-      const enabled = (value === 'true' || value === true);
-      repo.enabled = enabled;
+      repo.enabled = (value === 'true' || value === true);
       await this.updateTemplates();
       return {
         status: 200
