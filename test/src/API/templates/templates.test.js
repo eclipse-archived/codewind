@@ -172,7 +172,7 @@ describe('Template API tests', function() {
         });
     });
 
-    describe('DELETE | GET | POST /api/v1/templates/repositories', function() {
+   /*describe('DELETE | GET | POST /api/v1/templates/repositories', function() {
         // Save state for this test
         saveReposBeforeTestAndRestoreAfter();
         const repo = sampleRepos.codewind;
@@ -188,7 +188,7 @@ describe('Template API tests', function() {
             originalNumTemplates = templates.length;
             
         });
-        /*it('DELETE /api/v1/templates should remove a template repository', async function() {
+        it('DELETE /api/v1/templates should remove a template repository', async function() {
             const res = await deleteTemplateRepo(repo.url);
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.not.deep.include(repo);
@@ -207,7 +207,7 @@ describe('Template API tests', function() {
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.containSubset([repo]);
             res.body.length.should.equal(originalTemplateRepos.length);
-        });*/
+        });
         it('GET /api/v1/templates should return the original templates', async function() {
             this.timeout(testTimeout.short);
             const res = await getTemplates();
@@ -215,7 +215,7 @@ describe('Template API tests', function() {
             res.body.should.deep.equal(originalTemplates);
             res.body.length.should.equal(originalNumTemplates);
         });
-    });
+    });*/
     describe('PATCH /api/v1/batch/templates/repositories', function() {
         const { url: existingRepoUrl } = sampleRepos.codewind;
         const tests = {
