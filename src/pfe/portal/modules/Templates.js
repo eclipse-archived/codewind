@@ -173,7 +173,7 @@ module.exports = class Templates {
     }
     // writeRepositoryList regardless of whether it has been updated with the data from providers
     await writeRepositoryList(this.repositoryFile, this.repositoryList);
-    
+
     await this.updateTemplates();
   }
   

@@ -1103,6 +1103,8 @@ paths:
                   $ref: '#/components/schemas/Template'
         204:
           description: No templates found
+        409:
+          description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
 
   /api/v1/templates/repositories:
     get:
@@ -1116,6 +1118,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TemplateRepo'
+        409:
+          description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
     post:
       summary: Make Codewind aware of a template repository
       requestBody:
@@ -1135,6 +1139,8 @@ paths:
                   $ref: '#/components/schemas/TemplateRepo'
         400:
           description: Bad request
+        409:
+          description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
     delete:
       summary: Remove a template repository from the list Codewind is aware of
       requestBody:
@@ -1165,6 +1171,8 @@ paths:
             text/html:
               schema:
                 type: string
+        409:
+          description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
   /api/v1/batch/templates/repositories:
     patch:
       summary: Batch change settings for a template repository of which Codewind is aware
@@ -1195,6 +1203,8 @@ paths:
                       $ref: '#/components/schemas/TemplateRepoSetting'
                     error:
                       type: string
+        409:
+          description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
   /api/v1/templates/styles:
     get:
       summary: List all project styles for which Codewind has templates
@@ -1223,6 +1233,8 @@ paths:
                   $ref: '#/components/schemas/ProjectTypeDescriptor'
         204:
           description: No templates found
+        409:
+          description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
 
   /api/v1/logging:
     put:

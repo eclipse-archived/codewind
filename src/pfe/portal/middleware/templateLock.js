@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-const Logger = require('./utils/Logger');
+const Logger = require('../modules/utils/Logger');
 const log = new Logger(__filename);
 
 function verifyLock(req, res, _next) {
