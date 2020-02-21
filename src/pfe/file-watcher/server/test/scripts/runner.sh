@@ -189,7 +189,7 @@ if [[ $TEST_TYPE == "kube" ]]; then
         exit 1
     fi
 
-    oc login $CLUSTER_IP:$CLUSTER_PORT -u $CLUSTER_USER -p $CLUSTER_PASSWORD
+    oc login $CLUSTER_IP:$CLUSTER_PORT -u $CLUSTER_USER -p $CLUSTER_PASSWORD --insecure-skip-tls-verify=true
     oc project $NAMESPACE
     if [[ $? -eq 0 ]]; then
         echo -e "${GREEN}Successfully logged into the OKD cluster ${RESET}\n"
