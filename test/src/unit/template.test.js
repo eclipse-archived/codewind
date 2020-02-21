@@ -271,21 +271,6 @@ describe('Templates.js', function() {
                 output[1].should.deep.equal(enabledRepo);
             });
         });
-        describe('doesRepositoryExist()', function() {
-            let templateController;
-            before(() => {
-                templateController = new Templates('');
-                templateController.repositoryList = [...mockRepoList];
-            });
-            it('returns true as the repository exists', async function() {
-                const repoExists = await templateController.doesRepositoryExist('1');
-                repoExists.should.be.true;
-            });
-            it('returns false as the repository does not exist', async function() {
-                const repoExists = await templateController.doesRepositoryExist('http://badurl.com');
-                repoExists.should.be.false;
-            });
-        });
         describe('batchUpdate(requestedOperations)', function() {
             let templateController;
             beforeEach(() => {

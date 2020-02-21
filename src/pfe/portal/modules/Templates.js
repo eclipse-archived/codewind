@@ -158,30 +158,18 @@ module.exports = class Templates {
   }
 
   async deleteRepository(repoUrl) {
-    let deleted;
-    const repositoryList = this.repositoryList.filter((repo) => {
-      if (repo.url === repoUrl) {
-        deleted = repo;
-        return false;
-      }
-      return true;
-    });
-    await this.getRepository(repoUrl);
-    if (deleted) {
-      await this.removeRepositoryFromProviders(deleted);
-      this.repositoryList = repositoryList;
-      try {
-        const currentRepoList = [...this.repositoryList];
-        this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, currentRepoList, this.repositoryFile);
-      }
-      catch (err) {
-        // rollback
-        this.repositoryList.push(deleted);
-        this.addRepositoryToProviders(deleted).catch(error => log.warn(error.message));
-        throw err;
-      }
-    } else {
-      throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
+    const repoToDelete = this.getRepository(repoUrl);
+    if (!repoToDelete) throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
+    await this.removeRepositoryFromProviders(repoToDelete);
+    try {
+      const currentRepoList = [...this.repositoryList];
+      const updatedRepoList = await updateRepoListWithReposFromProviders(this.providers, currentRepoList, this.repositoryFile);
+      this.repositoryList = updatedRepoList.filter(repo => repo.url !== repoUrl);
+    }
+    catch (err) {
+      // rollback
+      this.addRepositoryToProviders(repoToDelete).catch(error => log.warn(error.message));
+      throw err;
     }
     // writeRepositoryList regardless of whether it has been updated with the data from providers
     await writeRepositoryList(this.repositoryFile, this.repositoryList);
@@ -193,20 +181,11 @@ module.exports = class Templates {
    * @param {String} url
    * @return {JSON} reference to the repo object in this.repositoryList
    */
-  async getRepository(url) {
-    const repositories = await this.getRepositories();
+  getRepository(url) {
+    const repositories = this.getRepositories();
     const index = getRepositoryIndex(url, repositories);
-    if (index < 0) throw new Error(`no repository found with URL '${url}'`);
+    if (index < 0) return null;
     return repositories[index];
-  }
-
-  async doesRepositoryExist(url) {
-    try {
-      await this.getRepository(url);
-      return true;
-    } catch (error) {
-      return false;
-    }
   }
 
   async batchUpdate(requestedOperations) {
@@ -231,7 +210,7 @@ module.exports = class Templates {
    * @returns {JSON} { status, error (optional) }
    */
   async enableOrDisableRepository({ url, value }) {
-    if (!await this.doesRepositoryExist(url)) {
+    if (!this.getRepository(url)) {
       return {
         status: 404,
         error: 'Unknown repository URL',
