@@ -188,7 +188,7 @@ describe('Template API tests', function() {
             originalNumTemplates = templates.length;
             
         });
-        it('DELETE /api/v1/templates should remove a template repository', async function() {
+        /*it('DELETE /api/v1/templates should remove a template repository', async function() {
             const res = await deleteTemplateRepo(repo.url);
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.not.deep.include(repo);
@@ -200,7 +200,7 @@ describe('Template API tests', function() {
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.not.deep.include(originalTemplates);
             res.body.length.should.be.below(originalNumTemplates);
-        });
+        });*/
         it('POST /api/v1/templates should re-add the deleted template repository', async function() {
             this.timeout(testTimeout.short);
             const res = await addTemplateRepo(repo);
