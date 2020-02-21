@@ -57,10 +57,11 @@ const mockRepos = {
 };
 const mockRepoList = Object.values(mockRepos);
 describe('Templates.js', function() {
+    // Set the default timeout for all tests
+    this.timeout(testTimeout.short);
     suppressLogOutput(Templates);
     describe('Class functions', function() {
         describe('initializeRepositoryList()', function() {
-            this.timeout(testTimeout.short);
             const workspace = path.join(__dirname, 'initializeRepositoryList');
             const customRepoFile = path.join(workspace, 'custom_repo_file.json');
             beforeEach(() => {
@@ -94,38 +95,38 @@ describe('Templates.js', function() {
         });
         describe('getTemplates(showEnabledOnly)', function() {
             it('Gets all templates', async function() {
-                this.timeout(testTimeout.short);
                 const templateController = new Templates('');
+                await templateController.updateTemplates();
                 const templateList = await templateController.getTemplates(false);
                 templateList.length.should.be.at.least(defaultCodewindTemplates.length);
             });
             it('gets only enabled templates', async function() {
-                this.timeout(testTimeout.short);
                 const templateController = new Templates('');
                 const { repositoryList } = templateController;
                 for (const repository of repositoryList) {
                     repository.enabled = false;
                     repository.enabled.should.be.false;
                 }
+                await templateController.updateTemplates();
                 const templateList = await templateController.getTemplates(true);
                 templateList.length.should.equal(0);
             });
             it('gets all templates after enabled templates', async function() {
-                this.timeout(testTimeout.short);
                 const templateController = new Templates('');
                 const { repositoryList } = templateController;
                 for (const repository of repositoryList) {
                     repository.enabled = false;
                     repository.enabled.should.be.false;
                 }
+                await templateController.updateTemplates();
                 const enabledTmplateList = await templateController.getTemplates(true);
                 enabledTmplateList.length.should.equal(0);
                 const templateList = await templateController.getTemplates(false);
                 templateList.length.should.be.at.least(defaultCodewindTemplates.length);
             });
             it('gets enabled templates after all templates', async function() {
-                this.timeout(testTimeout.short);
                 const templateController = new Templates('');
+                await templateController.updateTemplates();
                 const templateList = await templateController.getTemplates(false);
                 templateList.length.should.be.at.least(defaultCodewindTemplates.length);
                 const { repositoryList } = templateController;
@@ -133,6 +134,7 @@ describe('Templates.js', function() {
                     repository.enabled = false;
                     repository.enabled.should.be.false;
                 }
+                await templateController.updateTemplates();
                 const enabledTemplateList = await templateController.getTemplates(true);
                 enabledTemplateList.length.should.equal(0);
             });
@@ -140,6 +142,7 @@ describe('Templates.js', function() {
                 it('returns the default templates', async function() {
                     this.timeout(testTimeout.med);
                     const templateController = new Templates('');
+                    await templateController.updateTemplates();
                     const output = await templateController.getTemplates(false, false);
                     output.should.contain.deep.members(defaultCodewindTemplates);
                     for (const element of output) {
@@ -150,12 +153,13 @@ describe('Templates.js', function() {
             });
             describe('add an invalid template repo', function() {
                 let templateController;
-                before(() => {
+                before(async function() {
                     templateController = new Templates('');
                     templateController.repositoryList = [
                         sampleRepos.codewind,
                         { url: 'https://www.google.com/' },
                     ];
+                    await templateController.updateTemplates();
                 });
                 it('returns only the default templates', async function() {
                     const output = await templateController.getTemplates(false, false);
@@ -164,20 +168,20 @@ describe('Templates.js', function() {
             });
             describe('and add a provider providing a valid template repo', function() {
                 let templateController;
-                before(() => {
-                    fs.ensureDirSync(testWorkspaceConfigDir);
+                before(async function() {
+                    await fs.ensureDir(testWorkspaceConfigDir);
                     templateController = new Templates(testWorkspaceConfigDir);
                     templateController.addProvider('valid repo', {
                         getRepositories() {
                             return [sampleRepos.appsody];
                         },
                     });
+                    await templateController.updateTemplates();
                 });
                 after(() => {
                     fs.removeSync(testWorkspaceDir);
                 });
                 it('returns more templates than just the default ones', async function() {
-                    this.timeout(testTimeout.short);
                     const output = await templateController.getTemplates(false, false);
                     output.should.include.deep.members(defaultCodewindTemplates);
                     (output.length).should.be.above(defaultCodewindTemplates.length);
@@ -186,7 +190,6 @@ describe('Templates.js', function() {
             describe('and enable a repository and get the new templates', function() {
                 let templateController;
                 before(async function() {
-                    this.timeout(testTimeout.short);
                     fs.ensureDirSync(testWorkspaceConfigDir);
                     templateController = new Templates(testWorkspaceConfigDir);
                     const disabledRepo = { ...sampleRepos.codewind };
@@ -194,6 +197,7 @@ describe('Templates.js', function() {
                     // Use a disabled repository, getTemplates should return no templates
                     templateController.repositoryList = [disabledRepo];
                     templateController.projectTemplatesNeedsRefresh = true;
+                    await templateController.updateTemplates();
                     const templates = await templateController.getTemplates(true);
                     templates.length.should.equal(0);
                 });
@@ -201,7 +205,6 @@ describe('Templates.js', function() {
                     fs.removeSync(testWorkspaceDir);
                 });
                 it('returns an updated template list after a repo is enabled', async function() {
-                    this.timeout(testTimeout.short);
                     // Change repository to be enabled
                     await templateController.enableOrDisableRepository({ url: sampleRepos.codewind.url, value: true });
                     // Get templates should return updated list of templates
@@ -213,14 +216,14 @@ describe('Templates.js', function() {
         describe('getTemplatesByStyle(projectStyle, showEnabledOnly = false)', function() {
             const workspace = path.join(__dirname, 'initializeRepositoryList');
             it('gets only templates of a specific style', async function() {
-                this.timeout(testTimeout.short);
                 const templateController = new Templates(workspace);
+                await templateController.updateTemplates();
                 const templateList = await templateController.getTemplatesByStyle('Codewind');
                 templateList.length.should.be.gt(1);
             });
             it('gets no templates for a non-existent style', async function() {
-                this.timeout(testTimeout.short);
                 const templateController = new Templates(workspace);
+                await templateController.updateTemplates();
                 const templateList = await templateController.getTemplatesByStyle('NotAStyle');
                 templateList.length.should.equal(0);
             });
@@ -229,8 +232,9 @@ describe('Templates.js', function() {
             const workspace = path.join(__dirname, 'initializeRepositoryList');
             describe('returns only Codewind templates as it is the style in the projectTemplates', function() {
                 let templateController;
-                before(() => {
+                before(async function() {
                     templateController = new Templates(workspace);
+                    await templateController.updateTemplates();
                 });
                 it(`returns ['Codewind', 'Appsody']`, async function() {
                     const output = await templateController.getAllTemplateStyles();
@@ -667,7 +671,6 @@ describe('Templates.js', function() {
             describe('repo without name and description in templates.json', () => {
                 describe('(<invalidUrl>, <validDesc>)', function() {
                     it('throws an error', function() {
-                        this.timeout(testTimeout.short);
                         const url = 'some string';
                         const func = () => templateController.addRepository(url, 'description');
                         return func().should.be.rejectedWith(`Invalid URL: ${url}`);
@@ -675,7 +678,6 @@ describe('Templates.js', function() {
                 });
                 describe('(<existingUrl>, <validDesc>)', function() {
                     it('throws an error', function() {
-                        this.timeout(testTimeout.short);
                         const { url } = mockRepoList[0];
                         const func = () => templateController.addRepository(url, 'description');
                         return func().should.be.rejectedWith(`${url} is already a template repository`);
@@ -683,7 +685,6 @@ describe('Templates.js', function() {
                 });
                 describe('(<validUrlNotPointingToIndexJson>, <validDesc>)', function() {
                     it('throws an error', function() {
-                        this.timeout(testTimeout.short);
                         const url = validUrlNotPointingToIndexJson;
                         const func = () => templateController.addRepository(url, 'description');
                         return func().should.be.rejectedWith(`${url} does not point to a JSON file of the correct form`);
@@ -691,7 +692,6 @@ describe('Templates.js', function() {
                 });
                 describe('(<validUrlPointingToIndexJson>, <validDesc>, <validName>)', function() {
                     it('succeeds', async function() {
-                        this.timeout(testTimeout.short);
                         const func = () => templateController.addRepository(templateRepositoryURL, 'description', 'name');
                         await (func().should.not.be.rejected);
                         templateController.repositoryList.should.containSubset([{
@@ -709,7 +709,6 @@ describe('Templates.js', function() {
                 });
                 describe('(<validUrlUnprotected>, <validDesc>, <validName>)', function() {
                     it('succeeds', async function() {
-                        this.timeout(testTimeout.short);
                         const isRepoProtected = false;
                         const func = () => templateController.addRepository(templateRepositoryURL, 'description', 'name', isRepoProtected);
                         await (func().should.not.be.rejected);
@@ -731,7 +730,6 @@ describe('Templates.js', function() {
             describe('repo with name and description in templates.json', () => {
                 describe('(<validUrl>, <ValidDesc>, <ValidName>)', function() {
                     it('succeeds, and allows the user to set the name and description', async function() {
-                        this.timeout(testTimeout.short);
                         const func = () => templateController.addRepository(templateRepositoryURL, 'description', 'name', false);
                         await (func().should.not.be.rejected);
                         templateController.repositoryList.should.containSubset([{ ...sampleRepos.codewind,
@@ -743,7 +741,6 @@ describe('Templates.js', function() {
                 });
                 describe('(repo with templates.json, <validUrl>, <NoDesc>, <NoName>)', function() {
                     it('succeeds, and gets the name and description from templates.json', async function() {
-                        this.timeout(testTimeout.short);
                         const func = () => templateController.addRepository(templateRepositoryURL, '', '', false);
                         await (func().should.not.be.rejected);
                         templateController.repositoryList.should.containSubset([{ ...sampleRepos.codewind, protected: false }]);
@@ -1235,7 +1232,6 @@ describe('Templates.js', function() {
                 return doesURLPointToIndexJSON(url).should.eventually.be.true;
             });
             it('returns false as the URL does not point to JSON', function() {
-                this.timeout(testTimeout.short);
                 return doesURLPointToIndexJSON('http://google.com').should.eventually.be.false;
             });
             it('returns false as the file URL does not point to JSON', () => {

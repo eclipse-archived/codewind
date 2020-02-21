@@ -36,7 +36,9 @@ const should = chai.should();
 
 const EXTENSION_DIR =  `${__dirname}/extensionlist_temp`;
 
-describe('ExtensionList.js', () => {
+describe('ExtensionList.js', function() {
+    // Set the default timeout for all tests
+    this.timeout(testTimeout.short);
     suppressLogOutput(Extension);
     suppressLogOutput(ExtensionList);
     suppressLogOutput(Templates);
@@ -44,7 +46,6 @@ describe('ExtensionList.js', () => {
         fs.ensureDirSync(EXTENSION_DIR);
     });
     after(function() {
-        this.timeout(5000);
         execSync(`rm -rf ${EXTENSION_DIR}`);
     });
     describe('Class functions', () => {
@@ -88,7 +89,6 @@ describe('ExtensionList.js', () => {
                 list.should.have.property('extension');
             });
             it('Loads an extension which contains a template repository URL', async function() {
-                this.timeout(testTimeout.short);
                 createCodewindYamlFile(path.join(EXTENSION_DIR, 'extensionWithURL'), { name: 'extensionWithURL', templates: templateRepositoryURL });
                 const extensionList = new ExtensionList();
                 await extensionList.initialise(EXTENSION_DIR, templateController);
@@ -101,7 +101,6 @@ describe('ExtensionList.js', () => {
                 await templateController.getRepository(extensionWithURL.templates).should.be.fulfilled;
             });
             it('Loads an extension which contains a templateProvider.js file and no template repository URL', async function() {
-                this.timeout(testTimeout.short);
                 const extensionName = 'extensionWithTemplateProvider';
                 createCodewindYamlFile(path.join(EXTENSION_DIR, extensionName), { name: extensionName });
                 createTemplatesProviderFile(path.join(EXTENSION_DIR, extensionName));
@@ -117,7 +116,6 @@ describe('ExtensionList.js', () => {
                 templateController.providers.should.have.property(extensionName);
             });
             it('Loads an extension which contains both a template repository URL and a templateProvider.js file (ignores the templateProvider.js file)', async function() {
-                this.timeout(testTimeout.short);
                 const extensionName = 'extensionWithBoth';
                 createCodewindYamlFile(path.join(EXTENSION_DIR, extensionName), { name: extensionName, templates: templateRepositoryURL });
                 createTemplatesProviderFile(path.join(EXTENSION_DIR, extensionName));

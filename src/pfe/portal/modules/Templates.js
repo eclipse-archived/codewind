@@ -45,7 +45,6 @@ const DEFAULT_REPOSITORY_LIST = [
 ];
 
 module.exports = class Templates {
-
   constructor(workspace) {
     // If this exists it overrides the contents of DEFAULT_REPOSITORY_LIST
     // One list for enabled templates, another that includes the disabled templates.
@@ -183,7 +182,7 @@ module.exports = class Templates {
       }
       return true;
     });
-    this.getRepository(repoUrl)
+    await this.getRepository(repoUrl);
     if (deleted) {
       await this.removeRepositoryFromProviders(deleted);
       this.repositoryList = repositoryList;
@@ -200,7 +199,6 @@ module.exports = class Templates {
     } else {
       throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
     }
-    
     // writeRepositoryList regardless of whether it has been updated with the data from providers
     await writeRepositoryList(this.repositoryFile, this.repositoryList);
     
@@ -257,8 +255,9 @@ module.exports = class Templates {
     }
     try {
       const repo = await this.getRepository(url);
-      repo.enabled = (value === 'true' || value === true);
-      this.projectTemplatesNeedsRefresh = true;
+      const enabled = (value === 'true' || value === true);
+      repo.enabled = enabled;
+      await this.updateTemplates();
       return {
         status: 200
       };
