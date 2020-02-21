@@ -93,6 +93,34 @@ describe('Templates.js', function() {
                 projectTemplatesNeedsRefresh.should.be.true;
             });
         });
+        describe('lock()', () => {
+            it('should update the value of _lock to be true', () => {
+                const templateController = new Templates('');
+                templateController._lock = false;
+                templateController.lock();
+                templateController._lock.should.be.true;
+            });
+        });
+        describe('unlock()', () => {
+            it('should update the value of _lock to be false', () => {
+                const templateController = new Templates('');
+                templateController._lock = true;
+                templateController.unlock();
+                templateController._lock.should.be.false;
+            });
+        });
+        describe('isLocked()', () => {
+            it('should return the current value of _lock (true case)', () => {
+                const templateController = new Templates('');
+                templateController.lock();
+                templateController.isLocked().should.be.true;
+            });
+            it('should return the current value of _lock (false case)', () => {
+                const templateController = new Templates('');
+                templateController.unlock();
+                templateController.isLocked().should.be.false;
+            });
+        });
         describe('getTemplates(showEnabledOnly)', function() {
             it('Gets all templates', async function() {
                 const templateController = new Templates('');
@@ -242,14 +270,27 @@ describe('Templates.js', function() {
                 });
             });
         });
+        describe('updateTemplates()', function() {
+            const templateController = new Templates('');
+            before(() => {
+                templateController.repositoryList = [sampleRepos.codewind];
+                templateController.getTemplates(true).length.should.equal(0);
+                templateController.getTemplates(false).length.should.equal(0);
+            });
+            it('populates the templates property', async function() {
+                await templateController.updateTemplates();
+                templateController.getTemplates(true).length.should.be.above(0);
+                templateController.getTemplates(false).length.should.be.above(0);
+            });
+        });
         describe('getRepositories()', function() {
             let templateController;
             before(() => {
                 templateController = new Templates('');
                 templateController.repositoryList = [...mockRepoList];
             });
-            it('returns all repos', async function() {
-                const output = await templateController.getRepositories();
+            it('returns all repos', function() {
+                const output = templateController.getRepositories();
                 output.should.deep.equal(mockRepoList);
             });
         });
@@ -257,18 +298,26 @@ describe('Templates.js', function() {
             let templateController;
             beforeEach(() => {
                 templateController = new Templates('');
-                templateController.repositoryList = [mockRepos.enabled, mockRepos.disabled];
+                templateController.repositoryList = [{ ...mockRepos.enabled }, { ...mockRepos.disabled }];
             });
-            it('returns only enabled repos', async function() {
-                const output = await templateController.getEnabledRepositories();
+            it('returns only enabled repos', function() {
+                const output = templateController.getEnabledRepositories();
                 output.should.deep.equal([mockRepos.enabled]);
             });
             it('return the repository list with a new, enabled repository', async() => {
                 await templateController.enableOrDisableRepository({ url: '2', value: true });
                 const enabledRepo = { ...mockRepos.disabled };
                 enabledRepo.enabled = true;
-                const output = await templateController.getEnabledRepositories();
+                const output = templateController.getEnabledRepositories();
                 output[1].should.deep.equal(enabledRepo);
+            });
+        });
+        describe('getDisabledRepositories()', function() {
+            it('returns only disabled repos', function() {
+                const templateController = new Templates('');
+                templateController.repositoryList = [mockRepos.enabled, mockRepos.disabled];
+                const output = templateController.getDisabledRepositories();
+                output.should.deep.equal([mockRepos.disabled]);
             });
         });
         describe('batchUpdate(requestedOperations)', function() {

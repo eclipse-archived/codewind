@@ -80,18 +80,16 @@ module.exports = class Templates {
     this.unlock();
   }
 
-  isLocked() {
-    return this._lock;
-  }
-  
   lock() {
-    log.info('locked');
     this._lock = true;
   }
-  
+
   unlock() {
-    log.info('unlocked');
     this._lock = false;
+  }
+
+  isLocked() {
+    return this._lock;
   }
 
   // TEMPLATES
@@ -109,22 +107,6 @@ module.exports = class Templates {
     return getTemplateStyles(templates);
   }
 
-  // REPOSITORIES
-
-  getRepositories() {
-    return this.repositoryList;
-  }
-
-  async getEnabledRepositories() {
-    const repositories = await this.getRepositories();
-    return repositories.filter(repo => repo.enabled);
-  }
-
-  async getDisabledRepositories() {
-    const repositories = await this.getRepositories();
-    return repositories.filter(repo => !repo.enabled);
-  }
-  
   async updateTemplates() {
     const enabledRepositories = await this.getEnabledRepositories();
     const disabledRepositories = await this.getDisabledRepositories();
@@ -132,6 +114,22 @@ module.exports = class Templates {
     const newDisabledTemplates = await getTemplatesFromRepos(disabledRepositories);
     this.enabledProjectTemplates = newEnabledTemplates;
     this.allProjectTemplates = newEnabledTemplates.concat(newDisabledTemplates);
+  }
+
+  // REPOSITORIES
+
+  getRepositories() {
+    return this.repositoryList;
+  }
+
+  getEnabledRepositories() {
+    const repositories = this.getRepositories();
+    return repositories.filter(repo => repo.enabled);
+  }
+
+  getDisabledRepositories() {
+    const repositories = this.getRepositories();
+    return repositories.filter(repo => !repo.enabled);
   }
 
   /**
