@@ -181,7 +181,7 @@ async function getTemplates(queryParams) {
  * @param {[JSON]} repoList
  */
 async function setTemplateReposTo(repoList) {
-    const ignoreDefaultAppsodyRepo = repo => (repo.id !== 'incubator' && repo.projectStyles.includes('Appsody'));
+    const ignoreDefaultAppsodyRepo = repo => (!('id' in repo) || repo.id !== 'incubator');
     const reposToDelete = (await getTemplateRepos()).body;
     if (reposToDelete.length > 0) {
         await Promise.all(reposToDelete.filter(ignoreDefaultAppsodyRepo).map(repo =>
@@ -226,6 +226,24 @@ function saveReposBeforeEachTestAndRestoreAfterEach() {
     });
 }
 
+function setupReposAndTemplatesForTesting() {
+    // Removes all repos that already exist and replaces them with ones for testing
+    let originalTemplateRepos;
+    before(async function() {
+        this.timeout(testTimeout.med);
+        // Save original repositories
+        const { body: getBody } = await getTemplateRepos();
+        originalTemplateRepos = getBody;
+        await setTemplateReposTo([sampleRepos.codewind]);
+    });
+    after(async function() {
+        this.timeout(testTimeout.med);
+
+        // Restore orignal list
+        await setTemplateReposTo(originalTemplateRepos);
+    });
+}
+
 module.exports = {
     defaultCodewindTemplates,
     styledTemplates,
@@ -243,4 +261,5 @@ module.exports = {
     getTemplateStyles,
     saveReposBeforeTestAndRestoreAfter,
     saveReposBeforeEachTestAndRestoreAfterEach,
+    setupReposAndTemplatesForTesting,
 };

@@ -155,72 +155,23 @@ module.exports = class Templates {
    * Add a repository to the list of template repositories.
    */
   async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
-    // let url;
     const repositories = await this.getRepositories();
-    const url = await this.validateRepository(repoUrl, repositories);
+    const validatedUrl = await validateRepository(repoUrl, repositories);
+    const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected);
 
-    let newRepo = {
-      id: uuidv5(url, uuidv5.URL),
-      name: repoName,
-      url,
-      description: repoDescription,
-      enabled: true,
-    }
-    newRepo = await fetchRepositoryDetails(newRepo);
-    if (isRepoProtected !== undefined) {
-      newRepo.protected = isRepoProtected;
-    }
+    await this.addRepositoryToProviders(newRepo);
 
-    // TODO move this try catch into addRepositoryToProviders
-    try {
-      await this.addRepositoryToProviders(newRepo);
-    }
-    catch (err) {
-      throw new TemplateError('ADD_TO_PROVIDER_FAILURE', url, err.message);
-    }
-
-    this.repositoryList.push(newRepo);
-    
-    // Update repositories
-    try {
-      const currentRepoList = [...this.repositoryList];
-      this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, currentRepoList, this.repositoryFile);
-    }
-    catch (err) {
-      // rollback
-      this.repositoryList = this.repositoryList.filter(repo => repo.url !== url);
-      this.removeRepositoryFromProviders(newRepo).catch(error => log.warn(error.message));
-      throw err;
-    }
+    // Only update the repositoryList if the providers can be updated
+    const newRepositoryList = [...this.repositoryList, newRepo];
+    this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, newRepositoryList, this.repositoryFile);
 
     // writeRepositoryList regardless of whether it has been updated with the data from providers
     await writeRepositoryList(this.repositoryFile, this.repositoryList);
     
-    this.updateTemplates();
-  }
-  
-  // Move this to functions + add test
-  // eslint-disable-next-line class-methods-use-this
-  async validateRepository(repoUrl, repositories) {
-    let url;
-    try {
-      url = new URL(repoUrl).href;
-    } catch (error) {
-      if (error.message.includes('Invalid URL')) {
-        throw new TemplateError('INVALID_URL', repoUrl);
-      }
-      throw error;
-    }
-    
-    if (repositories.find(repo => repo.url === repoUrl)) {
-      throw new TemplateError('DUPLICATE_URL', repoUrl);
-    }
-
-    if (!(await doesURLPointToIndexJSON(url))) {
-      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', url);
-    }
-    
-    return url;
+    // Fetch templates from the new repository and add them
+    const newTemplates = await getTemplatesFromRepo(newRepo)
+    this.enabledProjectTemplates = this.allProjectTemplates.concat(newTemplates);
+    this.allProjectTemplates = this.allProjectTemplates.concat(newTemplates);
   }
 
   async deleteRepository(repoUrl) {
@@ -253,7 +204,7 @@ module.exports = class Templates {
     // writeRepositoryList regardless of whether it has been updated with the data from providers
     await writeRepositoryList(this.repositoryFile, this.repositoryList);
     
-    this.updateTemplates();
+    await this.updateTemplates();
   }
   
   /**
@@ -328,7 +279,7 @@ module.exports = class Templates {
     }
   }
 
-  addRepositoryToProviders(repo) {
+  async addRepositoryToProviders(repo) {
     const promises = [];
     for (const provider of Object.values(this.providers)) {
       if (typeof provider.canHandle === 'function') {
@@ -340,7 +291,13 @@ module.exports = class Templates {
         }
       }
     }
-    return Promise.all(promises);
+
+    try {
+      await Promise.all(promises);
+    }
+    catch (err) {
+      throw new TemplateError('ADD_TO_PROVIDER_FAILURE', repo.url, err.message);
+    }
   }
 
   removeRepositoryFromProviders(repo) {
@@ -365,6 +322,28 @@ async function writeRepositoryList(repositoryFile, repositoryList) {
   await fs.ensureFile(repositoryFile);
   await fs.writeJson(repositoryFile, repositoryList, { spaces: '  ' });
   log.info(`Repository list updated.`);
+}
+
+async function validateRepository(repoUrl, repositories) {
+  let url;
+  try {
+    url = new URL(repoUrl).href;
+  } catch (error) {
+    if (error.message.includes('Invalid URL')) {
+      throw new TemplateError('INVALID_URL', repoUrl);
+    }
+    throw error;
+  }
+
+  if (repositories.find(repo => repo.url === repoUrl)) {
+    throw new TemplateError('DUPLICATE_URL', repoUrl);
+  }
+
+  if (!(await doesURLPointToIndexJSON(url))) {
+    throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', url);
+  }
+
+  return url;
 }
 
 function getRepositoryIndex(url, repositories) {
@@ -460,6 +439,21 @@ async function getNameAndDescriptionFromRepoTemplatesJSON(url) {
     log.error(`URL '${templatesUrl}' should return JSON`);
   }
   return {};
+}
+
+async function constructRepositoryObject(url, description, name, isRepoProtected) {
+  let repository = {
+    id: uuidv5(url, uuidv5.URL),
+    name,
+    url,
+    description,
+    enabled: true,
+  }
+  repository = await fetchRepositoryDetails(repository);
+  if (isRepoProtected !== undefined) {
+    repository.protected = isRepoProtected;
+  }
+  return repository;
 }
 
 async function getTemplatesFromRepos(repos) {

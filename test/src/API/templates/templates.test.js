@@ -23,10 +23,10 @@ const {
     getTemplates,
     addTemplateRepo,
     deleteTemplateRepo,
-    setTemplateReposTo,
     getTemplateStyles,
     saveReposBeforeTestAndRestoreAfter,
     saveReposBeforeEachTestAndRestoreAfterEach,
+    setupReposAndTemplatesForTesting,
 } = require('../../../modules/template.service');
 const { pathToApiSpec, testTimeout } = require('../../../config');
 
@@ -40,12 +40,7 @@ describe('Template API tests', function() {
     // Save the state of the repos before any test and restore the exact state after
     saveReposBeforeTestAndRestoreAfter();
     describe('GET /api/v1/templates', function() {
-        before(async function() {
-            this.timeout(testTimeout.short);
-            await setTemplateReposTo([
-                { ...sampleRepos.codewind },
-            ]);
-        });
+        setupReposAndTemplatesForTesting();
         describe('?projectStyle=', function() {
             it('should return at least the default Codewind templates as no projectStyle is given', async function() {
                 this.timeout(testTimeout.short);
@@ -87,12 +82,7 @@ describe('Template API tests', function() {
     });
 
     describe('GET /api/v1/templates/repositories', function() {
-        before(async function() {
-            this.timeout(testTimeout.short);
-            await setTemplateReposTo([
-                { ...sampleRepos.codewind },
-            ]);
-        });
+        setupReposAndTemplatesForTesting();
         it('should return 200 and a list of available template repositories', async function() {
             this.timeout(testTimeout.short);
             const res = await getTemplateRepos();
@@ -107,6 +97,7 @@ describe('Template API tests', function() {
     });
 
     describe('POST /api/v1/templates/repositories', function() {
+        setupReposAndTemplatesForTesting();
         describe('when trying to add a repository with', function() {
             describe('an invalid url', function() {
                 it('should return 400', async function() {
@@ -126,12 +117,12 @@ describe('Template API tests', function() {
                     const originalTemplateRepos = res.body;
                     const duplicateRepoUrl = originalTemplateRepos[0].url;
                     // Act
-                    const res2 = await addTemplateRepo({
+                    const duplicateUrlRes = await addTemplateRepo({
                         url: duplicateRepoUrl,
                         description: 'duplicate url',
                     });
                     // Assert
-                    res2.should.have.status(400);
+                    duplicateUrlRes.should.have.status(400);
                 });
             });
             describe('a valid url that does not point to an index.json', function() {
@@ -148,24 +139,15 @@ describe('Template API tests', function() {
                 let originalTemplateReposLength;
                 before(async function() {
                     this.timeout(testTimeout.short);
+                    await deleteTemplateRepo(sampleRepos.codewind.url);
                     const { body: repos } = await getTemplateRepos();
                     originalTemplateReposLength = repos.length;
                 });
                 it('should add a template repository', async function() {
                     this.timeout(testTimeout.short);
-                    const repoToAdd = {
-                        // Use an early version of kabanero-io collections to avoid clashes inside the Appsody CLI
-                        url: 'https://github.com/kabanero-io/collections/releases/download/v0.0.6/kabanero-index.json',
-                        description: 'Additional Codewind templates',
-                        protected: false,
-                    };
-                    const res = await addTemplateRepo(repoToAdd);
-                    // const res1 =  await getTemplateRepos();
-                    // res1.should.have.status(200).and.satisfyApiSpec;
-                    // const res2 = await getTemplateRepos();
-                    // res2.should.have.status(200).and.satisfyApiSpec;
+                    const res = await addTemplateRepo(sampleRepos.codewind);
                     res.should.have.status(200).and.satisfyApiSpec;
-                    res.body.should.deep.containSubset([repoToAdd]);
+                    res.body.should.deep.containSubset([sampleRepos.codewind]);
                     res.body.length.should.equal(originalTemplateReposLength + 1);
                 });
             });
@@ -173,6 +155,7 @@ describe('Template API tests', function() {
     });
 
     describe('DELETE /api/v1/templates/repositories', function() {
+        setupReposAndTemplatesForTesting();
         it('DELETE should try to remove a template repository that doesn\'t exist', async function() {
             this.timeout(testTimeout.short);
             const res = await deleteTemplateRepo('http://something.com/index.json');
@@ -182,7 +165,7 @@ describe('Template API tests', function() {
 
     describe('DELETE | GET | POST /api/v1/templates/repositories', function() {
         // Save state for this test
-        saveReposBeforeTestAndRestoreAfter();
+        setupReposAndTemplatesForTesting();
         const repo = sampleRepos.codewind;
         let originalTemplateRepos;
         let originalTemplates;
@@ -226,6 +209,7 @@ describe('Template API tests', function() {
         });
     });
     describe('PATCH /api/v1/batch/templates/repositories', function() {
+        setupReposAndTemplatesForTesting();
         const { url: existingRepoUrl } = sampleRepos.codewind;
         const tests = {
             'enable an existing repo': {
@@ -302,6 +286,7 @@ describe('Template API tests', function() {
         }
     });
     describe('GET /api/v1/templates/styles', function() {
+        setupReposAndTemplatesForTesting();
         it('should return a list of available template styles', async function() {
             this.timeout(testTimeout.short);
             const res = await getTemplateStyles();
