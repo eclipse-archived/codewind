@@ -11,6 +11,7 @@
 const express = require('express');
 
 const { validateReq } = require('../middleware/reqValidator');
+const { verifyLock } = require('../middleware/templateLock');
 const Logger = require('../modules/utils/Logger');
 const TemplateError = require('../modules/utils/errors/TemplateError');
 
@@ -124,13 +125,3 @@ router.get('/api/v1/templates/styles', validateReq, verifyLock, async (req, res,
 });
 
 module.exports = router;
-
-
-function verifyLock(req, res, _next) {
-  const { templates: templatesController } = req.cw_user;
-  const locked = templatesController.isLocked();
-  if (locked) {
-    return res.status(409).send('template lock hit, they are currently being updated');
-  }
-  return _next();
-}

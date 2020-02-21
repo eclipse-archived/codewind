@@ -11,6 +11,7 @@
 const express = require('express');
 
 const Logger = require('../modules/utils/Logger');
+const { verifyLock } = require('../middleware/templateLock');
 
 const router = express.Router();
 const log = new Logger(__filename);
@@ -78,16 +79,16 @@ function addLanguage(projectType, language) {
  * API function to returns a list of supported project types
  * @return JSON array with the list of supported project types
  */
-router.get('/api/v1/project-types', async (req, res) => {
-  const user = req.cw_user;
+router.get('/api/v1/project-types', verifyLock, async (req, res) => {
+  const { templates: templateController, extensionList } = req.cw_user;
   const projectTypes = [];
   const seenProjectTypes = {};
   try {
-    const templates = await user.templates.getTemplates(true);
+    const templates = await templateController.getTemplates(true);
     for (const template of templates) {
 
       const projectType = template.projectType;
-      const extension = user.extensionList.getExtensionForProjectType(projectType)
+      const extension = extensionList.getExtensionForProjectType(projectType)
 
       if (extension) {
         const sourceId = template.sourceId;
@@ -95,7 +96,7 @@ router.get('/api/v1/project-types', async (req, res) => {
         // only need to get project types from extension once
         if (seenProjectTypes[key])
           continue;
-        const types = await getProjectTypes(user.templates.providers[extension.name], sourceId);
+        const types = await getProjectTypes(templateController.providers[extension.name], sourceId);
         projectTypes.push(...types);
         seenProjectTypes[key] = true;
       }
