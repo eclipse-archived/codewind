@@ -147,7 +147,13 @@ describe('User.js', () => {
             user.codewindPFESecretName.should.equal(`codewind-${process.env.CHE_WORKSPACE_ID}-docker-registries`);
         });
     });
-    describe('static createUser()', () => {        
+    describe('static createUser()', () => {
+        before(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        after(() => {
+            fs.removeSync(testWorkspace);
+        });
         it('returns a new User (initialised) when PFE is local', async function() {
             const user = await createSimpleUser();
 
@@ -203,7 +209,14 @@ describe('User.js', () => {
         let expectedProjectList;
         let createdProject;
         before(async() => {
+            fs.emptyDirSync(testWorkspace);
+            fs.emptyDirSync(pathToTestTempDir);
+            global.codewind.CODEWIND_TEMP_WORKSPACE = testTempDirName;
             user = await createSimpleUser();
+        });
+        after(() => {
+            fs.removeSync(testWorkspace);
+            fs.removeSync(pathToTestTempDir);
         });
         it('creates a project when createProject(projectJson) is called', async() => {
             const projectCreationOptions = { 
