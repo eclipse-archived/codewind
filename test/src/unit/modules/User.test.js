@@ -66,6 +66,7 @@ chai.should();
 const testWorkspace = path.join(__dirname, 'User.test/');
 const pathToProjectInfDir = path.join(testWorkspace, '.projects');
 const testTempDirName = 'CODEWIND_TEMP_WORKSPACE';
+const pathToTestTempDir = path.join(testWorkspace, testTempDirName);
 
 describe('User.js', () => {
     let existingGlobalCodewindRunningInK8sValue;
@@ -263,9 +264,10 @@ describe('User.js', () => {
                 '.logs',
                 '.projects',
                 testTempDirName,
+                // no project directory because it has been deleted
             ]);
-            
             fs.readdirSync(pathToProjectInfDir).should.be.empty;
+            fs.readdirSync(pathToTestTempDir).should.be.empty;
         });
     });
     describe('initialiseExistingProjects()', () => {
