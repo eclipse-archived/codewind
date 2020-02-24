@@ -113,6 +113,7 @@ module.exports = class User {
       } catch (error) {
         log.error(`Codewind extensions failed to load. Error ${util.inspect(error)}`);
       }
+      console.log('lock', this.templates._lock);
       log.info(`Extensions initialised for user ${this.user_id}.`)
       log.debug(`Loaded extensions are:\n\t${this.extensionList.getNames().join(",\n\t")}`);
       // Initialise the list after we have created extensions as they may

@@ -56,20 +56,14 @@ router.post('/api/v1/templates/repositories', validateReq, verifyLock, async (re
   const isRepoProtected = req.sanitizeBody('protected');
 
   try {
-    // LOCK HERE
-    templatesController.lock();
     await templatesController.addRepository(
       repositoryUrl,
       repositoryDescription,
       repositoryName,
       isRepoProtected
     );
-    // UNLOCK HERE
-    templatesController.unlock();
     await sendRepositories(req, res, _next);
   } catch (error) {
-    // UNLOCK HERE 
-    templatesController.unlock();
     log.error(error);
     const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON', 'ADD_TO_PROVIDER_FAILURE'];
     if (error instanceof TemplateError && knownErrorCodes.includes(error.code)) {
@@ -84,15 +78,9 @@ router.delete('/api/v1/templates/repositories', validateReq, verifyLock, async (
   const { templates: templatesController } = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
   try {
-    // LOCK HERE
-    templatesController.lock();
     await templatesController.deleteRepository(repositoryUrl);
-    templatesController.unlock();
-    // UNLOCK HERE
     await sendRepositories(req, res, _next);
   } catch (error) {
-    // UNLOCK HERE
-    templatesController.unlock();
     log.error(error);
     if (error instanceof TemplateError && error.code === 'REPOSITORY_DOES_NOT_EXIST') {
       res.status(404).send(error.message);

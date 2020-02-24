@@ -14,10 +14,12 @@ const chaiSubset = require('chai-subset');
 const fs = require('fs-extra');
 const path = require('path');
 const rewire = require('rewire');
+const assert = require('assert');
 
 global.codewind = { RUNNING_IN_K8S: false };
 
 const Templates = rewire('../../../src/pfe/portal/modules/Templates');
+const TemplateError = require('../../../src/pfe/portal/modules/utils/errors/TemplateError');
 const {
     styledTemplates,
     defaultCodewindTemplates,
@@ -31,6 +33,7 @@ const { testTimeout } = require('../../config');
 chai.use(chaiAsPromised);
 chai.use(chaiSubset);
 chai.should();
+const { expect } = chai;
 
 const testWorkspaceDir = './src/unit/temp/';
 const testWorkspaceConfigDir = path.join(testWorkspaceDir, '.config/');
@@ -83,14 +86,12 @@ describe('Templates.js', function() {
             });
             it('reads an existing repository list file', async function() {
                 const templateController = new Templates(workspace);
-                templateController.projectTemplatesNeedsRefresh = false;
                 templateController.repositoryFile = customRepoFile;
 
                 await templateController.initializeRepositoryList();
-                const { repositoryFile, repositoryList, projectTemplatesNeedsRefresh } = templateController;
+                const { repositoryFile, repositoryList } = templateController;
                 fs.readJsonSync(repositoryFile).should.deep.equal([sampleRepos.codewind]);
                 repositoryList.should.deep.equal([sampleRepos.codewind]);
-                projectTemplatesNeedsRefresh.should.be.true;
             });
         });
         describe('lock()', () => {
@@ -99,6 +100,12 @@ describe('Templates.js', function() {
                 templateController._lock = false;
                 templateController.lock();
                 templateController._lock.should.be.true;
+            });
+            it('should throw an error if the value of _lock is already true', () => {
+                const templateController = new Templates('');
+                templateController._lock = true;
+                const error = new TemplateError('LOCKED');
+                assert.throws(() => templateController.lock(), error);
             });
         });
         describe('unlock()', () => {
@@ -224,7 +231,6 @@ describe('Templates.js', function() {
                     disabledRepo.enabled = false;
                     // Use a disabled repository, getTemplates should return no templates
                     templateController.repositoryList = [disabledRepo];
-                    templateController.projectTemplatesNeedsRefresh = true;
                     await templateController.updateTemplates();
                     const templates = await templateController.getTemplates(true);
                     templates.length.should.equal(0);
@@ -684,7 +690,6 @@ describe('Templates.js', function() {
                     const operationResponse = await templateController.enableOrDisableRepository({ url: testRepo.url, value: input });
                     operationResponse.should.have.property('status', 200);
                     operationResponse.should.not.have.property('error');
-                    templateController.projectTemplatesNeedsRefresh.should.be.true;
 
                     const repoPostChange = await templateController.getRepository(testRepo.url);
                     repoPostChange.should.have.property('enabled', output);

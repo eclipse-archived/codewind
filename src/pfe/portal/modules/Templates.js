@@ -50,10 +50,6 @@ module.exports = class Templates {
     // One list for enabled templates, another that includes the disabled templates.
     this.enabledProjectTemplates = [];
     this.allProjectTemplates = [];
-    // If a repository is added or removed then update the template list on the next GetTemplates
-    this.projectTemplatesNeedsRefresh = true;
-    // If a repository is added or removed update the repository list
-    this.projectRepositoriesNeedsRefresh = true;
     this.repositoryFile = path.join(workspace, '.config/repository_list.json');
     this.repositoryList = DEFAULT_REPOSITORY_LIST;
     this.providers = {};
@@ -67,7 +63,6 @@ module.exports = class Templates {
       const repositoryFileExists = await cwUtils.fileExists(this.repositoryFile);
       if (repositoryFileExists) {
         repositories = await fs.readJson(this.repositoryFile);
-        this.projectTemplatesNeedsRefresh = true;
       }
       repositories = await updateRepoListWithReposFromProviders(this.providers, repositories, this.repositoryFile);
       repositories = await fetchAllRepositoryDetails(repositories);
@@ -81,6 +76,7 @@ module.exports = class Templates {
   }
 
   lock() {
+    if (this._lock === true) throw new TemplateError('LOCKED');
     this._lock = true;
   }
 
@@ -136,45 +132,61 @@ module.exports = class Templates {
    * Add a repository to the list of template repositories.
    */
   async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
-    const repositories = await this.getRepositories();
-    const validatedUrl = await validateRepository(repoUrl, repositories);
-    const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected);
+    try {
+      this.lock();
+      const repositories = await this.getRepositories();
+      const validatedUrl = await validateRepository(repoUrl, repositories);
+      const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected);
 
-    await this.addRepositoryToProviders(newRepo);
+      await this.addRepositoryToProviders(newRepo);
 
-    // Only update the repositoryList if the providers can be updated
-    const newRepositoryList = [...this.repositoryList, newRepo];
-    this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, newRepositoryList, this.repositoryFile);
+      // Only update the repositoryList if the providers can be updated
+      const newRepositoryList = [...this.repositoryList, newRepo];
+      this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, newRepositoryList, this.repositoryFile);
 
-    // writeRepositoryList regardless of whether it has been updated with the data from providers
-    await writeRepositoryList(this.repositoryFile, this.repositoryList);
-    
-    // Fetch templates from the new repository and add them
-    const newTemplates = await getTemplatesFromRepo(newRepo)
-    this.enabledProjectTemplates = this.allProjectTemplates.concat(newTemplates);
-    this.allProjectTemplates = this.allProjectTemplates.concat(newTemplates);
+      // Fetch templates from the new repository and add them
+      const newTemplates = await getTemplatesFromRepo(newRepo)
+      this.enabledProjectTemplates = this.allProjectTemplates.concat(newTemplates);
+      this.allProjectTemplates = this.allProjectTemplates.concat(newTemplates);
+
+      await writeRepositoryList(this.repositoryFile, this.repositoryList);
+    } finally {
+      this.unlock();
+    }
   }
 
   async deleteRepository(repoUrl) {
-    const repoToDelete = this.getRepository(repoUrl);
-    if (!repoToDelete) throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
-    await this.removeRepositoryFromProviders(repoToDelete);
     try {
-      const currentRepoList = [...this.repositoryList];
-      const updatedRepoList = await updateRepoListWithReposFromProviders(this.providers, currentRepoList, this.repositoryFile);
-      this.repositoryList = updatedRepoList.filter(repo => repo.url !== repoUrl);
-    }
-    catch (err) {
-      // rollback
-      this.addRepositoryToProviders(repoToDelete).catch(error => log.warn(error.message));
-      throw err;
-    }
-    // writeRepositoryList regardless of whether it has been updated with the data from providers
-    await writeRepositoryList(this.repositoryFile, this.repositoryList);
+      this.lock();
+      const repoToDelete = this.getRepository(repoUrl);
+      if (!repoToDelete) throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
+      await this.removeRepositoryFromProviders(repoToDelete);
+      try {
+        const currentRepoList = [...this.repositoryList];
+        const updatedRepoList = await updateRepoListWithReposFromProviders(this.providers, currentRepoList, this.repositoryFile);
+        this.repositoryList = updatedRepoList.filter(repo => repo.url !== repoUrl);
+      }
+      catch (err) {
+        // rollback
+        this.addRepositoryToProviders(repoToDelete).catch(error => log.warn(error.message));
+        throw err;
+      }
+      // writeRepositoryList regardless of whether it has been updated with the data from providers
+      await writeRepositoryList(this.repositoryFile, this.repositoryList);
 
-    await this.updateTemplates();
+      // If template has a sourceId then use sourceId and repo id otherwise use source and repo name
+      const deleteTemplatesThatBelongToRepo = template => {
+        return (template.sourceId) ? template.sourceId !== repoToDelete.id : template.source !== repoToDelete.name;
+      }
+
+      this.enabledProjectTemplates = this.enabledProjectTemplates.filter(deleteTemplatesThatBelongToRepo);
+      this.allProjectTemplates = this.allProjectTemplates.filter(deleteTemplatesThatBelongToRepo);
+      // await this.updateTemplates();
+    } finally {
+      this.unlock();
+    }
   }
-  
+
   /**
    * @param {String} url
    * @return {JSON} reference to the repo object in this.repositoryList
@@ -187,10 +199,15 @@ module.exports = class Templates {
   }
 
   async batchUpdate(requestedOperations) {
-    const promiseList = requestedOperations.map(operation => this.performOperationOnRepository(operation));
-    const operationResults = await Promise.all(promiseList);
-    await writeRepositoryList(this.repositoryFile, this.repositoryList);
-    return operationResults;
+    try {
+      this.lock();
+      const promiseList = requestedOperations.map(operation => this.performOperationOnRepository(operation));
+      const operationResults = await Promise.all(promiseList);
+      await writeRepositoryList(this.repositoryFile, this.repositoryList);
+      return operationResults;
+    } finally {
+      this.unlock();
+    }
   }
 
   async performOperationOnRepository(operation) {
@@ -230,11 +247,21 @@ module.exports = class Templates {
   }
 
   // PROVIDERS
+  async addProvider(name, provider) {
+    try {
+      this.lock();
+      if (provider && typeof provider.getRepositories === 'function') {
+        this.providers[name] = provider;
+        const currentRepoList = [...this.repositoryList];
+        this.repositoryList = await updateRepoListWithReposFromProviders([provider], currentRepoList, this.repositoryFile);
 
-  addProvider(name, provider) {
-    if (provider && typeof provider.getRepositories === 'function') {
-      this.providers[name] = provider;
-      this.projectRepositoriesNeedsRefresh = true;
+        // Fetch templates from the new repository and add them
+        await this.updateTemplates();
+
+        await writeRepositoryList(this.repositoryFile, this.repositoryList);
+      }
+    } finally {
+      this.unlock();
     }
   }
 
