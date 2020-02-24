@@ -161,7 +161,13 @@ cp -r $TARGET_DIR/* $LOGS_DATA_DIR/
 checkExitCode $? "Failed to copy data. Please check the source directory for data in $TARGET_DIR" true
 
 CSV_FILENAME="$TEST_ENV-$TURBINE_PERFORMANCE_TEST"-performance-data.csv
-CSV_BASELINE_DIR=$TEST_INFO_DIR/performance-test-baseline/$TEST_ENV/$TURBINE_PERFORMANCE_TEST
+CSV_BASELINE_DIR=$TEST_INFO_DIR/performance-test-baseline/$TEST_ENV
+if [ ! -z "$COMPARABLE_RELEASE" ]; then
+    CSV_BASELINE_DIR="$CSV_BASELINE_DIR/$COMPARABLE_RELEASE"
+else
+    CSV_BASELINE_DIR="$CSV_BASELINE_DIR/$TURBINE_PERFORMANCE_TEST"
+fi
+
 mkdir -p $CSV_BASELINE_DIR
 
 if [ -e "$CSV_BASELINE_DIR/$CSV_FILENAME" ]; then

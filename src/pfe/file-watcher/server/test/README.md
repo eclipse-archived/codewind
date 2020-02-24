@@ -51,9 +51,17 @@ Don't have a Che instance? No worries, use the `che-setup.sh` script from https:
 
 Performance test suite can be ran either on local or kube, similar to Functional Test Suite. To run the performance test, run the following commands:
 - `cd src/pfe/file-watcher/server/test/performance-test`
-- `./performance-run.sh --release=<base_release>`
+- `./test.sh --release=<base_release>`
 
-By default, the performance run is defaulted to run 10 iterations. The option to run for fewer or more iterations can be passed to the script. For additional information on the script options, check `./performance-run.sh --help`.
+By default, the performance run is defaulted to run 3 iterations. The option to run for fewer or more iterations can be passed to the script. For additional information on the script options, check `./test.sh --help`.
+
+Performance test report and data is stored under `$HOME/.codewindtest/turbine/performance-test-data/<TEST_TYPE>/<RELEASE>/<DATE_OF_RUN>/<TIME_OF_RUN>`
+
+Performance test baseline data csv is stored under `$HOME/.codewindtest/turbine/performance-test-baseline/<TEST_TYPE>/<RELEASE>`
+
+By default our nightly runs will use tonight's run to compare against the baseline set by yesterday's run. To compare it with a set baseline, set `export NEW_BASELINE=n` before running the test.
+
+To run performance test against a specific release, e.g 0.10.0, and compare it against an older release, e.g. 0.9.0, please set `export COMPARABLE_RELEASE=0.9.0` when running the performance test as `./test.sh --release=0.10.0`.
 
 ## Developing new tests
 
