@@ -14,7 +14,7 @@ const util = require('util');
 const LoggingError = require('./errors/LoggingError');
 
 const validLevels = ['error', 'warn', 'info', 'debug', 'trace'];
-const loggingLevel =  'trace'; // Should be 'info' for production code.
+const loggingLevel = process.env.LOG_LEVEL || 'info'; // Should be 'info' for production code.
 const contextName = 'context';
 const config = {
   appenders: {

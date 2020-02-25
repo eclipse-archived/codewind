@@ -36,9 +36,7 @@ module.exports = class ExtensionList {
       log.trace(`loading extensions from disk, path: ${extensionsPath}`);
       const extensions = await this.loadExtensionsFromDisk(extensionsPath);
       log.trace(`adding extensions to the templates, path: ${extensionsPath}`);
-      log.info(templates.getRepositories())
       await addExtensionsToTemplates(extensions, templates);
-      log.info(templates.getRepositories())
     } catch(err) {
       log.error('Error loading codewind extension:');
       log.error(err);
