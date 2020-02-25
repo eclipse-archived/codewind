@@ -232,8 +232,9 @@
           gcData.gcTime = correctMetricsObj.value;
           if (Number.isNaN(gcData.gcTime)) {
             gcData.gcTime = 0;
-        }
-
+          }
+        } else if (['overall_time_in_gc_percentage'].includes(metric.name)) {
+          gcData.gcTimeSummary = numMetricValue;
         } else if (['base_memory_usedHeap_bytes', 'process_heap_memory_used_bytes', 'base:memory_used_heap_bytes'].includes(metric.name)) {
           memPoolsData.usedHeap = numMetricValue;
         } else if (metric.name === 'process_native_memory_used_bytes') {

@@ -204,7 +204,7 @@ function updateGCData(gcRequest) {
   var d = gcRequestData;
   if (d != null && d.hasOwnProperty('time')) {
     d.date = new Date(+d.time);
-    d.gcTime = +d.gcTime * 100;
+    d.gcTime = +d.gcTimeSummary * 100;
   }
   gcData.push(d);
 
