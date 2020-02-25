@@ -382,6 +382,35 @@ describe('User.js', () => {
             projectInf.autoBuild.should.equal(originalAutoBuildValue);
         });
     });
+    describe('restartProject(project, startMode)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('restarts the project then updates the project.inf when the restart was successful', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.restartProject = () => {};
+            
+            await user.restartProject(project, 'some start mode');
+
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            projectInf.startMode.should.equal('some start mode');
+        });
+        it('restarts the project then does not update the project.inf when the restart was not successful', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.restartProject = () => { throw new Error('restart failed'); };
+
+            await user.restartProject(project, 'some start mode')
+                .should.eventually.be.rejectedWith('restart failed');
+
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            projectInf.should.not.have.property('startMode');
+        });
+    });
     describe('initialiseExistingProjects()', () => {
         beforeEach(() => {
             fs.emptyDirSync(pathToProjectInfDir);
