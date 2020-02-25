@@ -330,26 +330,29 @@ describe('User.js', () => {
         it('builds the project then doesn\'t update the project.inf when the build was not successful', async() => {
             const { user, project } = await createSimpleUserWithProject();
             user.fw.buildProject = () => ({ status: 'not success' });
+            const originalAutoBuildValue = project.autoBuild;
             
             await user.buildProject(project, 'disableautobuild');
 
             const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
             const projectInf = fs.readJsonSync(pathToProjectInf);
-            projectInf.autoBuild.should.equal(project.autoBuild);
+            projectInf.autoBuild.should.equal(originalAutoBuildValue);
         });
         it('builds the project then doesn\'t update the project.inf when `action` is `build`', async() => {
             const { user, project } = await createSimpleUserWithProject();
             user.fw.buildProject = () => ({ status: 'success' });
+            const originalAutoBuildValue = project.autoBuild;
             
             await user.buildProject(project, 'build');
 
             const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
             const projectInf = fs.readJsonSync(pathToProjectInf);
-            projectInf.autoBuild.should.equal(project.autoBuild);
+            projectInf.autoBuild.should.equal(originalAutoBuildValue);
         });
         it('builds the project then correctly updates the project.inf when `action` is `enableautobuild`', async() => {
             const { user, project } = await createSimpleUserWithProject();
             user.fw.buildProject = () => ({ status: 'success' });
+            project.autoBuild = false;
             
             await user.buildProject(project, 'enableautobuild');
 
@@ -370,12 +373,13 @@ describe('User.js', () => {
         it('does nothing after catching an error', async() => {
             const { user, project } = await createSimpleUserWithProject();
             user.fw.buildProject = () => { throw new Error('build error'); };
+            const originalAutoBuildValue = project.autoBuild;
             
             await user.buildProject(project, 'disableautobuild');
 
             const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
             const projectInf = fs.readJsonSync(pathToProjectInf);
-            projectInf.autoBuild.should.equal(project.autoBuild);
+            projectInf.autoBuild.should.equal(originalAutoBuildValue);
         });
     });
     describe('initialiseExistingProjects()', () => {
