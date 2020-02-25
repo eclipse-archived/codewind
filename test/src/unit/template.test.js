@@ -918,7 +918,7 @@ describe('Templates.js', function() {
                 await templateController.addRepositoryToProviders({ ...sampleRepos.codewind });
                 firstProvider.repositories.should.have.length(1);
             });
-            it('throws a TemplateError if one of the providers errors while adding the repository', async() => {
+            it('throws a TemplateError if one of the providers errors while adding the repository', () => {
                 const errorFunction = () => {
                     throw new Error();
                 };
