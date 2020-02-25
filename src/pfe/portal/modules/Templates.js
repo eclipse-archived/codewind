@@ -129,11 +129,22 @@ module.exports = class Templates {
   }
 
   /**
+   * @param {String} url
+   * @return {JSON} reference to the repo object in this.repositoryList
+   */
+  getRepository(url) {
+    const repositories = this.getRepositories();
+    const index = getRepositoryIndex(url, repositories);
+    if (index < 0) return null;
+    return repositories[index];
+  }
+
+  /**
    * Add a repository to the list of template repositories.
    */
   async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
+    this.lock();
     try {
-      this.lock();
       const repositories = await this.getRepositories();
       const validatedUrl = await validateRepository(repoUrl, repositories);
       const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected);
@@ -156,8 +167,8 @@ module.exports = class Templates {
   }
 
   async deleteRepository(repoUrl) {
+    this.lock();
     try {
-      this.lock();
       const repoToDelete = this.getRepository(repoUrl);
       if (!repoToDelete) throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
       await this.removeRepositoryFromProviders(repoToDelete);
@@ -187,20 +198,9 @@ module.exports = class Templates {
     }
   }
 
-  /**
-   * @param {String} url
-   * @return {JSON} reference to the repo object in this.repositoryList
-   */
-  getRepository(url) {
-    const repositories = this.getRepositories();
-    const index = getRepositoryIndex(url, repositories);
-    if (index < 0) return null;
-    return repositories[index];
-  }
-
   async batchUpdate(requestedOperations) {
+    this.lock();
     try {
-      this.lock();
       const promiseList = requestedOperations.map(operation => this.performOperationOnRepository(operation));
       const operationResults = await Promise.all(promiseList);
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
@@ -248,8 +248,8 @@ module.exports = class Templates {
 
   // PROVIDERS
   async addProvider(name, provider) {
+    this.lock();
     try {
-      this.lock();
       if (provider && typeof provider.getRepositories === 'function') {
         this.providers[name] = provider;
         const currentRepoList = [...this.repositoryList];
@@ -325,11 +325,27 @@ async function validateRepository(repoUrl, repositories) {
     throw new TemplateError('DUPLICATE_URL', repoUrl);
   }
 
-  if (!(await doesURLPointToIndexJSON(url))) {
+  const validJsonURL = await doesURLPointToIndexJSON(url);
+  if (!validJsonURL) {
     throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', url);
   }
 
   return url;
+}
+
+async function constructRepositoryObject(url, description, name, isRepoProtected) {
+  let repository = {
+    id: uuidv5(url, uuidv5.URL),
+    name,
+    url,
+    description,
+    enabled: true,
+  }
+  repository = await fetchRepositoryDetails(repository);
+  if (isRepoProtected !== undefined) {
+    repository.protected = isRepoProtected;
+  }
+  return repository;
 }
 
 function getRepositoryIndex(url, repositories) {
@@ -337,7 +353,7 @@ function getRepositoryIndex(url, repositories) {
   return index;
 }
 
-async function updateRepoListWithReposFromProviders(providers, repositoryList, repositoryFile) {
+async function updateRepoListWithReposFromProviders(providers, repositoryList) {
   const providedRepos = await getReposFromProviders(Object.values(providers));
 
   const extraRepos = providedRepos.filter(providedRepo =>
@@ -346,7 +362,6 @@ async function updateRepoListWithReposFromProviders(providers, repositoryList, r
   if (extraRepos.length > 0) {
     const reposWithCodewindSettings = await addCodewindSettingsToRepository(extraRepos);
     const updatedRepositoryList = repositoryList.concat(reposWithCodewindSettings);
-    await writeRepositoryList(repositoryFile, updatedRepositoryList);
     return updatedRepositoryList;
   }
   return repositoryList;
@@ -425,21 +440,6 @@ async function getNameAndDescriptionFromRepoTemplatesJSON(url) {
     log.error(`URL '${templatesUrl}' should return JSON`);
   }
   return {};
-}
-
-async function constructRepositoryObject(url, description, name, isRepoProtected) {
-  let repository = {
-    id: uuidv5(url, uuidv5.URL),
-    name,
-    url,
-    description,
-    enabled: true,
-  }
-  repository = await fetchRepositoryDetails(repository);
-  if (isRepoProtected !== undefined) {
-    repository.protected = isRepoProtected;
-  }
-  return repository;
 }
 
 async function getTemplatesFromRepos(repos) {
