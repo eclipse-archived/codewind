@@ -72,6 +72,10 @@ while :; do
     shift
 done
 
+if [ -z "$ERROR_THRESHOLD" ]; then
+    ERROR_THRESHOLD=5
+fi
+
 if [ -z "$BASELINE_FILE" ] || [ -z "$COMPARABLE_FILE" ]; then
     checkExitCode 1 "Both arguments for file comparison is required. For more info check: ./compare-csv.sh --help" true
 fi

@@ -24,6 +24,8 @@ CURR_DIR=$(pwd)
 source $DIR/../scripts/utils.sh
 cd $CURR_DIR
 
+WEBSERVER_FILE="$CW_DIR/src/pfe/file-watcher/server/test/scripts/webserver.sh"
+
 TEST_ENV="local"
 CLEAN_RUN="n"
 POST_CLEAN="n"
@@ -156,7 +158,7 @@ echo -e "${CYAN}> Deactivating python virtual environment ${RESET}"
 deactivate venv > /dev/null 2>&1
 checkExitCode $? "Failed to deactivate up python virtual environment. Please try again." true
 
-echo -e "${BLUE}Copying over performance data from $TARGET_DIR to $LOGS_DATA_DIR ... ${RESET}"
+echo -e "${CYAN}> Copying over performance data from $TARGET_DIR to $LOGS_DATA_DIR ... ${RESET}"
 cp -r $TARGET_DIR/* $LOGS_DATA_DIR/
 checkExitCode $? "Failed to copy data. Please check the source directory for data in $TARGET_DIR" true
 
@@ -171,13 +173,17 @@ fi
 mkdir -p $CSV_BASELINE_DIR
 
 if [ -e "$CSV_BASELINE_DIR/$CSV_FILENAME" ]; then
-    echo -e "${BLUE}Comparing csv paths for $TEST_ENV local with baseline file "$CSV_BASELINE_DIR/$CSV_FILENAME" ... ${RESET}"
-    ./compare-csv.sh --baseline-file="$CSV_BASELINE_DIR/$CSV_FILENAME" --comparable-file="$LOGS_DATA_DIR/$CSV_FILENAME" --save="$LOGS_DATA_DIR/performance-report.txt"
+    echo -e "${CYAN}> Comparing csv paths for $TEST_ENV local with baseline file "$CSV_BASELINE_DIR/$CSV_FILENAME" ... ${RESET}"
+    ./compare-csv.sh --baseline-file="$CSV_BASELINE_DIR/$CSV_FILENAME" --comparable-file="$LOGS_DATA_DIR/$CSV_FILENAME" --save="$LOGS_DATA_DIR/performance-report.txt" --error-threshold="$ERROR_THRESHOLD"
     checkExitCode $? "Failed to compare csv from baseline "$CSV_BASELINE_DIR/$CSV_FILENAME" to comparable "$LOGS_DATA_DIR/$CSV_FILENAME"" true
 fi
 
 if [ "$NEW_BASELINE" == "y" ]; then
-    echo -e "${BLUE}Copying over performance data csv from "$LOGS_DATA_DIR/$CSV_FILENAME" to $CSV_BASELINE_DIR ... ${RESET}"
+    echo -e "${CYAN}> Copying over performance data csv from "$LOGS_DATA_DIR/$CSV_FILENAME" to $CSV_BASELINE_DIR ... ${RESET}"
     cp -r "$LOGS_DATA_DIR/$CSV_FILENAME" $CSV_BASELINE_DIR/
     checkExitCode $? "Failed to copy performance data csv. Please check the source directory for data in "$LOGS_DATA_DIR/$CSV_FILENAME"" true
 fi
+
+echo -e "${CYAN}> Putting performance logs/data directory "$TEST_INFO_DIR/performance-test-data" on server  ... ${RESET}"
+$WEBSERVER_FILE "$TEST_INFO_DIR/performance-test-data" > /dev/null
+checkExitCode $? "Failed to put logs/data directory on server"
