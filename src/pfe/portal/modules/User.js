@@ -152,7 +152,7 @@ module.exports = class User {
    * Function to run load on project
    */
   async runLoad(project, description) {
-    log.debug("runLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
+    log.debug(`runLoad: project ${project.projectID} loadInProgress=${project.loadInProgress}`);
     // If load in progress, throw an error
     if (project.loadInProgress) {
       throw new LoadRunError("RUN_IN_PROGRESS", `For project ${project.projectID}`);
@@ -172,8 +172,7 @@ module.exports = class User {
         projectPort = hostOptions.port;
       }
 
-      let url = projectProtocol  + projectHost + ":" + projectPort + config.path;
-      config.url = url;
+      config.url = `${projectProtocol}${projectHost}:${projectPort}${config.path}`;
       project.loadConfig = config;
       log.info(`Running load for project: ${project.projectID} config: ${JSON.stringify(config)}`);
       const runLoadResp = await this.loadRunner.runLoad(config, project, description);
@@ -190,7 +189,7 @@ module.exports = class User {
    * Function to cancel load on project
    */
   async cancelLoad(project) {
-    log.debug("cancelLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
+    log.debug(`cancelLoad: project ${project.projectID} loadInProgress=${project.loadInProgress}`);
 
     if (project.loadInProgress) {
       project.loadInProgress = false;
