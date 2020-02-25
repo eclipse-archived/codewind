@@ -61,7 +61,7 @@ const Project = proxyquire('../../../../src/pfe/portal/modules/Project', {
 
 chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
-chai.should();
+const should = chai.should();
 
 const testWorkspace = path.join(__dirname, 'User.test/');
 const pathToProjectInfDir = path.join(testWorkspace, '.projects');
@@ -93,11 +93,11 @@ describe('User.js', () => {
             
             const user_id = null;
             const userString = null;
-            const uiSocket = {
+            const uiSocketStub = {
                 emit: () => {},
                 of: () => ('Namespace'),
             };
-            const user = new User(user_id, userString, testWorkspace, uiSocket);
+            const user = new User(user_id, userString, testWorkspace, uiSocketStub);
             
             user.should.be.an('object');
             user.should.have.keys([
@@ -122,11 +122,11 @@ describe('User.js', () => {
             
             const user_id = null;
             const userString = null;
-            const uiSocket = {
+            const uiSocketStub = {
                 emit: () => {},
                 of: () => ('Namespace'),
             };
-            const user = new User(user_id, userString, testWorkspace, uiSocket);
+            const user = new User(user_id, userString, testWorkspace, uiSocketStub);
             
             user.should.be.an('object');
             user.should.have.keys([
@@ -156,7 +156,13 @@ describe('User.js', () => {
             fs.removeSync(testWorkspace);
         });
         it('returns a new User (initialised) when PFE is local', async function() {
-            const user = await createSimpleUser();
+            const user_id = null;
+            const userString = null;
+            const uiSocketStub = {
+                emit: () => {},
+                of: () => ('Namespace'),
+            };
+            const user = await User.createUser(user_id, userString, testWorkspace, uiSocketStub);
 
             user.should.be.an('object');
             user.should.have.keys([
@@ -268,6 +274,108 @@ describe('User.js', () => {
             ]);
             fs.readdirSync(pathToProjectInfDir).should.be.empty;
             fs.readdirSync(pathToTestTempDir).should.be.empty;
+        });
+    });
+    describe('runLoad(project, description)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('errors if a load run is already in progress on the project', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.loadInProgress = true;
+
+            await user.runLoad(project)
+                .should.eventually.be.rejectedWith(`Load run already in progress.\nFor project ${sampleProjectID}`);
+        });
+        it('gets to LoadRunner.runLoad() then errors because we have stubbed out LoadRunner.js', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+
+            await user.runLoad(project)
+                .should.eventually.be.rejectedWith('Load Runner service is not available');
+            project.loadInProgress.should.be.false;
+            should.equal(project.loadConfig, null);
+        });
+    });
+    describe('cancelLoad(project)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('errors if a load run is not already in progress on the project', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            
+            await user.cancelLoad(project)
+                .should.eventually.be.rejectedWith(`Unable to cancel, no load run in progress.\nFor project ${sampleProjectID}`);
+        });
+        it('gets to LoadRunner.cancelRunLoad() then errors because we are not connected to the LoadRunner container', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.loadInProgress = true;
+
+            await user.cancelLoad(project)
+                .should.eventually.be.rejectedWith('Load Runner service is not available');
+        });
+    });
+    describe('buildProject(project, action)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('builds the project then doesn\'t update the project.inf when the build was not successful', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.buildProject = () => ({ status: 'not success' });
+            
+            await user.buildProject(project, 'disableautobuild');
+
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            projectInf.autoBuild.should.equal(project.autoBuild);
+        });
+        it('builds the project then doesn\'t update the project.inf when `action` is `build`', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.buildProject = () => ({ status: 'success' });
+            
+            await user.buildProject(project, 'build');
+
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            projectInf.autoBuild.should.equal(project.autoBuild);
+        });
+        it('builds the project then correctly updates the project.inf when `action` is `enableautobuild`', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.buildProject = () => ({ status: 'success' });
+            
+            await user.buildProject(project, 'enableautobuild');
+
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            projectInf.autoBuild.should.be.true;
+        });
+        it('builds the project then correctly updates the project.inf when `action` is `disableautobuild`', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.buildProject = () => ({ status: 'success' });
+            
+            await user.buildProject(project, 'disableautobuild');
+
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            projectInf.autoBuild.should.be.false;
+        });
+        it('does nothing after catching an error', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.buildProject = () => { throw new Error('build error'); };
+            
+            await user.buildProject(project, 'disableautobuild');
+
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            projectInf.autoBuild.should.equal(project.autoBuild);
         });
     });
     describe('initialiseExistingProjects()', () => {
@@ -469,24 +577,39 @@ describe('User.js', () => {
     });
 });
 
+const uiSocketStub = {
+    emit: () => {},
+    of: () => ({ emit: () => {} }),
+};
+
 const newSimpleUser = () => {
     const user_id = null;
     const userString = null;
-    const uiSocket = {
-        emit: () => {},
-        of: () => ('Namespace'),
-    };
-    return (new User(user_id, userString, testWorkspace, uiSocket));
+    return (new User(user_id, userString, testWorkspace, uiSocketStub));
 };
 
 const createSimpleUser = () => {
     const user_id = null;
     const userString = null;
-    const uiSocket = {
-        emit: () => {},
-        of: () => ('Namespace'),
+    return User.createUser(user_id, userString, testWorkspace, uiSocketStub);
+};
+
+const createSimpleUserWithProject = async() => {
+    const user = await createSimpleUser();
+    
+    const projectCreationOptions = {
+        name: 'test project',
+        projectID: sampleProjectID,
+        workspace: testWorkspace,
+        language: 'nodejs',
+        locOnDisk: 'locOnDisk',
     };
-    return User.createUser(user_id, userString, testWorkspace, uiSocket);
+    const createdProject = await user.createProject(projectCreationOptions);
+
+    return {
+        user,
+        project: createdProject,
+    };
 };
 
 const sampleProjectID = 'be4ea4e0-5239-11ea-abf6-f10edc5370f9';
