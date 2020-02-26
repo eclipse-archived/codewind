@@ -526,18 +526,18 @@ module.exports = class User {
       log.error(err);
     }
 
-    // Remove project log file
     try {
       let buildLog = project.getBuildLogPath();
       if (buildLog) {
+        log.trace(`Trying to remove project build log file at ${buildLog}`);
         await fs.unlink(buildLog);
       }
     } catch (err) {
       // Log file could be missing if the project never built.
     }
 
-    // Delete temp files from PFE's /codewind-workspace/cw-temp/<project> location
-    const cwTempPath = path.join(global.codewind.CODEWIND_WORKSPACE, "cw-temp", project.directory);
+    const cwTempPath = path.join(project.workspace, global.codewind.CODEWIND_TEMP_WORKSPACE, project.directory);
+    log.trace(`Trying to remove project temp files at ${cwTempPath}`);
     try {
       await cwUtils.forceRemove(cwTempPath);
     } catch (err) {

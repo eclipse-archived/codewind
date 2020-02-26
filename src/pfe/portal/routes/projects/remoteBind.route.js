@@ -80,12 +80,10 @@ async function bindStart(req, res) {
       return;
     }
 
-    const codewindWorkspace = global.codewind.CODEWIND_WORKSPACE
-
     const projectDetails = {
       name: name,
       directory: name,
-      workspace: codewindWorkspace,
+      workspace: global.codewind.CODEWIND_WORKSPACE,
       language: language,
       autoBuild: true,
       locOnDisk: locOnDisk,
