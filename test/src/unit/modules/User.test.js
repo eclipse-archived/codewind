@@ -411,6 +411,58 @@ describe('User.js', () => {
             projectInf.should.not.have.property('startMode');
         });
     });
+    describe('buildAndRunProject(project)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('builds and runs the project then updates the project when the build was successful and there is a build log file', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            const expectedBuildLogPath = 'expected build log path';
+            user.fw.buildAndRunProject = () => ({ logs: { build: { file: expectedBuildLogPath } } });
+            
+            await user.buildAndRunProject(project);
+
+            project.buildLogPath.should.equal(expectedBuildLogPath);
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            should.equal(projectInf.buildLogPath, null);
+        });
+        it('builds and runs the project then updates the project when the build was successful and there is no build log file', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.buildAndRunProject = () => {};
+            
+            await user.buildAndRunProject(project);
+
+            should.equal(project.buildLogPath, null);
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            should.equal(projectInf.buildLogPath, null);
+        });
+        it('closes the project when the build was unsuccessful', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.buildAndRunProject = () => { throw new Error('build failed'); };
+            project.state = 'open'; // make sure this is different to what it will be
+            project.autoBuild = true; // make sure this is different to what it will be
+            
+            await user.buildAndRunProject(project);
+
+            project.should.containSubset({
+                buildLogPath: null,
+                state: 'closed',
+                autoBuild: false,
+            });
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            projectInf.should.containSubset({
+                buildLogPath: null,
+                state: 'closed',
+                autoBuild: false,
+            });
+        });
+    });
     describe('initialiseExistingProjects()', () => {
         beforeEach(() => {
             fs.emptyDirSync(pathToProjectInfDir);
