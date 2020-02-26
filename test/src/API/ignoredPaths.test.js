@@ -24,7 +24,7 @@ describe('ignoredPaths API test', function() {
     describe('Swift', () => {
         it('returns 200 and an array containing a correct example ignored path', async() => {
             const res = await getIgnoredPaths('swift');
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
             res.body.should.include('.swift-version');
         });
@@ -32,7 +32,7 @@ describe('ignoredPaths API test', function() {
     describe('Liberty', () => {
         it('returns 200 and an array containing correct example ignored path', async() => {
             const res = await getIgnoredPaths('liberty');
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
             res.body.should.include('/libertyrepocache.zip');
         });
@@ -40,7 +40,7 @@ describe('ignoredPaths API test', function() {
     describe('Spring', () => {
         it('returns 200 and an array containing correct example ignored path', async() => {
             const res = await getIgnoredPaths('spring');
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
             res.body.should.include('/localm2cache.zip');
         });
@@ -48,7 +48,7 @@ describe('ignoredPaths API test', function() {
     describe('Node.js', () => {
         it('returns 200 and an array containing correct example ignored path', async() => {
             const res = await getIgnoredPaths('node');
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
             res.body.should.include('*/node_modules*');
         });
@@ -56,7 +56,7 @@ describe('ignoredPaths API test', function() {
     describe('Docker', () => {
         it('returns 200 and an array containing correct example ignored path', async() => {
             const res = await getIgnoredPaths('docker');
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
             res.body.should.include('*/.DS_Store');
         });
@@ -64,10 +64,9 @@ describe('ignoredPaths API test', function() {
     describe('Unknown Type', () => {
         it('returns 200 and an array of default docker ignoredPaths', async() => {
             const res = await getIgnoredPaths('unknown');
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
             res.body.should.include('*/.DS_Store');
         });
     });
 });
-

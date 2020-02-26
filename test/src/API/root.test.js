@@ -18,6 +18,6 @@ describe('Root endpoint test', function() {
     it('should return status 200', async function() {
         const res = await reqService.chai
             .get('/');
-        res.should.have.status(200);
+        res.status.should.equal(200, res.text); // print res.text if assertion fails
     });
 });

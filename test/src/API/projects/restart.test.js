@@ -42,7 +42,7 @@ describe('Project Restart Tests (POST /projects/{id}/restart)', function() {
         this.timeout(testTimeout.short);
         const res = await projectService.restartProject(projectID, 'run');
 
-        res.should.have.status(400);
+        res.status.should.equal(400, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
         res.body.message.should.equal(`Request error for project ${projectID}. Restart is invalid when the project is building.`);
     });
@@ -51,7 +51,7 @@ describe('Project Restart Tests (POST /projects/{id}/restart)', function() {
         this.timeout(testTimeout.short);
         const res = await projectService.restartProject(projectID, 'debugNoInit');
 
-        res.should.have.status(400);
+        res.status.should.equal(400, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
         res.body.message.should.equal(`Request error for project ${projectID}. Restart is invalid when the project is building.`);
     });
@@ -60,7 +60,7 @@ describe('Project Restart Tests (POST /projects/{id}/restart)', function() {
         this.timeout(testTimeout.short);
         const res = await projectService.restartProject(projectID, 'debug');
 
-        res.should.have.status(400);
+        res.status.should.equal(400, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
         res.body.message.should.equal(`Request error for project ${projectID}. Node.js projects do not support restarting in debug mode.`);
     });
@@ -69,7 +69,7 @@ describe('Project Restart Tests (POST /projects/{id}/restart)', function() {
         this.timeout(testTimeout.short);
         const res = await projectService.restartProject(projectID, 'unknownMode');
 
-        res.should.have.status(400);
+        res.status.should.equal(400, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
         res.text.should.equal('Error while validating request: request.body.startMode should be equal to one of the allowed values');
     });
@@ -79,7 +79,7 @@ describe('Project Restart Tests (POST /projects/{id}/restart)', function() {
         const projectID = '00000000-0000-0000-0000-000000000000';
         const res = await projectService.restartProject(projectID, 'run');
 
-        res.should.have.status(404);
+        res.status.should.equal(404, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
         res.body.msg.should.equal(`Unable to find project ${projectID}`);
     });

@@ -51,7 +51,7 @@ describe.skip('Batch enabling repositories', function() {
                 const repoUrls = testRepos.map(repo => repo.url);
                 const res = await disableTemplateRepos(repoUrls);
 
-                res.should.have.status(207);
+                res.status.should.equal(207, res.text); // print res.text if assertion fails
                 res.body.forEach(subResponse =>
                     subResponse.status.should.equal(200)
                 );
@@ -66,20 +66,20 @@ describe.skip('Batch enabling repositories', function() {
 
                 const res = await getTemplateRepos();
 
-                res.should.have.status(200);
+                res.status.should.equal(200, res.text); // print res.text if assertion fails
                 res.body.should.have.deep.members(disabledRepos);
             });
             it(`checks templates from the disabled repos do not appear in the list of enabled templates`, async function() {
                 this.timeout(30000);
                 const res = await getTemplates({ showEnabledOnly: true });
-                res.should.have.status(204);
+                res.status.should.equal(204, res.text); // print res.text if assertion fails
             });
 
             it(`returns 207 and sub-status 200 for each subrequest when batch enabling ${testRepos.length} repos`, async function() {
                 const repoUrls = testRepos.map(repo => repo.url);
                 const res = await enableTemplateRepos(repoUrls);
 
-                res.should.have.status(207);
+                res.status.should.equal(207, res.text); // print res.text if assertion fails
                 res.body.forEach(subResponse =>
                     subResponse.status.should.equal(200)
                 );
@@ -94,13 +94,13 @@ describe.skip('Batch enabling repositories', function() {
 
                 const res = await getTemplateRepos();
 
-                res.should.have.status(200);
+                res.status.should.equal(200, res.text); // print res.text if assertion fails
                 res.body.should.have.deep.members(enabledRepos);
             });
             it(`checks templates from the enabled repos do appear in the list of enabled templates`, async function() {
                 this.timeout(30000);
                 const res = await getTemplates({ showEnabledOnly: true });
-                res.should.have.status(200);
+                res.status.should.equal(200, res.text); // print res.text if assertion fails
                 res.body.should.have.deep.members(templatesFromTestRepos);
             });
         });

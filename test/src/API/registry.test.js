@@ -76,7 +76,7 @@ describe.skip('Deployment Registry route tests', function() {
 
         // Get the watch list for workspace config dir
         const res = await getWatchList();
-        res.should.have.status(200);
+        res.status.should.equal(200, res.text); // print res.text if assertion fails
         const projectsWatchList = res.body.projects;
         for (let i = 0; i < projectsWatchList.length; i++) {
             if (projectsWatchList[i].pathToMonitor.includes('.config')) {
@@ -105,7 +105,7 @@ describe.skip('Deployment Registry route tests', function() {
             this.timeout(testTimeout.med);
             await containerService.unlink(workspace_settings_file);
             const res = await getRegistryStatus();
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.deploymentRegistry.should.equal(false);
         });
 
@@ -119,7 +119,7 @@ describe.skip('Deployment Registry route tests', function() {
             fs.unlinkSync(content_file);
 
             const res = await getRegistryStatus();
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.deploymentRegistry.should.equal(false);
         });
 
@@ -133,7 +133,7 @@ describe.skip('Deployment Registry route tests', function() {
             fs.unlinkSync(content_file);
 
             const res = await getRegistryStatus();
-            res.should.have.status(500);
+            res.status.should.equal(500, res.text); // print res.text if assertion fails
             res.body.deploymentRegistry.should.equal(false);
         });
 
@@ -147,7 +147,7 @@ describe.skip('Deployment Registry route tests', function() {
             fs.unlinkSync(content_file);
 
             const res = await getRegistryStatus();
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.deploymentRegistry.should.equal(true);
         });
     });
@@ -157,7 +157,7 @@ describe.skip('Deployment Registry route tests', function() {
             this.timeout(testTimeout.med);
 
             const res = await testRegistry();
-            res.should.have.status(500);
+            res.status.should.equal(500, res.text); // print res.text if assertion fails
             res.body.imagePushRegistryTest.should.equal(false);
         });
 
@@ -166,10 +166,10 @@ describe.skip('Deployment Registry route tests', function() {
 
             const newRegistry = 'localhost:5000';
             const setRes = await setRegistry(newRegistry);
-            setRes.should.have.status(200);
+            setRes.status.should.equal(200, setRes.text); // print res.text if assertion fails
 
             const statusRes = await getRegistryStatus();
-            statusRes.should.have.status(200);
+            statusRes.status.should.equal(200, statusRes.text); // print res.text if assertion fails
             statusRes.body.deploymentRegistry.should.equal(true);
 
             const settings = await containerService.readJson(workspace_settings_file);

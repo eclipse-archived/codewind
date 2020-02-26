@@ -28,7 +28,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
         this.timeout(testTimeout.short);
 
         const res = await getMetricsStatus('invalidId');
-        res.should.have.status(404);
+        res.status.should.equal(404, res.text); // print res.text if assertion fails
     });
 
     describe('Node.js project with appmetrics-dash', function() {
@@ -62,7 +62,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
             project.metricsAvailable.should.be.true;
 
             const res = await getMetricsStatus(project.projectID);
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.metricsAvailable.should.be.true;
 
             // save projectID for cleanup
@@ -111,7 +111,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
             project.metricsAvailable.should.be.false;
 
             const res = await getMetricsStatus(project.projectID);
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.metricsAvailable.should.be.false;
 
             // save projectID for cleanup
@@ -145,7 +145,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'nodejs',
                 creationTime: Date.now(),
             });
-            resToBind.should.have.status(400);
+            resToBind.status.should.equal(400, resToBind.text); // print res.text if assertion fails
             resToBind.should.satisfyApiSpec;
             resToBind.body.should.deep.equal({
                 name: 'MetricsStatusError',
@@ -186,7 +186,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
             project.metricsAvailable.should.be.true;
 
             const res = await getMetricsStatus(project.projectID);
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.metricsAvailable.should.be.true;
 
             // save projectID for cleanup
@@ -225,7 +225,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
             project.metricsAvailable.should.be.false;
 
             const res = await getMetricsStatus(project.projectID);
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.metricsAvailable.should.be.false;
 
             // save projectID for cleanup

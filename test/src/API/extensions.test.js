@@ -21,6 +21,6 @@ describe('Extensions API test', function() {
         const res = await reqService.chai
             .get('/api/v1/extensions')
             .set('Cookie', ADMIN_COOKIE);
-        res.should.have.status(200);
+        res.status.should.equal(200, res.text); // print res.text if assertion fails
     });
 });

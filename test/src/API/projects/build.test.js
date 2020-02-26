@@ -42,7 +42,7 @@ describe('Project Build Tests', function() {
             this.timeout(testTimeout.short);
             const res = await projectService.buildProject(projectID, 'build');
             
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal(`Trying to build project ${projectID} with action build`);
         });
@@ -51,7 +51,7 @@ describe('Project Build Tests', function() {
             this.timeout(testTimeout.short);
             const res = await projectService.buildProject(projectID, 'enableautobuild');
             
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal(`Trying to build project ${projectID} with action enableautobuild`);
         });
@@ -60,7 +60,7 @@ describe('Project Build Tests', function() {
             this.timeout(testTimeout.short);
             const res = await projectService.buildProject(projectID, 'disableautobuild');
             
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal(`Trying to build project ${projectID} with action disableautobuild`);
         });
@@ -69,7 +69,7 @@ describe('Project Build Tests', function() {
             this.timeout(testTimeout.short);
             const res = await projectService.buildProject(projectID, 'unknown action');
             
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal('Error while validating request: request.body.action should be equal to one of the allowed values');
         });
@@ -79,7 +79,7 @@ describe('Project Build Tests', function() {
             const projectID = '00000000-0000-0000-0000-000000000000';
             const res = await projectService.buildProject(projectID, 'build');
             
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal(`Unable to find project ${projectID}`);
         });

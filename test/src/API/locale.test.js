@@ -21,6 +21,6 @@ describe('Locale API test', function() {
         const res = await reqService.chai.post('/api/v1/locale')
             .set('Cookie', ADMIN_COOKIE)
             .send({ locale: ['en-us', 'en'] });
-        res.should.have.status(200);
+        res.status.should.equal(200, res.text); // print res.text if assertion fails
     });
 });

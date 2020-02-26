@@ -110,27 +110,27 @@ describe('Load Runner Tests', function() {
                 it('fails with 400 to POST/loadtest/config when an input field is missing', async function() {
                     this.timeout(testTimeout.short);
                     const res = await writeToLoadTestConfig(projectID, configOptions);
-                    res.should.have.status(400);
+                    res.status.should.equal(400, res.text); // print res.text if assertion fails
                 });
 
                 it('fails with 400 to POST/loadtest/config when an input field is the wrong type', async function() {
                     this.timeout(testTimeout.short);
                     configOptions.path = true;
                     const res = await writeToLoadTestConfig(projectID, configOptions);
-                    res.should.have.status(400);
+                    res.status.should.equal(400, res.text); // print res.text if assertion fails
                 });
 
                 it('fails with 400 to POST/loadtest/config when input path is non-absolute', async function() {
                     this.timeout(testTimeout.short);
                     configOptions.path = 'test';
                     const res = await writeToLoadTestConfig(projectID, configOptions);
-                    res.should.have.status(400);
+                    res.status.should.equal(400, res.text); // print res.text if assertion fails
                 });
 
                 it('fails with 404 to POST/loadtest/config when project does not exist', async function() {
                     this.timeout(testTimeout.short);
                     const res = await writeToLoadTestConfig('falseID', configOptions);
-                    res.should.have.status(404);
+                    res.status.should.equal(404, res.text); // print res.text if assertion fails
                     res.should.satisfyApiSpec;
                 });
             });
@@ -146,7 +146,7 @@ describe('Load Runner Tests', function() {
             it('fails with 404 to GET/loadtest/config when project does not exist', async function() {
                 this.timeout(testTimeout.short);
                 const res = await readLoadTestConfig('falseID');
-                res.should.have.status(404);
+                res.status.should.equal(404, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
             });
         });
@@ -156,14 +156,14 @@ describe('Load Runner Tests', function() {
         it('fails with 404 to run load against a project with an invalid id', async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.runLoad('invalidID');
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
         });
 
         it('fails with 404 to cancel load on a project with an invalid id', async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.cancelLoad('invalidID');
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
         });
 
@@ -173,7 +173,7 @@ describe('Load Runner Tests', function() {
         it.skip('returns 202 and starts running load against a project', async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.runLoad(projectID, 'Load test run to test running load against a project.');
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
         });
 
@@ -183,14 +183,14 @@ describe('Load Runner Tests', function() {
         it.skip('fails with 409 to run load when load is already running', async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.runLoad(projectID);
-            res.should.have.status(409);
+            res.status.should.equal(409, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
         });
 
         it('fails with 503 to run load when project is not running', async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.runLoad(projectID);
-            res.should.have.status(503);
+            res.status.should.equal(503, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
         });
 
@@ -204,7 +204,7 @@ describe('Load Runner Tests', function() {
         it("fails with 409 to cancel load that isn't being run", async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.cancelLoad(projectID);
-            res.should.have.status(409);
+            res.status.should.equal(409, res.text); // print res.text if assertion fails
         });
     });
 });

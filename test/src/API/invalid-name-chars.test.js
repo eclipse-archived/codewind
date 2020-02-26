@@ -26,7 +26,7 @@ describe('invalidNameChars tests', function() {
         const res = await reqService.chai
             .get('/api/v1/projects/invalidNameChars')
             .set('Cookie', ADMIN_COOKIE);
-        res.should.have.status(200);
+        res.status.should.equal(200, res.text); // print res.text if assertion fails
         res.body.illegalNameChars.should.deep.equal(expectedInvalidChars);
     });
 });

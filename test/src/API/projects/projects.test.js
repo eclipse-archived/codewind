@@ -64,7 +64,7 @@ describe('Projects API tests', function() {
             this.timeout(testTimeout.short);
             const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
             const res = await projectService.getProject(idMatchingNoProjects, 404);
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal('Not Found');
         });

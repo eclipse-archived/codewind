@@ -37,12 +37,12 @@ describe('Logging API tests (these `it` blocks depend on each other passing)', f
 
     after('reset log level to original level', async function() {
         const res = await setLogLevel(originalLogLevel);
-        res.should.have.status(200);
+        res.status.should.equal(200, res.text); // print res.text if assertion fails
     });
 
     it('returns 200 and logging info when GET /logging is called', async function() {
         const res = await getLogLevel();
-        res.should.have.status(200);
+        res.status.should.equal(200, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
         res.body.allLevels.should.have.members(validLevels);
 
@@ -52,20 +52,20 @@ describe('Logging API tests (these `it` blocks depend on each other passing)', f
 
     it('returns 400 when PUT /logging is called with body { level : unknownLogLevel }', async function() {
         const res = await setLogLevel('unknownLogLevel');
-        res.should.have.status(400);
+        res.status.should.equal(400, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
         res.text.should.include('Invalid logging level requested');
     });
 
     it('returns 200 when PUT /logging is called with body { level : debug }', async function() {
         const res = await setLogLevel('warn');
-        res.should.have.status(200);
+        res.status.should.equal(200, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
     });
 
     it('returns 200 when PUT /logging is called with body { level : info }', async function() {
         const res = await setLogLevel('debug');
-        res.should.have.status(200);
+        res.status.should.equal(200, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
     });
 
