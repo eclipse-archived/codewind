@@ -283,19 +283,12 @@ describe('User.js', () => {
         afterEach(() => {
             fs.removeSync(testWorkspace);
         });
-        it('errors if a load run is already in progress on the project', async() => {
-            const { user, project } = await createSimpleUserWithProject();
-            project.loadInProgress = true;
-
-            await user.runLoad(project)
-                .should.eventually.be.rejectedWith(`Load run already in progress.\nFor project ${sampleProjectID}`);
-        });
         it('gets to LoadRunner.runLoad() then errors because we have stubbed out LoadRunner.js', async() => {
             const { user, project } = await createSimpleUserWithProject();
 
             await user.runLoad(project)
                 .should.eventually.be.rejectedWith('Load Runner service is not available');
-            project.loadInProgress.should.be.false;
+            project.loadInProgress.should.be.true;
             should.equal(project.loadConfig, null);
         });
     });
