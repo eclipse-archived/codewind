@@ -52,7 +52,7 @@ const User = proxyquire('../../../../src/pfe/portal/modules/User', {
     './LoadRunner': MockLoadRunner,
     './FileWatcher': MockFileWatcher,
 });
-// we have now imported User.js with some of its imports stubbed out
+// we have now imported User.js with some of its imports mocked
 
 // import Project.js but mock the logger so it does not pollute the test output
 const Project = proxyquire('../../../../src/pfe/portal/modules/Project', {

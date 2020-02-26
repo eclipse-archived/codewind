@@ -39,7 +39,7 @@ const FileWatcher = proxyquire('../../../../src/pfe/portal/modules/FileWatcher',
     'file-watcher': MockFw,
     './utils/Logger': MockLogger,
 });
-// we have now imported FileWatcher.js with some of its imports stubbed out
+// we have now imported FileWatcher.js with some of its imports mocked
 
 chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
