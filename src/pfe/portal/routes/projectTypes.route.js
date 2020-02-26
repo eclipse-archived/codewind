@@ -11,7 +11,7 @@
 const express = require('express');
 
 const Logger = require('../modules/utils/Logger');
-const { verifyLock } = require('../middleware/templateLock');
+const TemplateError = require('../modules/utils/errors/TemplateError');
 
 const router = express.Router();
 const log = new Logger(__filename);
@@ -79,7 +79,7 @@ function addLanguage(projectType, language) {
  * API function to returns a list of supported project types
  * @return JSON array with the list of supported project types
  */
-router.get('/api/v1/project-types', verifyLock, async (req, res) => {
+router.get('/api/v1/project-types', async (req, res) => {
   const { templates: templateController, extensionList } = req.cw_user;
   const projectTypes = [];
   const seenProjectTypes = {};
@@ -120,6 +120,10 @@ router.get('/api/v1/project-types', verifyLock, async (req, res) => {
     res.status(200).send(projectTypes);
   } catch (err) {
     log.error(err);
+    if (err instanceof TemplateError && err.code === 'LOCKED') {
+      res.sendStatus(409);
+      return;
+    }
     res.status(500).send(err);
   }
 });

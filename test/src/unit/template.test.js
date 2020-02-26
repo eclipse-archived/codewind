@@ -35,7 +35,7 @@ chai.use(chaiSubset);
 chai.should();
 const should = chai.should();
 
-const testWorkspaceDir = './src/unit/temp/';
+const testWorkspaceDir = path.join(__dirname, '/templateTestTemp/');
 const testWorkspaceConfigDir = path.join(testWorkspaceDir, '.config/');
 const testRepositoryFile = path.join(testWorkspaceConfigDir, 'repository_list.json');
 
@@ -65,14 +65,22 @@ const checkTemplateError = (err, expectedCode) => {
     code.should.equal(expectedCode);
 };
 
+function getWorkspaceAndDeleteAfterEach(testFolderName) {
+    const workspace = path.join(testWorkspaceDir, testFolderName);
+    afterEach(() => {
+        fs.removeSync(workspace);
+    });
+    return workspace;
+};
+
 const mockRepoList = Object.values(mockRepos);
-describe('Templates.js', function() {
+describe.only('Templates.js', function() {
     // Set the default timeout for all tests
     this.timeout(testTimeout.short);
     suppressLogOutput(Templates);
     describe('Class functions', function() {
         describe('initializeRepositoryList()', function() {
-            const workspace = path.join(__dirname, 'initializeRepositoryList');
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             const customRepoFile = path.join(workspace, 'custom_repo_file.json');
             beforeEach(() => {
                 fs.ensureDirSync(workspace);
@@ -84,91 +92,86 @@ describe('Templates.js', function() {
             });
             it('initializes a Templates Class and creates a repository file', async function() {
                 const templateController = new Templates(workspace);
-                fs.pathExistsSync(templateController.repositoryFile).should.be.false;
+                const existsPre = await fs.pathExists(templateController.repositoryFile);
+                existsPre.should.be.false;
 
                 await templateController.initializeRepositoryList();
 
                 templateController.repositoryList.length.should.equal(2);
-                fs.pathExistsSync(templateController.repositoryFile).should.be.true;
+                const existsPost = await fs.pathExists(templateController.repositoryFile);
+                existsPost.should.be.true;
             });
             it('reads an existing repository list file', async function() {
                 const templateController = new Templates(workspace);
                 templateController.repositoryFile = customRepoFile;
 
                 await templateController.initializeRepositoryList();
+
                 const { repositoryFile, repositoryList } = templateController;
-                fs.readJsonSync(repositoryFile).should.deep.equal([sampleRepos.codewind]);
+                const contents = await fs.readJson(repositoryFile);
+                contents.should.deep.equal([sampleRepos.codewind]);
                 repositoryList.should.deep.equal([sampleRepos.codewind]);
             });
         });
-        describe('lock()', () => {
+        describe('lock()', function() {
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             it('should update the value of _lock to be true', () => {
-                const templateController = new Templates('');
+                const templateController = new Templates(workspace);
                 templateController._lock = false;
                 templateController.lock();
                 templateController._lock.should.be.true;
             });
             it('should throw an error if the value of _lock is already true', () => {
-                const templateController = new Templates('');
+                const templateController = new Templates(workspace);
                 templateController._lock = true;
                 const error = new TemplateError('LOCKED');
                 assert.throws(() => templateController.lock(), error);
             });
         });
-        describe('unlock()', () => {
+        describe('unlock()', function() {
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             it('should update the value of _lock to be false', () => {
-                const templateController = new Templates('');
+                const templateController = new Templates(workspace);
                 templateController._lock = true;
                 templateController.unlock();
                 templateController._lock.should.be.false;
             });
         });
-        describe('isLocked()', () => {
-            it('should return the current value of _lock (true case)', () => {
-                const templateController = new Templates('');
-                templateController.lock();
-                templateController.isLocked().should.be.true;
-            });
-            it('should return the current value of _lock (false case)', () => {
-                const templateController = new Templates('');
-                templateController.unlock();
-                templateController.isLocked().should.be.false;
-            });
-        });
         describe('getTemplates(showEnabledOnly)', function() {
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             it('Gets all templates', async function() {
-                const templateController = new Templates('');
-                await templateController.updateTemplates();
-                const templateList = await templateController.getTemplates(false);
+                const templateController = new Templates(workspace);
+                await templateController.initializeRepositoryList();
+                const templateList = templateController.getTemplates(false);
                 templateList.length.should.be.at.least(defaultCodewindTemplates.length);
             });
             it('gets only enabled templates', async function() {
-                const templateController = new Templates('');
+                const templateController = new Templates(workspace);
                 const { repositoryList } = templateController;
                 for (const repository of repositoryList) {
                     repository.enabled = false;
                     repository.enabled.should.be.false;
                 }
-                await templateController.updateTemplates();
+                await templateController.initializeRepositoryList();
                 const templateList = await templateController.getTemplates(true);
                 templateList.length.should.equal(0);
             });
             it('gets all templates after enabled templates', async function() {
-                const templateController = new Templates('');
+                const templateController = new Templates(workspace);
                 const { repositoryList } = templateController;
                 for (const repository of repositoryList) {
                     repository.enabled = false;
                     repository.enabled.should.be.false;
                 }
-                await templateController.updateTemplates();
+                await templateController.initializeRepositoryList();
                 const enabledTmplateList = await templateController.getTemplates(true);
                 enabledTmplateList.length.should.equal(0);
                 const templateList = await templateController.getTemplates(false);
                 templateList.length.should.be.at.least(defaultCodewindTemplates.length);
             });
             it('gets enabled templates after all templates', async function() {
-                const templateController = new Templates('');
-                await templateController.updateTemplates();
+                const templateController = new Templates(workspace);
+                await templateController.initializeRepositoryList();
                 const templateList = await templateController.getTemplates(false);
                 templateList.length.should.be.at.least(defaultCodewindTemplates.length);
                 const { repositoryList } = templateController;
@@ -176,15 +179,15 @@ describe('Templates.js', function() {
                     repository.enabled = false;
                     repository.enabled.should.be.false;
                 }
-                await templateController.updateTemplates();
+                await templateController.initializeRepositoryList();
                 const enabledTemplateList = await templateController.getTemplates(true);
                 enabledTemplateList.length.should.equal(0);
             });
             describe('verifies the Codewind default templates are there and all others contain the required keys', function() {
                 it('returns the default templates', async function() {
                     this.timeout(testTimeout.med);
-                    const templateController = new Templates('');
-                    await templateController.updateTemplates();
+                    const templateController = new Templates(workspace);
+                    await templateController.initializeRepositoryList();
                     const output = await templateController.getTemplates(false);
                     output.should.contain.deep.members(defaultCodewindTemplates);
                     for (const element of output) {
@@ -193,34 +196,18 @@ describe('Templates.js', function() {
                     }
                 });
             });
-            describe('add an invalid template repo', function() {
-                let templateController;
-                before(async function() {
-                    templateController = new Templates('');
-                    templateController.repositoryList = [
-                        sampleRepos.codewind,
-                        { url: 'https://www.google.com/' },
-                    ];
-                    await templateController.updateTemplates();
-                });
-                it('returns only the default templates', async function() {
-                    const output = await templateController.getTemplates(false);
-                    output.should.deep.equal(defaultCodewindTemplates);
-                });
-            });
             describe('and add a provider providing a valid template repo', function() {
                 let templateController;
                 before(async function() {
-                    templateController = new Templates('');
-                    templateController.addProvider('valid repo', {
+                    templateController = new Templates(workspace);
+                    await templateController.addProvider('valid repo', {
                         getRepositories() {
                             return [sampleRepos.appsody];
                         },
                     });
-                    await templateController.updateTemplates();
                 });
                 it('returns more templates than just the default ones', async function() {
-                    const output = await templateController.getTemplates(false, false);
+                    const output = await templateController.getTemplates(false);
                     output.should.include.deep.members(defaultCodewindTemplates);
                     (output.length).should.be.above(defaultCodewindTemplates.length);
                 });
@@ -228,12 +215,12 @@ describe('Templates.js', function() {
             describe('and enable a repository and get the new templates', function() {
                 let templateController;
                 before(async function() {
-                    templateController = new Templates('');
+                    templateController = new Templates(workspace);
                     const disabledRepo = { ...sampleRepos.codewind };
                     disabledRepo.enabled = false;
                     // Use a disabled repository, getTemplates should return no templates
                     templateController.repositoryList = [disabledRepo];
-                    await templateController.updateTemplates();
+                    await templateController.initializeRepositoryList();
                     const templates = await templateController.getTemplates(true);
                     templates.length.should.equal(0);
                 });
@@ -247,27 +234,33 @@ describe('Templates.js', function() {
             });
         });
         describe('getTemplatesByStyle(projectStyle, showEnabledOnly = false)', function() {
-            const workspace = path.join(__dirname, 'initializeRepositoryList');
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
+            afterEach(() => {
+                fs.removeSync(workspace);
+            });
             it('gets only templates of a specific style', async function() {
                 const templateController = new Templates(workspace);
-                await templateController.updateTemplates();
+                await templateController.initializeRepositoryList();
                 const templateList = await templateController.getTemplatesByStyle('Codewind');
                 templateList.length.should.be.gt(1);
             });
             it('gets no templates for a non-existent style', async function() {
                 const templateController = new Templates(workspace);
-                await templateController.updateTemplates();
+                await templateController.initializeRepositoryList();
                 const templateList = await templateController.getTemplatesByStyle('NotAStyle');
                 templateList.length.should.equal(0);
             });
         });
         describe('getAllTemplateStyles()', function() {
-            const workspace = path.join(__dirname, 'initializeRepositoryList');
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             describe('returns only Codewind templates as it is the style in the projectTemplates', function() {
                 let templateController;
                 before(async function() {
                     templateController = new Templates(workspace);
-                    await templateController.updateTemplates();
+                    await templateController.initializeRepositoryList();
+                });
+                afterEach(() => {
+                    fs.removeSync(workspace);
                 });
                 it(`returns ['Codewind', 'Appsody']`, async function() {
                     const output = await templateController.getAllTemplateStyles();
@@ -275,23 +268,25 @@ describe('Templates.js', function() {
                 });
             });
         });
-        describe('updateTemplates()', function() {
-            const templateController = new Templates('');
-            before(() => {
-                templateController.repositoryList = [sampleRepos.codewind];
-                templateController.getTemplates(true).length.should.equal(0);
-                templateController.getTemplates(false).length.should.equal(0);
-            });
-            it('populates the templates property', async function() {
-                await templateController.updateTemplates();
-                templateController.getTemplates(true).length.should.be.above(0);
-                templateController.getTemplates(false).length.should.be.above(0);
-            });
-        });
+        // TODO move and rename to fetchTemplates(repositories)
+        // describe('updateTemplates()', function() {
+        //     const templateController = new Templates(testWorkspaceDir);
+        //     before(() => {
+        //         templateController.repositoryList = [sampleRepos.codewind];
+        //         templateController.getTemplates(true).length.should.equal(0);
+        //         templateController.getTemplates(false).length.should.equal(0);
+        //     });
+        //     it('populates the templates property', async function() {
+        //         await templateController.initializeRepositoryList();
+        //         templateController.getTemplates(true).length.should.be.above(0);
+        //         templateController.getTemplates(false).length.should.be.above(0);
+        //     });
+        // });
         describe('getRepositories()', function() {
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             let templateController;
             before(() => {
-                templateController = new Templates('');
+                templateController = new Templates(workspace);
                 templateController.repositoryList = [...mockRepoList];
             });
             it('returns all repos', function() {
@@ -299,36 +294,11 @@ describe('Templates.js', function() {
                 output.should.deep.equal(mockRepoList);
             });
         });
-        describe('getEnabledRepositories()', function() {
-            let templateController;
-            beforeEach(() => {
-                templateController = new Templates('');
-                templateController.repositoryList = [{ ...mockRepos.enabled }, { ...mockRepos.disabled }];
-            });
-            it('returns only enabled repos', function() {
-                const output = templateController.getEnabledRepositories();
-                output.should.deep.equal([mockRepos.enabled]);
-            });
-            it('return the repository list with a new, enabled repository', async() => {
-                await templateController.enableOrDisableRepository({ url: '2', value: true });
-                const enabledRepo = { ...mockRepos.disabled };
-                enabledRepo.enabled = true;
-                const output = templateController.getEnabledRepositories();
-                output[1].should.deep.equal(enabledRepo);
-            });
-        });
-        describe('getDisabledRepositories()', function() {
-            it('returns only disabled repos', function() {
-                const templateController = new Templates('');
-                templateController.repositoryList = [mockRepos.enabled, mockRepos.disabled];
-                const output = templateController.getDisabledRepositories();
-                output.should.deep.equal([mockRepos.disabled]);
-            });
-        });
         describe('getRepository()', function() {
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             let templateController;
             before(() => {
-                templateController = new Templates('');
+                templateController = new Templates(workspace);
                 templateController.repositoryList = [mockRepos.enabled];
             });
             it('returns a repository as it exists in the repositoryList', function() {
@@ -340,15 +310,13 @@ describe('Templates.js', function() {
                 should.equal(repo, null);
             });
         });
-        describe('batchUpdate(requestedOperations)', function() {
+        describe.skip('batchUpdate(requestedOperations)', function() {
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             let templateController;
             beforeEach(() => {
-                fs.ensureDirSync(testWorkspaceConfigDir);
-                templateController = new Templates(testWorkspaceDir);
+                fs.ensureDirSync(workspace);
+                templateController = new Templates(workspace);
                 templateController.repositoryList = [...mockRepoList];
-            });
-            afterEach(() => {
-                fs.removeSync(testWorkspaceDir);
             });
             describe('when the requested operations are all valid', function() {
                 const tests = {
@@ -579,9 +547,10 @@ describe('Templates.js', function() {
             });
         });
         describe('performOperationOnRepository(operation)', function() {
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             let templateController;
             beforeEach(() => {
-                templateController = new Templates('');
+                templateController = new Templates(workspace);
                 templateController.repositoryList = [...mockRepoList];
             });
             describe('when `operation.url` is an existing url', function() {
@@ -682,8 +651,9 @@ describe('Templates.js', function() {
             });
         });
         describe('enableOrDisableRepository({ url, value })', () => {
+            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             it('returns 404 as its status as the repository does not exist', async() => {
-                const templateController = new Templates('');
+                const templateController = new Templates(workspace);
                 const operationResponse = await templateController.enableOrDisableRepository({ url: 'urlThatDoesNotExist' });
                 operationResponse.should.have.property('status', 404);
                 operationResponse.should.have.property('error', 'Unknown repository URL');
@@ -698,7 +668,7 @@ describe('Templates.js', function() {
                 const { input, output, testRepo } = test;
                 // eslint-disable-next-line no-loop-func
                 it(`returns 200 and ${testName}`, async() => {
-                    const templateController = new Templates('');
+                    const templateController = new Templates(workspace);
                     templateController.repositoryList = [testRepo];
 
                     const operationResponse = await templateController.enableOrDisableRepository({ url: testRepo.url, value: input });
@@ -832,13 +802,13 @@ describe('Templates.js', function() {
                 },
             };
             it('ignores the invalid provider', async() => {
-                const templateController = new Templates('');
+                const templateController = new Templates(testWorkspaceDir);
                 const originalProviders = { ...templateController.providers };
                 await templateController.addProvider('empty obj', {});
                 templateController.providers.should.deep.equal(originalProviders);
             });
             it('fails to add a provider with a getRepositories function that does not return valid repositories', async() => {
-                const templateController = new Templates('');
+                const templateController = new Templates(testWorkspaceDir);
                 templateController.repositoryList = [];
                 const badProvider = {
                     getRepositories: () => {
@@ -848,7 +818,7 @@ describe('Templates.js', function() {
                 await templateController.addProvider('badProvider', badProvider);
             });
             it('successfully adds a provider', async() => {
-                const templateController = new Templates('');
+                const templateController = new Templates(testWorkspaceDir);
                 templateController.repositoryList = [];
                 const { providers } = templateController;
                 await templateController.addProvider('dummyProvider', provider);
@@ -859,7 +829,7 @@ describe('Templates.js', function() {
                 repoLength.should.equal(1);
             });
             it('does not add a duplicate repository', async() => {
-                const templateController = new Templates('');
+                const templateController = new Templates(testWorkspaceDir);
                 templateController.repositoryList = [];
                 await templateController.addRepository(sampleRepos.codewind.url);
                 templateController.repositoryList.length.should.equal(1);
@@ -878,7 +848,7 @@ describe('Templates.js', function() {
                     },
                 };
                 before(() => {
-                    templateController = new Templates('');
+                    templateController = new Templates(testWorkspaceDir);
                     templateController.repositoryList = [...mockRepoList];
                     // Add a dummy entry to the templates
                     templateController.allProjectTemplates = ['template'];
@@ -892,7 +862,7 @@ describe('Templates.js', function() {
                     updatedRepositoryList.should.deep.equal([...mockRepoList, sampleRepos.codewind]);
                     const updatedTemplates = templateController.getTemplates(false);
                     updatedTemplates.length.should.be.above(originalTemplatesLength);
-                    // the dummy template will have been removed as addProvider calls the updateTemplates function
+                    // the dummy template will have been removed as addProvider does a fresh fetch of templates
                     updatedTemplates.should.not.contain('template');
                 });
             });
@@ -909,7 +879,7 @@ describe('Templates.js', function() {
                 },
             };
             it('adds a repository to a provider', async() => {
-                const templateController = new Templates('');
+                const templateController = new Templates(testWorkspaceDir);
                 templateController.providers = {
                     firstProvider: { ...validProvider },
                 };
@@ -928,7 +898,7 @@ describe('Templates.js', function() {
                         await errorFunction();
                     },
                 };
-                const templateController = new Templates('');
+                const templateController = new Templates(testWorkspaceDir);
                 templateController.providers = {
                     badProvider: { ...providerThrowsError },
                 };
@@ -938,7 +908,7 @@ describe('Templates.js', function() {
         });
         describe('removeRepositoryFromProviders(repo)', () => {
             it('removes a repository from a provider', async() => {
-                const templateController = new Templates('');
+                const templateController = new Templates(testWorkspaceDir);
                 templateController.providers = {
                     firstProvider: {
                         repositories: [{ ...sampleRepos.codewind }],

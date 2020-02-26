@@ -11,7 +11,6 @@
 const express = require('express');
 
 const { validateReq } = require('../middleware/reqValidator');
-const { verifyLock } = require('../middleware/templateLock');
 const Logger = require('../modules/utils/Logger');
 const TemplateError = require('../modules/utils/errors/TemplateError');
 
@@ -22,7 +21,7 @@ const log = new Logger(__filename);
  * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
  */
-router.get('/api/v1/templates', validateReq, verifyLock, async (req, res, _next) => {
+router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
   const { templates: templateController } = req.cw_user;
   const projectStyle = req.query['projectStyle'];
   const showEnabledOnly = req.query['showEnabledOnly'] === 'true';
@@ -38,6 +37,11 @@ router.get('/api/v1/templates', validateReq, verifyLock, async (req, res, _next)
     }
   } catch (error) {
     log.error(error);
+    if (error instanceof TemplateError && error.code === 'LOCKED') {
+      res.sendStatus(409);
+      return;
+    }
+    log.error(error);
     res.status(500).json(error);
   }
 });
@@ -46,9 +50,20 @@ router.get('/api/v1/templates', validateReq, verifyLock, async (req, res, _next)
  * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
  */
-router.get('/api/v1/templates/repositories', verifyLock, sendRepositories);
+router.get('/api/v1/templates/repositories', async (req, res, _next) => {
+  try {
+    await sendRepositories(req, res, _next);
+  } catch (error) {
+    log.error(error);
+    if (error instanceof TemplateError && error.code === 'LOCKED') {
+      res.sendStatus(409);
+      return;
+    }
+    res.status(500).send(error.message);
+  }
+});
 
-router.post('/api/v1/templates/repositories', validateReq, verifyLock, async (req, res, _next) => {
+router.post('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const { templates: templatesController } = req.cw_user;
   const repositoryName = req.sanitizeBody('name')
   const repositoryUrl = req.sanitizeBody('url');
@@ -69,12 +84,15 @@ router.post('/api/v1/templates/repositories', validateReq, verifyLock, async (re
     if (error instanceof TemplateError && knownErrorCodes.includes(error.code)) {
       res.status(400).send(error.message);
       return;
+    } else if (error instanceof TemplateError && error.code === 'LOCKED') {
+      res.sendStatus(409);
+      return;
     }
     res.status(500).send(error.message);
   }
 });
 
-router.delete('/api/v1/templates/repositories', validateReq, verifyLock, async (req, res, _next) => {
+router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const { templates: templatesController } = req.cw_user;
   const repositoryUrl = req.sanitizeBody('url');
   try {
@@ -85,31 +103,51 @@ router.delete('/api/v1/templates/repositories', validateReq, verifyLock, async (
     if (error instanceof TemplateError && error.code === 'REPOSITORY_DOES_NOT_EXIST') {
       res.status(404).send(error.message);
       return;
+    } else if (error instanceof TemplateError && error.code === 'LOCKED') {
+      res.sendStatus(409);
+      return;
     }
     res.status(500).send(error.message);
   }
 });
 
-async function sendRepositories(req, res, _next) {
+function sendRepositories(req, res, _next) {
   const { templates: templatesController } = req.cw_user;
-  const repositoryList = await templatesController.getRepositories();
+  const repositoryList = templatesController.getRepositories();
   res.status(200).json(repositoryList);
 }
 
-router.patch('/api/v1/batch/templates/repositories', validateReq, verifyLock, async (req, res) => {
+router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, res) => {
   const { templates: templatesController } = req.cw_user;
   const requestedOperations = req.body;
-  const operationResults = await templatesController.batchUpdate(requestedOperations);
-  res.status(207).json(operationResults);
+  try {
+    const operationResults = await templatesController.batchUpdate(requestedOperations);
+    res.status(207).json(operationResults);
+  } catch(error) {
+    log.error(error);
+    if (error instanceof TemplateError && error.code === 'LOCKED') {
+      res.sendStatus(409);
+      return;
+    }
+    res.status(500).send(error.message);
+  }
 });
 
 /**
  * @return {[String]} the list of template styles
  */
-router.get('/api/v1/templates/styles', validateReq, verifyLock, async (req, res, _next) => {
+router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
   const { templates: templatesController } = req.cw_user;
-  const styles = await templatesController.getAllTemplateStyles();
-  res.status(200).json(styles);
+  try {
+    const styles = await templatesController.getAllTemplateStyles();
+    res.status(200).json(styles);
+  } catch(error) {
+    if (error instanceof TemplateError && error.code === 'LOCKED') {
+      res.sendStatus(409);
+      return;
+    }
+    res.status(500).send(error.message);
+  }
 });
 
 module.exports = router;

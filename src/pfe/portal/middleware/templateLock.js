@@ -16,7 +16,7 @@ function verifyLock(req, res, _next) {
   const locked = templatesController.isLocked();
   if (locked) {
     log.debug(`Templates attempted to be accessed while locked at endpoint: ${req.originalUrl}`);
-    return res.status(409).send('template lock hit, they are currently being updated');
+    return res.sendStatus(409);
   }
   return _next();
 }

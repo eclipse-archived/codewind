@@ -67,12 +67,18 @@ module.exports = class Templates {
       repositories = await updateRepoListWithReposFromProviders(this.providers, repositories, this.repositoryFile);
       repositories = await fetchAllRepositoryDetails(repositories);
       this.repositoryList = repositories;
-      await this.updateTemplates();
+
+      // Fetch templates
+      const { enabledTemplates, allTemplates } = await fetchTemplates(this.repositoryList);
+      this.enabledProjectTemplates = enabledTemplates;
+      this.allProjectTemplates = allTemplates;
+
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
     } catch (err) {
       log.error(`Error initializing repository list: ${err}`);
+    } finally {
+      this.unlock();
     }
-    this.unlock();
   }
 
   lock() {
@@ -84,48 +90,45 @@ module.exports = class Templates {
     this._lock = false;
   }
 
-  isLocked() {
-    return this._lock;
-  }
-
   // TEMPLATES
   getTemplates(enabledOnly) {
-    return enabledOnly ? this.enabledProjectTemplates : this.allProjectTemplates;
+    this.lock();
+    try {
+      return enabledOnly ? this.enabledProjectTemplates : this.allProjectTemplates;
+    } finally {
+      this.unlock();
+    }
   }
 
-  async getTemplatesByStyle(projectStyle, showEnabledOnly = false) {
-    const templates = await this.getTemplates(showEnabledOnly);
-    return filterTemplatesByStyle(templates, projectStyle);
+  getTemplatesByStyle(projectStyle, enabledOnly = false) {
+    this.lock();
+    try {
+      const templates = enabledOnly ? this.enabledProjectTemplates : this.allProjectTemplates;
+      return filterTemplatesByStyle(templates, projectStyle);
+    } finally {
+      this.unlock();
+    }
   }
 
   async getAllTemplateStyles() {
-    const templates = await this.getTemplates(false);
-    return getTemplateStyles(templates);
-  }
-
-  async updateTemplates() {
-    const enabledRepositories = await this.getEnabledRepositories();
-    const disabledRepositories = await this.getDisabledRepositories();
-    const newEnabledTemplates = await getTemplatesFromRepos(enabledRepositories);
-    const newDisabledTemplates = await getTemplatesFromRepos(disabledRepositories);
-    this.enabledProjectTemplates = newEnabledTemplates;
-    this.allProjectTemplates = newEnabledTemplates.concat(newDisabledTemplates);
+    this.lock();
+    try {
+      const templates = await this.allProjectTemplates;
+      return getTemplateStyles(templates);
+    } finally {
+      this.unlock();
+    }
   }
 
   // REPOSITORIES
 
   getRepositories() {
-    return this.repositoryList;
-  }
-
-  getEnabledRepositories() {
-    const repositories = this.getRepositories();
-    return repositories.filter(repo => repo.enabled);
-  }
-
-  getDisabledRepositories() {
-    const repositories = this.getRepositories();
-    return repositories.filter(repo => !repo.enabled);
+    this.lock();
+    try {
+      return this.repositoryList;
+    } finally {
+      this.unlock();
+    }
   }
 
   /**
@@ -133,10 +136,14 @@ module.exports = class Templates {
    * @return {JSON} reference to the repo object in this.repositoryList
    */
   getRepository(url) {
-    const repositories = this.getRepositories();
-    const index = getRepositoryIndex(url, repositories);
-    if (index < 0) return null;
-    return repositories[index];
+    this.lock();
+    try {
+      const repo = this.repositoryList.find(repo => repo.url === url);
+      if (!repo) return null;
+      return repo;
+    } finally {
+      this.unlock();
+    }
   }
 
   /**
@@ -145,7 +152,7 @@ module.exports = class Templates {
   async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
     this.lock();
     try {
-      const repositories = await this.getRepositories();
+      const repositories = [...this.repositoryList];
       const validatedUrl = await validateRepository(repoUrl, repositories);
       const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected);
 
@@ -169,7 +176,7 @@ module.exports = class Templates {
   async deleteRepository(repoUrl) {
     this.lock();
     try {
-      const repoToDelete = this.getRepository(repoUrl);
+      const repoToDelete = this.repositoryList.find(repo => repo.url === repoUrl);
       if (!repoToDelete) throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
       await this.removeRepositoryFromProviders(repoToDelete);
       try {
@@ -192,7 +199,6 @@ module.exports = class Templates {
 
       this.enabledProjectTemplates = this.enabledProjectTemplates.filter(deleteTemplatesThatBelongToRepo);
       this.allProjectTemplates = this.allProjectTemplates.filter(deleteTemplatesThatBelongToRepo);
-      // await this.updateTemplates();
     } finally {
       this.unlock();
     }
@@ -234,7 +240,9 @@ module.exports = class Templates {
     try {
       const repo = await this.getRepository(url);
       repo.enabled = (value === 'true' || value === true);
-      await this.updateTemplates();
+      const { enabledTemplates, allTemplates } = await fetchTemplates(this.repositoryList);
+      this.enabledProjectTemplates = enabledTemplates;
+      this.allProjectTemplates = allTemplates;
       return {
         status: 200
       };
@@ -256,7 +264,9 @@ module.exports = class Templates {
         this.repositoryList = await updateRepoListWithReposFromProviders([provider], currentRepoList, this.repositoryFile);
 
         // Fetch templates from the new repository and add them
-        await this.updateTemplates();
+        const { enabledTemplates, allTemplates } = await fetchTemplates(this.repositoryList);
+        this.enabledProjectTemplates = enabledTemplates;
+        this.allProjectTemplates = allTemplates;
 
         await writeRepositoryList(this.repositoryFile, this.repositoryList);
       }
@@ -442,6 +452,17 @@ async function getNameAndDescriptionFromRepoTemplatesJSON(url) {
   return {};
 }
 
+async function fetchTemplates(repositories) {
+  // const repositories = this.getRepositories();
+  const enabledRepositories = repositories.filter(repo => repo.enabled);
+  const disabledRepositories = repositories.filter(repo => !repo.enabled);
+  const enabledTemplates = await getTemplatesFromRepos(enabledRepositories);
+  const disabledTemplates = await getTemplatesFromRepos(disabledRepositories);
+  // this.enabledProjectTemplates = newEnabledTemplates;
+  const allTemplates = enabledTemplates.concat(disabledTemplates);
+  return { enabledTemplates, allTemplates }
+}
+
 async function getTemplatesFromRepos(repos) {
   let newProjectTemplates = [];
   await Promise.all(repos.map(async(repo) => {
@@ -513,6 +534,7 @@ async function getTemplatesJSONFromURL(givenURL) {
     try {
       templateSummaries = JSON.parse(res.body);
     } catch (error) {
+      // TODO add TemplateError here
       throw new Error(`URL '${parsedURL}' did not return JSON`);
     }
   }
