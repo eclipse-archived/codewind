@@ -476,7 +476,6 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         }
 
                         projectInfo.error = errorMsg;
-                        await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.buildFail");
                         io.emitOnListener(event, projectInfo);
                         logger.logProjectInfo("Emitted event: " + event + "\n" + JSON.stringify(projectInfo), projectID, projectName);
                         return;
