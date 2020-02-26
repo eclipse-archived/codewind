@@ -156,7 +156,8 @@ module.exports = class Templates {
       const validatedUrl = await validateRepository(repoUrl, repositories);
       const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected);
 
-      await this.addRepositoryToProviders(newRepo);
+      const providers = {...this.providers};
+      this.providers = await addRepositoryToProviders(newRepo, providers);
 
       // Only update the repositoryList if the providers can be updated
       const newRepositoryList = [...this.repositoryList, newRepo];
@@ -178,7 +179,8 @@ module.exports = class Templates {
     try {
       const repoToDelete = this.repositoryList.find(repo => repo.url === repoUrl);
       if (!repoToDelete) throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
-      await this.removeRepositoryFromProviders(repoToDelete);
+      const providers = {...this.providers};
+      this.providers = await removeRepositoryFromProviders(repoToDelete, providers);
       try {
         const currentRepoList = [...this.repositoryList];
         const updatedRepoList = await updateRepoListWithReposFromProviders(this.providers, currentRepoList, this.repositoryFile);
@@ -186,7 +188,8 @@ module.exports = class Templates {
       }
       catch (err) {
         // rollback
-        this.addRepositoryToProviders(repoToDelete).catch(error => log.warn(error.message));
+        const providers = {...this.providers};
+        this.providers = await addRepositoryToProviders(repoToDelete, providers).catch(error => log.warn(error.message));
         throw err;
       }
       // writeRepositoryList regardless of whether it has been updated with the data from providers
@@ -274,41 +277,6 @@ module.exports = class Templates {
       this.unlock();
     }
   }
-
-  async addRepositoryToProviders(repo) {
-    const promises = [];
-    for (const provider of Object.values(this.providers)) {
-      if (typeof provider.canHandle === 'function') {
-        // make a new copy to for each provider to be invoked with
-        // in case any provider modifies it (which they shouldn't do)
-        const copy = Object.assign({}, repo);
-        if (provider.canHandle(copy) && typeof provider.addRepository === 'function') {
-          promises.push(provider.addRepository(copy));
-        }
-      }
-    }
-
-    try {
-      await Promise.all(promises);
-    }
-    catch (err) {
-      throw new TemplateError('ADD_TO_PROVIDER_FAILURE', repo.url, err.message);
-    }
-  }
-
-  removeRepositoryFromProviders(repo) {
-    const promises = [];
-    for (const provider of Object.values(this.providers)) {
-      if (typeof provider.canHandle === 'function') {
-        // make a new copy to for each provider to be invoked with
-        // in case any provider modifies it (which they shouldn't do)
-        const copy = Object.assign({}, repo);
-        if (provider.canHandle(copy) && typeof provider.removeRepository === 'function')
-          promises.push(provider.removeRepository(copy));
-      }
-    }
-    return Promise.all(promises);
-  }
 }
 
 // FUNCTIONS
@@ -356,11 +324,6 @@ async function constructRepositoryObject(url, description, name, isRepoProtected
     repository.protected = isRepoProtected;
   }
   return repository;
-}
-
-function getRepositoryIndex(url, repositories) {
-  const index = repositories.findIndex(repo => repo.url === url);
-  return index;
 }
 
 async function updateRepoListWithReposFromProviders(providers, repositoryList) {
@@ -600,4 +563,40 @@ async function doesURLPointToIndexJSON(inputUrl) {
 function isTemplateSummary(obj) {
   const expectedKeys = ['displayName', 'description', 'language', 'projectType', 'location', 'links'];
   return expectedKeys.every(key => obj.hasOwnProperty(key));
+}
+
+async function addRepositoryToProviders(repo, providers) {
+  const promises = [];
+  for (const provider of Object.values(providers)) {
+    if (typeof provider.canHandle === 'function') {
+      // make a new copy to for each provider to be invoked with
+      // in case any provider modifies it (which they shouldn't do)
+      const copy = Object.assign({}, repo);
+      if (provider.canHandle(copy) && typeof provider.addRepository === 'function') {
+        promises.push(provider.addRepository(copy));
+      }
+    }
+  }
+
+  try {
+    await Promise.all(promises);
+  }
+  catch (err) {
+    throw new TemplateError('ADD_TO_PROVIDER_FAILURE', repo.url, err.message);
+  }
+  return providers;
+}
+
+function removeRepositoryFromProviders(repo, providers) {
+  const promises = [];
+  for (const provider of Object.values(providers)) {
+    if (typeof provider.canHandle === 'function') {
+      // make a new copy to for each provider to be invoked with
+      // in case any provider modifies it (which they shouldn't do)
+      const copy = Object.assign({}, repo);
+      if (provider.canHandle(copy) && typeof provider.removeRepository === 'function')
+        promises.push(provider.removeRepository(copy));
+    }
+  }
+  return Promise.all(promises);
 }
