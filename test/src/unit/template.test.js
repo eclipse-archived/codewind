@@ -792,7 +792,6 @@ describe('Templates.js', function() {
                 templateController.repositoryList = [...mockRepoList];
                 const func = () => templateController.deleteRepository('http://urlthatdoesnotexist.com');
                 return func().should.be.rejected;
-                // HERE
             });
         });
         describe('addProvider(name, provider)', () => {
@@ -1343,14 +1342,14 @@ describe('Templates.js', function() {
                 },
             };
             it('adds a repository to a provider', async() => {
-                const templateController = new Templates(testWorkspaceDir);
-                templateController.providers = {
+                const providers = {
                     firstProvider: { ...validProvider },
                 };
-                const { firstProvider } = templateController.providers;
+                const { firstProvider } = providers;
                 firstProvider.repositories.should.have.length(0);
-                await addRepositoryToProviders({ ...sampleRepos.codewind }, templateController.providers);
-                firstProvider.repositories.should.have.length(1);
+                const updatedProviders = await addRepositoryToProviders({ ...sampleRepos.codewind }, providers);
+                const { firstProvider: updatedFirstProvider } = updatedProviders;
+                updatedFirstProvider.repositories.should.have.length(1);
             });
             it('throws a TemplateError if one of the providers errors while adding the repository', () => {
                 const errorFunction = () => {
@@ -1362,19 +1361,17 @@ describe('Templates.js', function() {
                         await errorFunction();
                     },
                 };
-                const templateController = new Templates(testWorkspaceDir);
-                templateController.providers = {
+                const providers = {
                     badProvider: { ...providerThrowsError },
                 };
-                return addRepositoryToProviders({ ...sampleRepos.codewind }, templateController.providers)
+                return addRepositoryToProviders({ ...sampleRepos.codewind }, providers)
                     .should.be.rejected.then(err => checkTemplateError(err, 'ADD_TO_PROVIDER_FAILURE'));
             });
         });
         describe('removeRepositoryFromProviders(repo)', () => {
             const removeRepositoryFromProviders = Templates.__get__('removeRepositoryFromProviders');
             it('removes a repository from a provider', async() => {
-                const templateController = new Templates(testWorkspaceDir);
-                templateController.providers = {
+                const providers = {
                     firstProvider: {
                         repositories: [{ ...sampleRepos.codewind }],
                         canHandle() {
@@ -1386,10 +1383,11 @@ describe('Templates.js', function() {
                         },
                     },
                 };
-                const { firstProvider } = templateController.providers;
+                const { firstProvider } = providers;
                 firstProvider.repositories.should.have.length(1);
-                await removeRepositoryFromProviders(sampleRepos.codewind.url, templateController.providers);
-                firstProvider.repositories.should.have.length(0);
+                const updatedProviders = await removeRepositoryFromProviders(sampleRepos.codewind.url, providers);
+                const { firstProvider: updatedFirstProvider } = updatedProviders;
+                updatedFirstProvider.repositories.should.have.length(0);
             });
         });
     });

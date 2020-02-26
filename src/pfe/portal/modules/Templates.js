@@ -587,7 +587,7 @@ async function addRepositoryToProviders(repo, providers) {
   return providers;
 }
 
-function removeRepositoryFromProviders(repo, providers) {
+async function removeRepositoryFromProviders(repo, providers) {
   const promises = [];
   for (const provider of Object.values(providers)) {
     if (typeof provider.canHandle === 'function') {
@@ -598,5 +598,6 @@ function removeRepositoryFromProviders(repo, providers) {
         promises.push(provider.removeRepository(copy));
     }
   }
-  return Promise.all(promises);
+  await Promise.all(promises);
+  return providers;
 }
