@@ -16,6 +16,8 @@ const TemplateError = require('../modules/utils/errors/TemplateError');
 const router = express.Router();
 const log = new Logger(__filename);
 
+const TEMPLATES_LOCKED_STATUS_CODE = 423;
+
 function sanitizeProjectType(array, type) {
 
   // doesn't even have the expected fields, no-op return
@@ -121,7 +123,7 @@ router.get('/api/v1/project-types', async (req, res) => {
   } catch (err) {
     log.error(err);
     if (err instanceof TemplateError && err.code === 'LOCKED') {
-      res.sendStatus(409);
+      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
       return;
     }
     res.status(500).send(err);

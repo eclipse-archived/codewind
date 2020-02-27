@@ -1103,7 +1103,7 @@ paths:
                   $ref: '#/components/schemas/Template'
         204:
           description: No templates found
-        409:
+        423:
           description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
 
   /api/v1/templates/repositories:
@@ -1118,7 +1118,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TemplateRepo'
-        409:
+        423:
           description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
     post:
       summary: Make Codewind aware of a template repository
@@ -1139,7 +1139,7 @@ paths:
                   $ref: '#/components/schemas/TemplateRepo'
         400:
           description: Bad request
-        409:
+        423:
           description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
     delete:
       summary: Remove a template repository from the list Codewind is aware of
@@ -1171,7 +1171,7 @@ paths:
             text/html:
               schema:
                 type: string
-        409:
+        423:
           description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
   /api/v1/batch/templates/repositories:
     patch:
@@ -1203,7 +1203,7 @@ paths:
                       $ref: '#/components/schemas/TemplateRepoSetting'
                     error:
                       type: string
-        409:
+        423:
           description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
   /api/v1/templates/styles:
     get:
@@ -1233,7 +1233,7 @@ paths:
                   $ref: '#/components/schemas/ProjectTypeDescriptor'
         204:
           description: No templates found
-        409:
+        423:
           description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
 
   /api/v1/logging:

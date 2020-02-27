@@ -17,6 +17,8 @@ const TemplateError = require('../modules/utils/errors/TemplateError');
 const router = express.Router();
 const log = new Logger(__filename);
 
+const TEMPLATES_LOCKED_STATUS_CODE = 423;
+
 /**
  * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
@@ -38,7 +40,7 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
   } catch (error) {
     log.error(error);
     if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(409);
+      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
       return;
     }
     log.error(error);
@@ -56,7 +58,7 @@ router.get('/api/v1/templates/repositories', async (req, res, _next) => {
   } catch (error) {
     log.error(error);
     if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(409);
+      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
       return;
     }
     res.status(500).send(error.message);
@@ -85,7 +87,7 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
       res.status(400).send(error.message);
       return;
     } else if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(409);
+      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
       return;
     }
     res.status(500).send(error.message);
@@ -104,7 +106,7 @@ router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _n
       res.status(404).send(error.message);
       return;
     } else if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(409);
+      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
       return;
     }
     res.status(500).send(error.message);
@@ -126,7 +128,7 @@ router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, re
   } catch(error) {
     log.error(error);
     if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(409);
+      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
       return;
     }
     res.status(500).send(error.message);
@@ -137,13 +139,20 @@ router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, re
  * @return {[String]} the list of template styles
  */
 router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
+  // const { templates: templatesController } = req.cw_user;
+  // try {
+  //   templatesController.lock();
+  // } catch(err) {
+  //   templatesController.unlock();
+  // }
+  // res.send(`locked: ${templatesController._lock}`)
   const { templates: templatesController } = req.cw_user;
   try {
     const styles = await templatesController.getAllTemplateStyles();
     res.status(200).json(styles);
   } catch(error) {
     if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(409);
+      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
       return;
     }
     res.status(500).send(error.message);
