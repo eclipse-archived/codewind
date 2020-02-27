@@ -247,21 +247,7 @@ describe('Templates.js', function() {
                     output.should.deep.equal(['Codewind', 'Appsody']);
                 });
             });
-        });
-        // TODO move and rename to fetchTemplates(repositories)
-        // describe('updateTemplates()', function() {
-        //     const templateController = new Templates(testWorkspaceDir);
-        //     before(() => {
-        //         templateController.repositoryList = [sampleRepos.codewind];
-        //         templateController.getTemplates(true).length.should.equal(0);
-        //         templateController.getTemplates(false).length.should.equal(0);
-        //     });
-        //     it('populates the templates property', async function() {
-        //         await templateController.initializeRepositoryList();
-        //         templateController.getTemplates(true).length.should.be.above(0);
-        //         templateController.getTemplates(false).length.should.be.above(0);
-        //     });
-        // });
+        })
         describe('getRepositories()', function() {
             const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             let templateController;
@@ -993,6 +979,25 @@ describe('Templates.js', function() {
                 repo.should.contain.keys('name', 'description');
             });
         });
+        describe('fetchTemplates(repositories)', function() {
+            const fetchTemplates = Templates.__get__('fetchTemplates');
+            it('returns enabledTemplates and allTemplates as the same list as the only repository is enabled', async function() {
+                const repoList = [{ ...sampleRepos.codewind }];
+                const { enabledTemplates, allTemplates } = await fetchTemplates(repoList);
+                enabledTemplates.length.should.be.above(0);
+                allTemplates.length.should.be.above(0);
+                enabledTemplates.should.deep.equal(allTemplates);
+            });
+            it('returns enabledTemplates as empty as the only repository is disabled', async function() {
+                const repoList = [{
+                    ...sampleRepos.codewind,
+                    enabled: false,
+                }];
+                const { enabledTemplates, allTemplates } = await fetchTemplates(repoList);
+                enabledTemplates.length.should.equal(0);
+                allTemplates.length.should.be.above(0);
+            });
+        });
         describe('getTemplatesFromRepos(repositoryList)', function() {
             const getTemplatesFromRepos = Templates.__get__('getTemplatesFromRepos');
             it('throws an error as no repos are given', function() {
@@ -1009,7 +1014,7 @@ describe('Templates.js', function() {
             });
         });
         describe('getTemplatesFromRepo(repository)', function() {
-            const getTemplatesFromRepo = Templates.__get__('getTemplatesFromRepo'); 
+            const getTemplatesFromRepo = Templates.__get__('getTemplatesFromRepo');
             it('returns the correct templates from a valid repository', async function() {
                 const output = await getTemplatesFromRepo(sampleRepos.codewind);
                 output.should.have.deep.members(defaultCodewindTemplates);

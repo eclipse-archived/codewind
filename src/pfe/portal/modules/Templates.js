@@ -382,12 +382,10 @@ async function getNameAndDescriptionFromRepoTemplatesJSON(url) {
 }
 
 async function fetchTemplates(repositories) {
-  // const repositories = this.getRepositories();
   const enabledRepositories = repositories.filter(repo => repo.enabled);
   const disabledRepositories = repositories.filter(repo => !repo.enabled);
   const enabledTemplates = await getTemplatesFromRepos(enabledRepositories);
   const disabledTemplates = await getTemplatesFromRepos(disabledRepositories);
-  // this.enabledProjectTemplates = newEnabledTemplates;
   const allTemplates = enabledTemplates.concat(disabledTemplates);
   return { enabledTemplates, allTemplates }
 }
