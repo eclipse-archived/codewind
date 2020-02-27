@@ -91,6 +91,34 @@ describe('FileWatcher.js', () => {
             fw.locale = true;
         });
     });
+    describe('handleEvent(event, fwProject)', () => {
+        it('handles `projectCreation` events', async() => {
+            const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
+            const fw = new FileWatcher('mockUser');
+            const handleFWProjectEvent = sinon.stub(fw, 'handleFWProjectEvent');
+
+            await fw.handleEvent('projectCreation', mockFwProject);
+
+            handleFWProjectEvent.should.have.been.calledOnceWithExactly('projectCreation', mockFwProject);
+        });
+        it('handles `projectChanged` events', async() => {
+            const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
+            const fw = new FileWatcher('mockUser');
+            const handleFWProjectEvent = sinon.stub(fw, 'handleFWProjectEvent');
+
+            await fw.handleEvent('projectChanged', mockFwProject);
+
+            handleFWProjectEvent.should.have.been.calledOnceWithExactly('projectChanged', mockFwProject);
+        });
+        it('does nothing when event is unexpected', async() => {
+            const fw = new FileWatcher('mockUser');
+            const handleFWProjectEvent = sinon.stub(fw, 'handleFWProjectEvent');
+            
+            await fw.handleEvent('unexpectedEvent', 'mockFwProject');
+
+            handleFWProjectEvent.should.not.have.been.called;
+        });
+    });
     describe('handleCapabilitiesUpdated(fwProject)', () => {
         it('updates the project object, project.inf, and UI with `capabilitiesReady: true` when updating the project.inf succeeds', async() => {
             // arrange

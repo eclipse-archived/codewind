@@ -44,142 +44,144 @@ module.exports = class FileWatcher {
     if(this.locale) this.setLocale(this.locale);
     filewatcher.registerListener({
       name: "portalListener",
-      handleEvent: async (event, fwProject) => {
-        log.debug("Portal's event listener: " + event);
-        log.debug("Portal's event listener: " + JSON.stringify(fwProject));
-        switch (event) {
-        case "projectCreation" : {
-          await this.handleFWProjectEvent('projectCreation', fwProject);
-          break;
-        }
-
-        case "projectSettingsChanged" : {
-          logEvent("projectSettingsChanged", fwProject);
-          // Handle the projectSettingsChanged event only when we get a success
-          if(fwProject.status === 'success') {
-            await this.handleUpdatedProject("projectSettingsChanged", fwProject);
-          }
-          this.user.uiSocket.emit("projectSettingsChanged", fwProject);
-          break;
-        }
-
-        case "imagePushRegistryStatus" : {
-          this.user.uiSocket.emit("imagePushRegistryStatus", fwProject);
-          break;
-        }
-
-        case "projectDeletion" : {
-          logEvent('projectDeletion', fwProject);
-          // Delete properties that we don't want to store
-          delete fwProject.operationId;
-          try {
-            // Retrieve the project information so we can decide how to handle this.
-            let project = this.user.projectList.retrieveProject(fwProject.projectID);
-            if (project.isClosing()) {
-              // Project is being closed
-              const projectID = fwProject.projectID;
-              const data = {
-                changeType: "delete",
-                projectID: projectID
-              }
-              WebSocket.watchListChanged(data);
-              await this.handleProjectClosed(fwProject, project);
-            } else if (project.isDeleting() ) {
-              // Project is being deleted
-              const projectID = fwProject.projectID;
-              const data = {
-                changeType: "delete",
-                projectID: projectID
-              }
-              WebSocket.watchListChanged(data);
-              await this.handleProjectDeleted(fwProject, project);
-            } else {
-              log.error(`Unexpected project deletion event for: ${fwProject.projectID}: ${inspect(fwProject)}`);
-            }
-          } catch (err) {
-            let data = {
-              projectID: fwProject.projectID,
-              status: 'failure',
-              error: err.message
-            }
-            log.error(`Error deleting project ${fwProject.projectID}: ${inspect(err)}`);
-            this.user.uiSocket.emit('projectDeletion', data);
-          }
-          break;
-        }
-
-        case "projectChanged" : {
-          await this.handleFWProjectEvent('projectChanged', fwProject);
-          break;
-        }
-
-        case "projectValidated" : {
-          logEvent('projectValidated', fwProject);
-          delete fwProject.operationId;
-          fwProject.validationStatus = fwProject.status;
-          delete fwProject.status;
-          fwProject.validationResults = fwProject.results;
-          delete fwProject.results;
-          delete fwProject.error;
-
-          try {
-            await this.user.projectList.updateProject(fwProject);
-            this.user.uiSocket.emit('projectValidated', fwProject);
-          } catch (err) {
-            log.error(err);
-          }
-          break;
-        }
-
-        case "projectStatusChanged" : {
-          await this.handleFWProjectEvent('projectStatusChanged', fwProject);
-          break;
-        }
-
-        case "projectRestartResult" : {
-          await this.handleFWProjectEvent('projectRestartResult', fwProject);
-          break;
-        }
-
-        case "projectLogsListChanged" : {
-          let logType;
-          if (fwProject.build) {
-            logType = 'build'
-          } else if (fwProject.app) {
-            logType = 'app'
-          } else {
-            log.error('projectLogsListChanged: Unknown log type.');
-            break;
-          }
-          let file = fwProject[logType][0].files[0];
-          let logName = path.basename(file);
-          let logObject = { logName: logName }
-          if (fwProject[logType].origin == 'workspace') {
-            logObject.workspaceLogPath = path.dirname(file);
-          }
-          let message = { projectID: fwProject.projectID };
-          message[logType] = [logObject];
-          this.user.uiSocket.emit('projectLogsListChanged', message);
-          break;
-        }
-
-        case "newProjectAdded": {
-          await this.handleNewProjectAdded('newProjectAdded', fwProject);
-          break;
-        }
-
-        case "projectCapabilitiesReady" : {
-          await this.handleCapabilitiesUpdated(fwProject);
-          break;
-        }
-
-        default: {
-          log.debug("Unknown event received: " + event);
-          log.debug("Detailed message received from file-watcher module: " + JSON.stringify(fwProject));
-        }
-        }
-      }
+      handleEvent: this.handleEvent.bind(this),
     });
+  }
+
+  async handleEvent(event, fwProject) {
+    log.debug("Portal's event listener: " + event);
+    log.debug("Portal's event listener: " + JSON.stringify(fwProject));
+    switch (event) {
+    case "projectCreation" : {
+      await this.handleFWProjectEvent('projectCreation', fwProject);
+      break;
+    }
+
+    case "projectSettingsChanged" : {
+      logEvent("projectSettingsChanged", fwProject);
+      // Handle the projectSettingsChanged event only when we get a success
+      if(fwProject.status === 'success') {
+        await this.handleUpdatedProject("projectSettingsChanged", fwProject);
+      }
+      this.user.uiSocket.emit("projectSettingsChanged", fwProject);
+      break;
+    }
+
+    case "imagePushRegistryStatus" : {
+      this.user.uiSocket.emit("imagePushRegistryStatus", fwProject);
+      break;
+    }
+
+    case "projectDeletion" : {
+      logEvent('projectDeletion', fwProject);
+      // Delete properties that we don't want to store
+      delete fwProject.operationId;
+      try {
+        // Retrieve the project information so we can decide how to handle this.
+        let project = this.user.projectList.retrieveProject(fwProject.projectID);
+        if (project.isClosing()) {
+          // Project is being closed
+          const projectID = fwProject.projectID;
+          const data = {
+            changeType: "delete",
+            projectID: projectID
+          }
+          WebSocket.watchListChanged(data);
+          await this.handleProjectClosed(fwProject, project);
+        } else if (project.isDeleting() ) {
+          // Project is being deleted
+          const projectID = fwProject.projectID;
+          const data = {
+            changeType: "delete",
+            projectID: projectID
+          }
+          WebSocket.watchListChanged(data);
+          await this.handleProjectDeleted(fwProject, project);
+        } else {
+          log.error(`Unexpected project deletion event for: ${fwProject.projectID}: ${inspect(fwProject)}`);
+        }
+      } catch (err) {
+        let data = {
+          projectID: fwProject.projectID,
+          status: 'failure',
+          error: err.message
+        }
+        log.error(`Error deleting project ${fwProject.projectID}: ${inspect(err)}`);
+        this.user.uiSocket.emit('projectDeletion', data);
+      }
+      break;
+    }
+
+    case "projectChanged" : {
+      await this.handleFWProjectEvent('projectChanged', fwProject);
+      break;
+    }
+
+    case "projectValidated" : {
+      logEvent('projectValidated', fwProject);
+      delete fwProject.operationId;
+      fwProject.validationStatus = fwProject.status;
+      delete fwProject.status;
+      fwProject.validationResults = fwProject.results;
+      delete fwProject.results;
+      delete fwProject.error;
+
+      try {
+        await this.user.projectList.updateProject(fwProject);
+        this.user.uiSocket.emit('projectValidated', fwProject);
+      } catch (err) {
+        log.error(err);
+      }
+      break;
+    }
+
+    case "projectStatusChanged" : {
+      await this.handleFWProjectEvent('projectStatusChanged', fwProject);
+      break;
+    }
+
+    case "projectRestartResult" : {
+      await this.handleFWProjectEvent('projectRestartResult', fwProject);
+      break;
+    }
+
+    case "projectLogsListChanged" : {
+      let logType;
+      if (fwProject.build) {
+        logType = 'build'
+      } else if (fwProject.app) {
+        logType = 'app'
+      } else {
+        log.error('projectLogsListChanged: Unknown log type.');
+        break;
+      }
+      let file = fwProject[logType][0].files[0];
+      let logName = path.basename(file);
+      let logObject = { logName: logName }
+      if (fwProject[logType].origin == 'workspace') {
+        logObject.workspaceLogPath = path.dirname(file);
+      }
+      let message = { projectID: fwProject.projectID };
+      message[logType] = [logObject];
+      this.user.uiSocket.emit('projectLogsListChanged', message);
+      break;
+    }
+
+    case "newProjectAdded": {
+      await this.handleNewProjectAdded('newProjectAdded', fwProject);
+      break;
+    }
+
+    case "projectCapabilitiesReady" : {
+      await this.handleCapabilitiesUpdated(fwProject);
+      break;
+    }
+
+    default: {
+      log.debug("Unknown event received: " + event);
+      log.debug("Detailed message received from file-watcher module: " + JSON.stringify(fwProject));
+    }
+    }
   }
 
   async handleCapabilitiesUpdated(fwProject) {
