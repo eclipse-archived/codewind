@@ -11,7 +11,9 @@
 const fs = require('fs-extra');
 const path = require('path');
 const proxyquire = require('proxyquire');
+const sinon = require('sinon');
 const chai = require('chai');
+const sinonChai = require('sinon-chai');
 const chaiSubset = require('chai-subset');
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 
@@ -61,6 +63,7 @@ const Project = proxyquire('../../../../src/pfe/portal/modules/Project', {
 
 chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
+chai.use(sinonChai);
 const should = chai.should();
 
 const testWorkspace = path.join(__dirname, `${__filename}/`);
@@ -411,6 +414,66 @@ describe('User.js', () => {
             projectInf.should.not.have.property('startMode');
         });
     });
+    describe('buildAndRunProject(project)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('builds and runs the project then does not update the project when the build was successful and there is a build log file', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            const expectedBuildLogPath = 'expected build log path';
+            user.fw.buildAndRunProject = () => ({ logs: { build: { file: expectedBuildLogPath } } });
+            
+            await user.buildAndRunProject(project);
+
+            project.buildLogPath.should.equal(expectedBuildLogPath);
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            should.equal(projectInf.buildLogPath, null);
+
+            user.uiSocket.emit.should.not.have.been.called;
+        });
+        it('builds and runs the project then does not update the project when the build was successful and there is no build log file', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.buildAndRunProject = () => ({ statusCode: 202 });
+            
+            await user.buildAndRunProject(project);
+
+            should.equal(project.buildLogPath, null);
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            should.equal(projectInf.buildLogPath, null);
+            user.uiSocket.emit.should.not.have.been.called;
+        });
+        it('closes the project when the build was unsuccessful', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.buildAndRunProject = () => { throw new Error('build failed'); };
+            project.state = 'open'; // ensure this is not already what it should be later in this test
+            project.autoBuild = true; // ensure this is not already what it should be later in this test
+            
+            await user.buildAndRunProject(project);
+
+            project.should.containSubset({
+                buildLogPath: null,
+                state: 'closed',
+                autoBuild: false,
+            });
+            const pathToProjectInf = path.join(pathToProjectInfDir, `${project.projectID}.inf`);
+            const projectInf = fs.readJsonSync(pathToProjectInf);
+            projectInf.should.containSubset({
+                buildLogPath: null,
+                state: 'closed',
+                autoBuild: false,
+            });
+            user.uiSocket.emit.should.have.been.calledOnceWith('projectClosed', {
+                projectID: project.projectID,
+                state: 'closed',
+                autoBuild: false,
+            });
+        });
+    });
     describe('initialiseExistingProjects()', () => {
         beforeEach(() => {
             fs.emptyDirSync(pathToProjectInfDir);
@@ -611,8 +674,7 @@ describe('User.js', () => {
 });
 
 const uiSocketStub = {
-    emit: () => {},
-    of: () => ({ emit: () => {} }),
+    of: () => ({ emit: sinon.stub() }),
 };
 
 const newSimpleUser = () => {
