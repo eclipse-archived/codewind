@@ -426,21 +426,32 @@ module.exports = class FileWatcher {
         const projectWatchStateId = crypto.randomBytes(16).toString("hex");
         const data = {
           changeType: "update",
-          projectWatchStateId: projectWatchStateId,
-          projectID: projectID,
-          pathToMonitor: pathToMonitor,
-          ignoredPaths: ignoredPaths,
-          refPaths: []
+          projectWatchStateId,
+          projectID,
+          pathToMonitor,
+          ignoredPaths,
+          refPaths: [],
         }
         if (fwProject.refPaths) {
-          data.refPaths = fwProject.refPaths.map((refPath) => {
-            return { from: project.resolveMonitorPath(refPath.from), to: refPath.to };
-          });
+          data.refPaths = fwProject.refPaths.map((refPath) => ({ 
+            from: project.resolveMonitorPath(refPath.from), 
+            to: refPath.to,
+          }));
         }
-        let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths, status: fwProject.status };
+        const projectUpdate = { 
+          projectID,
+          projectWatchStateId,
+          ignoredPaths,
+          status: fwProject.status,
+        };
         await this.handleFWProjectEvent(event, projectUpdate);
         WebSocket.watchListChanged(data);
-      } else if (fwProject.contextRoot || fwProject.ports || fwProject.mavenProfiles || fwProject.mavenProperties || fwProject.statusPingTimeout || typeof fwProject.isHttps == "boolean") {
+      } else if (fwProject.contextRoot
+        || fwProject.ports
+        || fwProject.mavenProfiles
+        || fwProject.mavenProperties
+        || fwProject.statusPingTimeout
+        || typeof fwProject.isHttps == "boolean") {
         // Update the project.inf on project settings change
         await this.handleFWProjectEvent(event, fwProject);
       }
@@ -468,29 +479,31 @@ module.exports = class FileWatcher {
       const projectWatchStateId = crypto.randomBytes(16).toString("hex");
       const data = {
         changeType: "add",
-        projectWatchStateId: projectWatchStateId,
-        projectID: projectID,
-        pathToMonitor: pathToMonitor,
-        ignoredPaths: ignoredPaths,
+        projectWatchStateId,
+        projectID,
+        pathToMonitor,
+        ignoredPaths,
         refPaths: [],
-        projectCreationTime: time
+        projectCreationTime: time,
       }
       if (fwProject.refPaths) {
-        data.refPaths = fwProject.refPaths.map((refPath) => {
-          return { from: project.resolveMonitorPath(refPath.from), to: refPath.to };
-        });
+        data.refPaths = fwProject.refPaths.map((refPath) => ({
+          from: project.resolveMonitorPath(refPath.from),
+          to: refPath.to 
+        }));
       }
-      let projectUpdate = { projectID: projectID, projectWatchStateId: projectWatchStateId, ignoredPaths: ignoredPaths, status: fwProject.status };
+      const projectUpdate = {
+        projectID,
+        projectWatchStateId,
+        ignoredPaths,
+        status: fwProject.status,
+      };
       await this.handleFWProjectEvent(event, projectUpdate);
       WebSocket.watchListChanged(data);
     } catch (err) {
       log.error(err);
     }
   }
-
-
-
-
 
   /**
    * Response function to fw create / changed socket events
@@ -554,7 +567,7 @@ module.exports = class FileWatcher {
     // remove fields which are not required by the UI
     const { logStreams, ...projectInfoForUI } = updatedProject;
     this.user.uiSocket.emit('projectClosed', {...projectInfoForUI, status: fwProject.status});
-    log.debug('project ' + fwProject.projectID + ' successfully closed');
+    log.debug(`project ${fwProject.projectID} successfully closed`);
   }
 
   // Send the project deleted event. We do not need to send updates
