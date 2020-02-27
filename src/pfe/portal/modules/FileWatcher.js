@@ -712,5 +712,6 @@ function logEvent(event, projectData) {
     log.info(`${msg} ${projectData.projectID}) total time for update->run: ${ totalUpdateTime } seconds`)
     updateTimerStart = 0;
   }
-
 }
+
+module.exports.handleProjectActionResponse = handleProjectActionResponse;
