@@ -179,9 +179,14 @@ if [ -e "$CSV_BASELINE_DIR/$CSV_FILENAME" ]; then
 fi
 
 if [ "$NEW_BASELINE" == "y" ]; then
+    OLD_FILE="$CSV_BASELINE_DIR/$TEST_ENV-$TURBINE_PERFORMANCE_TEST-performance-data-old.csv"
+    echo -e "${CYAN}> Saving a copy of previous run data for logistic purposes as $OLD_FILE ... ${RESET}"
+    mv "$CSV_BASELINE_DIR/$CSV_FILENAME" "$OLD_FILE"
+    checkExitCode $? "Failed to save copy of previous performance data csv."
+
     echo -e "${CYAN}> Copying over performance data csv from "$LOGS_DATA_DIR/$CSV_FILENAME" to $CSV_BASELINE_DIR ... ${RESET}"
     cp -r "$LOGS_DATA_DIR/$CSV_FILENAME" $CSV_BASELINE_DIR/
-    checkExitCode $? "Failed to copy performance data csv. Please check the source directory for data in "$LOGS_DATA_DIR/$CSV_FILENAME"" true
+    checkExitCode $? "Failed to copy performance data csv. Please check the source directory for data in "$LOGS_DATA_DIR/$CSV_FILENAME""
 fi
 
 echo -e "${CYAN}> Putting performance logs/data directory "$TEST_INFO_DIR/performance-test-data" on server  ... ${RESET}"
