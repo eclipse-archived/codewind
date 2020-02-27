@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #*******************************************************************************
 # Copyright (c) 2019 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
@@ -28,34 +28,30 @@ mkdir -p $LOG_DIR
 
 cd /app
 
-function readCache() {
-    if [[ -f $CACHE_FILE ]]; then
-        while read line; do
-            if [[ $line == pid=* ]]; then
-                PID=${line#*=}
-            fi
-        done < $CACHE_FILE
+readCache() {
+    if [ -f $CACHE_FILE ]; then
+       PID=$(awk -F 'pid=' 'NF>0 { print $2 }' $CACHE_FILE |  tr -d '[:space:]')
     fi
     echo "Read in PID $PID from cache"
 }
 
-function writeCache() {
+writeCache() {
     echo "Write PID $PID to cache"
     echo "" > $CACHE_FILE
-    if [[ -n $PID ]]; then
+    if [ -n $PID ]; then
         echo "pid=$PID" >> $CACHE_FILE
     fi
 }
 
-function stop() {
+stop() {
     echo "Stop node and unset PID"
-    if [[ -n $PID ]]; then
+    if [ -n $PID ]; then
        kill -- -$(ps -o pgid= $PID | grep -o [0-9]*)
     fi
     PID=
 }
 
-function start() {
+start() {
     echo "Start node project in $START_MODE mode, auto build is $AUTO_BUILD_ENABLED"
 
     npm install 1>> $LOG_FILE 2>> $LOG_FILE
@@ -64,11 +60,11 @@ function start() {
     # If auto build is enabled, we wrap the script in 'nodemon'.
 
     prefix=""
-    if [[ "$AUTO_BUILD_ENABLED" == "true" ]]; then
+    if [ "$AUTO_BUILD_ENABLED" = "true" ]; then
         npm install -g nodemon >> $LOG_FILE 2>> $LOG_FILE
         # Wrap the npm script in nodemon
         # If os passed in is windows, use the legacy watch option
-        if [[ "$OS" == "windows" ]]; then
+        if [ "$OS" = "windows" ]; then
             prefix="nodemon -L --exec"
         else
             prefix="nodemon --exec"
@@ -78,7 +74,7 @@ function start() {
     npm_script="start"
     # Treat debug and debugNoInit the same. If the user wants to debug init,
     # they can replace '--inspect' with '--inspect-brk' in package.json themselves
-    if [[ "$START_MODE" == "debug" || "$START_MODE" == "debugNoInit" ]]; then
+    if [ "$START_MODE" = "debug" ] || [ "$START_MODE" = "debugNoInit" ]; then
         npm_script="debug"
     fi
 
@@ -90,27 +86,28 @@ function start() {
     echo "PID is $PID"
 }
 
-if [[ "$COMMAND" == "start" ]]; then
+if [ "$COMMAND" = "start" ]; then
     start $AUTO_BUILD_ENABLED $START_MODE
     writeCache $PID
-elif [[ "$COMMAND" == "stop" ]]; then
+elif [ "$COMMAND" = "stop" ]; then
     readCache $PID
     stop $PID
     writeCache $PID
-elif [[ "$COMMAND" == "isActive" ]]; then
+elif [ "$COMMAND" = "isActive" ]; then
     readCache $PID
-    if [[ -n $PID ]]; then
+    if [ -n $PID ]; then
         TIMEOUT=0
-        until [[ $TIMEOUT -eq 10 ]]; do
-            ps -p $PID
-            if [[ $? -eq 0 ]]; then
+        until [ $TIMEOUT -eq 10 ]; do
+            PS_DIR="/proc/$PID"
+            if [ -d $PS_DIR ]; then
                 # Check if using nodemon
-                ps -o cmd -p $PID | grep nodemon
-                if [[ $? -eq 0 ]]; then
+                cat $PS_DIR/cmdline | grep nodemon
+                if [ $? -eq 0 ]; then
                     # The nodemon process stays around even when there is an error so check for PID
                     # as the parent process id as well
-                    ps --ppid $PID
-                    if [[ $? -eq 0 ]]; then
+                    PARENT_PROCESS_ID=$(awk -F 'PPid:' 'NF>0 { print $2 }' $PS_DIR/status |  tr -d '[:space:]')
+                    echo "Parent process ID: $PARENT_PROCESS_ID"
+                    if [ -d /proc/$PARENT_PROCESS_ID ]; then
                         exit 0
                     fi
                 else
@@ -118,7 +115,7 @@ elif [[ "$COMMAND" == "isActive" ]]; then
                     exit 0
                 fi
             fi
-            (( TIMEOUT++ ))
+            TIMEOUT=`expr "$TIMEOUT" + 1`
             sleep 1
         done
         echo "Could not find a running node/nodemon process. Try restarting the processes by toggling the auto build preference."

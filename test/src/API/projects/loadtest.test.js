@@ -177,7 +177,17 @@ describe('Load Runner Tests', function() {
             res.should.satisfyApiSpec;
         });
 
-        it('fails with 503 to run load when load is already running', async function() {
+        /**
+         * Test disabled because we don't wait for test project to run, so PFE rejects requests to run load.
+         */
+        it.skip('fails with 409 to run load when load is already running', async function() {
+            this.timeout(testTimeout.short);
+            const res = await projectService.runLoad(projectID);
+            res.should.have.status(409);
+            res.should.satisfyApiSpec;
+        });
+
+        it('fails with 503 to run load when project is not running', async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.runLoad(projectID);
             res.should.have.status(503);

@@ -462,7 +462,7 @@ export async function exposeOverIngress(projectID: string, projectName: string, 
                         "apiVersion": "apps/v1",
                         "blockOwnerDeletion": true,
                         "controller": true,
-                        "kind": "ReplicaSet",
+                        "kind": "Deployment",
                         "name": `${ownerReferenceName}`,
                         "uid": `${ownerReferenceUID}`
                     }

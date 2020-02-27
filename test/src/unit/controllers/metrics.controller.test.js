@@ -55,8 +55,7 @@ describe('metrics.controller.js', () => {
                 cw_user: {
                     projectList: {
                         retrieveProject: () => ({
-                            workspace: 'test',
-                            directory: 'projectDir',
+                            projectPath: () => {},
                             projectType: 'unsupportedProjectType',
                         }),
                         updateProject: () => { throw new Error('we should not update the project.inf'); },
@@ -78,8 +77,7 @@ describe('metrics.controller.js', () => {
                 cw_user: {
                     projectList: {
                         retrieveProject: () => ({
-                            workspace: 'test',
-                            directory: 'projectDir', 
+                            projectPath: () => {},
                             projectType: 'nodejs',
                         }),
                         updateProject: () => {},
@@ -112,8 +110,7 @@ describe('metrics.controller.js', () => {
                 cw_user: {
                     projectList: {
                         retrieveProject: () => ({
-                            workspace: 'test',
-                            directory: 'projectDir',
+                            projectPath: () => {},
                             projectType: 'nodejs',
                         }),
                         updateProject: () => {},

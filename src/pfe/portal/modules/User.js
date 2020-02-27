@@ -58,7 +58,7 @@ module.exports = class User {
     }
     this.secure = true;
     this.dockerConfigFile = "/root/.docker/config.json";
-    this.codewindPFESecretName = "codewind-" + process.env.CHE_WORKSPACE_ID + "-docker-registries";
+    this.codewindPFESecretName = `codewind-${process.env.CHE_WORKSPACE_ID}-docker-registries`;
     // Get the Kube Client context when running in K8s
     if (global.codewind.RUNNING_IN_K8S == true) {
       this.k8Client = global.codewind.k8Client;
@@ -168,8 +168,7 @@ module.exports = class User {
         projectPort = hostOptions.port;
       }
 
-      let url = projectProtocol  + projectHost + ":" + projectPort + config.path;
-      config.url = url;
+      config.url = `${projectProtocol}${projectHost}:${projectPort}${config.path}`;
       project.loadConfig = config;
       log.info(`Requesting load on project: ${project.projectID} config: ${JSON.stringify(config)}`);
       const runLoadResp = await this.loadRunner.runLoad(config, project, description);
@@ -187,6 +186,7 @@ module.exports = class User {
   async cancelLoad(project) {
     log.debug("cancelLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
     this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelling' });
+
     if (project.loadInProgress) {
       project.loadInProgress = false;
       log.debug("Cancelling load for config: " + JSON.stringify(project.loadConfig));
@@ -227,7 +227,7 @@ module.exports = class User {
           let settingsFilePath = path.join(projFile.workspace, projName, '.cw-settings');
           const settFileExists = await fs.pathExists(settingsFilePath);
           const settFile = settFileExists ? await fs.readJson(settingsFilePath) : {};
-          let project = new Project({ ...projFile, ...settFile }, projFile.workspace);
+          let project = new Project({ ...projFile, ...settFile });
           this.projectList.addProject(project);
         } catch (err) {
           // Corrupt project inf file
@@ -239,7 +239,6 @@ module.exports = class User {
         }
       }
     }))
-    return this.projectList.list;
   }
 
   /**
@@ -273,7 +272,7 @@ module.exports = class User {
           refPathsFile.refPaths.forEach((refPath) => {
             if ((typeof refPath.from === "string" && (refPath.from = refPath.from.trim()).length > 0) &&
                 (typeof refPath.to === "string" && (refPath.to = refPath.to.trim()).length > 0)) {
-                  projectUpdate.refPaths.push({ from: project.resolveMonitorPath(refPath.from), to: refPath.to });
+              projectUpdate.refPaths.push({ from: project.resolveMonitorPath(refPath.from), to: refPath.to });
             }
           });
         }
@@ -335,30 +334,10 @@ module.exports = class User {
    * @param projectJson, the project to add to the projectList
    */
   async createProject(projectJson) {
-    let project = new Project(projectJson, projectJson.workspace);
+    let project = new Project(projectJson);
     this.projectList.addProject(project);
     await project.writeInformationFile();
     return project;
-  }
-
-  /**
-   * Function to notify file-watcher that it needs to validate a given project
-   * @param project, an instance of the Project class
-   */
-  validateProject(project) {
-    try {
-      log.debug('Project ' + project.projectID + ' being validated');
-      this.fw.validateProject(project);
-    } catch (err) {
-      log.error('Error in function validateProject');
-      log.error(err);
-      // Notify the client via socket event that validation has failed
-      let data = {
-        projectID: project.projectID,
-        validationStatus: 'failed'
-      };
-      this.uiSocket.emit('projectValidated', data);
-    }
   }
 
   /**
@@ -587,21 +566,6 @@ module.exports = class User {
       logs: logs
     });
     return logs;
-  }
-
-  /**
-   * Function to check if the file watcher is up
-   * Uses a promise to pause the function and then recursion to check again
-   * @return status on whether fw is up
-   */
-  async checkIfFileWatcherUp(tries) {
-    if (this.fw.up) {
-      return true;
-    } else if (tries === 0) {
-      return false;
-    }
-    await cwUtils.timeout(500);
-    return this.checkIfFileWatcherUp(tries - 1);
   }
 
   /**
@@ -855,7 +819,7 @@ module.exports = class User {
                 "apiVersion": "apps/v1",
                 "blockOwnerDeletion": true,
                 "controller": true,
-                "kind": "ReplicaSet",
+                "kind": "Deployment",
                 "name": `${ownerReferenceName}`,
                 "uid": `${ownerReferenceUID}`
               }
