@@ -18,9 +18,9 @@ const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const ProjectList = require('../../../../src/pfe/portal/modules/ProjectList');
 const ExtensionList = require('../../../../src/pfe/portal/modules/ExtensionList');
 
-// import User.js but stub out some of its own imports so we can just test User.js
+// import User.js but mock some of its imports so we can test it in isolation
 /* eslint-disable class-methods-use-this */
-class LoggerStub {
+class MockLogger {
     error() {}
     warn() {}
     info() {}
@@ -28,14 +28,14 @@ class LoggerStub {
     trace() {}
 };
 
-class TemplatesStub {
+class MockTemplates {
     initializeRepositoryList() {}
     getTemplates() { return []; }
 };
 
-class LoadRunnerStub {};
+class MockLoadRunner {};
 
-class FileWatcherStub {
+class MockFileWatcher {
     setLocale() {}
 };
 /* eslint-enable class-methods-use-this */
@@ -44,26 +44,26 @@ class FileWatcherStub {
  requires FileWatcher.js it will also require 'file-watcher', which will error.
  See https://github.com/thlorenz/proxyquire#preventing-call-thru-to-original-dependency
 */
-FileWatcherStub['@noCallThru'] = true; 
+MockFileWatcher['@noCallThru'] = true; 
 
 const User = proxyquire('../../../../src/pfe/portal/modules/User', {
-    './utils/Logger': LoggerStub,
-    './Templates': TemplatesStub,
-    './LoadRunner': LoadRunnerStub,
-    './FileWatcher': FileWatcherStub,
+    './utils/Logger': MockLogger,
+    './Templates': MockTemplates,
+    './LoadRunner': MockLoadRunner,
+    './FileWatcher': MockFileWatcher,
 });
-// we have now imported User.js with some of its imports stubbed out
+// we have now imported User.js with some of its imports mocked
 
-// import Project.js but stub out the logger so it does not pollute the test output
+// import Project.js but mock the logger so it does not pollute the test output
 const Project = proxyquire('../../../../src/pfe/portal/modules/Project', {
-    './utils/Logger': LoggerStub,
+    './utils/Logger': MockLogger,
 });
 
 chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
 const should = chai.should();
 
-const testWorkspace = path.join(__dirname, 'User.test/');
+const testWorkspace = path.join(__dirname, `${__filename}/`);
 const pathToProjectInfDir = path.join(testWorkspace, '.projects');
 const testTempDirName = 'CODEWIND_TEMP_WORKSPACE';
 const pathToTestTempDir = path.join(testWorkspace, testTempDirName);
@@ -198,9 +198,9 @@ describe('User.js', () => {
 
             user.projectList.should.deep.equal(new ProjectList());
             user.extensionList.should.deep.equal(new ExtensionList());
-            user.templates.should.deep.equal(new TemplatesStub());
-            user.fw.should.deep.equal(new FileWatcherStub());
-            user.loadRunner.should.deep.equal(new LoadRunnerStub());
+            user.templates.should.deep.equal(new MockTemplates());
+            user.fw.should.deep.equal(new MockFileWatcher());
+            user.loadRunner.should.deep.equal(new MockLoadRunner());
 
             fs.readdirSync(testWorkspace).should.equalInAnyOrder([
                 '.config',
