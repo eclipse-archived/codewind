@@ -222,7 +222,7 @@
         }
         if (['base:cpu_process_cpu_load_percent', 'base_cpu_processCpuLoad_percent', 'process_cpu_used_ratio '].includes(metric.name)) {
           cpuData.process = numMetricValue;
-        } else if (['base:cpu_system_load_average', 'base_cpu_systemLoadAverage', 'os_cpu_used_ratio'].includes(metric.name)) { // ignored if -1 (not available)
+        } else if (['os_cpu_used_ratio'].includes(metric.name)) { // ignored if -1 (not available)
           cpuData.system = numMetricValue;
 
         } else if (['base:gc_global_time_seconds', 'time_in_gc_percentage'].includes(metric.name)) {
@@ -276,7 +276,7 @@
     // They expect the following objects:
       //  {
       //   time: 1572617286795,
-      //   system: 0.022906090659757385,  // base_cpu_systemLoadAverage
+      //   system: 0.022906090659757385,
       //   process: 0.0037501107295195104, // base_cpu_processCpuLoad_percent
       //   processMean: 0.003553777086287611,
       //   systemMean: 0.01992974160373655
