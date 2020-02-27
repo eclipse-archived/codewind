@@ -247,7 +247,7 @@ describe('Templates.js', function() {
                     output.should.deep.equal(['Codewind', 'Appsody']);
                 });
             });
-        })
+        });
         describe('getRepositories()', function() {
             const workspace = getWorkspaceAndDeleteAfterEach(this.title);
             let templateController;
@@ -1279,7 +1279,6 @@ describe('Templates.js', function() {
         });
         describe('performOperationsOnRepositoryList(requestedOperations, repositoryList)', function() {
             const performOperationsOnRepositoryList = Templates.__get__('performOperationsOnRepositoryList');
-            // [...mockRepoList]
             describe('when the requested operations are all valid', function() {
                 const tests = {
                     'enable 2 existing repos': {
