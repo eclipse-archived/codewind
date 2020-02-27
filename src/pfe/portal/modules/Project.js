@@ -162,17 +162,22 @@ module.exports = class Project {
       ? `/performance/charts?project=${this.projectID}`
       : null;
   }
-  
+
   getMetricsDashHost() {
     const isMetricsDashAvailable = this.injectMetrics || this.isOpenLiberty || this.metricsAvailable;
     if (!isMetricsDashAvailable) {
       return null;
     }
-    
-    const shouldShowMetricsDashHostedOnProject = !this.injectMetrics && this.metricsAvailable;
-    return shouldShowMetricsDashHostedOnProject
-      ? METRICS_DASH_HOST.project
-      : METRICS_DASH_HOST.performanceContainer;
+    let shouldShowMetricsDashHostedOnProject = false;
+    if (this.projectType === "appsodyExtension") {
+      if (!(this.language === "java")) {
+        shouldShowMetricsDashHostedOnProject = true;
+      }
+    } else {
+      shouldShowMetricsDashHostedOnProject = !this.injectMetrics && this.metricsAvailable;
+    }
+
+    return shouldShowMetricsDashHostedOnProject ? METRICS_DASH_HOST.project : METRICS_DASH_HOST.performanceContainer;
   }
   
   getMetricsDashPath() {
