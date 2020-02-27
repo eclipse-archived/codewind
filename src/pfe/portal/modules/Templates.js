@@ -59,7 +59,7 @@ module.exports = class Templates {
   async initializeRepositoryList() {
     this.lock();
     try {
-      let repositories = [...this.repositoryList];
+      let repositories = cwUtils.deepClone(this.repositoryList);
       const repositoryFileExists = await cwUtils.fileExists(this.repositoryFile);
       if (repositoryFileExists) {
         repositories = await fs.readJson(this.repositoryFile);
@@ -121,7 +121,6 @@ module.exports = class Templates {
   }
 
   // REPOSITORIES
-
   getRepositories() {
     this.lock();
     try {
@@ -152,15 +151,16 @@ module.exports = class Templates {
   async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
     this.lock();
     try {
-      const repositories = [...this.repositoryList];
+      const repositories = cwUtils.deepClone(this.repositoryList);
       const validatedUrl = await validateRepository(repoUrl, repositories);
       const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected);
 
-      const providers = {...this.providers};
+      const providers = cwUtils.deepClone(this.providers);
       this.providers = await addRepositoryToProviders(newRepo, providers);
 
       // Only update the repositoryList if the providers can be updated
-      const newRepositoryList = [...this.repositoryList, newRepo];
+      const currentRepoList = cwUtils.deepClone(this.repositoryList);
+      const newRepositoryList = [...currentRepoList, newRepo];
       this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, newRepositoryList, this.repositoryFile);
 
       // Fetch templates from the new repository and add them
@@ -179,16 +179,16 @@ module.exports = class Templates {
     try {
       const repoToDelete = this.repositoryList.find(repo => repo.url === repoUrl);
       if (!repoToDelete) throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
-      const providers = {...this.providers};
+      const providers = cwUtils.deepClone(this.providers);
       this.providers = await removeRepositoryFromProviders(repoToDelete, providers);
       try {
-        const currentRepoList = [...this.repositoryList];
+        const currentRepoList = cwUtils.deepClone(this.repositoryList);
         const updatedRepoList = await updateRepoListWithReposFromProviders(this.providers, currentRepoList, this.repositoryFile);
         this.repositoryList = updatedRepoList.filter(repo => repo.url !== repoUrl);
       }
       catch (err) {
         // rollback
-        const providers = {...this.providers};
+        const providers = cwUtils.deepClone(this.providers);
         this.providers = await addRepositoryToProviders(repoToDelete, providers).catch(error => log.warn(error.message));
         throw err;
       }
@@ -210,50 +210,16 @@ module.exports = class Templates {
   async batchUpdate(requestedOperations) {
     this.lock();
     try {
-      const promiseList = requestedOperations.map(operation => this.performOperationOnRepository(operation));
-      const operationResults = await Promise.all(promiseList);
+      const currentRepoList = cwUtils.deepClone(this.repositoryList);
+      const { operationResults, newRepositoryList } = await performOperationsOnRepositoryList(requestedOperations, currentRepoList);
+      const { enabledTemplates, allTemplates } = await fetchTemplates(newRepositoryList);
+      this.enabledProjectTemplates = enabledTemplates;
+      this.allProjectTemplates = allTemplates;
+      this.repositoryList = newRepositoryList;
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
       return operationResults;
     } finally {
       this.unlock();
-    }
-  }
-
-  async performOperationOnRepository(operation) {
-    const { op, url, value } = operation;
-    let operationResult = {};
-    if (op === 'enable') {
-      operationResult = await this.enableOrDisableRepository({ url, value });
-    }
-    operationResult.requestedOperation = operation;
-    return operationResult;
-  }
-
-  /**
-   * @param {JSON} { url (URL of template repo to enable or disable), value (true|false)}
-   * @returns {JSON} { status, error (optional) }
-   */
-  async enableOrDisableRepository({ url, value }) {
-    if (!this.getRepository(url)) {
-      return {
-        status: 404,
-        error: 'Unknown repository URL',
-      };
-    }
-    try {
-      const repo = await this.getRepository(url);
-      repo.enabled = (value === 'true' || value === true);
-      const { enabledTemplates, allTemplates } = await fetchTemplates(this.repositoryList);
-      this.enabledProjectTemplates = enabledTemplates;
-      this.allProjectTemplates = allTemplates;
-      return {
-        status: 200
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        error: error.message,
-      };
     }
   }
 
@@ -263,7 +229,7 @@ module.exports = class Templates {
     try {
       if (provider && typeof provider.getRepositories === 'function') {
         this.providers[name] = provider;
-        const currentRepoList = [...this.repositoryList];
+        const currentRepoList = cwUtils.deepClone(this.repositoryList);
         this.repositoryList = await updateRepoListWithReposFromProviders([provider], currentRepoList, this.repositoryFile);
 
         // Fetch templates from the new repository and add them
@@ -334,8 +300,8 @@ async function updateRepoListWithReposFromProviders(providers, repositoryList) {
   );
   if (extraRepos.length > 0) {
     const reposWithCodewindSettings = await addCodewindSettingsToRepository(extraRepos);
-    const updatedRepositoryList = repositoryList.concat(reposWithCodewindSettings);
-    return updatedRepositoryList;
+    const newRepositoryList = repositoryList.concat(reposWithCodewindSettings);
+    return newRepositoryList;
   }
   return repositoryList;
 }
@@ -358,7 +324,7 @@ function fetchAllRepositoryDetails(repos) {
 }
 
 async function fetchRepositoryDetails(repo) {
-  let newRepo = {...repo}
+  let newRepo = cwUtils.deepClone(repo);
 
   // Only set the name or description of the repo if not given by the user
   if (!(repo.name && repo.description)){
@@ -600,4 +566,64 @@ async function removeRepositoryFromProviders(repo, providers) {
   }
   await Promise.all(promises);
   return providers;
+}
+
+async function performOperationsOnRepositoryList(requestedOperations, repositoryList) {
+  const newRepositoryList = cwUtils.deepClone(repositoryList);
+
+  const promiseList = requestedOperations.map(async operation => {
+    const { operationResult, updatedRepo } = await performOperationOnRepository(operation, repositoryList);
+    if (updatedRepo) {
+      // Update the repository list with the new repository
+      const foundIndex = newRepositoryList.findIndex(repo => repo.url === updatedRepo.url);
+      newRepositoryList[foundIndex] = updatedRepo;
+    }
+    return operationResult;
+  });
+  const operationResults = await Promise.all(promiseList);
+  return { operationResults, newRepositoryList }
+}
+
+async function performOperationOnRepository(operation, repositoryList) {
+  const { op, url, value } = operation;
+  const repo = repositoryList.find(repo => repo.url === url);
+  let resultObject = {};
+  if (op === 'enable') {
+    resultObject = await enableOrDisableRepository({ value }, repo);
+  }
+
+  const { response: operationResult, updatedRepo } = resultObject;
+  operationResult.requestedOperation = operation;
+  return { operationResult, updatedRepo };
+}
+
+/**
+ * @param {JSON} { url (URL of template repo to enable or disable), value (true|false)}
+ * @returns {JSON} { response: { status, error (optional) }, updatedRepo (optional) }
+ */
+function enableOrDisableRepository({ value }, repo) {
+  if (!repo) {
+    return {
+      response: {
+        status: 404,
+        error: 'Unknown repository URL',
+      }
+    }
+  }
+  try {
+    repo.enabled = (value === 'true' || value === true);
+    return {
+      response: {
+        status: 200,
+      },
+      updatedRepo: repo,
+    }
+  } catch (error) {
+    return {
+      response: {
+        status: 500,
+        error: error.message,
+      }
+    }
+  }
 }

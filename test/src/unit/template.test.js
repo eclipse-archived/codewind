@@ -212,26 +212,6 @@ describe('Templates.js', function() {
                     (output.length).should.be.above(defaultCodewindTemplates.length);
                 });
             });
-            describe('and enable a repository and get the new templates', function() {
-                let templateController;
-                before(async function() {
-                    templateController = new Templates(workspace);
-                    const disabledRepo = { ...sampleRepos.codewind };
-                    disabledRepo.enabled = false;
-                    // Use a disabled repository, getTemplates should return no templates
-                    templateController.repositoryList = [disabledRepo];
-                    await templateController.initializeRepositoryList();
-                    const templates = await templateController.getTemplates(true);
-                    templates.length.should.equal(0);
-                });
-                it('returns an updated template list after a repo is enabled', async function() {
-                    // Change repository to be enabled
-                    await templateController.enableOrDisableRepository({ url: sampleRepos.codewind.url, value: true });
-                    // Get templates should return updated list of templates
-                    const templates = await templateController.getTemplates(true);
-                    templates.length.should.not.equal(0);
-                });
-            });
         });
         describe('getTemplatesByStyle(projectStyle, showEnabledOnly = false)', function() {
             const workspace = getWorkspaceAndDeleteAfterEach(this.title);
@@ -310,15 +290,51 @@ describe('Templates.js', function() {
                 should.equal(repo, null);
             });
         });
-        describe.skip('batchUpdate(requestedOperations)', function() {
+        describe('batchUpdate(requestedOperations)', function() {
             const workspace = getWorkspaceAndDeleteAfterEach(this.title);
-            let templateController;
-            beforeEach(() => {
-                fs.ensureDirSync(workspace);
-                templateController = new Templates(workspace);
-                templateController.repositoryList = [...mockRepoList];
+            describe('when the repository has a valid URL to gather templates', function() {
+                let templateController;
+                let totalNumTemplates;
+                before(async() => {
+                    fs.ensureDirSync(workspace);
+                    templateController = new Templates(workspace);
+                    const disabledCodewindRepo = {
+                        ...sampleRepos.codewind,
+                        enabled: false,
+                    };
+                    templateController.repositoryList = [{ ...disabledCodewindRepo }];
+                    await templateController.initializeRepositoryList();
+                    // templateController should have no enabled templates
+                    templateController.getTemplates(true).length.should.equal(0);
+                    totalNumTemplates = templateController.getTemplates(false).length;
+                });
+                it('enables a disabled repository and updates the templates', async function() {
+                    const operation = {
+                        op: 'enable',
+                        url: sampleRepos.codewind.url,
+                        value: 'true',
+                    };
+                    const output = await templateController.batchUpdate([operation]);
+
+                    output.should.deep.equal([{
+                        status: 200,
+                        requestedOperation: operation,
+                    }]);
+
+                    // templateController should have enabled templates
+                    templateController.getTemplates(true).length.should.equal(totalNumTemplates);
+
+                    const repoFile = fs.readJsonSync(templateController.repositoryFile);
+                    repoFile.should.include.deep.members([sampleRepos.codewind]);
+                });
             });
             describe('when the requested operations are all valid', function() {
+                let templateController;
+                beforeEach(() => {
+                    fs.ensureDirSync(workspace);
+                    templateController = new Templates(workspace);
+                    templateController.repositoryList = [...mockRepoList];
+                });
                 const tests = {
                     'enable 2 existing repos': {
                         input: [
@@ -545,140 +561,6 @@ describe('Templates.js', function() {
                     });
                 }
             });
-        });
-        describe('performOperationOnRepository(operation)', function() {
-            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
-            let templateController;
-            beforeEach(() => {
-                templateController = new Templates(workspace);
-                templateController.repositoryList = [...mockRepoList];
-            });
-            describe('when `operation.url` is an existing url', function() {
-                const tests = {
-                    'enable an existing repo': {
-                        input: {
-                            op: 'enable',
-                            url: '1',
-                            value: 'true',
-                        },
-                        output: {
-                            status: 200,
-                            requestedOperation: {
-                                op: 'enable',
-                                url: '1',
-                                value: 'true',
-                            },
-                        },
-                        expectedRepoDetails: {
-                            url: '1',
-                            description: '1',
-                            enabled: true,
-                        },
-                    },
-                    'disable an existing repo': {
-                        input: {
-                            op: 'enable',
-                            url: '1',
-                            value: 'false',
-                        },
-                        output: {
-                            status: 200,
-                            requestedOperation: {
-                                op: 'enable',
-                                url: '1',
-                                value: 'false',
-                            },
-                        },
-                        expectedRepoDetails: {
-                            url: '1',
-                            description: '1',
-                            enabled: false,
-                        },
-                    },
-                };
-                for (const [testName, test] of Object.entries(tests)) {
-                    describe(testName, function() { // eslint-disable-line no-loop-func
-                        it(`returns the expected operation info and correctly updates the repository file`, async function() {
-                            const output = await templateController.performOperationOnRepository(test.input);
-                            output.should.deep.equal(test.output);
-                        });
-                    });
-                }
-            });
-            describe('when `operation.url` is an unknown url', function() {
-                const tests = {
-                    'enable an unknown repo': {
-                        input: {
-                            op: 'enable',
-                            url: 'unknownRepoUrl',
-                            value: 'true',
-                        },
-                        output: {
-                            status: 404,
-                            error: 'Unknown repository URL',
-                            requestedOperation: {
-                                op: 'enable',
-                                url: 'unknownRepoUrl',
-                                value: 'true',
-                            },
-                        },
-                    },
-                    'disable an unknown repo': {
-                        input: {
-                            op: 'enable',
-                            url: 'unknownRepoUrl',
-                            value: 'false',
-                        },
-                        output: {
-                            status: 404,
-                            error: 'Unknown repository URL',
-                            requestedOperation: {
-                                op: 'enable',
-                                url: 'unknownRepoUrl',
-                                value: 'false',
-                            },
-                        },
-                    },
-                };
-                for (const [testName, test] of Object.entries(tests)) {
-                    describe(testName, function() { // eslint-disable-line no-loop-func
-                        it(`returns the expected operation info`, async function() {
-                            const output = await templateController.performOperationOnRepository(test.input);
-                            output.should.deep.equal(test.output);
-                        });
-                    });
-                }
-            });
-        });
-        describe('enableOrDisableRepository({ url, value })', () => {
-            const workspace = getWorkspaceAndDeleteAfterEach(this.title);
-            it('returns 404 as its status as the repository does not exist', async() => {
-                const templateController = new Templates(workspace);
-                const operationResponse = await templateController.enableOrDisableRepository({ url: 'urlThatDoesNotExist' });
-                operationResponse.should.have.property('status', 404);
-                operationResponse.should.have.property('error', 'Unknown repository URL');
-            });
-            const tests = {
-                'enables a project (Boolean)': { input: true, output: true, testRepo: mockRepos.disabled },
-                'enables a project (String)': { input: 'true', output: true, testRepo: mockRepos.disabled },
-                'disables a project (Boolean)': { input: false, output: false, testRepo: mockRepos.enabled },
-                'disables a project (String)': { input: 'false', output: false, testRepo: mockRepos.enabled },
-            };
-            for (const [testName, test] of Object.entries(tests)) {
-                const { input, output, testRepo } = test;
-                // eslint-disable-next-line no-loop-func
-                it(`returns 200 and ${testName}`, async() => {
-                    const templateController = new Templates(workspace);
-                    templateController.repositoryList = [testRepo];
-
-                    const operationResponse = await templateController.enableOrDisableRepository({ url: testRepo.url, value: input });
-                    operationResponse.should.have.property('status', 200);
-                    operationResponse.should.not.have.property('error');
-
-                    const repoPostChange = await templateController.getRepository(testRepo.url);
-                    repoPostChange.should.have.property('enabled', output);
-                });
-            }
         });
         describe('addRepository(repoUrl, repoDescription, repoName, isRepoProtected)', function() {
             const mockRepoList = [{ id: 'notanid', url: 'https://made.up/url' }];
@@ -1389,6 +1271,366 @@ describe('Templates.js', function() {
                 const { firstProvider: updatedFirstProvider } = updatedProviders;
                 updatedFirstProvider.repositories.should.have.length(0);
             });
+        });
+        describe('performOperationsOnRepositoryList(requestedOperations, repositoryList)', function() {
+            const performOperationsOnRepositoryList = Templates.__get__('performOperationsOnRepositoryList');
+            // [...mockRepoList]
+            describe('when the requested operations are all valid', function() {
+                const tests = {
+                    'enable 2 existing repos': {
+                        input: [
+                            {
+                                op: 'enable',
+                                url: '1',
+                                value: 'true',
+                            },
+                            {
+                                op: 'enable',
+                                url: '2',
+                                value: 'true',
+                            },
+                        ],
+                        output: [
+                            {
+                                status: 200,
+                                requestedOperation: {
+                                    op: 'enable',
+                                    url: '1',
+                                    value: 'true',
+                                },
+                            },
+                            {
+                                status: 200,
+                                requestedOperation: {
+                                    op: 'enable',
+                                    url: '2',
+                                    value: 'true',
+                                },
+                            },
+                        ],
+                        expectedRepoDetails: [
+                            {
+                                url: '1',
+                                description: '1',
+                                enabled: true,
+                            },
+                            {
+                                url: '2',
+                                description: '2',
+                                enabled: true,
+                            },
+                        ],
+                    },
+                    'disable 2 existing repos': {
+                        input: [
+                            {
+                                op: 'enable',
+                                url: '1',
+                                value: 'false',
+                            },
+                            {
+                                op: 'enable',
+                                url: '2',
+                                value: 'false',
+                            },
+                        ],
+                        output: [
+                            {
+                                status: 200,
+                                requestedOperation: {
+                                    op: 'enable',
+                                    url: '1',
+                                    value: 'false',
+                                },
+                            },
+                            {
+                                status: 200,
+                                requestedOperation: {
+                                    op: 'enable',
+                                    url: '2',
+                                    value: 'false',
+                                },
+                            },
+                        ],
+                        expectedRepoDetails: [
+                            {
+                                url: '1',
+                                description: '1',
+                                enabled: false,
+                            },
+                            {
+                                url: '2',
+                                description: '2',
+                                enabled: false,
+                            },
+                        ],
+                    },
+                    'enable an unknown repo': {
+                        input: [
+                            {
+                                op: 'enable',
+                                url: '1',
+                                value: 'false',
+                            },
+                            {
+                                op: 'enable',
+                                url: '2',
+                                value: 'false',
+                            },
+                        ],
+                        output: [
+                            {
+                                status: 200,
+                                requestedOperation: {
+                                    op: 'enable',
+                                    url: '1',
+                                    value: 'false',
+                                },
+                            },
+                            {
+                                status: 200,
+                                requestedOperation: {
+                                    op: 'enable',
+                                    url: '2',
+                                    value: 'false',
+                                },
+                            },
+                        ],
+                        expectedRepoDetails: [
+                            {
+                                url: '1',
+                                description: '1',
+                                enabled: false,
+                            },
+                            {
+                                url: '2',
+                                description: '2',
+                                enabled: false,
+                            },
+                        ],
+                    },
+                    'enable an unknown repo': {
+                        input: [
+                            {
+                                op: 'enable',
+                                url: 'unknownRepoUrl',
+                                value: 'true',
+                            },
+                        ],
+                        output: [
+                            {
+                                status: 404,
+                                error: 'Unknown repository URL',
+                                requestedOperation: {
+                                    op: 'enable',
+                                    url: 'unknownRepoUrl',
+                                    value: 'true',
+                                },
+                            },
+                        ],
+                    },
+                    'disable an unknown repo': {
+                        input: [
+                            {
+                                op: 'enable',
+                                url: 'unknownRepoUrl',
+                                value: 'false',
+                            },
+                        ],
+                        output: [
+                            {
+                                status: 404,
+                                error: 'Unknown repository URL',
+                                requestedOperation: {
+                                    op: 'enable',
+                                    url: 'unknownRepoUrl',
+                                    value: 'false',
+                                },
+                            },
+                        ],
+                    },
+                    'disable an existing repo and an unknown repo': {
+                        input: [
+                            {
+                                op: 'enable',
+                                url: '1',
+                                value: 'false',
+                            },
+                            {
+                                op: 'enable',
+                                url: 'unknownRepoUrl',
+                                value: 'false',
+                            },
+                        ],
+                        output: [
+                            {
+                                status: 200,
+                                requestedOperation: {
+                                    op: 'enable',
+                                    url: '1',
+                                    value: 'false',
+                                },
+                            },
+                            {
+                                status: 404,
+                                error: 'Unknown repository URL',
+                                requestedOperation: {
+                                    op: 'enable',
+                                    url: 'unknownRepoUrl',
+                                    value: 'false',
+                                },
+                            },
+                        ],
+                        expectedRepoDetails: [
+                            {
+                                url: '1',
+                                description: '1',
+                                enabled: false,
+                            },
+                        ],
+                    },
+                };
+                for (const [testName, test] of Object.entries(tests)) {
+                    // eslint-disable-next-line no-loop-func
+                    it(`${testName}`, async function() {
+                        const repoList = [...mockRepoList];
+                        const { operationResults, newRepositoryList } = await performOperationsOnRepositoryList(test.input, repoList);
+                        operationResults.should.deep.equal(test.output);
+                        if (test.expectedRepoDetails) {
+                            newRepositoryList.should.containSubset(test.expectedRepoDetails);   
+                        }
+                    });
+                }
+            });
+        });
+        describe('performOperationOnRepository(operation, repositoryList)', function() {
+            const performOperationOnRepository = Templates.__get__('performOperationOnRepository');
+            describe('when `operation.url` is an existing url', function() {
+                const tests = {
+                    'enable an existing repo': {
+                        input: {
+                            op: 'enable',
+                            url: '1',
+                            value: 'true',
+                        },
+                        output: {
+                            status: 200,
+                            requestedOperation: {
+                                op: 'enable',
+                                url: '1',
+                                value: 'true',
+                            },
+                        },
+                        expectedRepoDetails: {
+                            url: '1',
+                            description: '1',
+                            enabled: true,
+                        },
+                    },
+                    'disable an existing repo': {
+                        input: {
+                            op: 'enable',
+                            url: '1',
+                            value: 'false',
+                        },
+                        output: {
+                            status: 200,
+                            requestedOperation: {
+                                op: 'enable',
+                                url: '1',
+                                value: 'false',
+                            },
+                        },
+                        expectedRepoDetails: {
+                            url: '1',
+                            description: '1',
+                            enabled: false,
+                        },
+                    },
+                };
+                for (const [testName, test] of Object.entries(tests)) {
+                    describe(testName, function() { // eslint-disable-line no-loop-func
+                        it(`returns the expected operation info and correctly updates the repository file`, async function() {
+                            const repositoryList = [...mockRepoList];
+                            const { operationResult, updatedRepo } = await performOperationOnRepository(test.input, repositoryList);
+                            operationResult.should.deep.equal(test.output);
+                            updatedRepo.should.deep.equal(test.expectedRepoDetails);
+                        });
+                    });
+                }
+            });
+            describe('when `operation.url` is an unknown url', function() {
+                const tests = {
+                    'enable an unknown repo': {
+                        input: {
+                            op: 'enable',
+                            url: 'unknownRepoUrl',
+                            value: 'true',
+                        },
+                        output: {
+                            status: 404,
+                            error: 'Unknown repository URL',
+                            requestedOperation: {
+                                op: 'enable',
+                                url: 'unknownRepoUrl',
+                                value: 'true',
+                            },
+                        },
+                    },
+                    'disable an unknown repo': {
+                        input: {
+                            op: 'enable',
+                            url: 'unknownRepoUrl',
+                            value: 'false',
+                        },
+                        output: {
+                            status: 404,
+                            error: 'Unknown repository URL',
+                            requestedOperation: {
+                                op: 'enable',
+                                url: 'unknownRepoUrl',
+                                value: 'false',
+                            },
+                        },
+                    },
+                };
+                for (const [testName, test] of Object.entries(tests)) {
+                    describe(testName, function() { // eslint-disable-line no-loop-func
+                        it(`returns the expected operation info`, async function() {
+                            const repositoryList = [...mockRepoList];
+                            const { operationResult, updatedRepo } = await performOperationOnRepository(test.input, repositoryList);
+                            operationResult.should.deep.equal(test.output);
+                            // eslint-disable-next-line no-undefined
+                            should.equal(updatedRepo, undefined);
+                        });
+                    });
+                }
+            });
+        });
+        describe('enableOrDisableRepository({ url, value }, repo)', () => {
+            const enableOrDisableRepository = Templates.__get__('enableOrDisableRepository');
+            it('returns 404 as its status as the repository does not exist', async() => {
+                const { response: operationResponse } = await enableOrDisableRepository({ url: 'urlThatDoesNotExist' });
+                operationResponse.should.have.property('status', 404);
+                operationResponse.should.have.property('error', 'Unknown repository URL');
+            });
+            const tests = {
+                'enables a project (Boolean)': { input: true, output: true, testRepo: mockRepos.disabled },
+                'enables a project (String)': { input: 'true', output: true, testRepo: mockRepos.disabled },
+                'disables a project (Boolean)': { input: false, output: false, testRepo: mockRepos.enabled },
+                'disables a project (String)': { input: 'false', output: false, testRepo: mockRepos.enabled },
+            };
+            for (const [testName, test] of Object.entries(tests)) {
+                const { input, output, testRepo } = test;
+                // eslint-disable-next-line no-loop-func
+                it(`returns 200 and ${testName}`, async() => {
+                    const { response: operationResponse, updatedRepo } = await enableOrDisableRepository({ url: testRepo.url, value: input }, testRepo);
+                    operationResponse.should.have.property('status', 200);
+                    operationResponse.should.not.have.property('error');
+
+                    updatedRepo.should.have.property('enabled', output);
+                });
+            }
         });
     });
 });

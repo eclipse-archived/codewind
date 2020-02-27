@@ -205,7 +205,7 @@ describe('Template API tests', function() {
             res.body.length.should.equal(originalNumTemplates);
         });
     });
-    describe.skip('PATCH /api/v1/batch/templates/repositories', function() {
+    describe('PATCH /api/v1/batch/templates/repositories', function() {
         setupReposAndTemplatesForTesting();
         const { url: existingRepoUrl } = sampleRepos.codewind;
         const tests = {
