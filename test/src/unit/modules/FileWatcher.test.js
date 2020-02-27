@@ -56,23 +56,22 @@ describe('FileWatcher.js', () => {
     });
     describe('new FileWatcher(user)', () => {
         it('returns a new FileWatcher and registers a FW listener', () => {
-            const mockUser = 'mock user';
-            const fw = new FileWatcher(mockUser);
+            const fw = new FileWatcher('mockUser');
 
-            fw.user.should.equal(mockUser);
+            fw.user.should.equal('mockUser');
             fw.up.should.be.true;
         });
     });
     describe('registerFWListener()', () => {
         it('does not set the locale and does register a FW listener when `this.locale` is falsy', () => {
-            const fw = newSimpleFileWatcher();
+            const fw = new FileWatcher('mockUser');
             fw.locale = false;
 
             fw.up.should.be.true;
             fw.locale = false;
         });
         it('sets the locale and registers a FW listener when `this.locale` is truthy', () => {
-            const fw = newSimpleFileWatcher();
+            const fw = new FileWatcher('mockUser');
             fw.locale = true;
 
             fw.up.should.be.true;
