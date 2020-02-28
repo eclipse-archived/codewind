@@ -460,7 +460,7 @@ describe('User.js', () => {
                 state: 'closed',
                 autoBuild: false,
             });
-            user.uiSocket.emit.should.have.been.calledOnceWith('projectClosed', {
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectClosed', {
                 projectID: project.projectID,
                 state: 'closed',
                 autoBuild: false,
