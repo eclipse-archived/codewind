@@ -27,7 +27,7 @@ const log = new Logger(__filename);
   * 202 on success, 404 if project id does not exist, 400 if options are invalid or a run
   * is already in progress, 500 if error
   */
-router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res){
+router.post('/api/v1/projects/:id/loadtest', validateReq, function(req,res){
   const user = req.cw_user;
   const projectID = req.sanitizeParams('id');
   let project = user.projectList.retrieveProject(projectID);
@@ -41,23 +41,25 @@ router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res
         throw new LoadRunError("PROJECT_NOT_OPEN", `For project (${project.projectID})`);
       } else if ( project.appStatus !== 'started' ) {
         throw new LoadRunError(LoadRunError.PROJECT_NOT_RUNNING, `For project (${project.projectID})`);
-      }
+     }
     } catch (err) {
       res.status(503).send(err.info);
       return;
     }
 
     try {
-      let runLoadResp = await user.runLoad(project, description);
-      // Response logic completed in ..docker/loadrunner/server.js
-      res.status(runLoadResp.statusCode).send(runLoadResp.body);
+      log.info(`LoadTest route: loadInProgres = ${project.loadInProgress}`);
+      if (project.loadInProgress == undefined || !project.loadInProgress) {
+        user.runLoad(project, description);
+        res.status(202).send("");
+      } else {
+        const err = new LoadRunError("RUN_IN_PROGRESS", `For project ${project.projectID}`);
+        res.status(409).send(err.info || err);
+      }
+      return;
     } catch(err) {
       log.error(err);
-      if (err.code == LoadRunError.RUN_IN_PROGRESS) {
-        res.status(409).send(err.info);
-      } else {
-        res.status(500).send(err.info || err);
-      }
+      res.status(500).send(err.info || err);
     }
   }
 });
