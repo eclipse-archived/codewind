@@ -979,6 +979,29 @@ describe('Templates.js', function() {
                 repo.should.contain.keys('name', 'description');
             });
         });
+        describe('updateTemplates(repositories, allTemplates)', function() {
+            const updateTemplates = Templates.__get__('updateTemplates');
+            it('returns a populated enabledTemplates list as the given repository is enabled', async() => {
+                const originalAllTemplates = [...defaultCodewindTemplates];
+                const repositories = [{
+                    ...sampleRepos.codewind,
+                    enabled: true,
+                }];
+                const { enabledTemplates, allTemplates } = await updateTemplates(repositories, originalAllTemplates);
+                allTemplates.should.deep.equal(originalAllTemplates);
+                enabledTemplates.should.deep.equal(allTemplates);
+            });
+            it('returns an empty enabledTemplates list as the given repository is disabled', async() => {
+                const originalAllTemplates = [...defaultCodewindTemplates];
+                const repositories = [{
+                    ...sampleRepos.codewind,
+                    enabled: false,
+                }];
+                const { enabledTemplates, allTemplates } = await updateTemplates(repositories, originalAllTemplates);
+                allTemplates.should.deep.equal(originalAllTemplates);
+                enabledTemplates.length.should.equal(0);
+            });
+        });
         describe('fetchTemplates(repositories)', function() {
             const fetchTemplates = Templates.__get__('fetchTemplates');
             it('returns enabledTemplates and allTemplates as the same list as the only repository is enabled', async function() {

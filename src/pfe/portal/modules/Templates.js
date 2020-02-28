@@ -226,7 +226,6 @@ module.exports = class Templates {
       const { enabledTemplates, allTemplates } = updateTemplates(list, currentAllProjectTemplates);
       this.enabledProjectTemplates = enabledTemplates;
       this.allProjectTemplates = allTemplates;
-      console.log(this.allProjectTemplates);
       this.repositoryList = list;
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
       return operationResults;
@@ -394,15 +393,13 @@ async function getNameAndDescriptionFromRepoTemplatesJSON(url) {
 }
 
 function updateTemplates(repositories, allTemplates) {
-  const enabledTemplates = [];
-  allTemplates.map(template => {
+  const enabledTemplates = allTemplates.filter(template => {
     const repo = repositories.find(repoToFind => {
       return (template.sourceId === repoToFind.id ||
         template.sourceURL === repoToFind.url ||
         template.source === repoToFind.name);
     });
-    if (repo.enabled) enabledTemplates.push(template);
-    return template;
+    return (repo && repo.enabled === true);
   });
   return { enabledTemplates, allTemplates }
 }
@@ -490,7 +487,6 @@ async function getTemplatesJSONFromURL(givenURL) {
     try {
       templateSummaries = JSON.parse(res.body);
     } catch (error) {
-      // TODO add TemplateError here
       throw new Error(`URL '${parsedURL}' did not return JSON`);
     }
   }
@@ -602,8 +598,6 @@ async function performOperationsOnRepositoryList(requestedOperations, repository
     const { operationResult, updatedRepo } = await performOperationOnRepository(operation, repositoryList);
     if (updatedRepo) {
       // Update the repository list with the new repository
-      // const foundIndex = newRepositoryList.findIndex(repo => repo.url === updatedRepo.url);
-      // newRepositoryList[foundIndex] = updatedRepo;
       newRepositoryList.push(updatedRepo);
     }
     return operationResult;
