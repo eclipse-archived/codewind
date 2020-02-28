@@ -11,6 +11,8 @@
 const { ADMIN_COOKIE, testTimeout } = require('../config');
 const reqService = require('./request.service');
 
+const templateRepositoryURL = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json';
+
 const defaultCodewindTemplates = [
     {
         label: 'Go',
@@ -19,6 +21,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/goTemplate',
         projectType: 'docker',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Lagom Java',
@@ -27,6 +30,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/lagomJavaTemplate',
         projectType: 'docker',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Node.js Express',
@@ -35,6 +39,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/nodeExpressTemplate',
         projectType: 'nodejs',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Open Liberty',
@@ -43,6 +48,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/openLibertyTemplate',
         projectType: 'docker',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Python',
@@ -51,6 +57,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/pythonTemplate',
         projectType: 'docker',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Spring Boot®',
@@ -59,6 +66,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/springJavaTemplate',
         projectType: 'spring',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'Swift',
@@ -67,6 +75,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/swiftTemplate',
         projectType: 'swift',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
     {
         label: 'WebSphere Liberty MicroProfile®',
@@ -75,6 +84,7 @@ const defaultCodewindTemplates = [
         url: 'https://github.com/codewind-resources/javaMicroProfileTemplate',
         projectType: 'liberty',
         source: 'Default templates',
+        sourceURL: templateRepositoryURL,
     },
 ];
 
@@ -97,8 +107,6 @@ const styledTemplates = {
         projectStyle: 'Appsody',
     },
 };
-
-const templateRepositoryURL = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json';
 
 const sampleRepos = {
     codewind: {

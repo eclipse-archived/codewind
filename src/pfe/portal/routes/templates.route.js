@@ -139,13 +139,6 @@ router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, re
  * @return {[String]} the list of template styles
  */
 router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
-  // const { templates: templatesController } = req.cw_user;
-  // try {
-  //   templatesController.lock();
-  // } catch(err) {
-  //   templatesController.unlock();
-  // }
-  // res.send(`locked: ${templatesController._lock}`)
   const { templates: templatesController } = req.cw_user;
   try {
     const styles = await templatesController.getAllTemplateStyles();

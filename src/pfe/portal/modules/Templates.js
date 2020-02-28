@@ -211,11 +211,23 @@ module.exports = class Templates {
     this.lock();
     try {
       const currentRepoList = cwUtils.deepClone(this.repositoryList);
-      const { operationResults, newRepositoryList } = await performOperationsOnRepositoryList(requestedOperations, currentRepoList);
-      const { enabledTemplates, allTemplates } = await fetchTemplates(newRepositoryList);
+      const { operationResults, newRepositoryList: listOfModifiedRepositories } = await performOperationsOnRepositoryList(requestedOperations, currentRepoList);
+
+      const list = currentRepoList.map(oldRepo => {
+        const modifiedRepo = listOfModifiedRepositories.find(modifiedRepo => modifiedRepo.url === oldRepo.url);
+        if (modifiedRepo) {
+          return modifiedRepo;
+        }
+        return oldRepo;
+      });
+
+      // Don't fetch the templates just update the template lists
+      const currentAllProjectTemplates = cwUtils.deepClone(this.allProjectTemplates);
+      const { enabledTemplates, allTemplates } = updateTemplates(list, currentAllProjectTemplates);
       this.enabledProjectTemplates = enabledTemplates;
       this.allProjectTemplates = allTemplates;
-      this.repositoryList = newRepositoryList;
+      console.log(this.allProjectTemplates);
+      this.repositoryList = list;
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
       return operationResults;
     } finally {
@@ -381,6 +393,20 @@ async function getNameAndDescriptionFromRepoTemplatesJSON(url) {
   return {};
 }
 
+function updateTemplates(repositories, allTemplates) {
+  const enabledTemplates = [];
+  allTemplates.map(template => {
+    const repo = repositories.find(repoToFind => {
+      return (template.sourceId === repoToFind.id ||
+        template.sourceURL === repoToFind.url ||
+        template.source === repoToFind.name);
+    });
+    if (repo.enabled) enabledTemplates.push(template);
+    return template;
+  });
+  return { enabledTemplates, allTemplates }
+}
+
 async function fetchTemplates(repositories) {
   const enabledRepositories = repositories.filter(repo => repo.enabled);
   const disabledRepositories = repositories.filter(repo => !repo.enabled);
@@ -429,6 +455,9 @@ async function getTemplatesFromRepo(repository) {
     }
     if (repository.id) {
       template.sourceId = repository.id;
+    }
+    if (repository.url) {
+      template.sourceURL = repository.url;
     }
 
     return template;
@@ -567,14 +596,15 @@ async function removeRepositoryFromProviders(repo, providers) {
 }
 
 async function performOperationsOnRepositoryList(requestedOperations, repositoryList) {
-  const newRepositoryList = cwUtils.deepClone(repositoryList);
-
+  // const newRepositoryList = cwUtils.deepClone(repositoryList);
+  const newRepositoryList = [];
   const promiseList = requestedOperations.map(async operation => {
     const { operationResult, updatedRepo } = await performOperationOnRepository(operation, repositoryList);
     if (updatedRepo) {
       // Update the repository list with the new repository
-      const foundIndex = newRepositoryList.findIndex(repo => repo.url === updatedRepo.url);
-      newRepositoryList[foundIndex] = updatedRepo;
+      // const foundIndex = newRepositoryList.findIndex(repo => repo.url === updatedRepo.url);
+      // newRepositoryList[foundIndex] = updatedRepo;
+      newRepositoryList.push(updatedRepo);
     }
     return operationResult;
   });
