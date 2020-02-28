@@ -212,21 +212,13 @@ module.exports = class Templates {
     try {
       const currentRepoList = cwUtils.deepClone(this.repositoryList);
       const { operationResults, newRepositoryList: listOfModifiedRepositories } = await performOperationsOnRepositoryList(requestedOperations, currentRepoList);
-
-      const list = currentRepoList.map(oldRepo => {
-        const modifiedRepo = listOfModifiedRepositories.find(modifiedRepo => modifiedRepo.url === oldRepo.url);
-        if (modifiedRepo) {
-          return modifiedRepo;
-        }
-        return oldRepo;
-      });
-
+      const newRepositoryList = updateRepositoryList(currentRepoList, listOfModifiedRepositories);
       // Don't fetch the templates just update the template lists
       const currentAllProjectTemplates = cwUtils.deepClone(this.allProjectTemplates);
-      const { enabledTemplates, allTemplates } = updateTemplates(list, currentAllProjectTemplates);
+      const { enabledTemplates, allTemplates } = updateTemplates(newRepositoryList, currentAllProjectTemplates);
       this.enabledProjectTemplates = enabledTemplates;
       this.allProjectTemplates = allTemplates;
-      this.repositoryList = list;
+      this.repositoryList = newRepositoryList;
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
       return operationResults;
     } finally {
@@ -648,4 +640,18 @@ function enableOrDisableRepository({ value }, repo) {
       }
     }
   }
+}
+
+// Updates repositories in the repositoryList with the updated values
+// New repositories will not be added
+// Repositories with no updates will be kept with no changes
+function updateRepositoryList(currentRepositoryList, updatedRepositories) {
+  const newRepositoryList = currentRepositoryList.map(oldRepo => {
+    const modifiedRepo = updatedRepositories.find(modifiedRepo => modifiedRepo.url === oldRepo.url);
+    if (modifiedRepo) {
+      return modifiedRepo;
+    }
+    return oldRepo;
+  });
+  return newRepositoryList;
 }

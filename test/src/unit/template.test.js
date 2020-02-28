@@ -1659,5 +1659,27 @@ describe('Templates.js', function() {
                 });
             }
         });
+        describe('updateRepositoryList(currentRepositoryList, updatedRepositories)', function() {
+            const updateRepositoryList = Templates.__get__('updateRepositoryList');
+            it('returns an updated repositoryList in which the given updatedRepository is enabled', () => {
+                const repositoryList = [...mockRepoList];
+                const updatedRepo = {
+                    ...mockRepos.disabled,
+                    enabled: true,
+                };
+                const updatedList = updateRepositoryList(repositoryList, [updatedRepo]);
+                updatedList.should.include(updatedRepo);
+            });
+            it('returns the original repositoryList as the updated repository is not in the orignal list', () => {
+                const repositoryList = [...mockRepoList];
+                const updatedRepo = {
+                    url: 'na',
+                    enabled: true,
+                };
+                const updatedList = updateRepositoryList(repositoryList, [updatedRepo]);
+                updatedList.should.not.include(updatedRepo);
+                updatedList.should.deep.equal(repositoryList);
+            });
+        });
     });
 });
