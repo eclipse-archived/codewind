@@ -191,8 +191,11 @@ module.exports = class LoadRunner {
 
     // If appmetrics does not support timed collections (which get auto delete when published), delete them now.
     if (!this.metricsFeatures || !this.metricsFeatures.timedMetrics) {
-      options.method = 'DELETE';
-      http.request(options, function (res) {
+      const deleteOptions = {
+        ...options,
+        method: 'DELETE',
+      };
+      http.request(deleteOptions, function (res) {
         if (res.statusCode == 204) {
           log.info('recordCollection: Metrics collection deleted');
         } else {
