@@ -27,6 +27,7 @@ cd $CURR_DIR
 BASELINE_FILE=
 COMPARABLE_FILE=
 ERROR_THRESHOLD=5
+NETWORK_THRESHOLD=50
 SAVE_FILE="n"
 SAVE_FILEPATH=
 PYTHON_CHECK="y"
@@ -38,7 +39,8 @@ Usage: $me: [-<option letter> <option value> | -h]
 Options:
     --baseline-file     The baseline csv file. Required
     --comparable-file   The comparable csv file. Required
-    --error-threshold   The minimum amount of error level threshold. Default: 5%      
+    --error-threshold   The minimum amount of error level threshold. Default: +/- 5%
+    --network-threshold The minimum amount of network level threshold. Default: +/- 50%     
     --save              Save report to a text file path. Default: n
     --check-python      Perform a check to see if python is setup. Default: y
     -h | --help         Display the man page
@@ -55,6 +57,9 @@ while :; do
         ;;
         --error-threshold=?*)
         ERROR_THRESHOLD=${1#*=}
+        ;;
+        --network-threshold=?*)
+        NETWORK_THRESHOLD=${1#*=}
         ;;
         --save=?*)
         SAVE_FILE="y"
@@ -74,6 +79,10 @@ done
 
 if [ -z "$ERROR_THRESHOLD" ]; then
     ERROR_THRESHOLD=5
+fi
+
+if [ -z "$NETWORK_THRESHOLD" ]; then
+    NETWORK_THRESHOLD=50
 fi
 
 if [ -z "$BASELINE_FILE" ] || [ -z "$COMPARABLE_FILE" ]; then
@@ -119,10 +128,10 @@ checkExitCode $? "Failed to install pandas module. Please try again." true
 
 if [ $SAVE_FILE == "y" ] && [ ! -z "$SAVE_FILEPATH" ]; then
     echo -e "${CYAN}> Running csv comparable script and saving output to "$SAVE_FILEPATH" ${RESET}"
-    python compare-csv.py "$BASELINE_FILE" "$COMPARABLE_FILE" $ERROR_THRESHOLD | tee "$SAVE_FILEPATH"
+    python compare-csv.py "$BASELINE_FILE" "$COMPARABLE_FILE" $ERROR_THRESHOLD $NETWORK_THRESHOLD | tee "$SAVE_FILEPATH"
 else
     echo -e "${CYAN}> Running csv comparable script ${RESET}"
-    python compare-csv.py "$BASELINE_FILE" "$COMPARABLE_FILE" $ERROR_THRESHOLD
+    python compare-csv.py "$BASELINE_FILE" "$COMPARABLE_FILE" $ERROR_THRESHOLD $NETWORK_THRESHOLD
 fi
 checkExitCode $? "Failed to run python script."
 

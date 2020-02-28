@@ -21,7 +21,7 @@ if (len(sys.argv) >= 3):
     baselineFile=sys.argv[1];
     toBeComparedFile=sys.argv[2];
 else:
-    print("Usage: python compare-csv.py <baseline_file> <comparable_file>");
+    print("Usage: python compare-csv.py <baseline_file> <comparable_file> <error_threshold> <network_threshold>");
     sys.exit(1);
 
 if (not (os.path.exists(baselineFile) and os.path.exists(toBeComparedFile))):
@@ -36,9 +36,17 @@ else:
 
 # threshold value in terms of % of error acceptable
 try:
-    threshold=abs(int(sys.argv[3]));
+    error_threshold=abs(int(sys.argv[3]));
 except IndexError:
-    threshold=5
+    error_threshold=5
+
+# threshold value in terms of % of network error acceptable
+try:
+    network_threshold=abs(int(sys.argv[4]));
+except IndexError:
+    network_threshold=50
+
+network_builds = ["create", "modify-Dockerfile"];
 
 # compare the two csv shapes
 def csv_shapes_matches(firstDf, secondDf):
@@ -77,12 +85,16 @@ else:
                 baselineValue = float(baselineValue);
                 comparableValue = float(comparableValue);
                 difference = round((baselineValue-comparableValue)/(baselineValue) * 100, 2);
-                if (difference >= 0 and difference >= threshold):
+                if (rowName in network_builds):
+                    threshold_to_compare = network_threshold;
+                else:
+                    threshold_to_compare = error_threshold;
+                if (difference >= 0 and difference >= threshold_to_compare):
                     counter = counter + 1;
                     goodCounter = goodCounter + 1;
                     improvedCases.append("{} {} {} by {}% [{}s -> {}s]".format(projectType, projectLanguage, rowName, difference, baselineValue, comparableValue));
                     print(">> Improvement in run of {} by {}% [{}s -> {}s]".format(rowName, difference, baselineValue, comparableValue));
-                elif (difference < 0 and abs(difference) >= threshold):
+                elif (difference < 0 and abs(difference) >= threshold_to_compare):
                     counter = counter + 1;
                     badCounter = badCounter + 1;
                     deterioratedCases.append("{} {} {} by {}% [{}s -> {}s]".format(projectType, projectLanguage, rowName, abs(difference), baselineValue, comparableValue));

@@ -174,7 +174,7 @@ mkdir -p $CSV_BASELINE_DIR
 
 if [ -e "$CSV_BASELINE_DIR/$CSV_FILENAME" ]; then
     echo -e "${CYAN}> Comparing csv paths for $TEST_ENV local with baseline file "$CSV_BASELINE_DIR/$CSV_FILENAME" ... ${RESET}"
-    ./compare-csv.sh --baseline-file="$CSV_BASELINE_DIR/$CSV_FILENAME" --comparable-file="$LOGS_DATA_DIR/$CSV_FILENAME" --save="$LOGS_DATA_DIR/performance-report.txt" --error-threshold="$ERROR_THRESHOLD"
+    ./compare-csv.sh --baseline-file="$CSV_BASELINE_DIR/$CSV_FILENAME" --comparable-file="$LOGS_DATA_DIR/$CSV_FILENAME" --save="$LOGS_DATA_DIR/performance-report.txt" --error-threshold="$ERROR_THRESHOLD" --network-threshold="$NETWORK_THRESHOLD"
     checkExitCode $? "Failed to compare csv from baseline "$CSV_BASELINE_DIR/$CSV_FILENAME" to comparable "$LOGS_DATA_DIR/$CSV_FILENAME"" true
 fi
 
