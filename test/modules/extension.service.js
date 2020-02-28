@@ -36,8 +36,7 @@ const createCodewindYamlFile = (directory, overwriteValues = {}) => {
         codewindJson[key] = overwriteValues[key];
     }
     const codewindYamlFileContents = yaml.safeDump(codewindJson);
-    fs.ensureDirSync(directory);
-    fs.writeFileSync(path.join(directory, CODEWIND_YAML_FILENAME), codewindYamlFileContents);
+    fs.outputFileSync(path.join(directory, CODEWIND_YAML_FILENAME), codewindYamlFileContents);
 };
 
 const deleteCodewindYamlFile = (directory) => {
@@ -46,9 +45,8 @@ const deleteCodewindYamlFile = (directory) => {
 
 const createTemplatesProviderFile = (directory) => {
     const getRepoFunc = 'getRepositories: () => { return []; }';
-    const templates_provider_content = `module.exports = { ${getRepoFunc} };`;
-    fs.ensureDirSync(directory);
-    fs.writeFileSync(path.join(directory, TEMPLATES_PROVIDER_FILENAME), templates_provider_content);
+    const templatesProviderContent = `module.exports = { ${getRepoFunc} };`;
+    fs.outputFileSync(path.join(directory, TEMPLATES_PROVIDER_FILENAME), templatesProviderContent);
 };
 
 const deleteTemplatesProviderFile = (directory) => {
