@@ -225,7 +225,7 @@
         } else if (['os_cpu_used_ratio'].includes(metric.name)) { // ignored if -1 (not available)
           cpuData.system = numMetricValue;
 
-        } else if (['base:gc_global_time_seconds', 'time_in_gc_percentage'].includes(metric.name)) {
+        } else if (['base:gc_global_time_seconds', 'overall_time_in_gc_percentage'].includes(metric.name)) {
           gcData.gcTime = numMetricValue;
         } else if (['base_gc_time_seconds'].includes(metric.name)) {
           const correctMetricsObj = metric.metrics.find(obj => obj.labels.name === 'global');
@@ -283,8 +283,7 @@
       // },
       // {
       //   time: 1572617286795,
-      //   gcTime: 0, // base_gc_time_seconds (actually milliseconds) (TODO add the scavenge and global handlers together)?
-      //   gcTimeSummary: 0.00022953932836541658
+      //   gcTime: 0.2022953932836541658
       // },
       // {
       //   time: 1572617288774,
@@ -308,7 +307,7 @@
     //       break;
     //     case 'gc':
     //       updateGCData(payload);
-    //       summary.gc.time = received.payload.gcTimeSummary;
+    //       summary.gc.time = received.payload.gcTime;
     //       break;
     //     case 'env':
     //       envTable.populateTableJSON(payload);
@@ -356,9 +355,7 @@
     }
     function processGCData(data) {
       updateGCData(JSON.stringify(data));
-      // Commented out as `data` doesn't currently get a `gcTimeSummary` property.
-      // Could we calculate it using ((data.durationTotal / 1000) / data.processUptime)?
-      // summary.gc.time = data.gcTimeSummary;
+      summary.gc.time = data.gcTime;
     }
     function processMemPoolsData(data) {
       updateMemPoolsData(JSON.stringify(data));
