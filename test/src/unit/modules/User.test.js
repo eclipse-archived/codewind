@@ -304,6 +304,7 @@ describe('User.js', () => {
         });
         it('errors if a load run is not already in progress on the project', async() => {
             const { user, project } = await createSimpleUserWithProject();
+            project.loadInProgress = false;
             
             await user.cancelLoad(project)
                 .should.eventually.be.rejectedWith(`Unable to cancel, no load run in progress.\nFor project ${sampleProjectID}`);

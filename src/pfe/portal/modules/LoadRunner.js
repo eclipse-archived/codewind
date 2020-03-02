@@ -45,6 +45,7 @@ module.exports = class LoadRunner {
     this.metricsFeatures = {};
     this.createSocketEvents();
     this.connectIfAvailable();
+    this.timerID = null;
   }
 
   // Fetch the supported metrics features from the project
@@ -251,7 +252,7 @@ module.exports = class LoadRunner {
         }
       }
 
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'preparing', timestamp: this.metricsFolder });
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'preparing' });
 
       // start profiling if supported by current language
       if (this.project.language == 'nodejs' || this.project.language === 'javascript') {
@@ -262,7 +263,7 @@ module.exports = class LoadRunner {
 
       //  Start collection on metrics endpoint (this must be started AFTER java profiling since java profiling will restart the liberty server)
       this.collectionUri = await this.createCollection(loadConfig.maxSeconds);
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'starting', timestamp: this.metricsFolder });
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'starting' });
 
       // Send the load run request to the loadrunner microservice
       let loadrunnerRes = await cwUtils.asyncHttpRequest(options, loadConfig);
@@ -270,7 +271,7 @@ module.exports = class LoadRunner {
       case 202:
         break;
       default:
-        this.cancelProfiling();
+        await this.cancelProfiling();
         this.project = null;
         log.error(`runLoad (${loadrunnerRes.statusCode} received)'`);
       }
@@ -364,7 +365,7 @@ module.exports = class LoadRunner {
       log.error(error)
     }
 
-    setTimeout(() => this.getJavaHealthCenterData(1), duration * 1000);
+    this.timerID = setTimeout(() => this.getJavaHealthCenterData(1), duration * 1000);
   }
 
   async getJavaHealthCenterData(counter) {
@@ -378,14 +379,14 @@ module.exports = class LoadRunner {
       log.error(error);
       if (this.project !== null) {
         log.info(`getJavaHealthCenterData: .hcd file not found, trying again. Attempt ${counter}/20`);
-        setTimeout(() => this.getJavaHealthCenterData(counter + 1), 3000);
+        this.timerID = setTimeout(() => this.getJavaHealthCenterData(counter + 1), 3000);
       } else {
         log.warn("getJavaHealthCenterData: Project was made null before .hcd could be found.")
       }
       return;
     }
     log.info("getJavaHealthCenterData: .hcd copied to PFE");
-    const data = { projectID: this.project.projectID,  status: 'hcdReady', timestamp: this.metricsFolder};
+    const data = { projectID: this.project.projectID,  status: 'hcdReady'};
     this.user.uiSocket.emit('runloadStatusChanged', data);
     this.project = null;
   }
@@ -518,13 +519,14 @@ module.exports = class LoadRunner {
 
     this.socket.on('started', () => {
       log.info(`Load run on project ${this.project.projectID} started`);
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started', timestamp: this.metricsFolder });
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started'});
     });
 
-    this.socket.on('cancelled', () => {
+    this.socket.on('cancelled', async () => {
       log.info(`Load run on project ${this.project.projectID} cancelled`);
-      this.cancelProfiling();
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled', timestamp: this.metricsFolder });
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelling'});
+      await this.cancelProfiling();
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled'});
       this.project = null;
     });
 
@@ -534,7 +536,7 @@ module.exports = class LoadRunner {
       if (this.collectionUri !== null) {
         this.recordCollection();
       }
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' , timestamp: this.metricsFolder});
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
       this.endProfiling();
     });
   }
@@ -588,7 +590,7 @@ module.exports = class LoadRunner {
         }
       });
       log.info(`profiling.json saved for project ${this.project.name}`);
-      const data = { projectID: this.project.projectID,  status: 'profilingReady' , timestamp: this.metricsFolder }
+      const data = { projectID: this.project.projectID,  status: 'profilingReady' }
       this.user.uiSocket.emit('runloadStatusChanged', data);
       this.profilingSocket.emit('disableprofiling');
       this.profilingSocket.disconnect();
@@ -598,11 +600,25 @@ module.exports = class LoadRunner {
     }
   }
 
-  cancelProfiling() {
+  async cancelProfiling() {
     if (this.profilingSocket !== null) {
       this.profilingSocket.emit('disableprofiling');
       this.profilingSocket.disconnect();
       this.profilingSocket = null;
+    }
+    if (this.timerID !== null) {
+      clearTimeout(this.timerID);
+      log.info(`cancelProfiling: Stopping liberty server`);
+      const stopCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `];
+      await cwUtils.spawnContainerProcess(this.project, stopCommand);
+      await this.waitForHealth(false);
+      log.info(`cancelProfiling: Starting liberty server`); 
+      const startCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start; `];
+      await cwUtils.spawnContainerProcess(this.project, startCommand);
+      await cwUtils.deleteFile(this.project, cwUtils.getProjectSourceRoot(this.project), `load-test/${this.metricsFolder}`);
+      await this.waitForHealth(true);
+      await this.project.removeProfilingData(this.metricsFolder);
+      this.timerID = null;
     }
   }
 
