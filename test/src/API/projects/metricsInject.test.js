@@ -37,7 +37,7 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         this.timeout(testTimeout.short);
         const res = await postMetricsInject(projectID, { enable: true });
         
-        res.should.have.status(404);
+        res.status.should.equal(404, res.text); // print res.text if assertion fails
         res.text.should.equal(`Unable to find project ${projectID}`);
     });
     
@@ -59,7 +59,7 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         it('returns 202 to /metrics/inject and starts injecting metrics into the user\'s project', async function() {
             this.timeout(testTimeout.short);
             const res = await postMetricsInject(projectID, { enable: true });
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
@@ -81,7 +81,7 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         it('returns 202 to /metrics/inject and starts removing injected metrics from the user\'s project', async function() {
             this.timeout(testTimeout.short);
             const res = await postMetricsInject(projectID, { enable: false });
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
@@ -119,7 +119,7 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         it('returns 202 to /metrics/inject and starts injecting metrics into the user\'s project', async function() {
             this.timeout(testTimeout.short);
             const res = await postMetricsInject(projectID, { enable: true });
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
@@ -141,7 +141,7 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         it('returns 202 to /metrics/inject and starts removing injected metrics from the user\'s project', async function() {
             this.timeout(testTimeout.short);
             const res = await postMetricsInject(projectID, { enable: false });
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
@@ -179,7 +179,7 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         it('returns 202 to /metrics/inject and starts injecting metrics into the user\'s project', async function() {
             this.timeout(testTimeout.short);
             const res = await postMetricsInject(projectID, { enable: true });
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
@@ -201,7 +201,7 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         it('returns 202 to /metrics/inject and starts removing injected metrics from the user\'s project', async function() {
             this.timeout(testTimeout.short);
             const res = await postMetricsInject(projectID, { enable: false });
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({

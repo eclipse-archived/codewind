@@ -59,7 +59,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
 
         it('returns 200 and the available metric types', async function() {
             const res = await getProjectMetrics(projectID);
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.body.length.should.equal(METRIC_TYPES.length);
             const expectedResBody = METRIC_TYPES.map(type => ({
@@ -71,7 +71,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
 
         it('returns 404 when the given project does not exist', async function() {
             const res = await getProjectMetrics('blahblah-project');
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
         });
     });
 
@@ -103,7 +103,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                 const invalidUpdateOptions = { noDescription: 'noDescription' };
                 const res = await updateProjectMetrics(projectID, originalLoadTest.testRunTime, invalidUpdateOptions);
                 
-                res.should.have.status(400);
+                res.status.should.equal(400, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
                 res.body.message.should.equal('request body has no \'description\' field');
             });
@@ -116,7 +116,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                 const timeOfNonExistentLoadTest = '1234567891234';
                 const res = await updateProjectMetrics(projectID, timeOfNonExistentLoadTest, updateOptions);
                 
-                res.should.have.status(404);
+                res.status.should.equal(404, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
                 res.body.message.should.include(`Unable to find metrics for project ${projectID}`);
                 res.body.message.should.include(`found no load-test metrics from time ${timeOfNonExistentLoadTest}`);
@@ -130,7 +130,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                 const idOfNonExistentProject = 'nonexistentproject';
                 const res = await updateProjectMetrics(idOfNonExistentProject, originalLoadTest.testRunTime, updateOptions);
                 
-                res.should.have.status(404);
+                res.status.should.equal(404, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
                 res.body.message.should.equal(`Unable to find project ${idOfNonExistentProject}`);
             });
@@ -143,7 +143,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                 const updateOptions = { description: newDescription };
                 const res = await updateProjectMetrics(projectID, originalLoadTest.testRunTime, updateOptions);
 
-                res.should.have.status(200);
+                res.status.should.equal(200, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
                 res.body.description.should.equal(newDescription);
 
@@ -163,7 +163,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                 const updateOptions = { description: '' };
                 const res = await updateProjectMetrics(projectID, originalLoadTest.testRunTime, updateOptions);
 
-                res.should.have.status(200);
+                res.status.should.equal(200, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
                 res.body.description.should.equal('');
 
@@ -227,7 +227,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                 const timeOfNonExistentLoadTest = '20150101000000';
                 const res = await deleteProjectMetrics(projectID, timeOfNonExistentLoadTest);
                 
-                res.should.have.status(404);
+                res.status.should.equal(404, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
                 res.body.message.should.include(`Unable to find metrics for project ${projectID}`);
                 res.body.message.should.include(`found no load-test metrics from time ${timeOfNonExistentLoadTest}`);
@@ -240,7 +240,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                 const idOfNonExistentProject = 'nonexistentproject';
                 const res = await deleteProjectMetrics(idOfNonExistentProject, originalLoadTest.testRunTime);
                 
-                res.should.have.status(404);
+                res.status.should.equal(404, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
                 res.body.message.should.equal(`Unable to find project ${idOfNonExistentProject}`);
             });
@@ -252,7 +252,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
 
                 const res = await deleteProjectMetrics(projectID, originalLoadTest.testRunTime);
                 
-                res.should.have.status(200);
+                res.status.should.equal(200, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
 
                 // and we can get all the original metrics except for the one we deleted
@@ -283,7 +283,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                 const timeOfNonExistentLoadTest = '20190326155249';
                 const res = await deleteProjectMetrics(projectID, timeOfNonExistentLoadTest);
                 
-                res.should.have.status(200);
+                res.status.should.equal(200, res.text); // print res.text if assertion fails
                 
                 const closestNeighborDir = `${parseInt(timeOfNonExistentLoadTest, 10) - 1}`;
                 const pathToClosestNeighborDir = path.join(pathToProjectLoadTestDir, closestNeighborDir);
@@ -312,7 +312,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                 this.timeout(testTimeout.med);
                 const res = await getProjectMetricsByType(projectID, type);
                 
-                res.should.have.status(200);
+                res.status.should.equal(200, res.text); // print res.text if assertion fails
                 res.body.should.be.an('array');
 
                 // copy the project's load-test dir to a temp dir to compare them in this test
@@ -346,14 +346,14 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
         it('returns 404 when the given metric does not exist', async function() {
             this.timeout(testTimeout.med);
             const res = await getProjectMetricsByType(projectID, 'blahblah');
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
         });
 
         it('returns 422 when the load test directory does not exist', async function() {
             this.timeout(testTimeout.short);
             await containerService.removeDir(pathToProjectLoadTestDir);
             const res = await getProjectMetricsByType(projectID, 'cpu');
-            res.should.have.status(422);
+            res.status.should.equal(422, res.text); // print res.text if assertion fails
         });
     });
 
@@ -363,7 +363,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
             const validTypes = ['cpu','memory'];
             const res = await postProjectsMetricsTypes(projectID, validTypes);
 
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             const receivedTypes = res.body.map(metricsObj => metricsObj.type);
             receivedTypes.should.have.members(validTypes);
         });

@@ -79,7 +79,7 @@ describe('Registry Secrets route tests', function() {
             this.timeout(testTimeout.med);
             
             const res = await getRegistrySecrets();
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array').to.have.lengthOf(0);
         });
 
@@ -93,7 +93,7 @@ describe('Registry Secrets route tests', function() {
             await containerService.copyTo(docker_registry_secret_garbage_file, docker_registry_file);
 
             const res = await getRegistrySecrets();
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array').to.have.lengthOf(2);
         });
 
@@ -107,7 +107,7 @@ describe('Registry Secrets route tests', function() {
             await containerService.copyTo(docker_registry_secret_bad_file, docker_registry_file);
 
             const res = await getRegistrySecrets();
-            res.should.have.status(500);
+            res.status.should.equal(500, res.text); // print res.text if assertion fails
             res.text.should.be.not.empty;
         });
     });
@@ -145,7 +145,7 @@ describe('Registry Secrets route tests', function() {
             const encodedDockerCredentials = Buffer.from(credentials_string).toString('base64');
 
             const res = await setRegistrySecret(dockerAddress, encodedDockerCredentials);
-            res.should.have.status(201);
+            res.status.should.equal(201, res.text); // print res.text if assertion fails
             res.body.should.be.an('array').to.have.lengthOf(1);
             res.body[0].address.should.equal(fullyQualifiedDockerRegistryAddress);
             res.body[0].username.should.equal(dockerUsername);
@@ -162,7 +162,7 @@ describe('Registry Secrets route tests', function() {
             const encodedDockerCredentials = Buffer.from(credentials_string).toString('base64');
 
             const res = await setRegistrySecret(dockerAddress, encodedDockerCredentials);
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.text.should.be.not.empty;
         });
 
@@ -178,14 +178,14 @@ describe('Registry Secrets route tests', function() {
             let encodedDockerCredentials = Buffer.from(credentials_string).toString('base64');
 
             let res = await setRegistrySecret(dockerAddress, encodedDockerCredentials);
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.text.should.be.not.empty;
 
             // invalid encoded credential object with bad JSON
             encodedDockerCredentials = 'garbage'.concat(encodedDockerCredentials);
 
             res = await setRegistrySecret(dockerAddress, encodedDockerCredentials);
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.text.should.be.not.empty;
         });
 
@@ -206,7 +206,7 @@ describe('Registry Secrets route tests', function() {
             const encodedDockerCredentials = Buffer.from(credentials_string).toString('base64');
 
             const res = await setRegistrySecret(dockerAddress, encodedDockerCredentials);
-            res.should.have.status(500);
+            res.status.should.equal(500, res.text); // print res.text if assertion fails
             res.text.should.be.not.empty;
         });
     });
@@ -238,7 +238,7 @@ describe('Registry Secrets route tests', function() {
             const dockerAddress = 'docker.io';
 
             const res = await removeRegistrySecret(dockerAddress);
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.text.should.be.not.empty;
         });
 
@@ -255,13 +255,13 @@ describe('Registry Secrets route tests', function() {
             const encodedDockerCredentials = Buffer.from(credentials_string).toString('base64');
 
             let res = await setRegistrySecret(dockerAddress, encodedDockerCredentials);
-            res.should.have.status(201);
+            res.status.should.equal(201, res.text); // print res.text if assertion fails
             res.body.should.be.an('array').to.have.lengthOf(1);
             res.body[0].address.should.equal(fullyQualifiedDockerRegistryAddress);
             res.body[0].username.should.equal(dockerUsername);
 
             res = await removeRegistrySecret(invalidDockerAddress);
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.text.should.be.not.empty;
         });
 
@@ -277,7 +277,7 @@ describe('Registry Secrets route tests', function() {
             const dockerAddress = 'docker.io';
 
             const res = await removeRegistrySecret(dockerAddress);
-            res.should.have.status(500);
+            res.status.should.equal(500, res.text); // print res.text if assertion fails
             res.text.should.be.not.empty;
         });
 
@@ -292,7 +292,7 @@ describe('Registry Secrets route tests', function() {
             const dockerAddress = 'docker.io';
 
             const res = await removeRegistrySecret(dockerAddress);
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array').to.have.lengthOf(1);
         });
     });

@@ -66,7 +66,7 @@ describe('Template API tests', function() {
             it('should return 204 as there exists no templates with the given projectStyle', async function() {
                 this.timeout(testTimeout.short);
                 const res = await getTemplates({ projectStyle: 'unknownStyle' });
-                res.should.have.status(204);
+                res.status.should.equal(204, res.text); // print res.text if assertion fails
                 res.body.should.be.empty;
             });
         });
@@ -115,7 +115,7 @@ describe('Template API tests', function() {
                         url: '/invalid/url',
                         description: 'Invalid url.',
                     });
-                    res.should.have.status(400);
+                    res.status.should.equal(400, res.text); // print res.text if assertion fails
                 });
             });
             describe('a duplicate url', function() {
@@ -131,7 +131,7 @@ describe('Template API tests', function() {
                         description: 'duplicate url',
                     });
                     // Assert
-                    res2.should.have.status(400);
+                    res2.status.should.equal(400, res2.text); // print res.text if assertion fails
                 });
             });
             describe('a valid url that does not point to an index.json', function() {
@@ -141,7 +141,7 @@ describe('Template API tests', function() {
                         url: validUrlNotPointingToIndexJson,
                         description: 'valid url that does not point to an index.json',
                     });
-                    res.should.have.status(400);
+                    res.status.should.equal(400, res.text); // print res.text if assertion fails
                 });
             });
             describe('a valid url', function() {
@@ -172,7 +172,7 @@ describe('Template API tests', function() {
         it('DELETE should try to remove a template repository that doesn\'t exist', async function() {
             this.timeout(testTimeout.short);
             const res = await deleteTemplateRepo('http://something.com/index.json');
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
         });
     });
 

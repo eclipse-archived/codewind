@@ -52,7 +52,7 @@ describe('Bind projects tests', () => {
                 creationTime: Date.now(),
             });
 
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             
             const pathToPfeTempProjectDir = path.join('codewind-workspace', 'cw-temp', projectName);
@@ -67,7 +67,7 @@ describe('Bind projects tests', () => {
             const responses = await projectService.uploadAllFiles(projectID, pathToLocalProject, 'nodejs');
 
             responses.forEach(res => {
-                res.should.have.status(200);
+                res.status.should.equal(200, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
             });
             const pathToUploadedFile = path.join('codewind-workspace', 'cw-temp', projectName, 'package.json');
@@ -78,7 +78,7 @@ describe('Bind projects tests', () => {
             this.timeout(testTimeout.short);
             
             const res = await projectService.bindEnd(projectID);
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             
             const pathToPfeTempProjectDir = path.join('codewind-workspace', 'cw-temp', projectName);
@@ -99,7 +99,7 @@ describe('Bind projects tests', () => {
                 creationTime: Date.now(),
             });
 
-            res.should.have.status(409);
+            res.status.should.equal(409, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
 
             const finalNumProjects = await projectService.countProjects();
@@ -109,7 +109,7 @@ describe('Bind projects tests', () => {
             this.timeout(testTimeout.short);
             
             const res = await projectService.unbind(projectID);
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             
             const pathToPfeTempProjectDir = path.join('codewind-workspace', 'cw-temp', projectName);
@@ -132,7 +132,7 @@ describe('Bind projects tests', () => {
                     path: 'valid/path',
                     creationTime: Date.now(),
                 });
-                res.should.have.status(400);
+                res.status.should.equal(400, res.text); // print res.text if assertion fails
                 res.body.message.should.equal('Project name is invalid: invalid characters : ["&"]');
             });
             it('returns 400 if projectType is invalid', async function() {
@@ -144,7 +144,7 @@ describe('Bind projects tests', () => {
                     path: 'valid/path',
                     creationTime: Date.now(),
                 });
-                res.should.have.status(400);
+                res.status.should.equal(400, res.text); // print res.text if assertion fails
                 res.text.should.equal('projects must specify a valid project type');
             });
         });
@@ -159,7 +159,7 @@ describe('Bind projects tests', () => {
                     pathToLocalProject,
                     'package.json',
                 );
-                res.should.have.status(404);
+                res.status.should.equal(404, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
             });
         });
@@ -170,7 +170,7 @@ describe('Bind projects tests', () => {
                 this.timeout(testTimeout.short);
                 const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
                 const res = await projectService.bindEnd(idMatchingNoProjects);
-                res.should.have.status(404);
+                res.status.should.equal(404, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
                 res.text.should.equal(`Unable to find project ${idMatchingNoProjects}`);
             });
@@ -182,7 +182,7 @@ describe('Bind projects tests', () => {
                 this.timeout(testTimeout.short);
                 const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
                 const res = await projectService.unbind(idMatchingNoProjects, 404);
-                res.should.have.status(404);
+                res.status.should.equal(404, res.text); // print res.text if assertion fails
                 res.should.satisfyApiSpec;
                 res.text.should.equal(`Unable to find project ${idMatchingNoProjects}`);
             });

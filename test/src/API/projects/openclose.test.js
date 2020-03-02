@@ -42,7 +42,7 @@ describe('Open/Close Project Tests', function() {
             this.timeout(testTimeout.short);
             const res = await projectService.closeProject(projectID);
             
-            res.should.have.status(202);
+            res.status.should.equal(202, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.body.msg.should.equal(`Now trying to close project ${projectName} (${projectID})`); 
         });
@@ -51,7 +51,7 @@ describe('Open/Close Project Tests', function() {
             this.timeout(testTimeout.short);
             const res = await projectService.closeProject(projectID);
             
-            res.should.have.status(409);
+            res.status.should.equal(409, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.body.msg.should.include('Already closing'); 
         });
@@ -61,7 +61,7 @@ describe('Open/Close Project Tests', function() {
             const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
             const res = await projectService.closeProject(idMatchingNoProjects);
             
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.body.msg.should.equal(`Unable to find project ${idMatchingNoProjects}`);
         });
@@ -72,7 +72,7 @@ describe('Open/Close Project Tests', function() {
             this.timeout(testTimeout.short);
             const res = await projectService.openProject(projectID);
             
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal(`Project ${projectName} (${projectID}) opened. Will now build and run it`);
         });
@@ -81,7 +81,7 @@ describe('Open/Close Project Tests', function() {
             this.timeout(testTimeout.short);
             const res = await projectService.openProject(projectID);
             
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal(`Project ${projectName} (${projectID}) opened. Will now build and run it`);
         });
@@ -91,7 +91,7 @@ describe('Open/Close Project Tests', function() {
             const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
             const res = await projectService.openProject(idMatchingNoProjects);
             
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal(`Unable to find project ${idMatchingNoProjects}`);
         });

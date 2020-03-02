@@ -27,7 +27,7 @@ describe('XSS Attack Tests', function() {
         it('should succeed (with status 200) when sanitising input', async function() {
             this.timeout(testTimeout.short);
             const res = await makeExampleXSSAttack();
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
         });
     });        
 });

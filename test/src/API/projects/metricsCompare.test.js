@@ -63,7 +63,7 @@ describe('Metrics Comparison tests (/projects/{id}/metrics/compare)', function()
             const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
             const res = await getProjectComparisonData(idMatchingNoProjects);
             
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal(`Unable to find project ${idMatchingNoProjects}`);
         });
@@ -72,7 +72,7 @@ describe('Metrics Comparison tests (/projects/{id}/metrics/compare)', function()
             this.timeout(testTimeout.short);
             const res = await getProjectComparisonData(projectID);
             
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.body.should.deep.equal([
                 {
@@ -107,7 +107,7 @@ describe('Metrics Comparison tests (/projects/{id}/metrics/compare)', function()
             await removeCpuDataFromMetricsJson(loadTest1);
 
             const res = await getProjectComparisonData(projectID);
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
 
             res.body.forEach((dataObj) => {
@@ -125,7 +125,7 @@ describe('Metrics Comparison tests (/projects/{id}/metrics/compare)', function()
             await deleteDataFromLoadTestRun(loadTest2);
 
             const res = await getProjectComparisonData(projectID);
-            res.should.have.status(422);
+            res.status.should.equal(422, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
         });
     });

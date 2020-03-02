@@ -41,7 +41,7 @@ describe('watchList and file-changes route tests', function() {
             this.timeout(testTimeout.med);
             const res = await projectService.getWatchList();
             
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             const project = res.body.projects.find(project => project.projectID === projectID);
             project.should.containSubset({
                 projectID,
@@ -87,7 +87,7 @@ describe('watchList and file-changes route tests', function() {
                 .query({ clientUuid });
             const res = await reqService.makeReq(req);
             
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.text.should.equal('Error while validating request: request.body should have required property \'success\'');
         });
 
@@ -101,7 +101,7 @@ describe('watchList and file-changes route tests', function() {
                 .send({ success: true });
 
             const res = await reqService.makeReq(req);
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
             res.text.should.equal(`Unable to find project ${idMatchingNoProjects}`);
         });
         
@@ -114,7 +114,7 @@ describe('watchList and file-changes route tests', function() {
                 .send({ success: true });
 
             const res = await reqService.makeReq(req);
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
         });
     });
 });

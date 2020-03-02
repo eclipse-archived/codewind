@@ -58,7 +58,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
                 pathFromDirToModifiedFile,
             );
 
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
 
             const pathToFileInPfeTempDir = path.join('codewind-workspace', 'cw-temp', projectName, pathFromDirToModifiedFile);
@@ -78,7 +78,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             };
             const res = await projectService.uploadEnd(projectID, options);
 
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
 
             const pathToFileInPfeProjectDir = path.join('codewind-workspace', projectName, pathFromDirToModifiedFile);
@@ -118,7 +118,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
                 pathFromDirToNewFile,
             );
 
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
 
             const pathToFileInPfeTempDir = path.join('codewind-workspace', 'cw-temp', projectName, pathFromDirToNewFile);
@@ -141,7 +141,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             };
             const res = await projectService.uploadEnd(projectID, options);
 
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
 
             const pathToFileInPfeTempDir = path.join('codewind-workspace', 'cw-temp', projectName, pathFromDirToNewFile);
@@ -188,7 +188,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             };
             const res = await projectService.uploadEnd(projectID, options);
 
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
 
             const pathToFileInPfeTempDir = path.join('codewind-workspace', 'cw-temp', projectName, pathFromDirToDeletedFile);
@@ -237,7 +237,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             };
             const res = await projectService.uploadEnd(projectID, options);
 
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
 
             const pathToDirInPfeTempDir = path.join('codewind-workspace', 'cw-temp', projectName, pathFromDirToDeletedDir);
@@ -275,7 +275,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             };
             const res = await projectService.uploadEnd(projectID, options);
 
-            res.should.have.status(200);
+            res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
         });
     });
@@ -290,7 +290,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
                 timeStamp: Date.now(),
             };
             const res = await projectService.uploadEnd(projectID, options);
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.text.should.equal('Error while validating request: request.body should have required property \'fileList\'');
         });
 
@@ -303,7 +303,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
                 timeStamp: Date.now(),
             };
             const res = await projectService.uploadEnd(projectID, options);
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.text.should.equal('Error while validating request: request.body should have required property \'directoryList\'');
         });
 
@@ -316,7 +316,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
                 timeStamp: Date.now(),
             };
             const res = await projectService.uploadEnd(projectID, options);
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.text.should.equal('Error while validating request: request.body should have required property \'modifiedList\'');
         });
 
@@ -329,7 +329,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
                 modifiedList: null,
             };
             const res = await projectService.uploadEnd(projectID, options);
-            res.should.have.status(400);
+            res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.text.should.equal('Error while validating request: request.body should have required property \'timeStamp\'');
         });
 
@@ -343,7 +343,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
                 timeStamp: Date.now(),
             };
             const res = await projectService.uploadEnd(idMatchingNoProjects, options);
-            res.should.have.status(404);
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
         });
     });
