@@ -28,6 +28,8 @@ chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
 const should = chai.should();
 
+const pathToLoadRunnerJs = '../../../../src/pfe/portal/modules/LoadRunner';
+
 describe('LoadRunner.js', () => {
     let sandbox;
     before(() => {
@@ -44,10 +46,10 @@ describe('LoadRunner.js', () => {
                 on: () => {},
                 connect: ioConnectStub,
             });
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/Logger': MockLogger,
-            }); 
+            });
 
             // act
             const loadRunner = new LoadRunner('mockUser');
@@ -82,16 +84,16 @@ describe('LoadRunner.js', () => {
                 headers: { location: 'mockLocation' },
             });
             const cwUtilsStub = { asyncHttpRequest: asyncHttpRequestStub };
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/sharedFunctions': cwUtilsStub,
                 './utils/Logger': MockLogger,
-            });  
-            const mockUser = { 
+            });
+            const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
             const loadRunner = new LoadRunner(mockUser);
-            const mockProject = { 
+            const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
@@ -99,7 +101,7 @@ describe('LoadRunner.js', () => {
             };
             loadRunner.project = mockProject;
             loadRunner.metricsFeatures = { timedMetrics: false };
-            
+
             // act
             const output = await loadRunner.createCollection();
 
@@ -125,16 +127,16 @@ describe('LoadRunner.js', () => {
                 headers: { location: 'mockLocation' },
             });
             const cwUtilsStub = { asyncHttpRequest: asyncHttpRequestStub };
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/sharedFunctions': cwUtilsStub,
                 './utils/Logger': MockLogger,
-            });  
+            });
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
             const loadRunner = new LoadRunner(mockUser);
-            const mockProject = { 
+            const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
@@ -143,7 +145,7 @@ describe('LoadRunner.js', () => {
             loadRunner.project = mockProject;
             loadRunner.metricsFeatures = { timedMetrics: true };
             const seconds = 500;
-            
+
             // act
             const output = await loadRunner.createCollection(seconds);
 
@@ -166,16 +168,16 @@ describe('LoadRunner.js', () => {
                 headers: { location: 'mockLocation' },
             });
             const cwUtilsStub = { asyncHttpRequest: asyncHttpRequestStub };
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/sharedFunctions': cwUtilsStub,
                 './utils/Logger': MockLogger,
-            });  
+            });
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
             const loadRunner = new LoadRunner(mockUser);
-            const mockProject = { 
+            const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
@@ -186,7 +188,7 @@ describe('LoadRunner.js', () => {
             loadRunner.project = mockProject;
             loadRunner.metricsFeatures = { timedMetrics: true };
             const seconds = 500;
-            
+
             // act
             const output = await loadRunner.createCollection(seconds);
 
@@ -208,23 +210,23 @@ describe('LoadRunner.js', () => {
             });
             const cwUtilsStub = { asyncHttpRequest: asyncHttpRequestStub };
             const logErrorSpy = sandbox.spy(MockLogger.prototype, 'error');
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/sharedFunctions': cwUtilsStub,
                 './utils/Logger': MockLogger,
-            });  
+            });
             const mockUser = {
                 uiSocket: { emit: () => {} },
             };
             const loadRunner = new LoadRunner(mockUser);
-            const mockProject = { 
+            const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
                 getPort: () => 'mockPort',
             };
             loadRunner.project = mockProject;
-            
+
             // act
             const output = await loadRunner.createCollection();
 
@@ -239,30 +241,30 @@ describe('LoadRunner.js', () => {
             should.equal(output, null);
         });
         it('POSTs to the project collections route\
-        then returns null when res.statusCode is unexpected', async() => {
+        then returns null when res.statusCode is unexpected (e.g. 499)', async() => {
             // arrange
             const asyncHttpRequestStub = sandbox.stub().returns({
                 statusCode: 499,
             });
             const cwUtilsStub = { asyncHttpRequest: asyncHttpRequestStub };
             const logErrorSpy = sandbox.spy(MockLogger.prototype, 'error');
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/sharedFunctions': cwUtilsStub,
                 './utils/Logger': MockLogger,
-            });  
+            });
             const mockUser = {
                 uiSocket: { emit: () => {} },
             };
             const loadRunner = new LoadRunner(mockUser);
-            const mockProject = { 
+            const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
                 getPort: () => 'mockPort',
             };
             loadRunner.project = mockProject;
-            
+
             // act
             const output = await loadRunner.createCollection();
 
@@ -286,7 +288,12 @@ describe('LoadRunner.js', () => {
         then does nothing when the status code is unexpected\
         then doesn\'t DELETE the collection when the project supports timed collections', async() => {
             // arrange
-            const httpRequestStub = sandbox.stub().returns({ statusCode: 299, on: () => ({ end: () => {} }) });
+            const httpRequestStub = sandbox.stub().returns({
+                statusCode: 299,
+                on: () => ({
+                    end: () => {},
+                }),
+            });
             const httpStub = {
                 request: httpRequestStub,
             };
@@ -294,14 +301,14 @@ describe('LoadRunner.js', () => {
                 statusCode: 201,
                 headers: { location: 'mockLocation' },
             });
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 http: httpStub,
                 './utils/sharedFunctions': { asyncHttpRequest: asyncHttpRequestStub },
                 './utils/Logger': MockLogger,
-            });  
+            });
             const loadRunner = new LoadRunner('mockUser');
-            const mockProject = { 
+            const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
@@ -310,7 +317,7 @@ describe('LoadRunner.js', () => {
             loadRunner.project = mockProject;
             loadRunner.collectionUri = 'mockCollectionUri';
             loadRunner.metricsFeatures = { timedMetrics: false };
-            
+
             // act
             const output = await loadRunner.recordCollection();
 
@@ -337,29 +344,29 @@ describe('LoadRunner.js', () => {
         });
         it('throws the correct error when loadRunner already has a project', async() => {
             // arrange
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/Logger': MockLogger,
-            });  
+            });
             const loadRunner = new LoadRunner('mockUser');
-            const mockProject = { 
+            const mockProject = {
                 name: 'mockName',
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
             };
             loadRunner.project = mockProject;
-            
+
             // act & assert
             await loadRunner.runLoad().should.eventually.be.rejectedWith(`Load run already in progress.\nFor project ${mockProject.name} (${mockProject.projectID})`);
         });
         it('throws the correct error when loadRunner is not up', async() => {
             // arrange
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/Logger': MockLogger,
-            });  
+            });
             const loadRunner = new LoadRunner('mockUser');
             // by default, loadRunner.up === false
-            
+
             // act & assert
             await loadRunner.runLoad().should.eventually.be.rejectedWith('Load Runner service is not available');
         });
@@ -372,24 +379,24 @@ describe('LoadRunner.js', () => {
         it('throws the correct error when loadRunner\'s request to cancel load errors', async() => {
             // arrange
             const asyncHttpRequestStub = () => { throw new Error('error cancelling load'); };
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/sharedFunctions': { asyncHttpRequest: asyncHttpRequestStub },
                 './utils/Logger': MockLogger,
-            });  
+            });
             const loadRunner = new LoadRunner('mockUser');
-            
+
             // act & assert
             await loadRunner.cancelRunLoad().should.eventually.be.rejectedWith('Load Runner service is not available');
         });
         it('returns the response to the request to cancel load when it doesn\'t error', async() => {
             // arrange
             const asyncHttpRequestStub = sandbox.stub().returns('mockCancelLoadResponse');
-            const LoadRunner = proxyquire('../../../../src/pfe/portal/modules/LoadRunner', {
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/sharedFunctions': { asyncHttpRequest: asyncHttpRequestStub },
                 './utils/Logger': MockLogger,
-            });  
+            });
             const loadRunner = new LoadRunner('mockUser');
             const expectedOptions = {
                 host: 'codewind-performance',
@@ -400,10 +407,10 @@ describe('LoadRunner.js', () => {
                     'Content-Type': 'application/json',
                 },
             };
-            
+
             // act
             const output = await loadRunner.cancelRunLoad('mockLoadConfig');
-            
+
             // assert
             asyncHttpRequestStub.should.have.been.calledOnceWithExactly(expectedOptions, 'mockLoadConfig');
             output.should.equal('mockCancelLoadResponse');
