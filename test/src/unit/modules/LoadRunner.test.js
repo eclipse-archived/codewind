@@ -13,6 +13,7 @@ const sinon = require('sinon');
 const chai = require('chai');
 const chaiSubset = require('chai-subset');
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
+const { c } = require('compress-tag');
 
 /* eslint-disable class-methods-use-this */
 class MockLogger {
@@ -75,9 +76,9 @@ describe('LoadRunner.js', () => {
             on: () => {},
             connect: () => {},
         });
-        it('updates the UI when the project supports timed metrics,\
-        then POSTs to the project collections route\
-        and returns the header location when successful', async() => {
+        it(c`updates the UI when the project supports timed metrics,
+        then POSTs to the project collections route,
+        and returns the header location when successful`, async() => {
             // arrange
             const asyncHttpRequestStub = sandbox.stub().returns({
                 statusCode: 201,
@@ -118,9 +119,9 @@ describe('LoadRunner.js', () => {
             });
             output.should.equal('mockLocation');
         });
-        it('doesn\'t update the UI when the project doesn\'t support timed metrics,\
-        then POSTs to the project collections route\
-        and returns the header location when successful', async() => {
+        it(c`doesn\'t update the UI when the project doesn\'t support timed metrics,
+        then POSTs to the project collections route
+        and returns the header location when successful`, async() => {
             // arrange
             const asyncHttpRequestStub = sandbox.stub().returns({
                 statusCode: 201,
@@ -159,9 +160,9 @@ describe('LoadRunner.js', () => {
             });
             output.should.equal('mockLocation');
         });
-        it('doesn\'t update the UI when the project doesn\'t support timed metrics,\
-        then POSTs to the project collections route when the project is in Kubernetes\
-        and returns the header location when successful', async() => {
+        it(c`doesn\'t update the UI when the project doesn\'t support timed metrics,
+        then POSTs to the project collections route when the project is in Kubernetes
+        and returns the header location when successful`, async() => {
             // arrange
             const asyncHttpRequestStub = sandbox.stub().returns({
                 statusCode: 201,
@@ -202,8 +203,8 @@ describe('LoadRunner.js', () => {
             });
             output.should.equal('mockLocation');
         });
-        it('POSTs to the project collections route\
-        then returns null when unsuccessful (400)', async() => {
+        it(c`POSTs to the project collections route
+        then returns null when unsuccessful (400)`, async() => {
             // arrange
             const asyncHttpRequestStub = sandbox.stub().returns({
                 statusCode: 400,
@@ -240,8 +241,8 @@ describe('LoadRunner.js', () => {
             logErrorSpy.should.have.been.calledOnceWithExactly('createCollection: too many metrics collections 400');
             should.equal(output, null);
         });
-        it('POSTs to the project collections route\
-        then returns null when res.statusCode is unexpected (e.g. 499)', async() => {
+        it(c`POSTs to the project collections route
+        then returns null when res.statusCode is unexpected (e.g. 499)`, async() => {
             // arrange
             const asyncHttpRequestStub = sandbox.stub().returns({
                 statusCode: 499,
@@ -284,9 +285,9 @@ describe('LoadRunner.js', () => {
             on: () => {},
             connect: () => {},
         });
-        it('GETs from the project collections route\
-        then does nothing when the status code is unexpected\
-        then doesn\'t DELETE the collection when the project supports timed collections', async() => {
+        it(c`GETs from the project collections route
+        then does nothing when the status code is unexpected
+        then doesn\'t DELETE the collection when the project supports timed collections`, async() => {
             // arrange
             const httpRequestStub = sandbox.stub().returns({
                 statusCode: 299,
