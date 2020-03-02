@@ -44,20 +44,32 @@ const sampleAppsodyTemplate = styledTemplates.appsody;
 
 const mockRepos = {
     enabled: {
+        id: '1',
         url: '1',
         description: '1',
         enabled: true,
     },
     disabled: {
+        id: '2',
         url: '2',
         description: '2',
         enabled: false,
     },
     noEnabledStatus: {
+        id: '3',
         url: '3',
         description: '3',
     },
+    noID: {
+        url: '4',
+        description: '4',
+        enabled: true,
+    },
+    withOnlyName: {
+        name: '5',
+    },
 };
+const mockRepoList = Object.values(mockRepos);
 
 const checkTemplateError = (err, expectedCode) => {
     const { name, code } = err;
@@ -73,7 +85,6 @@ function getWorkspaceAndDeleteAfterEach(testFolderName) {
     return workspace;
 };
 
-const mockRepoList = Object.values(mockRepos);
 describe('Templates.js', function() {
     // Set the default timeout for all tests
     this.timeout(testTimeout.short);
@@ -319,7 +330,7 @@ describe('Templates.js', function() {
                 beforeEach(() => {
                     fs.ensureDirSync(workspace);
                     templateController = new Templates(workspace);
-                    templateController.repositoryList = [...mockRepoList];
+                    templateController.repositoryList = [{ ...mockRepos.enabled }, { ...mockRepos.disabled }];
                 });
                 const tests = {
                     'enable 2 existing repos': {
@@ -355,11 +366,13 @@ describe('Templates.js', function() {
                         ],
                         expectedRepoDetails: [
                             {
+                                id: '1',
                                 url: '1',
                                 description: '1',
                                 enabled: true,
                             },
                             {
+                                id: '2',
                                 url: '2',
                                 description: '2',
                                 enabled: true,
@@ -399,11 +412,13 @@ describe('Templates.js', function() {
                         ],
                         expectedRepoDetails: [
                             {
+                                id: '1',
                                 url: '1',
                                 description: '1',
                                 enabled: false,
                             },
                             {
+                                id: '2',
                                 url: '2',
                                 description: '2',
                                 enabled: false,
@@ -443,11 +458,13 @@ describe('Templates.js', function() {
                         ],
                         expectedRepoDetails: [
                             {
+                                id: '1',
                                 url: '1',
                                 description: '1',
                                 enabled: false,
                             },
                             {
+                                id: '2',
                                 url: '2',
                                 description: '2',
                                 enabled: false,
@@ -528,6 +545,7 @@ describe('Templates.js', function() {
                         ],
                         expectedRepoDetails: [
                             {
+                                id: '1',
                                 url: '1',
                                 description: '1',
                                 enabled: false,
@@ -977,6 +995,30 @@ describe('Templates.js', function() {
                 const { url } = sampleRepos.codewind;
                 const repo = await getNameAndDescriptionFromRepoTemplatesJSON(url);
                 repo.should.contain.keys('name', 'description');
+            });
+        });
+        describe('getRepositoryFromTemplate(repositoryList, template)', function() {
+            const getRepositoryFromTemplate = Templates.__get__('getRepositoryFromTemplate');
+            const repositoryList = [...mockRepoList];
+            it('returns a repository for a template where the source ID matches the repository ID', () => {
+                const repo = getRepositoryFromTemplate(repositoryList, { sourceId: mockRepos.enabled.id });
+                repo.should.deep.equal(mockRepos.enabled);
+            });
+            it('returns a repository for a template with no source ID but the where the sourceURL matches the repository url', () => {
+                const repo = getRepositoryFromTemplate(repositoryList, { sourceURL: mockRepos.noID.url });
+                repo.should.deep.equal(mockRepos.noID);
+            });
+            it('returns a repository for a template with no source ID or sourceURL but the where the source (repo name) matches the repository name', () => {
+                const repo = getRepositoryFromTemplate(repositoryList, { source: mockRepos.withOnlyName.name });
+                repo.should.deep.equal(mockRepos.withOnlyName);
+            });
+            it('returns null as the template does not have a sourceId, sourceURL or a source field', () => {
+                const repo = getRepositoryFromTemplate(repositoryList,  {});
+                should.equal(repo, null);
+            });
+            it('returns null as a repository does not exist in the list that matches the given template', () => {
+                const repo = getRepositoryFromTemplate(repositoryList,  { sourceId: '123', sourceURL: 'url', source: 'invalid' });
+                should.equal(repo, null);
             });
         });
         describe('updateTemplates(repositories, allTemplates)', function() {
@@ -1510,6 +1552,7 @@ describe('Templates.js', function() {
                         ],
                         expectedRepoDetails: [
                             {
+                                id: '1',
                                 url: '1',
                                 description: '1',
                                 enabled: false,
@@ -1520,11 +1563,11 @@ describe('Templates.js', function() {
                 for (const [testName, test] of Object.entries(tests)) {
                     // eslint-disable-next-line no-loop-func
                     it(`${testName}`, async function() {
-                        const repoList = [...mockRepoList];
+                        const repoList = [{ ...mockRepos.enabled }, { ...mockRepos.disabled }];
                         const { operationResults, newRepositoryList } = await performOperationsOnRepositoryList(test.input, repoList);
                         operationResults.should.deep.equal(test.output);
                         if (test.expectedRepoDetails) {
-                            newRepositoryList.should.containSubset(test.expectedRepoDetails);   
+                            newRepositoryList.should.containSubset(test.expectedRepoDetails);
                         }
                     });
                 }
@@ -1549,6 +1592,7 @@ describe('Templates.js', function() {
                             },
                         },
                         expectedRepoDetails: {
+                            id: '1',
                             url: '1',
                             description: '1',
                             enabled: true,
@@ -1569,6 +1613,7 @@ describe('Templates.js', function() {
                             },
                         },
                         expectedRepoDetails: {
+                            id: '1',
                             url: '1',
                             description: '1',
                             enabled: false,
@@ -1578,7 +1623,7 @@ describe('Templates.js', function() {
                 for (const [testName, test] of Object.entries(tests)) {
                     describe(testName, function() { // eslint-disable-line no-loop-func
                         it(`returns the expected operation info and correctly updates the repository file`, async function() {
-                            const repositoryList = [...mockRepoList];
+                            const repositoryList = [{ ...mockRepos.enabled }, { ...mockRepos.disabled }];
                             const { operationResult, updatedRepo } = await performOperationOnRepository(test.input, repositoryList);
                             operationResult.should.deep.equal(test.output);
                             updatedRepo.should.deep.equal(test.expectedRepoDetails);

@@ -391,9 +391,9 @@ async function getNameAndDescriptionFromRepoTemplatesJSON(url) {
  */
 function getRepositoryFromTemplate(repositoryList, template) {
   const repo = repositoryList.find(repoToFind => (
-    template.sourceId === repoToFind.id ||
-    template.sourceURL === repoToFind.url ||
-    template.source === repoToFind.name)
+    (template.sourceId && template.sourceId === repoToFind.id) ||
+    (template.sourceURL && template.sourceURL === repoToFind.url) ||
+    (template.source && template.source === repoToFind.name))
   );
   return repo || null;
 }
