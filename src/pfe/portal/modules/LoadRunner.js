@@ -45,6 +45,7 @@ module.exports = class LoadRunner {
     this.metricsFeatures = {};
     this.createSocketEvents();
     this.connectIfAvailable();
+    this.timerID = null;
   }
 
   // Fetch the supported metrics features from the project
@@ -270,7 +271,7 @@ module.exports = class LoadRunner {
       case 202:
         break;
       default:
-        this.cancelProfiling();
+        await this.cancelProfiling();
         this.project = null;
         log.error(`runLoad (${loadrunnerRes.statusCode} received)'`);
       }
@@ -340,11 +341,11 @@ module.exports = class LoadRunner {
 
     // For Java Liberty restart the server in preparation for profiling
     if (this.project.language == 'java' && this.project.projectType == 'liberty') {
-      log.info(`beginJavaProfiling: Stopping liberty server`); 
+      log.info(`beginJavaProfiling: Stopping liberty server`);
       const stopCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `];
       await cwUtils.spawnContainerProcess(this.project, stopCommand);
       await this.waitForHealth(false);
-      log.info(`beginJavaProfiling: Starting liberty server`); 
+      log.info(`beginJavaProfiling: Starting liberty server`);
       const startCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start; `];
       await cwUtils.spawnContainerProcess(this.project, startCommand);
       await this.waitForHealth(true);
@@ -352,7 +353,7 @@ module.exports = class LoadRunner {
 
     const mkdirCommand = `mkdir -p ${loadTestDir}`;
     const mkdirArray = ['bash', '-c', mkdirCommand];
-    
+
     await cwUtils.spawnContainerProcess(this.project, mkdirArray);
 
     const healthCentercommand = `export javapid=(\`pidof java\`); java -jar $JAVA_HOME/jre/lib/ext/healthcenter.jar ID=\${javapid[-1]} level=headless -Dcom.ibm.java.diagnostics.healthcenter.headless.run.number.of.runs=1 -Dcom.ibm.java.diagnostics.healthcenter.headless.run.duration=${durationInMins} -Dcom.ibm.java.diagnostics.healthcenter.headless.output.directory=${loadTestDir} -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.memorycounters=off -Dcom.ibm.diagnostics.healthcenter.data.cpu=off -Dcom.ibm.diagnostics.healthcenter.data.environment=off -Dcom.ibm.diagnostics.healthcenter.data.locking=off -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.threads=off`;
@@ -364,7 +365,7 @@ module.exports = class LoadRunner {
       log.error(error)
     }
 
-    setTimeout(() => this.getJavaHealthCenterData(1), duration * 1000);
+    this.timerID = setTimeout(() => this.getJavaHealthCenterData(1), duration * 1000);
   }
 
   async getJavaHealthCenterData(counter) {
@@ -378,7 +379,7 @@ module.exports = class LoadRunner {
       log.error(error);
       if (this.project !== null) {
         log.info(`getJavaHealthCenterData: .hcd file not found, trying again. Attempt ${counter}/20`);
-        setTimeout(() => this.getJavaHealthCenterData(counter + 1), 3000);
+        this.timerID = setTimeout(() => this.getJavaHealthCenterData(counter + 1), 3000);
       } else {
         log.warn("getJavaHealthCenterData: Project was made null before .hcd could be found.")
       }
@@ -507,7 +508,7 @@ module.exports = class LoadRunner {
     */
     this.socket.on('error', (err) => {
       log.error('LoadRunner socket error');
-      this.project.loadInProgress = false; 
+      this.project.loadInProgress = false;
       log.error(err);
       // If this.up is false we're already trying to reconnect
       if (this.up) {
@@ -521,9 +522,10 @@ module.exports = class LoadRunner {
       this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started', timestamp: this.metricsFolder });
     });
 
-    this.socket.on('cancelled', () => {
+    this.socket.on('cancelled', async () => {
       log.info(`Load run on project ${this.project.projectID} cancelled`);
-      this.cancelProfiling();
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelling', timestamp: this.metricsFolder });
+      await this.cancelProfiling();
       this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled', timestamp: this.metricsFolder });
       this.project = null;
     });
@@ -598,11 +600,25 @@ module.exports = class LoadRunner {
     }
   }
 
-  cancelProfiling() {
+  async cancelProfiling() {
     if (this.profilingSocket !== null) {
       this.profilingSocket.emit('disableprofiling');
       this.profilingSocket.disconnect();
       this.profilingSocket = null;
+    }
+    if (this.timerID !== null) {
+      clearTimeout(this.timerID);
+      log.info(`cancelProfiling: Stopping liberty server`);
+      const stopCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `];
+      await cwUtils.spawnContainerProcess(this.project, stopCommand);
+      await this.waitForHealth(false);
+      log.info(`cancelProfiling: Starting liberty server`); 
+      const startCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start; `];
+      await cwUtils.spawnContainerProcess(this.project, startCommand);
+      await cwUtils.deleteFile(this.project, cwUtils.getProjectSourceRoot(this.project), `load-test/${this.metricsFolder}`);
+      await this.waitForHealth(true);
+      await this.project.removeProfilingData(this.metricsFolder);
+      this.timerID = null;
     }
   }
 
