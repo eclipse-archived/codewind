@@ -68,7 +68,6 @@ module.exports = class Templates {
       repositories = await fetchAllRepositoryDetails(repositories);
       this.repositoryList = repositories;
 
-      // Fetch templates
       const { enabledTemplates, allTemplates } = await fetchTemplates(this.repositoryList);
       this.enabledProjectTemplates = enabledTemplates;
       this.allProjectTemplates = allTemplates;
@@ -138,8 +137,7 @@ module.exports = class Templates {
     this.lock();
     try {
       const repo = this.repositoryList.find(repo => repo.url === url);
-      if (!repo) return null;
-      return repo;
+      return repo || null;
     } finally {
       this.unlock();
     }
@@ -250,7 +248,9 @@ module.exports = class Templates {
 
 // FUNCTIONS
 
-// Save the default list to disk so the user can potentially edit it (WHEN CODEWIND IS NOT RUNNING)
+/**
+ * Save the default list to disk so the user can potentially edit it (WHEN CODEWIND IS NOT RUNNING)
+ */
 async function writeRepositoryList(repositoryFile, repositoryList) {
   await fs.ensureFile(repositoryFile);
   await fs.writeJson(repositoryFile, repositoryList, { spaces: '  ' });
@@ -384,13 +384,29 @@ async function getNameAndDescriptionFromRepoTemplatesJSON(url) {
   return {};
 }
 
+/**
+ * Uses a template's sourceId, sourceURL or source (repo name) to get the repository for a given template
+ * Ordered so that the source (repo name) is used as a fall back
+ * Returns null if the repository cannot be found
+ */
+function getRepositoryFromTemplate(repositoryList, template) {
+  const repo = repositoryList.find(repoToFind => (
+    template.sourceId === repoToFind.id ||
+    template.sourceURL === repoToFind.url ||
+    template.source === repoToFind.name)
+  );
+  return repo || null;
+}
+
+/**
+ * Function to update the template lists
+ * Sets a template as enabled or disabled dependent on its repository's enabled value
+ * If enabled it will be added to the enabledTemplates list
+ * The allTemplates list will not be changed
+ */
 function updateTemplates(repositories, allTemplates) {
   const enabledTemplates = allTemplates.filter(template => {
-    const repo = repositories.find(repoToFind => {
-      return (template.sourceId === repoToFind.id ||
-        template.sourceURL === repoToFind.url ||
-        template.source === repoToFind.name);
-    });
+    const repo = getRepositoryFromTemplate(repositories, template);
     return (repo && repo.enabled === true);
   });
   return { enabledTemplates, allTemplates }
@@ -550,7 +566,7 @@ async function addRepositoryToProviders(repo, providers) {
   const promises = [];
   for (const provider of Object.values(providers)) {
     if (typeof provider.canHandle === 'function') {
-      // make a new copy to for each provider to be invoked with
+      // make a new copy for each provider to be invoked with
       // in case any provider modifies it (which they shouldn't do)
       const copy = Object.assign({}, repo);
       if (provider.canHandle(copy) && typeof provider.addRepository === 'function') {
@@ -584,7 +600,6 @@ async function removeRepositoryFromProviders(repo, providers) {
 }
 
 async function performOperationsOnRepositoryList(requestedOperations, repositoryList) {
-  // const newRepositoryList = cwUtils.deepClone(repositoryList);
   const newRepositoryList = [];
   const promiseList = requestedOperations.map(async operation => {
     const { operationResult, updatedRepo } = await performOperationOnRepository(operation, repositoryList);
@@ -642,16 +657,15 @@ function enableOrDisableRepository({ value }, repo) {
   }
 }
 
-// Updates repositories in the repositoryList with the updated values
-// New repositories will not be added
-// Repositories with no updates will be kept with no changes
+/**
+ * Updates repositories in the repositoryList with the updated values
+ * New repositories will not be added
+ * Repositories with no updates will be kept with no changes
+ */
 function updateRepositoryList(currentRepositoryList, updatedRepositories) {
   const newRepositoryList = currentRepositoryList.map(oldRepo => {
     const modifiedRepo = updatedRepositories.find(modifiedRepo => modifiedRepo.url === oldRepo.url);
-    if (modifiedRepo) {
-      return modifiedRepo;
-    }
-    return oldRepo;
+    return modifiedRepo || oldRepo;
   });
   return newRepositoryList;
 }

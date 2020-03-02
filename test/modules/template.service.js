@@ -246,7 +246,6 @@ function setupReposAndTemplatesForTesting() {
     });
     after(async function() {
         this.timeout(testTimeout.med);
-
         // Restore orignal list
         await setTemplateReposTo(originalTemplateRepos);
     });

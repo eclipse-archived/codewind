@@ -21,6 +21,9 @@ module.exports = class TemplateError extends BaseError {
 // Error codes
 module.exports.DUPLICATE_URL = 'DUPLICATE_URL';
 
+// HTTP codes
+module.exports.HTTP_LOCKED = 423;
+
 /**
  * Function to construct an error message based on the given error code
  * @param code, the error code to create the message from

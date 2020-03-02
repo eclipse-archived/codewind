@@ -17,8 +17,6 @@ const TemplateError = require('../modules/utils/errors/TemplateError');
 const router = express.Router();
 const log = new Logger(__filename);
 
-const TEMPLATES_LOCKED_STATUS_CODE = 423;
-
 /**
  * API Function to return a list of available templates
  * @return the set of language extensions as a JSON array of strings
@@ -40,10 +38,9 @@ router.get('/api/v1/templates', validateReq, async (req, res, _next) => {
   } catch (error) {
     log.error(error);
     if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
+      res.sendStatus(TemplateError.HTTP_LOCKED);
       return;
     }
-    log.error(error);
     res.status(500).json(error);
   }
 });
@@ -58,7 +55,7 @@ router.get('/api/v1/templates/repositories', async (req, res, _next) => {
   } catch (error) {
     log.error(error);
     if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
+      res.sendStatus(TemplateError.HTTP_LOCKED);
       return;
     }
     res.status(500).send(error.message);
@@ -83,12 +80,14 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
   } catch (error) {
     log.error(error);
     const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON', 'ADD_TO_PROVIDER_FAILURE'];
-    if (error instanceof TemplateError && knownErrorCodes.includes(error.code)) {
-      res.status(400).send(error.message);
-      return;
-    } else if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
-      return;
+    if (error instanceof TemplateError) {
+      if (knownErrorCodes.includes(error.code)) {
+        res.status(400).send(error.message);
+        return;
+      } else if (error.code === 'LOCKED') {
+        res.sendStatus(TemplateError.HTTP_LOCKED);
+        return;
+      }
     }
     res.status(500).send(error.message);
   }
@@ -102,12 +101,14 @@ router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _n
     await sendRepositories(req, res, _next);
   } catch (error) {
     log.error(error);
-    if (error instanceof TemplateError && error.code === 'REPOSITORY_DOES_NOT_EXIST') {
-      res.status(404).send(error.message);
-      return;
-    } else if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
-      return;
+    if (error instanceof TemplateError) {
+      if (error.code === 'REPOSITORY_DOES_NOT_EXIST') {
+        res.status(404).send(error.message);
+        return;
+      } else if (error.code === 'LOCKED') {
+        res.sendStatus(TemplateError.HTTP_LOCKED);
+        return;
+      }
     }
     res.status(500).send(error.message);
   }
@@ -128,7 +129,7 @@ router.patch('/api/v1/batch/templates/repositories', validateReq, async (req, re
   } catch(error) {
     log.error(error);
     if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
+      res.sendStatus(TemplateError.HTTP_LOCKED);
       return;
     }
     res.status(500).send(error.message);
@@ -145,7 +146,7 @@ router.get('/api/v1/templates/styles', validateReq, async (req, res, _next) => {
     res.status(200).json(styles);
   } catch(error) {
     if (error instanceof TemplateError && error.code === 'LOCKED') {
-      res.sendStatus(TEMPLATES_LOCKED_STATUS_CODE);
+      res.sendStatus(TemplateError.HTTP_LOCKED);
       return;
     }
     res.status(500).send(error.message);

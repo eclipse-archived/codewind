@@ -185,15 +185,14 @@ module.exports = class ExtensionList {
 async function addExtensionsToTemplates(extensions, templates) {
   // Use a for loop rather than .map and Promise.all as we need these to happen one after the other
   // so that there will not be a conflict with the Templates lock
+  /* eslint-disable no-await-in-loop */
   for (const extension of extensions) {
     try {
       if (extension.templates) {
         log.trace(`Adding Extension ${extension.name}'s repository into the templates`);
-        // eslint-disable-next-line no-await-in-loop
         await templates.addRepository(extension.templates, extension.description);
       } else if (extension.templatesProvider) {
         log.trace(`Adding Extension ${extension.name}'s provider into the templates`);
-        // eslint-disable-next-line no-await-in-loop
         await templates.addProvider(extension.name, extension.templatesProvider);
         delete extension.templatesProvider;
       }
@@ -201,4 +200,5 @@ async function addExtensionsToTemplates(extensions, templates) {
       log.warn(error);
     }
   }
+  /* eslint-enable no-await-in-loop */
 }

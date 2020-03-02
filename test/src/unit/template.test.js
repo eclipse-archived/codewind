@@ -164,8 +164,8 @@ describe('Templates.js', function() {
                     repository.enabled.should.be.false;
                 }
                 await templateController.initializeRepositoryList();
-                const enabledTmplateList = await templateController.getTemplates(true);
-                enabledTmplateList.length.should.equal(0);
+                const enabledTemplateList = await templateController.getTemplates(true);
+                enabledTemplateList.length.should.equal(0);
                 const templateList = await templateController.getTemplates(false);
                 templateList.length.should.be.at.least(defaultCodewindTemplates.length);
             });
@@ -788,7 +788,7 @@ describe('Templates.js', function() {
                 const repository = await constructRepositoryObject(url, description, name, protected);
                 repository.should.have.keys('id', 'name', 'url', 'description', 'enabled', 'protected', 'projectStyles');
             });
-            it('returns a repository object only a url is given - gets the name, description from the url and does not have a protected field', async() => {
+            it('returns a repository object when only a url is given - gets the name, description from the url and does not have a protected field', async() => {
                 const { url } = sampleRepos.codewind;
                 const repository = await constructRepositoryObject(url);
                 repository.should.have.keys('id', 'name', 'url', 'description', 'enabled', 'projectStyles');
