@@ -49,7 +49,7 @@ for appType in applicationTypes:
                 if (not (performanceKey in performanceObject["{}-{}".format(appType, lang)])):
                     performanceObject["{}-{}".format(appType, lang)][performanceKey] = [];
                 performanceObject["{}-{}".format(appType, lang)][performanceKey].append(performance_data[appType][lang][iteration][performanceKey]);
-        for performanceKey in performanceKeys:
+        for performanceKey in performanceObject["{}-{}".format(appType, lang)].keys():
             performanceObject["{}-{}".format(appType, lang)][performanceKey] = round(np.mean(performanceObject["{}-{}".format(appType, lang)][performanceKey]), 3);
 
 df = pd.DataFrame(data=performanceObject);

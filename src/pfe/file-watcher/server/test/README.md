@@ -59,7 +59,7 @@ Performance test report and data is stored under `$HOME/.codewindtest/turbine/pe
 
 Performance test baseline data csv is stored under `$HOME/.codewindtest/turbine/performance-test-baseline/<TEST_TYPE>/<RELEASE>`
 
-By default our nightly runs will use tonight's run to compare against the baseline set by yesterday's run. To compare it with a set baseline, set `export NEW_BASELINE=n` before running the test.
+By default our nightly runs will use tonight's run to compare against the baseline set by yesterday's run. To set the current run data as new baseline, set `export NEW_BASELINE=n` before running the test.
 
 To run performance test against a specific release, e.g 0.10.0, and compare it against an older release, e.g. 0.9.0, please set `export COMPARABLE_RELEASE=0.9.0` when running the performance test as `./test.sh --release=0.10.0`.
 

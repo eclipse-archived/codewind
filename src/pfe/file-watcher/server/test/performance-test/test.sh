@@ -119,7 +119,7 @@ if [[ $CONVERT_ONLY == false ]]; then
     else
         LOGS_DATA_DIR=$TEST_INFO_DIR/performance-test-data/$TEST_ENV/$RELEASE_BRANCH/$DATE_NOW/$TIME_NOW
         mkdir -p $LOGS_DATA_DIR
-        ./runner.sh --environment=$TEST_ENV --iterations=$ITERATIONS --clean-run=$CLEAN_RUN --post-clean=$POST_CLEAN --create-projects=n |& tee "$LOGS_DATA_DIR/performance-run-$TEST_ENV.log"
+        ./runner.sh --environment=$TEST_ENV --iterations=$ITERATIONS --clean-run=$CLEAN_RUN --post-clean=$POST_CLEAN --create-projects=n | tee "$LOGS_DATA_DIR/performance-run-$TEST_ENV.log"
     fi
 else
     if [ "$TEST_ENV" == "both" ]; then
