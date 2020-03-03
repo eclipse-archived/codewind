@@ -371,6 +371,69 @@ describe('LoadRunner.js', () => {
             // act & assert
             await loadRunner.runLoad().should.eventually.be.rejectedWith('Load Runner service is not available');
         });
+        it(c`saves the run description,
+        creates a results directory,
+        updates the project endpoints,
+        updates the metrics features of the project,
+        does not write a git hash when the project does not have git information,
+        tells the UI we are preparing to run load,
+        does not start profiling when the project does not support it,
+        starts collection on metrics endpoint,
+        tells the UI we are starting to run load,
+        requests a load run from the loadrunner microservice,
+        does not cancel profiling when successful,
+        returns the response from the loadrunner microservice`, async() => {
+            // arrange
+            const asyncHttpRequestStub = () => ({ statusCode: 202 });
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/sharedFunctions': { asyncHttpRequest: asyncHttpRequestStub },
+                './utils/Logger': MockLogger,
+            });
+            const mockUser = {
+                uiSocket: { emit: sandbox.stub() },
+            };
+            const loadRunner = new LoadRunner(mockUser);
+            loadRunner.up = true;
+            const mockProject = {
+                name: 'mockName',
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                getProjectKubeService: sandbox.stub(),
+            };
+
+            const mockLoadConfig = { maxSeconds: 999 };
+
+            const createResultsDirectory = sandbox.stub(loadRunner, 'createResultsDirectory');
+            const fetchProjectMetricsFeatures = sandbox.stub(loadRunner, 'fetchProjectMetricsFeatures');
+            const createCollection = sandbox.stub(loadRunner, 'createCollection');
+            const writeGitHash = sandbox.stub(loadRunner, 'writeGitHash');
+            const beginNodeProfiling = sandbox.stub(loadRunner, 'beginNodeProfiling');
+            const beginJavaProfiling = sandbox.stub(loadRunner, 'beginJavaProfiling');
+
+            // act
+            const loadrunnerRes = await loadRunner.runLoad(mockLoadConfig, mockProject, 'mockRunDescription');
+
+            // assert
+            loadRunner.runDescription.should.equal('mockRunDescription');
+            createResultsDirectory.should.have.been.calledOnceWithExactly();
+            loadRunner.project.getProjectKubeService.should.have.been.calledOnceWithExactly();
+            fetchProjectMetricsFeatures.should.have.been.calledOnceWithExactly();
+            writeGitHash.should.not.have.been.called;
+            mockUser.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
+                projectID: mockProject.projectID,
+                status: 'preparing',
+                timestamp: loadRunner.metricsFolder,
+            });
+            beginNodeProfiling.should.not.have.been.called;
+            beginJavaProfiling.should.not.have.been.called;
+            createCollection.should.have.been.calledOnceWithExactly(mockLoadConfig.maxSeconds);
+            mockUser.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
+                projectID: mockProject.projectID,
+                status: 'starting',
+                timestamp: loadRunner.metricsFolder,
+            });
+            loadrunnerRes.should.deep.equal({ statusCode: 202 });
+        });
     });
     describe('cancelRunLoad(loadConfig)', () => {
         const mockIo = () => ({
