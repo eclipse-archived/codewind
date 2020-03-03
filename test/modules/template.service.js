@@ -192,13 +192,15 @@ async function setTemplateReposTo(repoList) {
     const ignoreDefaultAppsodyRepo = repo => (!('id' in repo) || repo.id !== 'incubator');
     const reposToDelete = (await getTemplateRepos()).body;
     if (reposToDelete.length > 0) {
-        await Promise.all(reposToDelete.filter(ignoreDefaultAppsodyRepo).map(repo =>
-            deleteTemplateRepo(repo.url)
-        ));
+        const filteredReposToDelete = reposToDelete.filter(ignoreDefaultAppsodyRepo);
+        for (const repo of filteredReposToDelete) {
+            await deleteTemplateRepo(repo.url);
+        }
     }
-    await Promise.all(repoList.filter(ignoreDefaultAppsodyRepo).map(repo =>
-        addTemplateRepo(repo)
-    ));
+    const filteredReposToAdd = repoList.filter(ignoreDefaultAppsodyRepo);
+    for (const repo of filteredReposToAdd) {
+        await addTemplateRepo(repo);
+    }
 }
 
 async function getTemplateStyles() {
