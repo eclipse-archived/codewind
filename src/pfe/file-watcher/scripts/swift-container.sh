@@ -262,7 +262,6 @@ function deployLocal() {
 	if [ "$($IMAGE_COMMAND ps -a -f name=$project)" ]; then
 		echo "Remove an old container before trying to build a new one"
 		$IMAGE_COMMAND rm -f $project
-		$IMAGE_COMMAND rmi -f $project
 	fi
 
 	echo "$BUILD_IMAGE_INPROGRESS_MSG $projectName-build"
@@ -340,11 +339,15 @@ function deployLocal() {
  		$util newLogFileAvailable $PROJECT_ID "build"
 
 		echo -e "Docker app log file "$LOG_FOLDER/$DOCKER_APP_LOG.log""
+		OLD_IMAGE_ID=$($IMAGE_COMMAND images -q $project)
 		$IMAGE_COMMAND $BUILD_COMMAND -t $project . |& tee "$LOG_FOLDER/$DOCKER_APP_LOG.log"
 		exitCode=$?
 		imageLastBuild=$(($(date +%s)*1000))
 		if [ $exitCode -eq 0 ]; then
 			echo "$BUILD_IMAGE_SUCCESS_MSG $projectName"
+			if [ -n "$OLD_IMAGE_ID" ] && [ "$OLD_IMAGE_ID" != "$($IMAGE_COMMAND images -q $project)" ]; then
+				$IMAGE_COMMAND rmi -f $OLD_IMAGE_ID
+			fi
 			$util updateBuildState $PROJECT_ID $BUILD_STATE_SUCCESS " " "$imageLastBuild"
 			$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 		else
