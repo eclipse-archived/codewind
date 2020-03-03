@@ -37,7 +37,7 @@ chai.use(deepEqualInAnyOrder);
 
 chai.use(chaiResValidator(pathToApiSpec));
 
-describe.only('Template API tests', function() {
+describe('Template API tests', function() {
     // Set the default timeout for all tests
     this.timeout(testTimeout.short);
     // Save the state of the repos before any test and restore the exact state after
@@ -283,7 +283,7 @@ describe.only('Template API tests', function() {
         it('should return a list of available template styles', async function() {
             const res = await getTemplateStyles();
             res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.have.members(['Codewind', 'Appsody']);
+            res.body.should.include.members(['Codewind']);
         });
     });
 });
