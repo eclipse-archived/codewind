@@ -201,16 +201,13 @@ async function getNumberOfTemplates(queryParams) {
  * @param {[JSON]} repoList
  */
 async function setTemplateReposTo(repoList) {
-    const ignoreDefaultAppsodyRepo = repo => (!('id' in repo) || repo.id !== 'incubator');
     const reposToDelete = (await getTemplateRepos()).body;
     if (reposToDelete.length > 0) {
-        const filteredReposToDelete = reposToDelete.filter(ignoreDefaultAppsodyRepo);
-        for (const repo of filteredReposToDelete) {
+        for (const repo of reposToDelete) {
             await deleteTemplateRepo(repo.url);
         }
     }
-    const filteredReposToAdd = repoList.filter(ignoreDefaultAppsodyRepo);
-    for (const repo of filteredReposToAdd) {
+    for (const repo of repoList) {
         await addTemplateRepo(repo);
     }
 }
