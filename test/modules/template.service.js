@@ -184,6 +184,18 @@ async function getTemplates(queryParams) {
     return res;
 }
 
+async function getNumberOfTemplates(queryParams) {
+    const { statusCode, body: templates } = await getTemplates(queryParams);
+    // If we get a 204 HTTP Code the templates list is empty
+    if (statusCode === 204) {
+        return 0;
+    } else if (statusCode === 200) {
+        return templates.length;
+    }
+    // If we haven't got a 204 or 200 we cannot report the number of templates
+    throw new Error(`getNumberOfTemplates - Unknown status code received: ${statusCode}`);
+}
+
 /**
  * Removes all templates repos known to PFE, and adds the supplied repos
  * @param {[JSON]} repoList
@@ -266,6 +278,7 @@ module.exports = {
     enableTemplateRepos,
     disableTemplateRepos,
     getTemplates,
+    getNumberOfTemplates,
     setTemplateReposTo,
     getTemplateStyles,
     saveReposBeforeTestAndRestoreAfter,

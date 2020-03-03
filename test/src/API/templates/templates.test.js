@@ -20,6 +20,7 @@ const {
     sampleRepos,
     batchPatchTemplateRepos,
     getTemplateRepos,
+    getNumberOfTemplates,
     getTemplates,
     addTemplateRepo,
     deleteTemplateRepo,
@@ -36,7 +37,7 @@ chai.use(deepEqualInAnyOrder);
 
 chai.use(chaiResValidator(pathToApiSpec));
 
-describe('Template API tests', function() {
+describe.only('Template API tests', function() {
     // Set the default timeout for all tests
     this.timeout(testTimeout.short);
     // Save the state of the repos before any test and restore the exact state after
@@ -135,9 +136,7 @@ describe('Template API tests', function() {
                     await deleteTemplateRepo(sampleRepos.codewind.url);
                     const { body: repos } = await getTemplateRepos();
                     originalTemplateReposLength = repos.length;
-
-                    const { body: templates } = await getTemplates();
-                    originalTemplatesLength = templates.length;
+                    originalTemplatesLength = await getNumberOfTemplates();
                 });
                 it('should add a template repository and update the templates', async function() {
                     const addTemplateRepoRes = await addTemplateRepo(sampleRepos.codewind);
@@ -187,10 +186,8 @@ describe('Template API tests', function() {
             res.body.length.should.equal(originalTemplateRepos.length - 1);
         });
         it('GET /api/v1/templates should return fewer templates', async function() {
-            const res = await getTemplates();
-            res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.not.deep.include(originalTemplates);
-            res.body.length.should.be.below(originalNumTemplates);
+            const numberOfTemplates = await getNumberOfTemplates();
+            numberOfTemplates.should.be.below(originalNumTemplates);
         });
         it('POST /api/v1/templates should re-add the deleted template repository', async function() {
             const res = await addTemplateRepo(repo);
