@@ -7,7 +7,12 @@ BLUE='\033[0;36m'
 RESET='\033[0m'
 
 # Set up variables
-source ./scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+INITIAL_DIR=$(pwd)
+
+source $DIR/utils.sh
+cd $INITIAL_DIR
+
 WEBSERVER_FILE="$CW_DIR/src/pfe/file-watcher/server/test/scripts/webserver.sh"
 
 function usage {
@@ -77,7 +82,7 @@ function setup {
     TURBINE_SERVER_DIR=$CW_DIR/src/pfe/file-watcher/server
     TEST_DIR=$TURBINE_SERVER_DIR/test
     TURBINE_DIR_CONTAINER=/file-watcher/server
-    TEST_RUNS_DATE_DIR=~/test_results/$DATE_NOW
+    TEST_RUNS_DATE_DIR=$TEST_INFO_DIR/test_results/$DATE_NOW
     TEST_OUTPUT_DIR=$TEST_RUNS_DATE_DIR/$TEST_TYPE/$TEST_SUITE/$TIME_NOW
     TEST_OUTPUT=$TEST_OUTPUT_DIR/test_output.xml
     TEST_LOG=$TEST_OUTPUT_DIR/$TEST_TYPE-$TEST_SUITE-test.log
@@ -128,7 +133,7 @@ function setup {
         cd $TURBINE_SERVER_DIR
         npm install
         checkExitCode $? "Failed to install node modules."
-        cd -
+        cd $INITIAL_DIR
     fi
 }
 
@@ -172,7 +177,7 @@ function run {
         export JUNIT_REPORT_PATH=$TEST_OUTPUT
         npm run $TEST_SUITE:test:xml | tee $TEST_LOG
         checkExitCode $? "Failed on executing the Turbine unit tests."
-        cd -
+        cd $INITIAL_DIR
     fi
     echo -e "${BLUE}Test logs available at: $TEST_LOG ${RESET}"
 
@@ -187,13 +192,13 @@ function run {
         curl --header "Content-Type:text/xml" --data-binary @$TEST_OUTPUT --insecure "https://$DASHBOARD_IP/postxmlresult/$BUCKET_NAME/test" > /dev/null
     fi
 
-    if [ $TEST_TYPE == "local" ] & [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
+    if [ $TEST_TYPE == "local" ] && [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
         echo -e "${BLUE}>> Copy back data.json file back to host VM ... ${RESET}"
         docker cp $CODEWIND_CONTAINER_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST/performance-data.json "$PERFORMANCE_DATA_DIR"
         checkExitCode $? "Failed to copy data.json file to host VM local."
-    elif [ $TEST_TYPE == "kube" ] & [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
+    elif [ $TEST_TYPE == "kube" ] && [ ! -z $TURBINE_PERFORMANCE_TEST ]; then
         echo -e "${BLUE}>> Copy back data.json file back to host VM ... ${RESET}"
-        kubectl cp $CODEWIND_POD_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST/performance-data.json "$PERFORMANCE_DATA_DIR"
+        kubectl cp $CODEWIND_POD_ID:/file-watcher/server/test/performance-test/data/$TEST_TYPE/$TURBINE_PERFORMANCE_TEST/performance-data.json "$PERFORMANCE_DATA_DIR/performance-data.json"
         checkExitCode $? "Failed to copy data.json file to host VM on kube."
     fi
 }

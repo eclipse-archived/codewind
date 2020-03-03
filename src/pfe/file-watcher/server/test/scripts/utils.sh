@@ -6,12 +6,18 @@ RED='\033[0;31m'
 BLUE='\033[0;36m'
 RESET='\033[0m'
 
-cd ../../../../../
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+INITIAL_DIR=$(pwd)
+
+cd $DIR
+cd ../../../../../../
+
 CW_DIR=$(pwd)
-cd -
+cd $INITIAL_DIR
 
 export PROJECTS_CLONE_DATA_FILE="$CW_DIR/src/pfe/file-watcher/server/test/resources/projects-clone-data"
 export PROJECT_DIR="$CW_DIR/src/pfe/file-watcher/server/test/projects"
+export TEST_INFO_DIR="$HOME/.codewindtest/turbine"
 
 # Function to get the che and keycloak endpoint
 function getEndpoints() {
@@ -36,11 +42,15 @@ function generateCheAccessToken {
 function checkExitCode() {
 	exit_code=$1
 	error_msg=$2
+    exit=$3
+
 	if [[ $exit_code -eq 0 ]]; then
 		echo -e "${GREEN}✔ Done. ${RESET}\n"
 	else
 		echo -e "${RED}✖ $error_msg  ${RESET}\n"
-		exit 1
+		if [[ $exit == true ]]; then
+            exit 1
+        fi
 	fi
 }
 

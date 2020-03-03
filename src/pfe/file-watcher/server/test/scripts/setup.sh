@@ -7,7 +7,11 @@ BLUE='\033[0;36m'
 RESET='\033[0m'
 
 # Set up variables
-source ./scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+INITIAL_DIR=$(pwd)
+
+source $DIR/utils.sh
+cd $INITIAL_DIR
 
 function usage {
     me=$(basename $0)
@@ -27,7 +31,7 @@ function install {
     if [ $TEST_TYPE == "local" ]; then
         cd $CW_DIR
         $CW_DIR/run.sh
-        cd -
+        cd $INITIAL_DIR
         if [[ $? -ne 0 ]]; then
             echo -e "${RED}Codewind setup has failed. ${RESET}\n"
             exit 1
@@ -68,6 +72,12 @@ function install {
     fi
 }
 
+function checkForCodewindPod {
+    echo -e "${BLUE}Checking for codewind pod ... ${RESET}\n"
+    CW_POD="$( kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 )"
+    echo -e "${BLUE}Codewind Pod: $CW_POD ${RESET}\n"
+}
+
 # Uninstall function does the following things
 # 1 Remove Codewind and Codewind app containers
 # 2 Remove Codewind and Codewind app images
@@ -81,8 +91,7 @@ function uninstall {
         generateCheAccessToken
 
         # Get the Codewind Workspace ID
-        CW_POD="$( kubectl get po --selector=app=codewind-pfe --show-labels | tail -n 1 )"
-        echo -e "${BLUE}Codewind Pod: $CW_POD ${RESET}\n"
+        checkForCodewindPod
         if [[ $CW_POD =~ codewindWorkspace=.*, ]]; then
             RE_RESULT=${BASH_REMATCH}
             WORKSPACE_ID=$(echo $RE_RESULT | cut -d "=" -f 2 | cut -d "," -f 1)
@@ -108,6 +117,13 @@ function uninstall {
             fi
 
             echo -e "${GREEN}Codewind should be removed momentarily... ${RESET}\n"
+
+            while [[ ! -z $CW_POD ]] || ![[ $CW_POD =~ "Terminating" ]];
+            do
+                sleep 5s
+                checkForCodewindPod
+            done
+
         else
             echo -e "${BLUE}No Codewind pod found ${BLUE}\n"
         fi

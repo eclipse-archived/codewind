@@ -1,3 +1,15 @@
+#!/bin/bash
+#*******************************************************************************
+# Copyright (c) 2020 IBM Corporation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v2.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v20.html
+#
+# Contributors:
+#     IBM Corporation - initial API and implementation
+#*******************************************************************************
+
 import json
 import os
 import pandas as pd
@@ -37,7 +49,7 @@ for appType in applicationTypes:
                 if (not (performanceKey in performanceObject["{}-{}".format(appType, lang)])):
                     performanceObject["{}-{}".format(appType, lang)][performanceKey] = [];
                 performanceObject["{}-{}".format(appType, lang)][performanceKey].append(performance_data[appType][lang][iteration][performanceKey]);
-        for performanceKey in performanceKeys:
+        for performanceKey in performanceObject["{}-{}".format(appType, lang)].keys():
             performanceObject["{}-{}".format(appType, lang)][performanceKey] = round(np.mean(performanceObject["{}-{}".format(appType, lang)][performanceKey]), 3);
 
 df = pd.DataFrame(data=performanceObject);

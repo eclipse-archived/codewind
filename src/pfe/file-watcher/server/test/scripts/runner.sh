@@ -18,7 +18,11 @@ BLUE='\033[0;36m'
 RESET='\033[0m'
 
 # Set up variables
-source ./scripts/utils.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+INITIAL_DIR=$(pwd)
+
+source $DIR/utils.sh
+cd $INITIAL_DIR
 
 # Set up default options value for test
 TEST_TYPE="local"
@@ -118,17 +122,15 @@ function cleanRun {
 
     # Execute the tests
     executeTests
+}
 
-    # Post-test cleanup
-    # Cronjob machines need to set up POST_CLEANUP=y to do post-test automation cleanup
-    if [[ $POST_CLEANUP == "y" ]]; then
-        ./scripts/setup.sh -t $TEST_TYPE -f uninstall
-        if [[ $? -eq 0 ]]; then
-            echo -e "${GREEN}Post-test cleanup was successful. ${RESET}\n"
-        else
-            echo -e "${RED}Post-test cleanup failed. ${RESET}\n"
-            exit 1
-        fi
+function postClean {
+    ./scripts/setup.sh -t $TEST_TYPE -f uninstall
+    if [[ $? -eq 0 ]]; then
+        echo -e "${GREEN}Post-test cleanup was successful. ${RESET}\n"
+    else
+        echo -e "${RED}Post-test cleanup failed. ${RESET}\n"
+        exit 1
     fi
 }
 
@@ -187,7 +189,7 @@ if [[ $TEST_TYPE == "kube" ]]; then
         exit 1
     fi
 
-    oc login $CLUSTER_IP:$CLUSTER_PORT -u $CLUSTER_USER -p $CLUSTER_PASSWORD
+    oc login $CLUSTER_IP:$CLUSTER_PORT -u $CLUSTER_USER -p $CLUSTER_PASSWORD --insecure-skip-tls-verify=true
     oc project $NAMESPACE
     if [[ $? -eq 0 ]]; then
         echo -e "${GREEN}Successfully logged into the OKD cluster ${RESET}\n"
@@ -201,4 +203,10 @@ if [[ $TEST_SUITE == "functional" && $CLEAN_RUN == "y" ]]; then
     cleanRun
 else
     executeTests
+fi
+
+if [[ $POST_CLEANUP == "y" ]]; then
+    # Post-test cleanup
+    # Cronjob machines need to set up POST_CLEANUP=y to do post-test automation cleanup
+    postClean
 fi
