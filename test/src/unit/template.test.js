@@ -153,6 +153,12 @@ describe('Templates.js', function() {
                 const error = new TemplateError('NOT_LOCKED');
                 assert.throws(() => templateController.unlock(), error);
             });
+            it('should throw an error if the value of _lock is something other than true', () => {
+                const templateController = new Templates(workspace);
+                templateController._lock = 'notvalid';
+                const error = new TemplateError('NOT_LOCKED');
+                assert.throws(() => templateController.unlock(), error);
+            });
         });
         describe('getTemplates(showEnabledOnly)', function() {
             const workspace = getWorkspaceAndDeleteAfterEach(this.title);

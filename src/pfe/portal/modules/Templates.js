@@ -86,7 +86,7 @@ module.exports = class Templates {
   }
 
   unlock() {
-    if (this._lock === false) throw new TemplateError('NOT_LOCKED');
+    if (this._lock !== true) throw new TemplateError('NOT_LOCKED');
     this._lock = false;
   }
 
