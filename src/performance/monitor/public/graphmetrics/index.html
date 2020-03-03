@@ -228,7 +228,7 @@
     socket.on('gc', function(data) {
       updateGCData(data);
       let json = JSON.parse(data);
-      summary.gc.time = json.timeSummary;
+      summary.gc.time = json.time;
       summary.gc.usedHeapAfterGCMax = json.usedHeapAfterGCMax;
       updateSummaryTable();
     });
