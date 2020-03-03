@@ -51,6 +51,10 @@ function constructMessage(code, identifier, message) {
   case 'LOCKED':
     output = `_lock is already set to true`;
     break;
+  case 'NOT_LOCKED':
+    // Shouldn't happen but this prevents against implementation errors
+    output = `_lock is already set to false`;
+    break;
   default:
     output = 'Unknown template error';
   }

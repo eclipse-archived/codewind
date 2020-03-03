@@ -53,7 +53,7 @@ module.exports = class Templates {
     this.repositoryFile = path.join(workspace, '.config/repository_list.json');
     this.repositoryList = DEFAULT_REPOSITORY_LIST;
     this.providers = {};
-    this.unlock();
+    this._lock = false;
   }
 
   async initializeRepositoryList() {
@@ -86,6 +86,7 @@ module.exports = class Templates {
   }
 
   unlock() {
+    if (this._lock === false) throw new TemplateError('NOT_LOCKED');
     this._lock = false;
   }
 
