@@ -498,8 +498,8 @@ module.exports = class User {
         // Set the container key to '' as the container has stopped.
         const containerKey = (global.codewind.RUNNING_IN_K8S ? 'podName' : 'containerId');
         projectUpdate[containerKey] = '';
-        let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-        this.user.uiSocket.emit('projectClosed', { ...updatedProject, status: 'success' });
+        let updatedProject = await this.projectList.updateProject(projectUpdate);
+        this.uiSocket.emit('projectClosed', { ...updatedProject, status: 'success' });
         log.debug('project ' + projectID + ' successfully closed');
       } else throw err;
     }

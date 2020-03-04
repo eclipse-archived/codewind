@@ -19,8 +19,11 @@ const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 
 const ProjectList = require('../../../../src/pfe/portal/modules/ProjectList');
 const ExtensionList = require('../../../../src/pfe/portal/modules/ExtensionList');
+const FilewatcherError = require('../../../../src/pfe/portal/modules/utils/errors/FilewatcherError');
 
 const { testTimeout } = require('../../../config');
+
+const FW_INT_ERROR = new FilewatcherError('FILE_WATCHER_INTERNAL_FAILURE', 500);
 
 
 // import User.js but mock some of its imports so we can test it in isolation
@@ -42,6 +45,25 @@ class MockLoadRunner {};
 
 class MockFileWatcher {
     setLocale() {}
+    async deleteProject(project) {
+        if (project.throwConnFailed === 'true') {
+            throw new FilewatcherError('CONNECTION_FAILED', project.projectID, `Filewatcher status code 500`);
+        }
+        if (project.throwProjectNotFound === 'true') {
+            throw new FilewatcherError('PROJECT_NOT_FOUND', project.projectID, `Filewatcher status code 500`);
+        }
+        if (project.throwInternalFailure === 'true') {
+            throw FW_INT_ERROR;
+        }
+    }
+    async closeProject(project) {
+        if (project.throwConnFailed === 'true') {
+            throw new FilewatcherError('CONNECTION_FAILED', project.projectID, `Filewatcher status code 500`);
+        }
+        if (project.throwInternalFailure === 'true') {
+            throw FW_INT_ERROR;
+        }
+    }
 };
 /* eslint-enable class-methods-use-this */
 
@@ -68,6 +90,7 @@ chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
 chai.use(sinonChai);
 const should = chai.should();
+const assert = chai.assert;
 
 const testWorkspace = path.join(__dirname, 'temp_user_test_js_dir', path.sep);
 const pathToProjectInfDir = path.join(testWorkspace, '.projects');
@@ -667,6 +690,173 @@ describe('User.js', () => {
             });
         });
     });
+
+    describe('unbindProject(project)', () => {
+        const emptyProjectList = new ProjectList();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('unbinds an existing closed project', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.state = Project.STATES.closed;
+            await user.unbindProject(project);
+            user.projectList.should.deep.equal(emptyProjectList);
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectDeletion', {
+                projectID: project.projectID,
+                status: 'success',
+            });
+        });
+        it('unbinds an existing validating project', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.state = Project.STATES.validating;
+            await user.unbindProject(project);
+            user.projectList.should.deep.equal(emptyProjectList);
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectDeletion', {
+                projectID: project.projectID,
+                status: 'success',
+            });
+        });
+        it('unbinds an existing open project, deal with FWError CONNECTION_FAILED', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.throwConnFailed = 'true';
+            await user.unbindProject(project);
+            user.projectList.should.deep.equal(emptyProjectList);
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectDeletion', {
+                projectID: project.projectID,
+                status: 'success',
+            });
+        });
+        it('unbinds an existing open project, deal with FWError PROJECT_NOT_FOUND', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.throwProjectNotFound = 'true'
+            await user.unbindProject(project);
+            user.projectList.should.deep.equal(emptyProjectList);
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectDeletion', {
+                projectID: project.projectID,
+                status: 'success',
+            });
+        });
+        it('attempts to unbind an existing open project, throw FW error', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            const expectedProjectList = user.projectList;
+            project.throwInternalFailure = 'true'
+            try {
+                await user.unbindProject(project);
+                assert.fail('Did not throw expected exception');
+            } catch (e) {
+                e.should.deep.equal(FW_INT_ERROR);
+                user.projectList.should.deep.equal(expectedProjectList);
+            }
+        });
+    });
+
+    describe('closeProject(project)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('close an existing open project, deal with FWError CONNECTION_FAILED when not in K8S', async() => {
+            global.codewind.RUNNING_IN_K8S = false;
+            const { user, project } = await createSimpleUserWithProject();
+            const expectedProjectContents = {
+                projectID: project.projectID,
+                ports: '',
+                buildStatus: 'unknown',
+                appStatus: 'unknown',
+                state: Project.STATES.closed,
+                containerId: '',
+            }
+            project.throwConnFailed = 'true';
+            await user.closeProject(project);
+            project.logStreams.should.be.empty;
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectClosed', sinon.match({
+                ...expectedProjectContents,
+                status: 'success',
+            }));
+            project.should.include(expectedProjectContents);
+        });
+        it('close an existing open project, deal with FWError CONNECTION_FAILED when in K8S', async() => {
+            global.codewind.RUNNING_IN_K8S = true;
+            const { user, project } = await createSimpleUserWithProject();
+            const expectedProjectContents = {
+                projectID: project.projectID,
+                ports: '',
+                buildStatus: 'unknown',
+                appStatus: 'unknown',
+                state: Project.STATES.closed,
+                podName: '',
+            }
+            project.throwConnFailed = 'true';
+            await user.closeProject(project);
+            project.logStreams.should.be.empty;
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectClosed', sinon.match({
+                ...expectedProjectContents,
+                status: 'success',
+            }));
+            project.should.include(expectedProjectContents);
+        });
+        it('attempts to close an existing open project, throw FW error', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.throwInternalFailure = 'true'
+            try {
+                await user.closeProject(project);
+                assert.fail('Did not throw expected exception');
+            } catch (e) {
+                e.should.deep.equal(FW_INT_ERROR);
+                project.logStreams.should.be.empty;
+            }
+        });
+    });
+
+    describe('startExistingProjects()', () => {
+        var sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('builds and runs existing project', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            sandbox.spy(user, 'buildAndRunProject');
+            user.fw.up = true;
+            user.fw.buildAndRunProject = () => ({ statusCode: 202 });
+            user.startExistingProjects();
+            user.buildAndRunProject.should.have.been.called;
+            sandbox.restore();
+        });
+        it('does nothing if fw is not up', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            sandbox.spy(user, 'buildAndRunProject');
+            user.fw.up = false;
+            user.startExistingProjects();
+            user.buildAndRunProject.should.not.have.been.called;
+            sandbox.restore();
+        });
+        it('does nothing if there are no projects', async() => {
+            const user = await createSimpleUser();
+            sandbox.spy(user, 'buildAndRunProject');
+            user.fw.up = true;
+            user.startExistingProjects();
+            user.buildAndRunProject.should.not.have.been.called;
+            sandbox.restore();
+        });
+        it('does nothing if project is not open', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            sandbox.spy(user, 'buildAndRunProject');
+            project.state = Project.STATES.closed;
+            user.fw.up = false;
+            user.startExistingProjects();
+            user.buildAndRunProject.should.not.have.been.called;
+            sandbox.restore();
+        });
+    });
+    
 });
 
 const uiSocketStub = {
