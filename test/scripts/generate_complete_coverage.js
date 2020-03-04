@@ -17,6 +17,7 @@ const exec = promisify(require('child_process').exec);
 const dockerode = require('dockerode');
 const docker = new dockerode();
 const NYC = require('nyc');
+const { handleInput: { upload: codecovUpload } } = require('codecov');
 const Logger = require(path.join(__dirname, '../../', 'src/pfe/portal/modules/utils/Logger'));
 const log = new Logger('generate_complete_coverage.js');
 
@@ -48,12 +49,13 @@ const PORTAL_NYC_OUTPUT_DIR_LOCATION_IN_CONTAINER = path.join(PORTAL_DIR_LOCATIO
 const FW_NYC_OUTPUT_DIR = path.join(FW_DIR_ON_DISK, 'server/.nyc_output');
 const FW_NYC_MERGED_JSON = path.join(MERGED_NYC_OUTPUT_DIR, 'filewatcherNYCCoverage.json');
 
+const CODECOV_FILE = path.join(MERGED_NYC_COVERAGE_DIR, 'coverage-final.json');
 
 const NYC_CONFIG = {
     cwd: PFE_DIR_ON_DISK,
     tempDir: MERGED_NYC_OUTPUT_DIR,
     reportDir: MERGED_NYC_COVERAGE_DIR,
-    reporter: ['html', 'text', 'text-summary'], 
+    reporter: ['html', 'text', 'text-summary', 'json'],
 };
 
 const main = async() => {
@@ -78,6 +80,11 @@ const main = async() => {
 
     await createNYCReport();
 
+    const CODECOV_ENABLED = process.env.CODECOV_ENABLED;
+    if (CODECOV_ENABLED && CODECOV_ENABLED === 'true') {
+        await uploadCoverageToCodecov();
+    }
+
     await cleanUp();
 };
 
@@ -85,7 +92,7 @@ const setup = async() => {
     log.debug(`Removing old coverage directories and creating new ones`);
     await fs.remove(MERGED_NYC_COVERAGE_DIR);
     log.debug(`Creating output directories`);
-    return fs.ensureDir(MERGED_NYC_OUTPUT_DIR); 
+    return fs.ensureDir(MERGED_NYC_OUTPUT_DIR);
 };
 
 const ensureContainerCanReportCoverage = async container => {
@@ -170,6 +177,23 @@ const createNYCReport = async() => {
     if (indexHTMLExists) {
         log.info(`Open ${indexHTMLPath} in a browser to view the coverage`);
     }
+};
+
+const uploadCoverageToCodecov = async() => {
+    log.info(`Uploading the report to codecov`);
+    const lcovFileExists = await fs.pathExists(CODECOV_FILE);
+    if (!lcovFileExists) throw new Error(`lcov.info file does not exist (can't report coverage). Path: ${lcovFileExists}`);
+
+    const CODECOV_TOKEN = process.env.CODECOV_TOKEN;
+    if (!CODECOV_TOKEN) throw new Error(`No codecov token given`);
+
+    const options = {
+        file: CODECOV_FILE,
+        token: CODECOV_TOKEN,
+        yml: path.join(__dirname, 'codecov.yml'),
+        root: path.join(__dirname, '../..'),
+    };
+    await codecovUpload({ options });
 };
 
 const cleanUp = () => {
