@@ -122,31 +122,31 @@ describe('remoteBind.route.js', () => {
     });
     describe('isSubdirectory(dir1, dir2)', () => {
         const isSubdirectory = RemoteBind.__get__('isSubdirectory');
-        it('returns true as relative the file paths are equivalent (1)', async() => {
+        it('returns true as relative the file paths are equivalent (1)', () => {
             isSubdirectory('filepath/', 'filepath').should.be.true;
         });
-        it('returns true as relative the file paths are equivalent (2)', async() => {
+        it('returns true as relative the file paths are equivalent (2)', () => {
             isSubdirectory('filepath', 'filepath/').should.be.true;
         });
-        it('returns true as relative the file paths are equivalent (3)', async() => {
+        it('returns true as relative the file paths are equivalent (3)', () => {
             isSubdirectory('filepath', 'filepath').should.be.true;
         });
-        it('returns false as relative the file paths are different (1)', async() => {
+        it('returns false as relative the file paths are different (1)', () => {
             isSubdirectory('filepath', 'filepathextended').should.be.false;
         });
-        it('returns false as relative the file paths are different (2)', async() => {
+        it('returns false as relative the file paths are different (2)', () => {
             isSubdirectory('filepathextended', 'filepath').should.be.false;
         });
-        it('returns false as relative the file paths are different (3)', async() => {
+        it('returns false as relative the file paths are different (3)', () => {
             isSubdirectory('.filepath', 'filepath').should.be.false;
         });
-        it('returns false as a relative path and an absolute path are different', async() => {
+        it('returns false as a relative path and an absolute path are different', () => {
             isSubdirectory('/filepath', 'filepath').should.be.false;
         });
-        it('returns true as filepath/subdirectory is a subdirectory of filepath', async() => {
+        it('returns true as filepath/subdirectory is a subdirectory of filepath', () => {
             isSubdirectory('filepath/subdirectory', 'filepath').should.be.true;
         });
-        it('returns false as filepath is not a subdirectory of filepath/subdirectory', async() => {
+        it('returns false as filepath is not a subdirectory of filepath/subdirectory', () => {
             isSubdirectory('filepath', 'filepath/subdirectory').should.be.false;
         });
     });
