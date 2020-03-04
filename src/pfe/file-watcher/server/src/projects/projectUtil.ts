@@ -1646,6 +1646,9 @@ async function runLocalContainer(buildInfo: BuildRequest): Promise<void> {
             logger.logProjectInfo("The existing container was successfully removed.", buildInfo.projectID);
         }
 
+        // clean up old dangling image
+        await processManager.spawnDetachedAsync(buildInfo.projectID, "/file-watcher/scripts/dockerScripts/docker-rmi.sh", [buildInfo.containerName], {});
+
         // Check for pre-existing port mappings so that they can be reused for incremental builds
         const containerInfo = containerInfoMap.get(buildInfo.projectID);
         if (containerInfo && containerInfo.hostPorts.length > 0 && containerInfo.containerPorts.length > 0) {

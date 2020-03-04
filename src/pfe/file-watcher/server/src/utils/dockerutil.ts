@@ -410,7 +410,7 @@ export async function buildImage(projectID: string, projectLanguage: string, ima
   else {
     args = ["build"];
   }
-  args.push("--label", "builtBy=codewind", "-t", imageName);
+  args.push("--label", "builtBy=codewind", "--label", `imageName=${imageName}`, "-t", imageName);
 
   for (let i = 0; i < buildOptions.length; i++) {
     args.push(buildOptions[i]);
