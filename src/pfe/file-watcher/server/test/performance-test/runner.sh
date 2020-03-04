@@ -163,29 +163,32 @@ cp -r $TARGET_DIR/* $LOGS_DATA_DIR/
 checkExitCode $? "Failed to copy data. Please check the source directory for data in $TARGET_DIR" true
 
 CSV_FILENAME="$TEST_ENV-$TURBINE_PERFORMANCE_TEST"-performance-data.csv
-CSV_BASELINE_DIR=$TEST_INFO_DIR/performance-test-baseline/$TEST_ENV
+CSV_BASELINE_DIR="$TEST_INFO_DIR/performance-test-baseline/$TEST_ENV"
+
 if [ ! -z "$COMPARABLE_RELEASE" ]; then
-    CSV_BASELINE_DIR="$CSV_BASELINE_DIR/$COMPARABLE_RELEASE"
+    COMPARABLE_FILENAME="$TEST_ENV-$COMPARABLE_RELEASE"-performance-data.csv
+    COMPARABLE_BASELINE_DIR="$CSV_BASELINE_DIR/$COMPARABLE_RELEASE"
 else
-    CSV_BASELINE_DIR="$CSV_BASELINE_DIR/$TURBINE_PERFORMANCE_TEST"
+    COMPARABLE_FILENAME="$CSV_FILENAME"
+    COMPARABLE_BASELINE_DIR="$CSV_BASELINE_DIR/$TURBINE_PERFORMANCE_TEST"
 fi
 
-mkdir -p $CSV_BASELINE_DIR
+mkdir -p $COMPARABLE_BASELINE_DIR
 
-if [ -e "$CSV_BASELINE_DIR/$CSV_FILENAME" ]; then
-    echo -e "${CYAN}> Comparing csv paths for $TEST_ENV local with baseline file "$CSV_BASELINE_DIR/$CSV_FILENAME" ... ${RESET}"
-    ./compare-csv.sh --baseline-file="$CSV_BASELINE_DIR/$CSV_FILENAME" --comparable-file="$LOGS_DATA_DIR/$CSV_FILENAME" --save="$LOGS_DATA_DIR/performance-report.txt" --error-threshold="$ERROR_THRESHOLD" --network-threshold="$NETWORK_THRESHOLD"
-    checkExitCode $? "Failed to compare csv from baseline "$CSV_BASELINE_DIR/$CSV_FILENAME" to comparable "$LOGS_DATA_DIR/$CSV_FILENAME"" true
+if [ -e "$COMPARABLE_BASELINE_DIR/$COMPARABLE_FILENAME" ]; then
+    echo -e "${CYAN}> Comparing csv paths for $TEST_ENV local with baseline file "$COMPARABLE_BASELINE_DIR/$COMPARABLE_FILENAME" ... ${RESET}"
+    ./compare-csv.sh --baseline-file="$COMPARABLE_BASELINE_DIR/$COMPARABLE_FILENAME" --comparable-file="$LOGS_DATA_DIR/$CSV_FILENAME" --save="$LOGS_DATA_DIR/performance-report.txt" --error-threshold="$ERROR_THRESHOLD" --network-threshold="$NETWORK_THRESHOLD"
+    checkExitCode $? "Failed to compare csv from baseline "$COMPARABLE_BASELINE_DIR/$COMPARABLE_FILENAME" to comparable "$LOGS_DATA_DIR/$CSV_FILENAME"" true
 fi
 
 if [ "$NEW_BASELINE" == "y" ]; then
-    OLD_FILE="$CSV_BASELINE_DIR/$TEST_ENV-$TURBINE_PERFORMANCE_TEST-performance-data-old.csv"
+    OLD_FILE="$CSV_BASELINE_DIR/$TURBINE_PERFORMANCE_TEST/$TEST_ENV-$TURBINE_PERFORMANCE_TEST-performance-data-old.csv"
     echo -e "${CYAN}> Saving a copy of previous run data for logistic purposes as $OLD_FILE ... ${RESET}"
-    mv "$CSV_BASELINE_DIR/$CSV_FILENAME" "$OLD_FILE"
+    mv "$CSV_BASELINE_DIR/$TURBINE_PERFORMANCE_TEST/$CSV_FILENAME" "$OLD_FILE"
     checkExitCode $? "Failed to save copy of previous performance data csv."
 
-    echo -e "${CYAN}> Copying over performance data csv from "$LOGS_DATA_DIR/$CSV_FILENAME" to $CSV_BASELINE_DIR ... ${RESET}"
-    cp -r "$LOGS_DATA_DIR/$CSV_FILENAME" $CSV_BASELINE_DIR/
+    echo -e "${CYAN}> Copying over performance data csv from "$LOGS_DATA_DIR/$CSV_FILENAME" to "$CSV_BASELINE_DIR/$TURBINE_PERFORMANCE_TEST" ... ${RESET}"
+    cp -r "$LOGS_DATA_DIR/$CSV_FILENAME" "$CSV_BASELINE_DIR/$TURBINE_PERFORMANCE_TEST/"
     checkExitCode $? "Failed to copy performance data csv. Please check the source directory for data in "$LOGS_DATA_DIR/$CSV_FILENAME""
 fi
 
