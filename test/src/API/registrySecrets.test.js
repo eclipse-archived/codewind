@@ -10,12 +10,11 @@
  *******************************************************************************/
 
 const chai = require('chai');
-const fs = require('fs');
-const os = require('os');
+const fs = require('fs-extra');
 const path = require('path');
 const reqService = require('../../modules/request.service');
 const containerService = require('../../modules/container.service');
-const { ADMIN_COOKIE, testTimeout } = require('../../config');
+const { ADMIN_COOKIE, testTimeout, TEMP_TEST_DIR } = require('../../config');
 
 chai.should();
 
@@ -34,7 +33,7 @@ const removeRegistrySecret = (dockerAddress) => reqService.chai
     .send({ address: dockerAddress });
 
 describe('Registry Secrets route tests', function() {
-
+    const testDir = path.join(TEMP_TEST_DIR, 'registrySecrets');
     const docker_registry_file = '/root/.docker/config.json';
     const docker_registry_secret_garbage_json = {
         auths: {
@@ -56,9 +55,12 @@ describe('Registry Secrets route tests', function() {
     before('Create a backup of the existing /root/.docker/config.json file', async function() {
         this.timeout(testTimeout.med);
 
+        // Create test directory
+        await fs.ensureDir(testDir);
+
          // Create a backup of existing docker registry file
         if (await containerService.fileExists(docker_registry_file)) {
-            await containerService.copyFrom(docker_registry_file, path.join(os.tmpdir(), 'config_bk.json'));
+            await containerService.copyFrom(docker_registry_file, path.join(testDir, 'config_bk.json'));
             restoreConfig = true;
             await containerService.removeDir(docker_registry_file);
         }
@@ -70,8 +72,11 @@ describe('Registry Secrets route tests', function() {
 
         // Restore the docker registry file backup
         if (restoreConfig) {
-            await containerService.copyTo(path.join(os.tmpdir(), 'config_bk.json'), docker_registry_file);
+            await containerService.copyTo(path.join(testDir, 'config_bk.json'), docker_registry_file);
         }
+
+        // Remove test directory
+        await fs.remove(testDir);
     });
 
     describe('GET /api/v1/registrysecrets', function() {
@@ -88,7 +93,7 @@ describe('Registry Secrets route tests', function() {
 
             // create a docker registry with the garbage content
             const docker_registry_secret_garbage_content = JSON.stringify(docker_registry_secret_garbage_json);
-            const docker_registry_secret_garbage_file = path.join(os.tmpdir(), 'config.json');
+            const docker_registry_secret_garbage_file = path.join(testDir, 'config.json');
             fs.writeFileSync(docker_registry_secret_garbage_file, docker_registry_secret_garbage_content, 'utf8');
             await containerService.copyTo(docker_registry_secret_garbage_file, docker_registry_file);
 
@@ -102,7 +107,7 @@ describe('Registry Secrets route tests', function() {
 
             let docker_registry_secret_bad_content = JSON.stringify(docker_registry_secret_garbage_json);
             docker_registry_secret_bad_content = docker_registry_secret_bad_content.concat('garbage');
-            const docker_registry_secret_bad_file = path.join(os.tmpdir(), 'config.json');
+            const docker_registry_secret_bad_file = path.join(testDir, 'config.json');
             fs.writeFileSync(docker_registry_secret_bad_file, docker_registry_secret_bad_content, 'utf8');
             await containerService.copyTo(docker_registry_secret_bad_file, docker_registry_file);
 
@@ -194,7 +199,7 @@ describe('Registry Secrets route tests', function() {
 
             let docker_registry_secret_bad_content = JSON.stringify(docker_registry_secret_garbage_json);
             docker_registry_secret_bad_content = docker_registry_secret_bad_content.concat('garbage');
-            const docker_registry_secret_bad_file = path.join(os.tmpdir(), 'config.json');
+            const docker_registry_secret_bad_file = path.join(testDir, 'config.json');
             fs.writeFileSync(docker_registry_secret_bad_file, docker_registry_secret_bad_content, 'utf8');
             await containerService.copyTo(docker_registry_secret_bad_file, docker_registry_file);
 
@@ -270,7 +275,7 @@ describe('Registry Secrets route tests', function() {
             
             let docker_registry_secret_bad_content = JSON.stringify(docker_registry_secret_garbage_json);
             docker_registry_secret_bad_content = docker_registry_secret_bad_content.concat('garbage');
-            const docker_registry_secret_bad_file = path.join(os.tmpdir(), 'config.json');
+            const docker_registry_secret_bad_file = path.join(testDir, 'config.json');
             fs.writeFileSync(docker_registry_secret_bad_file, docker_registry_secret_bad_content, 'utf8');
             await containerService.copyTo(docker_registry_secret_bad_file, docker_registry_file);
 
@@ -285,7 +290,7 @@ describe('Registry Secrets route tests', function() {
             this.timeout(testTimeout.med);
             
             const docker_registry_secret_garbage_content = JSON.stringify(docker_registry_secret_garbage_json);
-            const docker_registry_secret_garbage_file = path.join(os.tmpdir(), 'config.json');
+            const docker_registry_secret_garbage_file = path.join(testDir, 'config.json');
             fs.writeFileSync(docker_registry_secret_garbage_file, docker_registry_secret_garbage_content, 'utf8');
             await containerService.copyTo(docker_registry_secret_garbage_file, docker_registry_file);
 
