@@ -39,7 +39,7 @@ const metricsCollectorRemovalFunctions = {
 async function isOpenLibertyPomXml(filePath) {
   const pomExists = await fs.pathExists(filePath);
   if (!pomExists) return false;
-  const openLibertyString = '<groupId>io.openliberty';
+  const openLibertyString = '<groupId>io.openliberty</groupId>';
   const contents = await fs.readFile(filePath, 'utf8');
   return contents.includes(openLibertyString);
 }
