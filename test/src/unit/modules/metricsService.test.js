@@ -137,6 +137,12 @@ describe('metricsService/index.js', () => {
             const isOpenLiberty = await funcToTest(pathToTestDockerfile);
             isOpenLiberty.should.be.true;
         });
+        it(`returns true as only FROM in the Dockerfile is 'FROM open-liberty (handles no tag given)'`, async() => {
+            const dockerfileContents = 'FROM open-liberty\nCOPY /something /somewhere\nCMD ["npm", "start"]';
+            fs.outputFileSync(pathToTestDockerfile, dockerfileContents);
+            const isOpenLiberty = await funcToTest(pathToTestDockerfile);
+            isOpenLiberty.should.be.true;
+        });
         it(`returns true as the only FROM in the Dockerfile is an Open Liberty image (handles non docker.io repository)`, async() => {
             const dockerfileContents = 'FROM quay.io/open-liberty:latest\nCOPY /something /somewhere\nCMD ["npm", "start"]';
             fs.outputFileSync(pathToTestDockerfile, dockerfileContents);
