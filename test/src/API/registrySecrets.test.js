@@ -10,7 +10,7 @@
  *******************************************************************************/
 
 const chai = require('chai');
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const reqService = require('../../modules/request.service');
 const containerService = require('../../modules/container.service');
@@ -61,7 +61,9 @@ describe('Registry Secrets route tests', function() {
             restoreConfig = true;
             await containerService.removeDir(docker_registry_file);
         }
-        
+
+        // Create the temp directory
+        await fs.ensureDir(tempDir);
     });
 
     after('Restore /root/.docker/config.json file', async function() {
@@ -71,6 +73,9 @@ describe('Registry Secrets route tests', function() {
         if (restoreConfig) {
             await containerService.copyTo(path.join(tempDir, 'config_bk.json'), docker_registry_file);
         }
+
+        // Remove the temp directory
+        await fs.remove(tempDir);
     });
 
     describe('GET /api/v1/registrysecrets', function() {
