@@ -54,6 +54,8 @@ describe('Registry Secrets route tests', function() {
     
     before('Create a backup of the existing /root/.docker/config.json file', async function() {
         this.timeout(testTimeout.med);
+        // Create the temp directory
+        await fs.ensureDir(tempDir);
 
          // Create a backup of existing docker registry file
         if (await containerService.fileExists(docker_registry_file)) {
@@ -61,9 +63,6 @@ describe('Registry Secrets route tests', function() {
             restoreConfig = true;
             await containerService.removeDir(docker_registry_file);
         }
-
-        // Create the temp directory
-        await fs.ensureDir(tempDir);
     });
 
     after('Restore /root/.docker/config.json file', async function() {
