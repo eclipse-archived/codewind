@@ -48,14 +48,10 @@ module.exports = class User {
     this.user_id = user_id || "default";
     this.userString = userString || null;
     this.workspace = workspace;
-    // socket.io namespace is user or false (single user, no need for a namespace)
-    this.uiSocketNamespace = (this.user_id) ? path.normalize(`/${this.user_id}`) : false;
+    // socket.io namespace is user or default
+    this.uiSocketNamespace = path.normalize(`/${this.user_id}`);
     // Setup socket to the UI for this user
-    if (this.uiSocketNamespace) {
-      this.uiSocket = uiSocket.of(this.uiSocketNamespace);
-    } else {
-      this.uiSocket = uiSocket;
-    }
+    this.uiSocket = uiSocket.of(this.uiSocketNamespace);
     this.secure = true;
     this.dockerConfigFile = "/root/.docker/config.json";
     this.codewindPFESecretName = `codewind-${process.env.CHE_WORKSPACE_ID}-docker-registries`;

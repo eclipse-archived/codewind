@@ -341,6 +341,21 @@ describe('User.js', () => {
             await user.cancelLoad(project)
                 .should.eventually.be.rejectedWith('Load Runner service is not available');
         }).timeout(testTimeout.short);
+        it('returns the cancelLoad response', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.loadRunner.cancelRunLoad = async (loadConfig) => { return 200 };
+            project.loadInProgress = true;
+            const responseCode = await user.cancelLoad(project);
+            user.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
+                projectID: project.projectID,
+                status: 'cancelling',
+            });
+            user.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
+                projectID: project.projectID,
+                status: 'cancelled',
+            });
+            responseCode.should.equal(200);
+        });
     });
     describe('buildProject(project, action)', () => {
         beforeEach(() => {
@@ -849,11 +864,213 @@ describe('User.js', () => {
         it('does nothing if project is not open', async() => {
             const { user, project } = await createSimpleUserWithProject();
             sandbox.spy(user, 'buildAndRunProject');
-            project.state = Project.STATES.closed;
-            user.fw.up = false;
+            user.fw.up = true;
+            project.throwConnFailed = 'true';
+            await user.closeProject(project);
             user.startExistingProjects();
             user.buildAndRunProject.should.not.have.been.called;
             sandbox.restore();
+        });
+    });
+
+    describe('fileChanged()', () => {
+        var sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('notifies change, deals with error', async() => {
+            const expectedError = new Error('fileChanged_error');
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.projectFileChanged = sandbox.spy(async (projectID, timestamp, chunkNum, chunkTotal, eventArray) => { throw expectedError; });
+            await user.fileChanged(project.projectID, 1900, 1, 5, []);
+            user.fw.projectFileChanged.should.have.been.calledOnceWithExactly(project.projectID, 1900, 1, 5, []);
+            sandbox.restore();
+        });
+    });
+
+    describe('updateStatus(body)', () => {
+        var sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('sends update to fw', async() => {
+            const testBody = { message: "Test" };
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.updateStatus = sandbox.spy();
+            await user.updateStatus(testBody);
+            user.fw.updateStatus.should.have.been.calledOnceWithExactly(testBody);
+            sandbox.restore();
+        });
+    });
+
+    describe('imagePushRegistryStatus(body)', () => {
+        var sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('notifies status change, deals with error', async() => {
+            const expectedError = new Error('imagePushRegistryStatus_error');
+            const testBody = { message: "Test" };
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.imagePushRegistryStatus = sandbox.spy(async (body) => { throw expectedError; });
+            await user.imagePushRegistryStatus(testBody);
+            user.fw.imagePushRegistryStatus.should.have.been.calledOnceWithExactly(testBody);
+            sandbox.restore();
+        });
+    });
+
+    describe('checkNewLogFile(projectID, type)', () => {
+        var sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('sends check to fw', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.checkNewLogFile = sandbox.spy();
+            await user.checkNewLogFile(project.projectID, project.projectType);
+            user.fw.checkNewLogFile.should.have.been.calledOnceWithExactly(project.projectID, project.projectType);
+            sandbox.restore();
+        });
+    });
+
+    describe('projectCapabilities(project)', () => {
+        var sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns capabilities data from fw', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.projectCapabilities = sandbox.spy(async (project) => { return { projectID : project.projectID }});
+            const result = await user.projectCapabilities(project);
+            user.fw.projectCapabilities.should.have.been.calledOnceWithExactly(project);
+            result.should.deep.equal({ projectID : project.projectID });
+            sandbox.restore();
+        });
+    });
+
+    describe('projectTypes()', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns project types from fw', async() => {
+            const expectedFWTypes = [ "Type1", "type2" ];
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.projectTypes = async () => { return expectedFWTypes };
+            const result = await user.projectTypes();
+            result.should.deep.equal(expectedFWTypes);
+        });
+    });
+
+    describe('getProjectLogs(project)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns list of logs from fw', async() => {
+            const expectedLogs = [ "Log1", "log2" ];
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.getProjectLogs = async (project) => { return expectedLogs };
+            const result = await user.getProjectLogs(project);
+            result.should.deep.equal(expectedLogs);
+            project.logs.should.deep.equal(expectedLogs);
+        });
+    });
+
+    describe('writeWorkspaceSettings(address, namespace)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns a response for a successful write', async() => {
+            const user = await createSimpleUser();
+            user.fw.writeWorkspaceSettings = async (address, namespace) => { return 200; };
+            const result = await user.writeWorkspaceSettings("address", "namespace");
+            result.should.equal(200);
+        });
+        it('throws an error for an unsuccessful write', async() => {
+            const expectedError = new Error('writeWorkspaceSettings_error');
+            const user = await createSimpleUser();
+            user.fw.writeWorkspaceSettings = async (address, namespace) => { throw expectedError; };
+            try {
+                const result = await user.writeWorkspaceSettings("address", "namespace");
+                assert.fail('Did not throw expected exception');
+            } catch(e) {
+                e.should.deep.equal(expectedError);
+            }
+        });
+    });
+
+    describe('removeImagePushRegistry(address)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns a response for a successful removal', async() => {
+            const user = await createSimpleUser();
+            user.fw.removeImagePushRegistry = async (address) => { return 200; };
+            const result = await user.removeImagePushRegistry("address");
+            result.should.equal(200);
+        });
+        it('throws an error for an unsuccessful removal', async() => {
+            const expectedError = new Error('removeImagePushRegistry_error');
+            const user = await createSimpleUser();
+            user.fw.removeImagePushRegistry = async (address) => { throw expectedError; };
+            try {
+                const result = await user.removeImagePushRegistry("address");
+                assert.fail('Did not throw expected exception');
+            } catch(e) {
+                e.should.deep.equal(expectedError);
+            }
+        });
+    });
+
+    describe('testImagePushRegistry(address, namespace)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns a response for a successful test', async() => {
+            const user = await createSimpleUser();
+            user.fw.testImagePushRegistry = async (address, namespace) => { return 200; };
+            const result = await user.testImagePushRegistry("address", "namespace");
+            result.should.equal(200);
+        });
+        it('throws an error for an unsuccessful test', async() => {
+            const expectedError = new Error('testImagePushRegistry_error');
+            const user = await createSimpleUser();
+            user.fw.testImagePushRegistry = async (address, namespace) => { throw expectedError; };
+            try {
+                const result = await user.testImagePushRegistry("address", "namespace");
+                assert.fail('Did not throw expected exception');
+            } catch(e) {
+                e.should.deep.equal(expectedError);
+            }
         });
     });
     
