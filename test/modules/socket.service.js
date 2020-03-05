@@ -137,9 +137,11 @@ class SocketService {
     close() {
         this.socket.removeAllListeners();
         this.socket.close();
+        /* eslint-disable no-undefined */
         this.socket = undefined;
         this.expectedEvents = undefined;
         this.receivedMsgs = undefined;
+        /* eslint-enable no-undefined */
     }
 
     on(event, func) { this.socket.on(event, func); }

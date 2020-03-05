@@ -21,49 +21,49 @@ const dockerApi = require('dockerode');
 const docker = new dockerApi();
 
 function getCommands(containerName) {
-  return {
-    EXEC_COMMAND: `docker exec ${containerName}`,
-    COPY_FROM_COMMAND: `docker cp ${containerName}:`,
-    COPY_TO_COMMAND: 'docker cp ',
-  };
+    return {
+        EXEC_COMMAND: `docker exec ${containerName}`,
+        COPY_FROM_COMMAND: `docker cp ${containerName}:`,
+        COPY_TO_COMMAND: 'docker cp ',
+    };
 }
 
 function getContainerName(projectName) {
-  return `/cw-${projectName}`;
+    return `/cw-${projectName}`;
 }
 
 /**
  * @returns {JSON[]} list of containerInfo JSONS, each with 4 string fields ('id', 'ip', 'exposedPort', 'internalPort')
  */
 async function getAppContainers() {
-  const containers = await getAllContainers();
-  const cwContainers = containers.filter(container => (
-    container.NetworkSettings.Networks.codewind_network
-  ));
-  return summariseContainerInfo(cwContainers);
+    const containers = await getAllContainers();
+    const cwContainers = containers.filter(container => (
+        container.NetworkSettings.Networks.codewind_network
+    ));
+    return summariseContainerInfo(cwContainers);
 }
 
 async function getAllContainers() {
-  const containerInfoList = await docker.listContainers();
-  const containers = await Promise.all(containerInfoList.map(containerInfo =>
-    docker.getContainer(containerInfo.Id).inspect()
-  ));
-  return containers;
+    const containerInfoList = await docker.listContainers();
+    const containers = await Promise.all(containerInfoList.map(containerInfo =>
+        docker.getContainer(containerInfo.Id).inspect()
+    ));
+    return containers;
 }
 
 function summariseContainerInfo(cwContainers) {
-  return cwContainers.map(container => {
-    const containerInfo = { id: container.Id };
-    containerInfo.name = getAppName(container.Name);
-    const { Networks, Ports } = container.NetworkSettings;
-    containerInfo.ip = Networks.codewind_network.IPAddress; // non-cw containers won't have this, so this will error
-    if (Ports) {
-      const [internalPortAndProtocol] = Object.keys(Ports);
-      containerInfo.exposedPort = Ports[internalPortAndProtocol][0].HostPort;
-      [containerInfo.internalPort] = internalPortAndProtocol.split('/');
-    }
-    return containerInfo;
-  });
+    return cwContainers.map(container => {
+        const containerInfo = { id: container.Id };
+        containerInfo.name = getAppName(container.Name);
+        const { Networks, Ports } = container.NetworkSettings;
+        containerInfo.ip = Networks.codewind_network.IPAddress; // non-cw containers won't have this, so this will error
+        if (Ports) {
+            const [internalPortAndProtocol] = Object.keys(Ports);
+            containerInfo.exposedPort = Ports[internalPortAndProtocol][0].HostPort;
+            [containerInfo.internalPort] = internalPortAndProtocol.split('/');
+        }
+        return containerInfo;
+    });
 }
 
 /**
@@ -72,13 +72,13 @@ function summariseContainerInfo(cwContainers) {
  * It is also uninteresting to the user so it shouldn't be displayed in the UI.
  */
 function getAppName(name) {
-  return name.includes('-idc-')
-    ? name.substring(0, name.lastIndexOf('-idc-'))
-    : name;
+    return name.includes('-idc-')
+        ? name.substring(0, name.lastIndexOf('-idc-'))
+        : name;
 }
 
 module.exports = {
-  getCommands,
-  getContainerName,
-  getAppContainers,
+    getCommands,
+    getContainerName,
+    getAppContainers,
 };
