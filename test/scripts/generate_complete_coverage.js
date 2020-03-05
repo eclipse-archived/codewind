@@ -55,7 +55,7 @@ const NYC_CONFIG = {
     cwd: PFE_DIR_ON_DISK,
     tempDir: MERGED_NYC_OUTPUT_DIR,
     reportDir: MERGED_NYC_COVERAGE_DIR,
-    reporter: ['lcov', 'text', 'text-summary'],
+    reporter: ['html', 'text', 'text-summary', 'lcovonly'],
 };
 
 const main = async() => {
@@ -171,7 +171,7 @@ const createNYCReport = async() => {
     log.info(`Creating the single nyc report`);
     const nyc = new NYC(NYC_CONFIG);
     await nyc.report();
-    const indexHTMLPath = path.join(MERGED_NYC_COVERAGE_DIR, 'lcov-report', 'index.html');
+    const indexHTMLPath = path.join(MERGED_NYC_COVERAGE_DIR, 'index.html');
     const indexHTMLExists = await fs.pathExists(indexHTMLPath);
     log.debug(`index.html exists = ${indexHTMLExists}`);
     if (indexHTMLExists) {
@@ -180,6 +180,7 @@ const createNYCReport = async() => {
 };
 
 const uploadCoverageToCodecov = async() => {
+    log.info(`Uploading the report to codecov`);
     const lcovFileExists = await fs.pathExists(LCOV_FILE_PATH);
     if (!lcovFileExists) throw new Error(`lcov.info file does not exist (can't report coverage). Path: ${lcovFileExists}`);
 
@@ -192,7 +193,6 @@ const uploadCoverageToCodecov = async() => {
         yml: path.join(__dirname, 'codecov.yml'),
         root: path.join(__dirname, '../..'),
     };
-    log.info(`Uploading the report to codecov`);
     await codecovUpload({ options });
 };
 
