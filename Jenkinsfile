@@ -357,7 +357,7 @@ pipeline {
                                 echo "Code coverage enabled in codewind-pfe (container)"
                             fi
 
-                            FW_COVERAGE_ENABLED=true node $DIR/test/scripts/generate_complete_coverage.js
+                            CODECOV_ENABLED=true FW_COVERAGE_ENABLED=true node $DIR/test/scripts/generate_complete_coverage.js
                             '''
                     }
                 }
