@@ -72,7 +72,7 @@ module.exports = class User {
   async initialise() {
     try {
       // Add trailing slash to end of the workspace directory, stops generator errors
-      if (this.workspace.substr(-1) != '/') this.workspace += '/';
+      if (this.workspace.substr(-1) != path.sep) this.workspace += path.sep;
       this.directories = {
         workspace: this.workspace,
         projects: path.join(this.workspace, '/.projects/'),
