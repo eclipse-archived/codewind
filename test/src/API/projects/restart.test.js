@@ -38,22 +38,28 @@ describe('Project Restart Tests (POST /projects/{id}/restart)', function() {
     });
 
     // Node can start in 'run' or 'debugNoInit' modes, but not 'debug'.
-    it('returns 400 when `restartMode` is `run` but project is still building', async function() {
+    it('returns 400 when `restartMode` is `run` but project has not started yet', async function() {
         this.timeout(testTimeout.short);
         const res = await projectService.restartProject(projectID, 'run');
 
         res.status.should.equal(400, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
-        res.body.message.should.equal(`Request error for project ${projectID}. Restart is invalid when the project is building.`);
+        res.body.message.should.be.oneOf([
+            `Request error for project ${projectID}. Restart is invalid when the project is building.`,
+            `Request error for project ${projectID}. Restart is valid only when project is starting or started.`,
+        ]);
     });
 
-    it('returns 400 when `restartMode` is `debugNoInit` but project is still building', async function() {
+    it('returns 400 when `restartMode` is `debugNoInit` but project has not started yet', async function() {
         this.timeout(testTimeout.short);
         const res = await projectService.restartProject(projectID, 'debugNoInit');
 
         res.status.should.equal(400, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
-        res.body.message.should.equal(`Request error for project ${projectID}. Restart is invalid when the project is building.`);
+        res.body.message.should.be.oneOf([
+            `Request error for project ${projectID}. Restart is invalid when the project is building.`,
+            `Request error for project ${projectID}. Restart is valid only when project is starting or started.`,
+        ]);
     });
 
     it('returns 400 when `restartMode` is `debug`', async function() {

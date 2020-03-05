@@ -9,18 +9,25 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const chai = require('chai');
+const chaiSubset = require('chai-subset');
 
 const reqService = require('../../modules/request.service');
 const { ADMIN_COOKIE } = require('../../config');
 
 chai.should();
+chai.use(chaiSubset);
 
 describe('Extensions API test', function() {
-
     it('should return status 200', async function() {
+        // For each extension to check for add an object with a name property (or additional properties to check for)
+        const wantedExtensions = [
+            { name: 'appsodyExtension' },
+        ];
         const res = await reqService.chai
             .get('/api/v1/extensions')
             .set('Cookie', ADMIN_COOKIE);
         res.status.should.equal(200, res.text); // print res.text if assertion fails
+        const { body: extensions } = res;
+        extensions.should.deep.containSubset(wantedExtensions);
     });
 });

@@ -10,6 +10,7 @@ pipeline {
     }
 
     options {
+        quietPeriod(300)
         timestamps()
         skipStagesAfterUnstable()
     }
