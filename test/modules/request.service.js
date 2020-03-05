@@ -25,9 +25,9 @@ chai.use(chaiHttp);
  * @returns {Promise} res
  */
 async function makeReq(request, expectedResStatus) {
-  const res = await request(); // TODO try doing .set('Cookie') here (Test in ICP)
-  if (expectedResStatus) verifyResStatus(res, expectedResStatus);
-  return res;
+    const res = await request(); // TODO try doing .set('Cookie') here (Test in ICP)
+    if (expectedResStatus) verifyResStatus(res, expectedResStatus);
+    return res;
 }
 
 /**
@@ -38,38 +38,38 @@ async function makeReq(request, expectedResStatus) {
  * @returns {Promise} res (returns only after socketService receives the expectedSocketMsg)
  */
 async function makeReqAndAwaitSocketMsg(request, expectedResStatus, expectedSocketMsg) {
-  const socketService = await SocketService.createSocket();
-  const res = await makeReq(request, expectedResStatus);
+    const socketService = await SocketService.createSocket();
+    const res = await makeReq(request, expectedResStatus);
 
-  if (res.status < 400) { // skip if http request is unsuccessful
-    if (!expectedSocketMsg.projectID) expectedSocketMsg.projectID = res.body.projectID; // if we didn't know the ID beforehand, try to get it from the response
-    await socketService.checkForMsg(expectedSocketMsg);
-  }
-  socketService.close();
-  return res;
+    if (res.status < 400) { // skip if http request is unsuccessful
+        if (!expectedSocketMsg.projectID) expectedSocketMsg.projectID = res.body.projectID; // if we didn't know the ID beforehand, try to get it from the response
+        await socketService.checkForMsg(expectedSocketMsg);
+    }
+    socketService.close();
+    return res;
 }
 
 function verifyResStatus(res, expectedResStatus) {
-  try {
-    res.should.have.status(expectedResStatus);
-  } catch (error) {
-    if (!isEmpty(res.body)) {
-      error.message += `\n(res.body: ${util.inspect(res.body)})`;
-    } else if (res.text) {
-      error.message += `\n(res.text: ${util.inspect(res.text)})`;
-    } else {
-      error.message += `\n(res: ${util.inspect(res)})`;
+    try {
+        res.should.have.status(expectedResStatus);
+    } catch (error) {
+        if (!isEmpty(res.body)) {
+            error.message += `\n(res.body: ${util.inspect(res.body)})`;
+        } else if (res.text) {
+            error.message += `\n(res.text: ${util.inspect(res.text)})`;
+        } else {
+            error.message += `\n(res: ${util.inspect(res)})`;
+        }
+        throw error;
     }
-    throw error;
-  }
 }
 
 function isEmpty(obj) {
-  return (Object.keys(obj).length === 0) && (obj.constructor === Object)
+    return (Object.keys(obj).length === 0) && (obj.constructor === Object);
 }
 
 module.exports = {
-  makeReq,
-  makeReqAndAwaitSocketMsg,
-  chai: chai.request(CODEWIND_URL),
-}
+    makeReq,
+    makeReqAndAwaitSocketMsg,
+    chai: chai.request(CODEWIND_URL),
+};

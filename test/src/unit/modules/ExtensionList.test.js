@@ -25,7 +25,7 @@ const Templates = rewire('../../../../src/pfe/portal/modules/Templates');
 const { templateRepositoryURL } = require('./../../../modules/template.service');
 const { suppressLogOutput } = require('../../../modules/log.service');
 const { testTimeout } = require('../../../config');
-const { 
+const {
     createCodewindYamlFile,
     createTemplatesProviderFile,
 } = require('../../../modules/extension.service');
@@ -36,7 +36,9 @@ const should = chai.should();
 
 const EXTENSION_DIR =  `${__dirname}/extensionlist_temp`;
 
-describe('ExtensionList.js', () => {
+describe('ExtensionList.js', function() {
+    // Set the default timeout for all tests
+    this.timeout(testTimeout.short);
     suppressLogOutput(Extension);
     suppressLogOutput(ExtensionList);
     suppressLogOutput(Templates);
@@ -44,7 +46,6 @@ describe('ExtensionList.js', () => {
         fs.ensureDirSync(EXTENSION_DIR);
     });
     after(function() {
-        this.timeout(5000);
         execSync(`rm -rf ${EXTENSION_DIR}`);
     });
     describe('Class functions', () => {
@@ -88,7 +89,6 @@ describe('ExtensionList.js', () => {
                 list.should.have.property('extension');
             });
             it('Loads an extension which contains a template repository URL', async function() {
-                this.timeout(testTimeout.short);
                 createCodewindYamlFile(path.join(EXTENSION_DIR, 'extensionWithURL'), { name: 'extensionWithURL', templates: templateRepositoryURL });
                 const extensionList = new ExtensionList();
                 await extensionList.initialise(EXTENSION_DIR, templateController);
@@ -96,17 +96,16 @@ describe('ExtensionList.js', () => {
                 list.should.have.property('extensionWithURL');
                 const { extensionWithURL } = list;
                 extensionWithURL.should.have.property('templates');
-    
+
                 // Ensure template repository has been added
-                await templateController.getRepository(extensionWithURL.templates).should.be.fulfilled;
+                templateController.getRepository(extensionWithURL.templates).should.not.equal(null);
             });
             it('Loads an extension which contains a templateProvider.js file and no template repository URL', async function() {
-                this.timeout(testTimeout.short);
                 const extensionName = 'extensionWithTemplateProvider';
                 createCodewindYamlFile(path.join(EXTENSION_DIR, extensionName), { name: extensionName });
                 createTemplatesProviderFile(path.join(EXTENSION_DIR, extensionName));
                 const extensionList = new ExtensionList();
-    
+
                 await extensionList.initialise(EXTENSION_DIR, templateController);
                 const { _list: list } = extensionList;
                 list.should.have.property(extensionName);
@@ -117,7 +116,6 @@ describe('ExtensionList.js', () => {
                 templateController.providers.should.have.property(extensionName);
             });
             it('Loads an extension which contains both a template repository URL and a templateProvider.js file (ignores the templateProvider.js file)', async function() {
-                this.timeout(testTimeout.short);
                 const extensionName = 'extensionWithBoth';
                 createCodewindYamlFile(path.join(EXTENSION_DIR, extensionName), { name: extensionName, templates: templateRepositoryURL });
                 createTemplatesProviderFile(path.join(EXTENSION_DIR, extensionName));
@@ -129,7 +127,7 @@ describe('ExtensionList.js', () => {
                 const { extensionWithBoth } = list;
                 
                 // Ensure template repository has been added
-                await templateController.getRepository(extensionWithBoth.templates).should.be.fulfilled;
+                templateController.getRepository(extensionWithBoth.templates).should.not.equal(null);
     
                 // Ensure provider has not been added
                 templateController.providers.should.not.have.property(extensionName);
@@ -418,7 +416,8 @@ describe('ExtensionList.js', () => {
                 extension.templates = 'invalidURL';
                 const templateController = new Templates(EXTENSION_DIR);
                 await addExtensionsToTemplates([extension], templateController);
-                await templateController.getRepository(extension.templates).should.be.rejected;
+                const repo = templateController.getRepository(extension.templates);
+                should.equal(repo, null);
             });
             it('Successfully adds the extension templates field as a repository when it exists', async() => {
                 const extension = new Extension({ name: 'extension' });
@@ -428,7 +427,7 @@ describe('ExtensionList.js', () => {
                 await addExtensionsToTemplates([extension], templateController);
 
                 // Ensure template repository has been added
-                await templateController.getRepository(extension.templates).should.be.fulfilled;
+                templateController.getRepository(extension.templates).should.not.equal(null);
             });
             it('Successfully adds the extension templateProvider as a provider', async() => {
                 const extension = new Extension({ name: 'extension' });

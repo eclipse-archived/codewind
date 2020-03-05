@@ -191,8 +191,11 @@ module.exports = class LoadRunner {
 
     // If appmetrics does not support timed collections (which get auto delete when published), delete them now.
     if (!this.metricsFeatures || !this.metricsFeatures.timedMetrics) {
-      options.method = 'DELETE';
-      http.request(options, function (res) {
+      const deleteOptions = {
+        ...options,
+        method: 'DELETE',
+      };
+      http.request(deleteOptions, function (res) {
         if (res.statusCode == 204) {
           log.info('recordCollection: Metrics collection deleted');
         } else {
@@ -340,11 +343,11 @@ module.exports = class LoadRunner {
 
     // For Java Liberty restart the server in preparation for profiling
     if (this.project.language == 'java' && this.project.projectType == 'liberty') {
-      log.info(`beginJavaProfiling: Stopping liberty server`); 
+      log.info(`beginJavaProfiling: Stopping liberty server`);
       const stopCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `];
       await cwUtils.spawnContainerProcess(this.project, stopCommand);
       await this.waitForHealth(false);
-      log.info(`beginJavaProfiling: Starting liberty server`); 
+      log.info(`beginJavaProfiling: Starting liberty server`);
       const startCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start; `];
       await cwUtils.spawnContainerProcess(this.project, startCommand);
       await this.waitForHealth(true);
@@ -352,7 +355,7 @@ module.exports = class LoadRunner {
 
     const mkdirCommand = `mkdir -p ${loadTestDir}`;
     const mkdirArray = ['bash', '-c', mkdirCommand];
-    
+
     await cwUtils.spawnContainerProcess(this.project, mkdirArray);
 
     const healthCentercommand = `export javapid=(\`pidof java\`); java -jar $JAVA_HOME/jre/lib/ext/healthcenter.jar ID=\${javapid[-1]} level=headless -Dcom.ibm.java.diagnostics.healthcenter.headless.run.number.of.runs=1 -Dcom.ibm.java.diagnostics.healthcenter.headless.run.duration=${durationInMins} -Dcom.ibm.java.diagnostics.healthcenter.headless.output.directory=${loadTestDir} -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.memorycounters=off -Dcom.ibm.diagnostics.healthcenter.data.cpu=off -Dcom.ibm.diagnostics.healthcenter.data.environment=off -Dcom.ibm.diagnostics.healthcenter.data.locking=off -Dcom.ibm.diagnostics.healthcenter.data.memory=off -Dcom.ibm.diagnostics.healthcenter.data.threads=off`;
@@ -507,7 +510,7 @@ module.exports = class LoadRunner {
     */
     this.socket.on('error', (err) => {
       log.error('LoadRunner socket error');
-      this.project.loadInProgress = false; 
+      this.project.loadInProgress = false;
       log.error(err);
       // If this.up is false we're already trying to reconnect
       if (this.up) {
