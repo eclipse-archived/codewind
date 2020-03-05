@@ -29,6 +29,7 @@
     "chai-openapi-response-validator": "^0.7.0",
     "chai-subset": "^1.6.0",
     "child-process-promise": "^2.2.1",
+    "compress-tag": "^1.2.2",
     "dateformat": "^3.0.3",
     "deep-equal-in-any-order": "^1.0.21",
     "dockerode": "^2.5.2",
