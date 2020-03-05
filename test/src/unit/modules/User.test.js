@@ -20,6 +20,9 @@ const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const ProjectList = require('../../../../src/pfe/portal/modules/ProjectList');
 const ExtensionList = require('../../../../src/pfe/portal/modules/ExtensionList');
 
+const { testTimeout } = require('../../../config');
+
+
 // import User.js but mock some of its imports so we can test it in isolation
 /* eslint-disable class-methods-use-this */
 class MockLogger {
@@ -66,7 +69,7 @@ chai.use(deepEqualInAnyOrder);
 chai.use(sinonChai);
 const should = chai.should();
 
-const testWorkspace = path.join(__dirname, `${__filename}/`);
+const testWorkspace = path.join(__dirname, 'temp_user_test_js_dir', path.sep);
 const pathToProjectInfDir = path.join(testWorkspace, '.projects');
 const testTempDirName = 'CODEWIND_TEMP_WORKSPACE';
 const pathToTestTempDir = path.join(testWorkspace, testTempDirName);
@@ -314,7 +317,7 @@ describe('User.js', () => {
 
             await user.cancelLoad(project)
                 .should.eventually.be.rejectedWith('Load Runner service is not available');
-        });
+        }).timeout(testTimeout.short);
     });
     describe('buildProject(project, action)', () => {
         beforeEach(() => {
