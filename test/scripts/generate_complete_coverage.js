@@ -169,6 +169,7 @@ const mergeNYCOutputIntoJSON = async(nycOutputDir, nycJsonFile) => {
 
 const createNYCReport = async() => {
     log.info(`Creating the single nyc report`);
+    log.debug(`nyc options: ${NYC_CONFIG}`);
     const nyc = new NYC(NYC_CONFIG);
     await nyc.report();
     const indexHTMLPath = path.join(MERGED_NYC_COVERAGE_DIR, 'index.html');
@@ -181,8 +182,8 @@ const createNYCReport = async() => {
 
 const uploadCoverageToCodecov = async() => {
     log.info(`Uploading the report to codecov`);
-    const lcovFileExists = await fs.pathExists(CODECOV_FILE);
-    if (!lcovFileExists) throw new Error(`lcov.info file does not exist (can't report coverage). Path: ${lcovFileExists}`);
+    const coverageFileExists = await fs.pathExists(CODECOV_FILE);
+    if (!coverageFileExists) throw new Error(`lcov.info file does not exist (can't report coverage). Path: ${coverageFileExists}`);
 
     const CODECOV_TOKEN = process.env.CODECOV_TOKEN;
     if (!CODECOV_TOKEN) throw new Error(`No codecov token given`);
@@ -193,6 +194,7 @@ const uploadCoverageToCodecov = async() => {
         yml: path.join(__dirname, 'codecov.yml'),
         root: path.join(__dirname, '../..'),
     };
+    log.debug(`codecov options: ${options}`);
     await codecovUpload({ options });
 };
 
