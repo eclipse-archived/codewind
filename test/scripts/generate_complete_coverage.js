@@ -201,8 +201,7 @@ const cleanUp = () => {
     return fs.remove(CONTAINER_NYC_OUTPUT_DIR);
 };
 
-// main().catch(err => {
-//     log.error(err);
-//     process.exit(1);
-// });
-uploadCoverageToCodecov();
+main().catch(err => {
+    log.error(err);
+    process.exit(1);
+});
