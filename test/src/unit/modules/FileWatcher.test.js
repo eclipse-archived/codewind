@@ -142,11 +142,11 @@ describe('FileWatcher.js', () => {
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 operationId: 12,
-                isClosing: () => { return true },
-                isDeleting: () => { return false },
+                isClosing: () => { return true; },
+                isDeleting: () => { return false; },
             };
             const mockUser = {
-                projectList: { retrieveProject: sinon.spy((projectID) => { console.dir(mockFwProject); return mockFwProject }) },
+                projectList: { retrieveProject: sinon.spy(() => { return mockFwProject; }) },
                 uiSocket: { emit: sinon.mock() },
             };
             const fw = new FileWatcher(mockUser);
@@ -161,11 +161,11 @@ describe('FileWatcher.js', () => {
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 operationId: 12,
-                isClosing: () => { return false },
-                isDeleting: () => { return true },
+                isClosing: () => { return false; },
+                isDeleting: () => { return true; },
             };
             const mockUser = {
-                projectList: { retrieveProject: sinon.spy((projectID) => { console.dir(mockFwProject); return mockFwProject }) },
+                projectList: { retrieveProject: sinon.spy(() => { return mockFwProject; }) },
                 uiSocket: { emit: sinon.mock() },
             };
             const fw = new FileWatcher(mockUser);
@@ -180,11 +180,11 @@ describe('FileWatcher.js', () => {
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 operationId: 12,
-                isClosing: () => { return false },
-                isDeleting: () => { return false },
+                isClosing: () => { return false; },
+                isDeleting: () => { return false; },
             };
             const mockUser = {
-                projectList: { retrieveProject: sinon.spy((projectID) => { console.dir(mockFwProject); return mockFwProject }) },
+                projectList: { retrieveProject: sinon.spy(() => { return mockFwProject; }) },
                 uiSocket: { emit: sinon.mock() },
             };
             const fw = new FileWatcher(mockUser);
@@ -204,7 +204,7 @@ describe('FileWatcher.js', () => {
                 operationId: 12,
             };
             const mockUser = {
-                projectList: { retrieveProject: sinon.spy((projectID) => { console.dir(mockFwProject); return mockFwProject }) },
+                projectList: { retrieveProject: sinon.spy(() => { return mockFwProject; }) },
                 uiSocket: { emit: sinon.mock() },
             };
             const fw = new FileWatcher(mockUser);
