@@ -45,7 +45,7 @@ class MockLoadRunner {};
 
 class MockFileWatcher {
     setLocale() {}
-    async deleteProject(project) {
+    deleteProject(project) {
         if (project.throwConnFailed === 'true') {
             throw new FilewatcherError('CONNECTION_FAILED', project.projectID, `Filewatcher status code 500`);
         }
@@ -56,7 +56,7 @@ class MockFileWatcher {
             throw FW_INT_ERROR;
         }
     }
-    async closeProject(project) {
+    closeProject(project) {
         if (project.throwConnFailed === 'true') {
             throw new FilewatcherError('CONNECTION_FAILED', project.projectID, `Filewatcher status code 500`);
         }
@@ -343,7 +343,7 @@ describe('User.js', () => {
         }).timeout(testTimeout.short);
         it('returns the cancelLoad response', async() => {
             const { user, project } = await createSimpleUserWithProject();
-            user.loadRunner.cancelRunLoad = async (loadConfig) => { return 200 };
+            user.loadRunner.cancelRunLoad = () => { return 200; };
             project.loadInProgress = true;
             const responseCode = await user.cancelLoad(project);
             user.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
@@ -746,7 +746,7 @@ describe('User.js', () => {
         });
         it('unbinds an existing open project, deal with FWError PROJECT_NOT_FOUND', async() => {
             const { user, project } = await createSimpleUserWithProject();
-            project.throwProjectNotFound = 'true'
+            project.throwProjectNotFound = 'true';
             await user.unbindProject(project);
             user.projectList.should.deep.equal(emptyProjectList);
             user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectDeletion', {
@@ -757,7 +757,7 @@ describe('User.js', () => {
         it('attempts to unbind an existing open project, throw FW error', async() => {
             const { user, project } = await createSimpleUserWithProject();
             const expectedProjectList = user.projectList;
-            project.throwInternalFailure = 'true'
+            project.throwInternalFailure = 'true';
             try {
                 await user.unbindProject(project);
                 assert.fail('Did not throw expected exception');
@@ -785,7 +785,7 @@ describe('User.js', () => {
                 appStatus: 'unknown',
                 state: Project.STATES.closed,
                 containerId: '',
-            }
+            };
             project.throwConnFailed = 'true';
             await user.closeProject(project);
             project.logStreams.should.be.empty;
@@ -805,7 +805,7 @@ describe('User.js', () => {
                 appStatus: 'unknown',
                 state: Project.STATES.closed,
                 podName: '',
-            }
+            };
             project.throwConnFailed = 'true';
             await user.closeProject(project);
             project.logStreams.should.be.empty;
@@ -817,7 +817,7 @@ describe('User.js', () => {
         });
         it('attempts to close an existing open project, throw FW error', async() => {
             const { user, project } = await createSimpleUserWithProject();
-            project.throwInternalFailure = 'true'
+            project.throwInternalFailure = 'true';
             try {
                 await user.closeProject(project);
                 assert.fail('Did not throw expected exception');
@@ -829,7 +829,7 @@ describe('User.js', () => {
     });
 
     describe('startExistingProjects()', () => {
-        var sandbox = sinon.createSandbox();
+        const sandbox = sinon.createSandbox();
         beforeEach(() => {
             fs.emptyDirSync(testWorkspace);
         });
@@ -842,11 +842,11 @@ describe('User.js', () => {
             user.fw.up = true;
             user.fw.buildAndRunProject = () => ({ statusCode: 202 });
             user.startExistingProjects();
-            user.buildAndRunProject.should.have.been.called;
+            user.buildAndRunProject.should.have.been.calledWithExactly(project);
             sandbox.restore();
         });
         it('does nothing if fw is not up', async() => {
-            const { user, project } = await createSimpleUserWithProject();
+            const user = await createSimpleUser();
             sandbox.spy(user, 'buildAndRunProject');
             user.fw.up = false;
             user.startExistingProjects();
@@ -874,7 +874,7 @@ describe('User.js', () => {
     });
 
     describe('fileChanged()', () => {
-        var sandbox = sinon.createSandbox();
+        const sandbox = sinon.createSandbox();
         beforeEach(() => {
             fs.emptyDirSync(testWorkspace);
         });
@@ -884,7 +884,7 @@ describe('User.js', () => {
         it('notifies change, deals with error', async() => {
             const expectedError = new Error('fileChanged_error');
             const { user, project } = await createSimpleUserWithProject();
-            user.fw.projectFileChanged = sandbox.spy(async (projectID, timestamp, chunkNum, chunkTotal, eventArray) => { throw expectedError; });
+            user.fw.projectFileChanged = sandbox.spy(() => { throw expectedError; });
             await user.fileChanged(project.projectID, 1900, 1, 5, []);
             user.fw.projectFileChanged.should.have.been.calledOnceWithExactly(project.projectID, 1900, 1, 5, []);
             sandbox.restore();
@@ -892,7 +892,7 @@ describe('User.js', () => {
     });
 
     describe('updateStatus(body)', () => {
-        var sandbox = sinon.createSandbox();
+        const sandbox = sinon.createSandbox();
         beforeEach(() => {
             fs.emptyDirSync(testWorkspace);
         });
@@ -900,8 +900,8 @@ describe('User.js', () => {
             fs.removeSync(testWorkspace);
         });
         it('sends update to fw', async() => {
-            const testBody = { message: "Test" };
             const { user, project } = await createSimpleUserWithProject();
+            const testBody = { projectID: project.projectID, message: 'Test' };
             user.fw.updateStatus = sandbox.spy();
             await user.updateStatus(testBody);
             user.fw.updateStatus.should.have.been.calledOnceWithExactly(testBody);
@@ -910,7 +910,7 @@ describe('User.js', () => {
     });
 
     describe('imagePushRegistryStatus(body)', () => {
-        var sandbox = sinon.createSandbox();
+        const sandbox = sinon.createSandbox();
         beforeEach(() => {
             fs.emptyDirSync(testWorkspace);
         });
@@ -919,9 +919,9 @@ describe('User.js', () => {
         });
         it('notifies status change, deals with error', async() => {
             const expectedError = new Error('imagePushRegistryStatus_error');
-            const testBody = { message: "Test" };
             const { user, project } = await createSimpleUserWithProject();
-            user.fw.imagePushRegistryStatus = sandbox.spy(async (body) => { throw expectedError; });
+            const testBody = { projectID: project.projectID, message: 'Test' };
+            user.fw.imagePushRegistryStatus = sandbox.spy(() => { throw expectedError; });
             await user.imagePushRegistryStatus(testBody);
             user.fw.imagePushRegistryStatus.should.have.been.calledOnceWithExactly(testBody);
             sandbox.restore();
@@ -929,7 +929,7 @@ describe('User.js', () => {
     });
 
     describe('checkNewLogFile(projectID, type)', () => {
-        var sandbox = sinon.createSandbox();
+        const sandbox = sinon.createSandbox();
         beforeEach(() => {
             fs.emptyDirSync(testWorkspace);
         });
@@ -946,7 +946,7 @@ describe('User.js', () => {
     });
 
     describe('projectCapabilities(project)', () => {
-        var sandbox = sinon.createSandbox();
+        const sandbox = sinon.createSandbox();
         beforeEach(() => {
             fs.emptyDirSync(testWorkspace);
         });
@@ -955,10 +955,10 @@ describe('User.js', () => {
         });
         it('returns capabilities data from fw', async() => {
             const { user, project } = await createSimpleUserWithProject();
-            user.fw.projectCapabilities = sandbox.spy(async (project) => { return { projectID : project.projectID }});
+            user.fw.projectCapabilities = sandbox.spy((project) => { return { projectID: project.projectID }; });
             const result = await user.projectCapabilities(project);
             user.fw.projectCapabilities.should.have.been.calledOnceWithExactly(project);
-            result.should.deep.equal({ projectID : project.projectID });
+            result.should.deep.equal( { projectID: project.projectID });
             sandbox.restore();
         });
     });
@@ -971,9 +971,9 @@ describe('User.js', () => {
             fs.removeSync(testWorkspace);
         });
         it('returns project types from fw', async() => {
-            const expectedFWTypes = [ "Type1", "type2" ];
-            const { user, project } = await createSimpleUserWithProject();
-            user.fw.projectTypes = async () => { return expectedFWTypes };
+            const expectedFWTypes = [ 'Type1', 'type2' ];
+            const user = await createSimpleUser();
+            user.fw.projectTypes = () => { return expectedFWTypes; };
             const result = await user.projectTypes();
             result.should.deep.equal(expectedFWTypes);
         });
@@ -987,9 +987,9 @@ describe('User.js', () => {
             fs.removeSync(testWorkspace);
         });
         it('returns list of logs from fw', async() => {
-            const expectedLogs = [ "Log1", "log2" ];
+            const expectedLogs = [ 'Log1', 'log2' ];
             const { user, project } = await createSimpleUserWithProject();
-            user.fw.getProjectLogs = async (project) => { return expectedLogs };
+            user.fw.getProjectLogs = () => { return expectedLogs; };
             const result = await user.getProjectLogs(project);
             result.should.deep.equal(expectedLogs);
             project.logs.should.deep.equal(expectedLogs);
@@ -1005,18 +1005,18 @@ describe('User.js', () => {
         });
         it('returns a response for a successful write', async() => {
             const user = await createSimpleUser();
-            user.fw.writeWorkspaceSettings = async (address, namespace) => { return 200; };
-            const result = await user.writeWorkspaceSettings("address", "namespace");
+            user.fw.writeWorkspaceSettings = () => { return 200; };
+            const result = await user.writeWorkspaceSettings('address', 'namespace');
             result.should.equal(200);
         });
         it('throws an error for an unsuccessful write', async() => {
             const expectedError = new Error('writeWorkspaceSettings_error');
             const user = await createSimpleUser();
-            user.fw.writeWorkspaceSettings = async (address, namespace) => { throw expectedError; };
+            user.fw.writeWorkspaceSettings = () => { throw expectedError; };
             try {
-                const result = await user.writeWorkspaceSettings("address", "namespace");
+                await user.writeWorkspaceSettings('address', 'namespace');
                 assert.fail('Did not throw expected exception');
-            } catch(e) {
+            } catch (e) {
                 e.should.deep.equal(expectedError);
             }
         });
@@ -1031,18 +1031,18 @@ describe('User.js', () => {
         });
         it('returns a response for a successful removal', async() => {
             const user = await createSimpleUser();
-            user.fw.removeImagePushRegistry = async (address) => { return 200; };
-            const result = await user.removeImagePushRegistry("address");
+            user.fw.removeImagePushRegistry = () => { return 200; };
+            const result = await user.removeImagePushRegistry('address');
             result.should.equal(200);
         });
         it('throws an error for an unsuccessful removal', async() => {
             const expectedError = new Error('removeImagePushRegistry_error');
             const user = await createSimpleUser();
-            user.fw.removeImagePushRegistry = async (address) => { throw expectedError; };
+            user.fw.removeImagePushRegistry = () => { throw expectedError; };
             try {
-                const result = await user.removeImagePushRegistry("address");
+                await user.removeImagePushRegistry('address');
                 assert.fail('Did not throw expected exception');
-            } catch(e) {
+            } catch (e) {
                 e.should.deep.equal(expectedError);
             }
         });
@@ -1057,18 +1057,18 @@ describe('User.js', () => {
         });
         it('returns a response for a successful test', async() => {
             const user = await createSimpleUser();
-            user.fw.testImagePushRegistry = async (address, namespace) => { return 200; };
-            const result = await user.testImagePushRegistry("address", "namespace");
+            user.fw.testImagePushRegistry = () => { return 200; };
+            const result = await user.testImagePushRegistry('address', 'namespace');
             result.should.equal(200);
         });
         it('throws an error for an unsuccessful test', async() => {
             const expectedError = new Error('testImagePushRegistry_error');
             const user = await createSimpleUser();
-            user.fw.testImagePushRegistry = async (address, namespace) => { throw expectedError; };
+            user.fw.testImagePushRegistry = () => { throw expectedError; };
             try {
-                const result = await user.testImagePushRegistry("address", "namespace");
+                await user.testImagePushRegistry('address', 'namespace');
                 assert.fail('Did not throw expected exception');
-            } catch(e) {
+            } catch (e) {
                 e.should.deep.equal(expectedError);
             }
         });
