@@ -174,6 +174,7 @@ else
 fi
 
 mkdir -p $COMPARABLE_BASELINE_DIR
+mkdir -p "$CSV_BASELINE_DIR/$TURBINE_PERFORMANCE_TEST"
 
 if [ -e "$COMPARABLE_BASELINE_DIR/$COMPARABLE_FILENAME" ]; then
     echo -e "${CYAN}> Comparing csv paths for $TEST_ENV local with baseline file "$COMPARABLE_BASELINE_DIR/$COMPARABLE_FILENAME" ... ${RESET}"
