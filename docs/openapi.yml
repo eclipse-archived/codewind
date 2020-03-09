@@ -111,14 +111,23 @@ paths:
                 action:
                   description: 'Action for build'
                   type: string
-                  enum: [build, enableautobuild, disableautobuild]
+                  enum: [ build, enableautobuild, disableautobuild ]
       responses:
         202:
           description: Build successful
           content:
-            text/html:
+            application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  status:
+                    type: string
+                  projectID:
+                    $ref: '#/components/schemas/ProjectID'
+                  action:
+                    description: 'Action for build'
+                    type: string
+                    enum: [ build, enableautobuild, disableautobuild ]
         400:
           description: Unknown action or Project not found
           content:
@@ -932,7 +941,7 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/MessageObject'
                   - $ref: '#/components/schemas/CodewindError'
-                 
+
         500:
           description: Internal error
     delete:

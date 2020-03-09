@@ -35,17 +35,22 @@ async function buildProject(req, res) {
       res.status(400).send(`Unable to find project ${id}`);
       return;
     }
-    
+
     if (project.isClosed() || project.isClosing() || project.isDeleting()) {
       const msg = `Cannot perform build action ${action} on ${project.name} because it is in state ${project.state}.`;
       res.status(400).send(msg);
       log.error(msg);
       return;
     }
-    
-    res.status(202).send(`Trying to build project ${id} with action ${action}`);
+
+    res.status(202).json({
+      status: "Accepted",
+      projectID: id,
+      action,
+    });
+
     await user.buildProject(project, action);
-    
+
   } catch (err) {
     log.error(err);
     res.status(500).send(err);

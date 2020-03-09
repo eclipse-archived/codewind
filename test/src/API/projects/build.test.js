@@ -13,7 +13,7 @@ const path = require('path');
 const chaiResValidator = require('chai-openapi-response-validator');
 
 const projectService = require('../../../modules/project.service');
-const { 
+const {
     testTimeout,
     TEMP_TEST_DIR,
     pathToApiSpec,
@@ -40,45 +40,51 @@ describe('Project Build Tests', function() {
     describe('POST projects/{id}/build', function() {
         it('returns 202 when `action` is `build`', async function() {
             this.timeout(testTimeout.short);
-            const res = await projectService.buildProject(projectID, 'build');
-            
+            const action = 'build';
+            const res = await projectService.buildProject(projectID, action);
+
             res.status.should.equal(202, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
-            res.text.should.equal(`Trying to build project ${projectID} with action build`);
+            res.body.action.should.equal(action);
+            res.body.projectID.should.equal(projectID);
         });
-        
+
         it('returns 202 when `action` is `enableautobuild`', async function() {
             this.timeout(testTimeout.short);
-            const res = await projectService.buildProject(projectID, 'enableautobuild');
-            
+            const action = 'enableautobuild';
+            const res = await projectService.buildProject(projectID, action);
+
             res.status.should.equal(202, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
-            res.text.should.equal(`Trying to build project ${projectID} with action enableautobuild`);
+            res.body.action.should.equal(action);
+            res.body.projectID.should.equal(projectID);
         });
-        
+
         it('returns 202 when `action` is `disableautobuild`', async function() {
             this.timeout(testTimeout.short);
-            const res = await projectService.buildProject(projectID, 'disableautobuild');
-            
+            const action = 'disableautobuild';
+            const res = await projectService.buildProject(projectID, action);
+
             res.status.should.equal(202, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
-            res.text.should.equal(`Trying to build project ${projectID} with action disableautobuild`);
+            res.body.action.should.equal(action);
+            res.body.projectID.should.equal(projectID);
         });
-        
+
         it('returns 400 when `action` is unknown', async function() {
             this.timeout(testTimeout.short);
             const res = await projectService.buildProject(projectID, 'unknown action');
-            
+
             res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal('Error while validating request: request.body.action should be equal to one of the allowed values');
         });
-        
+
         it('returns 400 when project does not exist', async function() {
             this.timeout(testTimeout.short);
             const projectID = '00000000-0000-0000-0000-000000000000';
             const res = await projectService.buildProject(projectID, 'build');
-            
+
             res.status.should.equal(400, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal(`Unable to find project ${projectID}`);
