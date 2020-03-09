@@ -144,7 +144,9 @@ async function enableAndBuild(projectInfo: ProjectInfo): Promise<void> {
             if (!statusController.isBuildInProgressOrQueued(projectInfo.projectID)) {
                 logger.logProjectInfo("Start build on switch to auto build enabled", projectID, projectName);
                 const operation = new Operation("update", projectInfo);
-                await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, projectID, statusController.BuildState.inProgress, "action.calculateDifference");
+                if (!projectHandler.suppressBuildStatus) {
+                    await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, projectID, statusController.BuildState.inProgress, "action.calculateDifference");
+                }
                 const intervaltimer = setInterval(() => {
                     // wait till no expected incoming chunks in order to get a full fileChanged array
                     lock.acquire(["chunkRemainingLock", "changedFilesLock"], async done => {
@@ -232,7 +234,10 @@ export const build = async function (args: IProjectActionParams): Promise<{ oper
         throw error;
     }
     if (!statusController.isBuildInProgressOrQueued(args.projectID)) {
-        await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, args.projectID, statusController.BuildState.inProgress, "action.calculateDifference");
+        const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
+        if (!projectHandler.suppressBuildStatus) {
+            await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, args.projectID, statusController.BuildState.inProgress, "action.calculateDifference");
+        }
         const operation = new Operation("update", projectInfo);
         const intervaltimer = setInterval(() => {
             // wait till no expected incoming chunks in order to get a full fileChanged array
@@ -242,7 +247,6 @@ export const build = async function (args: IProjectActionParams): Promise<{ oper
                     done();
                     return;
                 }
-                const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
                 projectInfo.forceAction = "REBUILD";
                 const project: projectsController.BuildQueueType = {
                     operation: operation,

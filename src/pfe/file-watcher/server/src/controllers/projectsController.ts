@@ -543,8 +543,10 @@ async function triggerBuild(project: BuildQueueType, changedFiles?: IFileChangeE
             }
         }
 
-        logger.logProjectInfo(`${operationType} build began for ${projectID}`, projectID);
-        await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.inProgress, "projectStatusController.buildStarted");
+        if (!selectedProjectHandler.suppressBuildStatus) {
+            logger.logProjectInfo(`${operationType} build began for ${projectID}`, projectID);
+            await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.inProgress, "projectStatusController.buildStarted");
+        }
 
         // Hand off operation to appropriate handler for execution
         logger.logProjectInfo(`Handing ${operationType} operation to the selected project handler`, projectID);
@@ -560,8 +562,11 @@ async function triggerBuild(project: BuildQueueType, changedFiles?: IFileChangeE
         }
         io.emitOnListener("newProjectAdded", eventData);
     } else if (operationType.toLowerCase() === "update") {
-        logger.logProjectInfo(`${operationType} build began for ${projectID}`, projectID);
-        await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.inProgress, "projectStatusController.buildStarted");
+
+        if (!selectedProjectHandler.suppressBuildStatus) {
+            logger.logProjectInfo(`${operationType} build began for ${projectID}`, projectID);
+            await statusController.updateProjectStatus(statusController.STATE_TYPES.buildState, project.operation.projectInfo.projectID, statusController.BuildState.inProgress, "projectStatusController.buildStarted");
+        }
 
         // Hand off operation to appropriate handler for execution
         logger.logProjectInfo(`Handing ${operationType} operation to the selected project handler`, projectID);
