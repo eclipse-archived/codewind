@@ -732,7 +732,7 @@ module.exports = class User {
           "auth":encodedAuth
         }
 
-        await fs.writeJson(this.dockerConfigFile, jsonObj);
+        await fs.writeJson(this.dockerConfigFile, jsonObj, {spaces: 2});
       } else {
         log.info("The Docker config file does not exist, writing the contents");
         jsonObj = {"auths":{}}
@@ -742,7 +742,7 @@ module.exports = class User {
           "auth":encodedAuth
         }
 
-        await fs.writeJson(this.dockerConfigFile, jsonObj);
+        await fs.writeJson(this.dockerConfigFile, jsonObj, {spaces: 2});
       }
       // Update the registrySecretList to send back to the caller
       const registrySecret = {
@@ -774,7 +774,7 @@ module.exports = class User {
     
     // Since patching the Service Account failed, we need to revert the update to the Docker Config and patch the Service Account again
     delete jsonObj.auths[address];
-    await fs.writeJson(this.dockerConfigFile, jsonObj);
+    await fs.writeJson(this.dockerConfigFile, jsonObj, {spaces: 2} );
     await this.updateServiceAccountWithDockerRegisrySecret();
 
     throw new RegistrySecretsError(serviceAccountPatchData, "for address " + address);
@@ -938,7 +938,7 @@ module.exports = class User {
           throw new RegistrySecretsError("SECRET_DELETE_MISSING", "for address " + address);
         }
 
-        await fs.writeJson(this.dockerConfigFile, jsonObj);
+        await fs.writeJson(this.dockerConfigFile, jsonObj, {spaces: 2});
         log.info("The Docker config file has been updated for removal of " + address);
       } else {
         // return if there is no Docker Config file, no need to create new Kubernetes Secret or patch the Service Account
@@ -967,7 +967,7 @@ module.exports = class User {
 
     // Since patching the Service Account failed, we need to revert the delete from the Docker Config and patch the Service Account again
     jsonObj.auths[address] = registrySecretToBeDeleted;
-    await fs.writeJson(this.dockerConfigFile, jsonObj);
+    await fs.writeJson(this.dockerConfigFile, jsonObj, {spaces: 2});
     await this.updateServiceAccountWithDockerRegisrySecret();
 
     throw new RegistrySecretsError(serviceAccountPatchData, "for address " + address);
