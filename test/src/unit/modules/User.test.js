@@ -46,19 +46,21 @@ class MockLoadRunner {};
 class MockFileWatcher {
     setLocale() {}
     deleteProject(project) {
+        const { projectID } = project;
         if (project.throwConnFailed === 'true') {
-            throw new FilewatcherError('CONNECTION_FAILED', project.projectID, `Filewatcher status code 500`);
+            throw new FilewatcherError('CONNECTION_FAILED', projectID, `Filewatcher status code 500`);
         }
         if (project.throwProjectNotFound === 'true') {
-            throw new FilewatcherError('PROJECT_NOT_FOUND', project.projectID, `Filewatcher status code 500`);
+            throw new FilewatcherError('PROJECT_NOT_FOUND', projectID, `Filewatcher status code 500`);
         }
         if (project.throwInternalFailure === 'true') {
             throw FW_INT_ERROR;
         }
     }
     closeProject(project) {
+        const { projectID } = project;
         if (project.throwConnFailed === 'true') {
-            throw new FilewatcherError('CONNECTION_FAILED', project.projectID, `Filewatcher status code 500`);
+            throw new FilewatcherError('CONNECTION_FAILED', projectID, `Filewatcher status code 500`);
         }
         if (project.throwInternalFailure === 'true') {
             throw FW_INT_ERROR;
@@ -90,7 +92,7 @@ chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
 chai.use(sinonChai);
 const should = chai.should();
-const assert = chai.assert;
+const { assert } = chai;
 
 const testWorkspace = path.join(__dirname, 'temp_user_test_js_dir', path.sep);
 const pathToProjectInfDir = path.join(testWorkspace, '.projects');
@@ -343,7 +345,7 @@ describe('User.js', () => {
         }).timeout(testTimeout.short);
         it('returns the cancelLoad response', async() => {
             const { user, project } = await createSimpleUserWithProject();
-            user.loadRunner.cancelRunLoad = () => { return 200; };
+            user.loadRunner.cancelRunLoad = () => 200;
             project.loadInProgress = true;
             const responseCode = await user.cancelLoad(project);
             user.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
@@ -775,7 +777,7 @@ describe('User.js', () => {
         afterEach(() => {
             fs.removeSync(testWorkspace);
         });
-        it('close an existing open project, deal with FWError CONNECTION_FAILED when not in K8S', async() => {
+        it('closes an existing open project, deal with FWError CONNECTION_FAILED when not in K8S', async() => {
             global.codewind.RUNNING_IN_K8S = false;
             const { user, project } = await createSimpleUserWithProject();
             const expectedProjectContents = {
@@ -795,7 +797,7 @@ describe('User.js', () => {
             }));
             project.should.include(expectedProjectContents);
         });
-        it('close an existing open project, deal with FWError CONNECTION_FAILED when in K8S', async() => {
+        it('closes an existing open project, deal with FWError CONNECTION_FAILED when in K8S', async() => {
             global.codewind.RUNNING_IN_K8S = true;
             const { user, project } = await createSimpleUserWithProject();
             const expectedProjectContents = {
@@ -973,7 +975,7 @@ describe('User.js', () => {
         it('returns project types from fw', async() => {
             const expectedFWTypes = [ 'Type1', 'type2' ];
             const user = await createSimpleUser();
-            user.fw.projectTypes = () => { return expectedFWTypes; };
+            user.fw.projectTypes = () => expectedFWTypes;
             const result = await user.projectTypes();
             result.should.deep.equal(expectedFWTypes);
         });
@@ -989,7 +991,7 @@ describe('User.js', () => {
         it('returns list of logs from fw', async() => {
             const expectedLogs = [ 'Log1', 'log2' ];
             const { user, project } = await createSimpleUserWithProject();
-            user.fw.getProjectLogs = () => { return expectedLogs; };
+            user.fw.getProjectLogs = () => expectedLogs;
             const result = await user.getProjectLogs(project);
             result.should.deep.equal(expectedLogs);
             project.logs.should.deep.equal(expectedLogs);
@@ -1005,7 +1007,7 @@ describe('User.js', () => {
         });
         it('returns a response for a successful write', async() => {
             const user = await createSimpleUser();
-            user.fw.writeWorkspaceSettings = () => { return 200; };
+            user.fw.writeWorkspaceSettings = () => 200;
             const result = await user.writeWorkspaceSettings('address', 'namespace');
             result.should.equal(200);
         });
@@ -1031,7 +1033,7 @@ describe('User.js', () => {
         });
         it('returns a response for a successful removal', async() => {
             const user = await createSimpleUser();
-            user.fw.removeImagePushRegistry = () => { return 200; };
+            user.fw.removeImagePushRegistry = () => 200;
             const result = await user.removeImagePushRegistry('address');
             result.should.equal(200);
         });
@@ -1057,7 +1059,7 @@ describe('User.js', () => {
         });
         it('returns a response for a successful test', async() => {
             const user = await createSimpleUser();
-            user.fw.testImagePushRegistry = () => { return 200; };
+            user.fw.testImagePushRegistry = () => 200;
             const result = await user.testImagePushRegistry('address', 'namespace');
             result.should.equal(200);
         });
