@@ -65,7 +65,7 @@ async function copyFileFromContainer(project, sourceName, destinationName) {
   const kubeCommand = `kubectl cp ${K8S_NAME_SPACE}/${project.podName}:${sourceName} ${destinationName}`;
   log.debug(`copyFileFromContainer [kubectl cp command] ${kubeCommand}`);
   try {
-    await exec(kubeCommand); 
+    await exec(kubeCommand);
   } catch (error) {
     log.error(`copyFileFromContainer: Error copying file ${sourceName} from ${project.podName}`);
     throw(error);
@@ -78,10 +78,44 @@ async function deleteFile(project, projectRoot, relativePathOfFile) {
   await exec(kubeCommand);
 }
 
+async function getNetworkConfigMap(projectID) {
+  const res = await client.api.v1.namespaces(K8S_NAME_SPACE).configmaps.get({ qs: { labelSelector: `projectID=${projectID}` } });
+  console.dir(res);
+  if (!res || !res.body || !res.body.items || res.body.items.length === 0) {
+    return null;
+  }
+  const { items: configMaps } = res.body;
+  return configMaps.find(configMap => {
+    const { name } = configMap.metadata;
+    return name.endsWith('-network');
+  });
+}
+
+function updateConfigMap(updatedConfigMap) {
+  const { metadata: { name } } = updatedConfigMap;
+  return client.api.v1.namespaces(K8S_NAME_SPACE).configmaps(name).put({ body: updatedConfigMap });
+}
+
+async function patchProjectDeployments(projectID, patchBody) {
+  const res = await client.apis.apps.v1.ns(K8S_NAME_SPACE).deploy.get({ qs: { labelSelector: `projectID=${projectID}` } });
+  console.dir(res);
+  if (!res || !res.body || !res.body.items || res.body.items.length === 0) {
+    return null;
+  }
+  const { items: deployments } = res.body;
+  // patch all deployments that match the query selector
+  return Promise.all(deployments.map(deploy => {
+    const { metadata: { name } } = deploy;
+    return client.apis.apps.v1.ns(K8S_NAME_SPACE).deploy(name).patch({ body: patchBody });
+  }));
+
 module.exports = {
   getContainerLogStream,
   spawnContainerProcess,
   findHCDFile,
   copyFileFromContainer,
   deleteFile,
+  getNetworkConfigMap,
+  updateConfigMap,
+  patchProjectDeployments,
 }

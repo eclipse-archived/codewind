@@ -17,6 +17,7 @@ deploymentFile=$1
 serviceFile=$2
 releaseName=$3
 projectID=$4
+projectDirectory=$5
 
 function addOwnerReference() {
     local filename="$1"
@@ -58,3 +59,20 @@ yq w -i $serviceFile -- spec.selector.release $releaseName
 
 # Add owner reference for deletion when workspace is deleted
 addOwnerReference $serviceFile
+
+# Add an envFrom field to use Codewind Networking environment file
+configMapName=$releaseName-network
+yq w -i $deploymentFile "spec.template.spec.containers[*].envFrom[+].configMapRef.name" $configMapName
+
+# Create the networking configmap
+configMapFile=$(dirname $deploymentFile)/codewind-networking-configmap.yaml
+networkEnvFile=$projectDirectory/.codewind-project-links.env
+
+if [ -f "$networkEnvFile" ]; then
+    fromEnvFile=--from-env-file=$networkEnvFile
+fi
+
+kubectl create configmap --dry-run -o yaml $fromEnvFile $configMapName > $configMapFile
+yq w -i $configMapFile metadata.name $configMapName
+yq w -i $configMapFile -- metadata.labels.release $releaseName
+yq w -i $configMapFile -- metadata.labels.projectID $projectID

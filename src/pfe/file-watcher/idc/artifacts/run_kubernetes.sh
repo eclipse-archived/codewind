@@ -116,7 +116,7 @@ if [[ -z $serviceFile ]]; then
 fi
 
 # Add the necessary labels and serviceaccount to the chart
-/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $CONTAINER_NAME $PROJECT_ID
+/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $CONTAINER_NAME $PROJECT_ID $APPDIR
 
 # Add the iterative-dev functionality to the chart
 /file-watcher/scripts/kubeScripts/add-iterdev-to-chart.sh $deploymentFile $PROJNAME "/home/default/artifacts/new_entrypoint.sh" $LOGFOLDER

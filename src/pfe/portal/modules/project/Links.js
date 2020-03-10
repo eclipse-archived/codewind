@@ -15,15 +15,26 @@ const ProjectLinkError = require('../utils/errors/ProjectLinkError');
 const Logger = require('../utils/Logger');
 const log = new Logger(__filename);
 
-const ENV_FILE_NAME = '.codewind-project-links.env'; // This will be in the users container
-
 /**
  * The Links class
  */
 class Links {
   constructor(directory, args) {
     this._links = (args && args._links) ? args._links : [];
-    this.filePath = path.join(directory, ENV_FILE_NAME);
+    this.fileName = '.codewind-project-links.env'; // This will be in the users container (not local disk)
+    this.filePath = path.join(directory, this.fileName);
+  }
+
+  getFileName() {
+    return this.fileName;
+  }
+
+  getFilePath() {
+    return this.filePath;
+  }
+
+  envFileExists() {
+    return fs.pathExists(this.filePath);
   }
 
   getAll() {
@@ -42,15 +53,25 @@ class Links {
     return this.getAll().map(({ envName, projectURL }) => `${envName}=${projectURL}`)
   }
 
+  getEnvPairObject() {
+    const links = this.getAll();
+    const obj = {};
+    for (const link of links) {
+      const { envName, projectURL } = link;
+      obj[envName] = projectURL;
+    }
+    return obj;
+  }
+
   async add(newLink) {
     const { projectURL, envName } = newLink;
     const validatedLink = validateLink(newLink, this._links);
     log.info(`Link added - envName: ${envName}, projectURL: ${projectURL}`);
     this._links.push(validatedLink);
-    await writeEnvironmentFile(this.filePath, this.getEnvPairs());
+    await updateEnvironmentFile(this.filePath, this.getEnvPairs());
   }
 
-  async update(envName, newEnvName, newProjectURL) {
+  async update(envName, newEnvName) {
     const linkIndex = this._links.findIndex(link => link.envName === envName);
     if (linkIndex === -1) {
       throw new ProjectLinkError('NOT_FOUND', envName);
@@ -60,9 +81,9 @@ class Links {
     // Clone and remove the updated link so we only validate against all other links
     const linksWithoutOneToBeUpdated = this._links.filter(link => link.envName !== envName);
 
-    this._links[linkIndex] = validateLink({ ...currentLink, envName: newEnvName, projectURL: newProjectURL }, linksWithoutOneToBeUpdated);
-    log.info(`Link updated - env: ${envName} properties changed to envName: ${newEnvName} projectURL: ${newProjectURL}`);
-    await writeEnvironmentFile(this.filePath, this.getEnvPairs());
+    this._links[linkIndex] = validateLink({ ...currentLink, envName: newEnvName }, linksWithoutOneToBeUpdated);
+    log.info(`Link updated - env: ${envName} properties changed to envName: ${newEnvName}`);
+    await updateEnvironmentFile(this.filePath, this.getEnvPairs());
   }
 
   async delete(envName) {
@@ -72,15 +93,13 @@ class Links {
     }
     this._links.splice(linkIndex, 1);
     log.info(`Link ${envName} deleted`);
-    await writeEnvironmentFile(this.filePath, this.getEnvPairs());
+    await updateEnvironmentFile(this.filePath, this.getEnvPairs());
   }
 }
 
 function validateLink(newLink, links) {
-  const { projectID, parentPFEURL, envName, projectURL, type } = newLink;
-  // Only require a parentPFEURL and projectURL if the link is remote
-  // If the link is local then the parentPFEURL is not required and the projectURL can be undefined
-  if (!projectID || !envName || !type || (type === Links.TYPES.REMOTE && (!parentPFEURL || !projectURL))) {
+  const { projectID, envName, projectURL } = newLink;
+  if (!projectID || !envName || !projectURL) {
     log.error(newLink);
     throw new ProjectLinkError(`INVALID_PARAMETERS`, newLink.envName);
   }
@@ -98,14 +117,14 @@ function envNameExists(links, envName) {
   return envList.includes(envName);
 }
 
-async function writeEnvironmentFile(filePath, envPairArray) {
-  const fileContents = envPairArray.join('\n');
-  await fs.writeFile(filePath, fileContents);
-}
-
-Links.TYPES = {
-  LOCAL: 'LOCAL', // Target project is running on the same PFE
-  REMOTE: 'REMOTE', // Target project is running on a different PFE
+function updateEnvironmentFile(filePath, envPairArray) {
+  if (envPairArray.length === 0) {
+    return fs.remove(filePath);
+  }
+  let fileContents = envPairArray.join('\n');
+  // Add new line to the end of string
+  fileContents += '\n';
+  return fs.writeFile(filePath, fileContents);
 }
 
 module.exports = Links;
