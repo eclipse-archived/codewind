@@ -1311,8 +1311,8 @@ describe('Templates.js', function() {
                 };
                 const { firstProvider } = providers;
                 firstProvider.repositories.should.have.length(0);
-                const updatedProviders = await addRepositoryToProviders({ ...sampleRepos.codewind }, providers);
-                const { firstProvider: updatedFirstProvider } = updatedProviders;
+                await addRepositoryToProviders({ ...sampleRepos.codewind }, providers);
+                const { firstProvider: updatedFirstProvider } = providers;
                 updatedFirstProvider.repositories.should.have.length(1);
             });
             it('throws a TemplateError if one of the providers errors while adding the repository', () => {
@@ -1349,8 +1349,8 @@ describe('Templates.js', function() {
                 };
                 const { firstProvider } = providers;
                 firstProvider.repositories.should.have.length(1);
-                const updatedProviders = await removeRepositoryFromProviders(sampleRepos.codewind.url, providers);
-                const { firstProvider: updatedFirstProvider } = updatedProviders;
+                await removeRepositoryFromProviders(sampleRepos.codewind.url, providers);
+                const { firstProvider: updatedFirstProvider } = providers;
                 updatedFirstProvider.repositories.should.have.length(0);
             });
         });
