@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Refresh the docs directory
+rm -r ./docs
+cp -r ../../../docs ./
+
 docker cp config/. codewind-pfe:/portal/config
 docker cp docs/. codewind-pfe:/portal/docs
 docker cp middleware/. codewind-pfe:/portal/middleware

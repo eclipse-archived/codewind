@@ -27,6 +27,7 @@ const router = express.Router();
   require('./internal.route'),
   require('./fileChanges.route'),
   require('./remoteBind.route'),
+  require('./links.route'),
 ]
   .forEach((subRouter) => router.use(subRouter));
 

@@ -51,7 +51,7 @@ module.exports.getContainerLogStream = function getContainerLogStream(project, o
 
 module.exports.inspect = async function inspect(project) {
   if (!project || !project.containerId || project.isClosed()) {
-    log.warn(`Unable to inspect: project does not exist, has no container or is closed`);
+    log.warn(`Unable to inspect: project '${project.name}' does not exist, has no container or is closed`);
     return;
   }
   const container = await docker.getContainer(project.containerId).inspect();

@@ -22,6 +22,7 @@ import { BuildRequest, ProjectInfo } from "../projects/Project";
 import { StartModes } from "../projects/constants";
 import * as logHelper from "../projects/logHelper";
 import * as workspaceSettings from "./workspaceSettings";
+import { fstat, pathExists } from "fs-extra";
 
 const docker = new dockerode();
 
@@ -458,8 +459,16 @@ export async function runContainer(buildInfo: BuildRequest, containerName: strin
       }
     }
   }
-
   const args: string[] = ["run", "--label", "builtBy=codewind", "--name", containerName, "--network=codewind_network"];
+
+   // If the network file exists, add the environment variables to the Docker container
+   const networkEnvFile = path.join(buildInfo.projectLocation, ".codewind-project-links.env");
+   const networkEnvFileExists = await pathExists(networkEnvFile);
+   if (networkEnvFileExists) {
+     args.push("--env-file");
+     args.push(networkEnvFile);
+   }
+
   args.push(...portArgs);
   args.push("-dt");
   args.push(containerName);
