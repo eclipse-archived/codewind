@@ -31,20 +31,31 @@ async function buildProject(req, res) {
     const user = req.cw_user;
     const project = user.projectList.retrieveProject(id);
     const action = req.sanitizeBody('action');
+
     if (!project) {
-      res.status(400).send(`Unable to find project ${id}`);
+      res.status(404).json({
+        status: "failed",
+        error: `Action ${action} failed: Unable to find project ${id}`,
+        projectID: id,
+        action,
+      });
       return;
     }
 
     if (project.isClosed() || project.isClosing() || project.isDeleting()) {
-      const msg = `Cannot perform build action ${action} on ${project.name} because it is in state ${project.state}.`;
-      res.status(400).send(msg);
-      log.error(msg);
+      const errMsg = `Action ${action} failed: ${project.name} is ${project.state}.`;
+      log.info(`Rejecting request: ${errMsg}`);
+      res.status(409).json({
+        status: "failed",
+        error: errMsg,
+        projectID: id,
+        action,
+      });
       return;
     }
 
     res.status(202).json({
-      status: "Accepted",
+      status: "accepted",
       projectID: id,
       action,
     });

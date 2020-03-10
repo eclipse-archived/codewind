@@ -114,26 +114,29 @@ paths:
                   enum: [ build, enableautobuild, disableautobuild ]
       responses:
         202:
-          description: Build successful
+          description: Build / Toggle Auto Build successful
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  projectID:
-                    $ref: '#/components/schemas/ProjectID'
-                  action:
-                    description: 'Action for build'
-                    type: string
-                    enum: [ build, enableautobuild, disableautobuild ]
+                $ref: '#/components/schemas/BuildActionResponse'
         400:
-          description: Unknown action or Project not found
+          description: Invalid action
           content:
-            text/html:
+            text/plain:
               schema:
                 type: string
+        404:
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildActionResponse'
+        409:
+          description: Action not valid for project state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildActionResponse'
         500:
           description: Internal error
 
@@ -2238,6 +2241,20 @@ components:
     PfeLogLevel:
       type: string
       enum: ['trace', 'debug', 'info', 'warn', 'error']
+    BuildActionResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        status:
+          type: string
+          enum: [ accepted, failed ]
+        projectID:
+          $ref: '#/components/schemas/ProjectID'
+        action:
+          description: 'Build action'
+          type: string
+          enum: [ build, enableautobuild, disableautobuild ]
 
   responses:
     400:
