@@ -56,6 +56,11 @@ start() {
 
     npm install 1>> $LOG_FILE 2>> $LOG_FILE
 
+    PROJECT_LINKS_ENV_FILE="/app/.codewind-project-links.env"
+	if [ -f "$PROJECT_LINKS_ENV_FILE" ]; then
+		while read LINE; do export "$LINE"; done < $PROJECT_LINKS_ENV_FILE
+	fi
+
     # One of two npm scripts will be run: 'start' or 'debug'.
     # If auto build is enabled, we wrap the script in 'nodemon'.
 

@@ -244,7 +244,13 @@ function dockerRun() {
 	workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
 	echo "Workspace path used for volume mounting is: "$workspace""
 
-	$IMAGE_COMMAND run --network=codewind_network --name "$project" -dt -P -w /swift-project "$project"
+	PROJECT_LINKS_ENV_FILE="$workspace/$projectName/.codewind-project-links.env"
+	PROJECT_LINKS_PARAM=""
+	if [ -f "$PROJECT_LINKS_ENV_FILE" ]; then
+			PROJECT_LINKS_PARAM="--env-file $PROJECT_LINKS_ENV_FILE"
+	fi
+
+	$IMAGE_COMMAND run $PROJECT_LINKS_PARAM --network=codewind_network --name "$project" -dt -P -w /swift-project "$project"
 	if [ $? -eq 0 ]; then
 		echo -e "Copying over source files"
 		docker cp "$workspace/$projectName"/. "$project":/swift-project

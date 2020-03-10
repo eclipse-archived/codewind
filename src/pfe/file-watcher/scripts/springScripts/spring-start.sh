@@ -7,6 +7,11 @@ echo "PROJECT_NAME=$PROJECT_NAME"
 echo "START_MODE=$START_MODE"
 echo "DEBUG_PORT=$DEBUG_PORT"
 
+PROJECT_LINKS_ENV_FILE="/root/app/.codewind-project-links.env"
+if [ -f "$PROJECT_LINKS_ENV_FILE" ]; then
+    while read LINE; do export "$LINE"; done < $PROJECT_LINKS_ENV_FILE
+fi
+
 # Start the application
 echo "Starting Spring application: $PROJECT_NAME in mode: $START_MODE"
 if [ "$START_MODE" == "run" ]; then

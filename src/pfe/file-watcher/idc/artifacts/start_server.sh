@@ -59,6 +59,12 @@ if [ -f $SERVER_XML ]; then
                 echo "Checking for missing runtime features for $WLP_USER_DIR/servers/defaultServer $(date)"
                 /opt/ibm/wlp/bin/installUtility install --acceptLicense $WLP_USER_DIR/servers/defaultServer/server.xml
                 echo "Starting server $WLP_USER_DIR/servers/defaultServer $(date)"
+
+                PROJECT_LINKS_ENV_FILE="$APP_DIR/.codewind-project-links.env"
+                if [ -f "$PROJECT_LINKS_ENV_FILE" ]; then
+                        while read LINE; do export "$LINE"; done < $PROJECT_LINKS_ENV_FILE
+                fi
+
                 /opt/ibm/wlp/bin/server start
                 echo "Completed $(date)"
         fi

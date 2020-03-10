@@ -1753,6 +1753,95 @@ paths:
                     example: "/Dockerfile-tools"
        500:
           description: Internal Server Error
+  /api/v1/projects/{id}/links:
+    get:
+      summary: Returns the links for a project
+      parameters:
+        - in: path
+          name: id
+          schema:
+            $ref: '#/components/schemas/ProjectID'
+          required: true
+          description: id of project
+      responses:
+        200:
+          description: Returns the links to a given project
+    post:
+      summary: Adds a new link to a project
+      parameters:
+        - in: path
+          name: id
+          schema:
+            $ref: '#/components/schemas/ProjectID'
+          required: true
+          description: id of project
+      requestBody:
+        description: JSON object containing details of the project to link this project to
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkRequestBody'
+      responses:
+        200:
+          description: The link has been created
+        400:
+          description: Invalid parameters given
+        409:
+          description: A link with the envName specified already exists
+    put:
+      summary: Updates a project link
+      parameters:
+        - in: path
+          name: id
+          schema:
+            $ref: '#/components/schemas/ProjectID'
+          required: true
+          description: id of project
+      requestBody:
+        description: JSON object containing the envName of the link to update, and an updated envName or/and an updated projectURL
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - envName
+              properties:
+                envName:
+                  type: string
+                updatedEnvName:
+                  type: string
+                targetProjectURL:
+                  type: string
+      responses:
+          204:
+            description: The link has been updated
+          404:
+            description: The link does not exists
+    delete:
+      summary: Deletes a project link
+      parameters:
+        - in: path
+          name: id
+          schema:
+            $ref: '#/components/schemas/ProjectID'
+          required: true
+          description: id of project
+      requestBody:
+        description: JSON object containing the envName of the link to delete
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - envName
+              properties:
+                envName:
+                  type: string
+      responses:
+        204:
+          description: The link has been deleted
+        404:
+          description: The link does not exists
 
 components:
   schemas:
@@ -2246,6 +2335,26 @@ components:
     PfeLogLevel:
       type: string
       enum: ['trace', 'debug', 'info', 'warn', 'error']
+    LinkRequestBody:
+      type: object
+      required:
+        - targetProjectID
+        - envName
+      properties:
+        targetProjectID:
+          $ref: '#/components/schemas/ProjectID'
+        envName:
+          type: string
+        targetProjectURL:
+          type: string
+          description: >
+            The target project's external URL<br>
+            Required if the project to connect to is located on a different PFE
+        targetParentPFEURL:
+          type: string
+          description: >
+            The target project's PFE URL - used to identify that it is on a different PFE<br>
+            Required if the project to connect to is located on a different PFE
 
   responses:
     400:
