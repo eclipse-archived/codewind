@@ -1,2 +1,17 @@
 fixes:
     - "::src/pfe/"
+coverage:
+    status:
+        patch: off
+        project:
+            default: false
+            portal:
+                paths: "src/pfe/portal/"
+                target: 60%
+                threshold: null
+                if_not_found: success
+            file-watcher:
+                paths: "src/pfe/file-watcher/"
+                target: 30%
+                threshold: null
+                if_not_found: success
