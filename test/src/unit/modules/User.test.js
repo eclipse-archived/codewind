@@ -19,8 +19,11 @@ const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 
 const ProjectList = require('../../../../src/pfe/portal/modules/ProjectList');
 const ExtensionList = require('../../../../src/pfe/portal/modules/ExtensionList');
+const FilewatcherError = require('../../../../src/pfe/portal/modules/utils/errors/FilewatcherError');
 
 const { testTimeout } = require('../../../config');
+
+const FW_INT_ERROR = new FilewatcherError('FILE_WATCHER_INTERNAL_FAILURE', 500);
 
 
 // import User.js but mock some of its imports so we can test it in isolation
@@ -42,6 +45,27 @@ class MockLoadRunner {};
 
 class MockFileWatcher {
     setLocale() {}
+    deleteProject(project) {
+        const { projectID } = project;
+        if (project.throwConnFailed === 'true') {
+            throw new FilewatcherError('CONNECTION_FAILED', projectID, `Filewatcher status code 500`);
+        }
+        if (project.throwProjectNotFound === 'true') {
+            throw new FilewatcherError('PROJECT_NOT_FOUND', projectID, `Filewatcher status code 500`);
+        }
+        if (project.throwInternalFailure === 'true') {
+            throw FW_INT_ERROR;
+        }
+    }
+    closeProject(project) {
+        const { projectID } = project;
+        if (project.throwConnFailed === 'true') {
+            throw new FilewatcherError('CONNECTION_FAILED', projectID, `Filewatcher status code 500`);
+        }
+        if (project.throwInternalFailure === 'true') {
+            throw FW_INT_ERROR;
+        }
+    }
 };
 /* eslint-enable class-methods-use-this */
 
@@ -68,6 +92,7 @@ chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
 chai.use(sinonChai);
 const should = chai.should();
+const { assert } = chai;
 
 const testWorkspace = path.join(__dirname, 'temp_user_test_js_dir', path.sep);
 const pathToProjectInfDir = path.join(testWorkspace, '.projects');
@@ -318,6 +343,21 @@ describe('User.js', () => {
             await user.cancelLoad(project)
                 .should.eventually.be.rejectedWith('Load Runner service is not available');
         }).timeout(testTimeout.short);
+        it('returns the cancelLoad response', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.loadRunner.cancelRunLoad = () => 200;
+            project.loadInProgress = true;
+            const responseCode = await user.cancelLoad(project);
+            user.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
+                projectID: project.projectID,
+                status: 'cancelling',
+            });
+            user.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
+                projectID: project.projectID,
+                status: 'cancelled',
+            });
+            responseCode.should.equal(200);
+        });
     });
     describe('buildProject(project, action)', () => {
         beforeEach(() => {
@@ -667,6 +707,375 @@ describe('User.js', () => {
             });
         });
     });
+
+    describe('unbindProject(project)', () => {
+        const emptyProjectList = new ProjectList();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('unbinds an existing closed project', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.state = Project.STATES.closed;
+            await user.unbindProject(project);
+            user.projectList.should.deep.equal(emptyProjectList);
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectDeletion', {
+                projectID: project.projectID,
+                status: 'success',
+            });
+        });
+        it('unbinds an existing validating project', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.state = Project.STATES.validating;
+            await user.unbindProject(project);
+            user.projectList.should.deep.equal(emptyProjectList);
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectDeletion', {
+                projectID: project.projectID,
+                status: 'success',
+            });
+        });
+        it('unbinds an existing open project, deal with FWError CONNECTION_FAILED', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.throwConnFailed = 'true';
+            await user.unbindProject(project);
+            user.projectList.should.deep.equal(emptyProjectList);
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectDeletion', {
+                projectID: project.projectID,
+                status: 'success',
+            });
+        });
+        it('unbinds an existing open project, deal with FWError PROJECT_NOT_FOUND', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.throwProjectNotFound = 'true';
+            await user.unbindProject(project);
+            user.projectList.should.deep.equal(emptyProjectList);
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectDeletion', {
+                projectID: project.projectID,
+                status: 'success',
+            });
+        });
+        it('attempts to unbind an existing open project, throw FW error', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            const expectedProjectList = user.projectList;
+            project.throwInternalFailure = 'true';
+            try {
+                await user.unbindProject(project);
+                assert.fail('Did not throw expected exception');
+            } catch (e) {
+                e.should.deep.equal(FW_INT_ERROR);
+                user.projectList.should.deep.equal(expectedProjectList);
+            }
+        });
+    });
+
+    describe('closeProject(project)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('closes an existing open project, deal with FWError CONNECTION_FAILED when not in K8S', async() => {
+            global.codewind.RUNNING_IN_K8S = false;
+            const { user, project } = await createSimpleUserWithProject();
+            const expectedProjectContents = {
+                projectID: project.projectID,
+                ports: '',
+                buildStatus: 'unknown',
+                appStatus: 'unknown',
+                state: Project.STATES.closed,
+                containerId: '',
+            };
+            project.throwConnFailed = 'true';
+            await user.closeProject(project);
+            project.logStreams.should.be.empty;
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectClosed', sinon.match({
+                ...expectedProjectContents,
+                status: 'success',
+            }));
+            project.should.include(expectedProjectContents);
+        });
+        it('closes an existing open project, deal with FWError CONNECTION_FAILED when in K8S', async() => {
+            global.codewind.RUNNING_IN_K8S = true;
+            const { user, project } = await createSimpleUserWithProject();
+            const expectedProjectContents = {
+                projectID: project.projectID,
+                ports: '',
+                buildStatus: 'unknown',
+                appStatus: 'unknown',
+                state: Project.STATES.closed,
+                podName: '',
+            };
+            project.throwConnFailed = 'true';
+            await user.closeProject(project);
+            project.logStreams.should.be.empty;
+            user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectClosed', sinon.match({
+                ...expectedProjectContents,
+                status: 'success',
+            }));
+            project.should.include(expectedProjectContents);
+        });
+        it('attempts to close an existing open project, throw FW error', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.throwInternalFailure = 'true';
+            try {
+                await user.closeProject(project);
+                assert.fail('Did not throw expected exception');
+            } catch (e) {
+                e.should.deep.equal(FW_INT_ERROR);
+                project.logStreams.should.be.empty;
+            }
+        });
+    });
+
+    describe('startExistingProjects()', () => {
+        const sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('builds and runs existing project', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            sandbox.spy(user, 'buildAndRunProject');
+            user.fw.up = true;
+            user.fw.buildAndRunProject = () => ({ statusCode: 202 });
+            user.startExistingProjects();
+            user.buildAndRunProject.should.have.been.calledWithExactly(project);
+            sandbox.restore();
+        });
+        it('does nothing if fw is not up', async() => {
+            const user = await createSimpleUser();
+            sandbox.spy(user, 'buildAndRunProject');
+            user.fw.up = false;
+            user.startExistingProjects();
+            user.buildAndRunProject.should.not.have.been.called;
+            sandbox.restore();
+        });
+        it('does nothing if there are no projects', async() => {
+            const user = await createSimpleUser();
+            sandbox.spy(user, 'buildAndRunProject');
+            user.fw.up = true;
+            user.startExistingProjects();
+            user.buildAndRunProject.should.not.have.been.called;
+            sandbox.restore();
+        });
+        it('does nothing if project is not open', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            sandbox.spy(user, 'buildAndRunProject');
+            user.fw.up = true;
+            project.throwConnFailed = 'true';
+            await user.closeProject(project);
+            user.startExistingProjects();
+            user.buildAndRunProject.should.not.have.been.called;
+            sandbox.restore();
+        });
+    });
+
+    describe('fileChanged()', () => {
+        const sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('notifies change, deals with error', async() => {
+            const expectedError = new Error('fileChanged_error');
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.projectFileChanged = sandbox.spy(() => { throw expectedError; });
+            await user.fileChanged(project.projectID, 1900, 1, 5, []);
+            user.fw.projectFileChanged.should.have.been.calledOnceWithExactly(project.projectID, 1900, 1, 5, []);
+            sandbox.restore();
+        });
+    });
+
+    describe('updateStatus(body)', () => {
+        const sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('sends update to fw', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            const testBody = { projectID: project.projectID, message: 'Test' };
+            user.fw.updateStatus = sandbox.spy();
+            await user.updateStatus(testBody);
+            user.fw.updateStatus.should.have.been.calledOnceWithExactly(testBody);
+            sandbox.restore();
+        });
+    });
+
+    describe('imagePushRegistryStatus(body)', () => {
+        const sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('notifies status change, deals with error', async() => {
+            const expectedError = new Error('imagePushRegistryStatus_error');
+            const { user, project } = await createSimpleUserWithProject();
+            const testBody = { projectID: project.projectID, message: 'Test' };
+            user.fw.imagePushRegistryStatus = sandbox.spy(() => { throw expectedError; });
+            await user.imagePushRegistryStatus(testBody);
+            user.fw.imagePushRegistryStatus.should.have.been.calledOnceWithExactly(testBody);
+            sandbox.restore();
+        });
+    });
+
+    describe('checkNewLogFile(projectID, type)', () => {
+        const sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('sends check to fw', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.checkNewLogFile = sandbox.spy();
+            await user.checkNewLogFile(project.projectID, project.projectType);
+            user.fw.checkNewLogFile.should.have.been.calledOnceWithExactly(project.projectID, project.projectType);
+            sandbox.restore();
+        });
+    });
+
+    describe('projectCapabilities(project)', () => {
+        const sandbox = sinon.createSandbox();
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns capabilities data from fw', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.projectCapabilities = sandbox.spy((project) => { return { projectID: project.projectID }; });
+            const result = await user.projectCapabilities(project);
+            user.fw.projectCapabilities.should.have.been.calledOnceWithExactly(project);
+            result.should.deep.equal( { projectID: project.projectID });
+            sandbox.restore();
+        });
+    });
+
+    describe('projectTypes()', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns project types from fw', async() => {
+            const expectedFWTypes = [ 'Type1', 'type2' ];
+            const user = await createSimpleUser();
+            user.fw.projectTypes = () => expectedFWTypes;
+            const result = await user.projectTypes();
+            result.should.deep.equal(expectedFWTypes);
+        });
+    });
+
+    describe('getProjectLogs(project)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns list of logs from fw', async() => {
+            const expectedLogs = [ 'Log1', 'log2' ];
+            const { user, project } = await createSimpleUserWithProject();
+            user.fw.getProjectLogs = () => expectedLogs;
+            const result = await user.getProjectLogs(project);
+            result.should.deep.equal(expectedLogs);
+            project.logs.should.deep.equal(expectedLogs);
+        });
+    });
+
+    describe('writeWorkspaceSettings(address, namespace)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns a response for a successful write', async() => {
+            const user = await createSimpleUser();
+            user.fw.writeWorkspaceSettings = () => 200;
+            const result = await user.writeWorkspaceSettings('address', 'namespace');
+            result.should.equal(200);
+        });
+        it('throws an error for an unsuccessful write', async() => {
+            const expectedError = new Error('writeWorkspaceSettings_error');
+            const user = await createSimpleUser();
+            user.fw.writeWorkspaceSettings = () => { throw expectedError; };
+            try {
+                await user.writeWorkspaceSettings('address', 'namespace');
+                assert.fail('Did not throw expected exception');
+            } catch (e) {
+                e.should.deep.equal(expectedError);
+            }
+        });
+    });
+
+    describe('removeImagePushRegistry(address)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns a response for a successful removal', async() => {
+            const user = await createSimpleUser();
+            user.fw.removeImagePushRegistry = () => 200;
+            const result = await user.removeImagePushRegistry('address');
+            result.should.equal(200);
+        });
+        it('throws an error for an unsuccessful removal', async() => {
+            const expectedError = new Error('removeImagePushRegistry_error');
+            const user = await createSimpleUser();
+            user.fw.removeImagePushRegistry = () => { throw expectedError; };
+            try {
+                await user.removeImagePushRegistry('address');
+                assert.fail('Did not throw expected exception');
+            } catch (e) {
+                e.should.deep.equal(expectedError);
+            }
+        });
+    });
+
+    describe('testImagePushRegistry(address, namespace)', () => {
+        beforeEach(() => {
+            fs.emptyDirSync(testWorkspace);
+        });
+        afterEach(() => {
+            fs.removeSync(testWorkspace);
+        });
+        it('returns a response for a successful test', async() => {
+            const user = await createSimpleUser();
+            user.fw.testImagePushRegistry = () => 200;
+            const result = await user.testImagePushRegistry('address', 'namespace');
+            result.should.equal(200);
+        });
+        it('throws an error for an unsuccessful test', async() => {
+            const expectedError = new Error('testImagePushRegistry_error');
+            const user = await createSimpleUser();
+            user.fw.testImagePushRegistry = () => { throw expectedError; };
+            try {
+                await user.testImagePushRegistry('address', 'namespace');
+                assert.fail('Did not throw expected exception');
+            } catch (e) {
+                e.should.deep.equal(expectedError);
+            }
+        });
+    });
+    
 });
 
 const uiSocketStub = {

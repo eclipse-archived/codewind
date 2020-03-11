@@ -48,14 +48,10 @@ module.exports = class User {
     this.user_id = user_id || "default";
     this.userString = userString || null;
     this.workspace = workspace;
-    // socket.io namespace is user or false (single user, no need for a namespace)
-    this.uiSocketNamespace = (this.user_id) ? path.normalize(`/${this.user_id}`) : false;
+    // socket.io namespace is user or default
+    this.uiSocketNamespace = path.normalize(`/${this.user_id}`);
     // Setup socket to the UI for this user
-    if (this.uiSocketNamespace) {
-      this.uiSocket = uiSocket.of(this.uiSocketNamespace);
-    } else {
-      this.uiSocket = uiSocket;
-    }
+    this.uiSocket = uiSocket.of(this.uiSocketNamespace);
     this.secure = true;
     this.dockerConfigFile = "/root/.docker/config.json";
     this.codewindPFESecretName = `codewind-${process.env.CHE_WORKSPACE_ID}-docker-registries`;
@@ -498,8 +494,8 @@ module.exports = class User {
         // Set the container key to '' as the container has stopped.
         const containerKey = (global.codewind.RUNNING_IN_K8S ? 'podName' : 'containerId');
         projectUpdate[containerKey] = '';
-        let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-        this.user.uiSocket.emit('projectClosed', { ...updatedProject, status: 'success' });
+        let updatedProject = await this.projectList.updateProject(projectUpdate);
+        this.uiSocket.emit('projectClosed', { ...updatedProject, status: 'success' });
         log.debug('project ' + projectID + ' successfully closed');
       } else throw err;
     }
