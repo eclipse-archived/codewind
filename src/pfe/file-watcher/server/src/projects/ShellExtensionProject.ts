@@ -87,6 +87,7 @@ export class ShellExtensionProject implements IExtensionProject {
 
     supportedType: string;
     detectChangeByExtension: boolean | string[] = true;
+    buildByExtension: boolean = true;
 
     private fullPath: string;
     private config: ShellExtensionProjectConfig;
