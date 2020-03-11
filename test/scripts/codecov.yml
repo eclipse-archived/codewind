@@ -15,3 +15,5 @@ coverage:
                 target: 30%
                 threshold: null
                 if_not_found: success
+comment:
+    layout: "header, diff, files"
