@@ -39,8 +39,8 @@ function downloadCwctl() {
         extension="linux"
     fi
     echo "Extension is $extension"
-    if [ ! -z $USE_PERFORMANCE_CWCTL ]; then
-        CWCTL_INSTALL_TARGET="$TURBINE_PERFORMANCE_TEST"
+    if [ ! -z $CWCTL_VERSION ]; then
+        CWCTL_INSTALL_TARGET="$CWCTL_VERSION"
     else
         CWCTL_INSTALL_TARGET="master"
     fi

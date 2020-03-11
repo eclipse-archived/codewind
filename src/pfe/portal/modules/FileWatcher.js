@@ -158,7 +158,7 @@ module.exports = class FileWatcher {
       let file = fwProject[logType][0].files[0];
       let logName = path.basename(file);
       let logObject = { logName: logName }
-      if (fwProject[logType].origin == 'workspace') {
+      if (fwProject[logType][0].origin == 'workspace') {
         logObject.workspaceLogPath = path.dirname(file);
       }
       let message = { projectID: fwProject.projectID };
