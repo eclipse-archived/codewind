@@ -101,6 +101,127 @@ describe('FileWatcher.js', () => {
 
             handleFWProjectEvent.should.have.been.calledOnceWithExactly('projectCreation', mockFwProject);
         });
+        it('handles `projectSettingsChanged` event with fwProj success status', async() => {
+            const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9', status: 'success' };
+            const mockUser = {
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+            const handleUpdatedProject = sinon.spy(fw, 'handleUpdatedProject');
+
+            await fw.handleEvent('projectSettingsChanged', mockFwProject);
+
+            handleUpdatedProject.should.have.been.calledOnceWithExactly('projectSettingsChanged', mockFwProject);
+            fw.user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectSettingsChanged', mockFwProject);
+        });
+        it('handles `projectSettingsChanged` event with fwProj failed status', async() => {
+            const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9', status: 'failed' };
+            const mockUser = {
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+            const handleUpdatedProject = sinon.spy(fw, 'handleUpdatedProject');
+
+            await fw.handleEvent('projectSettingsChanged', mockFwProject);
+
+            handleUpdatedProject.should.not.have.been.called;
+            fw.user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectSettingsChanged', mockFwProject);
+        });
+        it('handles `imagePushRegistryStatus` event', async() => {
+            const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
+            const mockUser = {
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+
+            await fw.handleEvent('imagePushRegistryStatus', mockFwProject);
+
+            fw.user.uiSocket.emit.should.have.been.calledOnceWithExactly('imagePushRegistryStatus', mockFwProject);
+        });
+        it('handles `projectDeletion` event with fwProj closing action', async() => {
+            const mockFwProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                operationId: 12,
+                isClosing: () => { return true; },
+                isDeleting: () => { return false; },
+            };
+            const mockUser = {
+                projectList: { retrieveProject: sinon.spy(() => { return mockFwProject; }) },
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+            const handleProjectClosed = sinon.spy(fw, 'handleProjectClosed');
+
+            await fw.handleEvent('projectDeletion', mockFwProject);
+
+            handleProjectClosed.should.have.been.calledOnceWithExactly(mockFwProject, mockFwProject);
+            mockFwProject.should.not.include({ operationId: 12 });
+        });
+        it('handles `projectDeletion` event with fwProj deleting action', async() => {
+            const mockFwProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                operationId: 12,
+                isClosing: () => { return false; },
+                isDeleting: () => { return true; },
+            };
+            const mockUser = {
+                projectList: { retrieveProject: sinon.spy(() => { return mockFwProject; }) },
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+            const handleProjectDeleted = sinon.spy(fw, 'handleProjectDeleted');
+
+            await fw.handleEvent('projectDeletion', mockFwProject);
+
+            handleProjectDeleted.should.have.been.calledOnceWithExactly(mockFwProject, mockFwProject);
+            mockFwProject.should.not.include({ operationId: 12 });
+        });
+        it('handles `projectDeletion` event with fwProj unexpected action', async() => {
+            const mockFwProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                operationId: 12,
+                isClosing: () => { return false; },
+                isDeleting: () => { return false; },
+            };
+            const mockUser = {
+                projectList: { retrieveProject: sinon.spy(() => { return mockFwProject; }) },
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+            const handleProjectClosed = sinon.spy(fw, 'handleProjectClosed');
+            const handleProjectDeleted = sinon.spy(fw, 'handleProjectDeleted');
+
+            await fw.handleEvent('projectDeletion', mockFwProject);
+
+            handleProjectClosed.should.not.have.been.called;
+            handleProjectDeleted.should.not.have.been.called;
+            mockFwProject.should.not.include({ operationId: 12 });
+            fw.user.uiSocket.emit.should.not.have.been.called;
+        });
+        it('handles `projectDeletion` event with error', async() => {
+            const mockFwProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                operationId: 12,
+            };
+            const mockUser = {
+                projectList: { retrieveProject: sinon.spy(() => { return mockFwProject; }) },
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+            const handleProjectClosed = sinon.spy(fw, 'handleProjectClosed');
+            const handleProjectDeleted = sinon.spy(fw, 'handleProjectDeleted');
+
+            await fw.handleEvent('projectDeletion', mockFwProject);
+
+            handleProjectClosed.should.not.have.been.called;
+            handleProjectDeleted.should.not.have.been.called;
+            mockFwProject.should.not.include({ operationId: 12 });
+            fw.user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectDeletion', {
+                projectID: mockFwProject.projectID,
+                status: 'failure',
+                error: 'project.isClosing is not a function',
+            });
+        });
         it('handles `projectChanged` events', async() => {
             const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
             const fw = new FileWatcher('mockUser');
@@ -109,6 +230,138 @@ describe('FileWatcher.js', () => {
             await fw.handleEvent('projectChanged', mockFwProject);
 
             handleFWProjectEvent.should.have.been.calledOnceWithExactly('projectChanged', mockFwProject);
+        });
+        it('handles `projectValidated` event', async() => {
+            const mockFwProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                operationId: 12,
+                status: 'valid',
+                results: 'success',
+                error: 'None',
+            };
+            const mockUser = {
+                projectList: { updateProject: sinon.mock() },
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+
+            await fw.handleEvent('projectValidated', mockFwProject);
+
+            fw.user.projectList.updateProject.should.have.been.calledOnceWithExactly(mockFwProject);
+            mockFwProject.should.not.include({ operationId: 12, status: 'valid', results: 'success', error: 'None' });
+            mockFwProject.should.include({ validationStatus: 'valid', validationResults: 'success' });
+            fw.user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectValidated', mockFwProject);
+        });
+        it('handles `projectStatusChanged` event', async() => {
+            const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
+            const fw = new FileWatcher('mockUser');
+            const handleFWProjectEvent = sinon.stub(fw, 'handleFWProjectEvent');
+
+            await fw.handleEvent('projectStatusChanged', mockFwProject);
+
+            handleFWProjectEvent.should.have.been.calledOnceWithExactly('projectStatusChanged', mockFwProject);
+        });
+        it('handles `projectRestartResult` event', async() => {
+            const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
+            const fw = new FileWatcher('mockUser');
+            const handleFWProjectEvent = sinon.stub(fw, 'handleFWProjectEvent');
+
+            await fw.handleEvent('projectRestartResult', mockFwProject);
+
+            handleFWProjectEvent.should.have.been.calledOnceWithExactly('projectRestartResult', mockFwProject);
+        });
+        it('handles `projectLogsListChanged` event with build, origin', async() => {
+            const mockFwProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                build: [
+                    {
+                        origin: 'workspace',
+                        files: [
+                            '/codewind-workspace/.logs/node8-be4ea4e0-5239-11ea-abf6-f10edc5370f9/docker.build.log',
+                        ],
+                    },
+                ],
+            };
+            const mockUser = {
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+
+            await fw.handleEvent('projectLogsListChanged', mockFwProject);
+
+            fw.user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectLogsListChanged', {
+                projectID: mockFwProject.projectID,
+                build: [
+                    {
+                        logName: 'docker.build.log',
+                        workspaceLogPath: '/codewind-workspace/.logs/node8-be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                    },
+                ],
+            });
+        });
+        it('handles `projectLogsListChanged` event with app, no origin', async() => {
+            const mockFwProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                app: [
+                    {
+                        origin: 'application',
+                        files: [
+                            '/codewind-workspace/.logs/node8-be4ea4e0-5239-11ea-abf6-f10edc5370f9/app.log',
+                        ],
+                    },
+                ],
+            };
+            const mockUser = {
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+
+            await fw.handleEvent('projectLogsListChanged', mockFwProject);
+
+            fw.user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectLogsListChanged', {
+                projectID: mockFwProject.projectID,
+                app: [
+                    {
+                        logName: 'app.log',
+                    },
+                ],
+            });
+        });
+        it('handles `projectLogsListChanged` event with unknown log type', async() => {
+            const mockFwProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                container: [
+                    {
+                        origin: 'docker',
+                        files: [
+                            '/codewind-workspace/.logs/node8-be4ea4e0-5239-11ea-abf6-f10edc5370f9/docker.output.log',
+                        ],
+                    },
+                ],
+            };
+            const mockUser = {
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+            await fw.handleEvent('projectLogsListChanged', mockFwProject);
+        });
+        it('handles `newProjectAdded` event', async() => {
+            const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
+            const fw = new FileWatcher('mockUser');
+            const handleNewProjectAdded = sinon.stub(fw, 'handleNewProjectAdded');
+
+            await fw.handleEvent('newProjectAdded', mockFwProject);
+
+            handleNewProjectAdded.should.have.been.calledOnceWithExactly('newProjectAdded', mockFwProject);
+        });
+        it('handles `projectCapabilitiesReady` event', async() => {
+            const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
+            const fw = new FileWatcher('mockUser');
+            const handleCapabilitiesUpdated = sinon.stub(fw, 'handleCapabilitiesUpdated');
+
+            await fw.handleEvent('projectCapabilitiesReady', mockFwProject);
+
+            handleCapabilitiesUpdated.should.have.been.calledOnceWithExactly(mockFwProject);
         });
         it('does nothing when event is unexpected', async() => {
             const fw = new FileWatcher('mockUser');
