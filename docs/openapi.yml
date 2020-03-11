@@ -1252,7 +1252,7 @@ paths:
     put:
       summary: Overwrite the default logging level of the Portal container
       requestBody:
-        description: Location on disk
+        description: New log level to use
         content:
           application/json:
             schema:
@@ -1266,9 +1266,11 @@ paths:
         200:
           description: Successful
           content:
-            text/html:
+            application/json:
               schema:
-                type: string
+                properties:
+                  level:
+                    $ref: '#/components/schemas/PfeLogLevel'
         400:
           description: Bad request
           content:

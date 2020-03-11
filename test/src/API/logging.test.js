@@ -12,7 +12,7 @@ const chai = require('chai');
 const chaiResValidator = require('chai-openapi-response-validator');
 
 const reqService = require('../../modules/request.service');
-const { 
+const {
     ADMIN_COOKIE,
     pathToApiSpec,
 } = require('../../config');
@@ -57,16 +57,20 @@ describe('Logging API tests (these `it` blocks depend on each other passing)', f
         res.text.should.include('Invalid logging level requested');
     });
 
-    it('returns 200 when PUT /logging is called with body { level : debug }', async function() {
-        const res = await setLogLevel('warn');
+    it('returns 200 when PUT /logging is called with body { level : warn }', async function() {
+        const level = 'warn';
+        const res = await setLogLevel(level);
         res.status.should.equal(200, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
+        res.level.should.equal(level);
     });
 
-    it('returns 200 when PUT /logging is called with body { level : info }', async function() {
-        const res = await setLogLevel('debug');
+    it('returns 200 when PUT /logging is called with body { level : debug }', async function() {
+        const level = 'debug';
+        const res = await setLogLevel(level);
         res.status.should.equal(200, res.text); // print res.text if assertion fails
         res.should.satisfyApiSpec;
+        res.level.should.equal(level);
     });
 
 });

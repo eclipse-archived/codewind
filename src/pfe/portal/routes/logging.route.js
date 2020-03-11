@@ -39,7 +39,7 @@ router.put('/api/v1/logging', async function (req, res) {
     await Logger.setLoggingLevel(level);
     await user.setLoggingLevel(level);
     log.info(`logging level set to ${level}`);
-    res.sendStatus(200);
+    res.status(200).json({ level });
   } catch (err) {
     log.error(err);
     if (err instanceof LoggingError && err.code === 'INVALID_LEVEL') {
