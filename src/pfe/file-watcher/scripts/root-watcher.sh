@@ -99,4 +99,10 @@ if [ "$IN_K8" == "true" ]; then
 		echo "Creating the Codewind PFE Docker Config with the secret .dockerconfigjson data"
 		kubectl get secret $SECRET_NAME -o jsonpath="{.data.\.dockerconfigjson}" | base64 --decode > /root/.docker/config.json
 	fi
+else
+   # If a docker secrets file exists copy that into the docker config file.
+   # This handles local docker container restarts.
+   if test -f "/run/secrets/dockerconfig"; then
+     cat /run/secrets/dockerconfig | base64 --decode > /root/.docker/config.json
+   fi
 fi

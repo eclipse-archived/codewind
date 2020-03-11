@@ -57,7 +57,7 @@ function setupRegistrySecret() {
     ENCODED_CREDENTIALS=$( node ./scripts/utils.js encode $REGISTRY_SECRET_USERNAME $REGISTRY_SECRET_PASSWORD )
     checkExitCode $? "Test setup failed during Registry Secret's base64 credential encode."
 
-    REGISTRY_SECRET_SETUP_CURL_API="curl -d '{\"address\": \"$REGISTRY_SECRET_ADDRESS\", \"credentials\": \"$ENCODED_CREDENTIALS\"}' -H \"Content-Type: application/json\" -X POST https://localhost:9191/api/v1/registrysecrets -k"
+    REGISTRY_SECRET_SETUP_CURL_API="curl -k -d '{\"address\": \"$REGISTRY_SECRET_ADDRESS\", \"credentials\": \"$ENCODED_CREDENTIALS\"}' -H \"Content-Type: application/json\" -X POST https://localhost:9191/api/v1/registrysecrets -k"
     kubectl exec -i $CODEWIND_POD_ID -- bash -c "$REGISTRY_SECRET_SETUP_CURL_API"
 }
 

@@ -4,6 +4,7 @@
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 BLUE='\033[0;36m'
+YELLOW='\e[33m'
 RESET='\033[0m'
 
 # Set up variables
@@ -49,7 +50,7 @@ function install {
         fi
         echo -e "${BLUE}Downloading devfile from:${GREEN} $DEFAULT_DEVFILE ${RESET}\n"
         
-        HTTPSTATUS=$(curl $DEFAULT_DEVFILE | curl -s --header "Content-Type: text/yaml" --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request POST --data-binary @- -D- -o/dev/null $CHE_ENDPOINT/api/workspace/devfile?start-after-create=true 2>/dev/null | sed -n 3p | cut -d ' ' -f2) 
+        HTTPSTATUS=$(curl -k $DEFAULT_DEVFILE | curl -k -s --header "Content-Type: text/yaml" --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request POST --data-binary @- -D- -o/dev/null $CHE_ENDPOINT/api/workspace/devfile?start-after-create=true 2>/dev/null | sed -n 3p | cut -d ' ' -f2) 
         if [[ $HTTPSTATUS -ne 201 ]]; then
             echo -e "${RED}Codewind workspace setup has failed with HTTPSTATUS $HTTPSTATUS. ${RESET}\n"
             exit 1
@@ -100,17 +101,25 @@ function uninstall {
 
             # Stop the Codewind Workspace
             echo -e "${BLUE}Stopping the Codewind Workspace ${RESET}\n"
-            HTTPSTATUS=$(curl -I --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request DELETE $CHE_ENDPOINT/api/workspace/$WORKSPACE_ID/runtime 2>/dev/null | head -n 1| cut -d$' ' -f2)
+            HTTPSTATUS=$(curl -k -I --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request DELETE $CHE_ENDPOINT/api/workspace/$WORKSPACE_ID/runtime 2>/dev/null | head -n 1 | cut -d$' ' -f2)
             if [[ $HTTPSTATUS -ne 204 ]]; then
                 echo -e "${RED}Codewind workspace has failed to stop with HTTPSTATUS $HTTPSTATUS. Will attempt to remove the workspace... ${RESET}\n"
             fi
+
             # We must wait for the workspace to stop before removing it, otherwise the workspace removal fails
             echo -e "${BLUE}Sleeping for 10s to allow the workspace to stop before removing it ${RESET}\n"
             sleep 10
 
+            checkForCodewindPod
+            while [[ $CW_POD =~ "Terminating" ]];
+            do
+                sleep 5s
+                checkForCodewindPod
+            done
+
             # Remove the Codewind Workspace
             echo -e "${BLUE}Removing the Codewind Workspace ${RESET}\n"
-            HTTPSTATUS=$(curl -I --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request DELETE $CHE_ENDPOINT/api/workspace/$WORKSPACE_ID 2>/dev/null | head -n 1| cut -d$' ' -f2)
+            HTTPSTATUS=$(curl -k -I --header 'Authorization: Bearer '"$CHE_ACCESS_TOKEN"'' --request DELETE $CHE_ENDPOINT/api/workspace/$WORKSPACE_ID 2>/dev/null | head -n 1| cut -d$' ' -f2)
             if [[ $HTTPSTATUS -ne 204 ]]; then
                 echo -e "${RED}Codewind workspace has failed to be removed with HTTPSTATUS $HTTPSTATUS... ${RESET}\n"
                 exit 1
@@ -118,7 +127,8 @@ function uninstall {
 
             echo -e "${GREEN}Codewind should be removed momentarily... ${RESET}\n"
 
-            while [[ ! -z $CW_POD ]] || ![[ $CW_POD =~ "Terminating" ]];
+            checkForCodewindPod
+            while [[ $CW_POD =~ "Terminating" ]];
             do
                 sleep 5s
                 checkForCodewindPod
