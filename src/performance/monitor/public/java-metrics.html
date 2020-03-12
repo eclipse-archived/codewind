@@ -213,6 +213,7 @@
       const gcData = { time };
       const memPoolsData = { time };
       const httpRequestData = { time };
+      const envData = [];
       for (const metric of metrics) {
         const metricsObj = metric.metrics[0];
         const metricValue = metricsObj.value;
@@ -224,7 +225,6 @@
           cpuData.process = numMetricValue;
         } else if (['os_cpu_used_ratio'].includes(metric.name)) { // ignored if -1 (not available)
           cpuData.system = numMetricValue;
-
         } else if (['base:gc_global_time_seconds', 'overall_time_in_gc_percentage'].includes(metric.name)) {
           gcData.gcTime = numMetricValue;
         } else if (['base_gc_time_seconds'].includes(metric.name)) {
@@ -232,8 +232,13 @@
           gcData.gcTime = correctMetricsObj.value;
           if (Number.isNaN(gcData.gcTime)) {
             gcData.gcTime = 0;
-        }
-
+          }
+        } else if (['environment_variable'].includes(metric.name)) {
+          for (const entry of metric.metrics) {
+            const envParam = Object.getOwnPropertyNames(entry.lables)[0];
+            const envEntry = { Parameter: envParam, Value: entry.lables[envParam] };
+            envData.push(envEntry);
+          }
         } else if (['base_memory_usedHeap_bytes', 'process_heap_memory_used_bytes', 'base:memory_used_heap_bytes'].includes(metric.name)) {
           memPoolsData.usedHeap = numMetricValue;
         } else if (metric.name === 'process_native_memory_used_bytes') {
@@ -270,6 +275,8 @@
         console.dir(httpRequestData)
         processHttpRequestData(httpRequestData);
       }
+      updateSummaryTable();
+      envTable.populateTable(envData);
     }
 
     // Original code to update graphs:
@@ -370,27 +377,29 @@
       updateHttpData(JSON.stringify(data));
     }
 
-    let summaryData = [];
-    if (summary.cpu.processMean) {
-      let value = new Number(summary.cpu.processMean);
-      let valueStr = value.toLocaleString([], { style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
-      summaryData.push({ Parameter: 'Average Process CPU', Value: valueStr });
+    function updateSummaryTable() {
+      let summaryData = [];
+      if (summary.cpu.processMean) {
+        let value = new Number(summary.cpu.processMean);
+        let valueStr = value.toLocaleString([], { style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
+        summaryData.push({ Parameter: 'Average Process CPU', Value: valueStr });
+      }
+      if (summary.cpu.systemMean) {
+        let value = new Number(summary.cpu.systemMean);
+        let valueStr = value.toLocaleString([], { style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
+        summaryData.push({ Parameter: 'Average System CPU', Value: valueStr });
+      }
+      if (summary.gc.time) {
+        let value = new Number(summary.gc.time);
+        let valueStr = value.toLocaleString([], { style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
+        summaryData.push({ Parameter: 'Time Spent in GC', Value: `${valueStr}` });
+      }
+      if (summary.memoryPools.usedHeapAfterGCMax) {
+        summaryData.push({ Parameter: 'Max Heap Used After GC', Value: `${summary.memoryPools.usedHeapAfterGCMax} bytes` });
+        summaryData.push({ Parameter: 'Max Native Heap Used', Value: `${summary.memoryPools.usedNativeMax} bytes` });
+      }
+      summaryTable.populateTable(summaryData);
     }
-    if (summary.cpu.systemMean) {
-      let value = new Number(summary.cpu.systemMean);
-      let valueStr = value.toLocaleString([], { style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
-      summaryData.push({ Parameter: 'Average System CPU', Value: valueStr });
-    }
-    if (summary.gc.time) {
-      let value = new Number(summary.gc.time);
-      let valueStr = value.toLocaleString([], { style: 'percent', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
-      summaryData.push({ Parameter: 'Time Spent in GC', Value: `${valueStr}` });
-    }
-    if (summary.memoryPools.usedHeapAfterGCMax) {
-      summaryData.push({ Parameter: 'Max Heap Used After GC', Value: `${summary.memoryPools.usedHeapAfterGCMax} bytes` });
-      summaryData.push({ Parameter: 'Max Native Heap Used', Value: `${summary.memoryPools.usedNativeMax} bytes` });
-    }
-    summaryTable.populateTable(summaryData);
   </script>
   <script>
 
