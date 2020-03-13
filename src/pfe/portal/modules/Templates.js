@@ -154,8 +154,7 @@ module.exports = class Templates {
       const validatedUrl = await validateRepository(repoUrl, repositories);
       const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected);
 
-      const providers = cwUtils.deepClone(this.providers);
-      this.providers = await addRepositoryToProviders(newRepo, providers);
+      await addRepositoryToProviders(newRepo, this.providers);
 
       // Only update the repositoryList if the providers can be updated
       const currentRepoList = cwUtils.deepClone(this.repositoryList);
@@ -178,8 +177,7 @@ module.exports = class Templates {
     try {
       const repoToDelete = this.repositoryList.find(repo => repo.url === repoUrl);
       if (!repoToDelete) throw new TemplateError('REPOSITORY_DOES_NOT_EXIST', repoUrl);
-      const providers = cwUtils.deepClone(this.providers);
-      this.providers = await removeRepositoryFromProviders(repoToDelete, providers);
+      await removeRepositoryFromProviders(repoToDelete, this.providers);
       try {
         const currentRepoList = cwUtils.deepClone(this.repositoryList);
         const updatedRepoList = await updateRepoListWithReposFromProviders(this.providers, currentRepoList, this.repositoryFile);
@@ -187,8 +185,7 @@ module.exports = class Templates {
       }
       catch (err) {
         // rollback
-        const providers = cwUtils.deepClone(this.providers);
-        this.providers = await addRepositoryToProviders(repoToDelete, providers).catch(error => log.warn(error.message));
+        await addRepositoryToProviders(repoToDelete, this.providers).catch(error => log.warn(error.message));
         throw err;
       }
       // writeRepositoryList regardless of whether it has been updated with the data from providers
@@ -582,7 +579,6 @@ async function addRepositoryToProviders(repo, providers) {
   catch (err) {
     throw new TemplateError('ADD_TO_PROVIDER_FAILURE', repo.url, err.message);
   }
-  return providers;
 }
 
 async function removeRepositoryFromProviders(repo, providers) {
@@ -597,7 +593,6 @@ async function removeRepositoryFromProviders(repo, providers) {
     }
   }
   await Promise.all(promises);
-  return providers;
 }
 
 async function performOperationsOnRepositoryList(requestedOperations, repositoryList) {
