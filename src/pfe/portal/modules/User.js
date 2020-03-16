@@ -223,7 +223,8 @@ module.exports = class User {
           let settingsFilePath = path.join(projFile.workspace, projName, '.cw-settings');
           const settFileExists = await fs.pathExists(settingsFilePath);
           const settFile = settFileExists ? await fs.readJson(settingsFilePath) : {};
-          let project = new Project({ ...projFile, ...settFile });
+          const project = new Project({ ...projFile, ...settFile });
+          await project.setOpenLiberty();
           this.projectList.addProject(project);
         } catch (err) {
           // Corrupt project inf file
@@ -330,7 +331,7 @@ module.exports = class User {
    * @param projectJson, the project to add to the projectList
    */
   async createProject(projectJson) {
-    let project = new Project(projectJson);
+    const project = new Project(projectJson);
     this.projectList.addProject(project);
     await project.writeInformationFile();
     return project;
