@@ -61,7 +61,12 @@ start() {
 
     prefix=""
     if [ "$AUTO_BUILD_ENABLED" = "true" ]; then
-        npm install -g nodemon >> $LOG_FILE 2>> $LOG_FILE
+        ls /tmp/nodemon-*.tgz >> $LOG_FILE 2>> $LOG_FILE
+        if [ $? -eq 0 ]; then
+            npm install -g /tmp/nodemon-*.tgz >> $LOG_FILE 2>> $LOG_FILE
+        else
+            npm install -g nodemon >> $LOG_FILE 2>> $LOG_FILE
+        fi
         # Wrap the npm script in nodemon
         # If os passed in is windows, use the legacy watch option
         if [ "$OS" = "windows" ]; then

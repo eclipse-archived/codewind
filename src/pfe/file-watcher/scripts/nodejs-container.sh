@@ -321,6 +321,7 @@ function deployLocal() {
 		fi
 	fi
 
+	$IMAGE_COMMAND cp /file-watcher/server/nodemon-*.tgz $project:/tmp
 	$IMAGE_COMMAND cp /file-watcher/scripts/nodejsScripts $project:/scripts
 	$IMAGE_COMMAND exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
 	if [ $? -eq 0 ]; then
