@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/badge/License-EPL%202.0-red.svg?label=license&logo=eclipse)](https://www.eclipse.org/legal/epl-2.0/)
 [![Build Status](https://ci.eclipse.org/codewind/buildStatus/icon?job=Codewind%2Fcodewind%2Fmaster)](https://ci.eclipse.org/codewind/job/Codewind/job/codewind/job/master/)
 [![Chat](https://img.shields.io/static/v1.svg?label=chat&message=mattermost&color=145dbf)](https://mattermost.eclipse.org/eclipse/channels/eclipse-codewind)
+[![codecov](https://codecov.io/gh/eclipse/codewind/branch/master/graph/badge.svg)](https://codecov.io/gh/eclipse/codewind)
 
 Build high-quality cloud-native applications for Kubernetes, regardless of your IDE or language.
 

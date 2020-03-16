@@ -48,14 +48,10 @@ module.exports = class User {
     this.user_id = user_id || "default";
     this.userString = userString || null;
     this.workspace = workspace;
-    // socket.io namespace is user or false (single user, no need for a namespace)
-    this.uiSocketNamespace = (this.user_id) ? path.normalize(`/${this.user_id}`) : false;
+    // socket.io namespace is user or default
+    this.uiSocketNamespace = path.normalize(`/${this.user_id}`);
     // Setup socket to the UI for this user
-    if (this.uiSocketNamespace) {
-      this.uiSocket = uiSocket.of(this.uiSocketNamespace);
-    } else {
-      this.uiSocket = uiSocket;
-    }
+    this.uiSocket = uiSocket.of(this.uiSocketNamespace);
     this.secure = true;
     this.dockerConfigFile = "/root/.docker/config.json";
     this.codewindPFESecretName = `codewind-${process.env.CHE_WORKSPACE_ID}-docker-registries`;
@@ -227,7 +223,8 @@ module.exports = class User {
           let settingsFilePath = path.join(projFile.workspace, projName, '.cw-settings');
           const settFileExists = await fs.pathExists(settingsFilePath);
           const settFile = settFileExists ? await fs.readJson(settingsFilePath) : {};
-          let project = new Project({ ...projFile, ...settFile });
+          const project = new Project({ ...projFile, ...settFile });
+          await project.setOpenLiberty();
           this.projectList.addProject(project);
         } catch (err) {
           // Corrupt project inf file
@@ -334,7 +331,7 @@ module.exports = class User {
    * @param projectJson, the project to add to the projectList
    */
   async createProject(projectJson) {
-    let project = new Project(projectJson);
+    const project = new Project(projectJson);
     this.projectList.addProject(project);
     await project.writeInformationFile();
     return project;
@@ -498,8 +495,8 @@ module.exports = class User {
         // Set the container key to '' as the container has stopped.
         const containerKey = (global.codewind.RUNNING_IN_K8S ? 'podName' : 'containerId');
         projectUpdate[containerKey] = '';
-        let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-        this.user.uiSocket.emit('projectClosed', { ...updatedProject, status: 'success' });
+        let updatedProject = await this.projectList.updateProject(projectUpdate);
+        this.uiSocket.emit('projectClosed', { ...updatedProject, status: 'success' });
         log.debug('project ' + projectID + ' successfully closed');
       } else throw err;
     }
@@ -732,7 +729,7 @@ module.exports = class User {
           "auth":encodedAuth
         }
 
-        await fs.writeJson(this.dockerConfigFile, jsonObj);
+        await fs.writeJson(this.dockerConfigFile, jsonObj, {spaces: 2});
       } else {
         log.info("The Docker config file does not exist, writing the contents");
         jsonObj = {"auths":{}}
@@ -742,7 +739,7 @@ module.exports = class User {
           "auth":encodedAuth
         }
 
-        await fs.writeJson(this.dockerConfigFile, jsonObj);
+        await fs.writeJson(this.dockerConfigFile, jsonObj, {spaces: 2});
       }
       // Update the registrySecretList to send back to the caller
       const registrySecret = {
@@ -774,7 +771,7 @@ module.exports = class User {
     
     // Since patching the Service Account failed, we need to revert the update to the Docker Config and patch the Service Account again
     delete jsonObj.auths[address];
-    await fs.writeJson(this.dockerConfigFile, jsonObj);
+    await fs.writeJson(this.dockerConfigFile, jsonObj, {spaces: 2} );
     await this.updateServiceAccountWithDockerRegisrySecret();
 
     throw new RegistrySecretsError(serviceAccountPatchData, "for address " + address);
@@ -938,7 +935,7 @@ module.exports = class User {
           throw new RegistrySecretsError("SECRET_DELETE_MISSING", "for address " + address);
         }
 
-        await fs.writeJson(this.dockerConfigFile, jsonObj);
+        await fs.writeJson(this.dockerConfigFile, jsonObj, {spaces: 2});
         log.info("The Docker config file has been updated for removal of " + address);
       } else {
         // return if there is no Docker Config file, no need to create new Kubernetes Secret or patch the Service Account
@@ -967,7 +964,7 @@ module.exports = class User {
 
     // Since patching the Service Account failed, we need to revert the delete from the Docker Config and patch the Service Account again
     jsonObj.auths[address] = registrySecretToBeDeleted;
-    await fs.writeJson(this.dockerConfigFile, jsonObj);
+    await fs.writeJson(this.dockerConfigFile, jsonObj, {spaces: 2});
     await this.updateServiceAccountWithDockerRegisrySecret();
 
     throw new RegistrySecretsError(serviceAccountPatchData, "for address " + address);
