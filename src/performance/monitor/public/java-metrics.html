@@ -235,8 +235,8 @@
           }
         } else if (['environment_variable'].includes(metric.name)) {
           for (const entry of metric.metrics) {
-            const envParam = Object.getOwnPropertyNames(entry.lables)[0];
-            const envEntry = { Parameter: envParam, Value: entry.lables[envParam] };
+            const envParam = Object.getOwnPropertyNames(entry.labels)[0];
+            const envEntry = { Parameter: envParam, Value: entry.labels[envParam] };
             envData.push(envEntry);
           }
         } else if (['base_memory_usedHeap_bytes', 'process_heap_memory_used_bytes', 'base:memory_used_heap_bytes'].includes(metric.name)) {
