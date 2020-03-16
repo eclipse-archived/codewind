@@ -36,16 +36,46 @@ const metricsCollectorRemovalFunctions = {
   spring: removeMetricsCollectorFromSpringProject,
 }
 
-async function identifyProject(projectType, projectLanguage) {
-  if (projectType === 'docker' && projectLanguage === 'java') {
+async function isOpenLibertyPomXml(filePath) {
+  const pomExists = await fs.pathExists(filePath);
+  if (!pomExists) return false;
+  const openLibertyString = '<groupId>io.openliberty</groupId>';
+  const contents = await fs.readFile(filePath, 'utf8');
+  return contents.includes(openLibertyString);
+}
+
+async function isOpenLibertyDockerfile(filePath) {
+  const dockerFileExists = await fs.pathExists(filePath);
+  if (!dockerFileExists) return false;
+  const fileContents = await fs.readFile(filePath);
+  const contentsArray = fileContents.toString().split('\n');
+  const [lastFromInDockerfile] = contentsArray.filter(string => string.startsWith('FROM')).slice(-1);
+  // Gets the image name from "FROM repository/image:tag"
+  const [image] = lastFromInDockerfile.split('FROM ')[1].split(':')[0].split('/').slice(-1);
+  return image === 'open-liberty';
+}
+
+async function determineIfOpenLiberty(projectType, projectLanguage, projectDir) {
+  if (projectType !== 'docker' || projectLanguage !== 'java') {
+    return false;
+  }
+  const pomXMLPath = path.join(projectDir, 'pom.xml');
+  const dockerfilePath = path.join(projectDir, 'Dockerfile');
+  const pomXmlIsOpenLiberty = await isOpenLibertyPomXml(pomXMLPath);
+  const dockerfileIsOpenLiberty = await isOpenLibertyDockerfile(dockerfilePath);
+  return pomXmlIsOpenLiberty || dockerfileIsOpenLiberty;
+}
+
+async function identifyProject(projectType, projectLanguage, projectDir) {
+  const isOpenLiberty = await determineIfOpenLiberty(projectType, projectLanguage, projectDir);
+  if (isOpenLiberty) {
     return 'openLiberty';
-    // this is the best we can do at the moment
   }
   return projectType
 }
 
 async function injectMetricsCollectorIntoProject(projectType, projectLanguage, projectDir) {
-  let projType = await identifyProject(projectType, projectLanguage);
+  const projType = await identifyProject(projectType, projectLanguage, projectDir);
   if (!metricsCollectorInjectionFunctions.hasOwnProperty(projType)) {
     throw new Error(`Injection of metrics collector is not supported for projects of type '${projType}'`);
   }
@@ -54,7 +84,7 @@ async function injectMetricsCollectorIntoProject(projectType, projectLanguage, p
 }
 
 async function removeMetricsCollectorFromProject(projectType, projectLanguage, projectDir) {
-  let projType = await identifyProject(projectType, projectLanguage);
+  const projType = await identifyProject(projectType, projectLanguage, projectDir);
   if (!metricsCollectorRemovalFunctions.hasOwnProperty(projType)) {
     throw new Error(`Injection of metrics collector is not supported for projects of type '${projType}'`);
   }
@@ -544,4 +574,6 @@ module.exports = {
   injectMetricsCollectorIntoProject,
   removeMetricsCollectorFromProject,
   metricsCollectorInjectionFunctions,
+  identifyProject,
+  determineIfOpenLiberty,
 }
