@@ -14,6 +14,7 @@ const { extname, isAbsolute, join } = require('path');
 const uuidv1 = require('uuid/v1');
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
+const rimraf = require('rimraf')
 
 const cwUtils = require('./utils/sharedFunctions');
 const metricsStatusChecker = require('./utils/metricsStatusChecker');
@@ -527,9 +528,19 @@ module.exports = class Project {
       if (fileName !== false) {
         return join(pathToLoadTestDir, fileName)
       }
+      await this.removeProfilingData(timeOfTestRun);
       throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
     }
     return null
+  }
+
+  /**
+   * 
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  async removeProfilingData(timeOfTestRun) {
+    const profilingPath = join(this.loadTestPath, timeOfTestRun);
+    await rimraf.sync(profilingPath);
   }
 
   /**
