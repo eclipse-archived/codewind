@@ -1,4 +1,14 @@
-const request = require('request');
+/*******************************************************************************
+ * Copyright (c) 2019 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v2.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v20.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+const got = require('got');
 
 const Logger = require('../modules/utils/Logger');
 
@@ -12,7 +22,7 @@ log.info(`PerformanceHost: ${performance_host}`);
 function pipePerfProxyReqsToPerfContainer(req, res) {
   try {
     const options = getOptionsForReqToPerfContainer(req, performance_host, performance_port);
-    const reqToPerfContainer = request(options);
+    const reqToPerfContainer = got.stream(options);
     req
       .pipe(reqToPerfContainer)
       .on('error', (err) => {
@@ -32,7 +42,7 @@ function getOptionsForReqToPerfContainer(req, performance_host, performance_port
 
   if (req.query.projectID) {
     const project = req.cw_user.projectList.retrieveProject(req.query.projectID);
-    options.qs = {
+    options.searchParams = {
       appOrigin: project.appBaseURL || `http://${project.host}:${project.ports.internalPort}`,
       projectLanguage: project.language,
     };

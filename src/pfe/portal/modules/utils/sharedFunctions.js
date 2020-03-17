@@ -12,7 +12,6 @@
 const http = require('follow-redirects').http;
 const https = require('follow-redirects').https;
 const fs = require('fs-extra');
-const request = require('request');
 const Logger = require('../utils/Logger');
 const log = new Logger('sharedFunctions.js');
 const { promisify } = require('util');
@@ -69,26 +68,6 @@ module.exports.asyncHttpRequest = function asyncHttpRequest(options, body, secur
       req.write(JSON.stringify(body));
     }
     req.end();
-  });
-}
-
-/**
- * Function to make a HTTP file download request using a promise
- * @param url, the URL target for the download
- * @param destination, destination file descriptor
- * @return res, the response from the HTTP request
- * @return promise, resolved if the download completed ok
- */
-module.exports.asyncHttpDownload = function asyncHttpDownload(url, destination) {
-  return new Promise(function (resolve, reject) {
-    let stream = request.get({followAllRedirects: true, url: url})
-      .on('error', function(err) {
-        return reject(err);
-      })
-      .pipe(destination);
-    stream.on('finish', function () {
-      return resolve();
-    });
   });
 }
 
