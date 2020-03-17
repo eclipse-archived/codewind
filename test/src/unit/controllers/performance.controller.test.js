@@ -47,7 +47,7 @@ describe('performance.controller.js', function() {
 
             output.should.deep.equal({
                 url: 'http://codewind-performance:9095/performance/monitor?projectID=15aa93c0-f722-11e9-b99b-6fce084c82cc',
-                qs: {
+                searchParams: {
                     appOrigin: 'http://123.45.67.89:1234',
                     projectLanguage: 'nodejs',
                 },
