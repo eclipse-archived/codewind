@@ -9,6 +9,9 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const proxyquire = require('proxyquire');
+const dateFormat = require('dateformat');
+const fs = require('fs-extra');
+const path = require('path');
 const sinon = require('sinon');
 const chai = require('chai');
 const chaiSubset = require('chai-subset');
@@ -69,6 +72,116 @@ describe('LoadRunner.js', () => {
             });
             loadRunner.socket.should.not.be.null;
             ioConnectStub.should.have.been.calledOnce;
+        });
+    });
+    describe('fetchProjectMetricsFeatures()', () => {
+        const mockIo = () => ({
+            on: () => {},
+            connect: () => {},
+        });
+        it('successfully fetches the project metrics features', async() => {
+            // arrange
+            const expectedMetricsFeature = { timedMetrics: false };
+            const asyncHttpRequestStub = sandbox.stub().returns({
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(expectedMetricsFeature),
+            });
+            const cwUtilsStub = { asyncHttpRequest: asyncHttpRequestStub };
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/sharedFunctions': cwUtilsStub,
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            const mockProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                host: 'mockHost',
+                getMetricsContextRoot: () => 'mockMetricsContextRoot',
+                getPort: () => 'mockPort',
+                kubeServiceHost: 'mockKubeHost',
+                kubeServicePort: 'mockKubePort',
+            };
+            loadRunner.project = mockProject;
+
+            // act
+            await loadRunner.fetchProjectMetricsFeatures();
+
+            // assert
+            asyncHttpRequestStub.should.have.been.calledOnceWithExactly({
+                host: 'mockKubeHost',
+                port: 'mockKubePort',
+                path: '/mockMetricsContextRoot/api/v1/collections/features',
+                method: 'GET',
+            });
+            loadRunner.metricsFeatures.should.deep.equal(expectedMetricsFeature);
+        });
+        it('unsuccessfully fetches the project metrics features', async() => {
+            // arrange
+            const expectedMetricsFeature = { timedMetrics: false };
+            const asyncHttpRequestStub = sandbox.stub().returns({
+                statusCode: 500,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(expectedMetricsFeature),
+            });
+            const cwUtilsStub = { asyncHttpRequest: asyncHttpRequestStub };
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/sharedFunctions': cwUtilsStub,
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            const mockProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                host: 'mockHost',
+                getMetricsContextRoot: () => 'mockMetricsContextRoot',
+                getPort: () => 'mockPort',
+            };
+            loadRunner.project = mockProject;
+
+            // act
+            await loadRunner.fetchProjectMetricsFeatures();
+
+            // assert
+            asyncHttpRequestStub.should.have.been.calledOnceWithExactly({
+                host: 'mockHost',
+                port: 'mockPort',
+                path: '/mockMetricsContextRoot/api/v1/collections/features',
+                method: 'GET',
+            });
+            loadRunner.metricsFeatures.should.deep.equal({});
+        });
+        it('errors fetching the project metrics features', async() => {
+            // arrange
+            const expectedError = new Error('PMF_ERROR');
+            const asyncHttpRequestStub = sandbox.stub().throws(expectedError);
+            const cwUtilsStub = { asyncHttpRequest: asyncHttpRequestStub };
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/sharedFunctions': cwUtilsStub,
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            const mockProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                host: 'mockHost',
+                getMetricsContextRoot: () => 'mockMetricsContextRoot',
+                getPort: () => 'mockPort',
+            };
+            loadRunner.project = mockProject;
+
+            // act
+            await loadRunner.fetchProjectMetricsFeatures();
+
+            // assert
+            asyncHttpRequestStub.should.have.been.calledOnceWithExactly({
+                host: 'mockHost',
+                port: 'mockPort',
+                path: '/mockMetricsContextRoot/api/v1/collections/features',
+                method: 'GET',
+            });
+            asyncHttpRequestStub.should.have.thrown(expectedError);
+            loadRunner.metricsFeatures.should.deep.equal({});
         });
     });
     describe('createCollection(seconds)', () => {
@@ -279,6 +392,42 @@ describe('LoadRunner.js', () => {
             logErrorSpy.should.have.been.calledOnceWithExactly('createCollection: unable to create metrics collection: 499');
             should.equal(output, null);
         });
+        it('POSTs to the project collections route and handles an error', async() => {
+            // arrange
+            const expectedError = new Error('CC_ERROR');
+            const asyncHttpRequestStub = sandbox.stub().throws(expectedError);
+            const cwUtilsStub = { asyncHttpRequest: asyncHttpRequestStub };
+            const logErrorSpy = sandbox.spy(MockLogger.prototype, 'error');
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/sharedFunctions': cwUtilsStub,
+                './utils/Logger': MockLogger,
+            });
+            const mockUser = {
+                uiSocket: { emit: () => {} },
+            };
+            const loadRunner = new LoadRunner(mockUser);
+            const mockProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                host: 'mockHost',
+                getMetricsContextRoot: () => 'mockMetricsContextRoot',
+                getPort: () => 'mockPort',
+            };
+            loadRunner.project = mockProject;
+
+            // act
+            await loadRunner.createCollection();
+
+            // assert
+            asyncHttpRequestStub.should.have.been.calledOnceWithExactly({
+                host: 'mockHost',
+                port: 'mockPort',
+                path: '/mockMetricsContextRoot/api/v1/collections',
+                method: 'POST',
+            });
+            asyncHttpRequestStub.should.have.thrown(expectedError);
+            logErrorSpy.should.have.been.calledWithExactly('createCollection: Error in function createCollection');
+        });
     });
     describe('recordCollection()', () => {
         const mockIo = () => ({
@@ -478,6 +627,478 @@ describe('LoadRunner.js', () => {
             // assert
             asyncHttpRequestStub.should.have.been.calledOnceWithExactly(expectedOptions, 'mockLoadConfig');
             output.should.equal('mockCancelLoadResponse');
+        });
+    });
+    describe('getJavaHealthCenterData(counter)', () => {
+        it('fails straightaway', async() => {
+            // arrange
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            const logErrorSpy = sandbox.spy(MockLogger.prototype, 'error');
+
+            // act
+            await loadRunner.getJavaHealthCenterData(21);
+
+            // assert
+            logErrorSpy.should.have.been.calledOnceWithExactly('getJavaHealthCenterData: Failed to save .hcd file');
+        });
+        it('fails after attempt with null project', async() => {
+            // arrange
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            loadRunner.project = null;
+            const logWarnSpy = sandbox.spy(MockLogger.prototype, 'warn');
+
+            // act
+            await loadRunner.getJavaHealthCenterData(20);
+
+            // assert
+            logWarnSpy.should.have.been.calledOnceWithExactly('getJavaHealthCenterData: Project was made null before .hcd could be found.');
+        });
+        it('tries again after a failed attempt', async() => {
+            // arrange
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            loadRunner.project = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
+            const logInfoSpy = sandbox.spy(MockLogger.prototype, 'info');
+            const gJHCDSpy = sandbox.spy(loadRunner, 'getJavaHealthCenterData');
+
+            // act
+            await loadRunner.getJavaHealthCenterData(20);
+
+            // assert
+            gJHCDSpy.should.have.been.calledWith(20);
+            logInfoSpy.should.have.been.calledOnceWithExactly('getJavaHealthCenterData: .hcd file not found, trying again. Attempt 20/20');
+        });
+        it('emits on UISocket when hcd copied', async() => {
+            // arrange
+            const expectedMetricsFolder = dateFormat(new Date(), 'yyyymmddHHMMss');
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                './utils/Logger': MockLogger,
+            });
+            const mockUser = {
+                uiSocket: { emit: sandbox.stub() },
+            };
+            const loadRunner = new LoadRunner(mockUser);
+            const mockProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                getProfilingByTime: () => {},
+            };
+            loadRunner.project = mockProject;
+            loadRunner.metricsFolder = expectedMetricsFolder;
+            const logInfoSpy = sandbox.spy(MockLogger.prototype, 'info');
+            const expectedData = {
+                projectID: mockProject.projectID,
+                status: 'hcdReady',
+                timestamp: expectedMetricsFolder,
+            };
+
+            // act
+            await loadRunner.getJavaHealthCenterData(20);
+
+            // assert
+            logInfoSpy.should.have.been.calledOnceWithExactly('getJavaHealthCenterData: .hcd copied to PFE');
+            loadRunner.user.uiSocket.emit.should.have.been.calledOnceWithExactly('runloadStatusChanged', expectedData);
+            should.equal(loadRunner.project, null);
+
+        });
+    });
+    describe('createResultsDirectory()', () => {
+        it('creates the results directory', async() => {
+            // arrange
+            const expectedMetricsFolder = dateFormat(new Date(), 'yyyymmddHHMMss');
+            const workingDir = path.join('.', 'crd_test');
+            await fs.mkdirp(workingDir);
+            const expectedPath = path.join(workingDir, expectedMetricsFolder);
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {});
+            const loadRunner = new LoadRunner('mockUser');
+            const mockProject = {
+                loadTestPath: workingDir,
+            };
+            loadRunner.project = mockProject;
+
+            // act
+            await loadRunner.createResultsDirectory();
+            const lRWorkingDir = loadRunner.workingDir;
+            loadRunner.workingDir = null;
+            await fs.remove(expectedPath);
+
+            // assert
+            lRWorkingDir.should.be.equal(expectedPath);
+        });
+    });
+    describe('writeGitHash() ', () => {
+        it('writes a git hash to a file', async() => {
+            // arrange
+            const gitHashValue = '5c9c13c160bbe967e4a7c81b54d403321d77ff56';
+            const gitHashObject = { gitHash: gitHashValue };
+            const workingDir = path.join('.', 'wgh_test');
+            await fs.mkdirp(workingDir);
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {});
+            const loadRunner = new LoadRunner('mockUser');
+            const mockProject = {
+                git: { getLastCommitHash: sandbox.stub().returns(gitHashValue) },
+            };
+            loadRunner.project = mockProject;
+            loadRunner.workingDir = workingDir;
+
+            // act
+            await loadRunner.writeGitHash();
+            const runinfoFilePath = path.join(loadRunner.workingDir, 'runinfo.json');
+            const runinfoContents = await fs.readJSON(runinfoFilePath);
+            await fs.remove(runinfoFilePath);
+
+            // assert
+            runinfoContents.should.be.deep.equal(gitHashObject);
+        });
+    });
+    describe('beginNodeProfiling() ', () => {
+        it('creates a profiling socket', async() => {
+            // arrange
+            const openStub = sandbox.stub();
+            const onStub = sandbox.stub();
+            const mockIo = sandbox.stub().returns({
+                on: onStub,
+                connect: () => {},
+                open: openStub,
+            });
+            const logDebugSpy = sandbox.spy(MockLogger.prototype, 'debug');
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            const mockProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                host: 'mockHost',
+                getMetricsContextRoot: () => 'mockMetricsContextRoot',
+                getPort: () => 'mockPort',
+            };
+            loadRunner.project = mockProject;
+
+            // act
+            await loadRunner.beginNodeProfiling();
+
+            // assert
+            logDebugSpy.should.have.been.calledOnceWithExactly('beginProfiling: Connecting to appmetrics socket ws://mockHost:mockPort/appmetrics-dash/socket.io');
+            mockIo.should.have.been.calledWithExactly('ws://mockHost:mockPort/', {
+                transport: ['websocket'],
+                path: '/appmetrics-dash/socket.io',
+                autoConnect: false,
+            });
+            onStub.should.have.been.calledWith('connect');
+            onStub.should.have.been.calledWith('profiling');
+            onStub.should.have.been.calledWith('disconnect');
+            loadRunner.profilingSamples.should.be.deep.equal([]);
+            openStub.should.have.been.calledOnce;
+        });
+    });
+    describe('endProfiling() ', () => {
+        it('writes samples out and disconnects profilingSocket if profilingSocket exists', async() => {
+            // arrange
+            const expectedObject = { successful: true };
+            const expectedMetricsFolder = '202003061524';
+            const workingDir = path.join('.', 'ep_test');
+            await fs.mkdirp(workingDir);
+            const psEmitStub = sandbox.stub();
+            const psDisconnectStub = sandbox.stub();
+            const mockProfilingSocket = {
+                emit: psEmitStub,
+                disconnect: psDisconnectStub,
+            };
+            const logInfoSpy = sandbox.spy(MockLogger.prototype, 'info');
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                './utils/Logger': MockLogger,
+            });
+            const mockUser = {
+                uiSocket: { emit: sandbox.stub() },
+            };
+            const loadRunner = new LoadRunner(mockUser);
+            loadRunner.profilingSocket = mockProfilingSocket;
+            const mockProject = {
+                name: 'mockName',
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+            };
+            loadRunner.project = mockProject;
+            loadRunner.metricsFolder = expectedMetricsFolder;
+            loadRunner.workingDir = workingDir;
+            loadRunner.profilingSamples = expectedObject;
+            const expectedData = {
+                projectID: mockProject.projectID,
+                status: 'profilingReady',
+                timestamp: expectedMetricsFolder,
+            };
+            const profilingJsonPath = path.join(loadRunner.workingDir, 'profiling.json');
+
+            // act
+            await loadRunner.endProfiling();
+            const profilingContents = await fs.readJSON(profilingJsonPath);
+            await fs.remove(profilingJsonPath);
+
+            // assert
+            profilingContents.should.be.deep.equal(expectedObject);
+            logInfoSpy.should.have.been.calledOnceWithExactly('profiling.json saved for project mockName');
+            loadRunner.user.uiSocket.emit.should.have.been.calledOnceWithExactly('runloadStatusChanged', expectedData);
+            psEmitStub.should.have.been.calledOnceWithExactly('disableprofiling');
+            psDisconnectStub.should.have.been.calledOnce;
+            should.equal(loadRunner.profilingSocket, null);
+            should.equal(loadRunner.profilingSamples, null);
+            should.equal(loadRunner.project, null);
+        });
+        it('does nothing if profilingSocket is null', async() => {
+            // arrange
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {});
+            const loadRunner = new LoadRunner('mockUser');
+            loadRunner.profilingSocket = null;
+
+            // act
+            await loadRunner.endProfiling();
+
+            // assert
+            should.equal(loadRunner.profilingSocket, null);
+        });
+    });
+    describe('cancelProfiling() ', () => {
+        it('disconnects if profilingSocket exists', async() => {
+            // arrange
+            const psEmitStub = sandbox.stub();
+            const psDisconnectStub = sandbox.stub();
+            const mockProfilingSocket = {
+                emit: psEmitStub,
+                disconnect: psDisconnectStub,
+            };
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {});
+            const loadRunner = new LoadRunner('mockUser');
+            loadRunner.profilingSocket = mockProfilingSocket;
+
+            // act
+            await loadRunner.cancelProfiling();
+
+            // assert
+            psEmitStub.should.have.been.calledOnceWithExactly('disableprofiling');
+            psDisconnectStub.should.have.been.calledOnce;
+            should.equal(loadRunner.profilingSocket, null);
+        });
+        it('does nothing if profilingSocket is null', async() => {
+            // arrange
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {});
+            const loadRunner = new LoadRunner('mockUser');
+            loadRunner.profilingSocket = null;
+
+            // act
+            await loadRunner.cancelProfiling();
+
+            // assert
+            should.equal(loadRunner.profilingSocket, null);
+        });
+    });
+    describe('shutdown()', () => {
+        it('shuts down cleanly on 200', async() => {
+            // arrange
+            const ioDisconnectStub = sandbox.stub();
+            const mockIo = () => ({
+                on: () => {},
+                connect: () => {},
+                disconnect: ioDisconnectStub,
+            });
+            const asyncHttpRequestStub = sandbox.stub().returns({ statusCode: 200 });
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/sharedFunctions': { asyncHttpRequest: asyncHttpRequestStub },
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            loadRunner.up = true;
+            const mockProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                host: 'mockHost',
+                getMetricsContextRoot: () => 'mockMetricsContextRoot',
+                getPort: () => 'mockPort',
+            };
+            loadRunner.project = mockProject;
+            loadRunner.hostname = 'mockHost';
+            loadRunner.port = 'mockPort';
+            const expectedOptions = {
+                host: 'mockHost',
+                port: 'mockPort',
+                path: '/api/v1/cancel',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+
+            // act
+            await loadRunner.shutdown();
+
+            // assert
+            asyncHttpRequestStub.should.have.been.calledOnceWithExactly(expectedOptions);
+            loadRunner.up.should.be.false;
+            ioDisconnectStub.should.have.been.calledOnce;
+        });
+        it('shuts down cleanly on 400', async() => {
+            // arrange
+            const ioDisconnectStub = sandbox.stub();
+            const mockIo = () => ({
+                on: () => {},
+                connect: () => {},
+                disconnect: ioDisconnectStub,
+            });
+            const asyncHttpRequestStub = sandbox.stub().returns({ statusCode: 400 });
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/sharedFunctions': { asyncHttpRequest: asyncHttpRequestStub },
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            loadRunner.up = true;
+            const mockProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                host: 'mockHost',
+                getMetricsContextRoot: () => 'mockMetricsContextRoot',
+                getPort: () => 'mockPort',
+            };
+            loadRunner.project = mockProject;
+            loadRunner.hostname = 'mockHost';
+            loadRunner.port = 'mockPort';
+            const expectedOptions = {
+                host: 'mockHost',
+                port: 'mockPort',
+                path: '/api/v1/cancel',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+
+            // act
+            await loadRunner.shutdown();
+
+            // assert
+            asyncHttpRequestStub.should.have.been.calledOnceWithExactly(expectedOptions);
+            loadRunner.up.should.be.false;
+            ioDisconnectStub.should.have.been.calledOnce;
+        });
+        it('shuts down cleanly on 500 whilst logging error', async() => {
+            // arrange
+            const ioDisconnectStub = sandbox.stub();
+            const mockIo = () => ({
+                on: () => {},
+                connect: () => {},
+                disconnect: ioDisconnectStub,
+            });
+            const asyncHttpRequestStub = sandbox.stub().returns({ statusCode: 500 });
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/sharedFunctions': { asyncHttpRequest: asyncHttpRequestStub },
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            loadRunner.up = true;
+            const mockProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                host: 'mockHost',
+                getMetricsContextRoot: () => 'mockMetricsContextRoot',
+                getPort: () => 'mockPort',
+            };
+            loadRunner.project = mockProject;
+            loadRunner.hostname = 'mockHost';
+            loadRunner.port = 'mockPort';
+            const logErrorSpy = sandbox.spy(MockLogger.prototype, 'error');
+            const expectedOptions = {
+                host: 'mockHost',
+                port: 'mockPort',
+                path: '/api/v1/cancel',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+
+            // act
+            await loadRunner.shutdown();
+
+            // assert
+            asyncHttpRequestStub.should.have.been.calledOnceWithExactly(expectedOptions);
+            logErrorSpy.should.have.been.calledOnceWithExactly('shutdown: error sending cancel request (500 received)');
+            loadRunner.up.should.be.false;
+            ioDisconnectStub.should.have.been.calledOnce;
+        });
+        it('shuts down cleanly on unknown status whilst logging error', async() => {
+            // arrange
+            const ioDisconnectStub = sandbox.stub();
+            const mockIo = () => ({
+                on: () => {},
+                connect: () => {},
+                disconnect: ioDisconnectStub,
+            });
+            const asyncHttpRequestStub = sandbox.stub().returns({ statusCode: 299 });
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/sharedFunctions': { asyncHttpRequest: asyncHttpRequestStub },
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            loadRunner.up = true;
+            const mockProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                host: 'mockHost',
+                getMetricsContextRoot: () => 'mockMetricsContextRoot',
+                getPort: () => 'mockPort',
+            };
+            loadRunner.project = mockProject;
+            loadRunner.hostname = 'mockHost';
+            loadRunner.port = 'mockPort';
+            const logErrorSpy = sandbox.spy(MockLogger.prototype, 'error');
+            const expectedOptions = {
+                host: 'mockHost',
+                port: 'mockPort',
+                path: '/api/v1/cancel',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+
+            // act
+            await loadRunner.shutdown();
+
+            // assert
+            asyncHttpRequestStub.should.have.been.calledOnceWithExactly(expectedOptions);
+            logErrorSpy.should.have.been.calledOnceWithExactly('shutdown: (299 received)');
+            loadRunner.up.should.be.false;
+            ioDisconnectStub.should.have.been.calledOnce;
+        });
+        it('shuts down cleanly if already down', async() => {
+            // arrange
+            const ioDisconnectStub = sandbox.stub();
+            const mockIo = () => ({
+                on: () => {},
+                connect: () => {},
+                disconnect: ioDisconnectStub,
+            });
+            const asyncHttpRequestStub = sandbox.stub().returns({ statusCode: 299 });
+            const LoadRunner = proxyquire(pathToLoadRunnerJs, {
+                'socket.io-client': mockIo,
+                './utils/sharedFunctions': { asyncHttpRequest: asyncHttpRequestStub },
+                './utils/Logger': MockLogger,
+            });
+            const loadRunner = new LoadRunner('mockUser');
+            loadRunner.up = false;
+
+            // act
+            await loadRunner.shutdown();
+
+            // assert
+            asyncHttpRequestStub.should.have.been.not.called;
+            loadRunner.up.should.be.false;
+            ioDisconnectStub.should.have.been.calledOnce;
         });
     });
 });

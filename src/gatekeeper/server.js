@@ -2,7 +2,6 @@ const express = require('express')
 const Keycloak = require('keycloak-connect');
 const session = require('express-session');
 const httpProxy = require('http-proxy');
-const request = require('request')
 const { promisify } = require('util');
 const https = require('https');
 
@@ -13,7 +12,7 @@ const CONST_MISSING_ROLE = "codewind-role-not-defined";
 
 let pfe_host = "codewind-pfe";  // use container name
 let pfe_port = '9090';          // use internal port (we are on the same network)
-let pfe_protocol = "http"
+let pfe_protocol = "http";
 
 main().catch(err => console.dir(err));
 async function main() {
@@ -146,64 +145,37 @@ async function main() {
 
     app.get('/health', (req, res) => res.send('OK'))
 
+    let pfe_target = `${pfe_protocol}://${pfe_host}:${pfe_port}`;
+    let proxy = new httpProxy.createProxyServer({ secure: false, target: `wss://${pfe_host}:${pfe_port}`, ws: true });
+    proxy.on('proxyReq', function (proxyReq, req, res, options) {
+        proxyReq.setHeader("x-forwarded-host", gatekeeper_host);
+    });
+
     // allow a route to PFE to check when PFE is ready
     app.get("/api/pfe/ready", function (req, res) {
-        try {
-            console.log(`req.originalUrl = ${req.originalUrl}`);
-            const options = {
-                url: `${pfe_protocol}://${pfe_host}:${pfe_port}/health`,
-                headers: {
-                    "x-forwarded-host": gatekeeper_host
-                }
-            }
-            let r = request(options);
-            req.pipe(r).on('error', function (err) {
-                console.log(err);
-                res.status(502).send({ error: err.code });
-            }).pipe(res);
-        } catch (err) {
-            console.log(err);
-        }
+        console.log(`/api/pfe/ready - req.originalUrl = ${req.originalUrl}`);
+        req.url = '/health';
+        proxy.web(req, res, {
+            target: pfe_target,
+        });
     });
 
     /* PFE handles socket IO authentication*/
     app.use('/socket.io/*', function (req, res) {
-        try {
-            console.log(`req.originalUrl = ${req.originalUrl}`);
-            const options = {
-                url: `${pfe_protocol}://${pfe_host}:${pfe_port}${req.originalUrl}`,
-                headers: {
-                    "x-forwarded-host": gatekeeper_host
-                }
-            }
-            let r = request(options);
-            req.pipe(r).on('error', function (err) {
-                console.log(err);
-                res.status(502).send({ error: err.code });
-            }).pipe(res);
-        } catch (err) {
-            console.log(err);
-        }
+        console.log(`/socket.io/* - req.originalUrl = ${req.originalUrl}`);
+        req.url = req.originalUrl;
+        proxy.web(req, res, {
+            target: pfe_target
+        });
     });
 
     /* Proxy Performance container routes */
     app.use('*', authMiddleware, function (req, res) {
-        try {
-            console.log(`req.originalUrl = ${req.originalUrl}`);
-            const options = {
-                url: `${pfe_protocol}://${pfe_host}:${pfe_port}${req.originalUrl}`,
-                headers: {
-                    "x-forwarded-host": gatekeeper_host
-                }
-            }
-            let r = request(options);
-            req.pipe(r).on('error', function (err) {
-                console.log(err);
-                res.status(502).send({ error: err.code });
-            }).pipe(res);
-        } catch (err) {
-            console.log(err);
-        }
+        console.log(`* - req.originalUrl = ${req.originalUrl}`);
+        req.url = req.originalUrl;
+        proxy.web(req, res, {
+            target: pfe_target
+          });
     });
 
     const https = require('https');
@@ -212,7 +184,6 @@ async function main() {
     let keys = await createCertificateAsync({ selfSigned: true });
     server = https.createServer({ key: keys.serviceKey, cert: keys.certificate }, app)
 
-    var proxy = new httpProxy.createProxyServer({secure: false, target: `wss://${pfe_host}:${pfe_port}`, ws:true});
     server.on('upgrade', function (req, socket, head) {
         console.log("Proxy: websocket connect 'upgrade'")
         proxy.ws(req, socket, head);
@@ -221,5 +192,3 @@ async function main() {
     server.listen(port, () => console.log(`Gatekeeper listening on port ${port}!`))
 
 }
-
-
