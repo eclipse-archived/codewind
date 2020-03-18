@@ -11,6 +11,7 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const chaiSubset = require('chai-subset');
+const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const fs = require('fs-extra');
 const path = require('path');
 const rewire = require('rewire');
@@ -22,16 +23,17 @@ const Templates = rewire('../../../src/pfe/portal/modules/Templates');
 const TemplateError = require('../../../src/pfe/portal/modules/utils/errors/TemplateError');
 const {
     styledTemplates,
-    defaultCodewindTemplates,
     sampleRepos,
     validUrlNotPointingToIndexJson,
     templateRepositoryURL,
+    getDefaultTemplatesFromGithub,
 } = require('../../modules/template.service');
 const { suppressLogOutput } = require('../../modules/log.service');
 const { testTimeout } = require('../../config');
 
 chai.use(chaiAsPromised);
 chai.use(chaiSubset);
+chai.use(deepEqualInAnyOrder);
 chai.should();
 const should = chai.should();
 
@@ -85,10 +87,14 @@ function getWorkspaceAndDeleteAfterEach(testFolderName) {
     return workspace;
 };
 
-describe('Templates.js', function() {
+describe.only('Templates.js', function() {
     // Set the default timeout for all tests
     this.timeout(testTimeout.short);
     suppressLogOutput(Templates);
+    let defaultCodewindTemplates;
+    before(async function() {
+        defaultCodewindTemplates = await getDefaultTemplatesFromGithub();
+    });
     describe('Class functions', function() {
         describe('initializeRepositoryList()', function() {
             const workspace = getWorkspaceAndDeleteAfterEach(this.title);
@@ -1087,7 +1093,7 @@ describe('Templates.js', function() {
             });
             it('returns the default Codewind templates', async function() {
                 const output = await getTemplatesFromRepos([sampleRepos.codewind]);
-                output.should.deep.equal(defaultCodewindTemplates);
+                output.should.deep.equalInAnyOrder(defaultCodewindTemplates);
             });
         });
         describe('getTemplatesFromRepo(repository)', function() {
@@ -1119,7 +1125,7 @@ describe('Templates.js', function() {
                 const templatesJSON = await getTemplatesJSONFromURL(sampleRepos.codewind.url);
                 templatesJSON.should.be.an('array');
                 templatesJSON.forEach(templateObject => {
-                    templateObject.should.have.keys('displayName', 'description', 'language', 'projectType', 'location', 'links');
+                    templateObject.should.have.keys('displayName', 'description', 'language', 'projectType', 'location', 'links', 'icon');
                 });
             });
             it('should be rejected as URL does not point to JSON', () => {
