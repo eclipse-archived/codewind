@@ -87,7 +87,7 @@ function getWorkspaceAndDeleteAfterEach(testFolderName) {
     return workspace;
 };
 
-describe.only('Templates.js', function() {
+describe('Templates.js', function() {
     // Set the default timeout for all tests
     this.timeout(testTimeout.short);
     suppressLogOutput(Templates);
