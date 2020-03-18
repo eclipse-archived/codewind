@@ -15,7 +15,7 @@ const chaiSubset = require('chai-subset');
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 
 const {
-    defaultCodewindTemplates,
+    getDefaultTemplatesFromGithub,
     validUrlNotPointingToIndexJson,
     sampleRepos,
     batchPatchTemplateRepos,
@@ -39,6 +39,10 @@ chai.use(chaiResValidator(pathToApiSpec));
 describe('Template API tests', function() {
     // Save the state of the repos before any test and restore the exact state after
     saveReposBeforeTestAndRestoreAfter();
+    let defaultCodewindTemplates;
+    before(async function() {
+        defaultCodewindTemplates = await getDefaultTemplatesFromGithub();
+    });
     describe('GET /api/v1/templates', function() {
         before(async function() {
             this.timeout(testTimeout.short);

@@ -11,6 +11,7 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const chaiSubset = require('chai-subset');
+const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const fs = require('fs-extra');
 const path = require('path');
 const rewire = require('rewire');
@@ -20,16 +21,17 @@ global.codewind = { RUNNING_IN_K8S: false };
 const Templates = rewire('../../../src/pfe/portal/modules/Templates');
 const {
     styledTemplates,
-    defaultCodewindTemplates,
     sampleRepos,
     validUrlNotPointingToIndexJson,
     templateRepositoryURL,
+    getDefaultTemplatesFromGithub,
 } = require('../../modules/template.service');
 const { suppressLogOutput } = require('../../modules/log.service');
 const { testTimeout } = require('../../config');
 
 chai.use(chaiAsPromised);
 chai.use(chaiSubset);
+chai.use(deepEqualInAnyOrder);
 chai.should();
 
 const testWorkspaceDir = './src/unit/temp/';
@@ -58,6 +60,10 @@ const mockRepos = {
 const mockRepoList = Object.values(mockRepos);
 describe('Templates.js', function() {
     suppressLogOutput(Templates);
+    let defaultCodewindTemplates;
+    before(async function() {
+        defaultCodewindTemplates = await getDefaultTemplatesFromGithub();
+    });
     describe('Class functions', function() {
         describe('initializeRepositoryList()', function() {
             this.timeout(testTimeout.short);
@@ -159,7 +165,7 @@ describe('Templates.js', function() {
                 });
                 it('returns only the default templates', async function() {
                     const output = await templateController.getTemplates(false, false);
-                    output.should.deep.equal(defaultCodewindTemplates);
+                    output.should.deep.equalInAnyOrder(defaultCodewindTemplates);
                 });
             });
             describe('and add a provider providing a valid template repo', function() {
@@ -1077,7 +1083,7 @@ describe('Templates.js', function() {
             });
             it('returns the default Codewind templates', async function() {
                 const output = await getTemplatesFromRepos([sampleRepos.codewind]);
-                output.should.deep.equal(defaultCodewindTemplates);
+                output.should.deep.equalInAnyOrder(defaultCodewindTemplates);
             });
         });
         describe('getTemplatesFromRepo(repository)', function() {
@@ -1106,7 +1112,8 @@ describe('Templates.js', function() {
         describe('getTemplatesJSONFromURL(givenURL)', () => {
             const getTemplatesJSONFromURL = Templates.__get__('getTemplatesJSONFromURL');
             it('gets templates JSON back from a valid URL', async() => {
-                const templatesJSON = await getTemplatesJSONFromURL(sampleRepos.codewind.url);
+                const staticCommitURL = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/3af4928a928a5c08b07908c54799cc1675b9f965/devfiles/index.json';
+                const templatesJSON = await getTemplatesJSONFromURL(staticCommitURL);
                 templatesJSON.should.be.an('array');
                 templatesJSON.forEach(templateObject => {
                     templateObject.should.have.keys('displayName', 'description', 'language', 'projectType', 'location', 'links');
