@@ -165,7 +165,7 @@ describe('Templates.js', function() {
                 });
                 it('returns only the default templates', async function() {
                     const output = await templateController.getTemplates(false, false);
-                    output.should.deep.equal(defaultCodewindTemplates);
+                    output.should.deep.equalInAnyOrder(defaultCodewindTemplates);
                 });
             });
             describe('and add a provider providing a valid template repo', function() {
@@ -1112,10 +1112,11 @@ describe('Templates.js', function() {
         describe('getTemplatesJSONFromURL(givenURL)', () => {
             const getTemplatesJSONFromURL = Templates.__get__('getTemplatesJSONFromURL');
             it('gets templates JSON back from a valid URL', async() => {
-                const templatesJSON = await getTemplatesJSONFromURL(sampleRepos.codewind.url);
+                const staticCommitURL = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/3af4928a928a5c08b07908c54799cc1675b9f965/devfiles/index.json';
+                const templatesJSON = await getTemplatesJSONFromURL(staticCommitURL);
                 templatesJSON.should.be.an('array');
                 templatesJSON.forEach(templateObject => {
-                    templateObject.should.have.keys('displayName', 'description', 'language', 'projectType', 'location', 'links', 'icon');
+                    templateObject.should.have.keys('displayName', 'description', 'language', 'projectType', 'location', 'links');
                 });
             });
             it('should be rejected as URL does not point to JSON', () => {

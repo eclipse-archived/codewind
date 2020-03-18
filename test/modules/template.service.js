@@ -59,7 +59,6 @@ async function getDefaultTemplatesFromGithub() {
             url: location,
             projectType,
             source: 'Default templates',
-            sourceURL: templateRepositoryURL,
         };
     });
     return parsedTemplates;
