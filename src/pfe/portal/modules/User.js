@@ -186,16 +186,18 @@ module.exports = class User {
    */
   async cancelLoad(project) {
     log.debug("cancelLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
-    this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelling' });
+
     if (project.loadInProgress) {
       log.debug("Cancelling load for config: " + JSON.stringify(project.loadConfig));
       const res = await retry((bail, number) => {
         log.info(`Attempting to cancel load run. Attempt ${number}/30`);
+        this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelling' });
         return this.callCancelRunLoad(project)
           .catch(function (err) {
             if (err.code !== "CANCEL_RUN_LOAD_ERROR") {
               bail(err); 
             } else {
+              this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
               throw err;
             }
           });
@@ -205,8 +207,10 @@ module.exports = class User {
         maxTimeout: 1000,
       });
       project.loadInProgress = false;
+      this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
       return res;
     }
+    
     this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
     throw new LoadRunError("NO_RUN_IN_PROGRESS", `For project ${project.projectID}`);
   }
