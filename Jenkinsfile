@@ -17,6 +17,7 @@ pipeline {
 
     environment {
         CODECOV_TOKEN = credentials('codecov-token-codewind-repository')
+        INSECURE_KEYRING = 'true'
     }
 
     stages {
