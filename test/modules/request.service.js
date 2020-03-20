@@ -68,8 +68,13 @@ function isEmpty(obj) {
     return (Object.keys(obj).length === 0) && (obj.constructor === Object);
 }
 
+function externalChaiRequest(URL) {
+    return chai.request(URL);
+}
+
 module.exports = {
     makeReq,
     makeReqAndAwaitSocketMsg,
     chai: chai.request(CODEWIND_URL),
+    externalChaiRequest,
 };

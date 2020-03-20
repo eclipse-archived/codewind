@@ -13,81 +13,6 @@ const reqService = require('./request.service');
 
 const templateRepositoryURL = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/master/devfiles/index.json';
 
-const defaultCodewindTemplates = [
-    {
-        label: 'Go',
-        description: 'Eclipse Codewind Go sample application',
-        language: 'go',
-        url: 'https://github.com/codewind-resources/goTemplate',
-        projectType: 'docker',
-        source: 'Default templates',
-        sourceURL: templateRepositoryURL,
-    },
-    {
-        label: 'Lagom Java',
-        description: 'Eclipse Codewind Lagom Reactive microservice in Java',
-        language: 'java',
-        url: 'https://github.com/codewind-resources/lagomJavaTemplate',
-        projectType: 'docker',
-        source: 'Default templates',
-        sourceURL: templateRepositoryURL,
-    },
-    {
-        label: 'Node.js Express',
-        description: 'Eclipse Codewind Express sample application',
-        language: 'nodejs',
-        url: 'https://github.com/codewind-resources/nodeExpressTemplate',
-        projectType: 'nodejs',
-        source: 'Default templates',
-        sourceURL: templateRepositoryURL,
-    },
-    {
-        label: 'Open Liberty',
-        description: 'Eclipse Codewind Open Liberty sample application in Java',
-        language: 'java',
-        url: 'https://github.com/codewind-resources/openLibertyTemplate',
-        projectType: 'docker',
-        source: 'Default templates',
-        sourceURL: templateRepositoryURL,
-    },
-    {
-        label: 'Python',
-        description: 'Eclipse Codewind Python sample application',
-        language: 'python',
-        url: 'https://github.com/codewind-resources/pythonTemplate',
-        projectType: 'docker',
-        source: 'Default templates',
-        sourceURL: templateRepositoryURL,
-    },
-    {
-        label: 'Spring Boot®',
-        description: 'Eclipse Codewind Spring Boot® sample application',
-        language: 'java',
-        url: 'https://github.com/codewind-resources/springJavaTemplate',
-        projectType: 'spring',
-        source: 'Default templates',
-        sourceURL: templateRepositoryURL,
-    },
-    {
-        label: 'Swift',
-        description: 'Eclipse Codewind Swift sample application',
-        language: 'swift',
-        url: 'https://github.com/codewind-resources/swiftTemplate',
-        projectType: 'swift',
-        source: 'Default templates',
-        sourceURL: templateRepositoryURL,
-    },
-    {
-        label: 'WebSphere Liberty MicroProfile®',
-        description: 'Eclipse MicroProfile® on Websphere Liberty',
-        language: 'java',
-        url: 'https://github.com/codewind-resources/javaMicroProfileTemplate',
-        projectType: 'liberty',
-        source: 'Default templates',
-        sourceURL: templateRepositoryURL,
-    },
-];
-
 const styledTemplates = {
     codewind: {
         label: 'Codewind template',
@@ -120,6 +45,25 @@ const sampleRepos = {
 };
 
 const validUrlNotPointingToIndexJson = 'https://support.oneskyapp.com/hc/en-us/article_attachments/202761627/example_1.json';
+
+async function getDefaultTemplatesFromGithub() {
+    const { status, text } = await reqService.externalChaiRequest(templateRepositoryURL).get('');
+    status.should.equal(200);
+    // Parse the index.json into our template format
+    const rawTemplates = JSON.parse(text);
+    const parsedTemplates = rawTemplates.map(({ displayName, description, language, projectType, location }) => {
+        return {
+            label: displayName,
+            description,
+            language,
+            url: location,
+            projectType,
+            source: 'Default templates',
+            sourceURL: templateRepositoryURL,
+        };
+    });
+    return parsedTemplates;
+}
 
 async function getTemplateRepos() {
     const res = await reqService.chai
@@ -263,7 +207,7 @@ function setupReposAndTemplatesForTesting() {
 }
 
 module.exports = {
-    defaultCodewindTemplates,
+    getDefaultTemplatesFromGithub,
     styledTemplates,
     templateRepositoryURL,
     sampleRepos,
