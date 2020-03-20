@@ -14,6 +14,10 @@ pipeline {
         skipStagesAfterUnstable()
     }
 
+    environment {
+        INSECURE_KEYRING = 'true'
+    }
+
     stages {
         stage('Run Portal eslint and unit tests') {
             options {
