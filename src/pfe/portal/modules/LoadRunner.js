@@ -533,14 +533,17 @@ module.exports = class LoadRunner {
       this.project = null;
     });
 
-    this.socket.on('completed', () => {
+    this.socket.on('completed', async () => {
       log.info(`Load run on project ${this.project.projectID} completed`);
       this.project.loadInProgress = false;   // Clear the flag on the project
       if (this.collectionUri !== null) {
         this.recordCollection();
       }
       this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' , timestamp: this.metricsFolder});
-      this.endProfiling();
+      await this.endProfiling();
+      if (this.timerID === null) {
+        this.project = null;
+      }
     });
   }
 
