@@ -31,8 +31,19 @@ if [ -f $MAVEN_REPO_CACHE_PATH ]; then
 fi
 
 echo "Running Maven build for $PROJECT_NAME"
+
+# copy settings.xml if present
+if [[ -f settings.xml ]]; then
+    mkdir -p /root/.m2/
+    mv settings.xml /root/.m2/
+fi
+
 echo "mvn -Dmaven.repo.local=/root/app/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$MAVEN_BUILD.log""
 mvn -Dmaven.repo.local=/root/app/.m2/repository -f ./pom.xml package -Dmaven.test.skip=true $MAVEN_SETTINGS --log-file "/root/logs/$MAVEN_BUILD.log"
+
+# remove settings.xml after build
+rm -f /root/.m2/settings.xml
+
 if [[ $? -ne 0 ]]; then
     # Exit if maven build failed
     echo "Maven build failed for $PROJECT_NAME"
