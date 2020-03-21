@@ -27,6 +27,7 @@ const FilewatcherError = require('./utils/errors/FilewatcherError');
 const log = new Logger('User.js');
 const util = require('util');
 const { installBuiltInExtensions } = require('./utils/installExtensions');
+const retry = require('async-retry')
 
 /**
  * The User class
@@ -182,16 +183,45 @@ module.exports = class User {
   async cancelLoad(project) {
     log.debug("cancelLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
     this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelling' });
-
+    
     if (project.loadInProgress) {
-      project.loadInProgress = false;
       log.debug("Cancelling load for config: " + JSON.stringify(project.loadConfig));
-      let cancelLoadResp = await this.loadRunner.cancelRunLoad(project.loadConfig);
-      this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
-      return cancelLoadResp;
+      const res = await retry((bail, number) => {
+        log.info(`Attempting to cancel load run. Attempt ${number}/30`);
+        return this.callCancelRunLoad(project)
+          .catch(function (err) {
+            if (err.code !== "CANCEL_RUN_LOAD_ERROR") {
+              bail(err); 
+            } else {
+              throw err;
+            }
+          });
+      }, {
+        retries: 30,
+        minTimeout: 1000,
+        maxTimeout: 1000,
+      });
+      project.loadInProgress = false;
+      return res;
     }
     this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
     throw new LoadRunError("NO_RUN_IN_PROGRESS", `For project ${project.projectID}`);
+  }
+
+  /**
+   * Function to call the load runner cancel and throw errors on unwanted status codes
+   */
+  async callCancelRunLoad(project) {
+    let cancelLoadResp
+    try {
+      cancelLoadResp = await this.loadRunner.cancelRunLoad(project.loadConfig); 
+    } catch (error) {
+      throw error;
+    }
+    if (cancelLoadResp.statusCode === 409) {
+      throw new LoadRunError("CANCEL_RUN_LOAD_ERROR", `Could not cancel run load for project ${project.projectID}`);
+    }
+    return cancelLoadResp;
   }
 
   /**
@@ -223,7 +253,8 @@ module.exports = class User {
           let settingsFilePath = path.join(projFile.workspace, projName, '.cw-settings');
           const settFileExists = await fs.pathExists(settingsFilePath);
           const settFile = settFileExists ? await fs.readJson(settingsFilePath) : {};
-          let project = new Project({ ...projFile, ...settFile });
+          const project = new Project({ ...projFile, ...settFile });
+          await project.setOpenLiberty();
           this.projectList.addProject(project);
         } catch (err) {
           // Corrupt project inf file
@@ -330,7 +361,7 @@ module.exports = class User {
    * @param projectJson, the project to add to the projectList
    */
   async createProject(projectJson) {
-    let project = new Project(projectJson);
+    const project = new Project(projectJson);
     this.projectList.addProject(project);
     await project.writeInformationFile();
     return project;

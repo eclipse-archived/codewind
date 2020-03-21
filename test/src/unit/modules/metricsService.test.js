@@ -26,8 +26,8 @@ chai.should();
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
-const projectDir = path.join('.', 'src', 'unit', 'modules', 'test');
-const testResourcesDir = path.join('.', 'resources', 'metricsService');
+const projectDir = path.join(__dirname, 'test');
+const testResourcesDir = path.join(__dirname, '../../../', 'resources', 'metricsService');
 
 // nodejs
 const pathToPackageJson = path.join(projectDir, 'package.json');
@@ -88,6 +88,8 @@ describe('metricsService/index.js', () => {
     let originalPomXmlForSpring;
     let expectedPomXmlForSpring;
 
+    const pathToTestDockerfile = path.join(projectDir, 'Dockerfile');
+
     before(async() => {
         originalPomXmlForLiberty = await readXml(pathToOriginalPomXmlForLiberty);
         expectedPomXmlForLiberty = await readXml(pathToExpectedPomXmlForLiberty);
@@ -103,8 +105,127 @@ describe('metricsService/index.js', () => {
         // console.log('expectedPomXmlForLiberty');
         // console.log(util.inspect(expectedPomXmlForLiberty, { showHidden: false, depth: null }));
     });
+    
+    describe('isOpenLibertyPomXml(filePath)', () => {
+        const funcToTest = metricsService.__get__('isOpenLibertyPomXml');
+        it('Returns false as the pom.xml does not exist', async() => {
+            const pomXmlContainsString = await funcToTest('doesnotexist');
+            pomXmlContainsString.should.be.false;
+        });
+        it('Returns true as file is a valid Open Liberty pom.xml', async() => {
+            const pomXmlContainsString = await funcToTest(pathToOriginalPomXmlForOpenLiberty);
+            pomXmlContainsString.should.be.true;
+        });
+        it('Returns false as file is not an Open Liberty pom.xml', async() => {
+            const pomXmlContainsString = await funcToTest(pathToOriginalPomXmlForLiberty);
+            pomXmlContainsString.should.be.false;
+        });
+    });
 
-    describe('injectMetricsCollectorIntoProject(projectType, project.language, projectDir)', () => {
+    describe('isOpenLibertyDockerfile(filePath)', () => {
+        const funcToTest = metricsService.__get__('isOpenLibertyDockerfile');
+        afterEach(() => {
+            fs.removeSync(pathToTestDockerfile);
+        });
+        it(`returns false as the Dockerfile does not exist`, async() => {
+            const isOpenLiberty = await funcToTest('paththatdoesnotexist');
+            isOpenLiberty.should.be.false;
+        });
+        it(`returns true as only FROM in the Dockerfile is 'FROM open-liberty:latest'`, async() => {
+            const dockerfileContents = 'FROM open-liberty:latest\nCOPY /something /somewhere\nCMD ["npm", "start"]';
+            fs.outputFileSync(pathToTestDockerfile, dockerfileContents);
+            const isOpenLiberty = await funcToTest(pathToTestDockerfile);
+            isOpenLiberty.should.be.true;
+        });
+        it(`returns true as only FROM in the Dockerfile is 'FROM open-liberty (handles no tag given)'`, async() => {
+            const dockerfileContents = 'FROM open-liberty\nCOPY /something /somewhere\nCMD ["npm", "start"]';
+            fs.outputFileSync(pathToTestDockerfile, dockerfileContents);
+            const isOpenLiberty = await funcToTest(pathToTestDockerfile);
+            isOpenLiberty.should.be.true;
+        });
+        it(`returns true as the only FROM in the Dockerfile is an Open Liberty image (handles non docker.io repository)`, async() => {
+            const dockerfileContents = 'FROM quay.io/open-liberty:latest\nCOPY /something /somewhere\nCMD ["npm", "start"]';
+            fs.outputFileSync(pathToTestDockerfile, dockerfileContents);
+            const isOpenLiberty = await funcToTest(pathToTestDockerfile);
+            isOpenLiberty.should.be.true;
+        });
+        it(`returns true as the final FROM in the Dockerfile is 'FROM open-liberty:latest'`, async() => {
+            const dockerfileContents = 'FROM node:8\nCOPY /something /somewhere\nCMD ["npm", "start"]\nFROM open-liberty:latest';
+            fs.outputFileSync(pathToTestDockerfile, dockerfileContents);
+            const isOpenLiberty = await funcToTest(pathToTestDockerfile);
+            isOpenLiberty.should.be.true;
+        });
+        it(`returns false as the final FROM in the Dockerfile is 'FROM node:latest'`, async() => {
+            const dockerfileContents = 'FROM open-liberty:latest\nCOPY /something /somewhere\nCMD ["npm", "start"]\nFROM node:latest';
+            fs.outputFileSync(pathToTestDockerfile, dockerfileContents);
+            const isOpenLiberty = await funcToTest(pathToTestDockerfile);
+            isOpenLiberty.should.be.false;
+        });
+    });
+
+    describe('determineIfOpenLiberty(projectType, projectLanguage, projectDir)', () => {
+        const funcToTest = metricsService.__get__('determineIfOpenLiberty');
+        const pomXmlPath = path.join(projectDir, 'pom.xml');
+        afterEach(() => {
+            fs.removeSync(pomXmlPath);
+            fs.removeSync(pathToTestDockerfile);
+        });
+        it('returns true as projectType is Docker, projectLanguage is Java and the pom.xml is a valid Open Liberty one', async() => {
+            await fs.copy(pathToOriginalPomXmlForOpenLiberty, pomXmlPath);
+            const isOpenLiberty = await funcToTest('docker', 'java', projectDir);
+            isOpenLiberty.should.be.true;
+        });
+        it('returns true as projectType is Docker, projectLanguage is Java and the Dockerfile is an "open-liberty" one', async() => {
+            const dockerfileContents = 'FROM open-liberty:latest\nCOPY /something /somewhere\nCMD ["npm", "start"]';
+            fs.outputFileSync(pathToTestDockerfile, dockerfileContents);
+            const isOpenLiberty = await funcToTest('docker', 'java', projectDir);
+            isOpenLiberty.should.be.true;
+        });
+        it('returns false as projectType is not Docker', async() => {
+            const isOpenLiberty = await funcToTest('notdocker', 'java', projectDir);
+            isOpenLiberty.should.be.false;
+        });
+        it('returns false as projectLanguage is not Java', async() => {
+            const isOpenLiberty = await funcToTest('docker', 'notjava', projectDir);
+            isOpenLiberty.should.be.false;
+        });
+        it('returns false as the Dockerfile is not an open-liberty one', async() => {
+            const dockerfileContents = 'FROM node:8\nCOPY /something /somewhere\nCMD ["npm", "start"]';
+            fs.outputFileSync(pathToTestDockerfile, dockerfileContents);
+            const isOpenLiberty = await funcToTest('docker', 'java', projectDir);
+            isOpenLiberty.should.be.false;
+        });
+        it('returns false as the final "FROM" in the Dockerfile is not an open-liberty one (multi-stage images)', async() => {
+            const dockerfileContents = 'FROM open-liberty:version\nCOPY /something /somewhere\nCMD ["npm", "start"]\nFROM node:8';
+            fs.outputFileSync(pathToTestDockerfile, dockerfileContents);
+            const isOpenLiberty = await funcToTest('docker', 'java', projectDir);
+            isOpenLiberty.should.be.false;
+        });
+    });
+
+    describe('identifyProject(projectType, projectLanguage, projectDir)', () => {
+        const funcToTest = metricsService.__get__('identifyProject');
+        it('returns docker as the Dockerfile does not match a known type of project (e.g. OpenLiberty)', async() => {
+            fs.outputFileSync(pathToTestDockerfile, 'FROM node:latest');
+            const type = await funcToTest('docker', 'java', projectDir);
+            type.should.equal('docker');
+        });
+        it('returns openLiberty as the Dockerfile is an open-liberty one', async() => {
+            fs.outputFileSync(pathToTestDockerfile, 'FROM open-liberty:latest');
+            const type = await funcToTest('docker', 'java', projectDir);
+            type.should.equal('openLiberty');
+        });
+        it('returns notdocker as the projectType is not Docker', async() => {
+            const type = await funcToTest('notdocker', 'java', projectDir);
+            type.should.equal('notdocker');
+        });
+        it('returns docker as the projectLanguage is not Java', async() => {
+            const type = await funcToTest('docker', 'notjava', projectDir);
+            type.should.equal('docker');
+        });
+    });
+
+    describe('injectMetricsCollectorIntoProject(projectType, projectLanguage, projectDir)', () => {
         afterEach(() => {
             fs.removeSync(projectDir);
         });
@@ -200,6 +321,7 @@ describe('metricsService/index.js', () => {
                 beforeEach(() => {
                     fs.outputFileSync(pathToTestPomXml, fs.readFileSync(pathToOriginalPomXmlForOpenLiberty));
                     fs.outputFileSync(pathToTestBackupPomXml, fs.readFileSync(pathToOriginalPomXmlForOpenLiberty));
+                    fs.outputFileSync(pathToTestDockerfile, 'FROM open-liberty:latest');
 
                     fs.outputFileSync(pathToJvmOptions, expectedNewJvmOptions);
                     fs.removeSync(pathToBackupJvmOptions);
@@ -316,6 +438,7 @@ describe('metricsService/index.js', () => {
 
                 fs.outputFileSync(pathToJvmOptions, expectedNewJvmOptions);
                 fs.removeSync(pathToBackupJvmOptions);
+                fs.outputFileSync(pathToTestDockerfile, 'FROM open-liberty:latest');
             });
             it(`removes metrics collector from the project's jvm.options and pom.xml`, async() => {
                 await metricsService.removeMetricsCollectorFromProject('docker', 'java', projectDir);
