@@ -59,3 +59,9 @@ module.exports.copyFileFromContainer = async function copyFileFromContainer(proj
     throw(error);
   }
 }
+
+module.exports.deleteFile = async function deleteFile(project, projectRoot, relativePathOfFile) {
+  const kubeCommand = `kubectl exec ${project.podName} -n ${K8S_NAME_SPACE} -- rm -rf ${projectRoot}/${relativePathOfFile}`;
+  log.debug(`[kubectl rm command] ${kubeCommand}`);
+  await exec(kubeCommand);
+}

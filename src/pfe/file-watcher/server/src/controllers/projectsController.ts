@@ -583,7 +583,8 @@ function checkInProgressBuilds(): void {
         runningBuilds.forEach((project: BuildQueueType) => {
             const projectID = project.operation.projectInfo.projectID;
             const buildStatus = statusController.getBuildState(projectID);
-            if (buildStatus === statusController.BuildState.success || buildStatus === statusController.BuildState.failed) {
+            if (project.handler.buildByExtension ||
+                buildStatus === statusController.BuildState.success || buildStatus === statusController.BuildState.failed) {
                 logger.logProjectInfo("Build completed for " + projectID, projectID);
                 runningBuilds.delete(project);
             }
