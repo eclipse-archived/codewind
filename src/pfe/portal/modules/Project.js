@@ -14,6 +14,7 @@ const { extname, isAbsolute, join } = require('path');
 const uuidv1 = require('uuid/v1');
 const Client = require('kubernetes-client').Client
 const config = require('kubernetes-client').config;
+const rimraf = require('rimraf')
 
 const cwUtils = require('./utils/sharedFunctions');
 const metricsStatusChecker = require('./utils/metricsStatusChecker');
@@ -103,10 +104,10 @@ module.exports = class Project {
     // Initialise the project type
     this.projectType = args.projectType;
 
-    // For metrics purposes, we treat java docker project as open liberty projects
-    this.isOpenLiberty = (this.projectType === 'docker' && this.language === 'java');
-    this.canMetricsBeInjected = this.isOpenLiberty
-      || metricsService.metricsCollectorInjectionFunctions.hasOwnProperty(this.projectType);
+    // Initialise isOpenLiberty as false
+    // We scan the project later to determine if its open liberty (setOpenLiberty)
+    this.isOpenLiberty = false;
+    this.canMetricsBeInjected = metricsService.metricsCollectorInjectionFunctions.hasOwnProperty(this.projectType);
 
     log.info(`Project ${this.name} initializing (project type: ${this.projectType}, projectID: ${this.projectID})`);
 
@@ -205,6 +206,13 @@ module.exports = class Project {
     } 
     const isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath(), this.language);
     return isMetricsAvailable;
+  }
+  
+  async setOpenLiberty() {
+    const isProjectOpenLiberty = await metricsService.determineIfOpenLiberty(this.projectType, this.language, this.projectPath());
+    // If Open Liberty override canMetricsBeInjected
+    if (isProjectOpenLiberty) this.canMetricsBeInjected = true;
+    this.isOpenLiberty = isProjectOpenLiberty;
   }
 
   /**
@@ -527,9 +535,19 @@ module.exports = class Project {
       if (fileName !== false) {
         return join(pathToLoadTestDir, fileName)
       }
+      await this.removeProfilingData(timeOfTestRun);
       throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
     }
     return null
+  }
+
+  /**
+   * 
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  async removeProfilingData(timeOfTestRun) {
+    const profilingPath = join(this.loadTestPath, timeOfTestRun);
+    await rimraf.sync(profilingPath);
   }
 
   /**

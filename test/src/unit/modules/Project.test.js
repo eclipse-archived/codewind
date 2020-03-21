@@ -185,7 +185,111 @@ describe('Project.js', () => {
                 areMetricsAvailable.should.be.false;
             });
         });
-
+    });
+    describe('setOpenLiberty()', () => {
+        const testResourcesDir = path.join(__dirname, '../../../', 'resources', 'metricsService');
+        const pathToOpenLibertyPomXml = path.join(testResourcesDir, 'openLiberty', 'pom.xml', 'withoutCollector.xml');
+        const pathToLibertyPomXml = path.join(testResourcesDir, 'liberty', 'pom.xml', 'withoutCollector.xml');
+        const testTempDir = path.join(__dirname, 'setOpenLibertyTemp');
+        before(() => {
+            // Copy a Open Liberty pom.xml into a temp dir
+            const validPomPath = path.join(testTempDir, 'openLibertyPom', 'pom.xml');
+            fs.ensureFileSync(validPomPath);
+            fs.copyFileSync(pathToOpenLibertyPomXml, validPomPath);
+            // Copy a non Open Liberty pom.xml into a temp dir
+            const invalidPomPath = path.join(testTempDir, 'invalidPom', 'pom.xml');
+            fs.ensureFileSync(invalidPomPath);
+            fs.copyFileSync(pathToLibertyPomXml, invalidPomPath);
+            // Create an Open Liberty Dockerfile
+            const dockerfileContents = 'FROM open-liberty:latest\nCOPY /something /somewhere\nCMD ["npm", "start"]';
+            fs.outputFileSync(path.join(testTempDir, 'openLibertyDockerfile', 'Dockerfile'), dockerfileContents);
+        });
+        after(() => {
+            fs.removeSync(testTempDir);
+        });
+        it('Check that isOpenLiberty is initialised as false', () => {
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.isOpenLiberty.should.be.false;
+            project.canMetricsBeInjected.should.be.false;
+        });
+        it('Check that isOpenLiberty is set to true when the language is Java, projectType is Docker and a valid Open Liberty Pom.xml exists in the project directory', async() => {
+            const args = {
+                projectID: '9318ab10-fef9-11e9-8761-9bf62d92b58b',
+                name: 'my-open-lib-project',
+                language: 'java',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: testTempDir,
+                directory: 'openLibertyPom',
+                projectType: 'docker',
+            };
+            const project = createProjectAndCheckIsAnObject(args, testTempDir);
+            await project.setOpenLiberty();
+            project.isOpenLiberty.should.be.true;
+            project.canMetricsBeInjected.should.be.true;
+        });
+        it('Check that isOpenLiberty is set to true when the language is Java, projectType is Docker and a valid Open Liberty Dockerfile exists in the project directory', async() => {
+            const args = {
+                projectID: '9318ab10-fef9-11e9-8761-9bf62d92b58b',
+                name: 'my-open-lib-project',
+                language: 'java',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: testTempDir,
+                directory: 'openLibertyDockerfile',
+                projectType: 'docker',
+            };
+            const project = createProjectAndCheckIsAnObject(args, testTempDir);
+            await project.setOpenLiberty();
+            project.isOpenLiberty.should.be.true;
+            project.canMetricsBeInjected.should.be.true;
+        });
+        it('Check that isOpenLiberty stays false when the language is not Java (Node.js)', async() => {
+            const args = {
+                projectID: '9318ab10-fef9-11e9-8761-9bf62d92b58b',
+                name: 'my-open-lib-project',
+                language: 'nodejs',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: testTempDir,
+                directory: 'openLibertyDockerfile',
+                projectType: 'docker',
+            };
+            const project = createProjectAndCheckIsAnObject(args, testTempDir);
+            const { canMetricsBeInjected: canMetricsBeInjectedPreOpenLiberty } = project;
+            await project.setOpenLiberty();
+            project.isOpenLiberty.should.be.false;
+            project.canMetricsBeInjected.should.equal(canMetricsBeInjectedPreOpenLiberty);
+        });
+        it('Check that isOpenLiberty stays false when the projectType is not Docker', async() => {
+            const args = {
+                projectID: '9318ab10-fef9-11e9-8761-9bf62d92b58b',
+                name: 'my-open-lib-project',
+                language: 'java',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: testTempDir,
+                directory: 'openLibertyDockerfile',
+                projectType: 'java',
+            };
+            const project = createProjectAndCheckIsAnObject(args, testTempDir);
+            const { canMetricsBeInjected: canMetricsBeInjectedPreOpenLiberty } = project;
+            await project.setOpenLiberty();
+            project.isOpenLiberty.should.be.false;
+            project.canMetricsBeInjected.should.equal(canMetricsBeInjectedPreOpenLiberty);
+        });
+        it('Check that isOpenLiberty is set to false when the language is Java, projectType is Docker but the Pom.xml is not an Open Liberty one and no Dockerfile exists', async() => {
+            const args = {
+                projectID: '9318ab10-fef9-11e9-8761-9bf62d92b58b',
+                name: 'my-open-lib-project',
+                language: 'java',
+                locOnDisk: '/Documents/projectDir/',
+                workspace: testTempDir,
+                directory: 'invalidPom',
+                projectType: 'docker',
+            };
+            const project = createProjectAndCheckIsAnObject(args, testTempDir);
+            const { canMetricsBeInjected: canMetricsBeInjectedPreOpenLiberty } = project;
+            await project.setOpenLiberty();
+            project.isOpenLiberty.should.be.false;
+            project.canMetricsBeInjected.should.equal(canMetricsBeInjectedPreOpenLiberty);
+        });
     });
     describe('getPort()', () => {
         it('Checks that the port returned is internal as RUNNING_IN_K8S is false', () => {
