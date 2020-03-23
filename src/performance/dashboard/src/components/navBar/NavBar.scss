@@ -43,3 +43,19 @@
 .NavBar .appTitle_2 {
   font-weight: bold;
 }
+
+
+.NavBar .serviceState {
+  float: right;
+  margin-right: 20px;
+  font-size: 0.7em;
+  font-weight: normal;
+}
+
+.NavBar .serviceState.offline {
+  background-color: #d0003d;
+  color: #fff;
+  font-weight: bold;
+  padding: 0 20px;
+  cursor: pointer;
+}
