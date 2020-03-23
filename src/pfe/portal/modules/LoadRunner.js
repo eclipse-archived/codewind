@@ -346,6 +346,7 @@ module.exports = class LoadRunner {
       const stopCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `];
       await cwUtils.spawnContainerProcess(this.project, stopCommand);
       await this.waitForHealth(false);
+      this.heartbeat('connecting');
       log.info(`beginJavaProfiling: Starting liberty server`);
       const startCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start; `];
       await cwUtils.spawnContainerProcess(this.project, startCommand);
