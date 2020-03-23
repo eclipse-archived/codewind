@@ -157,7 +157,6 @@ class PagePerformance extends React.Component {
         const showTip = !(this.state.chartData && this.state.chartData.CPU && this.state.chartData.CPU.columns && this.state.chartData.CPU.columns.length > 0);
         return (
             <Fragment>
-
                 <div className='pageTitle' role="main" aria-label='main page'>
                     <div className='pageTitle-content'>
                         <div className='main-title'>
@@ -224,7 +223,7 @@ class PagePerformance extends React.Component {
                     </div>
                     <div className="footer-container"></div>
                 </div>
-            </Fragment>
+        </Fragment>
         )
     }
 }
@@ -243,8 +242,9 @@ const mapStateToProps = stores => {
         projectMetricTypes: stores.projectMetricTypesReducer,
         projectMetrics: stores.projectMetricsReducer,
         lang: stores.localeReducer.lang,
+        connectionStatus: stores.statusReducer,
         loadRunnerConfig: stores.loadRunnerConfigReducer
-    };
+    }
 };
 
 PagePerformance.propTypes = {
