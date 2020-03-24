@@ -35,17 +35,17 @@ class NavBar extends React.Component {
     }
 
     async componentDidMount() {
+        if (this.props.socket != undefined) {
+            this.props.socket.on('disconnect', (reason) => {
+                console.error("Performance Dashboard has disconnected from Codewind: ", reason);
+                this.props.dispatch(setConnectionState(false));
+            });
 
-        this.props.socket.on('disconnect', (reason) => {
-            console.error("Performance Dashboard has disconnected from Codewind: ", reason);
-            this.props.dispatch(setConnectionState(false));
-        });
-
-        this.props.socket.on('connect', () => {
-            console.log("Performance Dashboard has connected to Codewind");
-            this.props.dispatch(setConnectionState(true));
-        });
-
+            this.props.socket.on('connect', () => {
+                console.log("Performance Dashboard has connected to Codewind");
+                this.props.dispatch(setConnectionState(true));
+            });
+        }
         try {
             await this.props.dispatch(fetchProjectConfig(this.props.projectID));
         } catch (err) {
