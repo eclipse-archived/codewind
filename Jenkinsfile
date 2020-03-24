@@ -298,11 +298,10 @@ pipeline {
                         export CWCTL_IMAGE_TAG=test
 
                         # If CHANGE_TARGET is set then this is a PR so use the target branch (usually master)
-                        CW_CLI_BRANCH=""
                         if [ -z "$CHANGE_TARGET" ]; then
-                             CW_CLI_BRANCH=$GIT_BRANCH
+                            export CW_CLI_BRANCH=$GIT_BRANCH
                         else
-                            CW_CLI_BRANCH=$CHANGE_TARGET
+                            export CW_CLI_BRANCH=$CHANGE_TARGET
                         fi
 
                         echo "cwctl branch to be used: $CW_CLI_BRANCH"
