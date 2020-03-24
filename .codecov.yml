@@ -17,3 +17,4 @@ coverage:
                 if_not_found: success
 comment:
     layout: "header, diff, files"
+    require_changes: false 

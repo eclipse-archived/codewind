@@ -191,7 +191,7 @@ const uploadCoverageToCodecov = async() => {
     const options = {
         file: CODECOV_FILE,
         token: CODECOV_TOKEN,
-        yml: path.join(__dirname, 'codecov.yml'),
+        yml: path.join(__dirname, '../..', '.codecov.yml'),
         root: path.join(__dirname, '../..'),
     };
     log.debug(`codecov options: ${options}`);
