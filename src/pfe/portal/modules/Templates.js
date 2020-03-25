@@ -418,14 +418,9 @@ function updateTemplates(repositories, allTemplates) {
 async function fetchTemplates(repositories) {
   const enabledRepositories = repositories.filter(repo => repo.enabled);
   const disabledRepositories = repositories.filter(repo => !repo.enabled);
-  log.info(`enabledRepos=${enabledRepositories}`);
-  log.info(`disabledRepos=${disabledRepositories}`);
   const enabledTemplates = await getTemplatesFromRepos(enabledRepositories);
-  log.info(`enabledTemplates=${enabledTemplates.length}`);
   const disabledTemplates = await getTemplatesFromRepos(disabledRepositories);
-  log.info(`disabledTemplates=${disabledTemplates.length}`);
   const allTemplates = enabledTemplates.concat(disabledTemplates);
-  log.info(`allTemplates=${allTemplates.length}`);
   return { enabledTemplates, allTemplates }
 }
 

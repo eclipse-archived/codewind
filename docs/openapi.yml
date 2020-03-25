@@ -1127,7 +1127,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TemplateRepo'
+              $ref: '#/components/schemas/TemplateRepoCreate'
       responses:
         200:
           description: Returns all the templates repositories that Codewind will use to find templates
