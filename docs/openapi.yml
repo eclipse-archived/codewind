@@ -1881,6 +1881,21 @@ components:
           example: "Default Codewind Templates"
         sourceId:
           type: string
+    TemplateRepoCreate:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        protected:
+          type: boolean          
     TemplateRepo:
       type: object
       required:
@@ -1900,6 +1915,8 @@ components:
             type: string
           example: ['Codewind', 'Appsody']
         enabled:
+          type: boolean
+        protected:
           type: boolean
     TemplateRepoSetting:
       type: object
