@@ -297,6 +297,15 @@ pipeline {
                         # Set image tag to test
                         export CWCTL_IMAGE_TAG=test
 
+                        # If CHANGE_TARGET is set then this is a PR so use the target branch (usually master)
+                        if [ -z "$CHANGE_TARGET" ]; then
+                            export CW_CLI_BRANCH=$GIT_BRANCH
+                        else
+                            export CW_CLI_BRANCH=$CHANGE_TARGET
+                        fi
+
+                        echo "cwctl branch to be used: $CW_CLI_BRANCH"
+
                         # Start Codewind
                         sh $DIR/start.sh
                         if [ $? -ne 0 ]; then
