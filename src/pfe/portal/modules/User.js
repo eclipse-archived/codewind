@@ -177,6 +177,7 @@ module.exports = class User {
     } catch (err) {
       // Reset run load flag and config in the project, and re-throw the error
       project.loadConfig = null;
+      project.loadInProgress = false  ;
       throw err;
     }
   }
