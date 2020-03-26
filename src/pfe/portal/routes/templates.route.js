@@ -68,13 +68,15 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
   const repositoryUrl = req.sanitizeBody('url');
   const repositoryDescription = req.sanitizeBody('description');
   const isRepoProtected = req.sanitizeBody('protected');
+  const isRepoEnabled = req.sanitizeBody('enabled');
 
   try {
     await templatesController.addRepository(
       repositoryUrl,
       repositoryDescription,
       repositoryName,
-      isRepoProtected
+      isRepoProtected,
+      isRepoEnabled
     );
     await sendRepositories(req, res, _next);
   } catch (error) {
