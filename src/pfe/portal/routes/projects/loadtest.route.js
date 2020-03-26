@@ -59,7 +59,11 @@ router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res
       return;
     } catch(err) {
       log.error(err);
-      res.status(500).send(err.info || err);
+      if (err.code == "RUN_IN_PROGRESS") {
+        res.status(409).send(err.info || err);
+      } else {
+        res.status(500).send(err.info || err);
+      }
     }
   }
 });
