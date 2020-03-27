@@ -77,10 +77,8 @@ class Links {
 }
 
 const validateLink = (newLink, links) => {
-  const { projectID, parentPFEURL, envName, projectURL, type } = newLink;
-  // Only require a parentPFEURL and projectURL if the link is remote
-  // If the link is local then the parentPFEURL is not required and the projectURL can be undefined
-  if (!projectID || !envName || !type || (type === Links.TYPES.REMOTE && (!parentPFEURL || !projectURL))) {
+  const { projectID, envName, projectURL } = newLink;
+  if (!projectID || !envName || !projectURL) {
     log.error(newLink);
     throw new ProjectLinkError(`INVALID_PARAMETERS`, newLink.envName);
   }

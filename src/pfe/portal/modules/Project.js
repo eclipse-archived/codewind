@@ -130,8 +130,9 @@ module.exports = class Project {
       this.injectMetrics = args.injectMetrics;
     }
     this.capabilitiesReady = false;
-    
-    this.links = new Links(this.projectPath(), args.links);
+
+    // this.links = new Links(this.projectPath(), args.links);
+    this.links = new Links(this.projectPath());
   }
 
 

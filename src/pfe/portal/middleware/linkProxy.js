@@ -21,12 +21,18 @@ const router = (req) => {
   };
 }
 
+const pathRewrite = (path, req) => {
+  const id = req.sanitizeParams('id');
+  return path.replace(`/links/proxy/${id}`, '');
+}
+
 // proxy middleware options
 const options = {
   target: 'http://codewind-pfe', // target field is required but we overwrite it with the customRouter
   changeOrigin: true, // needed for virtual hosted sites
   ws: true, // proxy websockets
   router,
+  pathRewrite,
 };
 
 const projectLinkProxy = createProxyMiddleware(options);

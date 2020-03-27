@@ -11,6 +11,7 @@
 
 const express = require('express');
 const router = express.Router();
+const url = require('url');
 
 const Logger = require('../../modules/utils/Logger');
 const { validateReq } = require('../../middleware/reqValidator');
@@ -36,27 +37,19 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
   // The targetProject is the one we want "this" project to be able to reach
   const targetProjectID = req.sanitizeBody('targetProjectID');
   const envName = req.sanitizeBody('envName');
-  const targetProjectURL = req.sanitizeBody('targetProjectURL');
-  const targetProjectPFEURL = req.sanitizeBody('targetProjectPFEURL');
+  const targetProjectURL = req.sanitizeBody('targetProjectURL'); // TODO would this be optional and overwrite the codewind logic?
 
   try {
     const { cw_user: user } = req;
     const project = getProjectFromReq(req);
+    verifyTargetProjectExists(targetProjectID);
+    const projectURL = new URL(`http://${process.env.HOSTNAME}:9090/links/proxy/${targetProjectID}`);
+
     const newLink = {
       projectID: targetProjectID,
       envName,
-      projectURL: targetProjectURL,
-      parentPFEURL: targetProjectPFEURL,
-      type: TYPES.REMOTE,
+      projectURL,
     };
-
-    // Check to see if the project exists on this PFE instance
-    if (!targetProjectURL && !targetProjectPFEURL) {
-      // Get the url from the projectList, throw an error if the project does not exist
-      const localProjectURL = await verifyProjectExistsAndReturnInternalURL(user, targetProjectID);
-      newLink.projectURL = localProjectURL;
-      newLink.type = TYPES.LOCAL;
-    }
 
     await project.createLink(newLink);
     log.info(`New project link created for ${project.name}`);
@@ -94,7 +87,7 @@ router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(
     
     if (linkType === TYPES.LOCAL) {
       // Get the url from the projectList, throw an error if the project does not exist
-      const localProjectURL = await verifyProjectExistsAndReturnInternalURL(user, targetProjectID);
+      const localProject = await verifyTargetProjectExists(user, targetProjectID);
       newProjectURL = localProjectURL;
     }
 
@@ -142,20 +135,12 @@ router.delete('/api/v1/projects/:id/links', validateReq, checkProjectExists, asy
   }
 });
 
-const verifyProjectExistsAndReturnInternalURL = async(user, projectID) => {
+const verifyTargetProjectExists = async(user, projectID) => {
   const project = await user.projectList.retrieveProject(projectID);
   if (!project) {
     throw new Error('projectID not found on local PFE');
   }
-  const { host: dockerNetworkIP, ports: { internalPort }, appStatus } = project;
-  // If the project has not started return undefined as the projectURL
-  if (appStatus != 'started' && !dockerNetworkIP) {
-    return undefined;
-  }
-  // Attempt to get container name fall back to docker network IP address (given to us by file-watcher)
-  const container = await dockerInspect(project);
-  const host = (container && container.Name) ? container.Name.substring(1) : dockerNetworkIP;
-  return `${host}:${internalPort}`;
+  return project;
 }
 
 const restartOrBuildProject = async(user, project) => {
