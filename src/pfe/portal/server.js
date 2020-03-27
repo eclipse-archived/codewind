@@ -267,6 +267,10 @@ function setRoutes(app, userList) {
 
   app.use(routes);
 
+  const { projectLinkProxy } = require('./middleware/linkProxy');
+  const { checkProjectExists } = require('./middleware/checkProjectExists');
+  app.use('/links/proxy/:id', checkProjectExists, projectLinkProxy);
+
   // Default route to send a 404 response, rather than the express default which
   // sends back the user input, and was seen as a content spoofing vulnerability
   app.use(function (req, res) {
