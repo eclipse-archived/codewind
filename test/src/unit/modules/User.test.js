@@ -291,7 +291,7 @@ describe('User.js', () => {
 
             await user.runLoad(project)
                 .should.eventually.be.rejectedWith('Load Runner service is not available');
-            project.loadInProgress.should.be.true;
+            project.loadInProgress.should.be.false;
             should.equal(project.loadConfig, null);
         });
     });
