@@ -472,11 +472,10 @@ async function addProjectLink(projectID, targetProjectID, envName, targetProject
     return res;
 }
 
-async function updateProjectLink(projectID, envName, updatedEnvName, targetProjectURL) {
+async function updateProjectLink(projectID, envName, updatedEnvName) {
     const reqBody = {
         envName,
         updatedEnvName,
-        targetProjectURL,
     };
     const res = await reqService.chai
         .put(`/api/v1/projects/${projectID}/links`)

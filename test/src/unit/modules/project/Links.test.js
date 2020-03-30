@@ -132,23 +132,23 @@ describe('Links.js', function() {
                     .and.eventually.have.property('code', 'EXISTS');
             });
         });
-        describe('update(envName, newEnvName, newProjectURL)', () => {
+        describe('update(envName, newEnvName)', () => {
             afterDeleteEnvFile();
             it('updates a link', async() => {
                 const links = new Links(TEMP_TEST_DIR);
                 await links.add(dummyLink);
 
                 const { envName } = dummyLink;
-                await links.update(envName, 'NEW_ENV', 'NEW_URL');
+                await links.update(envName, 'NEW_ENV');
                 const linkArray = links.getAll();
-                linkArray.should.deep.includes({ ...dummyLink, envName: 'NEW_ENV', projectURL: 'NEW_URL' });
+                linkArray.should.deep.includes({ ...dummyLink, envName: 'NEW_ENV' });
             });
             it('does not error when the given fields are the same as the old ones', async() => {
                 const links = new Links(TEMP_TEST_DIR);
                 await links.add(dummyLink);
 
-                const { envName, projectURL } = dummyLink;
-                await links.update(envName, envName, projectURL);
+                const { envName } = dummyLink;
+                await links.update(envName, envName);
                 const linkArray = links.getAll();
                 linkArray.should.deep.includes(dummyLink);
             });
@@ -157,23 +157,13 @@ describe('Links.js', function() {
                 await links.add(dummyLink);
 
                 const { envName } = dummyLink;
-                return links.update(envName, '', 'NEW_URL')
-                    .should.be.eventually.rejectedWith(ProjectLinkError)
-                    .and.eventually.have.property('code', 'INVALID_PARAMETERS');
-            });
-            it('throws an error as the newProjectURL is a blank string (no update)', async() => {
-                const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyLink);
-
-                const { envName } = dummyLink;
-
-                return links.update(envName, 'notnull', null)
+                return links.update(envName, '')
                     .should.be.eventually.rejectedWith(ProjectLinkError)
                     .and.eventually.have.property('code', 'INVALID_PARAMETERS');
             });
             it('throws an error as the link does not exist', () => {
                 const links = new Links(TEMP_TEST_DIR);
-                return links.update('nonexistant', 'notnull', 'notnull')
+                return links.update('nonexistant', 'notnull')
                     .should.be.eventually.rejectedWith(ProjectLinkError)
                     .and.eventually.have.property('code', 'NOT_FOUND');
             });

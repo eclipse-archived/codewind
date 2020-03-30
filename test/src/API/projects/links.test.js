@@ -102,7 +102,7 @@ describe('Link tests (/api/v1/project/:id/links)', () => {
                 envExistsInLinks.should.be.gt(-1);
             });
             it('returns 204 as the link has been updated', async function() {
-                const res = await projectService.updateProjectLink(projectIDForGenericDocker, envName, 'NEW_ENV_NAME', 'NEW_URL_VALUE');
+                const res = await projectService.updateProjectLink(projectIDForGenericDocker, envName, 'NEW_ENV_NAME');
                 res.should.have.status(204);
 
                 const body = await projectService.getProjectLinks(projectIDForGenericDocker);

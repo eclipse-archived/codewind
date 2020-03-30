@@ -50,7 +50,7 @@ class Links {
     await writeEnvironmentFile(this.filePath, this.getEnvPairs());
   }
 
-  async update(envName, newEnvName, newProjectURL) {
+  async update(envName, newEnvName) {
     const linkIndex = this._links.findIndex(link => link.envName === envName);
     if (linkIndex === -1) {
       throw new ProjectLinkError('NOT_FOUND', envName);
@@ -60,8 +60,8 @@ class Links {
     // Clone and remove the updated link so we only validate against all other links
     const linksWithoutOneToBeUpdated = this._links.filter(link => link.envName !== envName);
 
-    this._links[linkIndex] = validateLink({ ...currentLink, envName: newEnvName, projectURL: newProjectURL }, linksWithoutOneToBeUpdated);
-    log.info(`Link updated - env: ${envName} properties changed to envName: ${newEnvName} projectURL: ${newProjectURL}`);
+    this._links[linkIndex] = validateLink({ ...currentLink, envName: newEnvName }, linksWithoutOneToBeUpdated);
+    log.info(`Link updated - env: ${envName} properties changed to envName: ${newEnvName}`);
     await writeEnvironmentFile(this.filePath, this.getEnvPairs());
   }
 
