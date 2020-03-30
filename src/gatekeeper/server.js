@@ -124,6 +124,9 @@ async function main() {
     const authMiddleware = keyCloak.protect("realm:"+required_accessRole);
     app.use(keyCloak.middleware({ logout: '/logout', admin: '/' }));
 
+    // Favicon.ico
+    app.use('/favicon.ico', express.static('images/favicon.ico'));
+
     console.log("Added environment route to : /api/v1/gatekeeper/environment")
     // environment route
     app.get('/api/v1/gatekeeper/environment', function (req, res) {
