@@ -67,11 +67,6 @@ class NavBar extends React.Component {
                 <span className='appTitle_1'>code</span>
                 <span className='appTitle_2'>wind</span>
                 <span className='projectName'>{this.state.projectName}</span>
-                {
-                    this.props.connectionStatus.socketConnected ?
-                    <span aria-label="Connected to Codewind" className='serviceState'>Connected</span> : 
-                    <span aria-label="Disconnected Click to refresh" title="Click here to refresh window" onClick={ this.handleRefreshPage } className='serviceState offline'>Offline</span>
-                }
             </div>
         )
     }

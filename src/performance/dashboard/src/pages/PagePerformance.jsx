@@ -159,7 +159,6 @@ class PagePerformance extends React.Component {
         const showTip = !(this.state.chartData && this.state.chartData.CPU && this.state.chartData.CPU.columns && this.state.chartData.CPU.columns.length > 0);
         return (
             <Fragment>
-                <ModalBlocker active={!this.props.connectionStatus.socketConnected}/>
                 <div className='pageTitle' role="main" aria-label='main page'>
                     <div className='pageTitle-content'>
                         <div className='main-title'>
