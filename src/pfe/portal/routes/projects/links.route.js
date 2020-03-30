@@ -11,13 +11,11 @@
 
 const express = require('express');
 const router = express.Router();
-const url = require('url');
 
 const Logger = require('../../modules/utils/Logger');
 const { validateReq } = require('../../middleware/reqValidator');
 const { checkProjectExists, getProjectFromReq } = require('../../middleware/checkProjectExists');
 const { inspect: dockerInspect } = require('../../modules/utils/dockerFunctions');
-const { TYPES } = require('../../modules/project/Links');
 const cwUtils = require('../../modules/utils/sharedFunctions');
 const ProjectLinkError = require('../../modules/utils/errors/ProjectLinkError');
 
@@ -37,11 +35,11 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
   // The targetProject is the one we want "this" project to be able to reach
   const targetProjectID = req.sanitizeBody('targetProjectID');
   const envName = req.sanitizeBody('envName');
-  const targetProjectURL = req.sanitizeBody('targetProjectURL'); // TODO would this be optional and overwrite the codewind logic?
 
   try {
     const { cw_user: user } = req;
     const project = getProjectFromReq(req);
+    // TODO add logic to check remote project exists
     verifyTargetProjectExists(targetProjectID);
     const projectURL = new URL(`http://${process.env.HOSTNAME}:9090/links/proxy/${targetProjectID}`);
 
@@ -76,25 +74,13 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
 router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(req, res) => {
   const currentEnvName = req.sanitizeBody('envName');
   const newEnvName = req.sanitizeBody('updatedEnvName');
-  let newProjectURL = req.sanitizeBody('targetProjectURL');
   try {
     const { cw_user: user } = req;
     const project = getProjectFromReq(req);
-    const { links } = project;
-
-    // If the link on the same PFE (local) fetch the projectURL from the ProjectList (ignore newProjectURL)
-    const { type: linkType, projectID: targetProjectID, projectURL: currentProjectURL } = links.get(currentEnvName);
-    
-    if (linkType === TYPES.LOCAL) {
-      // Get the url from the projectList, throw an error if the project does not exist
-      const localProject = await verifyTargetProjectExists(user, targetProjectID);
-      newProjectURL = localProjectURL;
-    }
 
     // If newEnvName or newProjectURL are not given through the API, default them to their old values
     const updatedLinkEnvName = (newEnvName) ? newEnvName : currentEnvName;
-    const updatedLinkProjectURL = (newProjectURL) ? newProjectURL : currentProjectURL;
-    await project.updateLink(currentEnvName, updatedLinkEnvName, updatedLinkProjectURL);
+    await project.updateLink(currentEnvName, updatedLinkEnvName);
 
     // Send status and then kick off the restart/rebuild
     res.sendStatus(204);

@@ -25,7 +25,7 @@ class Links {
     this._links = (args && args._links) ? args._links : [];
     this.filePath = path.join(directory, ENV_FILE_NAME);
   }
-  
+
   getAll() {
     return this._links;
   }
@@ -97,13 +97,10 @@ const envNameExists = (links, envName) => {
 }
 
 const writeEnvironmentFile = async (filePath, envPairArray) => {
-  const fileContents = envPairArray.join('\n');
+  let fileContents = envPairArray.join('\n');
+  // Add new line to the end of string
+  fileContents += '\n';
   await fs.writeFile(filePath, fileContents);
-}
-
-Links.TYPES = {
-  LOCAL: 'LOCAL', // Target project is running on the same PFE
-  REMOTE: 'REMOTE', // Target project is running on a different PFE
 }
 
 module.exports = Links;
