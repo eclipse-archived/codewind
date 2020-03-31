@@ -178,13 +178,8 @@ module.exports = class LoadRunner {
           metricsJson.desc = this.runDescription;
         }
         try {
-          // eslint-disable-next-line no-sync
-          if (!fs.existsSync(this.workingDir)) {
-            // eslint-disable-next-line no-sync
-            fs.mkdirSync(this.workingDir);
-          }
-          // eslint-disable-next-line no-sync
-          fs.writeJsonSync(this.workingDir + '/metrics.json', metricsJson, { spaces: '  ' });
+          await fs.ensureDir(this.workingDir);
+          await fs.writeJson(this.workingDir + '/metrics.json', metricsJson, { spaces: '  ' });
         } catch (err) {
           log.error(err);
         }
