@@ -54,6 +54,23 @@ describe('Links.js', function() {
                 links.should.deep.equal({ ...args, filePath: '.codewind-project-links.env' });
             });
         });
+        describe('getFilePath()', () => {
+            it('returns the file path of the project links file', () => {
+                const links = new Links(TEMP_TEST_DIR);
+                links.getFilePath().should.equal(path.join(TEMP_TEST_DIR, '.codewind-project-links.env'));
+            });
+        });
+        describe('envFileExists()', () => {
+            it('reports the env file existing as false as it has not been created yet', () => {
+                const links = new Links(TEMP_TEST_DIR);
+                links.envFileExists().should.eventually.equal(false);
+            });
+            it('returns the file path of the project links file', async() => {
+                const links = new Links(TEMP_TEST_DIR);
+                await links.add(dummyLink);
+                links.envFileExists().should.eventually.equal(true);
+            });
+        });
         describe('getAll()', () => {
             it('returns the links array', () => {
                 const links = new Links(TEMP_TEST_DIR);
@@ -238,18 +255,32 @@ describe('Links.js', function() {
                 envNameExists([], 'notexisting').should.be.false;
             });
         });
-        describe('writeEnvironmentFile(filePath, links)', () => {
-            const writeEnvironmentFile = Links.__get__('writeEnvironmentFile');
-            const filePath = path.join(TEMP_TEST_DIR, 'writeEnvironmentFileTest');
+        describe('updateEnvironmentFile(filePath, links)', () => {
+            const updateEnvironmentFile = Links.__get__('updateEnvironmentFile');
+            const filePath = path.join(TEMP_TEST_DIR, 'updateEnvironmentFileTest');
             afterEach(() => {
                 fs.removeSync(filePath);
             });
             it('writes out the environment file', async() => {
                 const links = ['env1=url1', 'env2=url2'];
-                await writeEnvironmentFile(filePath, links);
-                await fs.pathExists(filePath);
+                await updateEnvironmentFile(filePath, links);
+                const pathExists = await fs.pathExists(filePath);
+                pathExists.should.be.true;
                 const fileContents = await fs.readFile(filePath, 'utf8');
                 fileContents.should.equal('env1=url1\nenv2=url2\n');
+            });
+            it('does not create an environment file if an empty env array is given', async() => {
+                const links = [];
+                await updateEnvironmentFile(filePath, links);
+                const pathExists = await fs.pathExists(filePath);
+                pathExists.should.be.false;
+            });
+            it('removes an environment file if an empty env array is given', async() => {
+                const links = [];
+                await fs.ensureFile(filePath);
+                await updateEnvironmentFile(filePath, links);
+                const pathExists = await fs.pathExists(filePath);
+                pathExists.should.be.false;
             });
         });
     });

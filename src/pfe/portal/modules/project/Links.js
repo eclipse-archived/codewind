@@ -26,6 +26,14 @@ class Links {
     this.filePath = path.join(directory, ENV_FILE_NAME);
   }
 
+  getFilePath() {
+    return this.filePath;
+  }
+
+  envFileExists() {
+    return fs.pathExists(this.filePath);
+  }
+
   getAll() {
     return this._links;
   }
@@ -47,7 +55,7 @@ class Links {
     const validatedLink = validateLink(newLink, this._links);
     log.info(`Link added - envName: ${envName}, projectURL: ${projectURL}`);
     this._links.push(validatedLink);
-    await writeEnvironmentFile(this.filePath, this.getEnvPairs());
+    await updateEnvironmentFile(this.filePath, this.getEnvPairs());
   }
 
   async update(envName, newEnvName) {
@@ -62,7 +70,7 @@ class Links {
 
     this._links[linkIndex] = validateLink({ ...currentLink, envName: newEnvName }, linksWithoutOneToBeUpdated);
     log.info(`Link updated - env: ${envName} properties changed to envName: ${newEnvName}`);
-    await writeEnvironmentFile(this.filePath, this.getEnvPairs());
+    await updateEnvironmentFile(this.filePath, this.getEnvPairs());
   }
 
   async delete(envName) {
@@ -72,7 +80,7 @@ class Links {
     }
     this._links.splice(linkIndex, 1);
     log.info(`Link ${envName} deleted`);
-    await writeEnvironmentFile(this.filePath, this.getEnvPairs());
+    await updateEnvironmentFile(this.filePath, this.getEnvPairs());
   }
 }
 
@@ -96,11 +104,14 @@ const envNameExists = (links, envName) => {
   return envList.includes(envName);
 }
 
-const writeEnvironmentFile = async (filePath, envPairArray) => {
+const updateEnvironmentFile = (filePath, envPairArray) => {
+  if (envPairArray.length === 0) {
+    return fs.remove(filePath);
+  }
   let fileContents = envPairArray.join('\n');
   // Add new line to the end of string
   fileContents += '\n';
-  await fs.writeFile(filePath, fileContents);
+  return fs.writeFile(filePath, fileContents);
 }
 
 module.exports = Links;

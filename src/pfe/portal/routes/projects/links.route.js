@@ -140,7 +140,16 @@ const restartOrBuildProject = async(user, project) => {
 };
 
 const restartNodeSpringLiberty = async(user, project) => {
-  const { name, startMode } = project;
+  const { name, startMode, links } = project;
+  const linksFileExists = await links.envFileExists();
+  const projectRoot = cwUtils.getProjectSourceRoot(project);
+  // TODO don't hard code '.codewind-project-links.env'
+  const envFileName = '.codewind-project-links.env';
+  if (linksFileExists) {
+    await cwUtils.copyFile(project, links.getFilePath(), projectRoot, envFileName);
+  } else {
+    await cwUtils.deleteFile(project, projectRoot, envFileName);
+  }
   log.info(`Restarting ${name} to pick up network environment variables`);
   const mode = (startMode) ? startMode : 'run';
   await user.restartProject(project, mode);
