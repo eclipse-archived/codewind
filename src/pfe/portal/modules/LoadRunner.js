@@ -178,6 +178,7 @@ module.exports = class LoadRunner {
           metricsJson.desc = this.runDescription;
         }
         try {
+          await fs.ensureDir(this.workingDir);
           await fs.writeJson(this.workingDir + '/metrics.json', metricsJson, { spaces: '  ' });
         } catch (err) {
           log.error(err);
@@ -541,7 +542,7 @@ module.exports = class LoadRunner {
       log.info(`Load run on project ${this.project.projectID} completed`);
       this.project.loadInProgress = false;   // Clear the flag on the project
       if (this.collectionUri !== null) {
-        this.recordCollection();
+        await this.recordCollection();
       }
       clearTimeout(this.heartbeatID);
       this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
