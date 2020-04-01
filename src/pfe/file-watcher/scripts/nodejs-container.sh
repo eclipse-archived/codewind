@@ -246,6 +246,10 @@ function deployK8s() {
 	# Delete any pods left that are terminating, to ensure they go away
 	/file-watcher/scripts/kubeScripts/clear-terminating-pods.sh $project
 
+	POD_NAME="$( kubectl get po --selector=release=$project | grep 'Running' | cut -d ' ' -f 1 )"
+	kubectl cp /file-watcher/scripts/nodejsScripts "$POD_NAME":/scripts
+	kubectl exec "$POD_NAME" -- /scripts/noderun.sh start false "$START_MODE" "$HOST_OS"
+
 	echo -e "Touching application log file: "$LOG_FOLDER/$APP_LOG.log""
 	touch "$LOG_FOLDER/$APP_LOG.log"
 	echo -e "Triggering log file event for: application log"
@@ -270,7 +274,16 @@ function dockerRun() {
 	workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
 	echo "Workspace path used for volume mounting is: "$workspace""
 
-	$IMAGE_COMMAND run --network=codewind_network -e $heapdump --name $project -p 127.0.0.1::$DEBUG_PORT -P -dt $project /bin/sh -c "$dockerCmd";
+	$IMAGE_COMMAND run \
+		--network=codewind_network \
+		--env $heapdump \
+		--name $project \
+		--publish 127.0.0.1::$DEBUG_PORT \
+		--publish-all \
+		--detach \
+		--tty \
+		$project \
+		/bin/sh -c "$dockerCmd";
 	if [ $? -eq 0 ]; then
 		echo -e "Copying over source files"
 		docker cp "$WORKSPACE/$projectName/." $project:/app
@@ -456,14 +469,26 @@ elif [ "$COMMAND" == "update" ]; then
 # Stop the application (not supported on Kubernetes)
 elif [ "$COMMAND" == "stop" ]; then
 	echo "Stopping node.js project $projectName"
-	$IMAGE_COMMAND exec $project /scripts/noderun.sh stop
+	if [[ "$IN_K8" == "true" ]]; then
+		POD_NAME="$( kubectl get po --selector=release=$project | grep 'Running' | cut -d ' ' -f 1 )"
+		kubectl cp /file-watcher/scripts/nodejsScripts/ "$POD_NAME":/scripts
+		kubectl exec "$POD_NAME" -- /scripts/noderun.sh stop
+	else
+		$IMAGE_COMMAND exec "$project" /scripts/noderun.sh stop
+	fi
 	$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
 # Start the application (not supported on Kubernetes)
 elif [ "$COMMAND" == "start" ]; then
 	echo "Starting node.js project $projectName"
 	# Clear the cache since restarting node will pick up any changes to package.json or nodemon.json
 	clearNodeCache
-	$IMAGE_COMMAND exec $project /scripts/noderun.sh start $AUTO_BUILD_ENABLED $START_MODE $HOST_OS
+	if [[ "$IN_K8" == "true" ]]; then
+		POD_NAME="$( kubectl get po --selector=release=$project | grep 'Running' | cut -d ' ' -f 1 )"
+		kubectl cp /file-watcher/scripts/nodejsScripts/ "$POD_NAME":/scripts
+		kubectl exec "$POD_NAME" -- /scripts/noderun.sh start false "$START_MODE" "$HOST_OS"
+	else
+		$IMAGE_COMMAND exec "$project" /scripts/noderun.sh start "$AUTO_BUILD_ENABLED" "$START_MODE" "$HOST_OS"
+	fi
 	$util updateAppState $PROJECT_ID $APP_STATE_STARTING
 # Enable auto build
 elif [ "$COMMAND" == "enableautobuild" ]; then

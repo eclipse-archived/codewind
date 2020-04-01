@@ -29,6 +29,14 @@ function addOwnerReference() {
     yq w -i $filename -- metadata.ownerReferences[$index].uid $PFE_UID
 }
 
+function overwriteContainerArgsWithTail() {
+    local argsPath="spec.template.spec.containers[0].args"
+    yq w -i "$deploymentFile" -- "$argsPath" []
+    yq w -i "$deploymentFile" -- "$argsPath"[0] "tail"
+    yq w -i "$deploymentFile" -- "$argsPath"[1] "-F"
+    yq w -i "$deploymentFile" -- "$argsPath"[2] "/app/package.json"
+}
+
 export PFE_NAME=$( kubectl get rs --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath='{.items[0].metadata.name}' )
 export PFE_UID=$( kubectl get rs --selector=app=codewind-pfe,codewindWorkspace=$CHE_WORKSPACE_ID -o jsonpath='{.items[0].metadata.uid}' )
 
@@ -58,3 +66,5 @@ yq w -i $serviceFile -- spec.selector.release $releaseName
 
 # Add owner reference for deletion when workspace is deleted
 addOwnerReference $serviceFile
+
+overwriteContainerArgsWithTail

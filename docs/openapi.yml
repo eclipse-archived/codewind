@@ -932,7 +932,7 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/MessageObject'
                   - $ref: '#/components/schemas/CodewindError'
-                 
+
         500:
           description: Internal error
     delete:
@@ -1895,7 +1895,7 @@ components:
         enabled:
           type: boolean
         protected:
-          type: boolean          
+          type: boolean
     TemplateRepo:
       type: object
       required:

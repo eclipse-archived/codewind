@@ -41,23 +41,6 @@ const changeInternalDebugPort = async function (debugPort: string, operation: Op
     const capabilities = projectExtensions.getProjectCapabilities(projectHandler);
 
     debugPort = debugPort.toString();
-    if (process.env.IN_K8 === "true") {
-        if (debugPort.trim().length != 0) {
-            const errorMsg = "BAD_REQUEST: debug mode is not supported on Kubernetes. ";
-            logger.logProjectError("Changing the debug port failed: " + errorMsg, projectID);
-            const data: ProjectSettingsEvent = {
-                operationId: operation.operationId,
-                projectID: projectID,
-                ports: {
-                    internalDebugPort: debugPort
-                },
-                status: "failed",
-                error: errorMsg
-            };
-            io.emitOnListener("projectSettingsChanged", data);
-        }
-        return;
-    }
 
     if ( !capabilities || ( !capabilities.hasStartMode("debug") && !capabilities.hasStartMode("debugNoInit") )) {
             const errorMsg = "BAD_REQUEST: The project does not support debug mode.";
@@ -248,14 +231,11 @@ const changeInternalPort = async function (applicationPort: string, operation: O
             }
         };
 
-        // Get the debug port only for local case
-        if (!process.env.IN_K8) {
-            // if debug port is not present in container info on start mode, then get it from project info
-            if (containerInfo.internalDebugPort) {
-                data.ports.internalDebugPort = containerInfo.internalDebugPort;
-            } else if (projectInfo.debugPort) {
-                data.ports.internalDebugPort = projectInfo.debugPort;
-            }
+        // if debug port is not present in container info on start mode, then get it from project info
+        if (containerInfo.internalDebugPort) {
+            data.ports.internalDebugPort = containerInfo.internalDebugPort;
+        } else if (projectInfo.debugPort) {
+            data.ports.internalDebugPort = projectInfo.debugPort;
         }
 
         io.emitOnListener("projectSettingsChanged", data);
