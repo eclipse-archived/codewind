@@ -245,7 +245,6 @@ const mapStateToProps = stores => {
         projectMetricTypes: stores.projectMetricTypesReducer,
         projectMetrics: stores.projectMetricsReducer,
         lang: stores.localeReducer.lang,
-        connectionStatus: stores.statusReducer,
         loadRunnerConfig: stores.loadRunnerConfigReducer
     }
 };

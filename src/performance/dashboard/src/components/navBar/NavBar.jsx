@@ -27,25 +27,9 @@ class NavBar extends React.Component {
         this.state = {
             projectName: ''
         }
-        this.handleRefreshPage = this.handleRefreshPage.bind(this)
-    }
-
-    handleRefreshPage(){
-        window.location.reload();
     }
 
     async componentDidMount() {
-        if (this.props.socket != undefined) {
-            this.props.socket.on('disconnect', (reason) => {
-                console.error("Performance Dashboard has disconnected from Codewind: ", reason);
-                this.props.dispatch(setConnectionState(false));
-            });
-
-            this.props.socket.on('connect', () => {
-                console.log("Performance Dashboard has connected to Codewind");
-                this.props.dispatch(setConnectionState(true));
-            });
-        }
         try {
             await this.props.dispatch(fetchProjectConfig(this.props.projectID));
         } catch (err) {
@@ -67,11 +51,6 @@ class NavBar extends React.Component {
                 <span className='appTitle_1'>code</span>
                 <span className='appTitle_2'>wind</span>
                 <span className='projectName'>{this.state.projectName}</span>
-                {
-                    this.props.connectionStatus.socketConnected ?
-                    <span aria-label="Connected to Codewind" className='serviceState'>Connected</span> : 
-                    <span aria-label="Disconnected Click to refresh" title="Click here to refresh window" onClick={ this.handleRefreshPage } className='serviceState offline'>Offline</span>
-                }
             </div>
         )
     }
@@ -81,21 +60,13 @@ class NavBar extends React.Component {
 // Mapped Redux Stores
 const mapStateToProps = stores => {
     return {
-        projectInfo: stores.projectInfoReducer,
-        connectionStatus: stores.statusReducer
+        projectInfo: stores.projectInfoReducer
     };
 };
-
-// Add UI SocketContext via props
-const NavBarWithSocket = props => (
-    <SocketContext.Consumer>
-        {socket => <NavBar {...props} socket={socket} />}
-    </SocketContext.Consumer>
-)
 
 NavBar.propTypes = {
     projectID: PropTypes.string.isRequired
 }
 
-export default connect(mapStateToProps)(NavBarWithSocket);
+export default connect(mapStateToProps)(NavBar);
 
