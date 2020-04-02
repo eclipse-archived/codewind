@@ -558,6 +558,7 @@ describe('LoadRunner.js', () => {
             const writeGitHash = sandbox.stub(loadRunner, 'writeGitHash');
             const beginNodeProfiling = sandbox.stub(loadRunner, 'beginNodeProfiling');
             const beginJavaProfiling = sandbox.stub(loadRunner, 'beginJavaProfiling');
+            const heartbeat = sandbox.stub(loadRunner, 'heartbeat');
 
             // act
             const loadrunnerRes = await loadRunner.runLoad(mockLoadConfig, mockProject, 'mockRunDescription');
@@ -568,19 +569,11 @@ describe('LoadRunner.js', () => {
             loadRunner.project.getProjectKubeService.should.have.been.calledOnceWithExactly();
             fetchProjectMetricsFeatures.should.have.been.calledOnceWithExactly();
             writeGitHash.should.not.have.been.called;
-            mockUser.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
-                projectID: mockProject.projectID,
-                status: 'preparing',
-                timestamp: loadRunner.metricsFolder,
-            });
+            heartbeat.should.have.been.calledWithExactly('preparing');
             beginNodeProfiling.should.not.have.been.called;
             beginJavaProfiling.should.not.have.been.called;
             createCollection.should.have.been.calledOnceWithExactly(mockLoadConfig.maxSeconds);
-            mockUser.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
-                projectID: mockProject.projectID,
-                status: 'starting',
-                timestamp: loadRunner.metricsFolder,
-            });
+            heartbeat.should.have.been.calledWithExactly('starting');
             loadrunnerRes.should.deep.equal({ statusCode: 202 });
         });
     });
