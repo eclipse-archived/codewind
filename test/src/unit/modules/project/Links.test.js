@@ -220,7 +220,7 @@ describe('Links.js', function() {
             it('throws an error as the newLink object is missing the projectID', () => {
                 const newLink = {
                     envName: 'env',
-                    projectURL: 'some'
+                    projectURL: 'some',
                 };
                 (() => validateLink(newLink, [])).should.throw(ProjectLinkError)
                     .and.have.property('code', 'INVALID_PARAMETERS');

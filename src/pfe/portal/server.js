@@ -247,6 +247,8 @@ function setRoutes(app, userList) {
   const routes = require('./routes');
   const { pipePerfProxyReqsToPerfContainer } = require('./controllers/performance.controller');
   const { handleErrors } = require('./middleware/errorHandler');
+  const { ENDPOINT: projectLinkProxyEndpoint, projectLinkProxy } = require('./controllers/links.controller');
+  const { checkProjectExists } = require('./middleware/checkProjectExists');
 
   // Add the user object into the request
   app.all('*', function (req, res, next) {
@@ -257,6 +259,8 @@ function setRoutes(app, userList) {
 
   /* Proxy Performance container routes */
   app.use('/performance/*', pipePerfProxyReqsToPerfContainer);
+  // Proxy Link routes
+  app.use(`${projectLinkProxyEndpoint}:id`, checkProjectExists, projectLinkProxy);
 
   app.use(bodyParser.json({ limit: '30mb' }));
   app.use(bodyParser.urlencoded({
@@ -266,10 +270,6 @@ function setRoutes(app, userList) {
   log.logAllApiCalls(app); // must be called after 'app.use(bodyParser)', and before 'app.use(router)'
 
   app.use(routes);
-
-  const { projectLinkProxy } = require('./middleware/linkProxy');
-  const { checkProjectExists } = require('./middleware/checkProjectExists');
-  app.use('/links/proxy/:id', checkProjectExists, projectLinkProxy);
 
   // Default route to send a 404 response, rather than the express default which
   // sends back the user input, and was seen as a content spoofing vulnerability

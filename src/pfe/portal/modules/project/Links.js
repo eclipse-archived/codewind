@@ -15,15 +15,13 @@ const ProjectLinkError = require('../utils/errors/ProjectLinkError');
 const Logger = require('../utils/Logger');
 const log = new Logger(__filename);
 
-const ENV_FILE_NAME = '.codewind-project-links.env'; // This will be in the users container
-
 /**
  * The Links class
  */
 class Links {
   constructor(directory, args) {
     this._links = (args && args._links) ? args._links : [];
-    this.filePath = path.join(directory, ENV_FILE_NAME);
+    this.filePath = path.join(directory, Links.ENV_FILE_NAME);
   }
 
   getFilePath() {
@@ -83,6 +81,8 @@ class Links {
     await updateEnvironmentFile(this.filePath, this.getEnvPairs());
   }
 }
+
+Links.ENV_FILE_NAME = '.codewind-project-links.env'; // This will be in the users container
 
 const validateLink = (newLink, links) => {
   const { projectID, envName, projectURL } = newLink;

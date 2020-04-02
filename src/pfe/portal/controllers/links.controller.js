@@ -9,8 +9,11 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const { createProxyMiddleware } = require('http-proxy-middleware');
-const { getProjectFromReq } = require('./checkProjectExists');
+const { getProjectFromReq } = require('../middleware/checkProjectExists');
 
+const ENDPOINT = '/links/proxy/'
+
+// Custom Proxy Router
 const router = (req) => {
   const { protocol } = req;
   const { host, ports: { internalPort }} = getProjectFromReq(req);
@@ -21,22 +24,26 @@ const router = (req) => {
   };
 }
 
+// Custom Proxy Path Rewrite (remove the proxy endpoint)
 const pathRewrite = (path, req) => {
   const id = req.sanitizeParams('id');
-  return path.replace(`/links/proxy/${id}`, '');
+  return path.replace(`${ENDPOINT}${id}`, '');
 }
 
-// proxy middleware options
-const options = {
+const projectLinkProxy = createProxyMiddleware({
   target: 'http://codewind-pfe', // target field is required but we overwrite it with the customRouter
   changeOrigin: true, // needed for virtual hosted sites
   ws: true, // proxy websockets
   router,
   pathRewrite,
-};
+});
 
-const projectLinkProxy = createProxyMiddleware(options);
+const createProxyURL = (targetProjectID) => {
+  return new URL(`http://${process.env.HOSTNAME}:9090${ENDPOINT}${targetProjectID}`);
+}
 
 module.exports = {
+  ENDPOINT,
   projectLinkProxy,
+  createProxyURL,
 }

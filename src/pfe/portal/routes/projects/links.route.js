@@ -18,6 +18,7 @@ const { checkProjectExists, getProjectFromReq } = require('../../middleware/chec
 const { inspect: dockerInspect } = require('../../modules/utils/dockerFunctions');
 const cwUtils = require('../../modules/utils/sharedFunctions');
 const ProjectLinkError = require('../../modules/utils/errors/ProjectLinkError');
+const { createProxyURL } = require('../../controllers/links.controller');
 
 const log = new Logger(__filename);
 
@@ -26,8 +27,7 @@ router.get('/api/v1/projects/:id/links', validateReq, checkProjectExists, (req, 
     const { links } = getProjectFromReq(req);
     res.status(200).send(links.getAll());
   } catch (err) {
-    log.error(err);
-    res.status(500).send(err);
+    handleRequestError(res, err);
   }
 });
 
@@ -40,16 +40,14 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
     const { cw_user: user } = req;
     const project = getProjectFromReq(req);
     // TODO add logic to check remote project exists
-    verifyTargetProjectExists(targetProjectID);
-    const projectURL = new URL(`http://${process.env.HOSTNAME}:9090/links/proxy/${targetProjectID}`);
+    verifyTargetProjectExists(user, targetProjectID);
+    const projectURL = createProxyURL(targetProjectID);
 
-    const newLink = {
+    await project.createLink({
       projectID: targetProjectID,
       envName,
       projectURL,
-    };
-
-    await project.createLink(newLink);
+    });
     log.info(`New project link created for ${project.name}`);
 
     // Send status and then kick off the restart/rebuild
@@ -60,14 +58,7 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
       await restartOrBuildProject(user, project);
     }
   } catch (err) {
-    log.error(err);
-    if (err.code === ProjectLinkError.CODES.INVALID_PARAMETERS) {
-      res.sendStatus(400);
-    } else if (err.code === ProjectLinkError.CODES.EXISTS) {
-      res.sendStatus(409);
-    } else {
-      res.status(500).send(err);
-    }
+    handleRequestError(res, err);
   }
 });
 
@@ -89,12 +80,7 @@ router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(
       await restartOrBuildProject(user, project);
     }
   } catch (err) {
-    log.error(err);
-    if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
-      res.sendStatus(404);
-    } else {
-      res.status(500).send(err);
-    }
+    handleRequestError(res, err);
   }
 });
 
@@ -112,19 +98,27 @@ router.delete('/api/v1/projects/:id/links', validateReq, checkProjectExists, asy
       await restartOrBuildProject(user, project);
     }
   } catch (err) {
-    log.error(err);
-    if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
-      res.sendStatus(404);
-    } else {
-      res.status(500).send(err);
-    }
+    handleRequestError(res, err);
   }
 });
 
-const verifyTargetProjectExists = async(user, projectID) => {
-  const project = await user.projectList.retrieveProject(projectID);
+const handleRequestError = (res, err) => {
+  log.error(err);
+  if (err.code === ProjectLinkError.CODES.INVALID_PARAMETERS) {
+    res.sendStatus(400);
+  } else if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
+    res.sendStatus(404);
+  } else if (err.code === ProjectLinkError.CODES.EXISTS) {
+    res.sendStatus(409);
+  } else {
+    res.status(500).send(err);
+  }
+};
+
+const verifyTargetProjectExists = (user, projectID) => {
+  const project = user.projectList.retrieveProject(projectID);
   if (!project) {
-    throw new Error('projectID not found on local PFE');
+    throw new ProjectLinkError('NOT_FOUND', projectID);
   }
   return project;
 }
@@ -143,8 +137,8 @@ const restartNodeSpringLiberty = async(user, project) => {
   const { name, startMode, links } = project;
   const linksFileExists = await links.envFileExists();
   const projectRoot = cwUtils.getProjectSourceRoot(project);
-  // TODO don't hard code '.codewind-project-links.env'
-  const envFileName = '.codewind-project-links.env';
+  const envFileName = links.ENV_FILE_NAME;
+
   if (linksFileExists) {
     await cwUtils.copyFile(project, links.getFilePath(), projectRoot, envFileName);
   } else {

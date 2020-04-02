@@ -458,12 +458,10 @@ async function getProjectLinks(projectID) {
     return res.body;
 }
 
-async function addProjectLink(projectID, targetProjectID, envName, targetProjectURL, targetProjectPFEURL) {
+async function addProjectLink(projectID, targetProjectID, envName) {
     const reqBody = {
         targetProjectID,
         envName,
-        targetProjectURL,
-        targetProjectPFEURL,
     };
     const res = await reqService.chai
         .post(`/api/v1/projects/${projectID}/links`)

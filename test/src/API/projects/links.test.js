@@ -47,15 +47,7 @@ describe('Link tests (/api/v1/project/:id/links)', () => {
         });
     });
     describe('POST', function() {
-        it('adds a link to a non-local project (located on different PFEs)', async function() {
-            const res = await projectService.addProjectLink(projectIDForGenericDocker, projectIDForNodeApp, 'ENVNAME', 'urlthatdoesntoexist', 'nonexistantpfeurl');
-            res.should.have.status(200);
-            res.should.have.ownProperty('body');
-            const { body } = res;
-            body.should.be.an('array');
-            body.length.should.equal(1);
-        });
-        it('adds a link to a local project (located on the same PFE)', async function() {
+        it('adds a link to a project (located on the same PFE)', async function() {
             const res = await projectService.addProjectLink(projectIDForNodeApp, projectIDForGenericDocker, 'ENVNAME');
             res.should.have.status(200);
             res.should.have.ownProperty('body');
@@ -68,11 +60,7 @@ describe('Link tests (/api/v1/project/:id/links)', () => {
             res.should.have.status(400);
         });
         it('fails to add a link as the request envName is a blank string', async function() {
-            const res = await projectService.addProjectLink(projectIDForNodeApp, projectIDForGenericDocker, '', 'urlthatdoesntoexist', 'nonexistantpfeurl');
-            res.should.have.status(400);
-        });
-        it('fails to add a link as the targetProjectPFEURL field is populated but the targetProjectURL field is not (non-local validation test)', async function() {
-            const res = await projectService.addProjectLink(projectIDForNodeApp, projectIDForGenericDocker, '', null, 'nonexistantpfeurl');
+            const res = await projectService.addProjectLink(projectIDForNodeApp, projectIDForGenericDocker, '');
             res.should.have.status(400);
         });
         describe('add a duplicate envName', function() {
