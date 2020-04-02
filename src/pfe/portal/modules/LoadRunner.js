@@ -529,6 +529,7 @@ module.exports = class LoadRunner {
       log.info(`Load run on project ${this.project.projectID} started`);
       clearTimeout(this.heartbeatID);
       this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started' });
+      this.heartbeat('running');
     });
 
     this.socket.on('cancelled', async () => {
