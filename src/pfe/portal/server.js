@@ -247,7 +247,7 @@ function setRoutes(app, userList) {
   const routes = require('./routes');
   const { pipePerfProxyReqsToPerfContainer } = require('./controllers/performance.controller');
   const { handleErrors } = require('./middleware/errorHandler');
-  const { ENDPOINT: projectLinkProxyEndpoint, projectLinkProxy } = require('./controllers/links.controller');
+  const { EXPRESS_ENDPOINT: projectLinkProxyEndpoint, projectLinkProxy } = require('./controllers/links.controller');
   const { checkProjectExists } = require('./middleware/checkProjectExists');
 
   // Add the user object into the request
@@ -260,7 +260,7 @@ function setRoutes(app, userList) {
   /* Proxy Performance container routes */
   app.use('/performance/*', pipePerfProxyReqsToPerfContainer);
   // Proxy Link routes
-  app.use(`${projectLinkProxyEndpoint}:id`, checkProjectExists, projectLinkProxy);
+  app.use(projectLinkProxyEndpoint, checkProjectExists, projectLinkProxy);
 
   app.use(bodyParser.json({ limit: '30mb' }));
   app.use(bodyParser.urlencoded({

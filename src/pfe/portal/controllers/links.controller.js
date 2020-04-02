@@ -11,10 +11,15 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const { getProjectFromReq } = require('../middleware/checkProjectExists');
 
-const ENDPOINT = '/links/proxy/'
+const ENDPOINT = '/links/proxy';
+const EXPRESS_ENDPOINT = `${ENDPOINT}/:id`;
+
+const getFullProxyEndpoint = (projectID) => {
+  return `${ENDPOINT}/${projectID}`;
+};
 
 // Custom Proxy Router
-const router = (req) => {
+const customRouter = (req) => {
   const { protocol } = req;
   const { host, ports: { internalPort }} = getProjectFromReq(req);
   return {
@@ -27,23 +32,25 @@ const router = (req) => {
 // Custom Proxy Path Rewrite (remove the proxy endpoint)
 const pathRewrite = (path, req) => {
   const id = req.sanitizeParams('id');
-  return path.replace(`${ENDPOINT}${id}`, '');
+  const proxyEndpoint = getFullProxyEndpoint(id);
+  return path.replace(proxyEndpoint, '');
 }
 
 const projectLinkProxy = createProxyMiddleware({
   target: 'http://codewind-pfe', // target field is required but we overwrite it with the customRouter
   changeOrigin: true, // needed for virtual hosted sites
   ws: true, // proxy websockets
-  router,
+  router: customRouter,
   pathRewrite,
 });
 
 const createProxyURL = (targetProjectID) => {
-  return new URL(`http://${process.env.HOSTNAME}:9090${ENDPOINT}${targetProjectID}`);
+  const proxyEndpoint = getFullProxyEndpoint(targetProjectID);
+  return new URL(`http://${process.env.HOSTNAME}:9090${proxyEndpoint}`);
 }
 
 module.exports = {
-  ENDPOINT,
+  EXPRESS_ENDPOINT,
   projectLinkProxy,
   createProxyURL,
 }

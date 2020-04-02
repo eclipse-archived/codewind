@@ -41,7 +41,7 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
     const project = getProjectFromReq(req);
     // TODO add logic to check remote project exists
     verifyTargetProjectExists(user, targetProjectID);
-    const projectURL = createProxyURL(targetProjectID);
+    const projectURL = createProxyURL(targetProjectID).toString();
 
     await project.createLink({
       projectID: targetProjectID,
