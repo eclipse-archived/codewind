@@ -521,33 +521,26 @@ module.exports = class Project {
       let fileName = await isHcdSaved(pathToLoadTestDir)
       if (fileName !== false) {
         return join(pathToLoadTestDir, fileName)
-      }
-      const projectRoot = join("home", "default", "app");
-      const relativePathToFile = join("load-test", timeOfTestRun);
+      } 
+
       try {
-        log.info(`Copying profiling folder for ${this.name} load run ${timeOfTestRun}`)
-        await cwUtils.copyFileFromContainer(this, this.loadTestPath, projectRoot, relativePathToFile);
+        const projectRoot = join("home", "default", "app");
+        const relativePathToFile = join("load-test", timeOfTestRun);
+        // find the real name of the hcd file from the docker container
+        const hcdFilename =  cwUtils.findHCDFile(this, join(projectRoot,relativePathToFile));
+        if (hcdFilename == undefined) {
+          throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
+        }
+        const relativetoHC = join(relativePathToFile,hcdFilename);
+        log.info(`Copying profiling file for ${this.name} load run ${timeOfTestRun}`)
+        await cwUtils.copyFileFromContainer(this, this.loadTestPath, projectRoot, relativetoHC);
       } catch (error) {
         throw new ProjectMetricsError('DOCKER_CP', this.name, error.message);
       }
-      log.info(`${this.name} profiling folder from run ${timeOfTestRun} saved to pfe`)
-      fileName = await isHcdSaved(pathToLoadTestDir)
-      if (fileName !== false) {
-        return join(pathToLoadTestDir, fileName)
-      }
-      await this.removeProfilingData(timeOfTestRun);
-      throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
+      log.info(`${this.name} hcd file from run ${timeOfTestRun} saved to pfe`)
+      
     }
     return null
-  }
-
-  /**
-   * 
-   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
-   */
-  async removeProfilingData(timeOfTestRun) {
-    const profilingPath = join(this.loadTestPath, timeOfTestRun);
-    await rimraf.sync(profilingPath);
   }
 
   /**

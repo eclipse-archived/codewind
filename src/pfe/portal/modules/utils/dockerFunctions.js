@@ -128,6 +128,12 @@ module.exports.copyFile = async function copyFile(project, fileToCopy, projectRo
   await exec(dockerCommand);
 }
 
+module.exports.findHCDFile = function findHCDFile(project, hcdDirectory) {
+  const hcdName = this.spawnContainerProcess(this.project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
+
+  return hcdName;
+}
+
 module.exports.copyFileFromContainer = async function copyFile(project, destinationPath, projectRoot, relativePathOfFile) {
   const dockerCommand = `docker cp ${project.containerId}:${projectRoot}/${relativePathOfFile} ${destinationPath}`;
   log.info(`[docker cp command] ${dockerCommand}`);
