@@ -13,10 +13,8 @@ import React, { } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux';
 
-import SocketContext from '../../utils/sockets/SocketContext';
 import { fetchProjectConfig } from '../../store/actions/projectInfoActions';
 import * as AppConstants from '../../AppConstants';
-import { setConnectionState } from '../../store/actions/statusActions';
 import logo from './logo@1x.png';
 import './NavBar.scss';
 
