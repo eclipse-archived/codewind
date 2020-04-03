@@ -376,6 +376,8 @@ module.exports = class LoadRunner {
   async getJavaHealthCenterData(counter) {
     if (counter > 20) {
       log.error("getJavaHealthCenterData: Failed to save .hcd file");
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+      this.project = null;
       return;
     }
     try {
@@ -393,6 +395,7 @@ module.exports = class LoadRunner {
     log.info("getJavaHealthCenterData: .hcd copied to PFE");
     const data = { projectID: this.project.projectID,  status: 'hcdReady', timestamp: this.metricsFolder};
     this.user.uiSocket.emit('runloadStatusChanged', data);
+    this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
     this.project = null;
   }
 
@@ -529,6 +532,7 @@ module.exports = class LoadRunner {
       log.info(`Load run on project ${this.project.projectID} started`);
       clearTimeout(this.heartbeatID);
       this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started' });
+      this.heartbeat('running');
     });
 
     this.socket.on('cancelled', async () => {
@@ -546,10 +550,10 @@ module.exports = class LoadRunner {
       if (this.collectionUri !== null) {
         this.recordCollection();
       }
-      clearTimeout(this.heartbeatID);
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+      clearTimeout(this.heartbeatID);  
       await this.endProfiling();
       if (this.timerID === null) {
+        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
         this.project = null;
       }
     });
@@ -610,6 +614,7 @@ module.exports = class LoadRunner {
       this.profilingSocket.disconnect();
       this.profilingSocket = null;
       this.profilingSamples = null;
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
       this.project = null;
     }
   }
