@@ -21,7 +21,6 @@ import { SocketEvents } from '../utils/sockets/SocketEvents';
 import { CHART_TYPE_CPU, CHART_TYPE_MEMORY } from '../AppConstants';
 import ActionRunLoad from '../components/actions/ActionRunLoad';
 import ActionModifyLoadTests from '../components/actions/ActionModifyLoadTests';
-import ModalBlocker from '../components/modals/ModalBlocker'
 import Chart from '../components/chart/Chart';
 import ChartCounterSelector from '../components/chartCounterSelector/ChartCounterSelector';
 import ErrorBoundary from '../components/utils/ErrorBoundary';
@@ -52,7 +51,6 @@ class PagePerformance extends React.Component {
 
     bindSocketHandlers() {
         const uiSocket = this.props.socket;
-        window.addEventListener("focus", () =>  uiSocket.connect());
         let thisComponent = this;
         uiSocket.on(SocketEvents.RUNLOAD_STATUS_CHANGED, data => {
             if (data.status === 'idle' && data.projectID === this.props.projectID) {
@@ -159,7 +157,6 @@ class PagePerformance extends React.Component {
         const showTip = !(this.state.chartData && this.state.chartData.CPU && this.state.chartData.CPU.columns && this.state.chartData.CPU.columns.length > 0);
         return (
             <Fragment>
-                <ModalBlocker active={!this.props.connectionStatus.socketConnected}/>
                 <div className='pageTitle' role="main" aria-label='main page'>
                     <div className='pageTitle-content'>
                         <div className='main-title'>
@@ -245,7 +242,6 @@ const mapStateToProps = stores => {
         projectMetricTypes: stores.projectMetricTypesReducer,
         projectMetrics: stores.projectMetricsReducer,
         lang: stores.localeReducer.lang,
-        connectionStatus: stores.statusReducer,
         loadRunnerConfig: stores.loadRunnerConfigReducer
     }
 };
