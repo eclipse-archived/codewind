@@ -46,6 +46,7 @@ module.exports = class LoadRunner {
     this.createSocketEvents();
     this.connectIfAvailable();
     this.timerID = null;
+    this.heartbeatID = null;
   }
 
   // Fetch the supported metrics features from the project
@@ -255,7 +256,7 @@ module.exports = class LoadRunner {
         }
       }
 
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'preparing', timestamp: this.metricsFolder });
+      this.heartbeat('preparing');
 
       // start profiling if supported by current language
       if (this.project.language == 'nodejs' || this.project.language === 'javascript') {
@@ -266,7 +267,7 @@ module.exports = class LoadRunner {
 
       //  Start collection on metrics endpoint (this must be started AFTER java profiling since java profiling will restart the liberty server)
       this.collectionUri = await this.createCollection(loadConfig.maxSeconds);
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'starting', timestamp: this.metricsFolder });
+      this.heartbeat('starting');
 
       // Send the load run request to the loadrunner microservice
       let loadrunnerRes = await cwUtils.asyncHttpRequest(options, loadConfig);
@@ -348,6 +349,7 @@ module.exports = class LoadRunner {
       const stopCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `];
       await cwUtils.spawnContainerProcess(this.project, stopCommand);
       await this.waitForHealth(false);
+      this.heartbeat('connecting');
       log.info(`beginJavaProfiling: Starting liberty server`);
       const startCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start; `];
       await cwUtils.spawnContainerProcess(this.project, startCommand);
@@ -374,6 +376,8 @@ module.exports = class LoadRunner {
   async getJavaHealthCenterData(counter) {
     if (counter > 20) {
       log.error("getJavaHealthCenterData: Failed to save .hcd file");
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+      this.project = null;
       return;
     }
     try {
@@ -391,6 +395,7 @@ module.exports = class LoadRunner {
     log.info("getJavaHealthCenterData: .hcd copied to PFE");
     const data = { projectID: this.project.projectID,  status: 'hcdReady', timestamp: this.metricsFolder};
     this.user.uiSocket.emit('runloadStatusChanged', data);
+    this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
     this.project = null;
   }
 
@@ -439,6 +444,9 @@ module.exports = class LoadRunner {
   * Function to cancel the loadrunner
   */
   async cancelRunLoad(loadConfig) {
+    if (this.heartbeatID !== null) {
+      clearTimeout(this.heartbeatID);
+    }
     try {
       let options = {
         host: this.hostname,
@@ -522,14 +530,17 @@ module.exports = class LoadRunner {
 
     this.socket.on('started', () => {
       log.info(`Load run on project ${this.project.projectID} started`);
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started', timestamp: this.metricsFolder });
+      clearTimeout(this.heartbeatID);
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started' });
+      this.heartbeat('running');
     });
 
     this.socket.on('cancelled', async () => {
       log.info(`Load run on project ${this.project.projectID} cancelled`);
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelling', timestamp: this.metricsFolder });
+      this.heartbeat('cancelling');
       await this.cancelProfiling();
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled', timestamp: this.metricsFolder });
+      clearTimeout(this.heartbeatID);
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled' });
       this.project = null;
     });
 
@@ -539,9 +550,10 @@ module.exports = class LoadRunner {
       if (this.collectionUri !== null) {
         this.recordCollection();
       }
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' , timestamp: this.metricsFolder});
+      clearTimeout(this.heartbeatID);  
       await this.endProfiling();
       if (this.timerID === null) {
+        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
         this.project = null;
       }
     });
@@ -602,6 +614,7 @@ module.exports = class LoadRunner {
       this.profilingSocket.disconnect();
       this.profilingSocket = null;
       this.profilingSamples = null;
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
       this.project = null;
     }
   }
@@ -662,5 +675,15 @@ module.exports = class LoadRunner {
     }
     this.up = false;
     socket.disconnect();
+  }
+
+  /**
+   * Function to send a heartbeat of the current LoadRunner status
+   */
+  heartbeat(status) {
+    if (this.heartbeatID !== null) {
+      clearTimeout(this.heartbeatID);
+    }
+    this.heartbeatID = setInterval(() => this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: status, timestamp: this.metricsFolder }), 2000);
   }
 }

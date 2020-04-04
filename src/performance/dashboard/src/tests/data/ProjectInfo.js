@@ -15,6 +15,6 @@
 export const projectInfo = {
     projectID: '4a8ccb90-7887-11e9-b7bb-6fc798faec9b',
     name: 'SampleProjectName',
-    codewindVersion: 'latest'
+    codewindVersion: 'latest',
 }
 

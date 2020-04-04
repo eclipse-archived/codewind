@@ -558,6 +558,7 @@ describe('LoadRunner.js', () => {
             const writeGitHash = sandbox.stub(loadRunner, 'writeGitHash');
             const beginNodeProfiling = sandbox.stub(loadRunner, 'beginNodeProfiling');
             const beginJavaProfiling = sandbox.stub(loadRunner, 'beginJavaProfiling');
+            const heartbeat = sandbox.stub(loadRunner, 'heartbeat');
 
             // act
             const loadrunnerRes = await loadRunner.runLoad(mockLoadConfig, mockProject, 'mockRunDescription');
@@ -568,19 +569,11 @@ describe('LoadRunner.js', () => {
             loadRunner.project.getProjectKubeService.should.have.been.calledOnceWithExactly();
             fetchProjectMetricsFeatures.should.have.been.calledOnceWithExactly();
             writeGitHash.should.not.have.been.called;
-            mockUser.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
-                projectID: mockProject.projectID,
-                status: 'preparing',
-                timestamp: loadRunner.metricsFolder,
-            });
+            heartbeat.should.have.been.calledWithExactly('preparing');
             beginNodeProfiling.should.not.have.been.called;
             beginJavaProfiling.should.not.have.been.called;
             createCollection.should.have.been.calledOnceWithExactly(mockLoadConfig.maxSeconds);
-            mockUser.uiSocket.emit.should.have.been.calledWithExactly('runloadStatusChanged', {
-                projectID: mockProject.projectID,
-                status: 'starting',
-                timestamp: loadRunner.metricsFolder,
-            });
+            heartbeat.should.have.been.calledWithExactly('starting');
             loadrunnerRes.should.deep.equal({ statusCode: 202 });
         });
     });
@@ -635,7 +628,12 @@ describe('LoadRunner.js', () => {
             const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 './utils/Logger': MockLogger,
             });
-            const loadRunner = new LoadRunner('mockUser');
+            const mockUser = {
+                uiSocket: { emit: sandbox.stub() },
+            };
+            const loadRunner = new LoadRunner(mockUser);
+            loadRunner.project = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
+
             const logErrorSpy = sandbox.spy(MockLogger.prototype, 'error');
 
             // act
@@ -643,13 +641,17 @@ describe('LoadRunner.js', () => {
 
             // assert
             logErrorSpy.should.have.been.calledOnceWithExactly('getJavaHealthCenterData: Failed to save .hcd file');
+            loadRunner.project = null;
         });
         it('fails after attempt with null project', async() => {
             // arrange
             const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 './utils/Logger': MockLogger,
             });
-            const loadRunner = new LoadRunner('mockUser');
+            const mockUser = {
+                uiSocket: { emit: sandbox.stub() },
+            };
+            const loadRunner = new LoadRunner(mockUser);
             loadRunner.project = null;
             const logWarnSpy = sandbox.spy(MockLogger.prototype, 'warn');
 
@@ -664,7 +666,10 @@ describe('LoadRunner.js', () => {
             const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 './utils/Logger': MockLogger,
             });
-            const loadRunner = new LoadRunner('mockUser');
+            const mockUser = {
+                uiSocket: { emit: sandbox.stub() },
+            };
+            const loadRunner = new LoadRunner(mockUser);
             loadRunner.project = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
             const logInfoSpy = sandbox.spy(MockLogger.prototype, 'info');
             const gJHCDSpy = sandbox.spy(loadRunner, 'getJavaHealthCenterData');
@@ -699,12 +704,18 @@ describe('LoadRunner.js', () => {
                 timestamp: expectedMetricsFolder,
             };
 
+            const expectedDataForPerfUI = {
+                projectID: mockProject.projectID,
+                status: 'completed',
+            };
+
             // act
             await loadRunner.getJavaHealthCenterData(20);
 
             // assert
             logInfoSpy.should.have.been.calledOnceWithExactly('getJavaHealthCenterData: .hcd copied to PFE');
-            loadRunner.user.uiSocket.emit.should.have.been.calledOnceWithExactly('runloadStatusChanged', expectedData);
+            loadRunner.user.uiSocket.emit.should.have.been.called.calledWith('runloadStatusChanged', expectedData);
+            loadRunner.user.uiSocket.emit.should.have.been.called.calledWith('runloadStatusChanged', expectedDataForPerfUI);
             should.equal(loadRunner.project, null);
 
         });
@@ -834,6 +845,12 @@ describe('LoadRunner.js', () => {
                 status: 'profilingReady',
                 timestamp: expectedMetricsFolder,
             };
+
+            const expectedDataForPerfUI = {
+                projectID: mockProject.projectID,
+                status: 'completed',
+            };
+
             const profilingJsonPath = path.join(loadRunner.workingDir, 'profiling.json');
 
             // act
@@ -844,11 +861,12 @@ describe('LoadRunner.js', () => {
             // assert
             profilingContents.should.be.deep.equal(expectedObject);
             logInfoSpy.should.have.been.calledOnceWithExactly('profiling.json saved for project mockName');
-            loadRunner.user.uiSocket.emit.should.have.been.calledOnceWithExactly('runloadStatusChanged', expectedData);
+            loadRunner.user.uiSocket.emit.should.have.been.calledWith('runloadStatusChanged', expectedData);
             psEmitStub.should.have.been.calledOnceWithExactly('disableprofiling');
             psDisconnectStub.should.have.been.calledOnce;
             should.equal(loadRunner.profilingSocket, null);
             should.equal(loadRunner.profilingSamples, null);
+            loadRunner.user.uiSocket.emit.should.have.been.calledWith('runloadStatusChanged', expectedDataForPerfUI);
             should.equal(loadRunner.project, null);
         });
         it('does nothing if profilingSocket is null', async() => {

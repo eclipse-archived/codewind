@@ -42,6 +42,14 @@ const sampleRepos = {
         projectStyles: ['Codewind'],
         name: 'Default templates',
     },
+    disabledcodewind: {
+        url: templateRepositoryURL,
+        description: 'The disabled default set of templates for new projects in Codewind.',
+        enabled: false,
+        protected: true,
+        projectStyles: ['Codewind'],
+        name: 'Default disabled templates',
+    },
 };
 
 const validUrlNotPointingToIndexJson = 'https://support.oneskyapp.com/hc/en-us/article_attachments/202761627/example_1.json';
@@ -128,6 +136,14 @@ async function getTemplates(queryParams) {
     return res;
 }
 
+async function getEnabledTemplates(queryParams) {
+    const res = await reqService.chai
+        .get('/api/v1/templates/?showEnabledOnly=true')
+        .query(queryParams)
+        .set('Cookie', ADMIN_COOKIE);
+    return res;
+}
+
 async function getNumberOfTemplates(queryParams) {
     const { statusCode, body: templates } = await getTemplates(queryParams);
     // If we get a 204 HTTP Code the templates list is empty
@@ -139,6 +155,19 @@ async function getNumberOfTemplates(queryParams) {
     // If we haven't got a 204 or 200 we cannot report the number of templates
     throw new Error(`getNumberOfTemplates - Unknown status code received: ${statusCode}`);
 }
+
+async function getNumberOfEnabledTemplates(queryParams) {
+    const { statusCode, body: templates } = await getEnabledTemplates(queryParams);
+    // If we get a 204 HTTP Code the templates list is empty
+    if (statusCode === 204) {
+        return 0;
+    } else if (statusCode === 200) {
+        return templates.length;
+    }
+    // If we haven't got a 204 or 200 we cannot report the number of templates
+    throw new Error(`getNumberOfTemplates - Unknown status code received: ${statusCode}`);
+}
+
 
 /**
  * Removes all templates repos known to PFE, and adds the supplied repos
@@ -219,6 +248,7 @@ module.exports = {
     enableTemplateRepos,
     disableTemplateRepos,
     getTemplates,
+    getNumberOfEnabledTemplates,
     getNumberOfTemplates,
     setTemplateReposTo,
     getTemplateStyles,

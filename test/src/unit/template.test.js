@@ -584,7 +584,7 @@ describe('Templates.js', function() {
                 }
             });
         });
-        describe('addRepository(repoUrl, repoDescription, repoName, isRepoProtected)', function() {
+        describe('addRepository(repoUrl, repoDescription, repoName, isRepoProtected, isRepoEnabled)', function() {
             const mockRepoList = [{ id: 'notanid', url: 'https://made.up/url' }];
             let templateController;
             beforeEach(() => {
@@ -817,11 +817,11 @@ describe('Templates.js', function() {
                 validatedURL.should.equal(sampleRepos.codewind.url);
             });
         });
-        describe('constructRepositoryObject(url, description, name, isRepoProtected)', () => {
+        describe('constructRepositoryObject(url, description, name, isRepoProtected, isRepoEnabled)', () => {
             const constructRepositoryObject = Templates.__get__('constructRepositoryObject');
             it('returns a repository object when all arguments are given', async() => {
-                const { url, description, name, protected } = sampleRepos.codewind;
-                const repository = await constructRepositoryObject(url, description, name, protected);
+                const { url, description, name, protected, enabled } = sampleRepos.codewind;
+                const repository = await constructRepositoryObject(url, description, name, protected, enabled);
                 repository.should.have.keys('id', 'name', 'url', 'description', 'enabled', 'protected', 'projectStyles');
             });
             it('returns a repository object when only a url is given - gets the name, description from the url and does not have a protected field', async() => {

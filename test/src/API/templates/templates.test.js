@@ -28,6 +28,7 @@ const {
     saveReposBeforeTestAndRestoreAfter,
     saveReposBeforeEachTestAndRestoreAfterEach,
     setupReposAndTemplatesForTesting,
+    getNumberOfEnabledTemplates,
 } = require('../../../modules/template.service');
 const { pathToApiSpec, testTimeout } = require('../../../config');
 
@@ -133,7 +134,7 @@ describe('Template API tests', function() {
                     res.status.should.equal(400, res.text); // print res.text if assertion fails
                 });
             });
-            describe('a valid url', function() {
+            describe('a valid url and enabled', function() {
                 let originalTemplateReposLength;
                 let originalTemplatesLength;
                 before(async function() {
@@ -153,6 +154,36 @@ describe('Template API tests', function() {
                     getTemplatesRes.body.length.should.be.above(originalTemplatesLength);
                 });
             });
+
+            describe('a valid url but disabled', function() {
+                let originalTemplateReposLength;
+                let originalTemplatesLength;
+                let originalEnabledTemplatesLength;
+                let afterTemplatesLength;
+                let afterEnabledTemplatesLength;
+                before(async function() {
+                    await deleteTemplateRepo(sampleRepos.codewind.url);
+                    const { body: repos } = await getTemplateRepos();
+                    originalTemplateReposLength = repos.length;
+                    originalTemplatesLength = await getNumberOfTemplates();
+                    originalEnabledTemplatesLength = await getNumberOfEnabledTemplates();
+                  
+                });
+                it('should add a disabled template repository giving no change to enabled templates', async function() {
+                    const addTemplateRepoRes = await addTemplateRepo(sampleRepos.disabledcodewind);
+                    addTemplateRepoRes.should.have.status(200).and.satisfyApiSpec;
+                    addTemplateRepoRes.body.should.deep.containSubset([sampleRepos.disabledcodewind]);
+                    addTemplateRepoRes.body.length.should.equal(originalTemplateReposLength + 1);
+                    afterTemplatesLength = await getNumberOfTemplates();
+                    afterEnabledTemplatesLength = await getNumberOfEnabledTemplates();
+                    originalEnabledTemplatesLength.should.equal(afterEnabledTemplatesLength);
+                    afterTemplatesLength.should.be.above(originalTemplatesLength);
+                });
+            });
+
+
+
+
         });
     });
 

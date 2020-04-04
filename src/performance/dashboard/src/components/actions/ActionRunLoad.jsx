@@ -62,6 +62,10 @@ class ActionRunLoad extends React.Component {
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Preparing...' });
                         break;
                     }
+                    case 'connecting': {
+                        this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Connecting....' });
+                        break;
+                    }
                     case 'starting': {
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Starting...' });
                         break;
@@ -69,6 +73,10 @@ class ActionRunLoad extends React.Component {
                     case 'started': {
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Running...' });
                         this.startCountdown();
+                        break;
+                    }
+                    case 'running': {
+                        this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Running...' });
                         break;
                     }
                     case 'completed': {
@@ -199,7 +207,7 @@ class ActionRunLoad extends React.Component {
         const { showNotificationRunTestFail, loadRunStatus, inlineTextLabel, timeRemaining } = this.state;
 
         let loadRunCompleted = loadRunStatus.status === 'completed';
-        const options = ['preparing', 'starting', 'started', 'completed', 'requesting', 'requested', 'cancelling', 'cancelled']
+        const options = ['preparing', 'connecting', 'starting', 'started', 'running', 'completed', 'requesting', 'requested', 'cancelling', 'cancelled']
         const showBusy = options.includes(loadRunStatus.status)
 
         let inlineTextLabelFormatted = (timeRemaining !== 0) ? `${inlineTextLabel}${timeRemaining}` : `${inlineTextLabel}`

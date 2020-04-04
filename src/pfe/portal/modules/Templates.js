@@ -147,12 +147,12 @@ module.exports = class Templates {
   /**
    * Add a repository to the list of template repositories.
    */
-  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected) {
+  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected, isRepoEnabled) {
     this.lock();
     try {
       const repositories = cwUtils.deepClone(this.repositoryList);
       const validatedUrl = await validateRepository(repoUrl, repositories);
-      const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected);
+      const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected, isRepoEnabled);
 
       await addRepositoryToProviders(newRepo, this.providers);
 
@@ -161,11 +161,12 @@ module.exports = class Templates {
       const newRepositoryList = [...currentRepoList, newRepo];
       this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, newRepositoryList, this.repositoryFile);
 
-      // Fetch templates from the new repository and add them
+      // Fetch the repository templates and add them appropriately
       const newTemplates = await getTemplatesFromRepo(newRepo)
-      this.enabledProjectTemplates = this.allProjectTemplates.concat(newTemplates);
       this.allProjectTemplates = this.allProjectTemplates.concat(newTemplates);
-
+      if (isRepoEnabled) {
+        this.enabledProjectTemplates = this.enabledProjectTemplates.concat(newTemplates);
+      }
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
     } finally {
       this.unlock();
@@ -278,13 +279,17 @@ async function validateRepository(repoUrl, repositories) {
   return url;
 }
 
-async function constructRepositoryObject(url, description, name, isRepoProtected) {
+async function constructRepositoryObject(url, description, name, isRepoProtected, isRepoEnabled) {
+  let enabled = isRepoEnabled;
+  if (enabled == undefined) {
+    enabled = true;
+  }
   let repository = {
     id: uuidv5(url, uuidv5.URL),
     name,
     url,
     description,
-    enabled: true,
+    enabled: enabled,
   }
   repository = await fetchRepositoryDetails(repository);
   if (isRepoProtected !== undefined) {
