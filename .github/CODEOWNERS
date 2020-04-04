@@ -8,8 +8,8 @@ docs/** @elsony @tobespc
 script/** @josephca @tetchel 
 
 # Iterative dev
-src/pfe/file-watcher/** @elsony @rajivnathan
-src/pfe/iterative-dev/** @elsony @rajivnathan
+src/pfe/file-watcher/** @elsony
+src/pfe/iterative-dev/** @elsony
 
 # Portal
 src/pfe/portal/** @hhellyer @tobespc
