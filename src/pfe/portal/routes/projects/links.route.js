@@ -22,10 +22,12 @@ const ProjectLinkError = require('../../modules/utils/errors/ProjectLinkError');
 
 const log = new Logger(__filename);
 
-const disableK8s = (req, res) => {
+const disableK8s = (req, res, next) => {
   if (global.codewind.RUNNING_IN_K8S) {
     res.status(405).send('Project links are disabled in a Kubernetes environment');
+    return;
   }
+  next();
 }
 
 router.get('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectExists, (req, res) => {
