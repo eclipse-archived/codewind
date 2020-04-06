@@ -45,7 +45,6 @@ async function fetchAuthInfo() {
 
 async function init() {
     let initOptions = await fetchAuthInfo();
-    console.log(initOptions)
     if (initOptions.hasError) {
         console.warn("No Auth service available")
         ReactDOM.render(

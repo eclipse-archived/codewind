@@ -142,9 +142,7 @@ class ChartCounterSelector extends Component {
                             <div className="options expanded">
                                 <div className='option'>
                                     <IconLine className='bx--btn__icon' style={{ 'fill': this.getColor('HTTP_RESPONSE') }} />
-                                    <TooltipDefinition tooltipText="HTTP Response time (ms) of this path" align="end" >
-                                        {this.props.testPath}
-                                    </TooltipDefinition>
+                                    <input readonly  aria-required="false" type="text" className="scrollableTextField" value={this.props.testPath}/>   
                                 </div>
                             </div>
                         </div>
@@ -161,9 +159,7 @@ class ChartCounterSelector extends Component {
                                 <div className='option'>
                                     <IconLine className='bx--btn__icon' style={{ 'fill': this.getColor('HTTP_HITS') }} />
                                     <span className='label'>
-                                        <TooltipDefinition tooltipText="Number of times this path was accessed" align="end" direction="top">
-                                            {this.props.testPath}
-                                        </TooltipDefinition>
+                                    <input readonly  aria-required="false" type="text" className="scrollableTextField" value={this.props.testPath}/>                      
                                     </span>
                                 </div>
                             </div>

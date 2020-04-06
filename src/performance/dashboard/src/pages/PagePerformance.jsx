@@ -149,7 +149,6 @@ class PagePerformance extends React.Component {
     }
 
     render() {
-
         const { snapshot_1, snapshot_2, snapshot_3 } = this.state;
         const absolutePath = MetricsUtils.getEndpoint(this.props.loadRunnerConfig.config.path) ? MetricsUtils.getEndpoint(this.props.loadRunnerConfig.config.path) : '';
         const httpMethod = this.props.loadRunnerConfig.config.method;

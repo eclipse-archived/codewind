@@ -269,27 +269,39 @@ class Chart extends Component {
 
     render() {
         const data = buildChartData(this.props.chartData, this.props.projectLanguage, this.props.absolutePath);
-        const testPath = `Path: ${this.props.absolutePath}`;
+        const testPath = `${this.props.absolutePath}`;
         const hasData = this.isDataAvailable(data);
 
         return (
             <div className="Chart">
                 <div className="Chart_actionbar">
-                    <div style={{ width: "300px", height: "35px" }}>
-                        {
-                            (hasData) ?
-                                <span className="testPath">{testPath}</span>
-                                : <Fragment />
-                        }
-                    </div>
+                    {
+                        (hasData) ?
+                            <Fragment>
+                            <div className="testPathLabel">Metrics for route:</div>
+                            <div className="testPathURL">
+                                <input readonly aria-required="false" className="scrollableText" value={testPath} />
+                            </div>
+                            </Fragment>
+                            : <Fragment />
+                    }
                 </div>
                 <div className="Chart_C3" style={{ padding: "20px" }} >
                     {
                         (!hasData) ?
                             <div className="nodata">
                                 <div className="nodata_message">
-                                    <div className="nodata_message_title">No metrics available</div>
-                                    <div className="nodata_message_help">Tip: Run a few load tests</div>
+                                    <div className="nodata_message_title">There are no saved metrics to display for the current load run settings</div>
+                                    <div className="nodata_message_path">
+                                        <span className="nodata_message_label">route path: </span>
+                                        {this.props.absolutePath}
+                                    </div>
+                                    <div className="nodata_message_help">
+                                        Only metrics containing HTTP hit count data can be displayed.
+                                    </div>
+                                    <div className="nodata_message_help">
+                                        Run load tests, or change the route path. To change the path, click 'Edit load run settings'.
+                                    </div>
                                 </div>
                             </div>
                             : <Fragment />
