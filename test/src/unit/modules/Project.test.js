@@ -166,6 +166,12 @@ describe('Project.js', () => {
                 const areMetricsAvailable = await project.isMetricsAvailable();
                 areMetricsAvailable.should.be.true;
             });
+            it('Checks metrics for Appsody: JavaScript', async() => {
+                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'javascript', locOnDisk: '/Documents/projectDir/' };
+                const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
+                const areMetricsAvailable = await project.isMetricsAvailable();
+                areMetricsAvailable.should.be.true;
+            });
             it('Checks metrics for Appsody: Java', async() => {
                 const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'java', locOnDisk: '/Documents/projectDir/' };
                 const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);

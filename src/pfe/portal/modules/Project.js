@@ -201,7 +201,7 @@ module.exports = class Project {
   async isMetricsAvailable() {
     // hardcoding a return of true for appsody projects until we have a better
     // way of detecting appsody has the dashboard dependency
-    if (this.projectType === "appsodyExtension" && (this.language === 'nodejs' || this.language === 'java' || this.language === 'swift')) {
+    if (this.projectType === "appsodyExtension" && ['nodejs', 'javascript', 'java', 'swift'].includes(this.language)) {
       return true;
     } 
     const isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath(), this.language);
