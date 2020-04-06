@@ -47,9 +47,9 @@ router.post('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectE
   const targetProjectURL = req.sanitizeBody('targetProjectURL');
   const targetProjectPFEURL = req.sanitizeBody('targetProjectPFEURL');
 
+  const { cw_user: user } = req;
+  const project = getProjectFromReq(req);
   try {
-    const { cw_user: user } = req;
-    const project = getProjectFromReq(req);
     const newLink = {
       projectID: targetProjectID,
       envName,
@@ -76,13 +76,16 @@ router.post('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectE
     if (project.isOpen()) {
       await restartOrBuildProject(user, project);
     }
+    emitStatusToUI(user, project, 'success');
   } catch (err) {
     log.error(err);
-    if (res.headersSent) return; // Don't send http response if its already sent
-    if (err.code === ProjectLinkError.CODES.INVALID_PARAMETERS) {
-      res.sendStatus(400);
-    } else if (err.code === ProjectLinkError.CODES.EXISTS) {
-      res.sendStatus(409);
+    // Emit over socket if http response has already been sent
+    if (res.headersSent) {
+      emitStatusToUI(user, project, 'failed', err);
+      return;
+    }
+    if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
+      res.sendStatus(404);
     } else {
       res.status(500).send(err);
     }
@@ -93,9 +96,10 @@ router.put('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectEx
   const currentEnvName = req.sanitizeBody('envName');
   const newEnvName = req.sanitizeBody('updatedEnvName');
   let newProjectURL = req.sanitizeBody('targetProjectURL');
+
+  const { cw_user: user } = req;
+  const project = getProjectFromReq(req);
   try {
-    const { cw_user: user } = req;
-    const project = getProjectFromReq(req);
     const { links } = project;
 
     // If the link on the same PFE (local) fetch the projectURL from the ProjectList (ignore newProjectURL)
@@ -118,9 +122,14 @@ router.put('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectEx
     if (project.isOpen()) {
       await restartOrBuildProject(user, project);
     }
+    emitStatusToUI(user, project, 'success');
   } catch (err) {
     log.error(err);
-    if (res.headersSent) return; // Don't send http response if its already sent
+    // Emit over socket if http response has already been sent
+    if (res.headersSent) {
+      emitStatusToUI(user, project, 'failed', err);
+      return;
+    }
     if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
       res.sendStatus(404);
     } else {
@@ -131,9 +140,9 @@ router.put('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectEx
 
 router.delete('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectExists, async(req, res) => {
   const envNameOfLinkToDelete = req.sanitizeBody('envName');
+  const { cw_user: user } = req;
+  const project = getProjectFromReq(req);
   try {
-    const { cw_user: user } = req;
-    const project = getProjectFromReq(req);
     await project.deleteLink(envNameOfLinkToDelete);
 
     // Send status and then kick off the restart/rebuild
@@ -142,9 +151,14 @@ router.delete('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjec
     if (project.isOpen()) {
       await restartOrBuildProject(user, project);
     }
+    emitStatusToUI(user, project, 'success');
   } catch (err) {
     log.error(err);
-    if (res.headersSent) return; // Don't send http response if its already sent
+    // Emit over socket if http response has already been sent
+    if (res.headersSent) {
+      emitStatusToUI(user, project, 'failed', err);
+      return;
+    }
     if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
       res.sendStatus(404);
     } else {
@@ -152,6 +166,17 @@ router.delete('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjec
     }
   }
 });
+
+const emitStatusToUI = (user, project, status, err = null) => {
+  const { name, projectID } = project;
+  const data = {
+    name,
+    projectID,
+    status,
+    error: err.info || err
+  }
+  user.uiSocket.emit('projectLink', data);
+}
 
 const verifyProjectExistsAndReturnInternalURL = async(user, projectID) => {
   const project = await user.projectList.retrieveProject(projectID);
