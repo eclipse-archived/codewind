@@ -22,7 +22,13 @@ const ProjectLinkError = require('../../modules/utils/errors/ProjectLinkError');
 
 const log = new Logger(__filename);
 
-router.get('/api/v1/projects/:id/links', validateReq, checkProjectExists, (req, res) => {
+const disableK8s = (req, res) => {
+  if (global.codewind.RUNNING_IN_K8S || true) {
+    res.status(405).send('Project links are disabled in a Kubernetes environment');
+  }
+}
+
+router.get('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectExists, (req, res) => {
   try {
     const { links } = getProjectFromReq(req);
     res.status(200).send(links.getAll());
@@ -32,7 +38,7 @@ router.get('/api/v1/projects/:id/links', validateReq, checkProjectExists, (req, 
   }
 });
 
-router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(req, res) => {
+router.post('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectExists, async(req, res) => {
   // The targetProject is the one we want "this" project to be able to reach
   const targetProjectID = req.sanitizeBody('targetProjectID');
   const envName = req.sanitizeBody('envName');
@@ -70,6 +76,7 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
     }
   } catch (err) {
     log.error(err);
+    if (res.headersSent) return; // Don't send http response if its already sent
     if (err.code === ProjectLinkError.CODES.INVALID_PARAMETERS) {
       res.sendStatus(400);
     } else if (err.code === ProjectLinkError.CODES.EXISTS) {
@@ -80,7 +87,7 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
   }
 });
 
-router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(req, res) => {
+router.put('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectExists, async(req, res) => {
   const currentEnvName = req.sanitizeBody('envName');
   const newEnvName = req.sanitizeBody('updatedEnvName');
   let newProjectURL = req.sanitizeBody('targetProjectURL');
@@ -91,7 +98,7 @@ router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(
 
     // If the link on the same PFE (local) fetch the projectURL from the ProjectList (ignore newProjectURL)
     const { type: linkType, projectID: targetProjectID, projectURL: currentProjectURL } = links.get(currentEnvName);
-    
+
     if (linkType === TYPES.LOCAL) {
       // Get the url from the projectList, throw an error if the project does not exist
       const localProjectURL = await verifyProjectExistsAndReturnInternalURL(user, targetProjectID);
@@ -111,6 +118,7 @@ router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(
     }
   } catch (err) {
     log.error(err);
+    if (res.headersSent) return; // Don't send http response if its already sent
     if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
       res.sendStatus(404);
     } else {
@@ -119,7 +127,7 @@ router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(
   }
 });
 
-router.delete('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(req, res) => {
+router.delete('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectExists, async(req, res) => {
   const envNameOfLinkToDelete = req.sanitizeBody('envName');
   try {
     const { cw_user: user } = req;
@@ -134,6 +142,7 @@ router.delete('/api/v1/projects/:id/links', validateReq, checkProjectExists, asy
     }
   } catch (err) {
     log.error(err);
+    if (res.headersSent) return; // Don't send http response if its already sent
     if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
       res.sendStatus(404);
     } else {
