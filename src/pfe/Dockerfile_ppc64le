@@ -145,7 +145,8 @@ RUN npm ci \
     && rm -rf node_modules \
     && npm ci --production \
     && mkdir /file-watcher/fwdata \
-    && npm cache clean -f
+    && npm cache clean -f \
+    && npm pack nodemon
 
 # Copy translation files to the distribution directory
 RUN cp -r src/utils/locales dist/utils/locales

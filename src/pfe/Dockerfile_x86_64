@@ -90,6 +90,7 @@ RUN npm ci \
     && npm ci --production \
     && mkdir /file-watcher/fwdata \
     && npm cache clean -f \
+    && npm pack nodemon \
     && cp -r src/utils/locales dist/utils/locales 
 
 ######### Portal setup
