@@ -77,7 +77,6 @@ function cleanContainer() {
 		if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then
 			$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
 			$IMAGE_COMMAND rm -f $project
-			$IMAGE_COMMAND rmi -f $project
 		fi
 	fi
 }
@@ -288,12 +287,16 @@ function deployLocal() {
  	$util newLogFileAvailable $PROJECT_ID "build"
 
 	echo -e "Docker build log file "$LOG_FOLDER/$DOCKER_BUILD.log""
+	OLD_IMAGE_ID=$($IMAGE_COMMAND images -q $project)
 	$IMAGE_COMMAND $BUILD_COMMAND -t $project . |& tee "$LOG_FOLDER/$DOCKER_BUILD.log"
 
 	exitCode=$?
 	imageLastBuild=$(($(date +%s)*1000))
 	if [ $exitCode -eq 0 ]; then
 		echo "$BUILD_IMAGE_SUCCESS_MSG $projectName"
+		if [ -n "$OLD_IMAGE_ID" ] && [ "$OLD_IMAGE_ID" != "$($IMAGE_COMMAND images -q $project)" ]; then
+			$IMAGE_COMMAND rmi -f $OLD_IMAGE_ID
+		fi
 	else
 		echo "$BUILD_IMAGE_FAILED_MSG $projectName" >&2
 		$util updateBuildState $PROJECT_ID $BUILD_STATE_FAILED "buildscripts.buildFail"
