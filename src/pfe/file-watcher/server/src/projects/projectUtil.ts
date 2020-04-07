@@ -258,20 +258,9 @@ export async function containerUpdate(operation: Operation, script: string, comm
     const projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
     logger.logTrace("The projectInfo has been updated for imagePushRegistry: " + JSON.stringify(projectInfo));
 
-    let args = [
-        projectLocation,
-        LOCAL_WORKSPACE,
-        operation.projectInfo.projectID,
-        command,
-        operation.containerName,
-        String(operation.projectInfo.autoBuildEnabled),
-        logName,
-        operation.projectInfo.startMode,
-        operation.projectInfo.debugPort,
-        (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE",
-        logDir,
-        imagePushRegistry,
-    ];
+    let args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
+        String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
+        (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry];
 
     if (projectType == "liberty" || projectType == "spring") {
 
@@ -1248,20 +1237,8 @@ export async function runScript(projectInfo: ProjectInfo, script: string, comman
     const logName = getLogName(projectInfo.projectID, projectInfo.location);
     const logDir = await logHelper.getLogDir(projectInfo.projectID, projectInfo.projectName);
     const projectName = path.basename(projectInfo.location);
-    let args = [
-        projectInfo.location,
-        LOCAL_WORKSPACE,
-        projectID,
-        command,
-        containerName,
-        String(projectInfo.autoBuildEnabled),
-        logName,
-        projectInfo.startMode,
-        projectInfo.debugPort,
-        "NONE",
-        logDir,
-        projectInfo.imagePushRegistry,
-    ];
+    let args = [projectInfo.location, LOCAL_WORKSPACE, projectID, command, containerName, String(projectInfo.autoBuildEnabled), logName, projectInfo.startMode,
+        projectInfo.debugPort, "NONE", logDir];
 
     if (projectInfo.projectType == "odo") {
         const componentName: string = await getComponentName(projectName);
@@ -1996,22 +1973,7 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
  */
 export async function restartProject(operation: Operation, startMode: string, eventName: string): Promise<any> {
     let portNumberChanged = false;
-    let projectInfo = operation.projectInfo;
-    let imagePushRegistry: string;
-
-    // add projectInfo to image registry
-    if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
-        imagePushRegistry = await workspaceSettings.getImagePushRegistry();
-        logger.logInfo("Image Push Registry: " + imagePushRegistry);
-        const keyValuePair: UpdateProjectInfoPair = {
-            key: "imagePushRegistry",
-            value: imagePushRegistry,
-            saveIntoJsonFile: true
-        };
-        projectInfo = await projectsController.updateProjectInfo(projectInfo.projectID, keyValuePair);
-        logger.logTrace("The projectInfo has been updated for imagePushRegistry: " + JSON.stringify(projectInfo));
-    }
-
+    const projectInfo = operation.projectInfo;
     const projectID = projectInfo.projectID;
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     if (startMode === StartModes.debug || startMode === StartModes.debugNoInit) {
