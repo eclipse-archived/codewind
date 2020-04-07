@@ -466,7 +466,7 @@ elif [ "$COMMAND" == "update" ]; then
 		fi
 	fi
 
-# Stop the application (not supported on Kubernetes)
+# Stop the application
 elif [ "$COMMAND" == "stop" ]; then
 	echo "Stopping node.js project $projectName"
 	if [[ "$IN_K8" == "true" ]]; then
@@ -477,7 +477,7 @@ elif [ "$COMMAND" == "stop" ]; then
 		$IMAGE_COMMAND exec "$project" /scripts/noderun.sh stop
 	fi
 	$util updateAppState $PROJECT_ID $APP_STATE_STOPPING
-# Start the application (not supported on Kubernetes)
+# Start the application
 elif [ "$COMMAND" == "start" ]; then
 	echo "Starting node.js project $projectName"
 	# Clear the cache since restarting node will pick up any changes to package.json or nodemon.json
