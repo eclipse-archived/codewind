@@ -129,18 +129,34 @@ module.exports.copyFile = async function copyFile(project, fileToCopy, projectRo
 }
 
 module.exports.findHCDFile = function findHCDFile(project, hcdDirectory) {
-  const hcdName = this.spawnContainerProcess(this.project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
+//  const command = 'ls ${hcdDirectory} | grep healthcenter';
+//  const hcdName = this.run(project.containerId, command);
+//  const hcdName = this.spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
+let process = this.spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
+let hcdName = "";
+process.stdout.on('data', (hcdNameOrNothing) => {
+  hcdName = hcdName + hcdNameOrNothing;
+//  project.hcdName = hcdName;
+  console.log(`############ ${hcdName}####`);
+  project.hcdName = hcdName.trim();
+  return project.hcdName;
+});
 
-  return hcdName;
+
+//  console.log(`###### findHCDFile returned hcdName=${hcdName}`);
+
+ // return hcdName;
 }
 
-module.exports.copyFileFromContainer = async function copyFile(project, destinationPath, projectRoot, relativePathOfFile) {
-  const dockerCommand = `docker cp ${project.containerId}:${projectRoot}/${relativePathOfFile} ${destinationPath}`;
-  log.info(`[docker cp command] ${dockerCommand}`);
+module.exports.copyFileFromContainer = async function copyFile(project, destinationPath, sourceFileName) {
+ // const dockerCommand = `docker cp ${project.containerId}:${sourcePath ${destinationPath}`;
+//  log.info(`[docker cp command] ${dockerCommand}`);
+  const dockerCommand = `docker cp ${project.containerId}:${sourceFileName} ${destinationPath}`;
+  console.log(`####### dockerCommand=${dockerCommand}`);
   try {
     await exec(dockerCommand); 
   } catch (error) {
-    log.error(`copyFileFromContainer: Error copying file ${relativePathOfFile} from ${project.containerId}`);
+    log.error(`copyFileFromContainer: Error copying file ${sourceFileName} from ${project.containerId}`);
     throw(error);
   }
 }

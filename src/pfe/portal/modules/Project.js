@@ -526,14 +526,24 @@ module.exports = class Project {
       try {
         const projectRoot = join("home", "default", "app");
         const relativePathToFile = join("load-test", timeOfTestRun);
+        // Clear the hcdName
+//        this.hcdName = "";
         // find the real name of the hcd file from the docker container
-        const hcdFilename =  cwUtils.findHCDFile(this, join(projectRoot,relativePathToFile));
-        if (hcdFilename == undefined) {
+        cwUtils.findHCDFile(this, join(projectRoot,relativePathToFile));
+        console.log(`#### getPathToProfilingFile ${this.hcdName}`)
+    //    console.log(`#### getPathToProfilingFile got name as ${hcdFilename}`);
+        if (this.hcdName == undefined  || this.hcdName == "") {
           throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
         }
-        const relativetoHC = join(relativePathToFile,hcdFilename);
+        //const relativetoHC = join(relativePathToFile, this.hcdName);
         log.info(`Copying profiling file for ${this.name} load run ${timeOfTestRun}`)
-        await cwUtils.copyFileFromContainer(this, this.loadTestPath, projectRoot, relativetoHC);
+
+        let originHCDPath = join(projectRoot, relativePathToFile, this.hcdName);
+        let destinationHCDPath = join(this.loadTestPath, timeOfTestRun, this.hcdName);
+        console.log(`####### fullHCDPath=${originHCDPath}##`);
+        console.log(`### destinationPath=${destinationHCDPath}##`);
+
+        await cwUtils.copyFileFromContainer(this, destinationHCDPath, originHCDPath);
       } catch (error) {
         throw new ProjectMetricsError('DOCKER_CP', this.name, error.message);
       }
@@ -799,7 +809,7 @@ async function isHcdSaved(pathToLoadTestDir) {
     if (extname(files[i]) == '.hcd') {
       return files[i];
     }
-  }
+  } 
   return false
 }
 
