@@ -83,8 +83,7 @@ router.post('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectE
       emitStatusToUI(user, project, 'failed', err);
       return;
     }
-    console.log('ERROR HERE');
-    console.log(err);
+
     if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
       res.sendStatus(404);
     } else if (err.code === ProjectLinkError.CODES.INVALID_PARAMETERS) {
