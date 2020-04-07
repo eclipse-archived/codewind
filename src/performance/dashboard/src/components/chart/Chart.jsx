@@ -297,7 +297,7 @@ class Chart extends Component {
                                         {this.props.absolutePath}
                                     </div>
                                     <div className="nodata_message_help">
-                                        Only metrics containing HTTP hit count data can be displayed.
+                                        To show metrics from the last run, the Route path must return HTTP data.
                                     </div>
                                     <div className="nodata_message_help">
                                         Run load tests, or change the route path. To change the path, click 'Edit load run settings'.
