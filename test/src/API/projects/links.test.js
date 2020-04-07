@@ -49,19 +49,11 @@ describe('Link tests (/api/v1/project/:id/links)', () => {
     describe('POST', function() {
         it('adds a link to a non-local project (located on different PFEs)', async function() {
             const res = await projectService.addProjectLink(projectIDForGenericDocker, projectIDForNodeApp, 'ENVNAME', 'urlthatdoesntoexist', 'nonexistantpfeurl');
-            res.should.have.status(200);
-            res.should.have.ownProperty('body');
-            const { body } = res;
-            body.should.be.an('array');
-            body.length.should.equal(1);
+            res.should.have.status(202);
         });
         it('adds a link to a local project (located on the same PFE)', async function() {
             const res = await projectService.addProjectLink(projectIDForNodeApp, projectIDForGenericDocker, 'ENVNAME');
-            res.should.have.status(200);
-            res.should.have.ownProperty('body');
-            const { body } = res;
-            body.should.be.an('array');
-            body.length.should.equal(1);
+            res.should.have.status(202);
         });
         it('fails to add a link as the request does not contain the required fields', async function() {
             const res = await projectService.addProjectLink(projectIDForNodeApp, projectIDForGenericDocker, null);
@@ -79,7 +71,7 @@ describe('Link tests (/api/v1/project/:id/links)', () => {
             const duplicateEnvName = 'DUPE_ENV_VALUE';
             before(async function() {
                 const res = await projectService.addProjectLink(projectIDForGenericDocker, projectIDForNodeApp, duplicateEnvName, 'urlthatdoesntoexist', 'nonexistantpfeurl');
-                res.should.have.status(200);
+                res.should.have.status(202);
             });
             it('fails to add a link with an envName that already exists', async function() {
                 const res = await projectService.addProjectLink(projectIDForGenericDocker, projectIDForNodeApp, duplicateEnvName, 'anotherurl', 'anothernonexistantpfeurl');
@@ -96,14 +88,11 @@ describe('Link tests (/api/v1/project/:id/links)', () => {
             const envName = 'UPDATE_LINK';
             before(async function() {
                 const res = await projectService.addProjectLink(projectIDForGenericDocker, projectIDForNodeApp, envName, 'urlthatdoesntoexist', 'nonexistantpfeurl');
-                res.should.have.status(200);
-                const { body } = res;
-                const envExistsInLinks = body.findIndex(({ envName: existingEnv }) => existingEnv === envName);
-                envExistsInLinks.should.be.gt(-1);
+                res.should.have.status(202);
             });
-            it('returns 204 as the link has been updated', async function() {
+            it('returns 202 as the link has been updated', async function() {
                 const res = await projectService.updateProjectLink(projectIDForGenericDocker, envName, 'NEW_ENV_NAME', 'NEW_URL_VALUE');
-                res.should.have.status(204);
+                res.should.have.status(202);
 
                 const body = await projectService.getProjectLinks(projectIDForGenericDocker);
                 const oldEnvExists = body.findIndex(({ envName: existingEnv }) => existingEnv === envName);
@@ -123,11 +112,11 @@ describe('Link tests (/api/v1/project/:id/links)', () => {
             const envName = 'DELETE_LINK';
             before(async function() {
                 const res = await projectService.addProjectLink(projectIDForGenericDocker, projectIDForNodeApp, envName, 'urlthatdoesntoexist', 'nonexistantpfeurl');
-                res.should.have.status(200);
+                res.should.have.status(202);
             });
-            it('returns 204 as the link has been deleted', async function() {
+            it('returns 202 as the link has been deleted', async function() {
                 const res = await projectService.deleteProjectLink(projectIDForGenericDocker, envName);
-                res.should.have.status(204);
+                res.should.have.status(202);
             });
         });
     });

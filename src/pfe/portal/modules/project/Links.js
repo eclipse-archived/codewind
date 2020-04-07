@@ -25,7 +25,7 @@ class Links {
     this._links = (args && args._links) ? args._links : [];
     this.filePath = path.join(directory, ENV_FILE_NAME);
   }
-  
+
   getAll() {
     return this._links;
   }
@@ -76,7 +76,7 @@ class Links {
   }
 }
 
-const validateLink = (newLink, links) => {
+function validateLink(newLink, links) {
   const { projectID, parentPFEURL, envName, projectURL, type } = newLink;
   // Only require a parentPFEURL and projectURL if the link is remote
   // If the link is local then the parentPFEURL is not required and the projectURL can be undefined
@@ -93,12 +93,12 @@ const validateLink = (newLink, links) => {
   return newLink;
 }
 
-const envNameExists = (links, envName) => {
+function envNameExists(links, envName) {
   const envList = links.map(link => link.envName);
   return envList.includes(envName);
 }
 
-const writeEnvironmentFile = async (filePath, envPairArray) => {
+async function writeEnvironmentFile(filePath, envPairArray) {
   const fileContents = envPairArray.join('\n');
   await fs.writeFile(filePath, fileContents);
 }

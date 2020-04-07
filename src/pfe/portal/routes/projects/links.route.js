@@ -22,7 +22,7 @@ const ProjectLinkError = require('../../modules/utils/errors/ProjectLinkError');
 
 const log = new Logger(__filename);
 
-const disableK8s = (req, res, next) => {
+function disableK8s(req, res, next) {
   if (global.codewind.RUNNING_IN_K8S) {
     res.status(405).send('Project links are disabled in a Kubernetes environment');
     return;
@@ -70,8 +70,7 @@ router.post('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectE
     log.info(`New project link created for ${project.name}`);
 
     // Send status and then kick off the restart/rebuild
-    const { links } = project;
-    res.status(200).send(links.getAll());
+    res.sendStatus(202);
 
     if (project.isOpen()) {
       await restartOrBuildProject(user, project);
@@ -84,8 +83,14 @@ router.post('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectE
       emitStatusToUI(user, project, 'failed', err);
       return;
     }
+    console.log('ERROR HERE');
+    console.log(err);
     if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
       res.sendStatus(404);
+    } else if (err.code === ProjectLinkError.CODES.INVALID_PARAMETERS) {
+      res.sendStatus(400);
+    } else if (err.code === ProjectLinkError.CODES.EXISTS) {
+      res.sendStatus(409);
     } else {
       res.status(500).send(err);
     }
@@ -117,7 +122,7 @@ router.put('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectEx
     await project.updateLink(currentEnvName, updatedLinkEnvName, updatedLinkProjectURL);
 
     // Send status and then kick off the restart/rebuild
-    res.sendStatus(204);
+    res.sendStatus(202);
 
     if (project.isOpen()) {
       await restartOrBuildProject(user, project);
@@ -132,6 +137,10 @@ router.put('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjectEx
     }
     if (err.code === ProjectLinkError.CODES.NOT_FOUND) {
       res.sendStatus(404);
+    } else if (err.code === ProjectLinkError.CODES.INVALID_PARAMETERS) {
+      res.sendStatus(400);
+    } else if (err.code === ProjectLinkError.CODES.EXISTS) {
+      res.sendStatus(409);
     } else {
       res.status(500).send(err);
     }
@@ -146,7 +155,7 @@ router.delete('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjec
     await project.deleteLink(envNameOfLinkToDelete);
 
     // Send status and then kick off the restart/rebuild
-    res.sendStatus(204);
+    res.sendStatus(202);
 
     if (project.isOpen()) {
       await restartOrBuildProject(user, project);
@@ -167,18 +176,19 @@ router.delete('/api/v1/projects/:id/links', disableK8s, validateReq, checkProjec
   }
 });
 
-const emitStatusToUI = (user, project, status, err = null) => {
+function emitStatusToUI(user, project, status, err = null) {
   const { name, projectID } = project;
+  const error = (err && err.info) ? err.info : err;
   const data = {
     name,
     projectID,
     status,
-    error: err.info || err
-  }
+    error,
+  };
   user.uiSocket.emit('projectLink', data);
 }
 
-const verifyProjectExistsAndReturnInternalURL = async(user, projectID) => {
+async function verifyProjectExistsAndReturnInternalURL(user, projectID) {
   const project = await user.projectList.retrieveProject(projectID);
   if (!project) {
     throw new Error('projectID not found on local PFE');
@@ -194,7 +204,7 @@ const verifyProjectExistsAndReturnInternalURL = async(user, projectID) => {
   return `${host}:${internalPort}`;
 }
 
-const restartOrBuildProject = async(user, project) => {
+async function restartOrBuildProject(user, project) {
   const { projectType } = project;
   const projectTypesThatPickUpEnvsThroughRestart = ['nodejs', 'liberty', 'spring'];
   if (projectTypesThatPickUpEnvsThroughRestart.includes(projectType.toLowerCase())) {
@@ -202,16 +212,16 @@ const restartOrBuildProject = async(user, project) => {
   } else {
     await restartDocker(user, project);
   }
-};
+}
 
-const restartNodeSpringLiberty = async(user, project) => {
+async function restartNodeSpringLiberty(user, project) {
   const { name, startMode } = project;
   log.info(`Restarting ${name} to pick up network environment variables`);
   const mode = (startMode) ? startMode : 'run';
   await user.restartProject(project, mode);
-};
+}
 
-const restartDocker = async(user, project) => {
+async function restartDocker(user, project) {
   const { name, buildStatus, projectID } = project;
   // As this function will be repeated until it has verified whether the envs exist in the container
   // we need to ensure that the project has not been deleted
@@ -239,16 +249,16 @@ const restartDocker = async(user, project) => {
     // Only build and run the project if the links are not in the container
     if (!linksExistInContainer) {
       log.info(`Rebuilding ${name} to pick up network environment variables`);
-      await user.buildAndRunProject(project);
+      await user.buildProject(project);
     }
   } else {
     // if a build is in progress, wait 5 seconds and try again
     await cwUtils.timeout(5000);
     await restartDocker(user, project);
   }
-};
+}
 
-const checkIfEnvsExistInArray = (project, array) => {
+function checkIfEnvsExistInArray(project, array) {
   const { links } = project;
   const envPairs = links.getEnvPairs();
   return envPairs.every(env => array.includes(env));

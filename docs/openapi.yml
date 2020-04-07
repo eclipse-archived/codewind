@@ -1782,8 +1782,10 @@ paths:
             schema:
               $ref: '#/components/schemas/LinkRequestBody'
       responses:
-        200:
-          description: The link has been created
+        202:
+          description: >
+            The link has been created.
+            A further response will be sent over WebSocket once the project has restarted (using the event 'projectLink')
         400:
           description: Invalid parameters given
         409:
@@ -1813,8 +1815,10 @@ paths:
                 targetProjectURL:
                   type: string
       responses:
-          204:
-            description: The link has been updated
+          202:
+            description: >
+              The link has been updated.
+              A further response will be sent over WebSocket once the project has restarted (using the event 'projectLink')
           404:
             description: The link does not exists
     delete:
@@ -1838,8 +1842,10 @@ paths:
                 envName:
                   type: string
       responses:
-        204:
-          description: The link has been deleted
+        202:
+          description: >
+            The link has been deleted.
+            A further response will be sent over WebSocket once the project has restarted (using the event 'projectLink')
         404:
           description: The link does not exists
 
