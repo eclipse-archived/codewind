@@ -633,7 +633,6 @@ describe('LoadRunner.js', () => {
             };
             const loadRunner = new LoadRunner(mockUser);
             loadRunner.project = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
-
             const logErrorSpy = sandbox.spy(MockLogger.prototype, 'error');
 
             // act
@@ -714,6 +713,10 @@ describe('LoadRunner.js', () => {
 
             // assert
             logInfoSpy.should.have.been.calledOnceWithExactly('getJavaHealthCenterData: .hcd copied to PFE');
+<<<<<<< HEAD
+=======
+            //loadRunner.user.uiSocket.emit.should.have.been.called.calledOnceWithExactly('runloadStatusChanged', expectedData);
+>>>>>>> 97d3434ff1e91aee286acd430d63f9b24dce5c8f
             loadRunner.user.uiSocket.emit.should.have.been.called.calledWith('runloadStatusChanged', expectedData);
             loadRunner.user.uiSocket.emit.should.have.been.called.calledWith('runloadStatusChanged', expectedDataForPerfUI);
             should.equal(loadRunner.project, null);
