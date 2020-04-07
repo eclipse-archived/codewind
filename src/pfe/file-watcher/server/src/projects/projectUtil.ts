@@ -1536,6 +1536,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             logger.logProjectError(err, buildInfo.projectID, buildInfo.containerName);
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.buildFail");
             await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopped, " ");
+            const containerName = await getContainerName(projectInfo);
+            await kubeutil.deleteHelmRelease(buildInfo.projectID, containerName);
             throw new Error(msg);
         }
 
@@ -1549,6 +1551,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             logger.logProjectError(err, buildInfo.projectID, buildInfo.containerName);
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.invalidImagePushRegistry");
             await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopped, " ");
+            const containerName = await getContainerName(projectInfo);
+            await kubeutil.deleteHelmRelease(buildInfo.projectID, containerName);
             throw new Error(msg);
         }
 
@@ -1567,6 +1571,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             await appendToBuildLogFile(buildInfo, buildLogMsg, logDir);
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.buildFail");
             await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopped, " ");
+            const containerName = await getContainerName(projectInfo);
+            await kubeutil.deleteHelmRelease(buildInfo.projectID, containerName);
             throw new Error(msg);
         }
 
@@ -1587,9 +1593,9 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
     } else {
         // Local Docker
         await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.inProgress, "buildscripts.buildImage");
+        const projectInfo = await getProjectInfo(buildInfo.projectID);
         try {
             logger.logProjectInfo("Build container image", buildInfo.projectID);
-            const projectInfo = await getProjectInfo(buildInfo.projectID);
             const language = projectInfo.language;
             await dockerutil.buildImage(buildInfo.projectID, language, buildInfo.containerName, [], buildInfo.projectLocation, true, dockerBuildLog);
             logger.logProjectInfo("Container image build stage complete.", buildInfo.projectID);
@@ -1602,6 +1608,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             logger.logProjectError("Error output:\n" + err.stdout, buildInfo.projectID);
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.buildFail");
             await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopped, "");
+            const containerName = await getContainerName(projectInfo);
+            await dockerutil.removeContainer(projectInfo.projectID, containerName);
             throw new Error(msg);
         }
 
