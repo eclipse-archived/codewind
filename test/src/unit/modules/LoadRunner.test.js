@@ -713,10 +713,6 @@ describe('LoadRunner.js', () => {
 
             // assert
             logInfoSpy.should.have.been.calledOnceWithExactly('getJavaHealthCenterData: .hcd copied to PFE');
-<<<<<<< HEAD
-=======
-            //loadRunner.user.uiSocket.emit.should.have.been.called.calledOnceWithExactly('runloadStatusChanged', expectedData);
->>>>>>> 97d3434ff1e91aee286acd430d63f9b24dce5c8f
             loadRunner.user.uiSocket.emit.should.have.been.called.calledWith('runloadStatusChanged', expectedData);
             loadRunner.user.uiSocket.emit.should.have.been.called.calledWith('runloadStatusChanged', expectedDataForPerfUI);
             should.equal(loadRunner.project, null);
