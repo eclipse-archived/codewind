@@ -383,7 +383,6 @@ module.exports = class LoadRunner {
     try {
       await this.project.getProfilingByTime(this.metricsFolder);
     } catch (error) {
-      log.error(error);
       if (this.project !== null) {
         log.info(`getJavaHealthCenterData: .hcd file not found, trying again. Attempt ${counter}/20`);
         this.timerID = setTimeout(() => this.getJavaHealthCenterData(counter + 1), 3000);

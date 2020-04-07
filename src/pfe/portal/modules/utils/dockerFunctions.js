@@ -129,34 +129,24 @@ module.exports.copyFile = async function copyFile(project, fileToCopy, projectRo
 }
 
 module.exports.findHCDFile = function findHCDFile(project, hcdDirectory) {
-//  const command = 'ls ${hcdDirectory} | grep healthcenter';
-//  const hcdName = this.run(project.containerId, command);
-//  const hcdName = this.spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
-let process = this.spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
-let hcdName = "";
-process.stdout.on('data', (hcdNameOrNothing) => {
-  hcdName = hcdName + hcdNameOrNothing;
-//  project.hcdName = hcdName;
-  console.log(`############ ${hcdName}####`);
-  project.hcdName = hcdName.trim();
-  return project.hcdName;
-});
-
-
-//  console.log(`###### findHCDFile returned hcdName=${hcdName}`);
-
- // return hcdName;
+  const process = this.spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
+  let hcdName = "";
+  process.stdout.on('data', (hcdNameOrNothing) => {
+    // Convert the name to a string and trim
+    hcdName = hcdName + hcdNameOrNothing;
+    project.hcdName = hcdName.trim();
+    log.debug(`findHCDFile found ${project.hcdName}`)
+    return project.hcdName;
+  });
 }
 
-module.exports.copyFileFromContainer = async function copyFile(project, destinationPath, sourceFileName) {
- // const dockerCommand = `docker cp ${project.containerId}:${sourcePath ${destinationPath}`;
-//  log.info(`[docker cp command] ${dockerCommand}`);
-  const dockerCommand = `docker cp ${project.containerId}:${sourceFileName} ${destinationPath}`;
-  console.log(`####### dockerCommand=${dockerCommand}`);
+module.exports.copyFileFromContainer = async function copyFile(project, sourceName, destinationName) {
+  const dockerCommand = `docker cp ${project.containerId}:${sourceName} ${destinationName}`;
+  log.debug(`copyFileFromContainer dockerCommand=${dockerCommand}`);
   try {
     await exec(dockerCommand); 
   } catch (error) {
-    log.error(`copyFileFromContainer: Error copying file ${sourceFileName} from ${project.containerId}`);
+    log.warn(`copyFileFromContainer: Error copying file ${sourceName} from ${project.containerId}`);
     throw(error);
   }
 }
