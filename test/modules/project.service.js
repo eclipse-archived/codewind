@@ -75,7 +75,7 @@ const defaultNodeProjectDirList = [
 async function createProjectFromTemplate(name, projectType, path, autoBuild = false) {
     const { url, language } = templateOptions[projectType];
 
-    const pfeProjectType = (projectType === 'openliberty')
+    const pfeProjectType = (['openliberty', 'go'].includes(projectType))
         ? 'docker'
         : projectType;
 
@@ -448,6 +448,51 @@ async function notifyPfeOfFileChangesAndAwaitMsg(array, projectID) {
     await reqService.makeReqAndAwaitSocketMsg(req, 200, expectedSocketMsg);
 }
 
+async function getProjectLinks(projectID) {
+    const res = await reqService.chai
+        .get(`/api/v1/projects/${projectID}/links`)
+        .set('Cookie', ADMIN_COOKIE);
+    res.should.have.status(200);
+    res.should.have.ownProperty('body');
+    res.body.should.be.an('array');
+    return res.body;
+}
+
+async function addProjectLink(projectID, targetProjectID, envName, targetProjectURL, targetProjectPFEURL) {
+    const reqBody = {
+        targetProjectID,
+        envName,
+        targetProjectURL,
+        targetProjectPFEURL,
+    };
+    const res = await reqService.chai
+        .post(`/api/v1/projects/${projectID}/links`)
+        .set('Cookie', ADMIN_COOKIE)
+        .send(reqBody);
+    return res;
+}
+
+async function updateProjectLink(projectID, envName, updatedEnvName, targetProjectURL) {
+    const reqBody = {
+        envName,
+        updatedEnvName,
+        targetProjectURL,
+    };
+    const res = await reqService.chai
+        .put(`/api/v1/projects/${projectID}/links`)
+        .set('Cookie', ADMIN_COOKIE)
+        .send(reqBody);
+    return res;
+}
+
+async function deleteProjectLink(projectID, envName) {
+    const res = await reqService.chai
+        .delete(`/api/v1/projects/${projectID}/links`)
+        .set('Cookie', ADMIN_COOKIE)
+        .send({ envName });
+    return res;
+}
+
 
 module.exports = {
     generateUniqueName,
@@ -483,4 +528,8 @@ module.exports = {
     buildProject,
     cloneProject,
     notifyPfeOfFileChangesAndAwaitMsg,
+    getProjectLinks,
+    addProjectLink,
+    updateProjectLink,
+    deleteProjectLink,
 };

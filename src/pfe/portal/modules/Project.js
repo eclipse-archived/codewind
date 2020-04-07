@@ -23,6 +23,7 @@ const ProjectMetricsError = require('./utils/errors/ProjectMetricsError');
 const Logger = require('./utils/Logger');
 const LogStream = require('./LogStream');
 const metricsService = require('./metricsService');
+const Links = require('./project/Links');
 
 const log = new Logger(__filename);
 
@@ -129,6 +130,8 @@ module.exports = class Project {
       this.injectMetrics = args.injectMetrics;
     }
     this.capabilitiesReady = false;
+    
+    this.links = new Links(this.projectPath(), args.links);
   }
 
 
@@ -783,12 +786,28 @@ module.exports = class Project {
   /**
    * Resolves the given path against the project's monitor path.
    * The path is unchanged if it is already absolute.
-   * 
+   *
    * @param {String} path
    * @returns {String} an absolute path
    */
   resolveMonitorPath(path) {
     return isAbsolute(path) ? cwUtils.convertFromWindowsDriveLetter(path) : join(this.pathToMonitor, path);
+  }
+
+  // Project Link wrappers so they can access the writeInformationFile function
+  async createLink(newLink) {
+    await this.links.add(newLink);
+    return this.writeInformationFile();
+  }
+
+  async updateLink(envName, newEnvName, newProjectURL) {
+    await this.links.update(envName, newEnvName, newProjectURL);
+    return this.writeInformationFile();
+  }
+
+  async deleteLink(envName) {
+    await this.links.delete(envName);
+    return this.writeInformationFile();
   }
 }
 
