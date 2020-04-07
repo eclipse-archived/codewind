@@ -108,7 +108,7 @@ describe('Links.js', function() {
             afterDeleteEnvFile();
             it('adds a new link to the link object and writes the env file', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                links.add(dummyRemoteLink);
+                await links.add(dummyRemoteLink);
                 links._links.length.should.equal(1);
                 const fileContents = await fs.readFile(links.filePath, 'utf8');
                 const { envName, projectURL } = dummyRemoteLink;
