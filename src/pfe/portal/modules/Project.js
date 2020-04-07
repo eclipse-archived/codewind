@@ -535,16 +535,26 @@ module.exports = class Project {
 
         let originHCDPath = join(projectRoot, relativePathToFile, this.hcdName);
         let destinationHCDPath = join(this.loadTestPath, timeOfTestRun, this.hcdName);
-        log.debug(`getPathToProfilingFile=${originHCDPath}##`);
-        log.debug(`getPathToProfilingFile=${destinationHCDPath}##`);
+        log.debug(`getPathToProfilingFile originHCDPath=${originHCDPath}.`);
+        log.debug(`getPathToProfilingFile destinationHCDPath=${destinationHCDPath}.`);
 
         await cwUtils.copyFileFromContainer(this, originHCDPath, destinationHCDPath);
       } catch (error) {
         throw new ProjectMetricsError('DOCKER_CP', this.name, error.message);
       }
-      log.info(`${this.name} hcd file from run ${timeOfTestRun} saved to pfe`);      
+      log.info(`${this.name} hcd file from run ${timeOfTestRun} saved to pfe`);   
+      return join(pathToLoadTestDir, this.hcdName);
     }
     return null
+  }
+
+  /**
+   * 
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  async removeProfilingData(timeOfTestRun) {
+    const profilingPath = join(this.loadTestPath, timeOfTestRun);
+    await rimraf.sync(profilingPath);
   }
 
   /**
