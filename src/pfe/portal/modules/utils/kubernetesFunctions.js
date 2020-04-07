@@ -49,13 +49,25 @@ module.exports.spawnContainerProcess = function spawnContainerProcess(project, c
   return spawn('/usr/local/bin/kubectl', cmdArray);
 }
 
-module.exports.copyFileFromContainer = async function copyFileFromContainer(project, destinationPath, projectRoot, relativePathOfFile) {
-  const kubeCommand = `kubectl cp ${K8S_NAME_SPACE}/${project.podName}:${projectRoot}/${relativePathOfFile} ${destinationPath}`;
-  log.debug(`[kubectl cp command] ${kubeCommand}`);
+module.exports.findHCDFile = function findHCDFile(project, hcdDirectory) {
+  const process = this.spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
+  let hcdName = "";
+  process.stdout.on('data', (hcdNameOrNothing) => {
+    // Convert the name to a string and trim
+    hcdName = hcdName + hcdNameOrNothing;
+    project.hcdName = hcdName.trim();
+    log.debug(`findHCDFile found ${project.hcdName}`)
+    return project.hcdName;
+  });
+}
+
+module.exports.copyFileFromContainer = async function copyFileFromContainer(project, sourceName, destinationName) {
+  const kubeCommand = `kubectl cp ${K8S_NAME_SPACE}/${project.podName}:${sourceName} ${destinationName}`;
+  log.debug(`copyFileFromContainer [kubectl cp command] ${kubeCommand}`);
   try {
     await exec(kubeCommand); 
   } catch (error) {
-    log.error(`copyFileFromContainer: Error copying file ${relativePathOfFile} from ${project.podName}`);
+    log.error(`copyFileFromContainer: Error copying file ${sourceName} from ${project.podName}`);
     throw(error);
   }
 }

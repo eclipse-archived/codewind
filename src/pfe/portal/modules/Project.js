@@ -524,22 +524,29 @@ module.exports = class Project {
       let fileName = await isHcdSaved(pathToLoadTestDir)
       if (fileName !== false) {
         return join(pathToLoadTestDir, fileName)
-      }
-      const projectRoot = join("home", "default", "app");
-      const relativePathToFile = join("load-test", timeOfTestRun);
+      } 
+
       try {
-        log.info(`Copying profiling folder for ${this.name} load run ${timeOfTestRun}`)
-        await cwUtils.copyFileFromContainer(this, this.loadTestPath, projectRoot, relativePathToFile);
+        const projectRoot = join("home", "default", "app");
+        const relativePathToFile = join("load-test", timeOfTestRun);
+        // find the actual name of the hcd file from the docker container
+        cwUtils.findHCDFile(this, join(projectRoot,relativePathToFile));
+        if (this.hcdName == undefined  || this.hcdName == "") {
+          throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
+        }
+        log.info(`Attempting to copy profiling file ${this.hcdName} for ${this.name} load run ${timeOfTestRun}`)
+
+        let originHCDPath = join(projectRoot, relativePathToFile, this.hcdName);
+        let destinationHCDPath = join(this.loadTestPath, timeOfTestRun, this.hcdName);
+        log.debug(`getPathToProfilingFile originHCDPath=${originHCDPath}.`);
+        log.debug(`getPathToProfilingFile destinationHCDPath=${destinationHCDPath}.`);
+
+        await cwUtils.copyFileFromContainer(this, originHCDPath, destinationHCDPath);
       } catch (error) {
         throw new ProjectMetricsError('DOCKER_CP', this.name, error.message);
       }
-      log.info(`${this.name} profiling folder from run ${timeOfTestRun} saved to pfe`)
-      fileName = await isHcdSaved(pathToLoadTestDir)
-      if (fileName !== false) {
-        return join(pathToLoadTestDir, fileName)
-      }
-      await this.removeProfilingData(timeOfTestRun);
-      throw new ProjectMetricsError('HCD_NOT_FOUND', this.name, `.hcd file has not been saved for load run ${timeOfTestRun}`);
+      log.info(`${this.name} hcd file from run ${timeOfTestRun} saved to pfe`);   
+      return join(pathToLoadTestDir, this.hcdName);
     }
     return null
   }
@@ -825,7 +832,7 @@ async function isHcdSaved(pathToLoadTestDir) {
     if (extname(files[i]) == '.hcd') {
       return files[i];
     }
-  }
+  } 
   return false
 }
 

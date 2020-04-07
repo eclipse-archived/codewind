@@ -633,7 +633,6 @@ describe('LoadRunner.js', () => {
             };
             const loadRunner = new LoadRunner(mockUser);
             loadRunner.project = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
-
             const logErrorSpy = sandbox.spy(MockLogger.prototype, 'error');
 
             // act
