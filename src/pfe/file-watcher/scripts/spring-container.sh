@@ -397,15 +397,12 @@ function update() {
 
 function start() {
 	# Start the spring application
-
+	echo "Starting the $projectName project in $START_MODE mode"
 	if [[ "$IN_K8" == "true" ]]; then
-		# Debug not supported on Kubernetes
-		echo "Starting the $projectName project in run mode"
 		POD_NAME="$( kubectl get po --selector=release=$project | grep 'Running' | cut -d ' ' -f 1 )"
-		kubectl exec $POD_NAME bash "/scripts/spring-start.sh" "$projectName" run
+		kubectl exec $POD_NAME bash "/scripts/spring-start.sh" "$projectName" "$START_MODE" "$DEBUG_PORT"
 		exit_code=$?
 	else
-		echo "Starting the $projectName project in $START_MODE mode"
 		$IMAGE_COMMAND exec $project /scripts/spring-start.sh "$projectName" $START_MODE $DEBUG_PORT
 		exit_code=$?
 	fi
