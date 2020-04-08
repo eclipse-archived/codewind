@@ -11,7 +11,7 @@
       "buildBuildImage": "Creating image for build",
       "compileApplication": "Compiling application",
       "compileFail": "Application failed to compile",
-      "buildFail": "Creating image for build failed",
+      "buildFail": "Failed to create image",
       "containerBuildSuccess": "Container image has been built successfully",
       "buildcontainerCreateSuccess": "Build container image has been created successfully",
       "buildMaven": "Running maven build",
