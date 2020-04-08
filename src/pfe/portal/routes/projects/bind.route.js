@@ -348,11 +348,20 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
       log.info(
         `Project ${project.name} syncing with build container, projectRoot is ${projectRoot}`
       );
-      await cwUtils.copyProjectContents(
-        project,
-        globalProjectPath,
-        projectRoot
-      );
+      if (project.containerId !== undefined) {
+        try {
+          await cwUtils.copyProjectContents(
+            project,
+            globalProjectPath,
+            projectRoot
+          );
+        } catch (err) {
+          // If we fail to copy into the container we still need to send the rest of the file change notifications.
+          log.warn(`Failed to copyProjectContents for ${project.name} to ${project.containerId} - container may be stopped or removed.`);
+        }
+      } else {
+        log.info(`Project ${project.name} - no container available to sync to.`);
+      }
     }
     if (filesToDelete != undefined) {
       filesToDelete.forEach((f) => {
