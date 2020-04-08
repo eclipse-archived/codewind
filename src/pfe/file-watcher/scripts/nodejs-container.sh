@@ -72,6 +72,10 @@ cd "$ROOT"
 
 set -o pipefail
 
+function getNameOfRunningProjectPod() {
+	kubectl get po --selector=release="$1" | grep 'Running' | cut -d ' ' -f 1
+}
+
 function cleanContainer() {
 	if [ "$IN_K8" != "true" ]; then
 		if [ "$($IMAGE_COMMAND ps -aq -f name=$project)" ]; then
@@ -138,6 +142,8 @@ function deployK8s() {
 
 	# Add the necessary labels and serviceaccount to the chart
 	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project $PROJECT_ID
+	# Overwrite the container args with `tail` so that we can restart the node process without the container dying
+	/file-watcher/scripts/kubeScripts/modify-helm-chart-node.sh "$deploymentFile"
 
 	# Push app container image to docker registry if one is set up
 	if [[ ! -z $IMAGE_PUSH_REGISTRY ]]; then
@@ -246,9 +252,10 @@ function deployK8s() {
 	# Delete any pods left that are terminating, to ensure they go away
 	/file-watcher/scripts/kubeScripts/clear-terminating-pods.sh $project
 
-	POD_NAME="$( kubectl get po --selector=release=$project | grep 'Running' | cut -d ' ' -f 1 )"
-	kubectl cp /file-watcher/scripts/nodejsScripts "$POD_NAME":/scripts
-	kubectl exec "$POD_NAME" -- /scripts/noderun.sh start false "$START_MODE" "$HOST_OS"
+	local podName
+	podName=$(getNameOfRunningProjectPod "$project")
+	kubectl cp /file-watcher/scripts/nodejsScripts "$podName":/scripts
+	kubectl exec "$podName" -- /scripts/noderun.sh start false "$START_MODE" "$HOST_OS"
 
 	echo -e "Touching application log file: "$LOG_FOLDER/$APP_LOG.log""
 	touch "$LOG_FOLDER/$APP_LOG.log"
@@ -470,7 +477,7 @@ elif [ "$COMMAND" == "update" ]; then
 elif [ "$COMMAND" == "stop" ]; then
 	echo "Stopping node.js project $projectName"
 	if [[ "$IN_K8" == "true" ]]; then
-		POD_NAME="$( kubectl get po --selector=release=$project | grep 'Running' | cut -d ' ' -f 1 )"
+		POD_NAME=$(getNameOfRunningProjectPod "$project")
 		kubectl cp /file-watcher/scripts/nodejsScripts/ "$POD_NAME":/scripts
 		kubectl exec "$POD_NAME" -- /scripts/noderun.sh stop
 	else
@@ -483,7 +490,7 @@ elif [ "$COMMAND" == "start" ]; then
 	# Clear the cache since restarting node will pick up any changes to package.json or nodemon.json
 	clearNodeCache
 	if [[ "$IN_K8" == "true" ]]; then
-		POD_NAME="$( kubectl get po --selector=release=$project | grep 'Running' | cut -d ' ' -f 1 )"
+		POD_NAME=$(getNameOfRunningProjectPod "$project")
 		kubectl cp /file-watcher/scripts/nodejsScripts/ "$POD_NAME":/scripts
 		kubectl exec "$POD_NAME" -- /scripts/noderun.sh start false "$START_MODE" "$HOST_OS"
 	else
