@@ -22,7 +22,12 @@ log.info(`PerformanceHost: ${performance_host}`);
 function pipePerfProxyReqsToPerfContainer(req, res) {
   try {
     const options = getOptionsForReqToPerfContainer(req, performance_host, performance_port);
-    const reqToPerfContainer = got.stream(options);
+    let reqToPerfContainer
+    if (req.method == "POST") {
+      reqToPerfContainer = got.stream.post(options);
+    } else {
+      reqToPerfContainer = got.stream(options);
+    }
     req
       .pipe(reqToPerfContainer)
       .on('error', (err) => {

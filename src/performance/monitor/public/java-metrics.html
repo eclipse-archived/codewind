@@ -165,7 +165,7 @@
     let httpSummary = new HttpSummary('#httpSummaryDiv', '#summary', localizedStrings.httpSummaryTitle);
     httpSummary.setHttpSummaryOptions({ host: hostname, filteredPath: dashboardRoot });
 
-    getEnvDataAndUpdateEnvSummary();
+    // getEnvDataAndUpdateEnvSummary();
     pollMetricsAndUpdateDash(maxPolls, updateDash);
 
     function updateDash(projectData) {
