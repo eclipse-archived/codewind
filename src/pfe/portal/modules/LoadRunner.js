@@ -37,6 +37,7 @@ module.exports = class LoadRunner {
     this.hostname = process.env.CODEWIND_PERFORMANCE_SERVICE ? process.env.CODEWIND_PERFORMANCE_SERVICE : "codewind-performance"
     this.port = '9095';
     this.project = null;
+    this.collectingHCD = false;
     this.runDescription = null;
     this.up = false;
     this.socket = io(`http://${this.hostname}:${this.port}`, { timeout: 5000, autoConnect: false });
@@ -329,6 +330,8 @@ module.exports = class LoadRunner {
   }
 
   async beginJavaProfiling(duration) {
+    // set the flag to false
+    this.collectingHCD = false;
     // round up time to next minute
     const durationInMins = Math.ceil(duration / 60);
 
@@ -369,14 +372,16 @@ module.exports = class LoadRunner {
     } catch (error) {
       log.error(error)
     }
-
+    this.collectingHCD = true;
     this.timerID = setTimeout(() => this.getJavaHealthCenterData(1), duration * 1000);
   }
 
   async getJavaHealthCenterData(counter) {
     if (counter > 20) {
       log.error("getJavaHealthCenterData: Failed to save .hcd file");
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+      this.collectingHCD = false;
+      this.emitCompleted();
+      clearTimeout(this.heartbeatID);
       this.project = null;
       return;
     }
@@ -384,6 +389,9 @@ module.exports = class LoadRunner {
       await this.project.getProfilingByTime(this.metricsFolder);
     } catch (error) {
       if (this.project !== null) {
+        const data = { projectID: this.project.projectID,  status: 'running' , timestamp: this.metricsFolder }
+        this.user.uiSocket.emit('runloadStatusChanged', data);
+      
         log.info(`getJavaHealthCenterData: .hcd file not found, trying again. Attempt ${counter}/20`);
         this.timerID = setTimeout(() => this.getJavaHealthCenterData(counter + 1), 3000);
       } else {
@@ -392,9 +400,10 @@ module.exports = class LoadRunner {
       return;
     }
     log.info("getJavaHealthCenterData: .hcd copied to PFE");
+    this.collectingHCD = false;
     const data = { projectID: this.project.projectID,  status: 'hcdReady', timestamp: this.metricsFolder};
     this.user.uiSocket.emit('runloadStatusChanged', data);
-    this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+    this.emitCompleted();
     this.project = null;
   }
 
@@ -538,9 +547,10 @@ module.exports = class LoadRunner {
       log.info(`Load run on project ${this.project.projectID} cancelled`);
       this.heartbeat('cancelling');
       await this.cancelProfiling();
-      clearTimeout(this.heartbeatID);
+
       this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled' });
       this.project = null;
+      clearTimeout(this.heartbeatID);
     });
 
     this.socket.on('completed', async () => {
@@ -549,12 +559,13 @@ module.exports = class LoadRunner {
       if (this.collectionUri !== null) {
         this.recordCollection();
       }
-      clearTimeout(this.heartbeatID);  
+
       await this.endProfiling();
       if (this.timerID === null) {
-        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+        this.emitCompleted();
         this.project = null;
       }
+      clearTimeout(this.heartbeatID);
     });
   }
 
@@ -613,7 +624,7 @@ module.exports = class LoadRunner {
       this.profilingSocket.disconnect();
       this.profilingSocket = null;
       this.profilingSamples = null;
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+      this.emitCompleted();    
       this.project = null;
     }
   }
@@ -684,5 +695,11 @@ module.exports = class LoadRunner {
       clearTimeout(this.heartbeatID);
     }
     this.heartbeatID = setInterval(() => this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: status, timestamp: this.metricsFolder }), 2000);
+  }
+
+  emitCompleted() {
+    if (!this.collectingHCD) {
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+    }
   }
 }
