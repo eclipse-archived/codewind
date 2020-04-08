@@ -251,7 +251,7 @@ describe('Registry Secrets route tests', function() {
             this.timeout(testTimeout.med);
             
             const dockerAddress = 'docker.io';
-            const invalidDockerAddress = 'docker.io.garbage';
+            const invalidDockerAddress = 'not.docker.io';
             const dockerUsername = 'randomusername';
             const dockerPassword = 'randompassword';
             const fullyQualifiedDockerRegistryAddress = 'https://index.docker.io/v1/';

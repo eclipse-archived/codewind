@@ -733,7 +733,7 @@ module.exports = class User {
     
     try {
       // Handle dockerhub specifically on local since docker.io does not work
-      if (address === "docker.io" && !global.codewind.RUNNING_IN_K8S) {
+      if (address.startsWith("docker.io") && !global.codewind.RUNNING_IN_K8S) {
         // eslint-disable-next-line no-param-reassign
         address = "https://index.docker.io/v1/";
       }
@@ -936,7 +936,7 @@ module.exports = class User {
 
     try {
       // Handle dockerhub specifically on local since docker.io does not work
-      if (address === "docker.io" && !global.codewind.RUNNING_IN_K8S) {
+      if (address.startsWith("docker.io") && !global.codewind.RUNNING_IN_K8S) {
         // eslint-disable-next-line no-param-reassign
         address = "https://index.docker.io/v1/";
       }
