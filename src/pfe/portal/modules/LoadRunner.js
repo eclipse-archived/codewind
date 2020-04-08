@@ -370,32 +370,26 @@ module.exports = class LoadRunner {
       log.error(error)
     }
 
-    this.timerID = setTimeout(() => this.getJavaHealthCenterData(1), duration * 1000);
+    this.timerID = setTimeout(() => this.getJavaHealthCenterData(this.project, this.timestamp, 1), duration * 1000);
   }
 
-  async getJavaHealthCenterData(counter) {
+  async getJavaHealthCenterData(project, timestamp, counter) {
     if (counter > 20) {
       log.error("getJavaHealthCenterData: Failed to save .hcd file");
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
-      this.project = null;
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID,  status: 'completed' });
       return;
     }
     try {
-      await this.project.getProfilingByTime(this.metricsFolder);
+      await project.getProfilingByTime(timestamp);
     } catch (error) {
-      if (this.project !== null) {
-        log.info(`getJavaHealthCenterData: .hcd file not found, trying again. Attempt ${counter}/20`);
-        this.timerID = setTimeout(() => this.getJavaHealthCenterData(counter + 1), 3000);
-      } else {
-        log.warn("getJavaHealthCenterData: Project was made null before .hcd could be found.")
-      }
+      log.info(`getJavaHealthCenterData: .hcd file not found, trying again. Attempt ${counter}/20`);
+      this.timerID = setTimeout(() => this.getJavaHealthCenterData(project, timestamp, counter + 1), 3000);
       return;
     }
     log.info("getJavaHealthCenterData: .hcd copied to PFE");
-    const data = { projectID: this.project.projectID,  status: 'hcdReady', timestamp: this.metricsFolder};
+    const data = { projectID: project.projectID,  status: 'hcdReady', timestamp: timestamp};
     this.user.uiSocket.emit('runloadStatusChanged', data);
-    this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
-    this.project = null;
+    this.user.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID,  status: 'completed' });
   }
 
   async getLibertyJavaVersion() {
@@ -551,10 +545,8 @@ module.exports = class LoadRunner {
       }
       clearTimeout(this.heartbeatID);  
       await this.endProfiling();
-      if (this.timerID === null) {
-        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
-        this.project = null;
-      }
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+      this.project = null;
     });
   }
 
