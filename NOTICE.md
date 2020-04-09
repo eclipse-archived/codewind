@@ -6,18 +6,23 @@ This content is produced and maintained by the Eclipse Codewind project.
 
 ## Trademarks
 
-Eclipse Codewind is the trademark of the Eclipse Foundation. Eclipse, and the Eclipse Logo are registered trademarks of the Eclipse Foundation.
+Eclipse Codewind is the
+trademark of the Eclipse Foundation. Eclipse, and the Eclipse Logo are
+registered trademarks of the Eclipse Foundation.
 
 ## Copyright
 
-All content is the property of the respective authors or their employers. For more information regarding authorship of content, please consult the listed source code repository logs.
+All content is the property of the respective authors or their employers.
+For more information regarding authorship of content, please consult the
+listed source code repository logs.
 
 ## Declared Project Licenses
 
-This program and the accompanying materials are made available under the terms of the Eclipse Public License v. 2.0 which is available at
- * http://www.eclipse.org/legal/epl-v20.html.
+This program and the accompanying materials are made available under the terms
+of the Eclipse Public License v. 2.0 which is available at
+http://www.eclipse.org/legal/epl-v20.html.
 
-SPDX-License-Identifier: EPL-2.0
+SPDX-License-Identifier: EPL-1.2
 
 ## Source Code
 
@@ -30,10 +35,12 @@ The project maintains the following source code repositories:
  *  https://github.com/eclipse/codewind-eclipse
  *  https://github.com/eclipse/codewind-filewatchers
  *  https://github.com/eclipse/codewind-installer
+ *  https://github.com/eclipse/codewind-intellij
  *  https://github.com/eclipse/codewind-java-profiler
  *  https://github.com/eclipse/codewind-odo-extension
  *  https://github.com/eclipse/codewind-openapi-eclipse
  *  https://github.com/eclipse/codewind-openapi-vscode
+ *  https://github.com/eclipse/codewind-operator
  *  https://github.com/eclipse/codewind-node-profiler
  *  https://github.com/eclipse/codewind-vscode
 
@@ -42,10 +49,14 @@ The project maintains the following source code repositories:
 1to2 - 1.0.0
  * License: MIT
 
-@babel/runtime - 7.4.5
+@babel/runtime - 7.7.4
+ * License: MIT
+ * Copyright: Copyright (c) 2014-present Sebastian McKenzie and other contributors
+
+@babel/runtime - 7.8.7
  * License: MIT
 
-@babel/runtime - 7.7.4
+@babel/runtime - 7.9.2
  * License: MIT
  * Copyright: Copyright (c) 2014-present Sebastian McKenzie and other contributors
 
@@ -81,13 +92,43 @@ The project maintains the following source code repositories:
  * License: Apache-2.0
  * Copyright: Copyright 2015 IBM Corp.
 
-@golangtools/heapview - 0.0.0
- * License: BSD-3-Clause
- * Copyright: Copyright 2016 The Go Authors. All rights reserved.
-
 @sindresorhus/is - 0.7.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+@sindresorhus/is - 2.1.0
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+@szmarczak/http-timer - 4.0.5
+ * License: MIT
+ * Copyright: Copyright (c) 2018 Szymon Marczak
+
+@types/cacheable-request - 6.0.1
+ * License: MIT
+ * Copyright: Copyright (c) Microsoft Corporation. All rights reserved.
+
+@types/http-cache-semantics - 4.0.0
+ * License: MIT
+ * Copyright: Copyright (c) Microsoft Corporation. All rights reserved.
+
+@types/keyv - 3.1.1
+ * License: MIT
+ * Copyright: Copyright (c) Microsoft Corporation. All rights reserved.
+
+@types/node - 10.14.15
+ * License: MIT
+
+@types/node - 12.12.31
+ * License: MIT
+
+@types/node - 13.9.2
+ * License: MIT
+ * Copyright: Copyright (c) Microsoft Corporation. All rights reserved.
+
+@types/responselike - 1.0.0
+ * License: MIT
+ * Copyright: Copyright (c) Microsoft Corporation. All rights reserved.
 
 JSONStream - 1.3.2
  * License: Apache-2.0
@@ -120,16 +161,9 @@ aggregate-error - 1.0.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
-ajv - 6.10.0
- * License: MIT
-
-ajv - 6.10.2
- * License: MIT
- * Copyright: Copyright (c) 2015-2017 Evgeny Poberezkin Copyright 2011 Gary Court. All rights reserved.
-
 ajv - 6.12.0
  * License: MIT
- * Copyright: Copyright 2011 Gary Court. All rights reserved. Copyright (c) 2015-2017 Evgeny Poberezkin
+ * Copyright: Copyright (c) 2015-2017 Evgeny Poberezkin Copyright 2011 Gary Court. All rights reserved.
 
 ansi-align - 2.0.0
  * License: ISC
@@ -152,17 +186,13 @@ ansi-styles - 3.2.1
 anymatch - 2.0.0
  * License: ISC
 
-anymatch - 3.0.3
- * License: ISC
- * Copyright: Copyright (c) 2014 Elan Shanker
-
 anymatch - 3.1.1
  * License: ISC
- * Copyright: Copyright (c) 2019 Elan Shanker  Paul Miller (https Copyright (c) 2014 Elan Shanker
+ * Copyright: Copyright (c) 2014 Elan Shanker Copyright (c) 2019 Elan Shanker  Paul Miller (https
 
 appmetrics - 5.1.1
  * License: Apache-2.0
- * Copyright: Copyright (c) 2012 Google Inc. All rights reserved. Copyright (c) 2014  Ben Noordhuis <info@bnoordhuis.nl> Copyright (c) 2009-2016 Stuart Knightley  David Duponchel  Franz Buchinger  António Afonso Copyright (c) 2014  StrongLoop Inc. Copyright (c) 2017 NAN contributors Copyright (c) Isaac Z. Schlueter and Contributors Copyright 2006-2011  the V8 project authors. All rights reserved. Copyright 2016 omr-agent contributors listed here Copyright (c) 2007  Eclipse Foundation  Inc. and its licensors. Copyright (c) 2009  2012 IBM Corp. Copyright (c) 2012  2014 IBM Corp. Copyright (c) 2013 IBM Corp. Copyright (c) 2012  2013 IBM Corp. Copyright (c) 2009  2014 IBM Corp. Copyright (c) 2009  2013 IBM Corp. Copyright 2007-2016 IBM Corp. Copyright 2014 2015 IBM Corp. Copyright 2014  StrongLoop Inc. Copyright 2014  Strongloop Inc. Copyright 2014  2015 IBM Corp. Copyright (c) 2014  Krishna Raman <kraman@gmail.com> Copyright (c) 2012  Ben Noordhuis <info@bnoordhuis.nl> Copyright 2016 IBM Corp. Copyright 2017 IBM Corp. Copyright 2015 IBM Corp.
+ * Copyright: Copyright (c) 2017 NAN contributors Copyright 2006-2011  the V8 project authors. All rights reserved. Copyright (c) 2009-2016 Stuart Knightley  David Duponchel  Franz Buchinger  António Afonso Copyright 2016 omr-agent contributors listed here Copyright (c) 2014  StrongLoop Inc. Copyright (c) Isaac Z. Schlueter and Contributors Copyright (c) 2014  Ben Noordhuis <info@bnoordhuis.nl> Copyright (c) 2007  Eclipse Foundation  Inc. and its licensors. Copyright (c) 2012  2014 IBM Corp. Copyright (c) 2013 IBM Corp. Copyright (c) 2012  2013 IBM Corp. Copyright (c) 2009  2012 IBM Corp. Copyright (c) 2009  2014 IBM Corp. Copyright (c) 2009  2013 IBM Corp. Copyright 2007-2016 IBM Corp. Copyright 2017 IBM Corp. Copyright (c) 2014  Krishna Raman <kraman@gmail.com> Copyright 2015 IBM Corp. Copyright (c) 2012 Google Inc. All rights reserved. Copyright 2014  Strongloop Inc. Copyright 2014  StrongLoop Inc. Copyright 2014 2015 IBM Corp. Copyright 2014  2015 IBM Corp. Copyright 2016 IBM Corp. Copyright (c) 2012  Ben Noordhuis <info@bnoordhuis.nl>
 
 appmetrics-codewind - 0.3.0
  * License: Apache-2.0
@@ -184,7 +214,7 @@ argparse - 1.0.10
 
 arr-diff - 4.0.0
  * License: MIT
- * Copyright: Copyright (c) 2014-2017  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert
+ * Copyright: Copyright (c) 2014-2017  Jon Schlinkert.
 
 arr-flatten - 1.1.0
  * License: MIT
@@ -200,7 +230,11 @@ array-flatten - 1.1.1
 
 array-unique - 0.3.2
  * License: MIT
- * Copyright: Copyright (c) 2014-2015  Jon Schlinkert. Copyright (c) 2014-2016  Jon Schlinkert
+ * Copyright: Copyright (c) 2014-2016  Jon Schlinkert Copyright (c) 2014-2015  Jon Schlinkert.
+
+array.prototype.map - 1.0.2
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Jordan Harband
 
 arraybuffer.slice - 0.0.7
  * License: MIT
@@ -208,7 +242,7 @@ arraybuffer.slice - 0.0.7
 
 asn1 - 0.2.4
  * License: MIT
- * Copyright: Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved. Copyright (c) 2011 Mark Cavage  All rights reserved.
+ * Copyright: Copyright (c) 2011 Mark Cavage  All rights reserved. Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
 asn1.js - 4.10.1
  * License: MIT
@@ -225,9 +259,6 @@ async - 2.6.3
  * License: MIT
  * Copyright: Copyright (c) 2010-2018 Caolan McMahon
 
-async-limiter - 1.0.0
- * License: MIT
-
 async-limiter - 1.0.1
  * License: MIT
  * Copyright: Copyright (c) 2017 Samuel Reed <samuel.trace.reed@gmail.com>
@@ -236,17 +267,21 @@ async-listener - 0.6.10
  * License: BSD-2-Clause
  * Copyright: Copyright (c) 2013-2017  Forrest L Norvell
 
-async-lock - 1.2.0
- * License: MIT
- * Copyright: Copyright (c) 2016 Rogier Schouten <github@workingcode.ninja>
-
 async-lock - 1.2.2
  * License: MIT
  * Copyright: Copyright (c) 2016 Rogier Schouten <github@workingcode.ninja>
 
+async-retry - 1.3.1
+ * License: MIT
+ * Copyright: Copyright (c) 2017 ZEIT  Inc.
+
 asynckit - 0.4.0
  * License: MIT
  * Copyright: Copyright (c) 2016 Alex Indigo
+
+at-least-node - 1.0.0
+ * License: ISC
+ * Copyright: Copyright (c) 2020 Ryan Zimmerman <opensrc@ryanzim.com>
 
 atob - 2.1.2
  * License: Apache-2.0
@@ -255,10 +290,6 @@ atob - 2.1.2
 aws-sign2 - 0.7.0
  * License: Apache-2.0
  * Copyright: Copyright 2010 LearnBoost <dev@learnboost.com>
-
-aws4 - 1.8.0
- * License: MIT
- * Copyright: Copyright 2013 Michael Hart (michael.hart.au@gmail.com)
 
 aws4 - 1.9.1
  * License: MIT
@@ -297,7 +328,7 @@ base64url - 3.0.1
 
 bcrypt-pbkdf - 1.0.2
  * License: BSD-3-Clause
- * Copyright: Copyright (c) 2013 Ted Unangst <tedu@openbsd.org> Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de> Copyright 2016  Joyent Inc
+ * Copyright: Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de> Copyright (c) 2013 Ted Unangst <tedu@openbsd.org> Copyright 2016  Joyent Inc
 
 better-assert - 1.0.2
  * License: MIT
@@ -308,7 +339,7 @@ binary-extensions - 1.13.1
 
 binary-extensions - 2.0.0
  * License: MIT
- * Copyright: Copyright (c) 2019 Sindre Sorhus <sindresorhus@gmail.com> (https Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com) Copyright (c) 2019 Sindre Sorhus <sindresorhus@gmail.com> (https
 
 bindings - 1.5.0
  * License: MIT
@@ -372,11 +403,26 @@ c3 - 0.7.1
  * License: MIT
  * Copyright: Copyright (c) 2013 Masayuki Tanaka
 
+c3 - 0.7.15
+ * License: MIT
+ * Copyright: Copyright (c) 2013 Masayuki Tanaka
+
 cache-base - 1.0.1
  * License: MIT
  * Copyright: Copyright (c) 2014-2017  Jon Schlinkert.
 
+cacheable-lookup - 2.0.0
+ * License: MIT
+
+cacheable-lookup - 2.0.1
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Szymon Marczak
+
 cacheable-request - 2.1.4
+ * License: MIT
+ * Copyright: Copyright (c) 2017 Luke Childs
+
+cacheable-request - 7.0.1
  * License: MIT
  * Copyright: Copyright (c) 2017 Luke Childs
 
@@ -400,7 +446,7 @@ carbon-components - 10.2.0
 
 carbon-components-react - 7.2.0
  * License: Apache-2.0
- * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright (c) Microsoft Corporation. All rights reserved. Copyright 2014-2015  Facebook  Inc.
+ * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright 2014-2015  Facebook  Inc. Copyright (c) Microsoft Corporation. All rights reserved.
 
 carbon-icons - 7.0.7
  * License: Apache-2.0
@@ -418,16 +464,9 @@ charenc - 0.0.2
 chokidar - 2.1.8
  * License: MIT
 
-chokidar - 3.0.2
- * License: MIT
- * Copyright: Copyright (c) 2012-2019 Paul Miller (https
-
 chokidar - 3.3.1
  * License: MIT
  * Copyright: Copyright (c) 2012-2019 Paul Miller (https
-
-chownr - 1.1.1
- * License: ISC
 
 chownr - 1.1.3
  * License: ISC
@@ -483,7 +522,7 @@ code-point-at - 1.1.0
 
 collection-visit - 1.0.0
  * License: MIT
- * Copyright: Copyright (c) 2015  2017  Jon Schlinkert. Copyright (c) 2015  2017  Jon Schlinkert
+ * Copyright: Copyright (c) 2015  2017  Jon Schlinkert.
 
 color-convert - 1.9.3
  * License: MIT
@@ -495,10 +534,6 @@ color-name - 1.1.3
 combined-stream - 1.0.8
  * License: MIT
  * Copyright: Copyright (c) 2011 Debuggable Limited <felix@debuggable.com>
-
-commander - 2.20.0
- * License: MIT
- * Copyright: Copyright (c) 2011 TJ Holowaychuk <tj@vision-media.ca>
 
 commander - 2.20.3
  * License: MIT
@@ -560,7 +595,7 @@ cookie-signature - 1.0.6
 
 copy-descriptor - 0.1.1
  * License: MIT
- * Copyright: Copyright (c) 2015  Jon Schlinkert. Copyright (c) 2015-2016  Jon Schlinkert
+ * Copyright: Copyright (c) 2015-2016  Jon Schlinkert Copyright (c) 2015  Jon Schlinkert.
 
 core-util-is - 1.0.2
  * License: MIT
@@ -587,13 +622,16 @@ cssfilter - 0.0.10
  * License: MIT
  * Copyright: Copyright (c) 2015 老雷 Copyright (c) 2015-2016 Zongmin Lei(雷宗民) <leizongmin@gmail.com>
 
+csstype - 2.6.9
+ * License: MIT
+ * Copyright: Copyright (c) 2017-2018 Fredrik Nicol
+
 d - 1.0.1
  * License: ISC
  * Copyright: Copyright (c) 2013-2019  Mariusz Nowak  @medikoo  medikoo.com
 
-d3 - 5.9.2
+d3 - 5.15.0
  * License: BSD-3-Clause
- * Copyright: Copyright 2010-2017 Mike Bostock
 
 d3-array - 1.2.4
  * License: BSD-3-Clause
@@ -604,6 +642,10 @@ d3-axis - 1.0.12
  * Copyright: Copyright 2010-2016 Mike Bostock
 
 d3-brush - 1.0.6
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock
+
+d3-brush - 1.1.5
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2016 Mike Bostock
 
@@ -619,6 +661,10 @@ d3-color - 1.2.3
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2016 Mike Bostock
 
+d3-color - 1.4.0
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock
+
 d3-contour - 1.3.2
  * License: BSD-3-Clause
  * Copyright: Copyright 2012-2017 Mike Bostock
@@ -627,7 +673,15 @@ d3-dispatch - 1.0.5
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2016 Mike Bostock
 
+d3-dispatch - 1.0.6
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock
+
 d3-drag - 1.2.3
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock
+
+d3-drag - 1.2.5
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2016 Mike Bostock
 
@@ -635,9 +689,17 @@ d3-dsv - 1.1.1
  * License: BSD-3-Clause
  * Copyright: Copyright 2013-2016 Mike Bostock
 
+d3-dsv - 1.2.0
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2013-2016 Mike Bostock
+
 d3-ease - 1.0.5
  * License: BSD-3-Clause
  * Copyright: Copyright 2001 Robert Penner Copyright 2010-2016 Mike Bostock
+
+d3-ease - 1.0.6
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock Copyright 2001 Robert Penner
 
 d3-fetch - 1.1.2
  * License: BSD-3-Clause
@@ -651,11 +713,23 @@ d3-format - 1.3.2
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2015 Mike Bostock
 
+d3-format - 1.4.3
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2015 Mike Bostock
+
 d3-geo - 1.11.3
  * License: BSD-3-Clause
  * Copyright: Copyright (c) 2008-2012  Charles Karney Copyright 2010-2016 Mike Bostock
 
+d3-geo - 1.11.9
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock Copyright (c) 2008-2012  Charles Karney
+
 d3-hierarchy - 1.1.8
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock
+
+d3-hierarchy - 1.1.9
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2016 Mike Bostock
 
@@ -663,7 +737,15 @@ d3-interpolate - 1.3.2
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2016 Mike Bostock
 
+d3-interpolate - 1.4.0
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock
+
 d3-path - 1.0.7
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2015-2016 Mike Bostock
+
+d3-path - 1.0.9
  * License: BSD-3-Clause
  * Copyright: Copyright 2015-2016 Mike Bostock
 
@@ -671,7 +753,15 @@ d3-polygon - 1.0.5
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2016 Mike Bostock
 
+d3-polygon - 1.0.6
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock
+
 d3-quadtree - 1.0.6
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock
+
+d3-quadtree - 1.0.7
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2016 Mike Bostock
 
@@ -687,7 +777,15 @@ d3-scale-chromatic - 1.3.3
  * License: BSD-3-Clause
  * Copyright: Copyright (c) 2002 Cynthia Brewer  Mark Harrower  and The Pennsylvania State Copyright 2010-2018 Mike Bostock
 
+d3-scale-chromatic - 1.5.0
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2018 Mike Bostock Copyright (c) 2002 Cynthia Brewer  Mark Harrower  and The Pennsylvania State
+
 d3-selection - 1.4.0
+ * License: BSD-3-Clause
+ * Copyright: Copyright (c) 2010-2018  Michael Bostock
+
+d3-selection - 1.4.1
  * License: BSD-3-Clause
  * Copyright: Copyright (c) 2010-2018  Michael Bostock
 
@@ -695,7 +793,15 @@ d3-shape - 1.3.5
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2015 Mike Bostock
 
+d3-shape - 1.3.7
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2015 Mike Bostock
+
 d3-time - 1.0.11
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock
+
+d3-time - 1.1.0
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2016 Mike Bostock
 
@@ -703,19 +809,30 @@ d3-time-format - 2.1.3
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2017 Mike Bostock
 
-d3-timer - 1.0.9
+d3-time-format - 2.2.3
  * License: BSD-3-Clause
- * Copyright: Copyright 2010-2016 Mike Bostock
+ * Copyright: Copyright 2010-2017 Mike Bostock
+
+d3-timer - 1.0.10
+ * License: BSD-3-Clause
 
 d3-transition - 1.2.0
  * License: BSD-3-Clause
  * Copyright: Copyright (c) 2010-2015  Michael Bostock Copyright 2001 Robert Penner
 
+d3-transition - 1.3.2
+ * License: BSD-3-Clause
+ * Copyright: Copyright (c) 2010-2015  Michael Bostock Copyright 2001 Robert Penner
+
 d3-voronoi - 1.1.4
  * License: BSd-3-Clause
- * Copyright: Copyright (C) 2010-2013 Raymond Hill Copyright 2010-2016 Mike Bostock
+ * Copyright: Copyright 2010-2016 Mike Bostock Copyright (C) 2010-2013 Raymond Hill
 
 d3-zoom - 1.7.3
+ * License: BSD-3-Clause
+ * Copyright: Copyright 2010-2016 Mike Bostock
+
+d3-zoom - 1.8.3
  * License: BSD-3-Clause
  * Copyright: Copyright 2010-2016 Mike Bostock
 
@@ -725,7 +842,7 @@ dashboard - 0.1.0
 
 dashdash - 1.14.1
  * License: MIT
- * Copyright: Copyright 2016 Joyent  Inc. Copyright 2016 Trent Mick Copyright (c) 2013 Joyent Inc. All rights reserved. Copyright (c) 2013 Trent Mick. All rights reserved.
+ * Copyright: Copyright 2016 Trent Mick Copyright 2016 Joyent  Inc. Copyright (c) 2013 Trent Mick. All rights reserved. Copyright (c) 2013 Joyent Inc. All rights reserved.
 
 date-format - 1.2.0
  * License: MIT
@@ -767,6 +884,10 @@ decompress-response - 3.3.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
+decompress-response - 5.0.0
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
 deep-diff - 0.3.8
  * License: MIT
  * Copyright: Copyright (c) 2011-2013 Phillip Clark
@@ -777,14 +898,15 @@ deep-equal - 1.1.1
 
 deep-extend - 0.6.0
  * License: MIT
- * Copyright: Copyright (c) 2013-2018 Viacheslav Lotsmanov Copyright (c) 2013-2018  Viacheslav Lotsmanov
-
-deepmerge - 3.2.0
- * License: MIT
+ * Copyright: Copyright (c) 2013-2018  Viacheslav Lotsmanov Copyright (c) 2013-2018 Viacheslav Lotsmanov
 
 deepmerge - 3.3.0
  * License: MIT
- * Copyright: Copyright (c) 2012 James Halliday  Josh Duff  and other contributors Copyright (c) 2012 Nicholas Fisher
+ * Copyright: Copyright (c) 2012 James Halliday  Josh Duff  and other contributors
+
+defer-to-connect - 2.0.0
+ * License: MIT
+ * Copyright: Copyright (c) 2018 Szymon Marczak
 
 define-properties - 1.1.3
  * License: MIT
@@ -798,7 +920,7 @@ define-property - 1.0.0
 
 define-property - 2.0.2
  * License: MIT
- * Copyright: Copyright (c) 2015-2018  Jon Schlinkert. Copyright (c) 2015  2017  Jon Schlinkert. Copyright (c) 2015  2017  Jon Schlinkert Copyright (c) 2015  Jon Schlinkert.
+ * Copyright: Copyright (c) 2015  Jon Schlinkert. Copyright (c) 2015-2018  Jon Schlinkert. Copyright (c) 2015  2017  Jon Schlinkert.
 
 delayed-stream - 1.0.0
  * License: MIT
@@ -829,9 +951,13 @@ docker-modem - 1.0.9
 
 dockerode - 2.5.8
  * License: Apache-2.0
- * Copyright: Copyright (c) 1999-2008 LSI Corporation Copyright (c) 2015 FUJITSU LIMITED
+ * Copyright: Copyright (c) 2015 FUJITSU LIMITED Copyright (c) 1999-2008 LSI Corporation
 
 dom-helpers - 3.4.0
+ * License: MIT
+ * Copyright: Copyright (c) 2015 Jason Quense Copyright 2014-2015  Facebook  Inc. Copyright 2013-2014  Facebook  Inc.
+
+dom-helpers - 5.1.3
  * License: MIT
  * Copyright: Copyright (c) 2015 Jason Quense Copyright 2014-2015  Facebook  Inc. Copyright 2013-2014  Facebook  Inc.
 
@@ -853,7 +979,7 @@ duplexer3 - 0.1.4
 
 ecc-jsbn - 0.1.2
  * License: MIT
- * Copyright: Copyright (c) 2003-2005  Tom Wu Copyright (c) 2014 Jeremie Miller
+ * Copyright: Copyright (c) 2014 Jeremie Miller Copyright (c) 2003-2005  Tom Wu
 
 ecdsa-sig-formatter - 1.0.11
  * License: Apache-2.0
@@ -880,10 +1006,6 @@ encoding - 0.1.12
  * License: MIT
  * Copyright: Copyright (c) 2012-2014 Andris Reinman
 
-end-of-stream - 1.4.1
- * License: MIT
- * Copyright: Copyright (c) 2014 Mathias Buus
-
 end-of-stream - 1.4.4
  * License: MIT
  * Copyright: Copyright (c) 2014 Mathias Buus
@@ -895,15 +1017,9 @@ engine.io - 3.4.0
 engine.io-client - 1.0.0
  * License: MIT
 
-engine.io-client - 3.3.2
- * License: MIT
-
 engine.io-client - 3.4.0
  * License: MIT
- * Copyright: Copyright (c) 2012 Niklas von Hertzen Copyright (c) 2014-2015 Automattic <dev@cloudup.com> Copyright (c) 2014 Automattic  Inc.
-
-engine.io-parser - 2.1.3
- * License: MIT
+ * Copyright: Copyright (c) 2014-2015 Automattic <dev@cloudup.com> Copyright (c) 2014 Automattic  Inc. Copyright (c) 2012 Niklas von Hertzen
 
 engine.io-parser - 2.2.0
  * License: MIT
@@ -913,14 +1029,27 @@ env-paths - 2.2.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
-es-abstract - 1.16.2
- * License: MIT
-
 es-abstract - 1.17.4
  * License: MIT
  * Copyright: Copyright (C) 2015 Jordan Harband
 
+es-abstract - 1.17.5
+ * License: MIT
+ * Copyright: Copyright (C) 2015 Jordan Harband
+
 es-aggregate-error - 1.0.1
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Jordan Harband
+
+es-aggregate-error - 1.0.2
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Jordan Harband
+
+es-array-method-boxes-properly - 1.0.0
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Jordan Harband
+
+es-get-iterator - 1.1.0
  * License: MIT
  * Copyright: Copyright (c) 2019 Jordan Harband
 
@@ -938,12 +1067,16 @@ es6-iterator - 2.0.3
 
 es6-promise - 4.2.8
  * License: MIT
- * Copyright: Copyright (c) 2014 Yehuda Katz  Tom Dale  Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald) Copyright (c) 2014 Yehuda Katz  Tom Dale  Stefan Penner and contributors
+ * Copyright: Copyright (c) 2014 Yehuda Katz  Tom Dale  Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
 
 es6-promisify - 5.0.0
  * License: MIT
 
 es6-promisify - 6.0.2
+ * License: MIT
+ * Copyright: Copyright (c) 2014 Mike Hall \ Digital Design Labs
+
+es6-promisify - 6.1.0
  * License: MIT
  * Copyright: Copyright (c) 2014 Mike Hall \ Digital Design Labs
 
@@ -1020,17 +1153,9 @@ extsprintf - 1.3.0
  * License: MIT
  * Copyright: Copyright (c) 2012  Joyent  Inc. All rights reserved.
 
-fast-deep-equal - 2.0.1
- * License: MIT
- * Copyright: Copyright (c) 2017 Evgeny Poberezkin
-
 fast-deep-equal - 3.1.1
  * License: MIT
  * Copyright: Copyright (c) 2017 Evgeny Poberezkin
-
-fast-json-stable-stringify - 2.0.0
- * License: MIT
- * Copyright: Copyright (c) 2013 James Halliday Copyright (c) 2017 Evgeny Poberezkin
 
 fast-json-stable-stringify - 2.1.0
  * License: MIT
@@ -1044,7 +1169,7 @@ fill-range - 4.0.0
 
 fill-range - 7.0.1
  * License: MIT
- * Copyright: Copyright (c) 2014-present  Jon Schlinkert. Copyright (c) 2014-2015  2017  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert
+ * Copyright: Copyright (c) 2014-2017  Jon Schlinkert Copyright (c) 2014-2015  2017  Jon Schlinkert. Copyright (c) 2014-present  Jon Schlinkert.
 
 finalhandler - 1.1.2
  * License: MIT
@@ -1059,9 +1184,13 @@ flatpickr - 4.5.5
 
 flatpickr - 4.5.7
  * License: MIT
- * Copyright: Copyright (c) Microsoft Corporation. All rights reserved. Copyright (c) 2017 Gregory Petrosyan
+ * Copyright: Copyright (c) 2017 Gregory Petrosyan Copyright (c) Microsoft Corporation. All rights reserved.
 
 flatted - 2.0.1
+ * License: ISC
+ * Copyright: Copyright (c) 2018  Andrea Giammarchi  @WebReflection
+
+flatted - 2.0.2
  * License: ISC
  * Copyright: Copyright (c) 2018  Andrea Giammarchi  @WebReflection
 
@@ -1072,6 +1201,9 @@ focus-trap - 4.0.2
 focus-trap-react - 6.0.0
  * License: MIT
  * Copyright: Copyright (c) 2015 David Clark
+
+follow-redirects - 1.10.0
+ * License: MIT
 
 follow-redirects - 1.5.10
  * License: MIT
@@ -1085,11 +1217,11 @@ for-in - 0.1.8
 
 for-in - 1.0.2
  * License: MIT
- * Copyright: Copyright (c) 2014-2017  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert
+ * Copyright: Copyright (c) 2014-2017  Jon Schlinkert.
 
 for-own - 0.1.5
  * License: MIT
- * Copyright: Copyright (c) 2014-2017  Jon Schlinkert. Copyright (c) 2014-2015  2017  Jon Schlinkert
+ * Copyright: Copyright (c) 2014-2015  2017  Jon Schlinkert Copyright (c) 2014-2017  Jon Schlinkert.
 
 forever-agent - 0.6.1
  * License: Apache-2.0
@@ -1104,7 +1236,7 @@ forwarded - 0.1.2
 
 fragment-cache - 0.2.1
  * License: MIT
- * Copyright: Copyright (c) 2016-2017  Jon Schlinkert. Copyright (c) 2016-2017  Jon Schlinkert
+ * Copyright: Copyright (c) 2016-2017  Jon Schlinkert.
 
 fresh - 0.5.2
  * License: MIT
@@ -1126,7 +1258,15 @@ fs-extra - 8.1.0
  * License: MIT
  * Copyright: Copyright (c) 2014-2016 Jonathan Ong me@jongleberry.com and Contributors Copyright (c) 2011-2017 JP Richardson Copyright (c) 2011-2017 [JP Richardson](https
 
+fs-extra - 9.0.0
+ * License: MIT
+ * Copyright: Copyright (c) 2011-2017 JP Richardson Copyright (c) 2011-2017 [JP Richardson](https Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com) Copyright (c) 2014-2016 Jonathan Ong me@jongleberry.com and Contributors
+
 fs-minipass - 1.2.7
+ * License: ISC
+ * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
+
+fs-minipass - 2.1.0
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
 
@@ -1137,19 +1277,19 @@ fs.realpath - 1.0.0
 fsevents - 1.2.11
  * License: MIT
 
-fsevents - 2.0.7
- * License: MIT
- * Copyright: Copyright (C) 2010-2019 by Philipp Dunkel  Ben Noordhuis  Elan Shankar Copyright (C) 2010-2018 by Philipp Dunkel  Ben Noordhuis  Elan Shankar — see LICENSE file.
-
 fsevents - 2.1.2
  * License: MIT
- * Copyright: Copyright (C) 2010-2018 by Philipp Dunkel  Ben Noordhuis  Elan Shankar — see LICENSE file. Copyright (C) 2010-2019 by Philipp Dunkel  Ben Noordhuis  Elan Shankar  Paul Miller — see LICENSE file. Copyright (c) 2012 Google Inc. All rights reserved. Copyright (C) 2010-2014 Philipp Dunkel
+ * Copyright: Copyright (C) 2010-2014 Philipp Dunkel Copyright (c) 2012 Google Inc. All rights reserved. Copyright (C) 2010-2019 by Philipp Dunkel  Ben Noordhuis  Elan Shankar  Paul Miller — see LICENSE file.
 
 function-bind - 1.1.1
  * License: MIT
  * Copyright: Copyright (c) 2013 Raynos.
 
 functions-have-names - 1.2.0
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Jordan Harband
+
+functions-have-names - 1.2.1
  * License: MIT
  * Copyright: Copyright (c) 2019 Jordan Harband
 
@@ -1164,9 +1304,13 @@ get-caller-file - 2.0.5
 get-stream - 3.0.0
  * License: MIT
 
+get-stream - 5.1.0
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
 get-value - 2.0.6
  * License: MIT
- * Copyright: Copyright (c) 2014-2015  Jon Schlinkert. Copyright (c) 2014-2016  Jon Schlinkert.
+ * Copyright: Copyright (c) 2014-2016  Jon Schlinkert. Copyright (c) 2014-2015  Jon Schlinkert.
 
 getpass - 0.1.7
  * License: MIT
@@ -1177,7 +1321,7 @@ github.com/Azure/go-ansiterm - branch master
 
 github.com/Azure/go-autorest - v13.3.0
  * License: Apache-2.0
- * Copyright: Copyright 2015 Microsoft Corporation Copyright 2017 Microsoft Corporation Copyright 2018 Microsoft Corporation
+ * Copyright: Copyright (c) 2012 Dave Grijalva Copyright 2017 Microsoft Corporation Copyright 2015 Microsoft Corporation Copyright 2018 Microsoft Corporation
 
 github.com/Microsoft/go-winio - v0.4.13
  * License: MIT
@@ -1246,7 +1390,7 @@ github.com/gophercloud/gophercloud - v0.7.0
 
 github.com/imdario/mergo - v0.3.8
  * License: BSD-3-Clause
- * Copyright: Copyright (c) 2012 The Go Authors. All rights reserved. Copyright (c) 2013 Dario Castañé. All rights reserved. Copyright 2014 Dario Castañé. All rights reserved. Copyright 2009 The Go Authors. All rights reserved. Copyright 2013 Dario Castañé. All rights reserved.
+ * Copyright: Copyright (c) 2013 Dario Castañé. All rights reserved. Copyright (c) 2012 The Go Authors. All rights reserved. Copyright 2014 Dario Castañé. All rights reserved. Copyright 2013 Dario Castañé. All rights reserved. Copyright 2009 The Go Authors. All rights reserved.
 
 github.com/json-iterator/go - 1.1.8
  * License: MIT
@@ -1300,19 +1444,19 @@ glob - 7.1.6
 glob-parent - 3.1.0
  * License: ISC
 
-glob-parent - 5.0.0
- * License: ISC
- * Copyright: Copyright (c) 2015  2019 Elan Shanker
-
 glob-parent - 5.1.0
  * License: ISC
- * Copyright: Copyright (c) 2015  2019 Elan Shanker Copyright (c) 2015 Elan Shanker
+ * Copyright: Copyright (c) 2015 Elan Shanker Copyright (c) 2015  2019 Elan Shanker
 
 global-dirs - 0.1.1
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 globalthis - 1.0.0
+ * License: MIT
+ * Copyright: Copyright (c) 2016 Jordan Harband
+
+globalthis - 1.0.1
  * License: MIT
  * Copyright: Copyright (c) 2016 Jordan Harband
 
@@ -1341,15 +1485,18 @@ gopkg.in/yaml.v3 - branch v3
  * License: Apache-2.0
  * Copyright: Copyright (c) 2006-2011 Kirill Simonov Copyright 2011-2016 Canonical Ltd. Copyright (c) 2006-2010 Kirill Simonov Copyright (c) 2011-2019 Canonical Ltd
 
+got - 10.6.0
+ * License: MIT
+
+got - 10.7.0
+ * License: MIT
+
 got - 6.7.1
  * License: MIT
 
 got - 8.3.2
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-graceful-fs - 4.1.15
- * License: ISC
 
 graceful-fs - 4.2.3
  * License: ISC
@@ -1368,9 +1515,6 @@ grpc - v1.24.0
 
 gud - 1.0.0
  * License: MIT
-
-hamcrest-core - 1.3
- * License: BSD-3-Clause
 
 har-schema - 2.0.0
  * License: ISC
@@ -1416,19 +1560,19 @@ has-value - 0.3.1
 
 has-value - 1.0.0
  * License: MIT
- * Copyright: Copyright (c) 2014-2017  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert Copyright (c) 2014-2016  Jon Schlinkert.
+ * Copyright: Copyright (c) 2014-2016  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert.
 
 has-values - 0.1.4
  * License: MIT
 
 has-values - 1.0.0
  * License: MIT
- * Copyright: Copyright (c) 2014-2015  2017  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert Copyright (c) 2014-2015  Jon Schlinkert. Copyright (c) 2014-2016  Jon Schlinkert.
+ * Copyright: Copyright (c) 2014-2016  Jon Schlinkert. Copyright (c) 2014-2015  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert Copyright (c) 2014-2015  2017  Jon Schlinkert.
 
 hash.js - 1.1.7
  * License: MIT
 
-history - 4.9.0
+history - 4.10.1
  * License: MIT
 
 hmac-drbg - 1.0.1
@@ -1438,8 +1582,16 @@ hoist-non-react-statics - 3.3.0
  * License: BSD-3-Clause
  * Copyright: Copyright (c) 2015  Yahoo! Inc. All rights reserved. Copyright 2015  Yahoo! Inc.
 
+hoist-non-react-statics - 3.3.2
+ * License: BSD-3-Clause
+ * Copyright: Copyright (c) 2015  Yahoo! Inc. All rights reserved. Copyright 2015  Yahoo! Inc.
+
 http-cache-semantics - 3.8.1
  * License: BSD-2-Clause
+
+http-cache-semantics - 4.1.0
+ * License: BSD-2-Clause
+ * Copyright: Copyright 2016-2018 Kornel Lesiński
 
 http-errors - 1.7.2
  * License: MIT
@@ -1451,7 +1603,7 @@ http-proxy - 1.18.0
 
 http-signature - 1.2.0
  * License: MIT
- * Copyright: Copyright (c) 2011 Joyent  Inc. and the persons identified as document authors. Copyright 2012 Joyent  Inc.  All rights reserved. Copyright 2015 Joyent  Inc.
+ * Copyright: Copyright (c) 2011 Joyent  Inc. and the persons identified as document authors. Copyright 2015 Joyent  Inc. Copyright 2012 Joyent  Inc.  All rights reserved.
 
 https-proxy-agent - 2.2.4
  * License: MIT
@@ -1461,10 +1613,10 @@ https-proxy-agent - 4.0.0
  * License: MIT
  * Copyright: Copyright (c) 2013 Nathan Rajlich <;nathan@tootallnate.net>;
 
-i18next - 15.1.2
+i18next - 15.1.3
  * License: MIT
 
-i18next - 15.1.3
+i18next - 19.3.3
  * License: MIT
 
 i18next-node-fs-backend - 2.1.3
@@ -1475,12 +1627,19 @@ ibmapm-embed - 19.12.1
  * License: Apache-2.0
  * Copyright: Copyright 2015 IBM Corp. Copyright (c) IBM Corp. 2015 2017. All Rights Reserved. Copyright 2015 2017 IBM Corp. Copyright (c) IBM Corp. 2017. All Rights Reserved. Copyright 2017 IBM Corp.
 
+ibmapm-embed - 20.3.0
+ * License: Apache-2.0
+ * Copyright: Copyright (c) IBM Corp. 2017. All Rights Reserved. Copyright (c) IBM Corp. 2015 2017. All Rights Reserved. Copyright 2015 2017 IBM Corp. Copyright 2017 IBM Corp. Copyright 2015 IBM Corp.
+
 ibmapm-restclient - 19.12.2
+ * License: Apache-2.0
+
+ibmapm-restclient - 20.3.0
  * License: Apache-2.0
 
 iconv-lite - 0.4.24
  * License: MIT
- * Copyright: Copyright (c) Microsoft Corporation. All rights reserved. Copyright (c) 2011 Alexander Shtuchkin
+ * Copyright: Copyright (c) 2011 Alexander Shtuchkin Copyright (c) Microsoft Corporation. All rights reserved.
 
 ignore-by-default - 1.0.1
  * License: ISC
@@ -1520,6 +1679,10 @@ internal-slot - 1.0.0
  * License: MIT
  * Copyright: Copyright (c) 2019 Jordan Harband
 
+internal-slot - 1.0.2
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Jordan Harband
+
 into-stream - 3.1.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
@@ -1552,15 +1715,11 @@ is-binary-path - 1.0.1
 
 is-binary-path - 2.1.0
  * License: MIT
- * Copyright: Copyright (c) 2019 Sindre Sorhus <sindresorhus@gmail.com> (https Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com) Copyright (c) 2019 Sindre Sorhus <sindresorhus@gmail.com> (https
 
 is-buffer - 1.1.6
  * License: MIT
  * Copyright: Copyright (c) Feross Aboukhadijeh Copyright (C) [Feross Aboukhadijeh](http
-
-is-callable - 1.1.4
- * License: MIT
- * Copyright: Copyright (c) 2015 Jordan Harband
 
 is-callable - 1.1.5
  * License: MIT
@@ -1575,11 +1734,7 @@ is-data-descriptor - 0.1.4
 
 is-data-descriptor - 1.0.0
  * License: MIT
- * Copyright: Copyright (c) 2015  Jon Schlinkert. Copyright (c) 2015-2017  Jon Schlinkert.
-
-is-date-object - 1.0.1
- * License: MIT
- * Copyright: Copyright (c) 2015 Jordan Harband
+ * Copyright: Copyright (c) 2015-2017  Jon Schlinkert. Copyright (c) 2015  Jon Schlinkert.
 
 is-date-object - 1.0.2
  * License: MIT
@@ -1598,11 +1753,11 @@ is-extendable - 0.1.1
 
 is-extendable - 1.0.1
  * License: MIT
- * Copyright: Copyright (c) 2015-2017  Jon Schlinkert. Copyright (c) 2015  Jon Schlinkert.
+ * Copyright: Copyright (c) 2015  Jon Schlinkert. Copyright (c) 2015-2017  Jon Schlinkert.
 
 is-extglob - 2.1.1
  * License: MIT
- * Copyright: Copyright (c) 2014-2016  Jon Schlinkert. Copyright (c) 2014-2016  Jon Schlinkert
+ * Copyright: Copyright (c) 2014-2016  Jon Schlinkert.
 
 is-fullwidth-code-point - 1.0.0
  * License: MIT
@@ -1622,6 +1777,10 @@ is-installed-globally - 0.1.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
+is-map - 2.0.1
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Inspect JS
+
 is-npm - 1.0.0
  * License: MIT
 
@@ -1630,7 +1789,7 @@ is-number - 3.0.0
 
 is-number - 7.0.0
  * License: MIT
- * Copyright: Copyright (c) 2014-present  Jon Schlinkert. Copyright (c) 2014-2015  Jon Schlinkert. Copyright (c) 2014-2016  Jon Schlinkert
+ * Copyright: Copyright (c) 2014-2016  Jon Schlinkert Copyright (c) 2014-2015  Jon Schlinkert. Copyright (c) 2014-present  Jon Schlinkert.
 
 is-obj - 1.0.1
  * License: MIT
@@ -1656,25 +1815,25 @@ is-redirect - 1.0.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
-is-regex - 1.0.4
- * License: MIT
- * Copyright: Copyright (c) 2014 Jordan Harband
-
 is-regex - 1.0.5
  * License: MIT
  * Copyright: Copyright (c) 2014 Jordan Harband
-
-is-retry-allowed - 1.1.0
- * License: MIT
- * Copyright: Copyright (c) Vsevolod Strukchinsky <floatdrop@gmail.com> (github.com\floatdrop)
 
 is-retry-allowed - 1.2.0
  * License: MIT
  * Copyright: Copyright (c) Vsevolod Strukchinsky <floatdrop@gmail.com> (github.com\floatdrop)
 
+is-set - 2.0.1
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Inspect JS
+
 is-stream - 1.1.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+is-string - 1.0.5
+ * License: MIT
+ * Copyright: Copyright (c) 2015 Jordan Harband
 
 is-symbol - 1.0.3
  * License: MIT
@@ -1697,6 +1856,10 @@ isarray - 2.0.1
  * License: MIT
  * Copyright: Copyright (c) 2013 Julian Gruber <;julian@juliangruber.com>;
 
+isarray - 2.0.5
+ * License: MIT
+ * Copyright: Copyright (c) 2013 Julian Gruber <julian@juliangruber.com> Copyright (c) 2013 Julian Gruber <;julian@juliangruber.com>;
+
 isexe - 2.0.0
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
@@ -1706,7 +1869,7 @@ isobject - 2.1.0
 
 isobject - 3.0.1
  * License: MIT
- * Copyright: Copyright (c) 2014-2015  Jon Schlinkert. Copyright (c) 2014-2016  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert.
+ * Copyright: Copyright (c) 2014-2017  Jon Schlinkert. Copyright (c) 2014-2016  Jon Schlinkert. Copyright (c) 2014-2015  Jon Schlinkert.
 
 isstream - 0.1.2
  * License: MIT
@@ -1716,29 +1879,13 @@ isurl - 1.0.0
  * License: MIT
  * Copyright: Copyright (c) 2017 Steven Vachon
 
-jackson-annotations - 2.9.0
- * License: Apache-2.0
+iterate-iterator - 1.0.1
+ * License: MIT
+ * Copyright: Copyright (c) 2020 Jordan Harband
 
-jackson-core - 2.9.8
- * License: Apache-2.0
-
-jackson-databind - 2.9.8
- * License: Apache-2.0
-
-jakarta.json - 1.1.5
- * License: EPL-2.0
-
-jakarta.json.bind-api - 1.0.1
- * License: EPL-2.0
-
-javax.servlet-api - 3.1.0
- * License: CDDL-2.0
-
-jetty-io - 9.4.18.v20190429
- * License: EPL-1.0
-
-jetty-xml - 9.4.18.v20190429
- * License: EPL-1.0
+iterate-value - 1.0.2
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Jordan Harband
 
 js-sha256 - 0.9.0
  * License: MIT
@@ -1746,7 +1893,7 @@ js-sha256 - 0.9.0
 
 js-tokens - 4.0.0
  * License: MIT
- * Copyright: Copyright 2014  2015  2016  2017  2018 Simon Lydell Copyright (c) 2014  2015  2016  2017  2018 Simon Lydell
+ * Copyright: Copyright (c) 2014  2015  2016  2017  2018 Simon Lydell Copyright 2014  2015  2016  2017  2018 Simon Lydell
 
 js-yaml - 3.13.1
  * License: MIT
@@ -1754,9 +1901,13 @@ js-yaml - 3.13.1
 
 jsbn - 0.1.1
  * License: MIT
- * Copyright: Copyright (c) 2005  Tom Wu Copyright (c) 2005-2009  Tom Wu Copyright (c) 2003-2005  Tom Wu
+ * Copyright: Copyright (c) 2003-2005  Tom Wu Copyright (c) 2005  Tom Wu Copyright (c) 2005-2009  Tom Wu
 
 json-buffer - 3.0.0
+ * License: MIT
+ * Copyright: Copyright (c) 2013 Dominic Tarr
+
+json-buffer - 3.0.1
  * License: MIT
  * Copyright: Copyright (c) 2013 Dominic Tarr
 
@@ -1780,6 +1931,10 @@ jsonfile - 4.0.0
  * License: MIT
  * Copyright: Copyright (c) 2012-2015  JP Richardson <jprichardson@gmail.com> Copyright 2012-2016  JP Richardson  <jprichardson@gmail.com>
 
+jsonfile - 6.0.1
+ * License: MIT
+ * Copyright: Copyright (c) 2012-2015  JP Richardson <jprichardson@gmail.com> Copyright 2012-2016  JP Richardson  <jprichardson@gmail.com>
+
 jsonparse - 1.3.1
  * License: MIT
  * Copyright: Copyright (c) 2012 Tim Caswell Copyright (c) 2011-2012 Tim Caswell
@@ -1794,10 +1949,7 @@ jsprim - 1.4.1
 
 jszip - 2.5.0
  * License: MIT
- * Copyright: Copyright (C) 2007 Free Software Foundation  Inc. <http Copyright (c) 2009-2014 Stuart Knightley  David Duponchel  Franz Buchinger  António Afonso
-
-junit - 4.12
- * License: EPL-1.0
+ * Copyright: Copyright (c) 2009-2014 Stuart Knightley  David Duponchel  Franz Buchinger  António Afonso Copyright (C) 2007 Free Software Foundation  Inc. <http
 
 jwa - 1.4.1
  * License: MIT
@@ -1829,7 +1981,7 @@ k8s.io/klog - v1.0.0
 
 k8s.io/kube-openapi - branch master
  * License: Apache-2.0
- * Copyright: Copyright 2016 The Kubernetes Authors. Copyright 2017 The Kubernetes Authors. Copyright 2018 The Kubernetes Authors. Copyright 2019 The Kubernetes Authors.
+ * Copyright: Copyright 2016 The Kubernetes Authors. Copyright 2017 The Kubernetes Authors. Copyright 2019 The Kubernetes Authors. Copyright (c) 2012-2013 Dave Collins <dave@davec.name> Copyright (c) 2015 Dave Collins <dave@davec.name> Copyright (c) 2013 Dave Collins <dave@davec.name> Copyright 2015 Ernest Micklei. All rights reserved. Copyright (c) 2012 2013 Ernest Micklei Copyright 2014 Ernest Micklei. All rights reserved. Copyright 2013 Ernest Micklei. All rights reserved. Copyright 2013 sigu-399 ( https Copyright 2015 go-swagger maintainers Copyright 2008 Google Inc.  All rights reserved. Copyright 2014 Google Inc. All rights reserved. Copyright 2017 Google Inc. All Rights Reserved. Copyright (c) 2016 json-iterator Copyright (c) 2016 Mail.Ru Group Copyright (c) 2011  Open Knowledge Foundation Ltd. Copyright (c) 2015 The New York Times Company Copyright (c) 2016 Yasuhiro Matsumoto Copyright (c) Yasuhiro MATSUMOTO <mattn.jp@gmail.com> Copyright (c) 2013-2014 Onsi Fakhouri Copyright (c) 2013  Patrick Mezard Copyright (c) 2012  Martin Angers Copyright (c) 2012 Alex Ogier. All rights reserved. Copyright (c) 2012 - 2013 Mat Ryer and Tyler Bunnell Copyright 2010 The Go Authors. All rights reserved. Copyright 2010 The Go Authors.  All rights reserved. Copyright 2014 The Go Authors.  All rights reserved. Copyright 2016 The Go Authors.  All rights reserved. Copyright 2015 The Go Authors.  All rights reserved. Copyright 2012 The Go Authors.  All rights reserved. Copyright 2011 The Go Authors.  All rights reserved. Copyright 2012 The Go Authors. All rights reserved. Copyright 2009 2010 The Go Authors. All rights reserved. Copyright 2009 The Go Authors. All rights reserved. Copyright 2014 The Go Authors. All rights reserved. Copyright 2011 The Go Authors. All rights reserved. Copyright 2015 The Go Authors. All rights reserved. Copyright 2017 The Go Authors. All rights reserved. Copyright 2016 The Go Authors. All rights reserved. Copyright (c) 2009 The Go Authors. All rights reserved. Copyright (c) 2006 Kirill Simonov Copyright 2011-2016 Canonical Ltd. Copyright 2014 The Kubernetes Authors. Copyright 2015 The Kubernetes Authors. Copyright 2013 Google Inc. All Rights Reserved. Copyright 2018 The Kubernetes Authors. Copyright 2013 The Go Authors. All rights reserved. Copyright (c) 2014 Sam Ghods Copyright (c) 2012 The Go Authors. All rights reserved.
 
 k8s.io/utils - branch master
  * License: Apache-2.0
@@ -1837,9 +1989,21 @@ k8s.io/utils - branch master
 
 keycloak-connect - 7.0.0
  * License: Apache-2.0
- * Copyright: Copyright 2014 Red Hat  Inc. Copyright 2016 Red Hat  Inc. and\or its affiliates Copyright 2017 Red Hat Inc. All rights reserved. Copyright 2016 Red Hat Inc. All rights reserved.
+ * Copyright: Copyright 2014 Red Hat  Inc. Copyright 2017 Red Hat Inc. All rights reserved. Copyright 2016 Red Hat  Inc. and\or its affiliates Copyright 2016 Red Hat Inc. All rights reserved.
+
+keycloak-js - 8.0.1
+ * License: Apache-2.0
+ * Copyright: Copyright 2017 Brett Epps <https Copyright 2016 Red Hat  Inc. and\or its affiliates
+
+keycloak-js - 8.0.2
+ * License: Apache-2.0
+ * Copyright: Copyright 2017 Brett Epps <https Copyright 2016 Red Hat  Inc. and\or its affiliates
 
 keyv - 3.0.0
+ * License: MIT
+ * Copyright: Copyright (c) 2017 Luke Childs
+
+keyv - 4.0.0
  * License: MIT
  * Copyright: Copyright (c) 2017 Luke Childs
 
@@ -1858,12 +2022,9 @@ kind-of - 5.1.0
 
 kind-of - 6.0.3
  * License: MIT
- * Copyright: Copyright (c) 2014-2017  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert Copyright (c) 2014-2015  Jon Schlinkert.
+ * Copyright: Copyright (c) 2014-2015  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert
 
 kubernetes-client - 3.18.1
- * License: MIT
-
-kubernetes-client - 6.11.0
  * License: MIT
 
 kubernetes-client - 6.12.1
@@ -1879,7 +2040,7 @@ lazy-cache - 0.2.7
 
 lazy-cache - 1.0.4
  * License: MIT
- * Copyright: Copyright (c) 2015-2016  Jon Schlinkert. Copyright (c) 2015  Jon Schlinkert.
+ * Copyright: Copyright (c) 2015  Jon Schlinkert. Copyright (c) 2015-2016  Jon Schlinkert.
 
 loadtest - 3.1.0
  * License: MIT
@@ -1904,7 +2065,7 @@ lodash.includes - 4.3.0
 
 lodash.isboolean - 3.0.3
  * License: MIT
- * Copyright: Copyright 2009-2016 Jeremy Ashkenas  DocumentCloud and Investigative Reporters & Editors copyright 2009-2016 Jeremy Ashkenas Copyright 2012-2016 The Dojo Foundation <http
+ * Copyright: copyright 2009-2016 Jeremy Ashkenas Copyright 2012-2016 The Dojo Foundation <http Copyright 2009-2016 Jeremy Ashkenas  DocumentCloud and Investigative Reporters & Editors
 
 lodash.isequal - 4.5.0
  * License: MIT
@@ -1914,14 +2075,14 @@ lodash.isinteger - 4.0.4
 
 lodash.isnumber - 3.0.3
  * License: MIT
- * Copyright: Copyright 2009-2016 Jeremy Ashkenas  DocumentCloud and Investigative Reporters & Editors copyright 2009-2016 Jeremy Ashkenas Copyright 2012-2016 The Dojo Foundation <http
+ * Copyright: copyright 2009-2016 Jeremy Ashkenas Copyright 2012-2016 The Dojo Foundation <http Copyright 2009-2016 Jeremy Ashkenas  DocumentCloud and Investigative Reporters & Editors
 
 lodash.isplainobject - 4.0.6
  * License: MIT
 
 lodash.isstring - 4.0.1
  * License: MIT
- * Copyright: Copyright 2009-2016 Jeremy Ashkenas  DocumentCloud and Investigative Reporters & Editors copyright 2009-2016 Jeremy Ashkenas Copyright 2012-2016 The Dojo Foundation <http
+ * Copyright: copyright 2009-2016 Jeremy Ashkenas Copyright 2012-2016 The Dojo Foundation <http Copyright 2009-2016 Jeremy Ashkenas  DocumentCloud and Investigative Reporters & Editors
 
 lodash.merge - 4.6.2
  * License: MIT
@@ -1944,6 +2105,14 @@ log4js - 4.5.1
  * License: Apache-2.0
  * Copyright: Copyright 2015 Gareth Jones (with contributions from many other people)
 
+log4js - 6.1.0
+ * License: Apache-2.0
+ * Copyright: Copyright 2015 Gareth Jones (with contributions from many other people)
+
+log4js - 6.1.2
+ * License: Apache-2.0
+ * Copyright: Copyright 2015 Gareth Jones (with contributions from many other people)
+
 long - 4.0.0
  * License: Apache-2.0
 
@@ -1955,6 +2124,10 @@ lowercase-keys - 1.0.0
  * License: MIT
 
 lowercase-keys - 1.0.1
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+lowercase-keys - 2.0.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
@@ -1971,7 +2144,7 @@ make-dir - 1.3.0
 
 map-cache - 0.2.2
  * License: MIT
- * Copyright: Copyright (c) 2015  Jon Schlinkert. Copyright (c) 2015-2016  Jon Schlinkert.
+ * Copyright: Copyright (c) 2015-2016  Jon Schlinkert. Copyright (c) 2015  Jon Schlinkert.
 
 map-visit - 1.0.0
  * License: MIT
@@ -1986,7 +2159,7 @@ media-typer - 0.3.0
 
 merge-deep - 3.0.2
  * License: MIT
- * Copyright: Copyright (c) 2014-2015  Jon Schlinkert. Copyright (c) 2014-present  Jon Schlinkert.
+ * Copyright: Copyright (c) 2014-present  Jon Schlinkert. Copyright (c) 2014-2015  Jon Schlinkert.
 
 merge-descriptors - 1.0.1
  * License: MIT
@@ -2008,10 +2181,6 @@ mime-db - 1.40.0
  * License: MIT
  * Copyright: Copyright (c) 2014 Jonathan Ong me@jongleberry.com
 
-mime-db - 1.42.0
- * License: MIT
- * Copyright: Copyright (c) 2014 Jonathan Ong me@jongleberry.com
-
 mime-db - 1.43.0
  * License: MIT
  * Copyright: Copyright (c) 2014 Jonathan Ong me@jongleberry.com
@@ -2019,10 +2188,6 @@ mime-db - 1.43.0
 mime-types - 2.1.24
  * License: MIT
  * Copyright: Copyright (c) 2014 Jonathan Ong <me@jongleberry.com> Copyright (c) 2015 Douglas Christopher Wilson <doug@somethingdoug.com>
-
-mime-types - 2.1.25
- * License: MIT
- * Copyright: Copyright (c) 2014 Jonathan Ong <me@jongleberry.com>
 
 mime-types - 2.1.26
  * License: MIT
@@ -2032,9 +2197,13 @@ mimic-response - 1.0.1
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
+mimic-response - 2.1.0
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
 mini-create-react-context - 0.3.2
  * License: MIT
- * Copyright: Copyright (c) 2017-2019 James Kyle <me@thejameskyle.com> Copyright (c) 2019-present StringEpsilon <StringEpsilon@gmail.com>
+ * Copyright: Copyright (c) 2019-present StringEpsilon <StringEpsilon@gmail.com> Copyright (c) 2017-2019 James Kyle <me@thejameskyle.com>
 
 minimalistic-assert - 1.0.1
  * License: ISC
@@ -2053,11 +2222,21 @@ minimist - 0.0.8
 minimist - 1.2.0
  * License: MIT
 
+minimist - 1.2.5
+ * License: MIT
+
 minipass - 2.9.0
  * License: ISC
  * Copyright: Copyright (c) npm  Inc. and Contributors
 
+minipass - 3.1.1
+ * License: ISC
+ * Copyright: Copyright (c) npm  Inc. and Contributors
+
 minizlib - 1.3.3
+ * License: MIT
+
+minizlib - 2.1.0
  * License: MIT
 
 mixin-deep - 1.3.2
@@ -2072,14 +2251,22 @@ mkdirp - 0.5.1
  * License: MIT
  * Copyright: Copyright 2010 James Halliday (mail@substack.net)
 
+mkdirp - 0.5.4
+ * License: MIT
+
+mkdirp - 1.0.3
+ * License: MIT
+ * Copyright: Copyright 2010 James Halliday (mail@substack.net)
+
 moment - 2.24.0
  * License: MIT
  * Copyright: Copyright (c) JS Foundation and other contributors
 
-moment-timezone - 0.5.25
- * License: MIT
-
 moment-timezone - 0.5.27
+ * License: MIT
+ * Copyright: Copyright (c) JS Foundation and other contributors
+
+moment-timezone - 0.5.28
  * License: MIT
  * Copyright: Copyright (c) JS Foundation and other contributors
 
@@ -2125,19 +2312,16 @@ node-fetch - 1.7.3
  * License: MIT
  * Copyright: Copyright (c) 2016 David Frank
 
-node-forge - 0.8.4
- * License: BSD-3-Clause
-
 node-forge - 0.8.5
  * License: BSD-3-Clause
- * Copyright: Copyright (c) 2009-2015 Digital Bazaar  Inc. Copyright 2008-2013 Digital Bazaar  Inc. Copyright (c) 2012-2014 Digital Bazaar  Inc. Copyright (c) 2017-2018 Digital Bazaar  Inc. Copyright (c) 2011-2014 Digital Bazaar  Inc. All rights reserved. Copyright (c) 2010-2012 Digital Bazaar  Inc. All rights reserved. Copyright (c) 2010-2014 Digital Bazaar  Inc. All rights reserved. Copyright 2011-2016 Digital Bazaar  Inc. Copyright (c) 2003-2005  Tom Wu Copyright (c) 2005  Tom Wu Copyright (c) 2005-2009  Tom Wu Copyright (c) 2014 Lautaro Cozzani <lautaro.cozzani@scytl.com> Copyright (c) 2008-2013 Digital Bazaar  Inc. Copyright 2011-2017 Digital Bazaar  Inc. Copyright 2012 Stefan Siegl <stesie@brokenpipe.de> Copyright (c) 2012 Kenji Urushima Copyright (c) 2013-2014 Digital Bazaar  Inc. Copyright (C) Ellis Pritchard  Guardian Unlimited 2003. Copyright (c) 2012-2015 Digital Bazaar  Inc. Copyright (c) 2014 Digital Bazaar  Inc. Copyright (c) 2013 Digital Bazaar  Inc. Copyright (c) 2012 Stefan Siegl <stesie@brokenpipe.de> Copyright (c) 2010-2015 Digital Bazaar  Inc. Copyright (c) 2014-2015 Digital Bazaar  Inc. Copyright (c) 2009-2013 Digital Bazaar  Inc. Copyright (c) 2009-2014 Digital Bazaar  Inc. Copyright (c) 2009-2012 Digital Bazaar  Inc. Copyright (c) 2010-2018 Digital Bazaar  Inc. Copyright (c) 2010-2014 Digital Bazaar  Inc. Copyright (c) 2010-2013 Digital Bazaar  Inc. Copyright (C) 1989  1991 Free Software Foundation  Inc. Copyright (c) 2010  Digital Bazaar  Inc.
+ * Copyright: Copyright (c) 2010  Digital Bazaar  Inc. Copyright (C) 1989  1991 Free Software Foundation  Inc. Copyright (c) 2009-2012 Digital Bazaar  Inc. Copyright (c) 2010-2018 Digital Bazaar  Inc. Copyright (c) 2012 Kenji Urushima Copyright (C) Ellis Pritchard  Guardian Unlimited 2003. Copyright (c) 2005  Tom Wu Copyright (c) 2003-2005  Tom Wu Copyright (c) 2005-2009  Tom Wu Copyright (c) 2014-2015 Digital Bazaar  Inc. Copyright 2011-2017 Digital Bazaar  Inc. Copyright (c) 2013-2014 Digital Bazaar  Inc. Copyright (c) 2009-2013 Digital Bazaar  Inc. Copyright (c) 2009-2015 Digital Bazaar  Inc. Copyright (c) 2008-2013 Digital Bazaar  Inc. Copyright 2011-2016 Digital Bazaar  Inc. Copyright (c) 2010-2012 Digital Bazaar  Inc. All rights reserved. Copyright (c) 2013 Digital Bazaar  Inc. Copyright (c) 2014 Lautaro Cozzani <lautaro.cozzani@scytl.com> Copyright (c) 2014 Digital Bazaar  Inc. Copyright (c) 2010-2015 Digital Bazaar  Inc. Copyright 2012 Stefan Siegl <stesie@brokenpipe.de> Copyright (c) 2012-2014 Digital Bazaar  Inc. Copyright (c) 2011-2014 Digital Bazaar  Inc. All rights reserved. Copyright (c) 2009-2014 Digital Bazaar  Inc. Copyright (c) 2010-2014 Digital Bazaar  Inc. All rights reserved. Copyright (c) 2017-2018 Digital Bazaar  Inc. Copyright (c) 2010-2013 Digital Bazaar  Inc. Copyright (c) 2012 Stefan Siegl <stesie@brokenpipe.de> Copyright (c) 2012-2015 Digital Bazaar  Inc. Copyright 2008-2013 Digital Bazaar  Inc.
 
 node-forge-flash - 0.0.0
  * License: BSD-3-Clause
 
 node-jose - 1.1.3
  * License: Apache-2.0
- * Copyright: Copyright (c) 2003-2005  Tom Wu. Copyright (c) 2015 Cisco Systems  Inc.  See LICENSE file. Copyright (c) 2015 Cisco Systems  Inc. See LICENSE file.
+ * Copyright: Copyright (c) 2015 Cisco Systems  Inc. See LICENSE file. Copyright (c) 2003-2005  Tom Wu. Copyright (c) 2015 Cisco Systems  Inc.  See LICENSE file.
 
 node-pre-gyp - 0.14.0
  * License: BSD-3-Clause
@@ -2157,14 +2341,22 @@ nopt - 4.0.1
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors Copyright 2009  2010  2011 Isaac Z. Schlueter.
 
+nopt - 4.0.3
+ * License: ISC
+ * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors Copyright 2009  2010  2011 Isaac Z. Schlueter.
+
 normalize-path - 2.1.1
  * License: MIT
 
 normalize-path - 3.0.0
  * License: MIT
- * Copyright: Copyright (c) 2014-2017  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert Copyright (c) 2014-2018  Jon Schlinkert.
+ * Copyright: Copyright (c) 2014-2017  Jon Schlinkert. Copyright (c) 2014-2018  Jon Schlinkert.
 
 normalize-url - 2.0.1
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+normalize-url - 4.5.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
@@ -2218,21 +2410,21 @@ object-is - 1.0.1
  * License: MIT
  * Copyright: Copyright (c) 2014 Jordan Harband
 
+object-is - 1.0.2
+ * License: MIT
+ * Copyright: Copyright (c) 2014 Jordan Harband
+
 object-keys - 1.1.1
  * License: MIT
  * Copyright: Copyright (C) 2013 Jordan Harband
 
 object-visit - 1.0.1
  * License: MIT
- * Copyright: Copyright (c) 2015  2017  Jon Schlinkert. Copyright (c) 2015  2017  Jon Schlinkert
+ * Copyright: Copyright (c) 2015  2017  Jon Schlinkert.
 
 object.assign - 4.1.0
  * License: MIT
  * Copyright: Copyright (c) 2014 Jordan Harband
-
-object.getownpropertydescriptors - 2.0.3
- * License: MIT
- * Copyright: Copyright (c) 2015 Jordan Harband
 
 object.getownpropertydescriptors - 2.1.0
  * License: MIT
@@ -2240,7 +2432,7 @@ object.getownpropertydescriptors - 2.1.0
 
 object.pick - 1.3.0
  * License: MIT
- * Copyright: Copyright (c) 2014-2015 Jon Schlinkert  contributors. Copyright (c) 2014-2016  Jon Schlinkert.
+ * Copyright: Copyright (c) 2014-2016  Jon Schlinkert. Copyright (c) 2014-2015 Jon Schlinkert  contributors.
 
 oidc-token-hash - 3.0.2
  * License: MIT
@@ -2295,6 +2487,14 @@ p-cancelable - 0.4.1
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
+p-cancelable - 2.0.0
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+p-event - 4.1.0
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
 p-finally - 1.0.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
@@ -2303,6 +2503,10 @@ p-is-promise - 1.1.0
  * License: MIT
 
 p-limit - 2.2.1
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+p-limit - 2.2.2
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
@@ -2379,13 +2583,21 @@ path-to-regexp - 1.7.0
  * License: MIT
  * Copyright: Copyright (c) 2014 Blake Embrey (hello@blakeembrey.com)
 
+path-to-regexp - 1.8.0
+ * License: MIT
+ * Copyright: Copyright (c) 2014 Blake Embrey (hello@blakeembrey.com)
+
 pem - 1.14.3
  * License: MIT
  * Copyright: copyright Copyright (c) 2012 Andris Reinman Copyright (c) 2016 Josef Fröhle
 
+pem - 1.14.4
+ * License: MIT
+ * Copyright: Copyright (c) 2012 Andris Reinman Copyright (c) 2016 Josef Fröhle copyright
+
 performance-now - 2.1.0
  * License: MIT
- * Copyright: Copyright (c) 2013 Braveg1rl Copyright (c) 2017 Braveg1rl
+ * Copyright: Copyright (c) 2017 Braveg1rl Copyright (c) 2013 Braveg1rl
 
 performanceserver - 1.0.0
  * License: ISC
@@ -2417,9 +2629,6 @@ process - 0.11.10
  * License: MIT
  * Copyright: Copyright (c) 2013 Roman Shtylman <shtylman@gmail.com>
 
-process-nextick-args - 2.0.0
- * License: MIT
-
 process-nextick-args - 2.0.1
  * License: BSD-3-Clause
  * Copyright: Copyright (c) 2015 Calvin Metcalf
@@ -2428,9 +2637,13 @@ promise.any - 2.0.0
  * License: MIT
  * Copyright: Copyright (c) 2019 Jordan Harband
 
+promise.any - 2.0.1
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Jordan Harband
+
 prop-types - 15.7.2
  * License: MIT
- * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright (c) Facebook  Inc. and its affiliates.
+ * Copyright: Copyright (c) Facebook  Inc. and its affiliates. Copyright (c) 2013-present  Facebook  Inc.
 
 properties - 1.2.1
  * License: MIT
@@ -2456,18 +2669,11 @@ pseudomap - 1.0.2
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
 
-psl - 1.1.32
- * License: MIT
-
-psl - 1.3.0
- * License: MIT
- * Copyright: Copyright (c) 2017 Lupo Montero lupomontero@gmail.com Copyright (c) 2017 Lupo Montero <lupomontero@gmail.com>
-
-psl - 1.4.0
- * License: MIT
- * Copyright: Copyright (c) 2017 Lupo Montero lupomontero@gmail.com Copyright (c) 2017 Lupo Montero <lupomontero@gmail.com>
-
 psl - 1.7.0
+ * License: MIT
+ * Copyright: Copyright (c) 2017 Lupo Montero lupomontero@gmail.com Copyright (c) 2017 Lupo Montero <lupomontero@gmail.com>
+
+psl - 1.8.0
  * License: MIT
  * Copyright: Copyright (c) 2017 Lupo Montero lupomontero@gmail.com Copyright (c) 2017 Lupo Montero <lupomontero@gmail.com>
 
@@ -2475,9 +2681,6 @@ pstree.remy - 1.1.7
  * License: MIT
 
 pump - 1.0.3
- * License: MIT
-
-punycode - 1.4.1
  * License: MIT
 
 punycode - 2.1.1
@@ -2490,15 +2693,15 @@ qs - 6.7.0
  * License: BSD-3-Clause
  * Copyright: Copyright (c) 2014 Nathan LaFreniere and other contributors.
 
+qs - 6.9.3
+ * License: BSD-3-Clause
+ * Copyright: Copyright (c) 2014  Nathan LaFreniere and other [contributors](https Copyright (c) 2014 Nathan LaFreniere and other contributors.
+
 query-string - 5.1.1
  * License: MIT
 
-query-string - 6.7.0
+query-string - 6.11.1
  * License: MIT
-
-query-string - 6.9.0
- * License: MIT
- * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 querystringify - 2.1.1
  * License: MIT
@@ -2518,25 +2721,34 @@ raw-body - 2.4.0
 
 rc - 1.2.8
  * License: Apache-2.0
- * Copyright: Copyright (c) 2013  Dominic Tarr Copyright (c) 2011 Dominic Tarr
+ * Copyright: Copyright (c) 2011 Dominic Tarr Copyright (c) 2013  Dominic Tarr
+
+react - 16.13.1
+ * License: MIT
 
 react - 16.8.6
  * License: MIT
  * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright (c) Facebook  Inc. and its affiliates.
 
+react-dom - 16.13.1
+ * License: MIT
+
 react-dom - 16.8.6
  * License: MIT
  * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright (c) Facebook  Inc. and its affiliates.
 
-react-is - 16.8.6
+react-is - 16.13.1
  * License: MIT
- * Copyright: Copyright (c) Facebook  Inc. and its affiliates.
 
 react-redux - 6.0.1
  * License: MIT
- * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright 2015  Yahoo! Inc. Copyright (c) 2015-present Dan Abramov
+ * Copyright: Copyright (c) 2015-present Dan Abramov Copyright 2015  Yahoo! Inc. Copyright (c) 2013-present  Facebook  Inc.
 
 react-router - 5.0.1
+ * License: MIT
+ * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright 2015  Yahoo! Inc.
+
+react-router - 5.1.2
  * License: MIT
  * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright 2015  Yahoo! Inc.
 
@@ -2544,9 +2756,17 @@ react-router-dom - 5.0.1
  * License: MIT
  * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright 2015  Yahoo! Inc.
 
+react-router-dom - 5.1.2
+ * License: MIT
+ * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright 2015  Yahoo! Inc.
+
 react-transition-group - 4.1.0
  * License: BSD-3-Clause
  * Copyright: Copyright (c) 2013-present  Facebook  Inc. Copyright (c) 2018  React Community
+
+react-transition-group - 4.3.0
+ * License: BSD-3-Clause
+ * Copyright: Copyright (c) 2018  React Community Copyright (c) 2013-present  Facebook  Inc.
 
 readable-stream - 1.0.34
  * License: MIT
@@ -2560,15 +2780,15 @@ readable-stream - 2.3.7
 readdirp - 2.2.1
  * License: MIT
 
-readdirp - 3.1.2
- * License: MIT
- * Copyright: Copyright (c) 2012-2019 Thorsten Lorenz  Paul Miller (https
-
 readdirp - 3.3.0
  * License: MIT
- * Copyright: Copyright (c) 2012-2019 Thorsten Lorenz  Paul Miller (https Copyright (c) 2012-2019 Thorsten Lorenz  Paul Miller (<https Copyright (c) 2012-2015 Thorsten Lorenz
+ * Copyright: Copyright (c) 2012-2015 Thorsten Lorenz Copyright (c) 2012-2019 Thorsten Lorenz  Paul Miller (https Copyright (c) 2012-2019 Thorsten Lorenz  Paul Miller (<https
 
 redux - 4.0.1
+ * License: MIT
+ * Copyright: Copyright (c) 2015-present Dan Abramov
+
+redux - 4.0.5
  * License: MIT
  * Copyright: Copyright (c) 2015-present Dan Abramov
 
@@ -2580,11 +2800,11 @@ redux-thunk - 2.3.0
  * License: MIT
  * Copyright: Copyright (c) 2015-present Dan Abramov
 
-regenerator-runtime - 0.13.2
+regenerator-runtime - 0.13.3
  * License: MIT
  * Copyright: Copyright (c) 2014-present  Facebook  Inc.
 
-regenerator-runtime - 0.13.3
+regenerator-runtime - 0.13.5
  * License: MIT
  * Copyright: Copyright (c) 2014-present  Facebook  Inc.
 
@@ -2593,6 +2813,10 @@ regex-not - 1.0.2
  * Copyright: Copyright (c) 2016  2018  Jon Schlinkert.
 
 regexp.prototype.flags - 1.2.0
+ * License: MIT
+ * Copyright: Copyright (C) 2014 Jordan Harband
+
+regexp.prototype.flags - 1.3.0
  * License: MIT
  * Copyright: Copyright (C) 2014 Jordan Harband
 
@@ -2613,33 +2837,14 @@ repeat-element - 1.1.3
 
 repeat-string - 1.6.1
  * License: MIT
- * Copyright: Copyright (c) 2014-2015  Jon Schlinkert. Copyright (c) 2014-2016  Jon Schlinkert.
+ * Copyright: Copyright (c) 2014-2016  Jon Schlinkert. Copyright (c) 2014-2015  Jon Schlinkert.
 
 replace-in-file - 3.4.4
  * License: MIT
 
-request - 2.88.0
- * License: Apache-2.0
- * Copyright: Copyright 2010-2012 Mikeal Rogers
-
 request - 2.88.2
  * License: Apache-2.0
  * Copyright: Copyright 2010-2012 Mikeal Rogers
-
-request-promise-core - 1.1.2
- * License: ISC
- * Copyright: Copyright (c) 2016  Nicolai Kamenzky and contributors
-
-request-promise-core - 1.1.3
- * License: ISC
- * Copyright: Copyright (c) 2016  Nicolai Kamenzky and contributors Copyright (c) 2019  Nicolai Kamenzky and contributors
-
-request-promise-native - 1.0.7
- * License: ISC
- * Copyright: Copyright (c) 2017  Nicolai Kamenzky and contributors Copyright (c) 2019  Nicolai Kamenzky and contributors
-
-request-promise-native - 1.0.8
- * License: ISC
 
 require-directory - 2.1.1
  * License: MIT
@@ -2659,6 +2864,9 @@ requires-port - 1.0.0
 resolve-pathname - 2.2.0
  * License: MIT
 
+resolve-pathname - 3.0.0
+ * License: MIT
+
 resolve-url - 0.2.1
  * License: MIT
  * Copyright: Copyright (c) 2013 Simon Lydell Copyright 2014 Simon Lydell
@@ -2667,15 +2875,26 @@ responselike - 1.0.2
  * License: MIT
  * Copyright: Copyright (c) 2017 Luke Childs
 
+responselike - 2.0.0
+ * License: MIT
+ * Copyright: Copyright (c) 2017 Luke Childs
+
 ret - 0.1.15
  * License: MIT
  * Copyright: Copyright (C) 2011 by Roly Fentanes
+
+retry - 0.12.0
+ * License: MIT
 
 rfdc - 1.1.4
  * License: MIT
  * Copyright: Copyright 2019 David Mark Clements <david.mark.clements@gmail.com>
 
 rimraf - 3.0.0
+ * License: ISC
+ * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
+
+rimraf - 3.0.2
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
 
@@ -2699,13 +2918,17 @@ safer-buffer - 2.1.2
 
 sanitizer - 0.1.3
  * License: Apache-2.0
- * Copyright: Copyright (C) 2010 Google Inc. Copyright (C) 2006 Google Inc.
+ * Copyright: Copyright (C) 2006 Google Inc. Copyright (C) 2010 Google Inc.
 
 sax - 1.2.4
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
 
 scheduler - 0.13.6
+ * License: MIT
+ * Copyright: Copyright (c) Facebook  Inc. and its affiliates.
+
+scheduler - 0.19.1
  * License: MIT
  * Copyright: Copyright (c) Facebook  Inc. and its affiliates.
 
@@ -2731,7 +2954,7 @@ set-blocking - 2.0.0
 
 set-value - 2.0.1
  * License: MIT
- * Copyright: Copyright (c) 2014-2015  2017  Jon Schlinkert. Copyright (c) 2014-2017  Jon Schlinkert
+ * Copyright: Copyright (c) 2014-2017  Jon Schlinkert Copyright (c) 2014-2015  2017  Jon Schlinkert.
 
 setprototypeof - 1.1.1
  * License: ISC
@@ -2756,13 +2979,21 @@ shimmer - 1.2.1
  * License: BSD-2-Clause
  * Copyright: Copyright (c) 2013-2019  Forrest L Norvell
 
+side-channel - 1.0.2
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Jordan Harband
+
 signal-exit - 3.0.2
+ * License: ISC
+ * Copyright: Copyright (c) 2015  Contributors
+
+signal-exit - 3.0.3
  * License: ISC
  * Copyright: Copyright (c) 2015  Contributors
 
 snapdragon - 0.8.2
  * License: MIT
- * Copyright: Copyright (c) 2012 TJ Holowaychuk <tj@vision-media.ca> Copyright (c) 2015-2016  Jon Schlinkert.
+ * Copyright: Copyright (c) 2015-2016  Jon Schlinkert. Copyright (c) 2012 TJ Holowaychuk <tj@vision-media.ca>
 
 snapdragon-node - 2.1.1
  * License: MIT
@@ -2783,12 +3014,9 @@ socket.io-adapter - 1.1.2
 socket.io-client - 1.0.0
  * License: MIT
 
-socket.io-client - 2.2.0
- * License: MIT
-
 socket.io-client - 2.3.0
  * License: MIT
- * Copyright: Copyright (c) 2012 Niklas von Hertzen Copyright (c) 2014 Guillermo Rauch
+ * Copyright: Copyright (c) 2014 Guillermo Rauch Copyright (c) 2012 Niklas von Hertzen
 
 socket.io-parser - 3.3.0
  * License: MIT
@@ -2811,6 +3039,10 @@ source-map-resolve - 0.5.3
  * License: MIT
  * Copyright: Copyright (c) 2014  2015  2016  2017  2018  2019 Simon Lydell Copyright (c) 2019 ZHAO Jinxiang
 
+source-map-support - 0.5.16
+ * License: MIT
+ * Copyright: Copyright (c) 2014 Evan Wallace
+
 source-map-url - 0.4.0
  * License: MIT
  * Copyright: Copyright (c) 2014 Simon Lydell Copyright 2014 Simon Lydell
@@ -2826,13 +3058,16 @@ split-string - 3.1.0
  * License: MIT
  * Copyright: Copyright (c) 2015-2017  Jon Schlinkert.
 
+sprintf - 1.0.3
+ * License: BSD-3-Clause-Clear
+
 sprintf-js - 1.0.3
  * License: BSD-3-Clause
  * Copyright: Copyright (c) 2007-2014  Alexandru Marasteanu <hello [at) alexei (dot] ro>
 
 sshpk - 1.16.1
  * License: MIT
- * Copyright: Copyright 2015 Joyent  Inc.  All rights reserved. Copyright 2016 Joyent  Inc. Copyright 2018 Joyent  Inc. Copyright 2017 Joyent  Inc. Copyright 2015 Joyent  Inc.
+ * Copyright: Copyright 2018 Joyent  Inc.	All rights reserved. Copyright 2015 Joyent  Inc.  All rights reserved. Copyright 2018 Joyent  Inc. Copyright 2016 Joyent  Inc. Copyright 2017 Joyent  Inc. Copyright 2015 Joyent  Inc.
 
 stack-trace - 0.0.10
  * License: MIT
@@ -2849,10 +3084,6 @@ statuses - 1.5.0
 stdio - 0.2.7
  * License: MIT
  * Copyright: Copyright (c) 2013- Sergio García <sgmonda@gmail.com>
-
-stealthy-require - 1.1.1
- * License: ISC
- * Copyright: Copyright (c) 2017  Nicolai Kamenzky and contributors
 
 streamroller - 0.7.0
  * License: MIT
@@ -2871,7 +3102,7 @@ strict-uri-encode - 1.1.0
 
 strict-uri-encode - 2.0.0
  * License: MIT
- * Copyright: Copyright (c) Kevin Martensson <kevinmartensson@gmail.com> (github.com\kevva) Copyright (c) Kevin Mårtensson <kevinmartensson@gmail.com> (github.com\kevva)
+ * Copyright: Copyright (c) Kevin Mårtensson <kevinmartensson@gmail.com> (github.com\kevva) Copyright (c) Kevin Martensson <kevinmartensson@gmail.com> (github.com\kevva)
 
 string-width - 1.0.2
  * License: MIT
@@ -2883,19 +3114,25 @@ string-width - 3.1.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
-string.prototype.trimleft - 2.1.0
+string.prototype.trimend - 1.0.0
  * License: MIT
 
 string.prototype.trimleft - 2.1.1
  * License: MIT
 
-string.prototype.trimright - 2.1.0
+string.prototype.trimleft - 2.1.2
  * License: MIT
- * Copyright: Copyright (c) 2015 Jordan Harband
 
 string.prototype.trimright - 2.1.1
  * License: MIT
  * Copyright: Copyright (c) 2015 Jordan Harband
+
+string.prototype.trimright - 2.1.2
+ * License: MIT
+
+string.prototype.trimstart - 1.0.0
+ * License: MIT
+ * Copyright: Copyright (c) 2015 Jordan Harband Copyright (c) 2017 Khaled Al-Ansari
 
 string_decoder - 0.10.31
  * License: MIT
@@ -2931,13 +3168,17 @@ swagger-fluent - 3.2.1
 
 symbol-observable - 1.2.0
  * License: MIT
- * Copyright: Copyright (c) Ben Lesh <ben@benlesh.com> Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com) Copyright (c) Ben Lesh <ben@benlesh.com>
 
 tabbable - 3.1.2
  * License: MIT
  * Copyright: Copyright (c) 2015 David Clark
 
 tar - 4.4.13
+ * License: ISC
+ * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
+
+tar - 6.0.1
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
 
@@ -2973,8 +3214,16 @@ tiny-invariant - 1.0.4
  * License: MIT
  * Copyright: Copyright (c) 2019 Alexander Reardon
 
+tiny-invariant - 1.1.0
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Alexander Reardon
+
 tiny-warning - 1.0.2
  * License: MIT
+
+tiny-warning - 1.0.3
+ * License: MIT
+ * Copyright: Copyright (c) 2019 Alexander Reardon
 
 to-array - 0.1.4
  * License: MIT
@@ -2986,7 +3235,11 @@ to-buffer - 1.1.1
 
 to-object-path - 0.3.0
  * License: MIT
- * Copyright: Copyright (c) 2015  Jon Schlinkert. Copyright (c) 2015-2016  Jon Schlinkert.
+ * Copyright: Copyright (c) 2015-2016  Jon Schlinkert. Copyright (c) 2015  Jon Schlinkert.
+
+to-readable-stream - 2.1.0
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 to-regex - 3.0.2
  * License: MIT
@@ -2997,7 +3250,7 @@ to-regex-range - 2.1.1
 
 to-regex-range - 5.0.1
  * License: MIT
- * Copyright: Copyright (c) 2015-present  Jon Schlinkert. Copyright (c) 2015  2017  Jon Schlinkert. Copyright (c) 2015-2017  Jon Schlinkert
+ * Copyright: Copyright (c) 2015-2017  Jon Schlinkert Copyright (c) 2015  2017  Jon Schlinkert. Copyright (c) 2015-present  Jon Schlinkert.
 
 toidentifier - 1.0.0
  * License: MIT
@@ -3006,10 +3259,6 @@ toidentifier - 1.0.0
 touch - 3.1.0
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter
-
-tough-cookie - 2.4.3
- * License: BSD-3-Clause
- * Copyright: Copyright (c) 2018  Salesforce.com  Inc. Copyright (c) 2015  Salesforce.com  Inc.
 
 tough-cookie - 2.5.0
  * License: BSD-3-Clause
@@ -3027,6 +3276,10 @@ type - 1.2.0
 type - 2.0.0
  * License: ISC
  * Copyright: Copyright (c) 2019  Mariusz Nowak  @medikoo  medikoo.com
+
+type-fest - 0.10.0
+ * License: MIT
+ * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 type-is - 1.6.18
  * License: MIT
@@ -3055,13 +3308,17 @@ unique-string - 1.0.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
+universalify - 1.0.0
+ * License: MIT
+ * Copyright: Copyright (c) 2017  Ryan Zimmerman <opensrc@ryanzim.com>
+
 unpipe - 1.0.0
  * License: MIT
  * Copyright: Copyright (c) 2015 Douglas Christopher Wilson <doug@somethingdoug.com>
 
 unset-value - 1.0.0
  * License: MIT
- * Copyright: Copyright (c) 2015  2017  Jon Schlinkert. Copyright (c) 2015  2017  Jon Schlinkert
+ * Copyright: Copyright (c) 2015  2017  Jon Schlinkert.
 
 unzip-response - 2.0.1
  * License: MIT
@@ -3080,9 +3337,6 @@ uri-js - 4.2.2
 urix - 0.1.0
  * License: MIT
  * Copyright: Copyright (c) 2013 Simon Lydell Copyright 2014 Simon Lydell
-
-url-join - 4.0.0
- * License: MIT
 
 url-join - 4.0.1
  * License: MIT
@@ -3105,7 +3359,7 @@ url-to-options - 1.0.1
 
 use - 3.1.1
  * License: MIT
- * Copyright: Copyright (c) 2015-2017  Jon Schlinkert. Copyright (c) 2015-present  Jon Schlinkert.
+ * Copyright: Copyright (c) 2015-present  Jon Schlinkert. Copyright (c) 2015-2017  Jon Schlinkert.
 
 util - 0.10.4
  * License: MIT
@@ -3113,10 +3367,6 @@ util - 0.10.4
 util-deprecate - 1.0.2
  * License: MIT
  * Copyright: Copyright (c) 2014 Nathan Rajlich <nathan@tootallnate.net>
-
-util.promisify - 1.0.0
- * License: MIT
- * Copyright: Copyright (c) 2017 Jordan Harband
 
 util.promisify - 1.0.1
  * License: MIT
@@ -3133,15 +3383,14 @@ uuid - 3.3.2
  * License: MIT
  * Copyright: Copyright (c) 2010-2016 Robert Kieffer and other contributors Copyright 2011  Sebastian Tschan
 
-uuid - 3.3.3
+uuid - 3.4.0
  * License: MIT
  * Copyright: Copyright (c) 2010-2012 Robert Kieffer Copyright (c) 2010-2016 Robert Kieffer and other contributors Copyright 2011  Sebastian Tschan
 
-uuid - 3.4.0
- * License: MIT
- * Copyright: Copyright (c) 2010-2012 Robert Kieffer Copyright 2011  Sebastian Tschan Copyright (c) 2010-2016 Robert Kieffer and other contributors
-
 value-equal - 0.4.0
+ * License: MIT
+
+value-equal - 1.0.1
  * License: MIT
 
 vary - 1.1.2
@@ -3158,12 +3407,13 @@ warning - 3.0.0
 
 websocket - 1.0.31
  * License: Apache-2.0
- * Copyright: Copyright (c) 2012 Google Inc. All rights reserved. Copyright 2010-2015 Brian McKelvey.
-
-websocket-api - 9.4.18.v20190429
- * License: EPL-1.0
+ * Copyright: Copyright 2010-2015 Brian McKelvey. Copyright (c) 2012 Google Inc. All rights reserved.
 
 which - 1.3.1
+ * License: ISC
+ * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
+
+which - 2.0.2
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
 
@@ -3201,11 +3451,11 @@ ws - 6.1.4
 ws - 6.2.1
  * License: MIT
 
-ws - 7.2.0
+ws - 7.2.1
  * License: MIT
  * Copyright: Copyright (c) 2011 Einar Otto Stangvik <einaros@gmail.com>
 
-ws - 7.2.1
+ws - 7.2.3
  * License: MIT
  * Copyright: Copyright (c) 2011 Einar Otto Stangvik <einaros@gmail.com>
 
@@ -3213,20 +3463,16 @@ xdg-basedir - 3.0.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
-xml2js - 0.4.19
+xml2js - 0.4.22
  * License: MIT
  * Copyright: Copyright 2010  2011  2012  2013. All rights reserved.
 
-xml2js - 0.4.22
+xml2js - 0.4.23
  * License: MIT
  * Copyright: Copyright 2010  2011  2012  2013. All rights reserved.
 
 xmlbuilder - 11.0.1
  * License: MIT
-
-xmlbuilder - 9.0.7
- * License: MIT
- * Copyright: Copyright (c) 2013 Ozgur Ozcitak
 
 xmlhttprequest-ssl - 1.5.5
  * License: MIT
@@ -3235,9 +3481,6 @@ xmlhttprequest-ssl - 1.5.5
 xss - 1.0.6
  * License: MIT
  * Copyright: Copyright (c) 2012-2018 Zongmin Lei(雷宗民) <leizongmin@gmail.com>
-
-xtend - 4.0.1
- * License: MIT
 
 xtend - 4.0.2
  * License: MIT
@@ -3254,28 +3497,33 @@ yaeti - 0.0.6
 yallist - 2.1.2
  * License: ISC
 
-yallist - 3.0.3
+yallist - 3.1.1
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
 
-yallist - 3.1.1
+yallist - 4.0.0
  * License: ISC
  * Copyright: Copyright (c) Isaac Z. Schlueter and Contributors
 
 yamljs - 0.3.0
  * License: MIT
- * Copyright: Copyright (c) 2010  Yahoo! Inc. All rights reserved. Copyright (c) 2010 Jeremy Faivre Copyright (c) 2008-2013 Pivotal Labs Copyright (c) 2008-2011 Pivotal Labs
+ * Copyright: Copyright (c) 2010  Yahoo! Inc. All rights reserved. Copyright (c) 2008-2011 Pivotal Labs Copyright (c) 2008-2013 Pivotal Labs Copyright (c) 2010 Jeremy Faivre
 
 yargs - 13.3.0
  * License: MIT
  * Copyright: Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com) Copyright (c) 2011 Andrei Mackenzie Copyright 2010 James Halliday (mail@substack.net) Copyright 2014 Contributors (ben@npmjs.com)
 
+yargs - 13.3.2
+ * License: MIT
+ * Copyright: Copyright 2010 James Halliday (mail@substack.net) Copyright 2014 Contributors (ben@npmjs.com) Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com) Copyright (c) 2011 Andrei Mackenzie
+
 yargs-parser - 13.1.1
  * License: ISC
  * Copyright: Copyright (c) 2016  Contributors
 
-yasson - 1.0.3
- * License: EPL-1.0
+yargs-parser - 13.1.2
+ * License: ISC
+ * Copyright: Copyright (c) 2016  Contributors
 
 yeast - 0.1.2
  * License: MIT
