@@ -377,6 +377,7 @@ module.exports = class LoadRunner {
   }
 
   async getJavaHealthCenterData(counter) {
+    clearTimeout(this.heartbeatID);
     if (counter > 20) {
       log.error("getJavaHealthCenterData: Failed to save .hcd file");
       this.collectingHCD = false;
@@ -389,9 +390,8 @@ module.exports = class LoadRunner {
       await this.project.getProfilingByTime(this.metricsFolder);
     } catch (error) {
       if (this.project !== null) {
-        const data = { projectID: this.project.projectID,  status: 'running' , timestamp: this.metricsFolder }
+        const data = { projectID: this.project.projectID,  status: 'collecting' , timestamp: this.metricsFolder }
         this.user.uiSocket.emit('runloadStatusChanged', data);
-      
         log.info(`getJavaHealthCenterData: .hcd file not found, trying again. Attempt ${counter}/20`);
         this.timerID = setTimeout(() => this.getJavaHealthCenterData(counter + 1), 3000);
       } else {

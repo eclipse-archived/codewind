@@ -79,6 +79,10 @@ class ActionRunLoad extends React.Component {
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Running...' });
                         break;
                     }
+                    case 'collecting': {
+                        this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Collecting...' });
+                        break;
+                    }
                     case 'completed': {
                         // after receiving a loadrun completion message,  wait a bit,  then reset the button back to ready
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Completed...' });
@@ -207,7 +211,7 @@ class ActionRunLoad extends React.Component {
         const { showNotificationRunTestFail, loadRunStatus, inlineTextLabel, timeRemaining } = this.state;
 
         let loadRunCompleted = loadRunStatus.status === 'completed';
-        const options = ['preparing', 'connecting', 'starting', 'started', 'running',  'completed', 'requesting', 'requested', 'cancelling', 'cancelled']
+        const options = ['preparing', 'connecting', 'starting', 'started', 'running',  'collecting', 'completed', 'requesting', 'requested', 'cancelling', 'cancelled']
         const showBusy = options.includes(loadRunStatus.status)
 
         let inlineTextLabelFormatted = (timeRemaining !== 0) ? `${inlineTextLabel}${timeRemaining}` : `${inlineTextLabel}`
