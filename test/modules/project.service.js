@@ -18,10 +18,9 @@ const path = require('path');
 const zlib = require('zlib');
 const klawSync = require('klaw-sync');
 const globToRegExp = require('glob-to-regexp');
-const got = require('got');
 
 const { projectTypeToIgnoredPaths } = require('../../src/pfe/portal/modules/utils/ignoredPaths');
-const { ADMIN_COOKIE, templateOptions, CODEWIND_URL } = require('../config');
+const { ADMIN_COOKIE, templateOptions } = require('../config');
 const reqService = require('./request.service');
 const SocketService = require('./socket.service');
 
