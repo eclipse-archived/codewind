@@ -47,20 +47,24 @@ router.post('/api/v1/projects/:id/loadtest', validateReq, async function(req,res
       return;
     }
 
-    try {
-      log.info(`LoadTest route: loadInProgres = ${project.loadInProgress}`);
-      if (project.loadInProgress == undefined || !project.loadInProgress) {
-        await user.runLoad(project, description);
-        res.status(202).send("");
-      } else {
-        const err = new LoadRunError("RUN_IN_PROGRESS", `For project ${project.projectID}`);
-        res.status(409).send(err.info || err);
-      }
+    log.info(`LoadTest route: loadInProgress= ${project.loadInProgress}`);
+    if (project.loadInProgress == true) {
+      const err = new LoadRunError("RUN_IN_PROGRESS", `For project ${project.projectID}`);
+      res.status(409).send(err.info || err);
       return;
+    }
+
+    try {
+      await user.runLoad(project, description);
     } catch(err) {
       log.error(err);
+      if (err.code == LoadRunError.RUN_IN_PROGRESS) {
+        res.status(409).send(err.info || err);
+        return
+      }
       res.status(500).send(err.info || err);
     }
+    res.status(202).send("");
   }
 });
 

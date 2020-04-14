@@ -149,8 +149,9 @@ module.exports = class User {
    * Function to run load on project
    */
   async runLoad(project, description) {
-    log.debug("runLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
+    log.info("runLoad: project " + project.projectID + " loadInProgress was =" + project.loadInProgress);
     project.loadInProgress = true;
+    log.info("runLoad: project " + project.projectID + " loadInProgress now =" + project.loadInProgress);
     try {
       let config = await project.getLoadTestConfig();
 
@@ -173,6 +174,7 @@ module.exports = class User {
     } catch (err) {
       // Reset run load flag and config in the project, and re-throw the error
       project.loadConfig = null;
+      project.loadInProgress = false;
       throw err;
     }
   }
