@@ -87,6 +87,9 @@ const expectedMsgTypes = {
         event: 'projectClosed',
         expectedProperties: { status: 'success' } ,
     },
+    localDirDeleted: {
+        event: 'localDirDeleted',
+    },
     projectLogsListChanged: {
         event: 'projectLogsListChanged',
     },
