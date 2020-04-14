@@ -21,7 +21,7 @@ const { testTimeout, TEMP_TEST_DIR, pathToApiSpec, ADMIN_COOKIE } = require('../
 chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
-describe('localDirDeletedAPI tests', function() {
+describe('localDirDeleted API tests', function() {
     const projectName = `project-localdirdeleted${Date.now()}`;
     const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
     let projectID;
@@ -53,8 +53,9 @@ describe('localDirDeletedAPI tests', function() {
     describe('Fail cases for GET /projects/{id}/localDirDeleted', () => {
         it('returns 404 when project does not exist', async function() {
             this.timeout(testTimeout.short);
+            const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
             const req = await reqService.chai
-                .post(`/api/v1/projects/not-a-project/localDirDeleted`)
+                .post(`/api/v1/projects/${idMatchingNoProjects}/localDirDeleted`)
                 .set(`Cookie`, ADMIN_COOKIE);
             req.status.should.equal(404);
         });
