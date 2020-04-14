@@ -25,7 +25,7 @@ const { spawn } = require('child_process');
  * @param project, the project to get the container logs for
  * @param outputCb, callback to send the logs to
  */
-module.exports.getContainerLogStream = function getContainerLogStream(project, outputCb) {
+function getContainerLogStream(project, outputCb) {
   if (!project || !project.podName || project.isClosed()) {
     log.warn(`Unable to get containerLogs: project does not exist, has no container or is closed`);
     return;
@@ -44,12 +44,12 @@ module.exports.getContainerLogStream = function getContainerLogStream(project, o
 
 // Use spawn to run a given command inside the container and return the resulting
 // child process.
-module.exports.spawnContainerProcess = function spawnContainerProcess(project, commandArray) {
+function spawnContainerProcess(project, commandArray) {
   const cmdArray = ['exec', '-i', project.podName, '-n', K8S_NAME_SPACE, '--'].concat(commandArray);
   return spawn('/usr/local/bin/kubectl', cmdArray);
 }
 
-module.exports.findHCDFile = function findHCDFile(project, hcdDirectory) {
+function findHCDFile(project, hcdDirectory) {
   const process = this.spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
   let hcdName = "";
   process.stdout.on('data', (hcdNameOrNothing) => {
@@ -61,7 +61,7 @@ module.exports.findHCDFile = function findHCDFile(project, hcdDirectory) {
   });
 }
 
-module.exports.copyFileFromContainer = async function copyFileFromContainer(project, sourceName, destinationName) {
+async function copyFileFromContainer(project, sourceName, destinationName) {
   const kubeCommand = `kubectl cp ${K8S_NAME_SPACE}/${project.podName}:${sourceName} ${destinationName}`;
   log.debug(`copyFileFromContainer [kubectl cp command] ${kubeCommand}`);
   try {
@@ -72,8 +72,16 @@ module.exports.copyFileFromContainer = async function copyFileFromContainer(proj
   }
 }
 
-module.exports.deleteFile = async function deleteFile(project, projectRoot, relativePathOfFile) {
+async function deleteFile(project, projectRoot, relativePathOfFile) {
   const kubeCommand = `kubectl exec ${project.podName} -n ${K8S_NAME_SPACE} -- rm -rf ${projectRoot}/${relativePathOfFile}`;
   log.debug(`[kubectl rm command] ${kubeCommand}`);
   await exec(kubeCommand);
+}
+
+module.exports = {
+  getContainerLogStream,
+  spawnContainerProcess,
+  findHCDFile,
+  copyFileFromContainer,
+  deleteFile,
 }
