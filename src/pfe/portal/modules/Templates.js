@@ -280,16 +280,12 @@ async function validateRepository(repoUrl, repositories) {
 }
 
 async function constructRepositoryObject(url, description, name, isRepoProtected, isRepoEnabled) {
-  let enabled = isRepoEnabled;
-  if (enabled == undefined) {
-    enabled = true;
-  }
   let repository = {
     id: uuidv5(url, uuidv5.URL),
     name,
     url,
     description,
-    enabled: enabled,
+    enabled: isRepoEnabled,
   }
   repository = await fetchRepositoryDetails(repository);
   if (isRepoProtected !== undefined) {
