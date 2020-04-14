@@ -410,6 +410,10 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                     const logs = await getProjectLogs(operation.projectInfo);
                     projectInfo.logs = logs;
 
+                    if (operation.projectInfo.debugPort) {
+                        projectInfo.ports.internalDebugPort = operation.projectInfo.debugPort;
+                    }
+
                     if (operation.projectInfo.projectType == "odo") {
                         const projectHandler = await projectExtensions.getProjectHandler(operation.projectInfo);
                         const odoProjectInfo: ProjectInfo = operation.projectInfo;
@@ -857,7 +861,7 @@ export async function hasDebugPortChanged(projectInfo: ProjectInfo): Promise<boo
 
     const containerName = await getContainerName(projectInfo);
     if (process.env.IN_K8 === "true") {
-        // do nothing for now, since Kubernetes does not support debug mode
+        // We do not change the port of Kubernetes projects
         return false;
     } else {
         return await dockerutil.hasDebugPortChanged(projectInfo, containerName);
@@ -2083,6 +2087,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                         internalPort: containerInfo.internalPort
                     }
                 };
+                if (process.env.IN_K8 === "true") {
+                    data.ports.internalDebugPort = projectHandler.getDefaultDebugPort();
+                }
                 if (containerInfo.containerId) {
                     data.containerId = containerInfo.containerId;
                 }

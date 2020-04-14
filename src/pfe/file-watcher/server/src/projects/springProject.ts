@@ -18,7 +18,7 @@ import { SpringValidator } from "./SpringValidator";
 import { Validator, ValidationResult, Severity, ProblemType } from "./Validator";
 import { Operation } from "./operation";
 import { ProjectInfo, BuildLog, AppLog } from "./Project";
-import { ProjectCapabilities, defaultProjectCapabilities } from  "./Project";
+import { ProjectCapabilities } from  "./Project";
 import { StartModes, ControlCommands } from "./constants";
 import * as locale from "../utils/locale";
 import * as logger from "../utils/logger";
@@ -247,9 +247,6 @@ export async function start(projectInfo: ProjectInfo): Promise<void> {
  * @returns ProjectCapabilities
  */
 export function getCapabilities(): ProjectCapabilities {
-    if (process.env.IN_K8 === "true") {
-        return defaultProjectCapabilities;
-    }
     return capabilities;
 }
 
