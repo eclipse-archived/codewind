@@ -125,7 +125,7 @@ async function copyFile(project, fileToCopy, projectRoot, relativePathOfFile) {
 }
 
 function findHCDFile(project, hcdDirectory) {
-  const process = this.spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
+  const process = spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
   let hcdName = "";
   process.stdout.on('data', (hcdNameOrNothing) => {
     // Convert the name to a string and trim
