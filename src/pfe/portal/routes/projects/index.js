@@ -26,7 +26,7 @@ const router = express.Router();
   require('./logStream.route'),
   require('./internal.route'),
   require('./fileChanges.route'),
-  require('./remoteBind.route'),
+  require('./bind.route'),
   require('./links.route'),
 ]
   .forEach((subRouter) => router.use(subRouter));

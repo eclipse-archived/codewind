@@ -16,7 +16,7 @@ const chai = require('chai');
 const chaiFiles = require('chai-files');
 const chaiPromise = require('chai-as-promised');
 
-const RemoteBind = rewire('../../../../../src/pfe/portal/routes/projects/remoteBind.route');
+const bind = rewire('../../../../../src/pfe/portal/routes/projects/bind.route');
 
 const { suppressLogOutput } = require('../../../../modules/log.service');
 
@@ -25,12 +25,12 @@ chai.use(chaiFiles);
 chai.use(chaiPromise);
 const { file: chaiFile, dir: chaiDir } = chaiFiles;
 
-const testDirectory = path.join(__dirname, 'remoteBindRouteTest');
+const testDirectory = path.join(__dirname, 'bindRouteTest');
 
-describe('remoteBind.route.js', () => {
-    suppressLogOutput(RemoteBind);
+describe('bind.route.js', () => {
+    suppressLogOutput(bind);
     describe('getPathsToDelete(existingPathArray, newPathArray)', () => {
-        const getPathsToDelete = RemoteBind.__get__('getPathsToDelete');
+        const getPathsToDelete = bind.__get__('getPathsToDelete');
         it('returns an array of files to be deleted', () => {
             const existingFileArray = ['package.json', 'package.lock'];
             const newFileArray = ['package.json'];
@@ -78,7 +78,7 @@ describe('remoteBind.route.js', () => {
         });
     });
     describe('getTopLevelDirectories(directoryArray)', () => {
-        const getTopLevelDirectories = RemoteBind.__get__('getTopLevelDirectories');
+        const getTopLevelDirectories = bind.__get__('getTopLevelDirectories');
         it('returns the given directories as they are the highest level', () => {
             const directoryArray = ['nondir/', 'dir/something/'];
             const topLevelDirectories = getTopLevelDirectories(directoryArray);
@@ -121,7 +121,7 @@ describe('remoteBind.route.js', () => {
         });
     });
     describe('isSubdirectory(dir1, dir2)', () => {
-        const isSubdirectory = RemoteBind.__get__('isSubdirectory');
+        const isSubdirectory = bind.__get__('isSubdirectory');
         it('returns true as relative the file paths are equivalent (1)', () => {
             isSubdirectory('filepath/', 'filepath').should.be.true;
         });
@@ -151,7 +151,7 @@ describe('remoteBind.route.js', () => {
         });
     });
     describe('deletePathsInArray(directory, arrayOfFiles)', () => {
-        const deletePathsInArray = RemoteBind.__get__('deletePathsInArray');
+        const deletePathsInArray = bind.__get__('deletePathsInArray');
         const testFileArray = ['package.json', 'server.js', 'dir/file', 'dir/anotherfile', 'anotherdir/file'];
         beforeEach(async() => {
             await createFilesFromArray(testDirectory, testFileArray);
@@ -184,7 +184,7 @@ describe('remoteBind.route.js', () => {
         });
     });
     describe('recursivelyListFilesOrDirectories(getDirectories, absolutePath, relativePath)', () => {
-        const recursivelyListFilesOrDirectories = RemoteBind.__get__('recursivelyListFilesOrDirectories');
+        const recursivelyListFilesOrDirectories = bind.__get__('recursivelyListFilesOrDirectories');
         describe('Get the directories (getDirectories = true)', () => {
             const testDirArray = ['dir', 'dir/dirinanother', 'dir/dirinanother/anotherdirinanother', 'anotherdir', 'finaldir', 'finaldir/dirwithinfinal'];
             const testFileArray = ['dir/file', 'dir/anotherfile', 'dir/dirinanother/file', 'dir/dirinanother/anotherdirinanother/file', 'anotherdir/file', 'anotherdir/anotherfile', 'finaldir/dirwithinfinal/file'];
