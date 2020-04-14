@@ -382,8 +382,6 @@ module.exports = class LoadRunner {
       log.error("getJavaHealthCenterData: Failed to save .hcd file");
       this.collectingHCD = false;
       this.emitCompleted();
-      clearTimeout(this.heartbeatID);
-      this.project = null;
       return;
     }
     try {
@@ -404,7 +402,6 @@ module.exports = class LoadRunner {
     const data = { projectID: this.project.projectID,  status: 'hcdReady', timestamp: this.metricsFolder};
     this.user.uiSocket.emit('runloadStatusChanged', data);
     this.emitCompleted();
-    this.project = null;
   }
 
   async getLibertyJavaVersion() {
@@ -561,11 +558,7 @@ module.exports = class LoadRunner {
       }
 
       await this.endProfiling();
-      if (this.timerID === null) {
-        this.emitCompleted();
-        this.project = null;
-      }
-      clearTimeout(this.heartbeatID);
+      this.emitCompleted();
     });
   }
 
@@ -624,8 +617,7 @@ module.exports = class LoadRunner {
       this.profilingSocket.disconnect();
       this.profilingSocket = null;
       this.profilingSamples = null;
-      this.emitCompleted();    
-      this.project = null;
+      this.emitCompleted();
     }
   }
 
@@ -700,6 +692,8 @@ module.exports = class LoadRunner {
   emitCompleted() {
     if (!this.collectingHCD) {
       this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+      clearTimeout(this.heartbeatID);
+      this.project = null;
     }
   }
 }
