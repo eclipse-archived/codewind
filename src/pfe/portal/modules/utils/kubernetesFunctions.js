@@ -108,6 +108,7 @@ async function patchProjectDeployments(projectID, patchBody) {
     const { metadata: { name } } = deploy;
     return client.apis.apps.v1.ns(K8S_NAME_SPACE).deploy(name).patch({ body: patchBody });
   }));
+}
 
 module.exports = {
   getContainerLogStream,
