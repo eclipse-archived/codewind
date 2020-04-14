@@ -277,7 +277,7 @@ describe('links.route.js', () => {
             restartProject: () => null,
         };
         const mockedLinks = {
-            ENV_FILE_NAME: 'dummyFileName',
+            getFileName: () => 'dummyFileName',
             getFilePath: () => null,
         };
 
