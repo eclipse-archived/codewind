@@ -19,7 +19,7 @@ const ProjectLinkError = require('../../../../src/pfe/portal/modules/utils/error
 chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
-describe.only('Link tests (/api/v1/project/:id/links)', () => {
+describe('Link tests (/api/v1/project/:id/links)', () => {
     const nodeProjectName = `test-project-links-nodejs-${Date.now()}`;
     const goProjectName = `test-project-links-go-${Date.now()}`;
     const pathToNodeProject = path.join(TEMP_TEST_DIR, nodeProjectName);

@@ -38,7 +38,7 @@ const afterDeleteEnvFile = () => {
 };
 
 
-describe.only('Links.js', function() {
+describe('Links.js', function() {
     suppressLogOutput(Links);
     describe('Class functions', () => {
         describe('new Links(directory, args)', () => {
