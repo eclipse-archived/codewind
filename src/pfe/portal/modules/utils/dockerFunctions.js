@@ -22,7 +22,7 @@ const { spawn } = require('child_process');
  * @param project, the project to get the container log for
  * @param outputCb, callback to send the logs to
  */
-module.exports.getContainerLogStream = function getContainerLogStream(project, outputCb) {
+function getContainerLogStream(project, outputCb) {
   if (!project || !project.containerId || project.isClosed()) {
     log.warn(`Unable to get containerLogs: project does not exist, has no container or is closed`);
     return;
@@ -49,17 +49,17 @@ module.exports.getContainerLogStream = function getContainerLogStream(project, o
   }
 }
 
-module.exports.inspect = async function inspect(project) {
+async function inspect(project) {
   if (!project || !project.containerId || project.isClosed()) {
     log.warn(`Unable to inspect: project '${project.name}' does not exist, has no container or is closed`);
-    return;
+    return null;
   }
   const container = await docker.getContainer(project.containerId).inspect();
   log.debug(`Container Inspect: ${JSON.stringify(container)}`);
   return container;
 }
 
-module.exports.exec = async function exec(project, command) {
+async function containerExec(project, command) {
   if (!project || !project.containerId || project.isClosed()) {
     log.warn(`Unable to exec: project does not exist, has no container or is closed`);
     return;
@@ -77,12 +77,12 @@ module.exports.exec = async function exec(project, command) {
 
 // Use spawn to run a given command inside the container and return the resulting
 // child process.
-module.exports.spawnContainerProcess = function spawnContainerProcess(project, commandArray) {
+function spawnContainerProcess(project, commandArray) {
   const cmdArray = ['exec', '-i', project.containerId].concat(commandArray);
   return spawn('/usr/bin/docker', cmdArray);
 }
 
-module.exports.run = async function(containerName, command, volumes) {
+async function run(containerName, command, volumes) {
   const commandArray = convertToArray(command);
   const options = {};
   if(volumes !== null && volumes !== undefined) {
@@ -91,7 +91,7 @@ module.exports.run = async function(containerName, command, volumes) {
   await docker.run(containerName, commandArray, process.stdout, options);
 }
 
-module.exports.readFile = function readFile(project, path) {
+function readFile(project, path) {
   return new Promise((resolve, reject) => {
     if (!project || !project.containerId || project.isClosed()) {
       log.warn(`Unable to exec: project does not exist, has no container or is closed`);
@@ -108,28 +108,24 @@ module.exports.readFile = function readFile(project, path) {
   });
 }
 
-module.exports.copyProjectContents = async function copyProjectContents(
-  project,
-  pathToPFEProject,
-  projectRoot
-) {
+async function copyProjectContents(project, pathToPFEProject, projectRoot) {
   // docker cp requires a trailing . to copy the contents of a directory
   const projectContents = `${pathToPFEProject}/.`;
   //  const dockerCommand = `docker exec ${project.containerId} cp ${fileToCopy} ${projectRoot}/${relativePathOfFile}`;
   const dockerCommand = `docker cp ${projectContents} ${project.containerId}:${projectRoot}`;
   log.debug(`[docker cp command] ${dockerCommand}`);
   await exec(dockerCommand);
-};
+}
 
-module.exports.copyFile = async function copyFile(project, fileToCopy, projectRoot, relativePathOfFile) {
+async function copyFile(project, fileToCopy, projectRoot, relativePathOfFile) {
 //  const dockerCommand = `docker exec ${project.containerId} cp ${fileToCopy} ${projectRoot}/${relativePathOfFile}`;
   const dockerCommand = `docker cp ${fileToCopy} ${project.containerId}:${projectRoot}/${relativePathOfFile}`;
   log.debug(`[docker cp command] ${dockerCommand}`);
   await exec(dockerCommand);
 }
 
-module.exports.findHCDFile = function findHCDFile(project, hcdDirectory) {
-  const process = this.spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
+function findHCDFile(project, hcdDirectory) {
+  const process = spawnContainerProcess(project, ['sh', '-c', `ls ${hcdDirectory} | grep healthcenter`]);
   let hcdName = "";
   process.stdout.on('data', (hcdNameOrNothing) => {
     // Convert the name to a string and trim
@@ -140,18 +136,18 @@ module.exports.findHCDFile = function findHCDFile(project, hcdDirectory) {
   });
 }
 
-module.exports.copyFileFromContainer = async function copyFile(project, sourceName, destinationName) {
+async function copyFileFromContainer(project, sourceName, destinationName) {
   const dockerCommand = `docker cp ${project.containerId}:${sourceName} ${destinationName}`;
   log.debug(`copyFileFromContainer dockerCommand=${dockerCommand}`);
   try {
-    await exec(dockerCommand); 
+    await exec(dockerCommand);
   } catch (error) {
     log.warn(`copyFileFromContainer: Error copying file ${sourceName} from ${project.containerId}`);
     throw(error);
   }
 }
 
-module.exports.deleteFile = async function deleteFile(project, projectRoot, relativePathOfFile) {
+async function deleteFile(project, projectRoot, relativePathOfFile) {
   const dockerCommand = `docker exec ${project.containerId} rm -rf ${projectRoot}/${relativePathOfFile}`;
   log.debug(`[docker rm command] ${dockerCommand}`);
   await exec(dockerCommand);
@@ -160,4 +156,19 @@ module.exports.deleteFile = async function deleteFile(project, projectRoot, rela
 function convertToArray(object) {
   if(object === null || object === undefined) return [];
   return Array.isArray(object) ? object : [object];
+}
+
+module.exports = {
+  getContainerLogStream,
+  inspect,
+  exec: containerExec,
+  spawnContainerProcess,
+  run,
+  readFile,
+  copyProjectContents,
+  copyFile,
+  findHCDFile,
+  copyFileFromContainer,
+  deleteFile,
+  convertToArray,
 }
