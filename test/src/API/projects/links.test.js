@@ -29,7 +29,7 @@ describe('Link tests (/api/v1/project/:id/links)', () => {
     let targetProjectID;
 
     before('create a sample Node.js and Go project and bind to Codewind and wait for the Go project to start', async function() {
-        this.timeout(testTimeout.med);
+        this.timeout(testTimeout.maxTravis);
         // Use GO applications as these tests require two running applications
         projectID = await projectService.createProjectFromTemplate(nodeProjectName, 'nodejs', pathToNodeProject);
         targetProjectID = await projectService.createProjectFromTemplate(goProjectName, 'go', pathToGoProject, true);
