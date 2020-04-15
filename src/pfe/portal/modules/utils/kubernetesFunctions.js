@@ -80,7 +80,6 @@ async function deleteFile(project, projectRoot, relativePathOfFile) {
 
 async function getNetworkConfigMap(projectID) {
   const res = await client.api.v1.namespaces(K8S_NAME_SPACE).configmaps.get({ qs: { labelSelector: `projectID=${projectID}` } });
-  console.dir(res);
   if (!res || !res.body || !res.body.items || res.body.items.length === 0) {
     return null;
   }
@@ -98,7 +97,6 @@ function updateConfigMap(updatedConfigMap) {
 
 async function patchProjectDeployments(projectID, patchBody) {
   const res = await client.apis.apps.v1.ns(K8S_NAME_SPACE).deploy.get({ qs: { labelSelector: `projectID=${projectID}` } });
-  console.dir(res);
   if (!res || !res.body || !res.body.items || res.body.items.length === 0) {
     return null;
   }
