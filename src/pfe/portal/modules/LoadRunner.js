@@ -442,7 +442,7 @@ module.exports = class LoadRunner {
     let hashObject = { gitHash: hashValue };
     const filePath = path.join(this.workingDir, 'runinfo.json');
     try {
-      fs.writeJson(filePath, hashObject, { spaces: '  ' });
+      await fs.writeJson(filePath, hashObject, { spaces: '  ' });
     } catch (err) {
       log.error(err);
     }

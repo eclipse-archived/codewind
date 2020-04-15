@@ -637,14 +637,6 @@ describe('Project.js', () => {
         });
     });
     describe('getProfilingByTime(timeOfTestRun)', () => {
-        it('Fails to get a profiling file using an invalid time stamp', () => {
-            const project = createDefaultProjectAndCheckIsAnObject();
-            project.loadTestPath = loadTestResources;
-            project.getProfilingByTime('123456')
-                .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
-                .and.be.an.instanceOf(ProjectMetricsError)
-                .and.have.property('code', 'NOT_FOUND');
-        });
         it('Gets a profiling file using a valid time stamp (String)', async() => {
             const project = createDefaultProjectAndCheckIsAnObject();
             project.language = 'nodejs';
@@ -687,10 +679,10 @@ describe('Project.js', () => {
             const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             project.language = 'nodejs';
-            project.getPathToProfilingFile('123')
-                .should.be.eventually.rejectedWith(`Unable to find metrics for project ${project.projectID}`)
+            return project.getPathToProfilingFile('123')
+                .should.be.eventually.rejectedWith(`profiling.json was not found for load run 123`)
                 .and.be.an.instanceOf(ProjectMetricsError)
-                .and.have.property('code', 'NOT_FOUND');
+                .and.have.property('code', 'PROFILING_NOT_FOUND');
         });
         it('Gets a profiling.json path using a valid time stamp which is an existing filename', async() => {
             const project = createDefaultProjectAndCheckIsAnObject();
@@ -699,14 +691,22 @@ describe('Project.js', () => {
             const profilingFilePath = await project.getPathToProfilingFile('20190326154749');
             fs.existsSync(profilingFilePath).should.be.true;
         });
-        it('Fails to get an .hcd path when java project pod is not running', () => {
+        it('Fails to get an .hcd path when java project container is not running', async() => {
             const project = createDefaultProjectAndCheckIsAnObject();
             project.loadTestPath = loadTestResources;
             project.language = 'java';
-            project.getPathToProfilingFile('30000000000000')
+
+            const mockedCwUtils = {
+                findHCDFile: () => { project.hcdName = 'dummyName'; },
+            };
+            const revertCwUtils = Project.__set__('cwUtils', mockedCwUtils);
+
+            await project.getPathToProfilingFile('30000000000000')
                 .should.be.eventually.rejectedWith('Unable to perform docker cp for project')
                 .and.be.an.instanceOf(ProjectMetricsError)
                 .and.have.property('code', 'DOCKER_CP');
+
+            revertCwUtils();
         });
     });
     describe('getComparison()', () => {
