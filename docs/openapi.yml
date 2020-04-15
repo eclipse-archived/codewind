@@ -1800,7 +1800,7 @@ paths:
           required: true
           description: id of project
       requestBody:
-        description: JSON object containing the envName of the link to update, and an updated envName or/and an updated projectURL
+        description: JSON object containing the envName of the link to update and an updated envName
         content:
           application/json:
             schema:
@@ -1811,8 +1811,6 @@ paths:
                 envName:
                   type: string
                 updatedEnvName:
-                  type: string
-                targetProjectURL:
                   type: string
       responses:
           202:
@@ -2351,16 +2349,6 @@ components:
           $ref: '#/components/schemas/ProjectID'
         envName:
           type: string
-        targetProjectURL:
-          type: string
-          description: >
-            The target project's external URL<br>
-            Required if the project to connect to is located on a different PFE
-        targetParentPFEURL:
-          type: string
-          description: >
-            The target project's PFE URL - used to identify that it is on a different PFE<br>
-            Required if the project to connect to is located on a different PFE
 
   responses:
     400:

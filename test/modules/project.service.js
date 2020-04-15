@@ -372,6 +372,15 @@ async function awaitProject(id) {
     return awaitProject(id);
 }
 
+async function awaitProjectStartedHTTP(id) {
+    const { body: project } = await getProject(id);
+    const { containerId, appStatus } = project;
+    if (!containerId || appStatus !== 'started') {
+        await sleep(1000); // wait one second
+        await awaitProjectStartedHTTP(id);
+    }
+}
+
 async function awaitProjectStarted(projectID) {
     const socketService = await SocketService.createSocket();
     const expectedSocketMsg = {
@@ -458,12 +467,10 @@ async function getProjectLinks(projectID) {
     return res.body;
 }
 
-async function addProjectLink(projectID, targetProjectID, envName, targetProjectURL, targetProjectPFEURL) {
+async function addProjectLink(projectID, targetProjectID, envName) {
     const reqBody = {
         targetProjectID,
         envName,
-        targetProjectURL,
-        targetProjectPFEURL,
     };
     const res = await reqService.chai
         .post(`/api/v1/projects/${projectID}/links`)
@@ -472,11 +479,10 @@ async function addProjectLink(projectID, targetProjectID, envName, targetProject
     return res;
 }
 
-async function updateProjectLink(projectID, envName, updatedEnvName, targetProjectURL) {
+async function updateProjectLink(projectID, envName, updatedEnvName) {
     const reqBody = {
         envName,
         updatedEnvName,
-        targetProjectURL,
     };
     const res = await reqService.chai
         .put(`/api/v1/projects/${projectID}/links`)
@@ -510,6 +516,7 @@ module.exports = {
     getProjectIDs,
     countProjects,
     awaitProject,
+    awaitProjectStartedHTTP,
     awaitProjectStarted,
     awaitProjectBuilding,
     runLoad,

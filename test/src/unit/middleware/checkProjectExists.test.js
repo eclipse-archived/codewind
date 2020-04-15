@@ -30,12 +30,16 @@ describe('checkProjectExists.js', function() {
                     },
                 },
             };
-            const codeShouldBe404 = (code) => {
+            function codeShouldBe404(code) {
                 code.should.equal(404);
+                return this;
+            };
+            const sendShouldBe = (text) => {
+                text.should.equal(`Project with ID '' does not exist on the Codewind server`);
             };
             const spiedCodeShouldBe404 = sandbox.spy(codeShouldBe404);
             const spiedNext = sandbox.spy(next);
-            checkProjectExists(failsToRetrieveProject, { sendStatus: spiedCodeShouldBe404 }, spiedNext);
+            checkProjectExists(failsToRetrieveProject, { status: spiedCodeShouldBe404, send: sendShouldBe }, spiedNext);
             spiedCodeShouldBe404.should.be.calledOnce;
             spiedNext.should.not.be.called;
         });

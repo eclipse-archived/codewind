@@ -13,7 +13,7 @@ function checkProjectExists(req, res, next) {
   const { cw_user: { projectList } } = req;
   const project = projectList.retrieveProject(id);
   if (!project) {
-    res.sendStatus(404);
+    res.status(404).send(`Project with ID '${id}' does not exist on the Codewind server`);
     return;
   }
   next();

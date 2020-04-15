@@ -140,7 +140,7 @@ function deployK8s() {
 	fi
 
 	# Add the necessary labels and serviceaccount to the chart
-	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project $PROJECT_ID
+	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project $PROJECT_ID $ROOT
 	# Overwrite the container args with `tail` so that we can restart the node process without the container dying
 	/file-watcher/scripts/kubeScripts/modify-helm-chart-node.sh "$deploymentFile"
 

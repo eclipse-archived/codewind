@@ -130,7 +130,7 @@ module.exports = class Project {
       this.injectMetrics = args.injectMetrics;
     }
     this.capabilitiesReady = false;
-    
+
     this.links = new Links(this.projectPath(), args.links);
   }
 
@@ -147,11 +147,13 @@ module.exports = class Project {
         if (services && services.body && services.body.items && services.body.items[0]) {
           const ipAddress = services.body.items[0].spec.clusterIP
           const port = services.body.items[0].spec.ports[0].targetPort
+          const serviceName = services.body.items[0].metadata.name
 
           // update service host
           this.kubeServiceHost = ipAddress
           this.kubeServicePort = port
-          return  {hostname:ipAddress, port:port}
+          this.kubeServiceName = serviceName
+          return { hostname: ipAddress, port, serviceName }
         }
       } catch (error) {
         log.error(error)

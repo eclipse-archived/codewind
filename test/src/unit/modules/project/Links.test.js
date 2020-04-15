@@ -24,17 +24,10 @@ const ProjectLinkError = require('../../../../../src/pfe/portal/modules/utils/er
 chai.should();
 chai.use(chaiAsPromised);
 
-const dummyLocalLink = {
+const dummyLink = {
     projectID: 'dummyID',
     projectURL: 'projectURL',
     envName: 'ENV_NAME',
-    type: Links.TYPES.LOCAL,
-};
-
-const dummyRemoteLink = {
-    ...dummyLocalLink,
-    parentPFEURL: 'parentURL',
-    type: Links.TYPES.REMOTE,
 };
 
 const afterDeleteEnvFile = () => {
@@ -51,14 +44,38 @@ describe('Links.js', function() {
         describe('new Links(directory, args)', () => {
             it('initialises a new Links object', () => {
                 const links = new Links('');
-                links.should.deep.equal({ _links: [], filePath: '.codewind-project-links.env' });
+                links.should.deep.equal({ _links: [], fileName: '.codewind-project-links.env', filePath: '.codewind-project-links.env' });
             });
             it('initialises a new Links object using the links passed in through args', () => {
                 const args = {
-                    _links: [dummyRemoteLink],
+                    _links: [dummyLink],
                 };
                 const links = new Links('', args);
-                links.should.deep.equal({ ...args, filePath: '.codewind-project-links.env' });
+                links.should.deep.equal({ ...args, fileName: '.codewind-project-links.env', filePath: '.codewind-project-links.env' });
+            });
+        });
+        describe('getFileName()', () => {
+            it('returns the file path of the project links file', () => {
+                const links = new Links(TEMP_TEST_DIR);
+                links.getFileName().should.equal('.codewind-project-links.env');
+            });
+        });
+        describe('getFilePath()', () => {
+            it('returns the file path of the project links file', () => {
+                const links = new Links(TEMP_TEST_DIR);
+                links.getFilePath().should.equal(path.join(TEMP_TEST_DIR, '.codewind-project-links.env'));
+            });
+        });
+        describe('envFileExists()', () => {
+            it('reports the env file existing as false as it has not been created yet', async() => {
+                const links = new Links(TEMP_TEST_DIR);
+                const exists = await links.envFileExists();
+                exists.should.equal(false);
+            });
+            it('returns the file path of the project links file', async() => {
+                const links = new Links(TEMP_TEST_DIR);
+                await links.add(dummyLink);
+                links.envFileExists().should.eventually.equal(true);
             });
         });
         describe('getAll()', () => {
@@ -69,8 +86,8 @@ describe('Links.js', function() {
             });
             it('returns a populated links array', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
-                await links.add({ ...dummyRemoteLink, envName: 'otherEnv' });
+                await links.add(dummyLink);
+                await links.add({ ...dummyLink, envName: 'otherEnv' });
                 const linkArray = links.getAll();
                 linkArray.length.should.equal(2);
             });
@@ -78,9 +95,9 @@ describe('Links.js', function() {
         describe('get()', () => {
             it('returns the requested link', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
-                const link = links.get(dummyRemoteLink.envName);
-                link.should.deep.equal(dummyRemoteLink);
+                await links.add(dummyLink);
+                const link = links.get(dummyLink.envName);
+                link.should.deep.equal(dummyLink);
             });
             it('throws an error as the requested link does not exist', () => {
                 const links = new Links(TEMP_TEST_DIR);
@@ -96,23 +113,42 @@ describe('Links.js', function() {
             });
             it('returns the links as envirnonment variable pairs', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
-                await links.add({ ...dummyRemoteLink, envName: 'otherEnv' });
+                await links.add(dummyLink);
+                await links.add({ ...dummyLink, envName: 'otherEnv' });
                 const envPairs = links.getEnvPairs();
                 envPairs.length.should.equal(2);
-                const { envName, projectURL } = dummyRemoteLink;
+                const { envName, projectURL } = dummyLink;
                 envPairs.should.deep.equal([`${envName}=${projectURL}`, `otherEnv=${projectURL}`]);
+            });
+        });
+        describe('getEnvPairObject()', () => {
+            it('returns an empty object as no links exist', () => {
+                const links = new Links(TEMP_TEST_DIR);
+                const envObject = links.getEnvPairObject();
+                Object.keys(envObject).length.should.equal(0);
+            });
+            it('returns the links as as an object', async() => {
+                const links = new Links(TEMP_TEST_DIR);
+                await links.add(dummyLink);
+                await links.add({ ...dummyLink, envName: 'otherEnv' });
+                const envObject = links.getEnvPairObject();
+                Object.keys(envObject).length.should.equal(2);
+                const { envName, projectURL } = dummyLink;
+                envObject.should.deep.equal({
+                    [envName]: projectURL,
+                    otherEnv: projectURL,
+                });
             });
         });
         describe('add(newLink)', () => {
             afterDeleteEnvFile();
             it('adds a new link to the link object and writes the env file', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
+                await links.add(dummyLink);
                 links._links.length.should.equal(1);
                 const fileContents = await fs.readFile(links.filePath, 'utf8');
-                const { envName, projectURL } = dummyRemoteLink;
-                fileContents.should.equal(`${envName}=${projectURL}`);
+                const { envName, projectURL } = dummyLink;
+                fileContents.should.equal(`${envName}=${projectURL}\n`);
             });
             it('throws an error as the newLink object is empty', () => {
                 const links = new Links(TEMP_TEST_DIR);
@@ -131,74 +167,55 @@ describe('Links.js', function() {
                 }).should.be.eventually.rejectedWith(ProjectLinkError)
                     .and.eventually.have.property('code', 'INVALID_PARAMETERS');
             });
-            it('throws an error as the newLink object has a type of REMOTE but does not contain a parentPFEURL', () => {
-                const links = new Links(TEMP_TEST_DIR);
-                return links.add({
-                    ...dummyLocalLink,
-                    type: Links.TYPES.REMOTE,
-                })
-                    .should.be.eventually.rejectedWith(ProjectLinkError)
-                    .and.eventually.have.property('code', 'INVALID_PARAMETERS');
-            });
             it('throws an error as the newLink object already exists in the Links array', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
-                return links.add(dummyRemoteLink)
+                await links.add(dummyLink);
+                return links.add(dummyLink)
                     .should.be.eventually.rejectedWith(ProjectLinkError)
                     .and.eventually.have.property('code', 'EXISTS');
             });
         });
-        describe('update(envName, newEnvName, newProjectURL)', () => {
+        describe('update(envName, newEnvName)', () => {
             afterDeleteEnvFile();
             it('updates a link', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
+                await links.add(dummyLink);
 
-                const { envName } = dummyRemoteLink;
-                await links.update(envName, 'NEW_ENV', 'NEW_URL');
+                const { envName } = dummyLink;
+                await links.update(envName, 'NEW_ENV');
                 const linkArray = links.getAll();
-                linkArray.should.deep.includes({ ...dummyRemoteLink, envName: 'NEW_ENV', projectURL: 'NEW_URL' });
+                linkArray.should.deep.includes({ ...dummyLink, envName: 'NEW_ENV' });
             });
             it('does not error when the given fields are the same as the old ones', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
+                await links.add(dummyLink);
 
-                const { envName, projectURL } = dummyRemoteLink;
-                await links.update(envName, envName, projectURL);
+                const { envName } = dummyLink;
+                await links.update(envName, envName);
                 const linkArray = links.getAll();
-                linkArray.should.deep.includes(dummyRemoteLink);
+                linkArray.should.deep.includes(dummyLink);
             });
             it('throws an error as the newEnvName is a blank string (no update)', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
+                await links.add(dummyLink);
 
-                const { envName } = dummyRemoteLink;
-                return links.update(envName, '', 'NEW_URL')
-                    .should.be.eventually.rejectedWith(ProjectLinkError)
-                    .and.eventually.have.property('code', 'INVALID_PARAMETERS');
-            });
-            it('throws an error as the newProjectURL is a blank string (no update)', async() => {
-                const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
-
-                const { envName } = dummyRemoteLink;
-
-                return links.update(envName, 'notnull', null)
+                const { envName } = dummyLink;
+                return links.update(envName, '')
                     .should.be.eventually.rejectedWith(ProjectLinkError)
                     .and.eventually.have.property('code', 'INVALID_PARAMETERS');
             });
             it('throws an error as the link does not exist', () => {
                 const links = new Links(TEMP_TEST_DIR);
-                return links.update('nonexistant', 'notnull', 'notnull')
+                return links.update('nonexistant', 'notnull')
                     .should.be.eventually.rejectedWith(ProjectLinkError)
                     .and.eventually.have.property('code', 'NOT_FOUND');
             });
             it('throws an error as the newEnvName is the same as an existing envName', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
-                await links.add({ ...dummyRemoteLink, envName: 'ENV_TO_UPDATE' });
+                await links.add(dummyLink);
+                await links.add({ ...dummyLink, envName: 'ENV_TO_UPDATE' });
 
-                const { envName, projectURL } = dummyRemoteLink;
+                const { envName, projectURL } = dummyLink;
                 return links.update('ENV_TO_UPDATE', envName, projectURL)
                     .should.be.eventually.rejectedWith(ProjectLinkError)
                     .and.eventually.have.property('code', 'EXISTS');
@@ -208,9 +225,9 @@ describe('Links.js', function() {
             afterDeleteEnvFile();
             it('deletes a link', async() => {
                 const links = new Links(TEMP_TEST_DIR);
-                await links.add(dummyRemoteLink);
+                await links.add(dummyLink);
 
-                const { envName } = dummyRemoteLink;
+                const { envName } = dummyLink;
                 await links.delete(envName);
                 const linkArray = links.getAll();
                 linkArray.should.deep.equal([]);
@@ -230,28 +247,6 @@ describe('Links.js', function() {
                 const newLink = {
                     envName: 'env',
                     projectURL: 'some',
-                    type: Links.TYPES.LOCAL,
-                };
-                (() => validateLink(newLink, [])).should.throw(ProjectLinkError)
-                    .and.have.property('code', 'INVALID_PARAMETERS');
-            });
-            it('throws an error as a link with TYPE=REMOTE does not have a parentPFEURL', () => {
-                const newLink = {
-                    projectID: 'id',
-                    envName: 'env',
-                    projectURL: 'some',
-                    type: Links.TYPES.REMOTE,
-                };
-                (() => validateLink(newLink, [])).should.throw(ProjectLinkError)
-                    .and.have.property('code', 'INVALID_PARAMETERS');
-            });
-            it('throws an error as a link with TYPE=REMOTE is given a projectURL of null', () => {
-                const newLink = {
-                    projectID: 'id',
-                    envName: 'env',
-                    projectURL: null,
-                    parentPFEURL: 'url',
-                    type: Links.TYPES.REMOTE,
                 };
                 (() => validateLink(newLink, [])).should.throw(ProjectLinkError)
                     .and.have.property('code', 'INVALID_PARAMETERS');
@@ -262,7 +257,6 @@ describe('Links.js', function() {
                     projectID: 'id',
                     envName: 'existing',
                     projectURL: 'some',
-                    type: Links.TYPES.LOCAL,
                 };
                 (() => validateLink(newLink, links)).should.throw(ProjectLinkError)
                     .and.have.property('code', 'EXISTS');
@@ -272,17 +266,6 @@ describe('Links.js', function() {
                     projectID: 'id',
                     envName: 'existing',
                     projectURL: 'some',
-                    type: Links.TYPES.LOCAL,
-                };
-                const validatedLink = validateLink(newLink, []);
-                validatedLink.should.deep.equal(newLink);
-            });
-            it('returns a validated link object when projectURL is null and TYPE=LOCAL', () => {
-                const newLink = {
-                    projectID: 'id',
-                    envName: 'existing',
-                    projectURL: null,
-                    type: Links.TYPES.LOCAL,
                 };
                 const validatedLink = validateLink(newLink, []);
                 validatedLink.should.deep.equal(newLink);
@@ -298,18 +281,32 @@ describe('Links.js', function() {
                 envNameExists([], 'notexisting').should.be.false;
             });
         });
-        describe('writeEnvironmentFile(filePath, links)', () => {
-            const writeEnvironmentFile = Links.__get__('writeEnvironmentFile');
-            const filePath = path.join(TEMP_TEST_DIR, 'writeEnvironmentFileTest');
+        describe('updateEnvironmentFile(filePath, links)', () => {
+            const updateEnvironmentFile = Links.__get__('updateEnvironmentFile');
+            const filePath = path.join(TEMP_TEST_DIR, 'updateEnvironmentFileTest');
             afterEach(() => {
                 fs.removeSync(filePath);
             });
             it('writes out the environment file', async() => {
                 const links = ['env1=url1', 'env2=url2'];
-                await writeEnvironmentFile(filePath, links);
-                await fs.pathExists(filePath);
+                await updateEnvironmentFile(filePath, links);
+                const pathExists = await fs.pathExists(filePath);
+                pathExists.should.be.true;
                 const fileContents = await fs.readFile(filePath, 'utf8');
-                fileContents.should.equal('env1=url1\nenv2=url2');
+                fileContents.should.equal('env1=url1\nenv2=url2\n');
+            });
+            it('does not create an environment file if an empty env array is given', async() => {
+                const links = [];
+                await updateEnvironmentFile(filePath, links);
+                const pathExists = await fs.pathExists(filePath);
+                pathExists.should.be.false;
+            });
+            it('removes an environment file if an empty env array is given', async() => {
+                const links = [];
+                await fs.ensureFile(filePath);
+                await updateEnvironmentFile(filePath, links);
+                const pathExists = await fs.pathExists(filePath);
+                pathExists.should.be.false;
             });
         });
     });
