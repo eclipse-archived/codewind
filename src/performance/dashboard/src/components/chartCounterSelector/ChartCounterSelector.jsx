@@ -187,7 +187,7 @@ class ChartCounterSelector extends Component {
                                     </p>
 
                                         <div className="bx--tooltip__footer">
-                                            <a href="https://microclimate.dev/appmetrics#understanding-performance-metrics-in-the-dashboard-tab" className="bx--link" target="_blank" rel="noopener noreferrer">
+                                            <a href="https://www.eclipse.org/codewind/metrics-dashboard.html" className="bx--link" target="_blank" rel="noopener noreferrer">
                                                 Learn More  <IconLaunch className='bx--btn__icon' />
                                             </a>
                                         </div>
