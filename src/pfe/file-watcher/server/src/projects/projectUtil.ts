@@ -410,6 +410,10 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                     const logs = await getProjectLogs(operation.projectInfo);
                     projectInfo.logs = logs;
 
+                    if (operation.projectInfo.debugPort) {
+                        projectInfo.ports.internalDebugPort = operation.projectInfo.debugPort;
+                    }
+
                     if (operation.projectInfo.projectType == "odo") {
                         const projectHandler = await projectExtensions.getProjectHandler(operation.projectInfo);
                         const odoProjectInfo: ProjectInfo = operation.projectInfo;
@@ -857,7 +861,7 @@ export async function hasDebugPortChanged(projectInfo: ProjectInfo): Promise<boo
 
     const containerName = await getContainerName(projectInfo);
     if (process.env.IN_K8 === "true") {
-        // do nothing for now, since Kubernetes does not support debug mode
+        // We do not change the port of Kubernetes projects
         return false;
     } else {
         return await dockerutil.hasDebugPortChanged(projectInfo, containerName);
@@ -1536,6 +1540,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             logger.logProjectError(err, buildInfo.projectID, buildInfo.containerName);
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.buildFail");
             await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopped, " ");
+            const containerName = await getContainerName(projectInfo);
+            await kubeutil.deleteHelmRelease(buildInfo.projectID, containerName);
             throw new Error(msg);
         }
 
@@ -1549,6 +1555,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             logger.logProjectError(err, buildInfo.projectID, buildInfo.containerName);
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.invalidImagePushRegistry");
             await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopped, " ");
+            const containerName = await getContainerName(projectInfo);
+            await kubeutil.deleteHelmRelease(buildInfo.projectID, containerName);
             throw new Error(msg);
         }
 
@@ -1567,6 +1575,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             await appendToBuildLogFile(buildInfo, buildLogMsg, logDir);
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.buildFail");
             await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopped, " ");
+            const containerName = await getContainerName(projectInfo);
+            await kubeutil.deleteHelmRelease(buildInfo.projectID, containerName);
             throw new Error(msg);
         }
 
@@ -1587,9 +1597,9 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
     } else {
         // Local Docker
         await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.inProgress, "buildscripts.buildImage");
+        const projectInfo = await getProjectInfo(buildInfo.projectID);
         try {
             logger.logProjectInfo("Build container image", buildInfo.projectID);
-            const projectInfo = await getProjectInfo(buildInfo.projectID);
             const language = projectInfo.language;
             await dockerutil.buildImage(buildInfo.projectID, language, buildInfo.containerName, [], buildInfo.projectLocation, true, dockerBuildLog);
             logger.logProjectInfo("Container image build stage complete.", buildInfo.projectID);
@@ -1602,6 +1612,8 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
             logger.logProjectError("Error output:\n" + err.stdout, buildInfo.projectID);
             await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, buildInfo.projectID, BuildState.failed, "buildscripts.buildFail");
             await projectStatusController.updateProjectStatus(STATE_TYPES.appState, buildInfo.projectID, AppState.stopped, "");
+            const containerName = await getContainerName(projectInfo);
+            await dockerutil.removeContainer(projectInfo.projectID, containerName);
             throw new Error(msg);
         }
 
@@ -2075,6 +2087,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                         internalPort: containerInfo.internalPort
                     }
                 };
+                if (process.env.IN_K8 === "true") {
+                    data.ports.internalDebugPort = projectHandler.getDefaultDebugPort();
+                }
                 if (containerInfo.containerId) {
                     data.containerId = containerInfo.containerId;
                 }

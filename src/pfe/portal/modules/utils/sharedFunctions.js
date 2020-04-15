@@ -19,10 +19,10 @@ const exec = promisify(require('child_process').exec);
 
 // This if statement allows us to only include one utils function, exporting either
 //      the Docker of K8s one depending on which environment we're in
-module.exports = require((global.codewind && global.codewind.RUNNING_IN_K8S ? './kubernetesFunctions' : './dockerFunctions'));
+const containerFunctions = require((global.codewind && global.codewind.RUNNING_IN_K8S ? './kubernetesFunctions' : './dockerFunctions'));
 
 // variable to do a async timeout
-module.exports.timeout = ms => new Promise(resolve => setTimeout(resolve, ms));
+const timeout = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Function check if a file exists (is accessable)
@@ -30,7 +30,7 @@ module.exports.timeout = ms => new Promise(resolve => setTimeout(resolve, ms));
  * @param file, the file
  * @return true if file is accessable, false if not
  */
-module.exports.fileExists = async function fileExists(file) {
+async function fileExists(file) {
   try {
     await fs.access(file);
     return true;
@@ -47,7 +47,7 @@ module.exports.fileExists = async function fileExists(file) {
  * @return res, the response from the HTTP request
  */
 
-module.exports.asyncHttpRequest = function asyncHttpRequest(options, body, secure = false) {
+function asyncHttpRequest(options, body, secure = false) {
   return new Promise(function (resolve, reject) {
     let protocol = secure ? https : http;
     let req = protocol.request(options, function(res) {
@@ -78,14 +78,14 @@ module.exports.asyncHttpRequest = function asyncHttpRequest(options, body, secur
  * @param fieldsToAddToObject, an object which contains fields/values to add to the object
  * @return the updated object
  */
-module.exports.updateObject = function updateObject(objectToUpdate, fieldsToAddToObject) {
+function updateObject(objectToUpdate, fieldsToAddToObject) {
   for (let key in fieldsToAddToObject) {
     objectToUpdate[key] = fieldsToAddToObject[key];
   }
   return objectToUpdate;
 }
 
-module.exports.copyProject = async function copyFile(fromProjectPath, toProjectPath, mode) {
+async function copyProject(fromProjectPath, toProjectPath, mode) {
   log.debug(`copyProject fromPath: ${fromProjectPath}, toPath: ${toProjectPath}`);
   await fs.copy(fromProjectPath, toProjectPath);
   if (mode) {
@@ -99,7 +99,7 @@ module.exports.copyProject = async function copyFile(fromProjectPath, toProjectP
  *
  * @param {string} path, path to remove
  */
-module.exports.forceRemove = async function forceRemove(path) {
+async function forceRemove(path) {
   try {
     await exec(`rm -rf "${path}"`);
   }
@@ -143,7 +143,7 @@ function isLetter(currentChar) {
       || ("A" <= currentChar && currentChar <= "Z");
 }
 
-module.exports.getProjectSourceRoot = function getProjectSourceRoot(project) {
+function getProjectSourceRoot(project) {
   let projectRoot = "";
   switch (project.projectType) {
   case 'nodejs': {
@@ -176,6 +176,16 @@ module.exports.getProjectSourceRoot = function getProjectSourceRoot(project) {
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
-module.exports.convertFromWindowsDriveLetter = convertFromWindowsDriveLetter;
-module.exports.isWindowsAbsolutePath = isWindowsAbsolutePath;
-module.exports.deepClone = deepClone;
+module.exports = {
+  ...containerFunctions,
+  timeout,
+  fileExists,
+  asyncHttpRequest,
+  updateObject,
+  copyProject,
+  forceRemove,
+  convertFromWindowsDriveLetter,
+  isWindowsAbsolutePath,
+  getProjectSourceRoot,
+  deepClone,
+}

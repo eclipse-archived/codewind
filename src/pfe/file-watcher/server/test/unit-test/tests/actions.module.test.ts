@@ -77,7 +77,7 @@ export function actionsTestModule(): void {
             "combo5": {
                 "args": { projectID: "testprojectID", startMode: "run"},
                 "K8": true,
-                "result": "BAD_REQUEST: Restart is not supported for Kubernetes"
+                "result": "FILE_NOT_EXIST: No project found for project id: testprojectID"
             },
         };
 

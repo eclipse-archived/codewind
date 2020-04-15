@@ -17,7 +17,7 @@ import { Validator } from "./Validator";
 import { Operation } from "./operation";
 import { ProjectInfo, BuildLog, AppLog } from "./Project";
 import { ContainerStates } from "./constants";
-import { ProjectCapabilities, defaultProjectCapabilities } from  "./Project";
+import { ProjectCapabilities } from  "./Project";
 import { StartModes, ControlCommands } from "./constants";
 import * as logHelper from "./logHelper";
 import { IFileChangeEvent } from "../utils/fileChanges";
@@ -255,9 +255,6 @@ export async function start(projectInfo: ProjectInfo): Promise<void> {
  * @returns ProjectCapabilities
  */
 export function getCapabilities(): ProjectCapabilities {
-    if (process.env.IN_K8 === "true") {
-        return defaultProjectCapabilities;
-    }
     return capabilities;
 }
 

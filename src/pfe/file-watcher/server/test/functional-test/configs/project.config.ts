@@ -68,21 +68,30 @@ export const projectCapabilities: any = {
                 "startModes": ["run", "debug"],
                 "controlCommands": ["restart"]
             },
-            "kube": project.defaultProjectCapabilities
+            "kube": {
+                "startModes": ["run", "debug"],
+                "controlCommands": ["restart"]
+            },
         },
         [projectLanguges.nodejs]: {
             "local": {
                 "startModes": ["run", "debugNoInit"],
                 "controlCommands": ["restart"]
             },
-            "kube": project.defaultProjectCapabilities
+            "kube": {
+                "startModes": ["run", "debugNoInit"],
+                "controlCommands": ["restart"]
+            },
         },
         [projectLanguges.spring]: {
             "local": {
                 "startModes": ["run", "debug", "debugNoInit"],
                 "controlCommands": ["restart"]
             },
-            "kube": project.defaultProjectCapabilities
+            "kube": {
+                "startModes": ["run", "debug", "debugNoInit"],
+                "controlCommands": ["restart"]
+            },
         },
         [projectLanguges.swift]: {
             "local": project.defaultProjectCapabilities,

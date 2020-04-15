@@ -531,10 +531,6 @@ export function projectSpecificationTest(socket: SocketIO, projData: projectsCon
                             expect(event.eventData.error);
                             expect(event.eventData.error).to.equal(`BAD_REQUEST: The project does not support debug mode.`);
                         }
-                        if (setting === "internalDebugPort" && process.env.IN_K8) {
-                            expect(event.eventData.error);
-                            expect(event.eventData.error).to.equal(`BAD_REQUEST: debug mode is not supported on Kubernetes.`);
-                        }
                         if (setting === "mavenProfiles" && !(project_configs.mavenProfileCapabilities[projectTemplate] && project_configs.mavenProfileCapabilities[projectTemplate][projectLang])) {
                             expect(event.eventData.error);
                             expect(event.eventData.error).to.equal(`Maven settings cannot be set for a non-Maven project: ${projData.projectType}`);

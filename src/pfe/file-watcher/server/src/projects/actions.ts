@@ -292,11 +292,6 @@ export const restart = async function(args: IProjectActionParams): Promise<{ ope
         error.name = "BAD_REQUEST";
         throw error;
     }
-    if (process.env.IN_K8 === "true") {
-        const error = new Error("Restart is not supported for Kubernetes");
-        error.name = "BAD_REQUEST";
-        throw error;
-    }
     const projectInfo = await projectUtil.getProjectInfo(args.projectID);
     if (!projectInfo) {
         const error = new Error("No project found for project id: " + args.projectID);
