@@ -147,7 +147,7 @@ module.exports = class Templates {
   /**
    * Add a repository to the list of template repositories.
    */
-  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected, isRepoEnabled) {
+  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected = false, isRepoEnabled = true) {
     this.lock();
     try {
       const repositories = cwUtils.deepClone(this.repositoryList);
