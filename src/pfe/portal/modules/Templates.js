@@ -147,7 +147,7 @@ module.exports = class Templates {
   /**
    * Add a repository to the list of template repositories.
    */
-  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected, isRepoEnabled) {
+  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected = false, isRepoEnabled = true) {
     this.lock();
     try {
       const repositories = cwUtils.deepClone(this.repositoryList);
@@ -280,16 +280,12 @@ async function validateRepository(repoUrl, repositories) {
 }
 
 async function constructRepositoryObject(url, description, name, isRepoProtected, isRepoEnabled) {
-  let enabled = isRepoEnabled;
-  if (enabled == undefined) {
-    enabled = true;
-  }
   let repository = {
     id: uuidv5(url, uuidv5.URL),
     name,
     url,
     description,
-    enabled: enabled,
+    enabled: isRepoEnabled,
   }
   repository = await fetchRepositoryDetails(repository);
   if (isRepoProtected !== undefined) {

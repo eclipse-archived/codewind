@@ -824,12 +824,6 @@ describe('Templates.js', function() {
                 const repository = await constructRepositoryObject(url, description, name, protected, enabled);
                 repository.should.have.keys('id', 'name', 'url', 'description', 'enabled', 'protected', 'projectStyles');
             });
-            it('returns a repository object when only a url is given - gets the name, description from the url and does not have a protected field', async() => {
-                const { url } = sampleRepos.codewind;
-                const repository = await constructRepositoryObject(url);
-                repository.should.have.keys('id', 'name', 'url', 'description', 'enabled', 'projectStyles');
-                repository.should.not.have.keys('protected');
-            });
         });
         describe('updateRepoListWithReposFromProviders(providers, repositoryList)', function() {
             const updateRepoListWithReposFromProviders = Templates.__get__('updateRepoListWithReposFromProviders');
