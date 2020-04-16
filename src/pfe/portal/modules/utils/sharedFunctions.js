@@ -85,9 +85,9 @@ function updateObject(objectToUpdate, fieldsToAddToObject) {
   return objectToUpdate;
 }
 
-async function copyProject(fromProjectPath, toProjectPath, mode) {
+async function copyProject(fromProjectPath, toProjectPath, mode, preserve = false) {
   log.debug(`copyProject fromPath: ${fromProjectPath}, toPath: ${toProjectPath}`);
-  await fs.copy(fromProjectPath, toProjectPath, { preserveTimestamps: true });
+  await fs.copy(fromProjectPath, toProjectPath, { preserveTimestamps: preserve });
   if (mode) {
     await fs.chmod(toProjectPath, mode);
   }
