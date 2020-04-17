@@ -8,7 +8,8 @@
     "integrationtest": "scripts/mocha.sh src/integration",
     "unittest": "ENABLE_COVERAGE=true scripts/mocha.sh src/unit",
     "apitest": "scripts/mocha.sh src/API",
-    "eslint": "./node_modules/.bin/eslint ."
+    "eslint": "./node_modules/.bin/eslint .",
+    "eslint:fix": "npm run eslint --fix"
   },
   "bin": {
     "test-codewind": "scripts/mocha.sh"
@@ -66,6 +67,7 @@
     "eslint": "^5.9.0",
     "eslint-plugin-chai-friendly": "^0.4.1",
     "eslint-plugin-no-only-tests": "^2.0.1",
+    "husky": "^4.2.5",
     "sinon-chai": "^3.3.0",
     "swagger-parser": "^6.0.5"
   },
@@ -82,5 +84,10 @@
       "docs/**",
       "eslint-rules/**"
     ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-push": "npm run eslint:fix"
+    }
   }
 }
