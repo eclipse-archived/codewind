@@ -266,7 +266,7 @@ async function uploadEnd(req, res) {
       || modifiedList.length > 0;
     if (wasProjectChanged) {
       const projectPath = project.projectPath();
-      await cwUtils.copyProject(pathToTempProj, projectPath, getMode(project));
+      await cwUtils.copyProject(pathToTempProj, projectPath, getMode(project), true);
 
       if (project.injectMetrics) {
         try {

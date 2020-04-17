@@ -85,9 +85,9 @@ module.exports.updateObject = function updateObject(objectToUpdate, fieldsToAddT
   return objectToUpdate;
 }
 
-module.exports.copyProject = async function copyFile(fromProjectPath, toProjectPath, mode) {
+module.exports.copyProject = async function copyFile(fromProjectPath, toProjectPath, mode, preserve = false) {
   log.debug(`copyProject fromPath: ${fromProjectPath}, toPath: ${toProjectPath}`);
-  await fs.copy(fromProjectPath, toProjectPath, { preserveTimestamps: true });
+  await fs.copy(fromProjectPath, toProjectPath, { preserveTimestamps: preserve });
   if (mode) {
     await fs.chmod(toProjectPath, mode);
   }
