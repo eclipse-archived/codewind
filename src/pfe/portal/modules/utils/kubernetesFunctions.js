@@ -95,12 +95,19 @@ function updateConfigMap(updatedConfigMap) {
   return client.api.v1.namespaces(K8S_NAME_SPACE).configmaps(name).put({ body: updatedConfigMap });
 }
 
-async function patchProjectDeployments(projectID, patchBody) {
+async function getProjectDeployments(projectID) {
   const res = await client.apis.apps.v1.ns(K8S_NAME_SPACE).deploy.get({ qs: { labelSelector: `projectID=${projectID}` } });
   if (!res || !res.body || !res.body.items || res.body.items.length === 0) {
+    log.warn(`Unable to inspect: project '${projectID}' has no deployment`);
     return null;
   }
   const { items: deployments } = res.body;
+  return deployments;
+}
+
+async function patchProjectDeployments(projectID, patchBody) {
+  const deployments = await getProjectDeployments(projectID);
+  if (!deployments || deployments.length === 0) return null;
   // patch all deployments that match the query selector
   return Promise.all(deployments.map(deploy => {
     const { metadata: { name } } = deploy;
@@ -116,5 +123,6 @@ module.exports = {
   deleteFile,
   getNetworkConfigMap,
   updateConfigMap,
+  getProjectDeployments,
   patchProjectDeployments,
 }
