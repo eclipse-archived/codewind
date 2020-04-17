@@ -1050,8 +1050,12 @@ paths:
 
   /api/v1/projects/{id}/metrics/status:
     get:
-      summary: Check if a project can support metrics
-      description: Investigates the build-file of a project to determine if it supports the metrics dashboard
+      summary: Returns the current state of a project's metrics
+      description: >
+        Determines whether a project has a /metric endpoint, is
+        running appmetrics and scans its build file to determine
+        whether it contains the appmetrics or microprofile
+        dependencies
       parameters:
         - name: id
           in: path
@@ -1070,8 +1074,18 @@ paths:
                   metricsAvailable:
                     type: boolean
                     example: true
-        400:
-          description: Project build file not found in project directory (pom.xml, package.json or Package.swift)
+                  metricsEndpoint:
+                    type: boolean
+                    example: true
+                  appmetricsEndpoint:
+                    type: boolean
+                    example: true
+                  microprofilePackage:
+                    type: boolean
+                    example: true
+                  appmetricsPackage:
+                    type: boolean
+                    example: true
         404:
           description: Project not found
 

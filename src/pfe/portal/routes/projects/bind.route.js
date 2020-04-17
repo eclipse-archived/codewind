@@ -287,7 +287,6 @@ async function uploadEnd(req, res) {
     let updatedProject = {
       projectID,
       creationTime: timeStamp,
-      metricsAvailable: await project.isMetricsAvailable(),
     }
     await user.projectList.updateProject(updatedProject);
 
@@ -458,7 +457,6 @@ async function bindEnd(req, res) {
       projectID,
       state: Project.STATES.open,
       startMode: 'run', // always use 'run' mode for new or recently re-opened projects
-      metricsAvailable: await project.isMetricsAvailable(),
     }
     user.uiSocket.emit('projectStatusChanged', updatedProject);
     await user.projectList.updateProject(updatedProject);
@@ -477,12 +475,8 @@ async function bindEnd(req, res) {
       error: err.info || err
     }
     user.uiSocket.emit('projectBind', data);
-    
-    if (err.code === 'BUILD_FILE_MISSING') {
-      res.status(400).send(data.error);
-    } else {
-      res.status(500).send(data.error);
-    }
+
+    res.status(500).send(data.error);
     await user.deleteProjectFiles(project);
   }
 }

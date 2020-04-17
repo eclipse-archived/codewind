@@ -14,7 +14,7 @@ const path = require('path');
 
 const projectService = require('../../../modules/project.service');
 const reqService = require('../../../modules/request.service');
-const { 
+const {
     ADMIN_COOKIE,
     TEMP_TEST_DIR,
     testTimeout,
@@ -23,7 +23,7 @@ const {
 
 chai.should();
 
-describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {        
+describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
     it('returns 400 when the project does not exist', async function() {
         this.timeout(testTimeout.short);
 
@@ -49,7 +49,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
             await projectService.removeProject(pathToLocalProject, projectID);
         });
 
-        it('returns 200 and { metricsAvailable: true } when binding project to Codewind', async function() {
+        it('returns 200 when binding project to Codewind reports appmetricsPackageFoundInBuildFile as true', async function() {
             this.timeout(testTimeout.med);
 
             const { body: project } = await projectService.bindProject({
@@ -59,11 +59,20 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'nodejs',
                 creationTime: Date.now(),
             });
-            project.metricsAvailable.should.be.true;
+            project.metricsAvailable.should.be.false;
+            project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
 
             const res = await getMetricsStatus(project.projectID);
             res.status.should.equal(200, res.text); // print res.text if assertion fails
-            res.body.metricsAvailable.should.be.true;
+            res.body.should.deep.equal({
+                liveMetricsAvailable: false,
+                metricsEndpoint: false,
+                appmetricsEndpoint: false,
+                microprofilePackageFoundInBuildFile: false,
+                appmetricsPackageFoundInBuildFile: true,
+                canMetricsBeInjected: true, // As is a Node.js project
+                projectRunning: false,
+            });
 
             // save projectID for cleanup
             projectID = project.projectID;
@@ -98,7 +107,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
             await projectService.removeProject(pathToLocalProject, projectID);
         });
 
-        it('returns 200 and { metricsAvailable: true } when binding project to Codewind', async function() {
+        it('returns 200 when binding project to Codewind and reports appmetricsPackageFoundInBuildFile as false', async function() {
             this.timeout(testTimeout.med);
 
             const { body: project } = await projectService.bindProject({
@@ -109,49 +118,22 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 creationTime: Date.now(),
             });
             project.metricsAvailable.should.be.false;
+            project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
 
             const res = await getMetricsStatus(project.projectID);
             res.status.should.equal(200, res.text); // print res.text if assertion fails
-            res.body.metricsAvailable.should.be.false;
+            res.body.should.deep.equal({
+                liveMetricsAvailable: false,
+                metricsEndpoint: false,
+                appmetricsEndpoint: false,
+                microprofilePackageFoundInBuildFile: false,
+                appmetricsPackageFoundInBuildFile: false,
+                canMetricsBeInjected: true, // As is a Node.js project
+                projectRunning: false,
+            });
 
             // save projectID for cleanup
             projectID = project.projectID;
-        });
-    });
-
-    describe('Node.js project without package.json', function() {
-        const projectName = `test-node-project-metrics-no-package-json-${Date.now()}`;
-        const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
-
-        before('git clone project to disk and remove package.json', async function() {
-            this.timeout(testTimeout.med);
-            await projectService.unbindAllProjects();
-            await projectService.cloneProject(
-                templateOptions['nodejs'].url,
-                pathToLocalProject,
-            );
-            
-            const pathToPackageJson = path.join(pathToLocalProject, 'package.json');
-            fs.removeSync(pathToPackageJson);
-        });
-
-        it('returns 400 and fails to bind project to Codewind', async function() {
-            this.timeout(testTimeout.med);
-
-            const resToBind = await projectService.bindProject({
-                name: projectName,
-                path: pathToLocalProject,
-                language: 'nodejs',
-                projectType: 'nodejs',
-                creationTime: Date.now(),
-            });
-            resToBind.status.should.equal(400, resToBind.text); // print res.text if assertion fails
-            resToBind.should.satisfyApiSpec;
-            resToBind.body.should.deep.equal({
-                name: 'MetricsStatusError',
-                code: 'BUILD_FILE_MISSING',
-                message: ' Cannot find project build-file (package.json)',
-            });
         });
     });
 
@@ -173,7 +155,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
             await projectService.removeProject(pathToLocalProject, projectID);
         });
 
-        it('returns 200 and { metricsAvailable: true } when binding project to Codewind', async function() {
+        it('returns 200 and when binding project to Codewind and reports the appmetricsPackageFoundInBuildFile and microprofilePackageFoundInBuildFile as true', async function() {
             this.timeout(testTimeout.med);
 
             const { body: project } = await projectService.bindProject({
@@ -183,11 +165,20 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'liberty',
                 creationTime: Date.now(),
             });
-            project.metricsAvailable.should.be.true;
+            project.metricsAvailable.should.be.false;
+            project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
 
             const res = await getMetricsStatus(project.projectID);
             res.status.should.equal(200, res.text); // print res.text if assertion fails
-            res.body.metricsAvailable.should.be.true;
+            res.body.should.deep.equal({
+                liveMetricsAvailable: false,
+                metricsEndpoint: false,
+                appmetricsEndpoint: false,
+                microprofilePackageFoundInBuildFile: true,
+                appmetricsPackageFoundInBuildFile: true,
+                canMetricsBeInjected: true, // As is a Java project
+                projectRunning: false,
+            });
 
             // save projectID for cleanup
             projectID = project.projectID;
@@ -212,7 +203,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
             await projectService.removeProject(pathToLocalProject, projectID);
         });
 
-        it('returns 200 and { metricsAvailable: false } when binding project to Codewind', async function() {
+        it('returns 200 and when binding project to Codewind and reports the appmetricsPackageFoundInBuildFile as false but the microprofilePackageFoundInBuildFile as true', async function() {
             this.timeout(testTimeout.med);
 
             const { body: project } = await projectService.bindProject({
@@ -223,10 +214,19 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 creationTime: Date.now(),
             });
             project.metricsAvailable.should.be.false;
+            project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
 
             const res = await getMetricsStatus(project.projectID);
             res.status.should.equal(200, res.text); // print res.text if assertion fails
-            res.body.metricsAvailable.should.be.false;
+            res.body.should.deep.equal({
+                liveMetricsAvailable: false,
+                metricsEndpoint: false,
+                appmetricsEndpoint: false,
+                microprofilePackageFoundInBuildFile: true,
+                appmetricsPackageFoundInBuildFile: false,
+                canMetricsBeInjected: true, // As is an Open Liberty project
+                projectRunning: false,
+            });
 
             // save projectID for cleanup
             projectID = project.projectID;

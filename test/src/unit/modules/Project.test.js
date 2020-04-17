@@ -13,6 +13,7 @@ const fs = require('fs-extra');
 const { execSync } = require('child_process');
 const path = require('path');
 const rewire = require('rewire');
+const sinon = require('sinon');
 const chai = require('chai');
 const chaiSubset = require('chai-subset');
 const chaiAsPromised = require('chai-as-promised');
@@ -81,6 +82,9 @@ describe('Project.js', () => {
                 buildLogPath: '/codewind-workspace/.logs/my-java-project-9318ab10-fef9-11e9-8761-9bf62d92b58b-9318ab10-fef9-11e9-8761-9bf62d92b58b/docker.build.log',
                 state: 'open',
                 autoBuild: false,
+                metricsCapabilities: {
+                    metricsAvailable: true,
+                },
             };
             const project = createProjectAndCheckIsAnObject(args, global.codewind.CODEWIND_WORKSPACE);
             project.should.containSubset(args);
@@ -109,87 +113,116 @@ describe('Project.js', () => {
             json.should.not.containSubset(obj);
         });
     });
-    describe('isMetricsAvailable()', () => {
-        describe('Checks if metrics are available for normal projects', () => {
-            it('Generic project with no language', async() => {
-                const project = createDefaultProjectAndCheckIsAnObject();
-                const areMetricsAvailable = await project.isMetricsAvailable();
-                areMetricsAvailable.should.be.false;
+    describe('getPerfDashPath()', () => {
+        const defaultArgs = {
+            projectID: 'projectID',
+            name: 'dummy',
+            locOnDisk: '/Documents/projectDir/',
+            injectMetrics: false,
+            isOpenLiberty: false,
+            metricsAvailable: false,
+        };
+        it('returns the performance dash path for a project as project.injectMetrics is true', () => {
+            const project = createProjectAndCheckIsAnObject(defaultArgs, 'dummyworkspace');
+            project.injectMetrics = true;
+            project.getPerfDashPath().should.equal(`/performance/charts?project=${defaultArgs.projectID}`);
+        });
+        it('returns the performance dash path for a project as project.isOpenLiberty is true', () => {
+            const project = createProjectAndCheckIsAnObject(defaultArgs, 'dummyworkspace');
+            project.isOpenLiberty = true;
+            project.getPerfDashPath().should.equal(`/performance/charts?project=${defaultArgs.projectID}`);
+        });
+        it('returns the performance dash path for a project as project.metricsAvailable is true', () => {
+            const project = createProjectAndCheckIsAnObject(defaultArgs, 'dummyworkspace');
+            project.metricsAvailable = true;
+            project.getPerfDashPath().should.equal(`/performance/charts?project=${defaultArgs.projectID}`);
+        });
+        it('returns null as project.injectMetrics, project.isOpenLiberty and project.metricsAvailable are all false', () => {
+            const project = createProjectAndCheckIsAnObject(defaultArgs, 'dummyworkspace');
+            expect(project.getPerfDashPath()).to.be.null;
+        });
+    });
+    describe('setMetricsState()', () => {
+        it('returns all capabilities as false, correctly sets the metricsCapabilities, metricsAvailable and metricsDashboard values in project', async() => {
+            // arrange
+            const expectedCapabilities = {
+                liveMetricsAvailable: false,
+                metricsEndpoint: false,
+                appmetricsEndpoint: false,
+                microprofilePackageFoundInBuildFile: false,
+                appmetricsPackageFoundInBuildFile: false,
+            };
+            const project = createDefaultProjectAndCheckIsAnObject();
+
+            // act
+            const { capabilities } = await project.setMetricsState();
+
+            // assert
+            capabilities.should.deep.equal(expectedCapabilities);
+            project.getMetricsCapabilities().should.deep.equal(expectedCapabilities);
+            project.metricsAvailable.should.be.false;
+            project.metricsDashboard.should.deep.equal({
+                hosting: null,
+                path: null,
             });
-            it('Checks metrics for Javascript', async() => {
-                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'javascript', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
-                const packageJSONContents = {
-                    dependencies: {
-                        'appmetrics-dash': true,
-                    },
-                };
-                const packageJSONPath = path.join(project.projectPath(), 'package.json');
-                await fs.ensureFile(packageJSONPath);
-                await fs.writeJSON(packageJSONPath, packageJSONContents);
-                const areMetricsAvailable = await project.isMetricsAvailable();
-                areMetricsAvailable.should.be.true;
-            });
-            it('Checks metrics for Node.js', async() => {
-                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'nodejs', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
-                const packageJSONContents = {
-                    dependencies: {
-                        'appmetrics-dash': true,
-                    },
-                };
-                const packageJSONPath = path.join(project.projectPath(), 'package.json');
-                await fs.ensureFile(packageJSONPath);
-                await fs.writeJSON(packageJSONPath, packageJSONContents);
-                const areMetricsAvailable = await project.isMetricsAvailable();
-                areMetricsAvailable.should.be.true;
-            });
-            it('Checks metrics for Java', async() => {
-                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'java', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
-                const pomXmlPath = path.join(project.projectPath(), 'pom.xml');
-                await fs.ensureFile(pomXmlPath);
-                await fs.writeFile(pomXmlPath, 'javametrics');
-                const areMetricsAvailable = await project.isMetricsAvailable();
-                areMetricsAvailable.should.be.true;
-            });
-            it('Checks metrics for Swift', async() => {
-                const project = createProjectAndCheckIsAnObject({ name: 'dummy', language: 'swift', locOnDisk: '/Documents/projectDir/' }, global.codewind.CODEWIND_WORKSPACE);
-                const packageSwiftPath = path.join(project.projectPath(), 'Package.swift');
-                await fs.ensureFile(packageSwiftPath);
-                await fs.writeFile(packageSwiftPath, 'SwiftMetrics.git');
-                const areMetricsAvailable = await project.isMetricsAvailable();
-                areMetricsAvailable.should.be.true;
+
+            // Verify the project inf has been updated
+            const infPath = path.join(global.codewind.CODEWIND_WORKSPACE, '/.projects', `${project.projectID}.inf`);
+            const updatedProjectInf = await fs.readJSON(infPath);
+            updatedProjectInf.should.containSubset({
+                metricsCapabilities: expectedCapabilities,
             });
         });
-        describe('Checks if metrics are available for Appsody projects', () => {
-            it('Checks metrics for Appsody: Node.js', async() => {
-                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'nodejs', locOnDisk: '/Documents/projectDir/' };
-                const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                const areMetricsAvailable = await project.isMetricsAvailable();
-                areMetricsAvailable.should.be.true;
+        it('returns metrics capabilities and sets metricsAvailable and metricsDash when a metrics dashboard is available', async() => {
+            // arrange
+            const mockedMetricStatusReturn = {
+                capabilities: {
+                    liveMetricsAvailable: true,
+                    metricsEndpoint: '/metrics',
+                    appmetricsEndpoint: '/appmetrics-dash',
+                    microprofilePackageFoundInBuildFile: true,
+                    appmetricsPackageFoundInBuildFile: true,
+                },
+                metricsDashHost: {
+                    hosting: 'project',
+                    path: '/appmetrics-dash',
+                },
+            };
+            Project.__set__('metricsStatusChecker', {
+                getMetricStatusForProject: sinon.stub().returns(mockedMetricStatusReturn),
             });
-            it('Checks metrics for Appsody: JavaScript', async() => {
-                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'javascript', locOnDisk: '/Documents/projectDir/' };
-                const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                const areMetricsAvailable = await project.isMetricsAvailable();
-                areMetricsAvailable.should.be.true;
+            const project = createDefaultProjectAndCheckIsAnObject();
+
+            // act
+            const { capabilities } = await project.setMetricsState();
+
+            // assert
+            capabilities.should.deep.equal(mockedMetricStatusReturn.capabilities);
+            project.getMetricsCapabilities().should.deep.equal(mockedMetricStatusReturn.capabilities);
+            project.metricsAvailable.should.be.true;
+            project.metricsDashboard.should.deep.equal(mockedMetricStatusReturn.metricsDashHost);
+
+            // Verify the project inf has been updated
+            const infPath = path.join(global.codewind.CODEWIND_WORKSPACE, '/.projects', `${project.projectID}.inf`);
+            const updatedProjectInf = await fs.readJSON(infPath);
+            updatedProjectInf.should.containSubset({
+                metricsCapabilities: mockedMetricStatusReturn.capabilities,
             });
-            it('Checks metrics for Appsody: Java', async() => {
-                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'java', locOnDisk: '/Documents/projectDir/' };
-                const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                const areMetricsAvailable = await project.isMetricsAvailable();
-                areMetricsAvailable.should.be.true;
+        });
+        it('throws an error when metricsStatusChecker.getMetricStatusForProject is rejected', () => {
+            Project.__set__('metricsStatusChecker', {
+                getMetricStatusForProject: sinon.stub().rejects,
             });
-            it('Checks metrics for Appsody: Swift', async() => {
-                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'swift', locOnDisk: '/Documents/projectDir/' };
-                const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                const areMetricsAvailable = await project.isMetricsAvailable();
-                areMetricsAvailable.should.be.true;
-            });
-            it('Checks metrics for Appsody: Invalid Language', async() => {
-                const projectObj = { name: 'dummy', projectType: 'appsodyExtension', language: 'invalid', locOnDisk: '/Documents/projectDir/' };
-                const project = createProjectAndCheckIsAnObject(projectObj, global.codewind.CODEWIND_WORKSPACE);
-                const areMetricsAvailable = await project.isMetricsAvailable();
-                areMetricsAvailable.should.be.false;
-            });
+            const project = createDefaultProjectAndCheckIsAnObject();
+
+            return project.setMetricsState().should.be.eventually.rejected;
+        });
+    });
+    describe('getMetricsCapabilities()', () => {
+        it('returns the metricsCapabilities object from a project', () => {
+            const project = createDefaultProjectAndCheckIsAnObject();
+            const metricsCapabilities = project.getMetricsCapabilities();
+            metricsCapabilities.should.deep.equal({});
         });
     });
     describe('setOpenLiberty()', () => {

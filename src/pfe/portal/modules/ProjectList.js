@@ -89,13 +89,9 @@ module.exports = class ProjectList {
       injectable: project.canMetricsBeInjected,
       injected: project.injectMetrics,
     };
-    project.metricsDashboard = {
-      hosting: project.getMetricsDashHost(),
-      path: project.getMetricsDashPath(),
-    };
     project.perfDashboardPath = project.getPerfDashPath();
 
-    return project;  
+    return project;
   }
 
   retrieveProjects() {

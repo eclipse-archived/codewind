@@ -38,18 +38,6 @@ const STATES = {
   deleting: 'deleting'
 };
 
-const METRICS_DASH_HOST = {
-  project: 'project',
-  performanceContainer: 'performanceContainer',
-};
-
-const pathsToUserHostedMetricsDashboards = {
-  nodejs: 'appmetrics-dash',
-  javascript: 'appmetrics-dash',
-  java: 'javametrics-dash',
-  swift: 'swiftmetrics-dash',
-};
-
 const METRIC_TYPES = ['cpu', 'gc', 'memory', 'http']
 
 const CW_SETTINGS_PROPERTIES = [
@@ -131,6 +119,10 @@ module.exports = class Project {
     }
     this.capabilitiesReady = false;
 
+    this.metricsAvailable = false; // Default to false as metrics won't be available until the project has started
+    this.metricsDashboard = { hosting: null, path: null };
+    this.metricsCapabilities = (args.metricsCapabilities) ? args.metricsCapabilities : {};
+
     this.links = new Links(this.projectPath(), args.links);
   }
 
@@ -169,50 +161,19 @@ module.exports = class Project {
       : null;
   }
 
-  getMetricsDashHost() {
-    const isMetricsDashAvailable = this.injectMetrics || this.isOpenLiberty || this.metricsAvailable;
-    if (!isMetricsDashAvailable) {
-      return null;
-    }
-    let shouldShowMetricsDashHostedOnProject = false;
-    if (this.projectType === "appsodyExtension") {
-      if (!(this.language === "java")) {
-        shouldShowMetricsDashHostedOnProject = true;
-      }
-    } else {
-      shouldShowMetricsDashHostedOnProject = !this.injectMetrics && this.metricsAvailable;
-    }
-
-    return shouldShowMetricsDashHostedOnProject ? METRICS_DASH_HOST.project : METRICS_DASH_HOST.performanceContainer;
-  }
-  
-  getMetricsDashPath() {
-    const metricsDashHost = this.getMetricsDashHost();
-    if (!metricsDashHost) {
-      return null;
-    }
-    
-    if (metricsDashHost === METRICS_DASH_HOST.project) {
-      return `/${pathsToUserHostedMetricsDashboards[this.language]}/?theme=dark`;
-    }
-
-    if (metricsDashHost === METRICS_DASH_HOST.performanceContainer) {
-      return `/performance/monitor/dashboard/${this.language}?theme=dark&projectID=${this.projectID}`
-    }
-    
-    throw new Error(`unknown metricsDashHost: ${metricsDashHost}`);
+  async setMetricsState() {
+    const { capabilities, metricsDashHost: { hosting, path } } = await metricsStatusChecker.getMetricStatusForProject(this);
+    this.metricsCapabilities = capabilities;
+    this.metricsAvailable = (hosting !== null && path !== null);
+    this.metricsDashboard = { hosting, path };
+    await this.writeInformationFile();
+    return { capabilities };
   }
 
-  async isMetricsAvailable() {
-    // hardcoding a return of true for appsody projects until we have a better
-    // way of detecting appsody has the dashboard dependency
-    if (this.projectType === "appsodyExtension" && ['nodejs', 'javascript', 'java', 'swift'].includes(this.language)) {
-      return true;
-    } 
-    const isMetricsAvailable = await metricsStatusChecker.isMetricsAvailable(this.projectPath(), this.language);
-    return isMetricsAvailable;
+  getMetricsCapabilities() {
+    return this.metricsCapabilities;
   }
-  
+
   async setOpenLiberty() {
     const isProjectOpenLiberty = await metricsService.determineIfOpenLiberty(this.projectType, this.language, this.projectPath());
     // If Open Liberty override canMetricsBeInjected
