@@ -1849,9 +1849,9 @@ paths:
         404:
           description: The link does not exist
 
-  /api/v1/projects/{id}/localDirDeleted:
+  /api/v1/projects/{id}/missingLocalDir:
     post:
-      summary: Register that the local directory, associated with the project, has been deleted
+      summary: Register that the local directory, associated with the project, is not present on disk
       parameters:
         - in: path
           name: id
@@ -1865,7 +1865,7 @@ paths:
         404:
           description: Project not found
         500:
-          description: Internal Server Error
+          description: Internal server error
 
 components:
   schemas:

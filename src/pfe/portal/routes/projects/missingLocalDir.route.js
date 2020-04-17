@@ -19,16 +19,16 @@ const { checkProjectExists } = require('../../middleware/checkProjectExists');
 const { validateReq } = require('../../middleware/reqValidator');
 
 /**
- * API Function to emit a localDirDeleted message on the UI socket
+ * API Function to emit a missingLocalDir message on the UI socket
  * @return {res.code} 200 if socket message emitted successfully
  * @return {res.code} 500 if internal error
  */
 
-router.post(`/api/v1/projects/:id/localDirDeleted`, validateReq, checkProjectExists, (req, res) => {
+router.post(`/api/v1/projects/:id/missingLocalDir`, validateReq, checkProjectExists, (req, res) => {
   const user = req.cw_user
   const projectID = req.sanitizeParams('id');
   try {
-    user.uiSocket.emit('localDirDeleted', {
+    user.uiSocket.emit('missingLocalDir', {
       projectID,
     })
     res.sendStatus(200)
