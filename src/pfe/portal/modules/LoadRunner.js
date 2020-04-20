@@ -524,7 +524,10 @@ module.exports = class LoadRunner {
     */
     this.socket.on('error', (err) => {
       log.error('LoadRunner socket error');
-      this.project.loadInProgress = false;
+      // A socket error could occur while a load run is not in progress.
+      if (this.project) {
+        this.project.loadInProgress = false;
+      }
       log.error(err);
       // If this.up is false we're already trying to reconnect
       if (this.up) {
@@ -534,31 +537,42 @@ module.exports = class LoadRunner {
     });
 
     this.socket.on('started', () => {
-      log.info(`Load run on project ${this.project.projectID} started`);
-      clearTimeout(this.heartbeatID);
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started' });
-      this.heartbeat('running');
+      if (this.project) {
+        log.info(`Load run on project ${this.project.projectID} started`);
+        clearTimeout(this.heartbeatID);
+        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID, status: 'started' });
+        this.heartbeat('running');
+      } else {
+        log.warn(`Unexpected 'started' message.`);
+      }
     });
 
     this.socket.on('cancelled', async () => {
-      log.info(`Load run on project ${this.project.projectID} cancelled`);
-      this.heartbeat('cancelling');
-      await this.cancelProfiling();
+      if (this.project) {
+        log.info(`Load run on project ${this.project.projectID} cancelled`);
+        this.heartbeat('cancelling');
+        await this.cancelProfiling();
 
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled' });
-      this.project = null;
-      clearTimeout(this.heartbeatID);
+        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID, status: 'cancelled' });
+        this.project = null;
+        clearTimeout(this.heartbeatID);
+      } else {
+        log.warn(`Unexpected 'cancelled' message.`);
+      }
     });
 
     this.socket.on('completed', async () => {
-      log.info(`Load run on project ${this.project.projectID} completed`);
-      this.project.loadInProgress = false;   // Clear the flag on the project
-      if (this.collectionUri !== null) {
-        this.recordCollection();
-      }
+      if (this.project) {
+        log.info(`Load run on project ${this.project.projectID} completed`);
+        this.project.loadInProgress = false;   // Clear the flag on the project
+        if (this.collectionUri !== null) {
+          this.recordCollection();
+        }
 
-      await this.endProfiling();
-      this.emitCompleted();
+        await this.endProfiling();
+      } else {
+        log.warn(`Unexpected 'completed' message.`);
+      }
     });
   }
 
@@ -611,14 +625,14 @@ module.exports = class LoadRunner {
         }
       });
       log.info(`profiling.json saved for project ${this.project.name}`);
-      const data = { projectID: this.project.projectID,  status: 'profilingReady' , timestamp: this.metricsFolder }
+      const data = { projectID: this.project.projectID, status: 'profilingReady', timestamp: this.metricsFolder }
       this.user.uiSocket.emit('runloadStatusChanged', data);
       this.profilingSocket.emit('disableprofiling');
       this.profilingSocket.disconnect();
       this.profilingSocket = null;
       this.profilingSamples = null;
-      this.emitCompleted();
     }
+    this.emitCompleted();
   }
 
   async cancelProfiling() {
