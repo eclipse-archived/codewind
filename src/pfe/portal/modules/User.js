@@ -260,6 +260,11 @@ module.exports = class User {
           const project = new Project({ ...projFile, ...settFile });
           await project.setOpenLiberty();
           this.projectList.addProject(project);
+          // If deletion had begun for this project but failed to complete, clear it now
+          if (projFile.action === Project.STATES.deleting) {        
+            log.info(`Completing delete of project ${projName}`);
+            await this.deleteProjectFiles(project);
+          } 
         } catch (err) {
           // Corrupt project inf file
           if (err instanceof SyntaxError) {
