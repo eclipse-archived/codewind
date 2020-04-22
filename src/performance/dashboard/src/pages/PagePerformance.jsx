@@ -30,7 +30,7 @@ import RunTestHistory from '../components/runTestHistory/RunTestHistory';
 import SocketContext from '../utils/sockets/SocketContext';
 import StatusPanel from '../components/status/StatusPanel';
 import * as MetricsUtils from '../modules/MetricsUtils';
-
+import CapabilitiesPanel from '../components/status/CapabilitiesPanel';
 import './PagePerformance.scss';
 
 class PagePerformance extends React.Component {
@@ -157,6 +157,7 @@ class PagePerformance extends React.Component {
         return (
             <Fragment>
                 <div className='pageTitle' role="main" aria-label='main page'>
+                    <CapabilitiesPanel projectID={this.props.projectID} />
                     <div className='pageTitle-content'>
                         <div className='main-title'>
                             <div className='main-text' title='main page'>Performance</div>
@@ -169,7 +170,6 @@ class PagePerformance extends React.Component {
                         </div>
                     </div>
                 </div>
-                <StatusPanel projectID={this.props.projectID} />
                 <div className='results-row' role="complementary" aria-label="Result Summaries">
                     <div className='results-cards'>
                         <div className='results-card_1'>

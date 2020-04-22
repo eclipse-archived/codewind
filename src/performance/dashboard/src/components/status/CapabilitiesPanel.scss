@@ -1,0 +1,85 @@
+/*******************************************************************************
+* Copyright (c) 2020 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+******************************************************************************/
+@import "~@carbon/colors/scss/colors";
+@import "~@carbon/layout/scss/spacing";
+@import "~@carbon/type/scss/type";
+@import "~@carbon/grid/scss/grid";
+
+.Capabilities {
+  margin: $carbon--spacing-03;
+  padding: $carbon--spacing-04;
+  background-color: $carbon--gray-80;
+}
+
+.Capabilities .bannerPanel{
+  width: 100%;
+  padding: $carbon--spacing-04;
+  margin: 0;
+}
+
+.Capabilities .panelTitle{
+  @include properties($productive-heading-04);
+}
+
+.Capabilities .panelSubTitle{
+  @include properties($body-short-01);
+  margin-top: $carbon--spacing-01;
+  margin-bottom: $carbon--spacing-07;
+}
+
+.Capabilities .rows {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.Capabilities .rows::after {
+  content: "";
+  flex: auto;
+}
+
+.Capabilities .row{
+  @extend .bx--col-lg-4;
+  @extend .bx--col-md-4;
+  @extend .bx--col-sm-4;
+  @include properties($body-short-01);
+  padding-bottom: $carbon--spacing-04;
+  margin-bottom: 0;
+}
+
+
+.Capabilities .row .headline {
+  margin-top:$carbon--spacing-04;
+  margin-bottom:$carbon--spacing-04;
+  padding-left: $carbon--spacing-05 ;
+  vertical-align: middle;
+}
+
+.Capabilities .icon {
+  display: inline;
+}
+
+.Capabilities .capability {
+  @include properties($productive-heading-02);
+  display: inline;
+  margin-left:$carbon--spacing-04;
+}
+
+.Capabilities .description{
+  @include properties($body-short-01);
+  margin-left:$carbon--spacing-09;
+}
+
+.Capabilities .actions {
+  margin-top: $carbon--spacing-02;
+  padding-top:$carbon--spacing-08;
+  text-align: right;
+}
