@@ -43,7 +43,7 @@ class StatusPanel extends React.Component {
         const { showOutOfDateMetrics } = this.state;
         return (
             <Fragment>
-                {showOutOfDateMetrics ? <div className="StatusPanelWarning">An old version of Appmetrics has been detected. Results may be inaccurate until you update Appmetrics within your project.</div> : <Fragment />}
+                {showOutOfDateMetrics ? <div className="StatusPanelWarning">The latest Appmetrics package is missing from your project. Open the properties for this project in your IDE and select the Inject Appmetrics option.</div> : <Fragment />}
             </Fragment>
         )
     }
