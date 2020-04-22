@@ -65,11 +65,11 @@ rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
 if [ "$ARCH" == "ppc64le" ]; then
    echo -e "\n+++++   DISABLING APPSODY EXTENSION FOR PPC64LE ARCHITECTURE +++++\n";
 else
-   curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-9.9.9999.zip http://download.eclipse.org/codewind/codewind-appsody-extension/master/latest/codewind-appsody-extension-9.9.9999.zip
+   curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-9.9.9999.zip http://archive.eclipse.org/codewind/codewind-appsody-extension/master/latest/codewind-appsody-extension-9.9.9999.zip
 fi
 
 rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
-curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-9.9.9999.zip http://download.eclipse.org/codewind/codewind-odo-extension/master/latest/codewind-odo-extension-9.9.9999.zip
+curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-9.9.9999.zip http://archive.eclipse.org/codewind/codewind-odo-extension/master/latest/codewind-odo-extension-9.9.9999.zip
 
 # BUILD IMAGES
 # Uses a build file in each of the directories that we want to use
