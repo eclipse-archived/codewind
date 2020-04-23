@@ -868,17 +868,32 @@ describe('LoadRunner.js', () => {
             loadRunner.user.uiSocket.emit.should.have.been.calledWith('runloadStatusChanged', expectedDataForPerfUI);
             should.equal(loadRunner.project, null);
         });
-        it('does nothing if profilingSocket is null', async() => {
+        it('still notifies the UI the perf run has completed if profilingSocket is null', async() => {
             // arrange
+            const expectedMetricsFolder = '202003061524';
             const LoadRunner = proxyquire(pathToLoadRunnerJs, {});
-            const loadRunner = new LoadRunner('mockUser');
+            const mockUser = {
+                uiSocket: { emit: sandbox.stub() },
+            };
+            const loadRunner = new LoadRunner(mockUser);
             loadRunner.profilingSocket = null;
+            const mockProject = {
+                name: 'mockName',
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+            };
+            loadRunner.project = mockProject;
+            loadRunner.metricsFolder = expectedMetricsFolder;
 
+            const expectedData = {
+                projectID: mockProject.projectID,
+                status: 'completed',
+            };
             // act
             await loadRunner.endProfiling();
 
             // assert
             should.equal(loadRunner.profilingSocket, null);
+            loadRunner.user.uiSocket.emit.should.have.been.calledWith('runloadStatusChanged', expectedData);
         });
     });
     describe('cancelProfiling() ', () => {
