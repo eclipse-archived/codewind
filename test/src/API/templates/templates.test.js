@@ -113,17 +113,12 @@ describe('Template API tests', function() {
             });
             describe('a duplicate url', function() {
                 it('should return 400', async function() {
-                    // Arrange
-                    const res = await getTemplateRepos();
-                    const originalTemplateRepos = res.body;
-                    const duplicateRepoUrl = originalTemplateRepos[0].url;
-                    // Act
-                    const duplicateUrlRes = await addTemplateRepo({
-                        url: duplicateRepoUrl,
+                    const { body: [existingRepo] } = await getTemplateRepos();
+                    const res = await addTemplateRepo({
+                        url: existingRepo.url,
                         description: 'duplicate url',
                     });
-                    // Assert
-                    duplicateUrlRes.should.have.status(400, duplicateUrlRes.text);
+                    res.should.have.status(400, res.text);
                 });
             });
             describe('a valid url that does not point to an index.json', function() {
