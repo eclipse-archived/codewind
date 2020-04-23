@@ -147,12 +147,19 @@ module.exports = class Templates {
   /**
    * Add a repository to the list of template repositories.
    */
-  async addRepository(repoUrl, repoDescription, repoName, isRepoProtected = false, isRepoEnabled = true) {
+  async addRepository({
+    url,
+    name,
+    description,
+    gitCredentials,
+    protected: _protected = false, // the keyword 'protected' is reserved
+    enabled = true,
+  }) {
     this.lock();
     try {
       const repositories = cwUtils.deepClone(this.repositoryList);
-      const validatedUrl = await validateRepository(repoUrl, repositories);
-      const newRepo = await constructRepositoryObject(validatedUrl, repoDescription, repoName, isRepoProtected, isRepoEnabled);
+      const validatedUrl = await validateRepository(url, repositories, gitCredentials);
+      const newRepo = await constructRepositoryObject(validatedUrl, description, name, _protected, enabled, gitCredentials);
 
       await addRepositoryToProviders(newRepo, this.providers);
 
@@ -162,9 +169,9 @@ module.exports = class Templates {
       this.repositoryList = await updateRepoListWithReposFromProviders(this.providers, newRepositoryList, this.repositoryFile);
 
       // Fetch the repository templates and add them appropriately
-      const newTemplates = await getTemplatesFromRepo(newRepo)
+      const newTemplates = await getTemplatesFromRepo(newRepo, gitCredentials)
       this.allProjectTemplates = this.allProjectTemplates.concat(newTemplates);
-      if (isRepoEnabled) {
+      if (enabled) {
         this.enabledProjectTemplates = this.enabledProjectTemplates.concat(newTemplates);
       }
       await writeRepositoryList(this.repositoryFile, this.repositoryList);
@@ -256,7 +263,7 @@ async function writeRepositoryList(repositoryFile, repositoryList) {
   log.info(`Repository list updated.`);
 }
 
-async function validateRepository(repoUrl, repositories) {
+async function validateRepository(repoUrl, repositories, gitCredentials) {
   let url;
   try {
     url = new URL(repoUrl).href;
@@ -271,15 +278,15 @@ async function validateRepository(repoUrl, repositories) {
     throw new TemplateError('DUPLICATE_URL', repoUrl);
   }
 
-  const validJsonURL = await doesURLPointToIndexJSON(url);
-  if (!validJsonURL) {
-    throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', url);
+  const templateSummaries = await getTemplateSummaries(repoUrl, gitCredentials);
+  if (!templateSummaries.length || templateSummaries.some(summary => !isTemplateSummary(summary))) {
+    throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', repoUrl);
   }
 
   return url;
 }
 
-async function constructRepositoryObject(url, description, name, isRepoProtected, isRepoEnabled) {
+async function constructRepositoryObject(url, description, name, isRepoProtected, isRepoEnabled, gitCredentials) {
   let repository = {
     id: uuidv5(url, uuidv5.URL),
     name,
@@ -287,7 +294,7 @@ async function constructRepositoryObject(url, description, name, isRepoProtected
     description,
     enabled: isRepoEnabled,
   }
-  repository = await fetchRepositoryDetails(repository);
+  repository = await fetchRepositoryDetails(repository, gitCredentials);
   if (isRepoProtected !== undefined) {
     repository.protected = isRepoProtected;
   }
@@ -325,12 +332,12 @@ function fetchAllRepositoryDetails(repos) {
   );
 }
 
-async function fetchRepositoryDetails(repo) {
+async function fetchRepositoryDetails(repo, gitCredentials) {
   let newRepo = cwUtils.deepClone(repo);
 
   // Only set the name or description of the repo if not given by the user
   if (!(repo.name && repo.description)){
-    const repoDetails = await getNameAndDescriptionFromRepoTemplatesJSON(newRepo.url);
+    const repoDetails = await getNameAndDescriptionFromRepoTemplatesJSON(newRepo.url, gitCredentials);
     newRepo = cwUtils.updateObject(newRepo, repoDetails);
   }
 
@@ -338,50 +345,52 @@ async function fetchRepositoryDetails(repo) {
     return newRepo;
   }
 
-  const templatesFromRepo = await getTemplatesFromRepo(repo);
+  const templatesFromRepo = await getTemplatesFromRepo(repo, gitCredentials);
   newRepo.projectStyles = getTemplateStyles(templatesFromRepo);
   return newRepo;
 }
 
-async function getNameAndDescriptionFromRepoTemplatesJSON(url) {
+async function getNameAndDescriptionFromRepoTemplatesJSON(url, gitCredentials) {
   if (!url) throw new Error(`must supply a URL`);
 
   const templatesUrl = new URL(url);
   // return repository untouched if repository url points to a local file
-  if ( templatesUrl.protocol === 'file:' ) {
+  if (templatesUrl.protocol === 'file:') {
     return {};
   }
-  const indexPath = templatesUrl.pathname;
-  const templatesPath = path.dirname(indexPath) + '/' + 'templates.json';
+  templatesUrl.pathname = `${path.dirname(templatesUrl.pathname)}/templates.json`;
 
-  templatesUrl.pathname = templatesPath;
-
-  const options = {
-    host: templatesUrl.hostname,
-    path: templatesUrl.pathname,
-    port: templatesUrl.port,
-    method: 'GET',
-  }
-
-  const res = await cwUtils.asyncHttpRequest(options, undefined, templatesUrl.protocol === 'https:');
+  const res = await makeGetRequest(templatesUrl, gitCredentials);
   if (res.statusCode !== 200) {
     return {};
   }
 
   try {
-    const templateDetails = JSON.parse(res.body);
-    const repositoryDetails = {};
-    for (const prop of ['name', 'description']) {
-      if (templateDetails.hasOwnProperty(prop)) {
-        repositoryDetails[prop] = templateDetails[prop];
-      }
-    }
-    return repositoryDetails;
+    const { name, description } = JSON.parse(res.body);
+    return { name, description };
   } catch (error) {
     // Log an error but don't throw an exception as this is optional.
     log.error(`URL '${templatesUrl}' should return JSON`);
   }
   return {};
+}
+
+async function makeGetRequest(url, gitCredentials) {
+  const options = {
+    host: url.hostname,
+    path: url.pathname,
+    port: url.port,
+    method: 'GET',
+  }
+  if (gitCredentials && gitCredentials.username && gitCredentials.password) {
+    options.auth = `${gitCredentials.username}:${gitCredentials.password}`;
+  }
+  const res = await cwUtils.asyncHttpRequest(
+    options,
+    undefined,
+    url.protocol === 'https:',
+  );
+  return res;
 }
 
 /**
@@ -436,12 +445,12 @@ async function getTemplatesFromRepos(repos) {
   return newProjectTemplates;
 }
 
-async function getTemplatesFromRepo(repository) {
+async function getTemplatesFromRepo(repository, gitCredentials) {
   if (!repository.url) {
     throw new Error(`repo '${repository}' must have a URL`);
   }
 
-  const templateSummaries = await getTemplatesJSONFromURL(repository.url);
+  const templateSummaries = await getTemplateSummaries(repository.url, gitCredentials);
 
   const templates = templateSummaries.map(summary => {
     const template = {
@@ -470,7 +479,7 @@ async function getTemplatesFromRepo(repository) {
   return templates;
 }
 
-async function getTemplatesJSONFromURL(givenURL) {
+async function getTemplateSummaries(givenURL, gitCredentials) {
   const parsedURL = new URL(givenURL);
   let templateSummaries;
   // check if repository url points to a local file and read it accordingly
@@ -480,23 +489,17 @@ async function getTemplatesJSONFromURL(givenURL) {
         templateSummaries = await fs.readJSON(parsedURL.pathname);
       }
     } catch (err) {
-      throw new Error(`repo file '${parsedURL}' did not return JSON`);
+      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', null, `repo file '${parsedURL}' did not return JSON`);
     }
   } else {
-    const options = {
-      host: parsedURL.hostname,
-      path: parsedURL.pathname,
-      port: parsedURL.port,
-      method: 'GET',
-    }
-    const res = await cwUtils.asyncHttpRequest(options, undefined, parsedURL.protocol === 'https:');
+    const res = await makeGetRequest(parsedURL, gitCredentials);
     if (res.statusCode !== 200) {
-      throw new Error(`Unexpected HTTP status for ${givenURL}: ${res.statusCode}`);
+      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', null, `Unexpected HTTP status for ${givenURL}: ${res.statusCode}`);
     }
     try {
       templateSummaries = JSON.parse(res.body);
     } catch (error) {
-      throw new Error(`URL '${parsedURL}' did not return JSON`);
+      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', null, `URL '${parsedURL}' did not return JSON`);
     }
   }
   return templateSummaries;
@@ -543,19 +546,6 @@ async function getReposFromProviders(providers) {
 
 function isRepo(obj) {
   return Boolean((obj && obj.hasOwnProperty('url')));
-}
-
-async function doesURLPointToIndexJSON(inputUrl) {
-  try {
-    const templateSummaries = await getTemplatesJSONFromURL(inputUrl);
-    if (templateSummaries.some(summary => !isTemplateSummary(summary))) {
-      return false;
-    }
-  } catch(error) {
-    log.warn(error);
-    return false
-  }
-  return true;
 }
 
 function isTemplateSummary(obj) {

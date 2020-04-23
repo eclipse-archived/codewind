@@ -62,24 +62,22 @@ router.get('/api/v1/templates/repositories', async (req, res, _next) => {
   }
 });
 
-router.post('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
+router.post('/api/v1/templates/repositories', validateReq, postRepositories, sendRepositories);
+
+async function postRepositories(req, res, next) {
   const { templates: templatesController } = req.cw_user;
-  const repositoryName = req.sanitizeBody('name')
-  const repositoryUrl = req.sanitizeBody('url');
-  const repositoryDescription = req.sanitizeBody('description');
-  const isRepoProtected = req.sanitizeBody('protected');
-  // Enabled should default to true if it isn't passed.
-  const isRepoEnabled = req.sanitizeBody('enabled') !== false;
+  const repoOptions = {
+    name: req.sanitizeBody('name'),
+    url: req.sanitizeBody('url'),
+    description: req.sanitizeBody('description'),
+    protected: req.sanitizeBody('protected'),
+    enabled: req.sanitizeBody('enabled') !== false, // Enabled should default to true if it isn't passed
+    gitCredentials: req.sanitizeBody('gitCredentials'),
+  };
 
   try {
-    await templatesController.addRepository(
-      repositoryUrl,
-      repositoryDescription,
-      repositoryName,
-      isRepoProtected,
-      isRepoEnabled
-    );
-    await sendRepositories(req, res, _next);
+    await templatesController.addRepository(repoOptions);
+    next();
   } catch (error) {
     log.error(error);
     const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON', 'ADD_TO_PROVIDER_FAILURE'];
@@ -94,7 +92,7 @@ router.post('/api/v1/templates/repositories', validateReq, async (req, res, _nex
     }
     res.status(500).send(error.message);
   }
-});
+}
 
 router.delete('/api/v1/templates/repositories', validateReq, async (req, res, _next) => {
   const { templates: templatesController } = req.cw_user;
