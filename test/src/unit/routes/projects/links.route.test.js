@@ -248,7 +248,7 @@ describe('links.route.js', () => {
             after(() => {
                 global.codewind.RUNNING_IN_K8S = originalK8s;
             });
-            it('successfully updates the configmap and restarts the deployment', async() => {
+            it('calls updateNetworkConfigMap as the project is a Codewind project', async() => {
                 const cwUtils = {
                     getNetworkConfigMap: () => true,
                     updateConfigMap: () => true,
@@ -256,11 +256,26 @@ describe('links.route.js', () => {
                 };
                 const spiedCwUtils = sandbox.spy(cwUtils);
                 Links.__set__('cwUtils', spiedCwUtils);
+                const spiedRestartAppsodyKubernetes = sandbox.spy(() => {});
+                Links.__set__('restartAppsodyKubernetes', spiedRestartAppsodyKubernetes);
                 await restartProjectToPickupLinks({}, { links: { getEnvPairObject: () => ({}) } });
                 const { getNetworkConfigMap, updateConfigMap, patchProjectDeployments } = spiedCwUtils;
                 getNetworkConfigMap.should.be.calledOnce;
                 updateConfigMap.should.be.calledOnce;
                 patchProjectDeployments.should.be.calledOnce;
+                spiedRestartAppsodyKubernetes.should.not.be.called;
+            });
+            it(`calls restartAppsodyKubernetes as the project is an extension`, async() => {
+                const spiedUpdateNetworkConfigMap = sandbox.spy(() => {});
+                const spiedRestartAppsodyKubernetes = sandbox.spy(() => {});
+
+                Links.__set__('updateNetworkConfigMap', spiedUpdateNetworkConfigMap);
+                Links.__set__('restartAppsodyKubernetes', spiedRestartAppsodyKubernetes);
+
+                await restartProjectToPickupLinks({}, { extension: true });
+
+                spiedUpdateNetworkConfigMap.should.not.be.called;
+                spiedRestartAppsodyKubernetes.should.be.calledOnce;
             });
         });
     });
@@ -509,6 +524,129 @@ describe('links.route.js', () => {
                 getEnvPairs: () => ['env=val', 'env20=val20'],
             };
             checkIfEnvsExistInArray({ links }, arrayOfEnvs).should.be.false;
+        });
+    });
+    describe('restartAppsodyKubernetes(user, project)', () => {
+        const restartAppsodyKubernetes = Links.__get__('restartAppsodyKubernetes');
+        const sandbox = sinon.createSandbox();
+        const mockedUser = {
+            restartProject: () => null,
+            projectList: {
+                retrieveProject: () => true,
+            },
+        };
+        const mockedProject = {
+            name: null,
+            buildStatus: null,
+            projectID: null,
+            links: {
+                getEnvPairs: () => ['env=val'],
+            },
+        };
+        const mockedCwUtils = {
+            timeout: () => null,
+        };
+
+        it('does nothing and does not error as the project does not exist', () => {
+            const user = {
+                ...mockedUser,
+                projectList: {
+                    retrieveProject: () => false,
+                },
+            };
+            return restartAppsodyKubernetes(user, mockedProject).should.not.be.rejected;
+        });
+        it('throws an error as getProjectDeployments throws an error that does not have a statusCode of 404', () => {
+            Links.__set__('cwUtils', { getProjectDeployments: () => { throw new Error(); } });
+            return restartAppsodyKubernetes(mockedUser, mockedProject).should.be.rejected;
+        });
+        describe('buildStatus == inProgress or deployment in null', () => {
+            const project = {
+                ...mockedProject,
+                buildStatus: 'inProgress',
+            };
+            afterEach(() => {
+                sandbox.restore();
+            });
+            it('calls restartAppsodyKubernetes once as buildStatus == inProgress', async() => {
+                Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => [true] });
+                const spiedRestartAppsodyKubernetes = sandbox.spy(() => null);
+                Links.__set__('restartAppsodyKubernetes', spiedRestartAppsodyKubernetes);
+                await restartAppsodyKubernetes(mockedUser, project);
+                spiedRestartAppsodyKubernetes.should.be.calledOnce;
+            });
+            it('calls restartAppsodyKubernetes once as deployment == null (restartAppsodyKubernetes throws 404 statusCode)', async() => {
+                Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
+                    const err = new Error();
+                    err.statusCode = 404;
+                    throw err;
+                } });
+                const spiedRestartAppsodyKubernetes = sandbox.spy(() => null);
+                Links.__set__('restartAppsodyKubernetes', spiedRestartAppsodyKubernetes);
+                await restartAppsodyKubernetes(mockedUser, project);
+                spiedRestartAppsodyKubernetes.should.be.calledOnce;
+            });
+        });
+        describe('buildStatus != inProgress && container is a populated object', () => {
+            const user = {
+                ...mockedUser,
+                buildProject: () => true,
+            };
+            afterEach(() => {
+                sandbox.restore();
+            });
+            it('calls user.buildProject once as the linksExistInContainer is false', async() => {
+                Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
+                    return [{
+                        spec: {
+                            template: {
+                                spec: {
+                                    containers: [
+                                        {
+                                            env: [
+                                                {
+                                                    name: 'env',
+                                                    value: 'notval',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    }];
+                } });
+                sandbox.spy(user, 'buildProject');
+                await restartAppsodyKubernetes(user, mockedProject);
+                const { buildProject } = user;
+                buildProject.should.be.calledOnce;
+            });
+            it('calls user.buildProject once as the linksExistInContainer is true', async() => {
+                Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
+                    return [{
+                        spec: {
+                            template: {
+                                spec: {
+                                    containers: [
+                                        {
+                                            env: [
+                                                {
+                                                    name: 'env',
+                                                    value: 'val',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    }];
+                } });
+                sandbox.spy(user, 'buildProject');
+                await restartAppsodyKubernetes(user, mockedProject);
+                const { buildProject } = user;
+                buildProject.should.not.be.called;
+            });
         });
     });
 });
