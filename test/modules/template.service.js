@@ -180,18 +180,22 @@ async function getNumberOfEnabledTemplates(queryParams) {
 }
 
 
+const idOfImmutableRepo = 'incubator';
 /**
  * Removes all templates repos known to PFE, and adds the supplied repos
  * @param {[JSON]} repoList
  */
 async function setTemplateReposTo(repoList) {
-    const reposToDelete = (await getTemplateRepos()).body;
-    if (reposToDelete.length > 0) {
+    const currentRepos = (await getTemplateRepos()).body;
+    if (currentRepos.length > 0) {
+        const reposToDelete = currentRepos.filter(repo => repo.id !== idOfImmutableRepo);
+        console.log(reposToDelete);
         for (const repo of reposToDelete) {
             await deleteTemplateRepo(repo.url);
         }
     }
-    for (const repo of repoList) {
+    const templatesToAdd = repoList.filter(repo => repo.id !== idOfImmutableRepo);
+    for (const repo of templatesToAdd) {
         await addTemplateRepo(repo);
     }
 }
