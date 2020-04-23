@@ -357,8 +357,9 @@ async function getNameAndDescriptionFromRepoTemplatesJSON(url) {
   templatesUrl.pathname = templatesPath;
 
   const options = {
-    host: templatesUrl.host,
+    host: templatesUrl.hostname,
     path: templatesUrl.pathname,
+    port: templatesUrl.port,
     method: 'GET',
   }
 
@@ -483,8 +484,9 @@ async function getTemplatesJSONFromURL(givenURL) {
     }
   } else {
     const options = {
-      host: parsedURL.host,
+      host: parsedURL.hostname,
       path: parsedURL.pathname,
+      port: parsedURL.port,
       method: 'GET',
     }
     const res = await cwUtils.asyncHttpRequest(options, undefined, parsedURL.protocol === 'https:');

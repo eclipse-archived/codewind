@@ -52,6 +52,7 @@ function asyncHttpRequest(options, body, secure = false) {
     let protocol = secure ? https : http;
     let req = protocol.request(options, function(res) {
       res.body = '';
+      // Listen for response events.
       res.on('error', function(err) {
         return reject(err);
       });
@@ -61,9 +62,19 @@ function asyncHttpRequest(options, body, secure = false) {
       res.on('end', function() {
         return resolve(res);
       });
-    }).on('error', function(err) {
+    });
+
+    // Listen for request events.
+    req.on('error', function(err) {
       return reject(err);
     });
+    req.setTimeout(30 * 1000);
+    req.on('timeout', function() {
+      // Calling abort will trigger an error which will call
+      // reject above.
+      req.abort();
+    });
+
     if (body) {
       req.write(JSON.stringify(body));
     }
