@@ -868,7 +868,7 @@ describe('LoadRunner.js', () => {
             loadRunner.user.uiSocket.emit.should.have.been.calledWith('runloadStatusChanged', expectedDataForPerfUI);
             should.equal(loadRunner.project, null);
         });
-        it('still notifies the UI the perf run has conmplated if profilingSocket is null', async() => {
+        it('still notifies the UI the perf run has completed if profilingSocket is null', async() => {
             // arrange
             const expectedMetricsFolder = '202003061524';
             const LoadRunner = proxyquire(pathToLoadRunnerJs, {});
