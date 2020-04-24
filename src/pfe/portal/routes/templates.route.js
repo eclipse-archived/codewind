@@ -62,7 +62,7 @@ router.get('/api/v1/templates/repositories', async (req, res, _next) => {
   }
 });
 
-router.post('/api/v1/templates/repositories', validateReq, postRepositories, sendRepositories);
+router.post('/api/v1/templates/repositories', validateReq, postRepositories);
 
 async function postRepositories(req, res, next) {
   const { templates: templatesController } = req.cw_user;
@@ -77,7 +77,7 @@ async function postRepositories(req, res, next) {
 
   try {
     await templatesController.addRepository(repoOptions);
-    next();
+    await sendRepositories(req, res, next);
   } catch (error) {
     log.error(error);
     const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON', 'ADD_TO_PROVIDER_FAILURE'];
