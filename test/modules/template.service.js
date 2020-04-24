@@ -33,6 +33,12 @@ const styledTemplates = {
     },
 };
 
+// Insert your own credentials to run relevant tests
+const gheCredentials = {
+    username: 'foo.bar@domain.com',
+    // password: 'INSERT_TO_RUN_RELEVANT_TESTS',
+};
+
 const sampleRepos = {
     codewind: {
         url: templateRepositoryURL,
@@ -49,6 +55,11 @@ const sampleRepos = {
         protected: true,
         projectStyles: ['Codewind'],
         name: 'Default disabled templates',
+    },
+    GHE: {
+        url: 'https://raw.github.ibm.com/Richard-Waller/sampleGHETemplateRepo/415ece47958250175f182c095af7da6cfe40e58a/devfiles/index.json',
+        description: 'Example GHE template repository',
+        name: 'Example GHE template repository',
     },
 };
 
@@ -80,11 +91,11 @@ async function getTemplateRepos() {
     return res;
 }
 
-async function addTemplateRepo(repo) {
+async function addTemplateRepo(repoOptions) {
     const res = await reqService.chai
         .post('/api/v1/templates/repositories')
         .set('Cookie', ADMIN_COOKIE)
-        .send(repo);
+        .send(repoOptions);
     return res;
 }
 
@@ -169,18 +180,22 @@ async function getNumberOfEnabledTemplates(queryParams) {
 }
 
 
+const idOfImmutableRepo = 'incubator';
 /**
  * Removes all templates repos known to PFE, and adds the supplied repos
  * @param {[JSON]} repoList
  */
 async function setTemplateReposTo(repoList) {
-    const reposToDelete = (await getTemplateRepos()).body;
-    if (reposToDelete.length > 0) {
+    const currentRepos = (await getTemplateRepos()).body;
+    if (currentRepos.length > 0) {
+        const reposToDelete = currentRepos.filter(repo => repo.id !== idOfImmutableRepo);
+        console.log(reposToDelete);
         for (const repo of reposToDelete) {
             await deleteTemplateRepo(repo.url);
         }
     }
-    for (const repo of repoList) {
+    const templatesToAdd = repoList.filter(repo => repo.id !== idOfImmutableRepo);
+    for (const repo of templatesToAdd) {
         await addTemplateRepo(repo);
     }
 }
@@ -241,6 +256,7 @@ module.exports = {
     templateRepositoryURL,
     sampleRepos,
     validUrlNotPointingToIndexJson,
+    gheCredentials,
     getTemplateRepos,
     addTemplateRepo,
     deleteTemplateRepo,

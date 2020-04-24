@@ -18,6 +18,7 @@ const {
     getDefaultTemplatesFromGithub,
     validUrlNotPointingToIndexJson,
     sampleRepos,
+    gheCredentials,
     batchPatchTemplateRepos,
     getTemplateRepos,
     getNumberOfTemplates,
@@ -112,17 +113,12 @@ describe('Template API tests', function() {
             });
             describe('a duplicate url', function() {
                 it('should return 400', async function() {
-                    // Arrange
-                    const res = await getTemplateRepos();
-                    const originalTemplateRepos = res.body;
-                    const duplicateRepoUrl = originalTemplateRepos[0].url;
-                    // Act
-                    const duplicateUrlRes = await addTemplateRepo({
-                        url: duplicateRepoUrl,
+                    const { body: [existingRepo] } = await getTemplateRepos();
+                    const res = await addTemplateRepo({
+                        url: existingRepo.url,
                         description: 'duplicate url',
                     });
-                    // Assert
-                    duplicateUrlRes.should.have.status(400, duplicateUrlRes.text);
+                    res.should.have.status(400, res.text);
                 });
             });
             describe('a valid url that does not point to an index.json', function() {
@@ -167,7 +163,6 @@ describe('Template API tests', function() {
                     originalTemplateReposLength = repos.length;
                     originalTemplatesLength = await getNumberOfTemplates();
                     originalEnabledTemplatesLength = await getNumberOfEnabledTemplates();
-                  
                 });
                 it('should add a disabled template repository giving no change to enabled templates', async function() {
                     const addTemplateRepoRes = await addTemplateRepo(sampleRepos.disabledcodewind);
@@ -180,10 +175,6 @@ describe('Template API tests', function() {
                     afterTemplatesLength.should.be.above(originalTemplatesLength);
                 });
             });
-
-
-
-
         });
     });
 
@@ -200,19 +191,15 @@ describe('Template API tests', function() {
     });
 
     describe('DELETE | GET | POST /api/v1/templates/repositories', function() {
-        // Save state for this test
         setupReposAndTemplatesForTesting();
         const repo = sampleRepos.codewind;
         let originalTemplateRepos;
         let originalTemplates;
-        let originalNumTemplates;
         before(async function() {
             const { body: repos } = await getTemplateRepos();
             originalTemplateRepos = repos;
             const { body: templates } = await getTemplates();
             originalTemplates = templates;
-            originalNumTemplates = templates.length;
-
         });
         it('DELETE /api/v1/templates should remove a template repository', async function() {
             const res = await deleteTemplateRepo(repo.url);
@@ -222,9 +209,9 @@ describe('Template API tests', function() {
         });
         it('GET /api/v1/templates should return fewer templates', async function() {
             const numberOfTemplates = await getNumberOfTemplates();
-            numberOfTemplates.should.be.below(originalNumTemplates);
+            numberOfTemplates.should.be.below(originalTemplates.length);
         });
-        it('POST /api/v1/templates should re-add the deleted template repository', async function() {
+        it('POST /api/v1/templates/repositories should re-add the deleted template repository', async function() {
             const res = await addTemplateRepo(repo);
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.containSubset([repo]);
@@ -234,9 +221,44 @@ describe('Template API tests', function() {
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.deep.equalInAnyOrder(originalTemplates);
-            res.body.length.should.equal(originalNumTemplates);
         });
     });
+
+    describe('Add secure template repository and list templates', function() {
+        before(function() {
+            if (!gheCredentials.password) {
+                this.skip();
+            }
+        });
+
+        setupReposAndTemplatesForTesting();
+        it('POST /api/v1/templates/repositories without GitHub credentials should fail to add a GHE template repository', async function() {
+            const res = await addTemplateRepo(sampleRepos.GHE);
+            res.should.have.status(400).and.satisfyApiSpec;
+            res.text.should.include(sampleRepos.GHE.url);
+        });
+        it('POST /api/v1/templates/repositories with incorrect GHE credentials should fail to add a GHE template repository', async function() {
+            const res = await addTemplateRepo(sampleRepos.GHE);
+            res.should.have.status(400).and.satisfyApiSpec;
+            res.text.should.include(sampleRepos.GHE.url);
+        });
+        it('POST /api/v1/templates/repositories with correct GHE credentials should add a GHE template repository', async function() {
+            const { body: originalTemplates } = await getTemplates();
+
+            const res = await addTemplateRepo({
+                ...sampleRepos.GHE,
+                gitCredentials: gheCredentials,
+            });
+            res.should.have.status(200).and.satisfyApiSpec;
+            res.body.should.containSubset([sampleRepos.GHE]);
+
+            // Then GET /templates should return the templates from the repository we just added
+            const resToGetRequest = await getTemplates();
+            resToGetRequest.should.have.status(200).and.satisfyApiSpec;
+            resToGetRequest.body.should.have.length.above(originalTemplates.length);
+        });
+    });
+
     describe('PATCH /api/v1/batch/templates/repositories', function() {
         setupReposAndTemplatesForTesting();
         const { url: existingRepoUrl } = sampleRepos.codewind;

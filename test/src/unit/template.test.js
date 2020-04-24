@@ -27,6 +27,7 @@ const {
     validUrlNotPointingToIndexJson,
     templateRepositoryURL,
     getDefaultTemplatesFromGithub,
+    gheCredentials,
 } = require('../../modules/template.service');
 const { suppressLogOutput } = require('../../modules/log.service');
 const { testTimeout } = require('../../config');
@@ -584,7 +585,7 @@ describe('Templates.js', function() {
                 }
             });
         });
-        describe('addRepository(repoUrl, repoDescription, repoName, isRepoProtected, isRepoEnabled)', function() {
+        describe('addRepository(repoOptions)', function() {
             const mockRepoList = [{ id: 'notanid', url: 'https://made.up/url' }];
             let templateController;
             beforeEach(() => {
@@ -599,32 +600,43 @@ describe('Templates.js', function() {
                 describe('(<invalidUrl>, <validDesc>)', function() {
                     it('throws an error', function() {
                         const url = 'some string';
-                        const func = () => templateController.addRepository(url, 'description');
+                        const func = () => templateController.addRepository({
+                            url,
+                            description: 'description',
+                        });
                         return func().should.be.rejectedWith(`Invalid URL: ${url}`);
                     });
                 });
                 describe('(<existingUrl>, <validDesc>)', function() {
                     it('throws an error', function() {
                         const { url } = mockRepoList[0];
-                        const func = () => templateController.addRepository(url, 'description');
+                        const func = () => templateController.addRepository({
+                            url,
+                            description: 'description',
+                        });
                         return func().should.be.rejectedWith(`${url} is already a template repository`);
                     });
                 });
                 describe('(<validUrlNotPointingToIndexJson>, <validDesc>)', function() {
                     it('throws an error', function() {
                         const url = validUrlNotPointingToIndexJson;
-                        const func = () => templateController.addRepository(url, 'description');
+                        const func = () => templateController.addRepository({
+                            url,
+                            description: 'description',
+                        });
                         return func().should.be.rejectedWith(`${url} does not point to a JSON file of the correct form`);
                     });
                 });
                 describe('(<validUrlPointingToIndexJson>, <validDesc>, <validName>)', function() {
                     it('succeeds', async function() {
-                        const func = () => templateController.addRepository(templateRepositoryURL, 'description', 'name');
-                        await (func().should.not.be.rejected);
-                        templateController.repositoryList.should.containSubset([{
+                        const repoOptions = {
                             url: templateRepositoryURL,
-                            name: 'name',
                             description: 'description',
+                            name: 'name',
+                        };
+                        await templateController.addRepository(repoOptions);
+                        templateController.repositoryList.should.containSubset([{
+                            ...repoOptions,
                             enabled: true,
                             projectStyles: ['Codewind'],
                         }]);
@@ -636,16 +648,56 @@ describe('Templates.js', function() {
                 });
                 describe('(<validUrlUnprotected>, <validDesc>, <validName>)', function() {
                     it('succeeds', async function() {
-                        const isRepoProtected = false;
-                        const func = () => templateController.addRepository(templateRepositoryURL, 'description', 'name', isRepoProtected);
-                        await (func().should.not.be.rejected);
-                        templateController.repositoryList.should.containSubset([{
+                        const repoOptions = {
                             url: templateRepositoryURL,
-                            name: 'name',
                             description: 'description',
+                            name: 'name',
+                            protected: false,
+                        };
+                        await templateController.addRepository(repoOptions);
+                        templateController.repositoryList.should.containSubset([{
+                            ...repoOptions,
                             enabled: true,
                             projectStyles: ['Codewind'],
+                        }]);
+                        templateController.repositoryList.forEach(obj => {
+                            obj.should.have.property('id');
+                            obj.id.should.be.a('string');
+                        });
+                    });
+                });
+                describe('(<validGHEURL>, <noGitCredentials>)', function() {
+                    it('fails', function() {
+                        const repoOptions = {
+                            url: sampleRepos.GHE.url,
+                            description: 'description',
+                            name: 'name',
                             protected: false,
+                        };
+                        const func = () => templateController.addRepository(repoOptions);
+                        return func().should.be.rejectedWith(`Unexpected HTTP status for ${sampleRepos.GHE.url}: 404`);
+                    });
+                });
+                describe('(<validGHEURL>, <correctGHECredentials>)', function() {
+                    it('succeeds', async function() {
+                        if (!gheCredentials.password) {
+                            this.skip();
+                        }
+                        const repo = {
+                            url: sampleRepos.GHE.url,
+                            description: 'description',
+                            name: 'name',
+                            protected: false,
+                        };
+                        const repoOptions = {
+                            ...repo,
+                            gitCredentials: gheCredentials,
+                        };
+                        await templateController.addRepository(repoOptions);
+                        templateController.repositoryList.should.containSubset([{
+                            ...repo,
+                            enabled: true,
+                            projectStyles: ['Codewind'],
                         }]);
                         templateController.repositoryList.forEach(obj => {
                             obj.should.have.property('id');
@@ -657,20 +709,28 @@ describe('Templates.js', function() {
             describe('repo with name and description in templates.json', () => {
                 describe('(<validUrl>, <ValidDesc>, <ValidName>)', function() {
                     it('succeeds, and allows the user to set the name and description', async function() {
-                        const func = () => templateController.addRepository(templateRepositoryURL, 'description', 'name', false);
-                        await (func().should.not.be.rejected);
-                        templateController.repositoryList.should.containSubset([{ ...sampleRepos.codewind,
+                        const repoOptions = {
+                            url: templateRepositoryURL,
                             name: 'name',
                             description: 'description',
-                            protected: false,
-                        }]);
+                        };
+                        await templateController.addRepository(repoOptions);
+                        templateController.repositoryList.should.containSubset([repoOptions]);
                     });
                 });
                 describe('(repo with templates.json, <validUrl>, <NoDesc>, <NoName>)', function() {
                     it('succeeds, and gets the name and description from templates.json', async function() {
-                        const func = () => templateController.addRepository(templateRepositoryURL, '', '', false);
-                        await (func().should.not.be.rejected);
-                        templateController.repositoryList.should.containSubset([{ ...sampleRepos.codewind, protected: false }]);
+                        const repoOptions = {
+                            url: templateRepositoryURL,
+                            name: '',
+                            description: '',
+                        };
+                        await templateController.addRepository(repoOptions);
+                        templateController.repositoryList.should.containSubset([{
+                            url: templateRepositoryURL,
+                            name: sampleRepos.codewind.name,
+                            description: sampleRepos.codewind.description,
+                        }]);
                     });
                 });
             });
@@ -734,7 +794,7 @@ describe('Templates.js', function() {
             it('does not add a duplicate repository', async() => {
                 const templateController = new Templates(testWorkspaceDir);
                 templateController.repositoryList = [];
-                await templateController.addRepository(sampleRepos.codewind.url);
+                await templateController.addRepository({ url: sampleRepos.codewind.url });
                 templateController.repositoryList.length.should.equal(1);
                 await templateController.addProvider('dummyProvider', provider);
                 // Check repository has not been duplicated
@@ -815,6 +875,17 @@ describe('Templates.js', function() {
             it('returns a validated url', async() => {
                 const validatedURL = await validateRepository(sampleRepos.codewind.url, [...mockRepoList]);
                 validatedURL.should.equal(sampleRepos.codewind.url);
+            });
+            it('returns a validated GHE url when correct credentials are provided', async function() {
+                if (!gheCredentials.password) {
+                    this.skip();
+                }
+                const validatedURL = await validateRepository(
+                    sampleRepos.GHE.url,
+                    [...mockRepoList],
+                    gheCredentials,
+                );
+                validatedURL.should.equal(sampleRepos.GHE.url);
             });
         });
         describe('constructRepositoryObject(url, description, name, isRepoProtected, isRepoEnabled)', () => {
@@ -969,24 +1040,41 @@ describe('Templates.js', function() {
             const fetchRepositoryDetails = Templates.__get__('fetchRepositoryDetails');
             it('returns the details for a repository', async() => {
                 const details = await fetchRepositoryDetails(sampleRepos.codewind);
-                details.should.have.keys(['url', 'description', 'enabled', 'protected', 'projectStyles', 'name']);
                 details.should.deep.equal(sampleRepos.codewind);
             });
             it('returns the correct name and description for a repository from its url (json file)', async() => {
-                const repo = { ...sampleRepos.codewind };
-                delete repo.name;
-                delete repo.description;
-                repo.should.not.have.keys(['name', 'description']);
-                const details = await fetchRepositoryDetails(sampleRepos.codewind);
-                details.should.have.keys(['url', 'description', 'enabled', 'protected', 'projectStyles', 'name']);
+                const {
+                    name, // eslint-disable-line no-unused-vars
+                    description, // eslint-disable-line no-unused-vars
+                    ...repo
+                } = sampleRepos.codewind;
+                const details = await fetchRepositoryDetails(repo);
                 details.should.deep.equal(sampleRepos.codewind);
             });
-            it('returns the default "Codewind" projectStyles when it is doesn\'t exist', async() => {
-                const repo = { ...sampleRepos.codewind };
-                delete repo.projectStyles;
-                repo.should.not.have.key('projectStyles');
-                const details = await fetchRepositoryDetails(sampleRepos.codewind);
-                details.should.have.deep.property('projectStyles', ['Codewind']);
+            it('returns the default "Codewind" projectStyles when it is not provided', async() => {
+                const {
+                    projectStyles, // eslint-disable-line no-unused-vars
+                    ...repo
+                } = sampleRepos.codewind;
+                const details = await fetchRepositoryDetails(repo);
+                details.projectStyles.should.deep.equal(sampleRepos.codewind.projectStyles);
+            });
+            it('returns all details for a GHE repository', async function() {
+                if (!gheCredentials.password) {
+                    this.skip();
+                }
+                const {
+                    name, // eslint-disable-line no-unused-vars
+                    description, // eslint-disable-line no-unused-vars
+                    ...repo
+                } = sampleRepos.GHE;
+                const details = await fetchRepositoryDetails(repo, gheCredentials);
+                details.should.deep.equal({
+                    ...sampleRepos.GHE,
+                    name: sampleRepos.codewind.name,
+                    description: sampleRepos.codewind.description,
+                    projectStyles: sampleRepos.codewind.projectStyles,
+                });
             });
         });
         describe('getNameAndDescriptionFromRepoTemplatesJSON(url)', function() {
@@ -1096,6 +1184,22 @@ describe('Templates.js', function() {
                 const output = await getTemplatesFromRepo(sampleRepos.codewind);
                 output.should.have.deep.members(defaultCodewindTemplates);
             });
+            it('returns the templates from a valid GHE repository', async function() {
+                if (!gheCredentials.password) {
+                    this.skip();
+                }
+                const output = await getTemplatesFromRepo(sampleRepos.GHE, gheCredentials);
+                output.should.be.an('array').with.length(8);
+                output.forEach(obj => obj.should.have.keys([
+                    'description',
+                    'label',
+                    'language',
+                    'projectType',
+                    'source',
+                    'sourceURL',
+                    'url',
+                ]));
+            });
             it('throws a useful error when a string is given', function() {
                 const func = () => getTemplatesFromRepo('string');
                 return func().should.be.rejectedWith(`repo 'string' must have a URL`);
@@ -1103,6 +1207,10 @@ describe('Templates.js', function() {
             it('throws a useful error when an invalid url is given', function() {
                 const func = () => getTemplatesFromRepo({ url: 'invalidURL' });
                 return func().should.be.rejectedWith('Invalid URL');
+            });
+            it('throws a useful error when a valid GHE URL is given without credentials', function() {
+                const func = () => getTemplatesFromRepo({ url: sampleRepos.GHE.url });
+                return func().should.be.rejectedWith(`Unexpected HTTP status for ${sampleRepos.GHE.url}: 404`);
             });
             it('throws a useful error when a valid URL is given but it does not point to JSON', function() {
                 const func = () => getTemplatesFromRepo({ url: 'https://www.google.com/' });
@@ -1113,22 +1221,67 @@ describe('Templates.js', function() {
                 return func().should.be.rejectedWith(`repo file 'file://something.json/' did not return JSON`);
             });
         });
-        describe('getTemplatesJSONFromURL(givenURL)', () => {
-            const getTemplatesJSONFromURL = Templates.__get__('getTemplatesJSONFromURL');
-            it('gets templates JSON back from a valid URL', async() => {
+        describe('getTemplateSummaries(givenURL)', () => {
+            const getTemplateSummaries = Templates.__get__('getTemplateSummaries');
+            it('gets template summaries back from a valid URL', async() => {
                 const staticCommitURL = 'https://raw.githubusercontent.com/codewind-resources/codewind-templates/3af4928a928a5c08b07908c54799cc1675b9f965/devfiles/index.json';
-                const templatesJSON = await getTemplatesJSONFromURL(staticCommitURL);
-                templatesJSON.should.be.an('array');
-                templatesJSON.forEach(templateObject => {
+                const output = await getTemplateSummaries(staticCommitURL);
+                output.should.be.an('array');
+                output.forEach(templateObject => {
                     templateObject.should.have.keys('displayName', 'description', 'language', 'projectType', 'location', 'links');
                 });
             });
+            it('gets template summaries back from a URL to a valid JSON file', async() => {
+                // setup
+                const testFile = path.join(__dirname, 'doesURLPointToIndexJSON.json');
+                const templateSummary = {
+                    displayName: 'test',
+                    description: 'test',
+                    language: 'test',
+                    projectType: 'test',
+                    location: 'test',
+                    links: 'test',
+                };
+                fs.outputJSONSync(testFile, [templateSummary]);
+
+                // test
+                const output = await getTemplateSummaries(path.join('file://', testFile));
+                output.should.deep.equal([templateSummary]);
+
+                // teardown
+                fs.removeSync(path.join(__dirname, 'doesURLPointToIndexJSON.json'));
+            });
+            it('gets template summaries back from a valid GHE URL when valid credentials are provided', async function() {
+                if (!gheCredentials.password) {
+                    this.skip();
+                }
+                const staticCommitURL = sampleRepos.GHE.url;
+                const output = await getTemplateSummaries(staticCommitURL, gheCredentials);
+                output.should.be.an('array');
+                output.forEach(templateObject => {
+                    templateObject.should.have.keys('displayName', 'description', 'language', 'projectType', 'location', 'links', 'icon');
+                });
+            });
+            it('should be rejected as URL is GHE but no credentials are provided', () => {
+                const staticCommitURL = sampleRepos.GHE.url;
+                const func = () => getTemplateSummaries(staticCommitURL);
+                return func().should.be.rejectedWith(`Unexpected HTTP status for ${staticCommitURL}: 404`);
+            });
+            it('should be rejected as URL is GHE but credentials are invalid', () => {
+                const staticCommitURL = sampleRepos.GHE.url;
+                const incorrectGitCredentials = {
+                    username: gheCredentials.username,
+                    password: 'incorrectPassword',
+                };
+                const func = () => getTemplateSummaries(staticCommitURL, incorrectGitCredentials);
+                return func().should.be.rejectedWith(`Unexpected HTTP status for ${staticCommitURL}: 404`);
+            });
             it('should be rejected as URL does not point to JSON', () => {
-                const func = () => getTemplatesJSONFromURL('https://www.google.com/');
+                const func = () => getTemplateSummaries('https://www.google.com/');
                 return func().should.be.rejectedWith(`URL 'https://www.google.com/' did not return JSON`);
             });
             it('should be rejected as filepath does not exist', function() {
-                const func = () => getTemplatesJSONFromURL('file://something.json');
+                const func = () => getTemplateSummaries('file://something.json');
                 return func().should.be.rejectedWith(`repo file 'file://something.json/' did not return JSON`);
             });
         });
@@ -1237,36 +1390,6 @@ describe('Templates.js', function() {
             it('returns false as obj has no url field', () => {
                 const output = isRepo({});
                 output.should.be.false;
-            });
-        });
-        describe('doesURLPointToIndexJSON(obj)', () => {
-            const doesURLPointToIndexJSON = Templates.__get__('doesURLPointToIndexJSON');
-            it('returns true a valid URL is given', () => {
-                const { url } = sampleRepos.codewind;
-                return doesURLPointToIndexJSON(url).should.eventually.be.true;
-            });
-            it('returns false as the URL does not point to JSON', function() {
-                return doesURLPointToIndexJSON('http://google.com').should.eventually.be.false;
-            });
-            it('returns false as the file URL does not point to JSON', () => {
-                return doesURLPointToIndexJSON('file://doesNotExist').should.eventually.be.false;
-            });
-            it('returns true as the file URL does point to JSON', () => {
-                const testFile = path.join(__dirname, 'doesURLPointToIndexJSON.json');
-                fs.ensureFileSync(testFile);
-                const template = {
-                    displayName: 'test',
-                    description: 'test',
-                    language: 'test',
-                    projectType: 'test',
-                    location: 'test',
-                    links: 'test',
-                };
-                fs.writeJSONSync(testFile, [template]);
-                return doesURLPointToIndexJSON(path.join('file://', testFile)).should.eventually.be.true;
-            });
-            after(() => {
-                fs.removeSync(path.join(__dirname, 'doesURLPointToIndexJSON.json'));
             });
         });
         describe('isTemplateSummary(obj)', () => {

@@ -1139,6 +1139,10 @@ paths:
                   $ref: '#/components/schemas/TemplateRepo'
         400:
           description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
         423:
           description: The templates object is currently locked to prevent incorrect data being accessed and returned. Retry later
     delete:
@@ -1989,6 +1993,13 @@ components:
           type: boolean
         protected:
           type: boolean
+        gitCredentials:
+          type: object
+          properties:
+            username:
+              type: string
+            password:
+              type: string
     TemplateRepo:
       type: object
       required:

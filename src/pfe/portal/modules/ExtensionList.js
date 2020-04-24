@@ -190,7 +190,10 @@ async function addExtensionsToTemplates(extensions, templates) {
     try {
       if (extension.templates) {
         log.trace(`Adding Extension ${extension.name}'s repository into the templates`);
-        await templates.addRepository(extension.templates, extension.description);
+        await templates.addRepository({
+          url: extension.templates,
+          description: extension.description,
+        });
       } else if (extension.templatesProvider) {
         log.trace(`Adding Extension ${extension.name}'s provider into the templates`);
         await templates.addProvider(extension.name, extension.templatesProvider);
