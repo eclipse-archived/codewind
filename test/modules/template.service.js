@@ -189,7 +189,6 @@ async function setTemplateReposTo(repoList) {
     const currentRepos = (await getTemplateRepos()).body;
     if (currentRepos.length > 0) {
         const reposToDelete = currentRepos.filter(repo => repo.id !== idOfImmutableRepo);
-        console.log(reposToDelete);
         for (const repo of reposToDelete) {
             await deleteTemplateRepo(repo.url);
         }
