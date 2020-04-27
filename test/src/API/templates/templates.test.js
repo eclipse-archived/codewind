@@ -224,30 +224,76 @@ describe('Template API tests', function() {
         });
     });
 
-    describe('Add secure template repository and list templates', function() {
-        before(function() {
-            if (!gheCredentials.password) {
+    describe('Add GHE template repository (via POST /api/v1/templates/repositories)', function() {
+        setupReposAndTemplatesForTesting();
+        it('should fail to add a GHE repo when not given GitHub credentials', async function() {
+            const res = await addTemplateRepo(sampleRepos.GHE);
+            res.should.have.status(400).and.satisfyApiSpec;
+            res.text.should.include(sampleRepos.GHE.url);
+        });
+        it('should fail to add a GHE repo when given GitHub username but no password', async function() {
+            const res = await addTemplateRepo({
+                ...sampleRepos.GHE,
+                gitCredentials: {
+                    username: gheCredentials.basic.username,
+                    // no password
+                },
+            });
+            res.should.have.status(400).and.satisfyApiSpec;
+            res.text.should.include('Error while validating request: request.body.gitCredentials should have required property \'password\'');
+        });
+        it('should fail to add a GHE repo when given GitHub password but no username', async function() {
+            const res = await addTemplateRepo({
+                ...sampleRepos.GHE,
+                gitCredentials: {
+                    password: 'validPassword',
+                    // no username
+                },
+            });
+            res.should.have.status(400).and.satisfyApiSpec;
+            res.text.should.include('Error while validating request: request.body.gitCredentials should have required property \'username\'');
+        });
+        it('should fail to add a GHE repo when given unexpected `gitCredentials` field', async function() {
+            const res = await addTemplateRepo({
+                ...sampleRepos.GHE,
+                gitCredentials: {
+                    unexpected: 'field',
+                },
+            });
+            res.should.have.status(400).and.satisfyApiSpec;
+            res.text.should.include('Error while validating request: request.body.gitCredentials should NOT have additional properties');
+        });
+        it('should fail to add a GHE repo when given incorrect GHE basic credentials', async function() {
+            const res = await addTemplateRepo({
+                ...sampleRepos.GHE,
+                gitCredentials: {
+                    username: gheCredentials.basic.username,
+                    password: 'incorrectPassword',
+                },
+            });
+            res.should.have.status(400).and.satisfyApiSpec;
+            res.text.should.include(sampleRepos.GHE.url);
+        });
+        it('should fail to add a GHE repo when given incorrect GHE Personal Access Token', async function() {
+            const res = await addTemplateRepo({
+                ...sampleRepos.GHE,
+                gitCredentials: {
+                    personalAccessToken: 'incorrectPersonalAccessToken',
+                },
+            });
+            res.should.have.status(400).and.satisfyApiSpec;
+            res.text.should.include(sampleRepos.GHE.url);
+        });
+        it('should add a GHE repo when given correct GHE basic credentials', async function() {
+            if (!gheCredentials.basic.password) {
                 this.skip();
             }
-        });
 
-        setupReposAndTemplatesForTesting();
-        it('POST /api/v1/templates/repositories without GitHub credentials should fail to add a GHE template repository', async function() {
-            const res = await addTemplateRepo(sampleRepos.GHE);
-            res.should.have.status(400).and.satisfyApiSpec;
-            res.text.should.include(sampleRepos.GHE.url);
-        });
-        it('POST /api/v1/templates/repositories with incorrect GHE credentials should fail to add a GHE template repository', async function() {
-            const res = await addTemplateRepo(sampleRepos.GHE);
-            res.should.have.status(400).and.satisfyApiSpec;
-            res.text.should.include(sampleRepos.GHE.url);
-        });
-        it('POST /api/v1/templates/repositories with correct GHE credentials should add a GHE template repository', async function() {
             const { body: originalTemplates } = await getTemplates();
 
             const res = await addTemplateRepo({
                 ...sampleRepos.GHE,
-                gitCredentials: gheCredentials,
+                gitCredentials: gheCredentials.basic,
             });
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.containSubset([sampleRepos.GHE]);
@@ -256,6 +302,35 @@ describe('Template API tests', function() {
             const resToGetRequest = await getTemplates();
             resToGetRequest.should.have.status(200).and.satisfyApiSpec;
             resToGetRequest.body.should.have.length.above(originalTemplates.length);
+
+            // cleanup
+            const resToDeleteRequest = await deleteTemplateRepo(sampleRepos.GHE.url);
+            resToDeleteRequest.should.have.status(200).and.satisfyApiSpec;
+        });
+        it('should add a GHE repo when given correct GHE Personal Access Token', async function() {
+            if (!gheCredentials.personalAccessToken) {
+                this.skip();
+            }
+
+            const { body: originalTemplates } = await getTemplates();
+
+            const res = await addTemplateRepo({
+                ...sampleRepos.GHE,
+                gitCredentials: {
+                    personalAccessToken: gheCredentials.personalAccessToken,
+                },
+            });
+            res.should.have.status(200).and.satisfyApiSpec;
+            res.body.should.containSubset([sampleRepos.GHE]);
+
+            // Then GET /templates should return the templates from the repository we just added
+            const resToGetRequest = await getTemplates();
+            resToGetRequest.should.have.status(200).and.satisfyApiSpec;
+            resToGetRequest.body.should.have.length.above(originalTemplates.length);
+
+            // cleanup
+            const resToDeleteRequest = await deleteTemplateRepo(sampleRepos.GHE.url);
+            resToDeleteRequest.should.have.status(200).and.satisfyApiSpec;
         });
     });
 

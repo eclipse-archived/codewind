@@ -672,26 +672,45 @@ describe('Templates.js', function() {
                             url: sampleRepos.GHE.url,
                             description: 'description',
                             name: 'name',
-                            protected: false,
                         };
                         const func = () => templateController.addRepository(repoOptions);
                         return func().should.be.rejectedWith(`Unexpected HTTP status for ${sampleRepos.GHE.url}: 404`);
                     });
                 });
                 describe('(<validGHEURL>, <correctGHECredentials>)', function() {
-                    it('succeeds', async function() {
-                        if (!gheCredentials.password) {
+                    const repo = {
+                        url: sampleRepos.GHE.url,
+                        description: 'description',
+                        name: 'name',
+                    };
+                    it('succeeds when given correct username and password', async function() {
+                        if (!gheCredentials.basic.password) {
                             this.skip();
                         }
-                        const repo = {
-                            url: sampleRepos.GHE.url,
-                            description: 'description',
-                            name: 'name',
-                            protected: false,
-                        };
                         const repoOptions = {
                             ...repo,
-                            gitCredentials: gheCredentials,
+                            gitCredentials: gheCredentials.basic,
+                        };
+                        await templateController.addRepository(repoOptions);
+                        templateController.repositoryList.should.containSubset([{
+                            ...repo,
+                            enabled: true,
+                            projectStyles: ['Codewind'],
+                        }]);
+                        templateController.repositoryList.forEach(obj => {
+                            obj.should.have.property('id');
+                            obj.id.should.be.a('string');
+                        });
+                    });
+                    it('succeeds when given correct personal access token', async function() {
+                        if (!gheCredentials.personalAccessToken) {
+                            this.skip();
+                        }
+                        const repoOptions = {
+                            ...repo,
+                            gitCredentials: {
+                                personalAccessToken: gheCredentials.personalAccessToken,
+                            },
                         };
                         await templateController.addRepository(repoOptions);
                         templateController.repositoryList.should.containSubset([{
@@ -877,13 +896,13 @@ describe('Templates.js', function() {
                 validatedURL.should.equal(sampleRepos.codewind.url);
             });
             it('returns a validated GHE url when correct credentials are provided', async function() {
-                if (!gheCredentials.password) {
+                if (!gheCredentials.basic.password) {
                     this.skip();
                 }
                 const validatedURL = await validateRepository(
                     sampleRepos.GHE.url,
                     [...mockRepoList],
-                    gheCredentials,
+                    gheCredentials.basic,
                 );
                 validatedURL.should.equal(sampleRepos.GHE.url);
             });
@@ -1060,7 +1079,7 @@ describe('Templates.js', function() {
                 details.projectStyles.should.deep.equal(sampleRepos.codewind.projectStyles);
             });
             it('returns all details for a GHE repository', async function() {
-                if (!gheCredentials.password) {
+                if (!gheCredentials.basic.password) {
                     this.skip();
                 }
                 const {
@@ -1068,7 +1087,7 @@ describe('Templates.js', function() {
                     description, // eslint-disable-line no-unused-vars
                     ...repo
                 } = sampleRepos.GHE;
-                const details = await fetchRepositoryDetails(repo, gheCredentials);
+                const details = await fetchRepositoryDetails(repo, gheCredentials.basic);
                 details.should.deep.equal({
                     ...sampleRepos.GHE,
                     name: sampleRepos.codewind.name,
@@ -1185,10 +1204,10 @@ describe('Templates.js', function() {
                 output.should.have.deep.members(defaultCodewindTemplates);
             });
             it('returns the templates from a valid GHE repository', async function() {
-                if (!gheCredentials.password) {
+                if (!gheCredentials.basic.password) {
                     this.skip();
                 }
-                const output = await getTemplatesFromRepo(sampleRepos.GHE, gheCredentials);
+                const output = await getTemplatesFromRepo(sampleRepos.GHE, gheCredentials.basic);
                 output.should.be.an('array').with.length(8);
                 output.forEach(obj => obj.should.have.keys([
                     'description',
@@ -1252,11 +1271,11 @@ describe('Templates.js', function() {
                 fs.removeSync(path.join(__dirname, 'doesURLPointToIndexJSON.json'));
             });
             it('gets template summaries back from a valid GHE URL when valid credentials are provided', async function() {
-                if (!gheCredentials.password) {
+                if (!gheCredentials.basic.password) {
                     this.skip();
                 }
                 const staticCommitURL = sampleRepos.GHE.url;
-                const output = await getTemplateSummaries(staticCommitURL, gheCredentials);
+                const output = await getTemplateSummaries(staticCommitURL, gheCredentials.basic);
                 output.should.be.an('array');
                 output.forEach(templateObject => {
                     templateObject.should.have.keys('displayName', 'description', 'language', 'projectType', 'location', 'links', 'icon');
@@ -1270,7 +1289,7 @@ describe('Templates.js', function() {
             it('should be rejected as URL is GHE but credentials are invalid', () => {
                 const staticCommitURL = sampleRepos.GHE.url;
                 const incorrectGitCredentials = {
-                    username: gheCredentials.username,
+                    username: gheCredentials.basic.username,
                     password: 'incorrectPassword',
                 };
                 const func = () => getTemplateSummaries(staticCommitURL, incorrectGitCredentials);

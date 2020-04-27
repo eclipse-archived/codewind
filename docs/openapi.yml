@@ -1994,12 +1994,9 @@ components:
         protected:
           type: boolean
         gitCredentials:
-          type: object
-          properties:
-            username:
-              type: string
-            password:
-              type: string
+          oneOf:
+          - $ref: '#/components/schemas/BasicGitHubCredentials'
+          - $ref: '#/components/schemas/GitHubPersonalAccessToken'
     TemplateRepo:
       type: object
       required:
@@ -2040,6 +2037,25 @@ components:
         value:
           type: string
           example: 'true'
+    BasicGitHubCredentials:
+      type: object
+      additionalProperties: false
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    GitHubPersonalAccessToken:
+      type: object
+      additionalProperties: false
+      required:
+        - personalAccessToken
+      properties:
+        personalAccessToken:
+          type: string
     BasicMetric:
       properties:
         time:

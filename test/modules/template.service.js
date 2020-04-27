@@ -35,8 +35,11 @@ const styledTemplates = {
 
 // Insert your own credentials to run relevant tests
 const gheCredentials = {
-    username: 'foo.bar@domain.com',
-    // password: 'INSERT_TO_RUN_RELEVANT_TESTS',
+    basic: {
+        username: 'foo.bar@domain.com',
+        // password: 'INSERT_TO_RUN_RELEVANT_TESTS',
+    },
+    // personalAccessToken: 'INSERT_TO_RUN_RELEVANT_TESTS',
 };
 
 const sampleRepos = {

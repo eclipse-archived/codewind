@@ -382,8 +382,14 @@ async function makeGetRequest(url, gitCredentials) {
     port: url.port,
     method: 'GET',
   }
-  if (gitCredentials && gitCredentials.username && gitCredentials.password) {
-    options.auth = `${gitCredentials.username}:${gitCredentials.password}`;
+  if (gitCredentials) {
+    if (gitCredentials.username && gitCredentials.password) {
+      options.auth = `${gitCredentials.username}:${gitCredentials.password}`;
+    } else if (gitCredentials.personalAccessToken) {
+      options.headers = {
+        Authorization: `token ${gitCredentials.personalAccessToken}`,
+      };
+    }
   }
   const res = await cwUtils.asyncHttpRequest(
     options,
