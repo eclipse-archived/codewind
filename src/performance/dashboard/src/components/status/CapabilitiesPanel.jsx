@@ -11,10 +11,12 @@
 
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import {Button} from 'carbon-components-react';
+import { Button } from 'carbon-components-react';
 import IconSuccess from '@carbon/icons-react/es/checkmark/20';
 import IconFailure from '@carbon/icons-react/es/error/20';
+import IconWarning from '@carbon/icons-react/es/warning--alt/20';
 import { connect } from 'react-redux';
+import * as Constants from './Constants';
 
 import { fetchProjectCapabilities } from '../../store/actions/projectCapabilitiesActions';
 import './CapabilitiesPanel.scss';
@@ -24,101 +26,159 @@ class CapabilitiesPanel extends React.Component {
     constructor() {
         super();
         this.state = {
-            lastUpdated: "",
-            doNotShowAgain: false,
-         };
+            lastUpdated: 0,
+        };
         this.buildDisplayModel = this.buildDisplayModel.bind(this);
-        this.handleContinueClick = this.handleContinueClick.bind(this);
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         if (!this.props.projectID) { return; }
-        this.props.dispatch(fetchProjectCapabilities(this.props.projectID));
+        try {
+            await this.props.dispatch(fetchProjectCapabilities(this.props.projectID))
+        } catch (err) {
+            console.log("Error loading capabilities: ", err)
+        }
     }
 
     componentWillReceiveProps(newProps) {
-        if (newProps.projectCapabilities.lastUpdated !== this.state.lastUpdated) {
-            this.setState({lastUpdated: newProps.projectCapabilities.lastUpdated})
+        if (newProps.projectCapabilities.receivedAt !== this.state.lastUpdated) {
+            this.setState({ lastUpdated: newProps.projectCapabilities.receivedAt })
         }
     }
 
     getIconMarkup(status) {
-        if (status) {
-            return <IconSuccess className='bx--btn__icon' style={{ 'fill': '#42be65'}} />
+        switch (status) {
+            case Constants.STATUS_OK:
+                return <IconSuccess className='bx--btn__icon' style={{ 'fill': '#42be65' }} />
+            case Constants.STATUS_ERROR:
+                return <IconFailure className='bx--btn__icon' style={{ 'fill': '#da1e28' }} />
         }
-        return <IconFailure className='bx--btn__icon' style={{ 'fill': '#da1e28' }} />
+        return <IconWarning className='bx--btn__icon' style={{ 'fill': '#f1c21b' }} />
     }
 
     handleContinueClick() {
-        this.setState({doNotShowAgain:true})
+        this.props.handleCapabilitiesClose();
     }
 
+    getCapabilityProjectStatus(capabilityData, feature) {
+        if (capabilityData.projectRunning) {
+            feature.status = Constants.STATUS_OK
+            feature.statusMessage = Constants.MESSAGE_PROJECT_RUNNING
+        } else {
+            feature.status = Constants.STATUS_ERROR
+            feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING
+        }
+    }
+
+    getCapabilityLoadRunnerStatus(capabilityData, feature) {
+        if (capabilityData.projectRunning) {
+            feature.status = Constants.STATUS_OK
+            feature.statusMessage = Constants.MESSAGE_LOADRUNNER_AVAILABLE;
+        } else {
+            feature.status = Constants.STATUS_ERROR
+            feature.statusMessage = Constants.MESSAGE_LOADRUNNER_NOT_AVAILABLE;
+        }
+    }
+
+    getCapabilityLiveMetrics(capabilityData, feature) {
+        if (!capabilityData.projectRunning) {
+            feature.status = Constants.STATUS_ERROR
+            feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
+            return
+        }
+
+        if (capabilityData.liveMetricsAvailable) {
+            feature.status = Constants.STATUS_OK
+            feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_AVAILABLE;
+            return
+        }
+
+        if (capabilityData.microprofilePackageFoundInBuildFile) {
+            feature.status = Constants.STATUS_WARNING
+            feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE;
+            return
+        }
+
+        if (capabilityData.canMetricsBeInjected) {
+            feature.status = Constants.STATUS_WARNING;
+            feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_INJECT_REQUIRED;
+            return
+        }
+
+        feature.status = Constants.STATUS_ERROR
+        feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_COMPATIBLE;
+    }
+
+    getCapabilityComparisons(capabilityData, feature) {
+        if (!capabilityData.projectRunning) {
+            feature.status = Constants.STATUS_WARNING
+            feature.statusMessage = Constants.MESSAGE_COMPARISONS_NOT_RUNNING;
+            return
+        }
+
+        if (capabilityData.appmetricsEndpointReachable && !capabilityData.hasTimedMetrics) {
+            feature.status = Constants.STATUS_WARNING;
+            feature.statusMessage = Constants.MESSAGE_COMPARISONS_INJECT_TIMED
+            return
+        }
+
+        if (capabilityData.appmetricsEndpointReachable) {
+            feature.status = Constants.STATUS_OK;
+            feature.statusMessage = Constants.MESSAGE_COMPARISONS_AVAILABLE;
+            return
+        }
+
+        if (capabilityData.canMetricsBeInjected) {
+            feature.status = Constants.STATUS_ERROR;
+            feature.statusMessage = Constants.MESSAGE_COMPARISONS_INJECT_REQUIRED;
+            return
+        }
+        feature.status = Constants.STATUS_ERROR;
+        feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_COMPATIBLE;
+    }
+
+
     buildDisplayModel() {
-        const displayModelTemplate= [
+        const capabilityData = this.props.projectCapabilities.capabilities;
+        const displayModelTemplate = [
             {
-                id:"ProjectStatus", label: "Project Status", status: false,
-                textSuccess: "Your project has started and is running",
-                textFailure: "Your project is not running"
+                id: "ProjectStatus", label: "Project Status", status: Constants.STATUS_WARNING,
+                statusMessage: "Unable to determine status",
             },
             {
-                id:"LoadRunner", label: "LoadRunner Feature", status: false,
-                textSuccess: "Codewind can apply load pressure to your project",
-                textFailure:"Codewind is unable to apply load pressure your project"
+                id: "LoadRunner", label: "LoadRunner Feature", status: Constants.STATUS_WARNING,
+                statusMessage: "Unable to determine status",
             },
             {
-                id:"LiveMetrics", label: "Live Metrics", status: false,
-                textSuccess: "Your project has built in support for Live Metrics",
-                textFailure:"Your project does not support Live Metrics collection. This feature requires additional monitoring to be enabled in your project. Open the project settings in your IDE and enable the Inject Metrics checkbox."
+                id: "LiveMetrics", label: "Live Metrics", status: Constants.STATUS_WARNING,
+                statusMessage: "Unable to determine status",
             },
             {
-                id:"Comparisons", label: "Test Comparisons", status: false,
-                textSuccess:"Ready",
-                textFailure: "Your project does not support load run comparisons. This requires additional monitoring to be enabled in your project. To enable this feature, open the project settings in your IDE and enable the Inject Metrics checkbox.",
-            },
-            {
-                id:"TimedComparisons", label: "Timed Load Tests", status: false,
-                textSuccess: "Ready",
-                textFailure:"Your project does not support the new timed load run comparisons feature. This requires updated monitoring to be enabled in your project. To enable this feature, open the project settings in your IDE and enable the Inject Metrics checkbox."
-            },
-            {
-                id:"Profiling", label: "Hot methods", status: false,
-                textSuccess: "Ready",
-                textFailure:"Your project does not support hot method performance profiling. Only Java and NodeJS projects support this feature and require injected Appmetrics to be enabled."
+                id: "Comparisons", label: "Test Comparisons", status: Constants.STATUS_WARNING,
+                statusMessage: "Unable to determine status",
             },
         ];
 
-        const capabilityData = this.props.projectCapabilities.capabilities;
+        // We always want to display all the features in the UI model so update status with results
+        // from the capabilities API
+        if (capabilityData) {
+            let feature = displayModelTemplate.find(element => element.id == "ProjectStatus");
+            this.getCapabilityProjectStatus(capabilityData, feature);
 
-        // Update the UI model with API status
-        let feature = displayModelTemplate.find(element => element.id == "ProjectStatus");
-        feature.status = capabilityData.running
-
-        console.log('capabilityData.capabilities', capabilityData.capabilities)
-
-
-        // We always want to display all the rows in the UI model so update status with results from the capabilities API
-        if (capabilityData.capabilities) {
             feature = displayModelTemplate.find(element => element.id == "LoadRunner");
-            if (feature) feature.status = capabilityData.capabilities.loadrunner
+            this.getCapabilityLoadRunnerStatus(capabilityData, feature);
 
             feature = displayModelTemplate.find(element => element.id == "LiveMetrics");
-            if (feature) feature.status = capabilityData.capabilities.liveMetrics
+            this.getCapabilityLiveMetrics(capabilityData, feature);
 
             feature = displayModelTemplate.find(element => element.id == "Comparisons");
-            if (feature)  feature.status = capabilityData.capabilities.metricsCollections
-
-            feature = displayModelTemplate.find(element => element.id == "TimedComparisons");
-            if (feature)  feature.status = capabilityData.capabilities.metricsCollectionsTimed
-
-            feature = displayModelTemplate.find(element => element.id == "Profiling");
-            if (feature)  feature.status = capabilityData.capabilities.profiling
+            this.getCapabilityComparisons(capabilityData, feature);
         }
-
         return displayModelTemplate;
     }
 
     render() {
-        if (this.state.doNotShowAgain) return <Fragment/>
+        if (this.state.doNotShowAgain) return <Fragment />
         const dataModel = this.buildDisplayModel();
         return (
             <Fragment>
@@ -132,33 +192,29 @@ class CapabilitiesPanel extends React.Component {
                         </div>
                     </div>
                     <div className="rows">
-                    {
-                        dataModel.map(row => {
-                            return (
-                            <div className="row">
-                                <div className="headline">
-                                    <div className="icon">{this.getIconMarkup(row.status)}</div>
-                                    <div className="capability">{row.label}</div>
-                                </div>
-                                <div className="description">{row.status ? row.textSuccess : row.textFailure}</div>
-                            </div>
-                            )
-                        })
-                    }
+                        {
+                            dataModel.map(row => {
+                                return (
+                                    <div key={row.id} className="row">
+                                        <div className="headline">
+                                            <div className="icon">{this.getIconMarkup(row.status)}</div>
+                                            <div className="capability">{row.label}</div>
+                                        </div>
+                                        <div className="description">{row.statusMessage}</div>
+                                    </div>
+                                )
+                            })
+                        }
                     </div>
 
-                <div className="actions">
-                    <Button onClick={() => this.handleContinueClick()}>Continue</Button>
+                    <div className="actions">
+                        <Button onClick={() => this.handleContinueClick()}>Continue</Button>
+                    </div>
                 </div>
-              </div>
             </Fragment>
         )
     }
 }
-
-CapabilitiesPanel.propTypes = {
-    projectID: PropTypes.string.isRequired,
-};
 
 // Mapped Redux Stores
 const mapStateToProps = stores => {
@@ -168,7 +224,8 @@ const mapStateToProps = stores => {
 };
 
 CapabilitiesPanel.propTypes = {
-    projectID: PropTypes.string.isRequired
+    projectID: PropTypes.string.isRequired,
+    handleCapabilitiesClose: PropTypes.func.isRequired,
 }
 
 export default connect(mapStateToProps)(CapabilitiesPanel);

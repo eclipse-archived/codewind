@@ -23,6 +23,9 @@
   padding-top: $carbon--spacing-04;
   @include properties($productive-heading-03);
   font-weight: carbon--font-weight("semibold");
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .NavBar .projectName {

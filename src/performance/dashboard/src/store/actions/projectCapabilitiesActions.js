@@ -36,7 +36,7 @@ function fetchRejected(json) {
 function fetchCapabilities(projectID) {
   return dispatch => {
     dispatch(requestCapabilities());
-    return fetch(`${AppConstants.API_SERVER}/api/v1/projects/capabilities/${projectID}`,
+    return fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectID}/metrics/status`,
       {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
