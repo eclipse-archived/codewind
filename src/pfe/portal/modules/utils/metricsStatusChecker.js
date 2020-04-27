@@ -58,14 +58,22 @@ const APPMETRIC_ENDPOINTS = [
 ];
 
 async function getMetricStatusForProject(project) {
-  const { projectID, language, host, ports: { internalPort }, injectMetrics } = project;
+  const { RUNNING_IN_K8S } = global.codewind;
+  const { projectID, language, host: hostname, ports: { internalPort }, injectMetrics } = project;
   const projectPath = project.projectPath();
+  let host = hostname;
+  let port = internalPort;
+  if (RUNNING_IN_K8S) {
+    const kubeService = await project.getProjectKubeService();
+    host = kubeService.hostname;
+    port = kubeService.port;
+  }
 
   // file system checks and get endpoints
   const [appmetricsPackageFoundInBuildFile, microprofilePackageFoundInBuildFile, endpoints] = await Promise.all([
     hasAppmetricsInFileSystem(projectPath, language),
     hasMicroprofileMetricsInFileSystem(projectPath, language),
-    getActiveMetricsURLs(host, internalPort),
+    getActiveMetricsURLs(host, port),
   ]);
 
   // endpoint checks

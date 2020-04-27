@@ -18,6 +18,7 @@ const chai = require('chai');
 const chaiSubset = require('chai-subset');
 const chaiAsPromised = require('chai-as-promised');
 
+const { testTimeout } = require('../../../config');
 const Project = rewire('../../../../src/pfe/portal/modules/Project');
 const ProjectError = require('../../../../src/pfe/portal/modules/utils/errors/ProjectError');
 const ProjectMetricsError = require('../../../../src/pfe/portal/modules/utils/errors/ProjectMetricsError');
@@ -31,7 +32,7 @@ const { expect } = chai;
 
 const loadTestResources = path.join(__dirname, '../../../resources/load-test-data/');
 
-describe('Project.js', () => {
+describe('Project.js', function() {
     suppressLogOutput(Project);
     beforeEach(() => {
         global.codewind = {
@@ -142,7 +143,8 @@ describe('Project.js', () => {
             expect(project.getPerfDashPath()).to.be.null;
         });
     });
-    describe('setMetricsState()', () => {
+    describe('setMetricsState()', function() {
+        this.timeout(testTimeout.short);
         it('returns all capabilities as false, correctly sets the metricsCapabilities, metricsAvailable and metricsDashboard values in project', async() => {
             // arrange
             const expectedCapabilities = {

@@ -22,6 +22,13 @@ chai.should();
 
 describe('metricsStatusChecker.js', function() {
     suppressLogOutput(metricsStatusChecker);
+    let unsetGlobal;
+    beforeEach(function() {
+        unsetGlobal = metricsStatusChecker.__set__('global', { codewind: { RUNNING_IN_K8S: false } });
+    });
+    afterEach(function() {
+        unsetGlobal();
+    });
     describe('getMetricStatusForProject(project)', function() {
         const { getMetricStatusForProject } = metricsStatusChecker;
         const mockProject = {
@@ -32,6 +39,10 @@ describe('metricsStatusChecker.js', function() {
                 internalPort: 'internalPort',
             },
             projectPath: () => 'projectPath',
+            getProjectKubeService: () => ({
+                hostname: 'k8Hostname',
+                port: 'k8Port',
+            }),
         };
         const defaultCapabilities = {
             liveMetricsAvailable: false,
@@ -47,6 +58,26 @@ describe('metricsStatusChecker.js', function() {
                 hosting: null,
                 path: null,
             });
+        });
+        it('when global.codewind.RUNNING_IN_K8S is false, calls getActiveMetricsURLs with the host and internalPort', async function() {
+            const mockedGetActiveMetricsURLs = sinon.stub().returns({});
+            const unsetGetActiveMetrics = metricsStatusChecker.__set__('getActiveMetricsURLs', mockedGetActiveMetricsURLs);
+            await getMetricStatusForProject(mockProject);
+            mockedGetActiveMetricsURLs.should.be.calledWith('host', 'internalPort');
+
+            // reset values
+            unsetGetActiveMetrics();
+        });
+        it('when global.codewind.RUNNING_IN_K8S is true, calls getActiveMetricsURLs with the K8 hostname and port', async function() {
+            const mockedGetActiveMetricsURLs = sinon.stub().returns({});
+            const unsetGetActiveMetrics = metricsStatusChecker.__set__('getActiveMetricsURLs', mockedGetActiveMetricsURLs);
+            const unsetGlobal = metricsStatusChecker.__set__('global', { codewind: { RUNNING_IN_K8S: true } });
+            await getMetricStatusForProject(mockProject);
+            mockedGetActiveMetricsURLs.should.be.calledWith('k8Hostname', 'k8Port');
+
+            // reset values
+            unsetGetActiveMetrics();
+            unsetGlobal();
         });
         [
             { language: 'java', fileContents: 'javametrics\n<artifactId>microprofile</artifactId>', mpPac: true, apEndpoint: '/javametrics-dash' },
