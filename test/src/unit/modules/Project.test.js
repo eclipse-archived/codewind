@@ -59,6 +59,7 @@ describe('Project.js', function() {
             project.name.should.equal('newdummyproject');
             project.should.have.property('workspace');
             project.workspace.should.equal('./someworkspace');
+            project.perfDashboardPath.should.equal(`/performance/charts?project=${project.projectID}`);
         });
         it('Sets directory to name', () => {
             const project = createProjectAndCheckIsAnObject({
