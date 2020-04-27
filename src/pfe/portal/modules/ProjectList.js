@@ -83,14 +83,12 @@ module.exports = class ProjectList {
   retrieveProject(id) {
     const project = (this._list.hasOwnProperty(id) ? this._list[id] : undefined);
     if (!project) {
-      return;
+      return null;
     }
     project.injection = {
       injectable: project.canMetricsBeInjected,
       injected: project.injectMetrics,
     };
-    project.perfDashboardPath = project.getPerfDashPath();
-
     return project;
   }
 

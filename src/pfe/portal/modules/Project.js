@@ -73,9 +73,9 @@ module.exports = class Project {
       const isWindowsPath = cwUtils.isWindowsAbsolutePath(this.pathToMonitor);
       if (isWindowsPath) {
         this.pathToMonitor = cwUtils.convertFromWindowsDriveLetter(this.pathToMonitor);
-      } 
+      }
     }
-    
+
     // Project status information
     this.host = args.host || '';
     this.ports = args.ports || {};
@@ -124,6 +124,8 @@ module.exports = class Project {
     this.metricsCapabilities = (args.metricsCapabilities) ? args.metricsCapabilities : {};
 
     this.links = new Links(this.projectPath(), args.links);
+
+    this.perfDashboardPath = `/performance/charts?project=${this.projectID}`;
   }
 
 
@@ -155,13 +157,6 @@ module.exports = class Project {
       }
     }
     return {}
-  }
-
-  getPerfDashPath() {
-    const isPerfDashAvailable = this.injectMetrics || this.isOpenLiberty || this.metricsAvailable;
-    return isPerfDashAvailable
-      ? `/performance/charts?project=${this.projectID}`
-      : null;
   }
 
   async setMetricsState() {
