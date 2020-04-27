@@ -107,7 +107,7 @@ function copyToPFE() {
 
 echo -e "${BLUE}>> Downloading latest installer ... ${RESET}"
 EXECUTABLE_NAME="cwctl"
-curl -X GET http://download.eclipse.org/codewind/codewind-installer/master/latest/cwctl-win.exe --output $EXECUTABLE_NAME
+curl -X GET http://archive.eclipse.org/codewind/codewind-installer/master/latest/cwctl-win.exe --output $EXECUTABLE_NAME
 checkExitCode $? "Failed to download latest installer."
 
 echo -e "${BLUE}>> Giving executable permission to installer ... ${RESET}"

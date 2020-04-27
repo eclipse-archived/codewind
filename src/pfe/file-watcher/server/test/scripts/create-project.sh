@@ -45,9 +45,9 @@ function downloadCwctl() {
         CWCTL_INSTALL_TARGET="master"
     fi
     if [ ! -z $EXECUTABLE_PATH ]; then
-        curl -X GET http://download.eclipse.org/codewind/codewind-installer/$CWCTL_INSTALL_TARGET/latest/cwctl-$extension --output $EXECUTABLE_PATH/$EXECUTABLE_NAME
+        curl -X GET http://archive.eclipse.org/codewind/codewind-installer/$CWCTL_INSTALL_TARGET/latest/cwctl-$extension --output $EXECUTABLE_PATH/$EXECUTABLE_NAME
     else
-        curl -X GET http://download.eclipse.org/codewind/codewind-installer/$CWCTL_INSTALL_TARGET/latest/cwctl-$extension --output $EXECUTABLE_NAME
+        curl -X GET http://archive.eclipse.org/codewind/codewind-installer/$CWCTL_INSTALL_TARGET/latest/cwctl-$extension --output $EXECUTABLE_NAME
     fi
     
     checkExitCode $? "Failed to download latest installer."
