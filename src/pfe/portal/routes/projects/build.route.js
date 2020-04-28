@@ -36,8 +36,8 @@ async function buildProject(req, res) {
       return;
     }
     
-    if (project.isClosed() || project.isClosing() || project.isDeleting()) {
-      const msg = `Cannot perform build action ${action} on ${project.name} because it is in state ${project.state}.`;
+    if (project.isClosed() || project.isClosing() || project.isDeleting() || !project.loadRunner.isIdle()) {
+      const msg = `Cannot perform build action ${action} on ${project.name} because it is in state ${project.state}. Or a load run is in progress.`;
       res.status(400).send(msg);
       log.error(msg);
       return;

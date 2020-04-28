@@ -27,6 +27,7 @@ const Logger = require('./utils/Logger');
 const LogStream = require('./LogStream');
 const metricsService = require('./metricsService');
 const Links = require('./project/Links');
+const LoadRunner = require('./LoadRunner');
 
 const log = new Logger(__filename);
 
@@ -129,6 +130,8 @@ module.exports = class Project {
     this.links = new Links(this.projectPath(), args.links);
 
     this.perfDashboardPath = `/performance/charts?project=${this.projectID}`;
+    log.debug(`Creating LoadRunner for project ${this.projectID}`);
+    this.loadRunner = new LoadRunner(this);
   }
 
 
@@ -302,7 +305,7 @@ module.exports = class Project {
   toJSON() {
     // Strip out fields we don't want to attempt to turn into JSON.
     // (This is our guard against trying to write circular references.)
-    const { logStreams, loadInProgress, loadConfig, operation, ...filteredProject } = this;
+    const { logStreams, loadInProgress, loadConfig, operation, loadRunner, ...filteredProject } = this;
     return filteredProject;
   }
 

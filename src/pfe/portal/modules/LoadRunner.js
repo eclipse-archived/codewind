@@ -25,6 +25,19 @@ const LoadRunError = require('./utils/errors/LoadRunError');
 const mkDirAsync = promisify(fs.mkdir);
 const log = new Logger(__filename);
 
+const states = {
+  REQUESTED: "REQUESTED",
+  PREPARING: "PREPARING",
+  STARTING: "STARTING",
+  STARTED: "STARTED",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+  IDLE: "IDLE",
+  COLLECTING_HCD: "COLLECTING_HCD",
+  JAVA_PROFILING: "JAVA_PROFILING",
+  NODE_PROFILING: "NODE_PROFILING",
+}
+
 /**
 * The LoadRunner class
 * Contains functions to:
@@ -33,12 +46,12 @@ const log = new Logger(__filename);
 * One per User
 */
 module.exports = class LoadRunner {
-  constructor(user) {
-    this.user = user;
+  constructor(project) {
+    this.resetStatus();
+    this.user = null;
     this.hostname = process.env.CODEWIND_PERFORMANCE_SERVICE ? process.env.CODEWIND_PERFORMANCE_SERVICE : "codewind-performance"
     this.port = '9095';
-    this.project = null;
-    this.collectingHCD = false;
+    this.project = project;
     this.runDescription = null;
     this.up = false;
     this.socket = io(`http://${this.hostname}:${this.port}`, { timeout: 5000, autoConnect: false });
@@ -220,19 +233,21 @@ module.exports = class LoadRunner {
    * @param newProject the project to run the load against.
    * @param runDesc a text description of the run.
    */
-  async runLoad(loadConfig, targetProject, runDesc) {
+  async runLoad(loadConfig, targetUser, runDesc) {
     log.debug('runLoad: loadConfig=' + JSON.stringify(loadConfig));
-    log.debug('runLoad: project=' + JSON.stringify(targetProject));
-    if (this.project != null) {
+    if (this.status.CURRENT_STATE != states.IDLE) {
+      log.debug(`Current state for load run:\n${this.status}`);
       throw new LoadRunError("RUN_IN_PROGRESS", `For project ${this.project.name} (${this.project.projectID})`);
     }
     if (this.up) {
-      this.project = targetProject;
+      this.user = targetUser;
+      this.setStatus(states.REQUESTED);
       if (runDesc) {
         this.runDescription = runDesc;
       } else {
         this.runDescription = null;
       }
+      loadConfig.projectID = this.project.projectID;
       let options = {
         host: this.hostname,
         port: this.port,
@@ -258,7 +273,10 @@ module.exports = class LoadRunner {
         }
       }
 
-      this.heartbeat('preparing');
+      this.setStatus(states.PREPARING);
+      if (!this.status.CANCELLED) {
+        this.heartbeat('preparing');
+      }
 
       // start profiling if supported by current language
       if (this.project.language == 'nodejs' || this.project.language === 'javascript') {
@@ -269,7 +287,10 @@ module.exports = class LoadRunner {
 
       //  Start collection on metrics endpoint (this must be started AFTER java profiling since java profiling will restart the liberty server)
       this.collectionUri = await this.createCollection(loadConfig.maxSeconds);
-      this.heartbeat('starting');
+      this.setStatus(states.STARTING);
+      if (!this.status.CANCELLED) {
+        this.heartbeat('starting');
+      }
 
       // Send the load run request to the loadrunner microservice
       let loadrunnerRes = await cwUtils.asyncHttpRequest(options, loadConfig);
@@ -278,11 +299,11 @@ module.exports = class LoadRunner {
         break;
       default:
         await this.cancelProfiling();
-        this.project = null;
         log.error(`runLoad (${loadrunnerRes.statusCode} received)'`);
       }
       return loadrunnerRes;
     }
+    log.debug(this.status);
     throw new LoadRunError('CONNECTION_FAILED');
   }
 
@@ -331,8 +352,7 @@ module.exports = class LoadRunner {
   }
 
   async beginJavaProfiling(duration) {
-    // set the flag to false
-    this.collectingHCD = false;
+    this.setStatus(states.JAVA_PROFILING);
     // round up time to next minute
     const durationInMins = Math.ceil(duration / 60);
 
@@ -353,7 +373,9 @@ module.exports = class LoadRunner {
       const stopCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `];
       await cwUtils.spawnContainerProcess(this.project, stopCommand);
       await this.waitForHealth(false);
-      this.heartbeat('connecting');
+      if (!this.status.CANCELLED) {
+        this.heartbeat('connecting');
+      }
       log.info(`beginJavaProfiling: Starting liberty server`);
       const startCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start; `];
       await cwUtils.spawnContainerProcess(this.project, startCommand);
@@ -373,15 +395,16 @@ module.exports = class LoadRunner {
     } catch (error) {
       log.error(error)
     }
-    this.collectingHCD = true;
+    this.status.COLLECTING_HCD = true;
     this.timerID = setTimeout(() => this.getJavaHealthCenterData(1), duration * 1000);
   }
 
   async getJavaHealthCenterData(counter) {
+    this.status.COLLECTING_HCD = true;
     clearTimeout(this.heartbeatID);
     if (counter > 20) {
       log.error("getJavaHealthCenterData: Failed to save .hcd file");
-      this.collectingHCD = false;
+      this.status.COLLECTING_HCD = false;
       this.emitCompleted();
       return;
     }
@@ -390,7 +413,9 @@ module.exports = class LoadRunner {
     } catch (error) {
       if (this.project !== null) {
         const data = { projectID: this.project.projectID,  status: 'collecting' , timestamp: this.metricsFolder }
-        this.user.uiSocket.emit('runloadStatusChanged', data);
+        if (!this.status.CANCELLED) {
+          this.user.uiSocket.emit('runloadStatusChanged', data);
+        }
         log.info(`getJavaHealthCenterData: .hcd file not found, trying again. Attempt ${counter}/20`);
         this.timerID = setTimeout(() => this.getJavaHealthCenterData(counter + 1), 3000);
       } else {
@@ -399,9 +424,11 @@ module.exports = class LoadRunner {
       return;
     }
     log.info("getJavaHealthCenterData: .hcd copied to PFE");
-    this.collectingHCD = false;
+    this.status.COLLECTING_HCD = false;
     const data = { projectID: this.project.projectID,  status: 'hcdReady', timestamp: this.metricsFolder};
-    this.user.uiSocket.emit('runloadStatusChanged', data);
+    if (!this.status.CANCELLED) {
+      this.user.uiSocket.emit('runloadStatusChanged', data);
+    }
     this.emitCompleted();
   }
 
@@ -449,9 +476,10 @@ module.exports = class LoadRunner {
   /**
   * Function to cancel the loadrunner
   */
-  async cancelRunLoad(loadConfig) {
-    if (this.heartbeatID !== null) {
-      clearTimeout(this.heartbeatID);
+  async cancelRunLoad() {
+    if (!this.isIdle()) {
+      this.heartbeat('cancelling');
+      this.setStatus(states.CANCELLED); 
     }
     try {
       let options = {
@@ -463,12 +491,13 @@ module.exports = class LoadRunner {
           'Content-Type': 'application/json'
         }
       }
-      let cancelLoadResp = await cwUtils.asyncHttpRequest(options, loadConfig);
+      let cancelLoadResp = await cwUtils.asyncHttpRequest(options, {projectID: this.project.projectID});
       return cancelLoadResp;
     } catch (err) {
       log.error('cancelRunLoad: Error occurred');
       log.error(err);
     }
+    log.debug(this.status);
     throw new LoadRunError('CONNECTION_FAILED');
   }
 
@@ -510,69 +539,68 @@ module.exports = class LoadRunner {
     * Socket event for connection timeout
     * Logs the error and starts reconnect procedure
     */
-    this.socket.on('connect_timeout', () => {
-      log.info('Loadrunner has timed out')
-      // If this.up is false we're already trying to reconnect
-      if (this.up) {
-        // socket.io-client will automatically reconnect and trigger the connect event.
-        this.up = false;
-      }
+    this.socket.on('connect_timeout', data => {
+      if (data.projectID === this.project.projectID) {
+        log.info('Loadrunner has timed out')
+        // If this.up is false we're already trying to reconnect
+        if (this.up) {
+          // socket.io-client will automatically reconnect and trigger the connect event.
+          this.up = false;
+        }
+      }  
     });
 
     /**
     * Socket event for error
     * Logs the error and starts reconnect procedure
     */
-    this.socket.on('error', (err) => {
-      log.error('LoadRunner socket error');
-      // A socket error could occur while a load run is not in progress.
-      if (this.project) {
-        this.project.loadInProgress = false;
-      }
-      log.error(err);
-      // If this.up is false we're already trying to reconnect
-      if (this.up) {
-        // socket.io-client will automatically reconnect and trigger the connect event.
-        this.up = false;
-      }
-    });
-
-    this.socket.on('started', () => {
-      if (this.project) {
-        log.info(`Load run on project ${this.project.projectID} started`);
-        clearTimeout(this.heartbeatID);
-        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID, status: 'started' });
-        this.heartbeat('running');
-      } else {
-        log.warn(`Unexpected 'started' message.`);
+    this.socket.on('error', (err, data) => {
+      if (data.projectID === this.project.projectID) {
+        log.error('LoadRunner socket error');
+        log.error(err);
+        // If this.up is false we're already trying to reconnect
+        if (this.up) {
+          // socket.io-client will automatically reconnect and trigger the connect event.
+          this.up = false;
+        }
+        this.resetStatus();
       }
     });
 
-    this.socket.on('cancelled', async () => {
-      if (this.project) {
+    this.socket.on('started', data => {
+      if (data.projectID === this.project.projectID) {
+        if (!this.status.CANCELLED) {
+          log.info(`Load run on project ${this.project.projectID} started`);
+          clearTimeout(this.heartbeatID);
+          this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'started' });
+          this.setStatus(states.STARTED);
+          this.heartbeat('running'); 
+        }
+      }
+    });
+
+    this.socket.on('cancelled', async data => {
+      if (data.projectID === this.project.projectID) {
         log.info(`Load run on project ${this.project.projectID} cancelled`);
         this.heartbeat('cancelling');
-        await this.cancelProfiling();
-
-        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID, status: 'cancelled' });
-        this.project = null;
+        this.cancelProfiling();
         clearTimeout(this.heartbeatID);
-      } else {
-        log.warn(`Unexpected 'cancelled' message.`);
+        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled' });
+        this.resetStatus();
       }
     });
 
-    this.socket.on('completed', async () => {
-      if (this.project) {
-        log.info(`Load run on project ${this.project.projectID} completed`);
-        this.project.loadInProgress = false;   // Clear the flag on the project
-        if (this.collectionUri !== null) {
-          this.recordCollection();
+    this.socket.on('completed', async data => {
+      if (data.projectID === this.project.projectID) {
+        if (this.project) {
+          log.info(`Load run on project ${this.project.projectID} completed`);
+          if (this.collectionUri !== null) {
+            this.recordCollection();
+          }
+          await this.endProfiling();
+        } else {
+          log.warn(`Unexpected 'completed' message.`);
         }
-
-        await this.endProfiling();
-      } else {
-        log.warn(`Unexpected 'completed' message.`);
       }
     });
   }
@@ -582,6 +610,7 @@ module.exports = class LoadRunner {
    * samples.
    */
   beginNodeProfiling() {
+    this.setStatus(states.NODE_PROFILING);
     log.debug(`beginProfiling: Connecting to appmetrics socket ws://${this.project.host}:${this.project.getPort()}/appmetrics-dash/socket.io`);
 
     let samples = [];
@@ -636,7 +665,9 @@ module.exports = class LoadRunner {
       }
 
       const data = { projectID: this.project.projectID, status: 'profilingReady', timestamp: this.metricsFolder }
-      this.user.uiSocket.emit('runloadStatusChanged', data);
+      if (!this.status.CANCELLED) {
+        this.user.uiSocket.emit('runloadStatusChanged', data);
+      }
       this.profilingSocket.emit('disableprofiling');
       this.profilingSocket.disconnect();
       this.profilingSocket = null;
@@ -750,10 +781,37 @@ module.exports = class LoadRunner {
   }
 
   emitCompleted() {
-    if (!this.collectingHCD) {
-      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+    if (!this.status.COLLECTING_HCD) {
       clearTimeout(this.heartbeatID);
-      this.project = null;
+      this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'completed' });
+      this.resetStatus();
     }
+  }
+
+  resetStatus() {
+    this.status = {
+      CURRENT_STATE: states.IDLE,
+      REQUESTED: false,
+      PREPARING: false,
+      STARTING: false,
+      STARTED: false,
+      COMPLETED: false,
+      CANCELLED: false,
+    };
+  }
+
+  isIdle() {
+    if (this.status.CURRENT_STATE === states.IDLE) {
+      return true;
+    }
+    return false;
+  }
+
+  setStatus(newStatus) {
+    log.trace(`LoadRunner status change for ${this.project.projectID} - ${this.status.CURRENT_STATE} to ${newStatus}`);
+    if (this.status[newStatus] !== null) {
+      this.status[newStatus] = true;
+    }
+    this.status.CURRENT_STATE = newStatus;
   }
 }

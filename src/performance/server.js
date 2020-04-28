@@ -31,8 +31,7 @@ const serverPort = 9095;
 const server = app.listen(serverPort, () => log.info(`Performance server listening on port ${serverPort}!`))
 const io = Io.listen(server);
 
-var loadProcess;
-let projectURL;
+var loadProcess = {};
 
 const codewindVersion = process.env.CODEWIND_VERSION;
 const imageBuildTime = process.env.IMAGE_BUILD_TIME
@@ -61,19 +60,19 @@ app.get('/performance/api/v1/environment', (req, res) => {
 */
 app.post('/api/v1/runload', async function (req, res) {
     try {
-        if (loadProcess) {
+        if (!loadProcess[req.body.projectID]) {
+            if (!req.body.url) {
+                log.error('URL is required');
+                res.sendStatus(500);
+                return;
+            }
+            runLoad(req.body);
+            res.sendStatus(202);
+        } else {
             log.error('A load run is already in progress');
             res.status(409).send("A load run is already in progress");
             return;
         }
-        if (!req.body.url) {
-            log.error('URL is required');
-            res.status(500);
-            return;
-        }
-        runLoad(req.body);
-        projectURL = req.body.url;
-        res.sendStatus(202);
     } catch (err) {
         res.status(500).send(err);
         log.error(err);
@@ -88,20 +87,13 @@ app.post('/api/v1/runload', async function (req, res) {
 */
 app.post('/api/v1/cancelLoad', async function (req, res) {
     try {
-        if (req.body.url == projectURL) {
-            if (loadProcess) {
-                loadProcess.kill('SIGKILL');
-                res.sendStatus(200);
-                return;
-            } else {
-                log.error('No run in progress');
-                res.status(409).send("No run in progress");
-            }
-        } else {
-            const msg = 'No run in progress for this project'
-            log.error(msg)
-            res.status(409).send(msg);
+        if (loadProcess[req.body.projectID]) {
+            loadProcess[req.body.projectID].kill('SIGKILL');
+            res.sendStatus(200);
             return;
+        } else {
+            log.error('No run in progress');
+            res.status(409).send("No run in progress");
         }
     } catch (err) {
         res.status(500).send(err);
@@ -111,38 +103,38 @@ app.post('/api/v1/cancelLoad', async function (req, res) {
 
 function runLoad(options) {
     log.info(`starting loadrun with options : ${JSON.stringify(options)}`);
-    io.emit('starting');
+    io.emit('starting', {projectID: options.projectID});
     var output = "";
     var errOutput = "";
-    loadProcess = childProcess.spawn('node', ['runload.js', JSON.stringify(options)], { stdio: 'pipe' });
-    io.emit('started');
-    loadProcess.stdout.on('data', (data) => {
+    loadProcess[options.projectID] = childProcess.spawn('node', ['runload.js', JSON.stringify(options)], { stdio: 'pipe' });
+    io.emit('started', {projectID: options.projectID});
+    loadProcess[options.projectID].stdout.on('data', (data) => {
         output = output + data;
     });
-    loadProcess.stderr.on('data', (data) => {
+    loadProcess[options.projectID].stderr.on('data', (data) => {
         errOutput = errOutput + data;
     });
-    loadProcess.on('exit', (code, signal) => {
-        loadProcess = null;
+    loadProcess[options.projectID].on('exit', (code, signal) => {
+        loadProcess[options.projectID] = null;
         // Log any stray codes thrown back from the kill process signal
         log.debug(`signal: ${signal}`);
         log.debug(`code: ${code}`);
         if (signal === 9 || signal === 'SIGKILL') { // cancelled
             log.info('cancelled');
-            io.emit('cancelled');
+            io.emit('cancelled', {projectID: options.projectID});
         } else if (code != 0) { // error
             log.error(`error ${errOutput}`);
-            io.emit('error', errOutput);
+            io.emit('error', {error: errOutput, projectID: options.projectID});
         } else { // success
             log.info(`completed - loadrun summary : ${output}`);
-            io.emit('completed', output);
+            io.emit('completed', {output: output, projectID: options.projectID});
         }
     }).on('error', (err) => {
-        loadProcess = null;
-        io.emit('error', errOutput);
+        loadProcess[options.projectID] = null;
+        io.emit('error', {error: errOutput, projectID: options.projectID});
         log.error(err);
     });
-    log.debug(`loadProcess = ${inspect(loadProcess)}`);
+    log.debug(`loadProcess = ${inspect(loadProcess[options.projectID])}`);
 }
 
 /** React Performance Dashboard static files */
