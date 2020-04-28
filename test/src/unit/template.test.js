@@ -646,7 +646,7 @@ describe('Templates.js', function() {
                         });
                     });
                 });
-                describe('(<validUrlUnprotected>, <validDesc>, <validName>)', function() {
+                describe('(<validPublicGHUrl>, <validDesc>, <validName>)', function() {
                     it('succeeds', async function() {
                         const repoOptions = {
                             url: templateRepositoryURL,
@@ -666,15 +666,60 @@ describe('Templates.js', function() {
                         });
                     });
                 });
-                describe('(<validGHEURL>, <noGitCredentials>)', function() {
-                    it('fails', function() {
-                        const repoOptions = {
-                            url: sampleRepos.GHE.url,
-                            description: 'description',
-                            name: 'name',
-                        };
+                describe('(<validGHEURL>, <incorrectGitCredentials>)', function() {
+                    const repo = {
+                        url: sampleRepos.GHE.url,
+                        description: 'description',
+                        name: 'name',
+                    };
+                    it('fails when not given GitHub credentials', function() {
+                        const repoOptions = repo;
                         const func = () => templateController.addRepository(repoOptions);
                         return func().should.be.rejectedWith(`Unexpected HTTP status for ${sampleRepos.GHE.url}: 404`);
+                    });
+                    it('fails when given GitHub username but no password', function() {
+                        const repoOptions = {
+                            ...repo,
+                            gitCredentials: {
+                                username: gheCredentials.basic.username,
+                                // no password
+                            },
+                        };
+                        const func = () => templateController.addRepository(repoOptions);
+                        return func().should.be.rejectedWith(`gitCredentials includes username but no password`);
+                    });
+                    it('fails when given GitHub password but no username', function() {
+                        const repoOptions = {
+                            ...repo,
+                            gitCredentials: {
+                                password: 'validPassword',
+                                // no username
+                            },
+                        };
+                        const func = () => templateController.addRepository(repoOptions);
+                        return func().should.be.rejectedWith(`gitCredentials includes password but no username`);
+                    });
+                    it('fails when given credentials for multiple authentication methods', function() {
+                        const repoOptions = {
+                            ...repo,
+                            gitCredentials: {
+                                personalAccessToken: 'validPersonalAccessToken',
+                                password: 'validPassword',
+                            },
+                        };
+                        const func = () => templateController.addRepository(repoOptions);
+                        return func().should.be.rejectedWith(`gitCredentials includes credentials for multiple authentication methods`);
+                    });
+                    it('fails when given unexpected `gitCredentials` keys', function() {
+                        const repoOptions = {
+                            ...repo,
+                            gitCredentials: {
+                                unexpected1: 'field',
+                                unexpected2: 'field',
+                            },
+                        };
+                        const func = () => templateController.addRepository(repoOptions);
+                        return func().should.be.rejectedWith(`gitCredentials includes unexpected keys: unexpected1,unexpected2`);
                     });
                 });
                 describe('(<validGHEURL>, <correctGHECredentials>)', function() {
