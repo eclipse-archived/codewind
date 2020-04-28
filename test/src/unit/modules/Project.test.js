@@ -115,35 +115,6 @@ describe('Project.js', function() {
             json.should.not.containSubset(obj);
         });
     });
-    describe('getPerfDashPath()', () => {
-        const defaultArgs = {
-            projectID: 'projectID',
-            name: 'dummy',
-            locOnDisk: '/Documents/projectDir/',
-            injectMetrics: false,
-            isOpenLiberty: false,
-            metricsAvailable: false,
-        };
-        it('returns the performance dash path for a project as project.injectMetrics is true', () => {
-            const project = createProjectAndCheckIsAnObject(defaultArgs, 'dummyworkspace');
-            project.injectMetrics = true;
-            project.getPerfDashPath().should.equal(`/performance/charts?project=${defaultArgs.projectID}`);
-        });
-        it('returns the performance dash path for a project as project.isOpenLiberty is true', () => {
-            const project = createProjectAndCheckIsAnObject(defaultArgs, 'dummyworkspace');
-            project.isOpenLiberty = true;
-            project.getPerfDashPath().should.equal(`/performance/charts?project=${defaultArgs.projectID}`);
-        });
-        it('returns the performance dash path for a project as project.metricsAvailable is true', () => {
-            const project = createProjectAndCheckIsAnObject(defaultArgs, 'dummyworkspace');
-            project.metricsAvailable = true;
-            project.getPerfDashPath().should.equal(`/performance/charts?project=${defaultArgs.projectID}`);
-        });
-        it('returns null as project.injectMetrics, project.isOpenLiberty and project.metricsAvailable are all false', () => {
-            const project = createProjectAndCheckIsAnObject(defaultArgs, 'dummyworkspace');
-            expect(project.getPerfDashPath()).to.be.null;
-        });
-    });
     describe('setMetricsState()', function() {
         this.timeout(testTimeout.short);
         it('returns all capabilities as false, correctly sets the metricsCapabilities, metricsAvailable and metricsDashboard values in project', async() => {
