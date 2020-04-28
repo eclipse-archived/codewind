@@ -101,79 +101,171 @@ describe('Template API tests', function() {
 
     describe('POST /api/v1/templates/repositories', function() {
         setupReposAndTemplatesForTesting();
-        describe('when trying to add a repository with', function() {
-            describe('an invalid url', function() {
-                it('should return 400', async function() {
-                    const res = await addTemplateRepo({
-                        url: '/invalid/url',
-                        description: 'Invalid url.',
-                    });
-                    res.status.should.equal(400, res.text); // print res.text if assertion fails
+        describe('when trying to add a public repository', function() {
+            it('fails with 400 when given an invalid url', async function() {
+                const res = await addTemplateRepo({
+                    url: '/invalid/url',
+                    description: 'Invalid url.',
                 });
+                res.status.should.equal(400, res.text);
             });
-            describe('a duplicate url', function() {
-                it('should return 400', async function() {
-                    const { body: [existingRepo] } = await getTemplateRepos();
-                    const res = await addTemplateRepo({
-                        url: existingRepo.url,
-                        description: 'duplicate url',
-                    });
-                    res.should.have.status(400, res.text);
+            it('fails with 400 when given an duplicate url', async function() {
+                const { body: [existingRepo] } = await getTemplateRepos();
+                const res = await addTemplateRepo({
+                    url: existingRepo.url,
+                    description: 'duplicate url',
                 });
+                res.should.have.status(400, res.text);
             });
-            describe('a valid url that does not point to an index.json', function() {
-                it('should return 400', async function() {
-                    const res = await addTemplateRepo({
-                        url: validUrlNotPointingToIndexJson,
-                        description: 'valid url that does not point to an index.json',
-                    });
-                    res.status.should.equal(400, res.text); // print res.text if assertion fails
+            it('fails with 400 when given a valid url that does not point to an index.json', async function() {
+                const res = await addTemplateRepo({
+                    url: validUrlNotPointingToIndexJson,
+                    description: 'valid url that does not point to an index.json',
                 });
+                res.status.should.equal(400, res.text);
             });
-            describe('a valid url and enabled', function() {
-                let originalTemplateReposLength;
-                let originalTemplatesLength;
-                before(async function() {
-                    await deleteTemplateRepo(sampleRepos.codewind.url);
-                    const { body: repos } = await getTemplateRepos();
-                    originalTemplateReposLength = repos.length;
-                    originalTemplatesLength = await getNumberOfTemplates();
-                });
-                it('should add a template repository and update the templates', async function() {
-                    const addTemplateRepoRes = await addTemplateRepo(sampleRepos.codewind);
-                    addTemplateRepoRes.should.have.status(200).and.satisfyApiSpec;
-                    addTemplateRepoRes.body.should.deep.containSubset([sampleRepos.codewind]);
-                    addTemplateRepoRes.body.length.should.equal(originalTemplateReposLength + 1);
+            it('succeeds with 200 when given a valid url and enabled', async function() {
+                // setup
+                await deleteTemplateRepo(sampleRepos.codewind.url);
+                const { body: originalRepos } = await getTemplateRepos();
+                const originalNumTemplates = await getNumberOfTemplates();
 
-                    const getTemplatesRes = await getTemplates();
-                    getTemplatesRes.should.have.status(200).and.satisfyApiSpec;
-                    getTemplatesRes.body.length.should.be.above(originalTemplatesLength);
-                });
-            });
+                // test
+                const resToAddRepoRequest = await addTemplateRepo(sampleRepos.codewind);
+                resToAddRepoRequest.should.have.status(200).and.satisfyApiSpec;
+                resToAddRepoRequest.body.should.deep.containSubset([sampleRepos.codewind]);
+                resToAddRepoRequest.body.should.have.length(originalRepos.length + 1);
 
-            describe('a valid url but disabled', function() {
-                let originalTemplateReposLength;
-                let originalTemplatesLength;
-                let originalEnabledTemplatesLength;
-                let afterTemplatesLength;
-                let afterEnabledTemplatesLength;
-                before(async function() {
-                    await deleteTemplateRepo(sampleRepos.codewind.url);
-                    const { body: repos } = await getTemplateRepos();
-                    originalTemplateReposLength = repos.length;
-                    originalTemplatesLength = await getNumberOfTemplates();
-                    originalEnabledTemplatesLength = await getNumberOfEnabledTemplates();
+                // Then GET /templates should return the templates from the repository we just added
+                const getTemplatesRes = await getTemplates();
+                getTemplatesRes.body.length.should.be.above(originalNumTemplates);
+            });
+            it('succeeds with 200 when given a valid url but disabled', async function() {
+                // setup
+                await deleteTemplateRepo(sampleRepos.codewind.url);
+                const { body: originalRepos } = await getTemplateRepos();
+                const originalNumTemplates = await getNumberOfTemplates();
+                const originalNumEnabledTemplates = await getNumberOfEnabledTemplates();
+
+                // test
+                const resToAddRepoRequest = await addTemplateRepo(sampleRepos.disabledcodewind);
+                resToAddRepoRequest.should.have.status(200).and.satisfyApiSpec;
+                resToAddRepoRequest.body.should.deep.containSubset([sampleRepos.disabledcodewind]);
+                resToAddRepoRequest.body.should.have.length(originalRepos.length + 1);
+
+                const newNumTemplates = await getNumberOfTemplates();
+                newNumTemplates.should.be.above(originalNumTemplates);
+
+                const newNumEnabledTemplates = await getNumberOfEnabledTemplates();
+                newNumEnabledTemplates.should.equal(originalNumEnabledTemplates);
+            });
+        });
+        describe('when trying to add a GHE repository with', function() {
+            it('fails with 400 when not given GitHub credentials', async function() {
+                const res = await addTemplateRepo(sampleRepos.GHE);
+                res.should.have.status(400).and.satisfyApiSpec;
+                res.text.should.include(sampleRepos.GHE.url);
+            });
+            it('fails with 400 when given GitHub username but no password', async function() {
+                const res = await addTemplateRepo({
+                    ...sampleRepos.GHE,
+                    gitCredentials: {
+                        username: gheCredentials.basic.username,
+                        // no password
+                    },
                 });
-                it('should add a disabled template repository giving no change to enabled templates', async function() {
-                    const addTemplateRepoRes = await addTemplateRepo(sampleRepos.disabledcodewind);
-                    addTemplateRepoRes.should.have.status(200).and.satisfyApiSpec;
-                    addTemplateRepoRes.body.should.deep.containSubset([sampleRepos.disabledcodewind]);
-                    addTemplateRepoRes.body.length.should.equal(originalTemplateReposLength + 1);
-                    afterTemplatesLength = await getNumberOfTemplates();
-                    afterEnabledTemplatesLength = await getNumberOfEnabledTemplates();
-                    originalEnabledTemplatesLength.should.equal(afterEnabledTemplatesLength);
-                    afterTemplatesLength.should.be.above(originalTemplatesLength);
+                res.should.have.status(400).and.satisfyApiSpec;
+                res.text.should.include('Error while validating request: request.body.gitCredentials should have required property \'password\'');
+            });
+            it('fails with 400 when given GitHub password but no username', async function() {
+                const res = await addTemplateRepo({
+                    ...sampleRepos.GHE,
+                    gitCredentials: {
+                        password: 'validPassword',
+                        // no username
+                    },
                 });
+                res.should.have.status(400).and.satisfyApiSpec;
+                res.text.should.include('Error while validating request: request.body.gitCredentials should have required property \'username\'');
+            });
+            it('fails with 400 when given unexpected `gitCredentials` field', async function() {
+                const res = await addTemplateRepo({
+                    ...sampleRepos.GHE,
+                    gitCredentials: {
+                        unexpected: 'field',
+                    },
+                });
+                res.should.have.status(400).and.satisfyApiSpec;
+                res.text.should.include('Error while validating request: request.body.gitCredentials should NOT have additional properties');
+            });
+            it('fails with 400 when given incorrect GHE basic credentials', async function() {
+                const res = await addTemplateRepo({
+                    ...sampleRepos.GHE,
+                    gitCredentials: {
+                        username: gheCredentials.basic.username,
+                        password: 'incorrectPassword',
+                    },
+                });
+                res.should.have.status(400).and.satisfyApiSpec;
+                res.text.should.include(sampleRepos.GHE.url);
+            });
+            it('fails with 400 when given incorrect GHE Personal Access Token', async function() {
+                const res = await addTemplateRepo({
+                    ...sampleRepos.GHE,
+                    gitCredentials: {
+                        personalAccessToken: 'incorrectPersonalAccessToken',
+                    },
+                });
+                res.should.have.status(400).and.satisfyApiSpec;
+                res.text.should.include(sampleRepos.GHE.url);
+            });
+            it('succeeds with 200 when given correct GHE basic credentials', async function() {
+                if (!gheCredentials.basic.password) {
+                    this.skip();
+                }
+
+                const { body: originalTemplates } = await getTemplates();
+
+                const res = await addTemplateRepo({
+                    ...sampleRepos.GHE,
+                    gitCredentials: gheCredentials.basic,
+                });
+                res.should.have.status(200).and.satisfyApiSpec;
+                res.body.should.containSubset([sampleRepos.GHE]);
+
+                // Then GET /templates should return the templates from the repository we just added
+                const resToGetRequest = await getTemplates();
+                resToGetRequest.should.have.status(200).and.satisfyApiSpec;
+                resToGetRequest.body.should.have.length.above(originalTemplates.length);
+
+                // cleanup
+                const resToDeleteRequest = await deleteTemplateRepo(sampleRepos.GHE.url);
+                resToDeleteRequest.should.have.status(200).and.satisfyApiSpec;
+            });
+            it('succeeds with 200 when given correct GHE Personal Access Token', async function() {
+                if (!gheCredentials.personalAccessToken) {
+                    this.skip();
+                }
+
+                const { body: originalTemplates } = await getTemplates();
+
+                const res = await addTemplateRepo({
+                    ...sampleRepos.GHE,
+                    gitCredentials: {
+                        personalAccessToken: gheCredentials.personalAccessToken,
+                    },
+                });
+                res.should.have.status(200).and.satisfyApiSpec;
+                res.body.should.containSubset([sampleRepos.GHE]);
+
+                // Then GET /templates should return the templates from the repository we just added
+                const resToGetRequest = await getTemplates();
+                resToGetRequest.should.have.status(200).and.satisfyApiSpec;
+                resToGetRequest.body.should.have.length.above(originalTemplates.length);
+
+                // cleanup
+                const resToDeleteRequest = await deleteTemplateRepo(sampleRepos.GHE.url);
+                resToDeleteRequest.should.have.status(200).and.satisfyApiSpec;
             });
         });
     });
@@ -221,116 +313,6 @@ describe('Template API tests', function() {
             const res = await getTemplates();
             res.should.have.status(200).and.satisfyApiSpec;
             res.body.should.deep.equalInAnyOrder(originalTemplates);
-        });
-    });
-
-    describe('Add GHE template repository (via POST /api/v1/templates/repositories)', function() {
-        setupReposAndTemplatesForTesting();
-        it('should fail to add a GHE repo when not given GitHub credentials', async function() {
-            const res = await addTemplateRepo(sampleRepos.GHE);
-            res.should.have.status(400).and.satisfyApiSpec;
-            res.text.should.include(sampleRepos.GHE.url);
-        });
-        it('should fail to add a GHE repo when given GitHub username but no password', async function() {
-            const res = await addTemplateRepo({
-                ...sampleRepos.GHE,
-                gitCredentials: {
-                    username: gheCredentials.basic.username,
-                    // no password
-                },
-            });
-            res.should.have.status(400).and.satisfyApiSpec;
-            res.text.should.include('Error while validating request: request.body.gitCredentials should have required property \'password\'');
-        });
-        it('should fail to add a GHE repo when given GitHub password but no username', async function() {
-            const res = await addTemplateRepo({
-                ...sampleRepos.GHE,
-                gitCredentials: {
-                    password: 'validPassword',
-                    // no username
-                },
-            });
-            res.should.have.status(400).and.satisfyApiSpec;
-            res.text.should.include('Error while validating request: request.body.gitCredentials should have required property \'username\'');
-        });
-        it('should fail to add a GHE repo when given unexpected `gitCredentials` field', async function() {
-            const res = await addTemplateRepo({
-                ...sampleRepos.GHE,
-                gitCredentials: {
-                    unexpected: 'field',
-                },
-            });
-            res.should.have.status(400).and.satisfyApiSpec;
-            res.text.should.include('Error while validating request: request.body.gitCredentials should NOT have additional properties');
-        });
-        it('should fail to add a GHE repo when given incorrect GHE basic credentials', async function() {
-            const res = await addTemplateRepo({
-                ...sampleRepos.GHE,
-                gitCredentials: {
-                    username: gheCredentials.basic.username,
-                    password: 'incorrectPassword',
-                },
-            });
-            res.should.have.status(400).and.satisfyApiSpec;
-            res.text.should.include(sampleRepos.GHE.url);
-        });
-        it('should fail to add a GHE repo when given incorrect GHE Personal Access Token', async function() {
-            const res = await addTemplateRepo({
-                ...sampleRepos.GHE,
-                gitCredentials: {
-                    personalAccessToken: 'incorrectPersonalAccessToken',
-                },
-            });
-            res.should.have.status(400).and.satisfyApiSpec;
-            res.text.should.include(sampleRepos.GHE.url);
-        });
-        it('should add a GHE repo when given correct GHE basic credentials', async function() {
-            if (!gheCredentials.basic.password) {
-                this.skip();
-            }
-
-            const { body: originalTemplates } = await getTemplates();
-
-            const res = await addTemplateRepo({
-                ...sampleRepos.GHE,
-                gitCredentials: gheCredentials.basic,
-            });
-            res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.containSubset([sampleRepos.GHE]);
-
-            // Then GET /templates should return the templates from the repository we just added
-            const resToGetRequest = await getTemplates();
-            resToGetRequest.should.have.status(200).and.satisfyApiSpec;
-            resToGetRequest.body.should.have.length.above(originalTemplates.length);
-
-            // cleanup
-            const resToDeleteRequest = await deleteTemplateRepo(sampleRepos.GHE.url);
-            resToDeleteRequest.should.have.status(200).and.satisfyApiSpec;
-        });
-        it('should add a GHE repo when given correct GHE Personal Access Token', async function() {
-            if (!gheCredentials.personalAccessToken) {
-                this.skip();
-            }
-
-            const { body: originalTemplates } = await getTemplates();
-
-            const res = await addTemplateRepo({
-                ...sampleRepos.GHE,
-                gitCredentials: {
-                    personalAccessToken: gheCredentials.personalAccessToken,
-                },
-            });
-            res.should.have.status(200).and.satisfyApiSpec;
-            res.body.should.containSubset([sampleRepos.GHE]);
-
-            // Then GET /templates should return the templates from the repository we just added
-            const resToGetRequest = await getTemplates();
-            resToGetRequest.should.have.status(200).and.satisfyApiSpec;
-            resToGetRequest.body.should.have.length.above(originalTemplates.length);
-
-            // cleanup
-            const resToDeleteRequest = await deleteTemplateRepo(sampleRepos.GHE.url);
-            resToDeleteRequest.should.have.status(200).and.satisfyApiSpec;
         });
     });
 
