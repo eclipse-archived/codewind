@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 IBM Corporation and others.
+ * Copyright (c) 2020 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -36,9 +36,7 @@ const mockedConfig = {
 };
 
 describe('kubernetesFunctions.js', () => {
-    // suppressLogOutput(kubernetesFunctions);
     describe('getServicePortFromProjectIngress(projectID)', () => {
-        // const { getServicePortFromProjectIngress } = kubernetesFunctions;
         it('returns 9080 as the mockResponse returned from the kubernetes-client is valid and contains the servicePort 9080', async function() {
             const mockResponse = {
                 body: {
@@ -79,10 +77,10 @@ describe('kubernetesFunctions.js', () => {
                 },
                 config: mockedConfig,
             };
-            const kubernetesFunctions = proxyquire('../../../../../src/pfe/portal/modules/utils/kubernetesFunctions', {
+            const { getServicePortFromProjectIngress } = proxyquire('../../../../../src/pfe/portal/modules/utils/kubernetesFunctions', {
                 'kubernetes-client': MockKubernetesClient,
             });
-            const port = await kubernetesFunctions.getServicePortFromProjectIngress('projectID');
+            const port = await getServicePortFromProjectIngress('projectID');
             port.should.equal(9080);
         });
         it('returns null as the mockResponse returned from the kubernetes-client is invalid', async function() {
@@ -110,10 +108,10 @@ describe('kubernetesFunctions.js', () => {
                 },
                 config: mockedConfig,
             };
-            const kubernetesFunctions = proxyquire('../../../../../src/pfe/portal/modules/utils/kubernetesFunctions', {
+            const { getServicePortFromProjectIngress } = proxyquire('../../../../../src/pfe/portal/modules/utils/kubernetesFunctions', {
                 'kubernetes-client': MockKubernetesClient,
             });
-            const port = await kubernetesFunctions.getServicePortFromProjectIngress('projectID');
+            const port = await getServicePortFromProjectIngress('projectID');
             chai.expect(port).to.equal(null);
         });
         it('throws an error when the kubernetes-client throws an error', function() {
@@ -135,10 +133,10 @@ describe('kubernetesFunctions.js', () => {
                 },
                 config: mockedConfig,
             };
-            const kubernetesFunctions = proxyquire('../../../../../src/pfe/portal/modules/utils/kubernetesFunctions', {
+            const { getServicePortFromProjectIngress } = proxyquire('../../../../../src/pfe/portal/modules/utils/kubernetesFunctions', {
                 'kubernetes-client': MockKubernetesClient,
             });
-            return kubernetesFunctions.getServicePortFromProjectIngress('projectID').should.eventually.rejected;
+            return getServicePortFromProjectIngress('projectID').should.eventually.rejected;
         });
     });
 });
