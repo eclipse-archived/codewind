@@ -132,18 +132,21 @@ module.exports = class Project {
     if (global.codewind.RUNNING_IN_K8S) {
       try {
         const namespace = process.env.KUBE_NAMESPACE
-        const projectID = this.projectID
+        const { projectID } = this;
         const client = new Client({ config: config.getInCluster(), version: '1.9' });
         const services = await client.api.v1.namespaces(namespace).services.get({ qs: { labelSelector: 'projectID='+projectID } })
-
+        const ingressPort = await cwUtils.getServicePortFromProjectIngress(projectID);
         if (services && services.body && services.body.items && services.body.items[0]) {
           const ipAddress = services.body.items[0].spec.clusterIP
-          const port = services.body.items[0].spec.ports[0].targetPort
+          const targetPort = services.body.items[0].spec.ports[0].targetPort
           const serviceName = services.body.items[0].metadata.name
+
+          // prefer the ingress port if available
+          const port = ingressPort ? ingressPort : targetPort;
 
           // update service host
           this.kubeServiceHost = ipAddress
-          this.kubeServicePort = port
+          this.kubeServicePort = port;
           this.kubeServiceName = serviceName
           return { hostname: ipAddress, port, serviceName }
         }

@@ -115,6 +115,30 @@ async function patchProjectDeployments(projectID, patchBody) {
   }));
 }
 
+async function getProjectIngress(projectID) {
+  const res = await client.apis.extensions.v1beta1.ns(K8S_NAME_SPACE).ingresses.get({ qs: { labelSelector: `projectID=${projectID}` } });
+  if (!res || !res.body || !res.body.items || res.body.items.length === 0) {
+    return null;
+  }
+  const { items: ingresses } = res.body;
+  const [ingress] = ingresses; // we don't support multiple ingresses so get the first item in the list
+  return ingress;
+}
+
+async function getServicePortFromProjectIngress(projectID) {
+  const ingress = await getProjectIngress(projectID);
+  // sanitise the response ingress
+  if (!ingress || !ingress.spec || !ingress.spec.rules
+    || !ingress.spec.rules[0] || !ingress.spec.rules[0].http
+    || !ingress.spec.rules[0].http.paths || !ingress.spec.rules[0].http.paths.length > 0
+    || !ingress.spec.rules[0].http.paths[0].backend) {
+    return null;
+  }
+  // Assume that we want the first rule and the first path in the http rules
+  const { servicePort } = ingress.spec.rules[0].http.paths[0].backend;
+  return servicePort;
+}
+
 module.exports = {
   getContainerLogStream,
   spawnContainerProcess,
@@ -125,4 +149,5 @@ module.exports = {
   updateConfigMap,
   getProjectDeployments,
   patchProjectDeployments,
+  getServicePortFromProjectIngress,
 }
