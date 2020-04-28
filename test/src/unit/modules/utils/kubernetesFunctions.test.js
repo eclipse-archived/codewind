@@ -8,9 +8,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
 *******************************************************************************/
-const rewire = require('rewire');
+const proxyquire = require('proxyquire');
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
+
+chai.use(chaiAsPromised);
+chai.should();
 
 // These tests can be used to create new functions using the kubernetes-client package.
 // They can run data against your current kube context (ensure you're logged in)
@@ -28,18 +31,14 @@ const chaiAsPromised = require('chai-as-promised');
 // Finally, either comment the function mocking for the test you want to run real data against
 //          or write a new test
 
-
-const kubernetesFunctions = rewire('../../../../../src/pfe/portal/modules/utils/kubernetesFunctions');
-
-const { suppressLogOutput } = require('../../../../modules/log.service');
-
-chai.use(chaiAsPromised);
-chai.should();
+const mockedConfig = {
+    getInCluster: () => '',
+};
 
 describe('kubernetesFunctions.js', () => {
-    suppressLogOutput(kubernetesFunctions);
+    // suppressLogOutput(kubernetesFunctions);
     describe('getServicePortFromProjectIngress(projectID)', () => {
-        const { getServicePortFromProjectIngress } = kubernetesFunctions;
+        // const { getServicePortFromProjectIngress } = kubernetesFunctions;
         it('returns 9080 as the mockResponse returned from the kubernetes-client is valid and contains the servicePort 9080', async function() {
             const mockResponse = {
                 body: {
@@ -62,63 +61,84 @@ describe('kubernetesFunctions.js', () => {
                     ],
                 },
             };
-            const mockedClient = {
-                apis: {
-                    extensions: {
-                        v1beta1: {
-                            ns: () => ({
-                                ingresses: {
-                                    get: () => mockResponse,
-                                },
-                            }),
-                        },
-                    },
-                },
-            };
-            kubernetesFunctions.__set__('client', mockedClient);
-            const port = await getServicePortFromProjectIngress('projectID');
-            port.should.equal(9080);
-        });
-        it('returns null as the mockResponse returned from the kubernetes-client is invalid', async function() {
-            const mockedClient = {
-                apis: {
-                    extensions: {
-                        v1beta1: {
-                            ns: () => ({
-                                ingresses: {
-                                    get: () => ({
-                                        body: {
-                                            items: [{
-                                                invalidItem: true,
-                                            }],
+            const MockKubernetesClient = {
+                Client: class Client {
+                    constructor() {
+                        this.apis = {
+                            extensions: {
+                                v1beta1: {
+                                    ns: () => ({
+                                        ingresses: {
+                                            get: () => mockResponse,
                                         },
                                     }),
                                 },
-                            }),
-                        },
-                    },
+                            },
+                        };
+                    }
                 },
+                config: mockedConfig,
             };
-            kubernetesFunctions.__set__('client', mockedClient);
-            const port = await getServicePortFromProjectIngress('projectID');
+            const kubernetesFunctions = proxyquire('../../../../../src/pfe/portal/modules/utils/kubernetesFunctions', {
+                'kubernetes-client': MockKubernetesClient,
+            });
+            const port = await kubernetesFunctions.getServicePortFromProjectIngress('projectID');
+            port.should.equal(9080);
+        });
+        it('returns null as the mockResponse returned from the kubernetes-client is invalid', async function() {
+            const MockKubernetesClient = {
+                Client: class Client {
+                    constructor() {
+                        this.apis = {
+                            extensions: {
+                                v1beta1: {
+                                    ns: () => ({
+                                        ingresses: {
+                                            get: () => ({
+                                                body: {
+                                                    items: [{
+                                                        invalidItem: true,
+                                                    }],
+                                                },
+                                            }),
+                                        },
+                                    }),
+                                },
+                            },
+                        };
+                    }
+                },
+                config: mockedConfig,
+            };
+            const kubernetesFunctions = proxyquire('../../../../../src/pfe/portal/modules/utils/kubernetesFunctions', {
+                'kubernetes-client': MockKubernetesClient,
+            });
+            const port = await kubernetesFunctions.getServicePortFromProjectIngress('projectID');
             chai.expect(port).to.equal(null);
         });
         it('throws an error when the kubernetes-client throws an error', function() {
-            const mockedClient = {
-                apis: {
-                    extensions: {
-                        v1beta1: {
-                            ns: () => ({
-                                ingresses: {
-                                    get: () => { throw Error('expected error'); },
+            const MockKubernetesClient = {
+                Client: class Client {
+                    constructor() {
+                        this.apis = {
+                            extensions: {
+                                v1beta1: {
+                                    ns: () => ({
+                                        ingresses: {
+                                            get: () => { throw Error('expected error'); },
+                                        },
+                                    }),
                                 },
-                            }),
-                        },
-                    },
+                            },
+                        };
+                    }
                 },
+                config: mockedConfig,
             };
-            kubernetesFunctions.__set__('client', mockedClient);
-            return getServicePortFromProjectIngress('projectID').should.eventually.rejected;
+            const kubernetesFunctions = proxyquire('../../../../../src/pfe/portal/modules/utils/kubernetesFunctions', {
+                'kubernetes-client': MockKubernetesClient,
+            });
+            return kubernetesFunctions.getServicePortFromProjectIngress('projectID').should.eventually.rejected;
         });
     });
 });
