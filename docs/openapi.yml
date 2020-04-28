@@ -1849,7 +1849,25 @@ paths:
             The link has been deleted.
             A further response will be sent over WebSocket once the project has restarted (using the event 'projectLink')
         404:
-          description: The link does not exists
+          description: The link does not exist
+
+  /api/v1/projects/{id}/missingLocalDir:
+    post:
+      summary: Register that the local directory, associated with the project, is not present on disk
+      parameters:
+        - in: path
+          name: id
+          schema:
+            $ref: '#/components/schemas/ProjectID'
+          required: true
+          description: id of project
+      responses:
+        200:
+          description: Action successful
+        404:
+          description: Project not found
+        500:
+          description: Internal server error
 
 components:
   schemas:

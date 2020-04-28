@@ -28,6 +28,7 @@ const router = express.Router();
   require('./fileChanges.route'),
   require('./bind.route'),
   require('./links.route'),
+  require('./missingLocalDir.route')
 ]
   .forEach((subRouter) => router.use(subRouter));
 
