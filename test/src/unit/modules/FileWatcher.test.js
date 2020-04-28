@@ -598,15 +598,17 @@ describe('FileWatcher.js', () => {
                 logStreams: mockFwProject.logStreams,
                 type: mockFwProject.type,
             };
+            const setMetricsState = sinon.stub().resolves();
             const expectedProjectInfoForUI = {
                 projectID: mockFwProject.projectID,
                 status: mockFwProject.status,
                 error: mockFwProject.error,
                 type: mockFwProject.type,
+                setMetricsState,
             };
             const mockUser = {
-                projectList: { 
-                    updateProject: sinon.stub().returns(expectedProjectUpdate),
+                projectList: {
+                    updateProject: sinon.stub().returns({ ...expectedProjectUpdate, setMetricsState }),
                 },
                 uiSocket: { emit: sinon.mock() },
             };

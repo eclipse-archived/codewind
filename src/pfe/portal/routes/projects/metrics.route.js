@@ -16,6 +16,7 @@ const ProjectError = require('../../modules/utils/errors/ProjectError');
 const ProjectMetricsError = require('../../modules/utils/errors/ProjectMetricsError');
 const Project = require('../../modules/Project');
 const { validateReq } = require('../../middleware/reqValidator');
+const { checkProjectExists, getProjectFromReq } = require('../../middleware/checkProjectExists');
 const metricsController = require('../../controllers/metrics.controller');
 
 const router = express.Router();
@@ -58,31 +59,25 @@ router.get('/api/v1/projects/:id/metrics', function (req, res) {
  * Function to check if project can support metrics
  * @param id, the id of the project
  * @return 200 if project existed and the metricsCheck completes
- * @return 400 if project build file is not found
  * @return 404 if project is not found
  * @return 500 on internal error
  */
 
-router.get('/api/v1/projects/:id/metrics/status', async function (req, res) {
+router.get('/api/v1/projects/:id/metrics/status', checkProjectExists, async function (req, res) {
   try {
-    const user = req.cw_user;
-    const projectID = req.sanitizeParams('id');
-    const project = user.projectList.retrieveProject(projectID);
-    if (!project) {
-      const message = `Unable to find project ${projectID}`;
-      log.error(message);
-      res.status(404).send({ message });
-      return;
+    const project = getProjectFromReq(req);
+    const { canMetricsBeInjected, appStatus } = project;
+    let capabilities = project.getMetricsCapabilities();
+    if (!capabilities || Object.keys(capabilities).length === 0) {
+      // If projectMetrics is an empty object, fetch them first
+      const { capabilities: updatedCapabilities } = await project.setMetricsState();
+      capabilities = updatedCapabilities;
     }
-    const metricsAvailable = await project.isMetricsAvailable();
-    res.status(200).send({ metricsAvailable });
+    const projectRunning = (appStatus === 'started');
+    res.status(200).send({ ...capabilities, canMetricsBeInjected, projectRunning });
   } catch (err) {
     log.error(err.info || err);
-    if (err.code === 'BUILD_FILE_MISSING') {
-      res.status(400).send(err.info || err);
-    } else {
-      res.status(500).send(err.info || err);
-    }
+    res.status(500).send(err.info || err);
   }
 });
 

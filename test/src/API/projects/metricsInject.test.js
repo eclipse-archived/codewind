@@ -63,17 +63,12 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
-                metricsAvailable: true,
                 injectMetrics: true,
                 injection: {
                     injectable: true,
                     injected: true,
                 },
                 isOpenLiberty: false,
-                metricsDashboard: {
-                    hosting: 'performanceContainer',
-                    path: `/performance/monitor/dashboard/nodejs?theme=dark&projectID=${projectID}`,
-                },
                 perfDashboardPath: `/performance/charts?project=${projectID}`,
             });
         });
@@ -85,18 +80,12 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
-                metricsAvailable: true,
                 injectMetrics: false,
                 injection: {
                     injectable: true,
                     injected: false,
                 },
                 isOpenLiberty: false,
-                metricsDashboard: {
-                    hosting: 'project',
-                    path: `/appmetrics-dash/?theme=dark`,
-                },
-                perfDashboardPath: `/performance/charts?project=${projectID}`,
             });
         });
     });
@@ -123,17 +112,12 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
-                metricsAvailable: true,
                 injectMetrics: true,
                 injection: {
                     injectable: true,
                     injected: true,
                 },
                 isOpenLiberty: false,
-                metricsDashboard: {
-                    hosting: 'performanceContainer',
-                    path: `/performance/monitor/dashboard/java?theme=dark&projectID=${projectID}`,
-                },
                 perfDashboardPath: `/performance/charts?project=${projectID}`,
             });
         });
@@ -145,18 +129,12 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
-                metricsAvailable: true,
                 injectMetrics: false,
                 injection: {
                     injectable: true,
                     injected: false,
                 },
                 isOpenLiberty: false,
-                metricsDashboard: {
-                    hosting: 'project',
-                    path: `/javametrics-dash/?theme=dark`,
-                },
-                perfDashboardPath: `/performance/charts?project=${projectID}`,
             });
         });
     });
@@ -183,17 +161,12 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
-                metricsAvailable: false,
                 injectMetrics: true,
                 injection: {
                     injectable: true,
                     injected: true,
                 },
                 isOpenLiberty: true,
-                metricsDashboard: {
-                    hosting: 'performanceContainer',
-                    path: `/performance/monitor/dashboard/java?theme=dark&projectID=${projectID}`,
-                },
                 perfDashboardPath: `/performance/charts?project=${projectID}`,
             });
         });
@@ -205,18 +178,12 @@ describe('Metrics Inject tests (/api/v1/projects/{id}/metrics/inject)', function
         
             const { body: project } = await projectService.getProject(projectID);
             project.should.containSubset({
-                metricsAvailable: false,
                 injectMetrics: false,
                 injection: {
                     injectable: true,
                     injected: false,
                 },
                 isOpenLiberty: true,
-                metricsDashboard: {
-                    hosting: 'performanceContainer',
-                    path: `/performance/monitor/dashboard/java?theme=dark&projectID=${projectID}`,
-                },
-                perfDashboardPath: `/performance/charts?project=${projectID}`,
             });
         });
     });
