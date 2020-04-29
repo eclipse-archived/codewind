@@ -43,6 +43,15 @@ describe('metricsStatusChecker.js', function() {
                 hostname: 'k8Hostname',
                 port: 'k8Port',
             }),
+            getMetricsContextRoot() {
+                const { language } = this;
+                if (language === 'java') {
+                    return 'javametrics';
+                } else if (language === 'nodejs' || language === 'javascript') {
+                    return 'appmetrics';
+                }
+                return '';
+            },
         };
         const defaultCapabilities = {
             liveMetricsAvailable: false,
@@ -50,6 +59,7 @@ describe('metricsStatusChecker.js', function() {
             appmetricsEndpoint: false,
             microprofilePackageFoundInBuildFile: false,
             appmetricsPackageFoundInBuildFile: false,
+            hasTimedMetrics: false,
         };
         it('returns the metricsStatus object for a project that is not running and has no files', async function() {
             const { capabilities, metricsDashHost } = await getMetricStatusForProject(mockProject);
@@ -136,6 +146,7 @@ describe('metricsStatusChecker.js', function() {
                         appmetricsEndpoint,
                         microprofilePackageFoundInBuildFile,
                         appmetricsPackageFoundInBuildFile,
+                        hasTimedMetrics: false,
                     });
                     metricsDashHost.should.deep.equal(expectedMetricsDashHost);
                     unsetGetActiveMetrics();
@@ -274,7 +285,6 @@ describe('metricsStatusChecker.js', function() {
             hasMetrics.should.be.false;
         });
     });
-    
     describe('getActiveMetricsURLs(host, port)', function() {
         const getActiveMetricsURLs = metricsStatusChecker.__get__('getActiveMetricsURLs');
         it('returns all endpoints as true as isMetricsEndpoint is stubbed to always return true', async function() {
@@ -493,6 +503,140 @@ describe('metricsStatusChecker.js', function() {
         it('returns null when the metricsDashHost is performanceContainer, the language is not nodejs or java and injectMetrics is false', function() {
             const path = getDashboardPath(params.metricsDashHost.perf, params.endpoint, params.projectID, 'notnodejsorjava', false);
             chai.expect(path).to.equal(null);
+        });
+    });
+    describe('hasTimedMetricsFeature(host, port, metricsContextRoot)', function() {
+        const hasTimedMetricsFeature = metricsStatusChecker.__get__('hasTimedMetricsFeature');
+        it('returns true as the collections/features endpoint exists and body.timedMetrics is true', async function() {
+            const mockedMakeRequest = sinon.stub().returns({
+                validRes: true,
+                body: {
+                    timedMetrics: true,
+                },
+            });
+            const resetMakeRequestAndCheckResponse = metricsStatusChecker.__set__('makeRequestAndCheckResponse', mockedMakeRequest);
+            const hasTimedMetrics = await hasTimedMetricsFeature('host', 'port', 'metricsStatusChecker');
+            hasTimedMetrics.should.be.true;
+            resetMakeRequestAndCheckResponse();
+        });
+        it('returns true as statusCode === expectedStatus and res.body is a valid object', async function() {
+            const mockedMakeRequest = sinon.stub().returns({
+                validRes: true,
+                body: '{"timedMetrics":"true"}',
+            });
+            const resetMakeRequestAndCheckResponse = metricsStatusChecker.__set__('makeRequestAndCheckResponse', mockedMakeRequest);
+            const hasTimedMetrics = await hasTimedMetricsFeature('host', 'port', 'metricsStatusChecker');
+            hasTimedMetrics.should.be.true;
+            resetMakeRequestAndCheckResponse();
+        });
+        it('returns true as statusCode === expectedStatus and res.body is a valid object', async function() {
+            const mockedMakeRequest = sinon.stub().returns({
+                validRes: true,
+                body: '{"timedMetrics":true}',
+            });
+            const resetMakeRequestAndCheckResponse = metricsStatusChecker.__set__('makeRequestAndCheckResponse', mockedMakeRequest);
+            const hasTimedMetrics = await hasTimedMetricsFeature('host', 'port', 'metricsStatusChecker');
+            hasTimedMetrics.should.be.true;
+            resetMakeRequestAndCheckResponse();
+        });
+        it('returns false as the collections/features endpoint exists but body.timedMetrics is false', async function() {
+            const mockedMakeRequest = sinon.stub().returns({
+                validRes: true,
+                body: {
+                    timedMetrics: false,
+                },
+            });
+            const resetMakeRequestAndCheckResponse = metricsStatusChecker.__set__('makeRequestAndCheckResponse', mockedMakeRequest);
+            const hasTimedMetrics = await hasTimedMetricsFeature('host', 'port', 'metricsStatusChecker');
+            hasTimedMetrics.should.be.false;
+            resetMakeRequestAndCheckResponse();
+        });
+        it('returns false as the collections/features endpoint exists but body.timedMetrics is an empty string', async function() {
+            const mockedMakeRequest = sinon.stub().returns({
+                validRes: true,
+                body: '{"timedMetrics":""}',
+            });
+            const resetMakeRequestAndCheckResponse = metricsStatusChecker.__set__('makeRequestAndCheckResponse', mockedMakeRequest);
+            const hasTimedMetrics = await hasTimedMetricsFeature('host', 'port', 'metricsStatusChecker');
+            hasTimedMetrics.should.be.false;
+            resetMakeRequestAndCheckResponse();
+        });
+        it('returns false as the collections/features endpoint exists but body.timedMetrics is an invalid string', async function() {
+            const mockedMakeRequest = sinon.stub().returns({
+                validRes: true,
+                body: '{"timedMetrics":"invalid"}',
+            });
+            const resetMakeRequestAndCheckResponse = metricsStatusChecker.__set__('makeRequestAndCheckResponse', mockedMakeRequest);
+            const hasTimedMetrics = await hasTimedMetricsFeature('host', 'port', 'metricsStatusChecker');
+            hasTimedMetrics.should.be.false;
+            resetMakeRequestAndCheckResponse();
+        });
+        it('returns false as the collections/features endpoint exists but body.timedMetrics is a number', async function() {
+            const mockedMakeRequest = sinon.stub().returns({
+                validRes: true,
+                body: '{"timedMetrics":15}',
+            });
+            const resetMakeRequestAndCheckResponse = metricsStatusChecker.__set__('makeRequestAndCheckResponse', mockedMakeRequest);
+            const hasTimedMetrics = await hasTimedMetricsFeature('host', 'port', 'metricsStatusChecker');
+            hasTimedMetrics.should.be.false;
+            resetMakeRequestAndCheckResponse();
+        });
+        it('returns false as the collections/features endpoint does not exist', async function() {
+            const mockedMakeRequest = sinon.stub().returns({
+                validRes: false,
+            });
+            const resetMakeRequestAndCheckResponse = metricsStatusChecker.__set__('makeRequestAndCheckResponse', mockedMakeRequest);
+            const hasTimedMetrics = await hasTimedMetricsFeature('host', 'port', 'metricsStatusChecker');
+            hasTimedMetrics.should.be.false;
+            resetMakeRequestAndCheckResponse();
+        });
+    });
+    describe('makeRequestAndCheckResponse(options, expectedResponse)', function() {
+        const makeRequestAndCheckResponse = metricsStatusChecker.__get__('makeRequestAndCheckResponse');
+        it('returns true as statusCode === expectedStatus', async function() {
+            const expectedStatus = 200;
+            const mockedAsyncHttpRequest = sinon.stub().returns({
+                statusCode: expectedStatus,
+            });
+            const resetAsyncHttpRequest = metricsStatusChecker.__set__('asyncHttpRequest', mockedAsyncHttpRequest);
+            const requestOptions = { host: 'host', port: 'port', path: 'path' };
+
+            const { validRes } = await makeRequestAndCheckResponse(requestOptions, expectedStatus);
+
+            validRes.should.be.true;
+            mockedAsyncHttpRequest.should.be.calledWith({ ...requestOptions, method: 'GET' });
+
+            resetAsyncHttpRequest();
+        });
+        it('returns false as statusCode !== expectedStatus', async function() {
+            const expectedStatus = 200;
+            const mockedAsyncHttpRequest = sinon.stub().returns({
+                statusCode: 404,
+                body: 'body',
+            });
+            const resetAsyncHttpRequest = metricsStatusChecker.__set__('asyncHttpRequest', mockedAsyncHttpRequest);
+            const requestOptions = { host: 'host', port: 'port', path: 'path' };
+
+            const { validRes, body } = await makeRequestAndCheckResponse(requestOptions, expectedStatus);
+
+            validRes.should.be.false;
+            body.should.equal('body');
+            mockedAsyncHttpRequest.should.be.calledWith({ ...requestOptions, method: 'GET' });
+
+            resetAsyncHttpRequest();
+        });
+        it('returns false as asyncHttpRequest throws an error', async function() {
+            const expectedStatus = 200;
+            const mockedAsyncHttpRequest = sinon.stub().throws;
+            const resetAsyncHttpRequest = metricsStatusChecker.__set__('asyncHttpRequest', mockedAsyncHttpRequest);
+            const requestOptions = { host: 'host', port: 'port', path: 'path' };
+
+            const { validRes, body } = await makeRequestAndCheckResponse(requestOptions, expectedStatus);
+
+            validRes.should.be.false;
+            chai.expect(body).to.equal(null);
+
+            resetAsyncHttpRequest();
         });
     });
 });

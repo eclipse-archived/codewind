@@ -61,6 +61,8 @@ async function getMetricStatusForProject(project) {
   const { RUNNING_IN_K8S } = global.codewind;
   const { projectID, language, host: hostname, ports: { internalPort }, injectMetrics } = project;
   const projectPath = project.projectPath();
+  const metricsContextRoot = project.getMetricsContextRoot();
+
   let host = hostname;
   let port = internalPort;
   if (RUNNING_IN_K8S) {
@@ -81,6 +83,12 @@ async function getMetricStatusForProject(project) {
   const [appmetricsEndpoint = false] = Object.keys(endpoints).filter(key => APPMETRIC_ENDPOINTS.includes(key) && endpoints[key]);
   const liveMetricsAvailable = (metricsEndpoint || appmetricsEndpoint) ? true : false;
 
+  // Check if projects appmetrics has the ability to use timed metrics
+  // if the project doesn't have a metricsContextRoot, it won't have the appmetrics API
+  const hasTimedMetrics = (metricsContextRoot && metricsContextRoot !== '')
+    ? await hasTimedMetricsFeature(host, port, metricsContextRoot)
+    : false;
+
   // hosting and path for project.metricsDashboard
   const { hosting, path } = getMetricsDashboardHostAndPath(endpoints, projectID, language, injectMetrics);
 
@@ -91,6 +99,7 @@ async function getMetricStatusForProject(project) {
       appmetricsEndpoint,
       microprofilePackageFoundInBuildFile,
       appmetricsPackageFoundInBuildFile,
+      hasTimedMetrics,
     },
     metricsDashHost: {
       hosting,
@@ -168,22 +177,7 @@ async function getActiveMetricsURLs(host, port) {
 }
 
 async function isMetricsEndpoint(host, port, path) {
-  const options = {
-    host,
-    port,
-    path,
-    method: 'GET',
-  }
-
-  let res;
-  try {
-    res = await asyncHttpRequest(options);
-  } catch(err) {
-    // If the request errors then the metrics endpoint isn't available
-    return false;
-  }
-  const { statusCode, body } = res;
-  const validRes = (statusCode === 200);
+  const { validRes, body } = await makeRequestAndCheckResponse({ host, port, path }, 200);
   if (!validRes || !body) {
     return false;
   }
@@ -264,6 +258,43 @@ function getDashboardPath(metricsDashHost, projectMetricEndpoint, projectID, lan
   }
 
   return null;
+}
+
+async function hasTimedMetricsFeature(host, port, metricsContextRoot) {
+  const path = `/${metricsContextRoot}/api/v1/collections/features`;
+  const { validRes, body } = await makeRequestAndCheckResponse({ host, port, path }, 200);
+  // const body = JSON.parse(stringBody);
+  let hasTimedMetrics = false;
+  const bodyIsString = (typeof body === 'string' || body instanceof String);
+  if (bodyIsString) {
+    try {
+      const parsedBody = JSON.parse(body);
+      hasTimedMetrics = parsedBody && (parsedBody.timedMetrics === true || parsedBody.timedMetrics === "true");
+    } catch (err) {
+      // Response body was a string but we couldn't parse it
+      return false;
+    }
+  } else {
+    // body should be an object now
+    hasTimedMetrics = body && body.timedMetrics;
+  }
+  return validRes && hasTimedMetrics;
+}
+
+async function makeRequestAndCheckResponse(options, expectedResponse) {
+  let res;
+  try {
+    res = await asyncHttpRequest({
+      method: 'GET',
+      ...options,
+    });
+  } catch(err) {
+    // If the request errors then the metrics endpoint isn't available
+    return { validRes: false, body: null };
+  }
+  const { statusCode, body } = res;
+  const validRes = (statusCode === expectedResponse);
+  return { validRes, body };
 }
 
 module.exports = {

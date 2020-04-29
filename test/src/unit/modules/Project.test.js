@@ -153,6 +153,7 @@ describe('Project.js', function() {
                 appmetricsEndpoint: false,
                 microprofilePackageFoundInBuildFile: false,
                 appmetricsPackageFoundInBuildFile: false,
+                hasTimedMetrics: false,
             };
             const project = createDefaultProjectAndCheckIsAnObject();
 
@@ -184,6 +185,7 @@ describe('Project.js', function() {
                     appmetricsEndpoint: '/appmetrics-dash',
                     microprofilePackageFoundInBuildFile: true,
                     appmetricsPackageFoundInBuildFile: true,
+                    hasTimedMetrics: false,
                 },
                 metricsDashHost: {
                     hosting: 'project',
