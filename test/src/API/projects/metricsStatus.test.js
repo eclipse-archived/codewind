@@ -59,6 +59,9 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'nodejs',
                 creationTime: Date.now(),
             });
+            // save projectID for cleanup
+            projectID = project.projectID;
+
             project.metricsAvailable.should.be.false;
             project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
 
@@ -72,10 +75,8 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 appmetricsPackageFoundInBuildFile: true,
                 canMetricsBeInjected: true, // As is a Node.js project
                 projectRunning: false,
+                hasTimedMetrics: false,
             });
-
-            // save projectID for cleanup
-            projectID = project.projectID;
         });
     });
 
@@ -117,6 +118,9 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'nodejs',
                 creationTime: Date.now(),
             });
+            // save projectID for cleanup
+            projectID = project.projectID;
+
             project.metricsAvailable.should.be.false;
             project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
 
@@ -130,10 +134,8 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 appmetricsPackageFoundInBuildFile: false,
                 canMetricsBeInjected: true, // As is a Node.js project
                 projectRunning: false,
+                hasTimedMetrics: false,
             });
-
-            // save projectID for cleanup
-            projectID = project.projectID;
         });
     });
 
@@ -165,6 +167,9 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'liberty',
                 creationTime: Date.now(),
             });
+            // save projectID for cleanup
+            projectID = project.projectID;
+
             project.metricsAvailable.should.be.false;
             project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
 
@@ -178,10 +183,8 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 appmetricsPackageFoundInBuildFile: true,
                 canMetricsBeInjected: true, // As is a Java project
                 projectRunning: false,
+                hasTimedMetrics: false,
             });
-
-            // save projectID for cleanup
-            projectID = project.projectID;
         });
     });
 
@@ -213,6 +216,9 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'docker',
                 creationTime: Date.now(),
             });
+            // save projectID for cleanup
+            projectID = project.projectID;
+
             project.metricsAvailable.should.be.false;
             project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
 
@@ -226,10 +232,8 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 appmetricsPackageFoundInBuildFile: false,
                 canMetricsBeInjected: true, // As is an Open Liberty project
                 projectRunning: false,
+                hasTimedMetrics: false,
             });
-
-            // save projectID for cleanup
-            projectID = project.projectID;
         });
     });
 });
