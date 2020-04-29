@@ -146,15 +146,15 @@ class CapabilitiesPanel extends React.Component {
                 statusMessage: "Unable to determine status",
             },
             {
-                id: "LoadRunner", label: "LoadRunner Feature", status: Constants.STATUS_WARNING,
+                id: "LoadRunner", label: "Run Load Feature", status: Constants.STATUS_WARNING,
                 statusMessage: "Unable to determine status",
             },
             {
-                id: "LiveMetrics", label: "Live Metrics", status: Constants.STATUS_WARNING,
+                id: "LiveMetrics", label: "Live Monitoring", status: Constants.STATUS_WARNING,
                 statusMessage: "Unable to determine status",
             },
             {
-                id: "Comparisons", label: "Test Comparisons", status: Constants.STATUS_WARNING,
+                id: "Comparisons", label: "Benchmarks", status: Constants.STATUS_WARNING,
                 statusMessage: "Unable to determine status",
             },
         ];
@@ -184,18 +184,19 @@ class CapabilitiesPanel extends React.Component {
             <Fragment>
                 <div className="Capabilities">
                     <div className="bannerPanel">
-                        <div className="panelTitle">
+                        <div className="panelTitle" role="banner">
                             Project capabilities
                         </div>
                         <div className="panelSubTitle">
-                            Monitoring and performance measuring features available to you are:
+                            <span>Monitoring and performance measuring features currently available to you are:</span>
+                            <Button iconDescription="Refresh Page" size="small" className="some-class" kind="ghost" onClick={() => window.location.reload(false)}>Refresh</Button>
                         </div>
                     </div>
-                    <div className="rows">
+                    <div className="rows" role="grid">
                         {
                             dataModel.map(row => {
                                 return (
-                                    <div key={row.id} className="row">
+                                    <div key={row.id} className="row" role="gridcell">
                                         <div className="headline">
                                             <div className="icon">{this.getIconMarkup(row.status)}</div>
                                             <div className="capability">{row.label}</div>
@@ -208,7 +209,7 @@ class CapabilitiesPanel extends React.Component {
                     </div>
 
                     <div className="actions">
-                        <Button onClick={() => this.handleContinueClick()}>Continue</Button>
+                        <Button iconDescription="Continue" onClick={() => this.handleContinueClick()}>Continue</Button>
                     </div>
                 </div>
             </Fragment>
