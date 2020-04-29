@@ -60,10 +60,18 @@ else
 fi
 echo "Maven build output directory is set to $MICROCLIMATE_OUTPUT_DIR"
 
+# copy settings.xml if present
+if [[ -f settings.xml ]]; then
+    mkdir -p $HOME/.m2/
+    mv settings.xml $HOME/.m2/
+fi
+
 if [[ $1 && $1 == "prod" ]]; then
 	echo "Start mvn package for production"
 	echo "mvn -B package -DinstallDirectory=/opt/ibm/wlp"
 	mvn -B package -DinstallDirectory=/opt/ibm/wlp
+	# remove settings.xml after build
+	rm -f $HOME/.m2/settings.xml
 	exit 0
 fi
 
@@ -89,3 +97,5 @@ else
 	echo "Finished mvn package for $LOGNAME $(date)"
 fi
 
+# remove settings.xml after build
+rm -f $HOME/.m2/settings.xml
