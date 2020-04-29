@@ -2023,6 +2023,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                 if (containerInfo.containerId) {
                     data.containerId = containerInfo.containerId;
                 }
+                if (containerInfo.podName) {
+                    data.podName = containerInfo.podName;
+                }
                 if (containerInfo.exposedDebugPort) {
                     data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
                 }
@@ -2092,6 +2095,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                 }
                 if (containerInfo.containerId) {
                     data.containerId = containerInfo.containerId;
+                }
+                if (containerInfo.podName) {
+                    data.podName = containerInfo.podName;
                 }
                 if (containerInfo.exposedDebugPort) {
                     data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
