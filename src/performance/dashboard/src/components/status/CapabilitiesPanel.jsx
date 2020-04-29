@@ -32,7 +32,7 @@ class CapabilitiesPanel extends React.Component {
     }
 
     async componentDidMount() {
-        if (!this.props.projectID) { return; }
+        if (!this.props.projectID) return;
         try {
             await this.props.dispatch(fetchProjectCapabilities(this.props.projectID))
         } catch (err) {
@@ -62,11 +62,11 @@ class CapabilitiesPanel extends React.Component {
 
     getCapabilityProjectStatus(capabilityData, feature) {
         if (capabilityData.projectRunning) {
-            feature.status = Constants.STATUS_OK
-            feature.statusMessage = Constants.MESSAGE_PROJECT_RUNNING
+            feature.status = Constants.STATUS_OK;
+            feature.statusMessage = Constants.MESSAGE_PROJECT_RUNNING;
         } else {
-            feature.status = Constants.STATUS_ERROR
-            feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING
+            feature.status = Constants.STATUS_ERROR;
+            feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
         }
     }
 
