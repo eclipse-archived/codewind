@@ -51,7 +51,7 @@ console.log = () => { }
 describe('<CapabilitiesPanel />', () => {
     test('panel displays without error', () => {
         render(wrapper);
-        expect(document.querySelector('.Capabilities').childElementCount).toEqual(3);
+        expect(document.querySelectorAll('.Capabilities').length).toBe(1);
     });
 
     test('panel has a valid heading', () => {
@@ -81,7 +81,7 @@ describe('<CapabilitiesPanel />', () => {
         describe('LoadRunner card rendering', () => {
             test('"LoadRunner" card #2 exists', () => {
                 render(wrapper);
-                expect(document.querySelector('.rows .row:nth-of-type(2) .capability').innerHTML).toEqual("LoadRunner Feature");
+                expect(document.querySelector('.rows .row:nth-of-type(2) .capability').innerHTML).toEqual("Run Load Feature");
                 expect(document.querySelector('.rows .row:nth-of-type(2) .description').innerHTML).toEqual("Unable to determine status");
             });
         });
@@ -89,7 +89,7 @@ describe('<CapabilitiesPanel />', () => {
         describe('LiveMetrics card rendering', () => {
             test('"LiveMetrics" card #3 exists', () => {
                 render(wrapper);
-                expect(document.querySelector('.rows .row:nth-of-type(3) .capability').innerHTML).toEqual("Live Metrics");
+                expect(document.querySelector('.rows .row:nth-of-type(3) .capability').innerHTML).toEqual("Live Monitoring");
                 expect(document.querySelector('.rows .row:nth-of-type(3) .description').innerHTML).toEqual("Unable to determine status");
             });
         });
@@ -97,7 +97,7 @@ describe('<CapabilitiesPanel />', () => {
         describe('TestComparisons card rendering', () => {
             test('"TestComparisons" card #4 exists', () => {
                 render(wrapper);
-                expect(document.querySelector('.rows .row:nth-of-type(4) .capability').innerHTML).toEqual("Test Comparisons");
+                expect(document.querySelector('.rows .row:nth-of-type(4) .capability').innerHTML).toEqual("Benchmarks");
                 expect(document.querySelector('.rows .row:nth-of-type(4) .description').innerHTML).toEqual("Unable to determine status");
             });
         });

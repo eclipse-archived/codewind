@@ -33,7 +33,7 @@
   @include properties($body-short-02);
   margin-top: $carbon--spacing-01;
   margin-bottom: $carbon--spacing-07;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid $carbon__gray-50;
   margin-top: 10px;
   padding-top: 10px;
 }

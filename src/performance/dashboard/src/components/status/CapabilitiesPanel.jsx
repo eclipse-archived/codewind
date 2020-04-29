@@ -17,7 +17,7 @@ import IconFailure from '@carbon/icons-react/es/error/20';
 import IconWarning from '@carbon/icons-react/es/warning--alt/20';
 import { connect } from 'react-redux';
 import * as Constants from './Constants';
-
+import DetailPanel from './DetailPanel';
 import { fetchProjectCapabilities } from '../../store/actions/projectCapabilitiesActions';
 import './CapabilitiesPanel.scss';
 
@@ -27,6 +27,8 @@ class CapabilitiesPanel extends React.Component {
         super();
         this.state = {
             lastUpdated: 0,
+            detailMessage:"",
+            revealDetail:false,
         };
         this.buildDisplayModel = this.buildDisplayModel.bind(this);
     }
@@ -96,6 +98,7 @@ class CapabilitiesPanel extends React.Component {
         if (capabilityData.microprofilePackageFoundInBuildFile) {
             feature.status = Constants.STATUS_WARNING
             feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE;
+            feature.detailMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE_DETAIL;
             return
         }
 
@@ -143,19 +146,19 @@ class CapabilitiesPanel extends React.Component {
         const displayModelTemplate = [
             {
                 id: "ProjectStatus", label: "Project Status", status: Constants.STATUS_WARNING,
-                statusMessage: "Unable to determine status",
+                statusMessage: "Unable to determine status", detailMessage:""
             },
             {
                 id: "LoadRunner", label: "Run Load Feature", status: Constants.STATUS_WARNING,
-                statusMessage: "Unable to determine status",
+                statusMessage: "Unable to determine status", detailMessage:""
             },
             {
                 id: "LiveMetrics", label: "Live Monitoring", status: Constants.STATUS_WARNING,
-                statusMessage: "Unable to determine status",
+                statusMessage: "Unable to determine status", detailMessage:""
             },
             {
                 id: "Comparisons", label: "Benchmarks", status: Constants.STATUS_WARNING,
-                statusMessage: "Unable to determine status",
+                statusMessage: "Unable to determine status", detailMessage:""
             },
         ];
 
@@ -177,6 +180,14 @@ class CapabilitiesPanel extends React.Component {
         return displayModelTemplate;
     }
 
+    ShowDetailPanel(detailMessage) {
+        if (detailMessage != this.state.detailMessage) {
+            this.setState({revealDetail: true, detailMessage:detailMessage});
+        } else {
+            this.setState({revealDetail: false, detailMessage:""});
+        }
+    }
+
     render() {
         if (this.state.doNotShowAgain) return <Fragment />
         const dataModel = this.buildDisplayModel();
@@ -189,25 +200,29 @@ class CapabilitiesPanel extends React.Component {
                         </div>
                         <div className="panelSubTitle">
                             <span>Monitoring and performance measuring features currently available to you are:</span>
-                            <Button iconDescription="Refresh Page" size="small" className="some-class" kind="ghost" onClick={() => window.location.reload(false)}>Refresh</Button>
+                            <Button iconDescription="Refresh Page" size="small" kind="ghost" onClick={() => window.location.reload(false)}>Refresh</Button>
                         </div>
                     </div>
                     <div className="rows" role="grid">
                         {
                             dataModel.map(row => {
                                 return (
-                                    <div key={row.id} className="row" role="gridcell">
+                                    <div key={row.id} className="row " role="gridcell">
                                         <div className="headline">
                                             <div className="icon">{this.getIconMarkup(row.status)}</div>
                                             <div className="capability">{row.label}</div>
                                         </div>
                                         <div className="description">{row.statusMessage}</div>
+                                        {
+                                          row.detailMessage == "" ? <Fragment/> :
+                                            <Button className="description" iconDescription="more" size="small" kind="ghost" onClick={() => this.ShowDetailPanel(row.detailMessage)}>more...</Button>
+                                        }
                                     </div>
                                 )
                             })
                         }
                     </div>
-
+                    <DetailPanel show={this.state.revealDetail} messageText={this.state.detailMessage} />
                     <div className="actions">
                         <Button iconDescription="Continue" onClick={() => this.handleContinueClick()}>Continue</Button>
                     </div>
