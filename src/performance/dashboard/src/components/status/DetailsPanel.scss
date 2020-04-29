@@ -1,0 +1,48 @@
+/*******************************************************************************
+* Copyright (c) 2020 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+******************************************************************************/
+
+@import "~@carbon/colors/scss/colors";
+@import "~@carbon/layout/scss/spacing";
+@import "~@carbon/type/scss/type";
+@import "~@carbon/grid/scss/grid";
+
+.DetailsPanel {
+  @extend .bx--col-lg-16;
+  @extend .bx--col-md-8;
+  @extend .bx--col-sm-4;
+  margin-top: $carbon--spacing-05;
+  margin-bottom: $carbon--spacing-05;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-out;
+  background-color:black;
+}
+
+.DetailsPanel.reveal{
+  max-height: 600px;
+  overflow-y: auto;
+  transition: max-height 0.5s ease-in;
+}
+
+.DetailsPanel .detailPanelBox {
+  padding: $carbon--spacing-06;
+}
+
+.DetailsPanel .detailTitle {
+  @include properties($body-short-02);
+  margin-bottom:$carbon--spacing-05;
+  padding-bottom: $carbon--spacing-02;
+  border-bottom: 1px solid $carbon__gray-50;
+}
+
+.DetailsPanel .detailBody {
+  @include properties($body-short-01);
+}
