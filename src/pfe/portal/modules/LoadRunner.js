@@ -618,12 +618,13 @@ module.exports = class LoadRunner {
    */
   async endProfiling() {
     if (this.profilingSocket !== null) {
-      await fs.writeJson(this.workingDir + '/profiling.json', this.profilingSamples, { spaces: '  ' }, function (err) {
-        if (err) {
-          log.error('endProfiling: Error writing profiling samples');
-          log.error(err);
-        }
-      });
+      try {
+        const profilingPath = path.join(this.workingDir + '/profiling.json');
+        await fs.writeJson(profilingPath, this.profilingSamples, { spaces: '  ' });
+      } catch(err) {
+        log.error('endProfiling: Error writing profiling samples');
+        log.error(err);
+      }
       log.info(`profiling.json saved for project ${this.project.name}`);
       const data = { projectID: this.project.projectID, status: 'profilingReady', timestamp: this.metricsFolder }
       this.user.uiSocket.emit('runloadStatusChanged', data);
