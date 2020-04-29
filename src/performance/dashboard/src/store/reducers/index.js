@@ -16,7 +16,16 @@ import projectMetricsReducer from './projectMetricsReducer';
 import loadRunnerConfigReducer from './loadRunnerConfigReducer';
 import projectInfoReducer from './projectInfoReducer';
 import chartCountersReducer from './chartCountersReducer';
+import projectCapabilitiesReducer from './projectCapabilitiesReducer';
 
 export default combineReducers(
-  { localeReducer, projectMetricTypesReducer, projectMetricsReducer, loadRunnerConfigReducer, projectInfoReducer, chartCountersReducer }
+  {
+    chartCountersReducer,
+    loadRunnerConfigReducer,
+    localeReducer,
+    projectCapabilitiesReducer,
+    projectInfoReducer,
+    projectMetricsReducer,
+    projectMetricTypesReducer,
+  },
 );

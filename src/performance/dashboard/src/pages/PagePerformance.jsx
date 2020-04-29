@@ -30,7 +30,7 @@ import RunTestHistory from '../components/runTestHistory/RunTestHistory';
 import SocketContext from '../utils/sockets/SocketContext';
 import StatusPanel from '../components/status/StatusPanel';
 import * as MetricsUtils from '../modules/MetricsUtils';
-
+import CapabilitiesPanel from '../components/status/CapabilitiesPanel';
 import './PagePerformance.scss';
 
 class PagePerformance extends React.Component {
@@ -39,6 +39,7 @@ class PagePerformance extends React.Component {
         super();
         this.state = {
             projectMetricsLastUpdated: 0,
+            showCapabilities: true,
             chartData: {
                 CPU: {},
                 MEMORY: {},
@@ -47,6 +48,7 @@ class PagePerformance extends React.Component {
             }
         }
         this.reloadMetrics = this.reloadMetrics.bind(this);
+        this.handleCapabilityClose = this.handleCapabilityClose.bind(this);
     }
 
     bindSocketHandlers() {
@@ -148,12 +150,29 @@ class PagePerformance extends React.Component {
         this.props.dispatch(reloadMetricsData(projectID, this.props.projectMetricTypes.types));
     }
 
+    handleCapabilityClose() {
+        this.setState({showCapabilities: false})
+    }
+
     render() {
         const { snapshot_1, snapshot_2, snapshot_3 } = this.state;
         const absolutePath = MetricsUtils.getEndpoint(this.props.loadRunnerConfig.config.path) ? MetricsUtils.getEndpoint(this.props.loadRunnerConfig.config.path) : '';
         const httpMethod = this.props.loadRunnerConfig.config.method;
         const projectLanguage = (this.props.projectInfo.config.language) ? this.props.projectInfo.config.language : '';
         const showTip = !(this.state.chartData && this.state.chartData.CPU && this.state.chartData.CPU.columns && this.state.chartData.CPU.columns.length > 0);
+
+        // Show the capabilities panel as a full page
+        if (this.state.showCapabilities) {
+            return (
+                <div className='pageTitle' role="main" aria-label='main page'>
+                    <div className='main-title'>
+                            <div className='main-text' title='main page'>Performance</div>
+                    </div>
+                    <CapabilitiesPanel projectID={this.props.projectID} handleCapabilitiesClose={this.handleCapabilityClose}/>
+                </div>
+            )
+        }
+
         return (
             <Fragment>
                 <div className='pageTitle' role="main" aria-label='main page'>
@@ -169,7 +188,6 @@ class PagePerformance extends React.Component {
                         </div>
                     </div>
                 </div>
-                <StatusPanel projectID={this.props.projectID} />
                 <div className='results-row' role="complementary" aria-label="Result Summaries">
                     <div className='results-cards'>
                         <div className='results-card_1'>
