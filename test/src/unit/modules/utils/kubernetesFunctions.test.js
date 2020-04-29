@@ -12,6 +12,8 @@ const proxyquire = require('proxyquire');
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 
+const { testTimeout } = require('../../../../config');
+
 chai.use(chaiAsPromised);
 chai.should();
 
@@ -36,6 +38,7 @@ const MOCKED_CONFIG = {
 };
 
 describe('kubernetesFunctions.js', function() {
+    this.timeout(testTimeout.short);
     describe('getProjectIngress(projectID)', function() {
         it('returns the first ingress when the items array has a length of atleast one', async function() {
             const mockResponse = {
