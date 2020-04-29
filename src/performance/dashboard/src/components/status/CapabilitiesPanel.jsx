@@ -116,7 +116,6 @@ class CapabilitiesPanel extends React.Component {
         if (!capabilityData.projectRunning) {
             feature.status = Constants.STATUS_WARNING
             feature.statusMessage = Constants.MESSAGE_COMPARISONS_NOT_RUNNING;
-            feature.detailMessage = MESSAGE_LIVEMETRICS_MICROPROFILE_DETAIL;
             return
         }
 
