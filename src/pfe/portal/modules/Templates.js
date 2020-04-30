@@ -157,6 +157,7 @@ module.exports = class Templates {
   }) {
     this.lock();
     try {
+      validateFormatOfGitCredentials(gitCredentials);
       const repositories = cwUtils.deepClone(this.repositoryList);
       const validatedUrl = await validateRepository(url, repositories, gitCredentials);
       const newRepo = await constructRepositoryObject(validatedUrl, description, name, _protected, enabled, gitCredentials);
@@ -252,7 +253,32 @@ module.exports = class Templates {
   }
 }
 
+const validCredentialsKeys = ['username', 'password', 'personalAccessToken'];
+
 // FUNCTIONS
+function validateFormatOfGitCredentials(gitCredentials) {
+  if (!gitCredentials) {
+    return;
+  }
+  const unexpectedKeys = Object.keys(gitCredentials).filter(key => !validCredentialsKeys.includes(key));
+  if (unexpectedKeys.length) {
+    throw new Error(`gitCredentials includes unexpected keys: ${unexpectedKeys}`)
+  }
+  const {
+    username,
+    password,
+    personalAccessToken,
+  } = gitCredentials;
+  if (personalAccessToken && (username || password)) {
+    throw new Error('gitCredentials includes credentials for multiple authentication methods');
+  }
+  if (username && !password) {
+    throw new Error('gitCredentials includes username but no password');
+  }
+  if (password && !username) {
+    throw new Error('gitCredentials includes password but no username');
+  }
+}
 
 /**
  * Save the default list to disk so the user can potentially edit it (WHEN CODEWIND IS NOT RUNNING)
@@ -382,8 +408,14 @@ async function makeGetRequest(url, gitCredentials) {
     port: url.port,
     method: 'GET',
   }
-  if (gitCredentials && gitCredentials.username && gitCredentials.password) {
-    options.auth = `${gitCredentials.username}:${gitCredentials.password}`;
+  if (gitCredentials) {
+    if (gitCredentials.username && gitCredentials.password) {
+      options.auth = `${gitCredentials.username}:${gitCredentials.password}`;
+    } else if (gitCredentials.personalAccessToken) {
+      options.headers = {
+        Authorization: `token ${gitCredentials.personalAccessToken}`,
+      };
+    }
   }
   const res = await cwUtils.asyncHttpRequest(
     options,
