@@ -151,6 +151,7 @@ class PagePerformance extends React.Component {
     }
 
     handleCapabilityClose() {
+        this.reloadMetrics(this.props.projectID);
         this.setState({showCapabilities: false})
     }
 
