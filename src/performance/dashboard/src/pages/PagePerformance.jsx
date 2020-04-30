@@ -55,7 +55,7 @@ class PagePerformance extends React.Component {
         const uiSocket = this.props.socket;
         let thisComponent = this;
         uiSocket.on(SocketEvents.RUNLOAD_STATUS_CHANGED, data => {
-            if (data.status === 'idle' && data.projectID === this.props.projectID) {
+            if (data.status === 'completed' && data.projectID === this.props.projectID) {
                 thisComponent.reloadMetrics(this.props.projectID);
             }
         });
