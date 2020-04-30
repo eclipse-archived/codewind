@@ -2025,6 +2025,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                 }
                 if (containerInfo.podName) {
                     data.podName = containerInfo.podName;
+                    if (projectInfo.appBaseURL) {
+                        data.appBaseURL = projectInfo.appBaseURL;
+                    }
                 }
                 if (containerInfo.exposedDebugPort) {
                     data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
@@ -2098,6 +2101,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                 }
                 if (containerInfo.podName) {
                     data.podName = containerInfo.podName;
+                    if (projectInfo.appBaseURL) {
+                        data.appBaseURL = projectInfo.appBaseURL;
+                    }
                 }
                 if (containerInfo.exposedDebugPort) {
                     data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
