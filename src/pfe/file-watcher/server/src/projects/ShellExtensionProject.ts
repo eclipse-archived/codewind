@@ -23,7 +23,6 @@ import * as processManager from "../utils/processManager";
 import * as logger from "../utils/logger";
 import { projectConstants, StartModes } from "./constants";
 import { IFileChangeEvent } from "../utils/fileChanges";
-import * as kubeutil from "../utils/kubeutil";
 
 /**
  * @interface
@@ -206,10 +205,7 @@ export class ShellExtensionProject implements IExtensionProject {
      */
     start = async (projectInfo: ProjectInfo): Promise<void> => {
         await projectUtil.runScript(projectInfo, path.join(this.fullPath, "entrypoint.sh"), "start");
-        if (process.env.IN_K8) {
-            const projectName = projectInfo.location.split("/").pop();
-            await kubeutil.exposeOverIngress(projectInfo.projectID, projectName, projectInfo.isHttps);
-        }
+        await projectUtil.exposeOverIngress(projectInfo);
     }
 
     /**
