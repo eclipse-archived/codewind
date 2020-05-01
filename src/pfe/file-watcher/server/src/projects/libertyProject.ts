@@ -20,7 +20,7 @@ import { getTranslation } from "../utils/locale";
 import { LibertyValidator } from "./LibertyValidator";
 import * as dockerutil from "../utils/dockerutil";
 import { Validator, ValidationResult, Severity, ProblemType } from "./Validator";
-import { ProjectCapabilities } from  "./Project";
+import { ProjectCapabilities, defaultProjectCapabilities } from  "./Project";
 import { StartModes, ControlCommands } from "./constants";
 import * as locale from "../utils/locale";
 import * as logger from "../utils/logger";
@@ -371,5 +371,8 @@ export async function rebuild(projectInfo: ProjectInfo): Promise<void> {
  * @returns ProjectCapabilities
  */
 export function getCapabilities(): ProjectCapabilities {
+    if (process.env.IN_K8 === "true") {
+        return defaultProjectCapabilities;
+    }
     return capabilities;
 }
