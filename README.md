@@ -45,7 +45,7 @@ After you build Codewind with the build scripts, you can build one of the IDEs f
 Codewind contains two debugging tools for VSCode in the `.vscode/launch.json` file.
 To use these you should:
 1. Clone the `codewind` repository.
-2. Copy the `src/pfe/devbuild-example.env` file to `src/pfe/devbuild.env` to turn on the Node.js inspect (See `src/pfe/package.json`).
+2. Copy the `src/pfe/devbuild-example.env` file to `src/pfe/devbuild.env` to turn on the Node.js inspect (See `src/pfe/portal/package.json`).
 3. Run the `./run.sh` script to build and start Codewind.
 4. Open the Codewind directory in VSCode (Something like `code github/codewind`).
 5. Open the debugging tab and select one of the debugging options.
