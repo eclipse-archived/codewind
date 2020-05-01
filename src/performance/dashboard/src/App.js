@@ -24,9 +24,13 @@ import SocketContext from './utils/sockets/SocketContext';
 import * as ProjectIDChecker from './utils/projectUtils';
 import * as AppConstants from './AppConstants';
 
-let socketURL = `${AppConstants.API_SERVER}/default`;
+let socketURL = `${AppConstants.API_HOST}/default`;
+let socketPath = `${AppConstants.API_ROOT}/socket.io/`;
 
-const socket = io(socketURL, { timeout: '5000' });
+const socket = io(socketURL, {
+  timeout: '5000',
+  path: socketPath,
+});
 
 // Authenticate socket after connecting
 socket.on('connect', function(){
@@ -49,7 +53,7 @@ function App() {
             <NavBar projectID={projectID} />
           </ErrorBoundary>
           {(!projectID) ? <ModalNoProjectID /> :
-            <Router basename={'/performance'}>
+            <Router basename={`${AppConstants.API_ROOT}/performance`}>
               <Route exact={true} path='/' render={(props) => <PagePerformance {...props} projectID={projectID} />} />
               <Route exact={true} path='/charts' render={(props) => <PagePerformance {...props} projectID={projectID} />} />
             </Router >
