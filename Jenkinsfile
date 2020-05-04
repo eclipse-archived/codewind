@@ -65,6 +65,9 @@ def sendEmailNotification() {
     }
 }
 
+def IS_MASTER_BRANCH = env.BRANCH_NAME == "master"
+def IS_RELEASE_BRANCH = (env.BRANCH_NAME ==~ /\d+\.\d+\.\d+/)
+
 pipeline {
     agent {
         label "docker-build"
@@ -597,8 +600,11 @@ pipeline {
           sh '''#!/usr/bin/env bash
             printf "The PR failed";
           '''
-          echo "Calling sendEmailNotification()"
-          sendEmailNotification()
+
+          if (IS_MASTER_BRANCH || IS_RELEASE_BRANCH)  {
+            echo "Calling sendEmailNotification()"
+            sendEmailNotification()
+          }
         }
     }
 }
