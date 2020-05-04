@@ -597,14 +597,16 @@ pipeline {
             deleteDir() /* clean up our workspace */
         }
         failure {
-          sh '''#!/usr/bin/env bash
-            printf "The PR failed";
-          '''
-
-          if (IS_MASTER_BRANCH || IS_RELEASE_BRANCH)  {
-            echo "Calling sendEmailNotification()"
-            sendEmailNotification()
-          }
+            steps {
+                script {
+                    echo "The PR failed"
+                    
+                    if (IS_MASTER_BRANCH || IS_RELEASE_BRANCH)  {
+                        echo "Calling sendEmailNotification()"
+                        sendEmailNotification()
+                    }
+                }
+            }
         }
     }
 }
