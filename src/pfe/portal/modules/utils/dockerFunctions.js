@@ -148,7 +148,7 @@ async function copyFileFromContainer(project, sourceName, destinationName) {
 }
 
 async function deleteFile(project, projectRoot, relativePathOfFile) {
-  const dockerCommand = `docker exec ${project.containerId} rm -rf ${projectRoot}/${relativePathOfFile}`;
+  const dockerCommand = `docker exec ${project.containerId} rm -rf "${projectRoot}/${relativePathOfFile}"`;
   log.debug(`[docker rm command] ${dockerCommand}`);
   await exec(dockerCommand);
 }
