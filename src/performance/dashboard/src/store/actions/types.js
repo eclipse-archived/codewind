@@ -10,6 +10,7 @@
 *******************************************************************************/
 
 export const LOCALE_SET = 'LOCALE_SET';
+export const CAPABILITIES_PANEL = 'CAPABILITIES_PANEL';
 
 export const SET_COMMENT_GRID_LINES = 'SET_COMMENT_GRID_LINES';
 export const SET_FILTERED_LOADTESTS = 'SET_FILTERED_LOADTESTS';
