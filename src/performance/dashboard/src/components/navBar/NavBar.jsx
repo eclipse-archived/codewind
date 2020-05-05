@@ -12,9 +12,11 @@
 import React, { } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux';
-
+import { Button } from 'carbon-components-react';
+import IconNotification from '@carbon/icons-react/es/notification/20';
+import IconNotificationFill from '@carbon/icons-react/es/notification--filled/20';
 import { fetchProjectConfig } from '../../store/actions/projectInfoActions';
-import * as AppConstants from '../../AppConstants';
+import { showCapabilitiesPanel } from '../../store/actions/navbarActions';
 import logo from './logo@1x.png';
 import './NavBar.scss';
 
@@ -25,6 +27,7 @@ class NavBar extends React.Component {
         this.state = {
             projectName: ''
         }
+        this.toggleCapabilityPanel = this.toggleCapabilityPanel.bind(this);
     }
 
     async componentDidMount() {
@@ -42,13 +45,22 @@ class NavBar extends React.Component {
         }
     }
 
+    toggleCapabilityPanel() {
+        this.props.dispatch(showCapabilitiesPanel(!this.props.navbarActions.displayCapabilitiesPanel))
+    }
+
     render() {
         return (
             <div className='NavBar' role="banner">
-                <span className='logo'> <img src={logo} alt="logo" aria-label="Logo" title="Logo"/> </span>
-                <span className='appTitle_1'>code</span>
-                <span className='appTitle_2'>wind</span>
-                <span className='projectName'>{this.state.projectName}</span>
+                <div className="title">
+                    <span className='logo'> <img src={logo} alt="logo" aria-label="Logo" title="Logo"/> </span>
+                    <span className='appTitle_1'>code</span>
+                    <span className='appTitle_2'>wind</span>
+                    <span className='projectName'>{this.state.projectName}</span>
+                </div>
+                <div className="utilities">
+                    <Button size="small" kind="ghost" style={{float:"right"}}renderIcon={this.props.navbarActions.displayCapabilitiesPanel ? IconNotificationFill : IconNotification} onClick={() => this.toggleCapabilityPanel()}/>
+                </div>
             </div>
         )
     }
@@ -58,7 +70,8 @@ class NavBar extends React.Component {
 // Mapped Redux Stores
 const mapStateToProps = stores => {
     return {
-        projectInfo: stores.projectInfoReducer
+        projectInfo: stores.projectInfoReducer,
+        navbarActions: stores.navbarActionsReducer,
     };
 };
 

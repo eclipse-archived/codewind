@@ -15,18 +15,54 @@
 @import "../../themes/dark-theme.scss";
 
 .NavBar {
+  @extend .bx--row;
+  margin:0;
   background-color: $color-navbar-background;
   color: $color-navbar-foreground;
-  padding-left: 2rem;
   height: 50px;
   line-height: 50px;
-  padding-top: $carbon--spacing-04;
-  @include properties($productive-heading-03);
-  font-weight: carbon--font-weight("semibold");
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+.NavBar .title {
+  @extend .bx--col-lg-11;
+  @extend .bx--col-md-7;
+  @extend .bx--col-sm-3;
+  @include properties($productive-heading-03);
+  font-weight: carbon--font-weight("semibold");
+  overflow:hidden;
+  text-overflow: ellipsis;
+  word-wrap: none;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.NavBar .utilities {
+  margin-top: auto;
+  margin-bottom: auto;
+  @extend .bx--col-lg-1;
+  @extend .bx--col-md-1;
+  @extend .bx--col-sm-1;
+}
+
+.NavBar .utilities .bx--btn--ghost:hover .bx--btn__icon,
+.NavBar .utilities .bx--btn--ghost:active .bx--btn__icon {
+  fill: white;
+}
+
+.NavBar .utilities .bx--btn {
+  height:0.5rem;
+}
+.NavBar .utilities .bx--btn__icon {
+  fill: white;
+  height: 1.1rem;
+  width: 1.1rem;
+  margin:0;
+}
+
+
 
 .NavBar .projectName {
   margin-left: $carbon--spacing-04;

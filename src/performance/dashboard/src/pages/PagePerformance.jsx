@@ -28,7 +28,6 @@ import ResultsCard from '../components/resultsCard/ResultsCard';
 import ResultsCard_Blank from '../components/resultsCard/ResultsCard_Blank';
 import RunTestHistory from '../components/runTestHistory/RunTestHistory';
 import SocketContext from '../utils/sockets/SocketContext';
-import StatusPanel from '../components/status/StatusPanel';
 import * as MetricsUtils from '../modules/MetricsUtils';
 import CapabilitiesPanel from '../components/status/CapabilitiesPanel';
 import './PagePerformance.scss';
@@ -151,7 +150,6 @@ class PagePerformance extends React.Component {
     }
 
     handleCapabilityClose() {
-        this.reloadMetrics(this.props.projectID);
         this.setState({showCapabilities: false})
     }
 
@@ -162,23 +160,17 @@ class PagePerformance extends React.Component {
         const projectLanguage = (this.props.projectInfo.config.language) ? this.props.projectInfo.config.language : '';
         const showTip = !(this.state.chartData && this.state.chartData.CPU && this.state.chartData.CPU.columns && this.state.chartData.CPU.columns.length > 0);
 
-        // Show the capabilities panel as a full page
-        if (this.state.showCapabilities) {
-            return (
-                <div className='pageTitle' role="main" aria-label='main page'>
-                    <div className='main-title'>
-                            <div className='main-text' title='main page'>Performance</div>
-                    </div>
-                    <CapabilitiesPanel projectID={this.props.projectID} handleCapabilitiesClose={this.handleCapabilityClose}/>
-                </div>
-            )
-        }
-
         return (
             <Fragment>
+                {
+                    this.props.navbarActions.displayCapabilitiesPanel ?
+                    <CapabilitiesPanel projectID={this.props.projectID} handleCapabilitiesClose={this.handleCapabilityClose}/>
+                    : <Fragment/>
+                }
                 <div className='pageTitle' role="main" aria-label='main page'>
+
                     <div className='pageTitle-content'>
-                        <div className='main-title'>
+                         <div className='main-title'>
                             <div className='main-text' title='main page'>Performance</div>
                             <div className='actions-main'>
                                 <ActionRunLoad small={true} kind="ghost" projectID={this.props.projectID} />
@@ -260,7 +252,8 @@ const mapStateToProps = stores => {
         projectMetricTypes: stores.projectMetricTypesReducer,
         projectMetrics: stores.projectMetricsReducer,
         lang: stores.localeReducer.lang,
-        loadRunnerConfig: stores.loadRunnerConfigReducer
+        loadRunnerConfig: stores.loadRunnerConfigReducer,
+        navbarActions: stores.navbarActionsReducer,
     }
 };
 

@@ -11,13 +11,17 @@
 
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'carbon-components-react';
-import IconSuccess from '@carbon/icons-react/es/checkmark/20';
-import IconFailure from '@carbon/icons-react/es/error/20';
-import IconWarning from '@carbon/icons-react/es/warning--alt/20';
+import { Button, SkeletonText, InlineLoading } from 'carbon-components-react';
+import IconSuccess from '@carbon/icons-react/es/checkmark--outline/20';
+import IconFailure from '@carbon/icons-react/es/error--outline/16';
+import IconWarning from '@carbon/icons-react/es/warning/20';
+import IconClose from '@carbon/icons-react/es/close/20';
+import { showCapabilitiesPanel } from '../../store/actions/navbarActions';
+
 import { connect } from 'react-redux';
 import * as Constants from './Constants';
 import DetailPanel from './DetailPanel';
+
 import { fetchProjectCapabilities } from '../../store/actions/projectCapabilitiesActions';
 import './CapabilitiesPanel.scss';
 
@@ -28,9 +32,11 @@ class CapabilitiesPanel extends React.Component {
         this.state = {
             lastUpdated: 0,
             detailMessage:"",
+            detailSubComponent:"",
             revealDetail:false,
         };
         this.buildDisplayModel = this.buildDisplayModel.bind(this);
+        this.handleCloseClick = this.handleCloseClick.bind(this);
     }
 
     async componentDidMount() {
@@ -58,8 +64,8 @@ class CapabilitiesPanel extends React.Component {
         return <IconWarning className='bx--btn__icon' style={{ 'fill': '#f1c21b' }} />
     }
 
-    handleContinueClick() {
-        this.props.handleCapabilitiesClose();
+    handleCloseClick() {
+        this.props.dispatch(showCapabilitiesPanel(false));
     }
 
     getCapabilityProjectStatus(capabilityData, feature) {
@@ -98,7 +104,7 @@ class CapabilitiesPanel extends React.Component {
         if (capabilityData.microprofilePackageFoundInBuildFile) {
             feature.status = Constants.STATUS_WARNING
             feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE;
-            feature.detailMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE_DETAIL;
+            feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE;
             return
         }
 
@@ -146,19 +152,19 @@ class CapabilitiesPanel extends React.Component {
         const displayModelTemplate = [
             {
                 id: "ProjectStatus", label: "Project Status", status: Constants.STATUS_WARNING,
-                statusMessage: "Unable to determine status", detailMessage:""
+                statusMessage: "Unable to determine status", detailMessage:"", detailSubComponent:"",
             },
             {
                 id: "LoadRunner", label: "Run Load Feature", status: Constants.STATUS_WARNING,
-                statusMessage: "Unable to determine status", detailMessage:""
+                statusMessage: "Unable to determine status", detailMessage:"", detailSubComponent:"",
             },
             {
                 id: "LiveMetrics", label: "Live Monitoring", status: Constants.STATUS_WARNING,
-                statusMessage: "Unable to determine status", detailMessage:""
+                statusMessage: "Unable to determine status", detailMessage:"", detailSubComponent:"",
             },
             {
                 id: "Comparisons", label: "Benchmarks", status: Constants.STATUS_WARNING,
-                statusMessage: "Unable to determine status", detailMessage:""
+                statusMessage: "Unable to determine status", detailMessage:"", detailSubComponent:"",
             },
         ];
 
@@ -180,51 +186,49 @@ class CapabilitiesPanel extends React.Component {
         return displayModelTemplate;
     }
 
-    ShowDetailPanel(detailMessage) {
-        if (detailMessage != this.state.detailMessage) {
-            this.setState({revealDetail: true, detailMessage:detailMessage});
+    ShowDetailPanel(detailMessage, detailSubComponent) {
+        if (detailMessage != this.state.detailMessage || detailSubComponent != this.state.detailSubComponent) {
+            this.setState({revealDetail: true, detailMessage:detailMessage, detailSubComponent:detailSubComponent});
         } else {
-            this.setState({revealDetail: false, detailMessage:""});
+            this.setState({revealDetail: false, detailMessage:"", detailSubComponent:""});
         }
     }
 
     render() {
-        if (this.state.doNotShowAgain) return <Fragment />
         const dataModel = this.buildDisplayModel();
+        const fetching = this.props.projectCapabilities.fetching
         return (
             <Fragment>
                 <div className="Capabilities">
-                    <div className="bannerPanel">
-                        <div className="panelTitle" role="banner">
-                            Project capabilities
-                        </div>
-                        <div className="panelSubTitle">
-                            <span>Monitoring and performance measuring features currently available to you are:</span>
-                            <Button iconDescription="Refresh Page" size="small" kind="ghost" onClick={() => window.location.reload(false)}>Refresh</Button>
-                        </div>
+                    <div className="actions">
+                        <Button className="closeButton" kind="ghost" size="small" renderIcon={IconClose} iconDescription="Close capabilities panel" onClick={() => this.handleCloseClick()}/>
                     </div>
                     <div className="rows" role="grid">
                         {
                             dataModel.map(row => {
                                 return (
                                     <div key={row.id} className="row " role="gridcell">
-                                        <div className="headline">
-                                            <div className="icon">{this.getIconMarkup(row.status)}</div>
-                                            <div className="capability">{row.label}</div>
-                                        </div>
-                                        <div className="description">{row.statusMessage}</div>
+                                        <Fragment>
+                                            <div className="headline">
+                                                <div className="icon"> 
+                                                    { (fetching) ? <InlineLoading description="" iconDescription="Active loading indicator" status="active"/> : this.getIconMarkup(row.status) }
+                                                </div>
+                                                <div className="capability">
+                                                    { (fetching) ? <SkeletonText/> : row.label  }
+                                                </div>
+                                            </div>
+                                            <div className="description">
+                                                { (fetching) ? <SkeletonText/> : row.statusMessage }
+                                            </div>
+                                        </Fragment>
                                         {
-                                          row.detailMessage == "" ? <Fragment/> :
-                                            <Button className="description" iconDescription="more" size="small" kind="ghost" onClick={() => this.ShowDetailPanel(row.detailMessage)}>more...</Button>
+                                          (row.detailMessage == "" && row.detailSubComponent == "") || fetching ? <Fragment/> :
+                                          <DetailPanel show={true} projectID={this.props.projectID} messageText={row.detailMessage} detailSubComponent={row.detailSubComponent}/>
                                         }
                                     </div>
                                 )
                             })
                         }
-                    </div>
-                    <DetailPanel show={this.state.revealDetail} messageText={this.state.detailMessage} />
-                    <div className="actions">
-                        <Button iconDescription="Continue" onClick={() => this.handleContinueClick()}>Continue</Button>
                     </div>
                 </div>
             </Fragment>
@@ -236,6 +240,7 @@ class CapabilitiesPanel extends React.Component {
 const mapStateToProps = stores => {
     return {
         projectCapabilities: stores.projectCapabilitiesReducer,
+        navbarActions: stores.navbarActionsReducer,
     }
 };
 

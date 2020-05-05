@@ -9,21 +9,14 @@
 *     IBM Corporation - initial API and implementation
 ******************************************************************************/
 
-@import "~@carbon/colors/scss/colors";
-@import "~@carbon/layout/scss/spacing";
-@import "~@carbon/type/scss/type";
-@import "~@carbon/grid/scss/grid";
-
-.DetailsPanel {
-  padding:0 50px;
-  overflow: hidden;
-  transition: max-height 0.5s ease-out;
+.CodeBlock {
+  font-family: 'Courier New', Courier, monospace;
+  font-size:0.9em;
+  font-weight:bold;
 }
 
-.DetailsPanel .detailPanelBox {
-  padding: $carbon--spacing-04 0;
-}
-
-.DetailsPanel .detailBody {
-  @include properties($body-short-01);
+.ActionButton .errorMessage {
+  padding: 5px;
+  margin-left:20px;
+  color: #f1c21d;
 }
