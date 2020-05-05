@@ -9,7 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 "use strict";
-import * as crypto from "crypto";
+import crypto from "crypto";
 import * as fs from "fs";
 import * as http from "http";
 import * as https from "https";
@@ -47,7 +47,7 @@ const config = require("kubernetes-client").config; // tslint:disable-line:no-re
 let k8sClient: any = undefined;
 
 if (process.env.IN_K8) {
-    k8sClient = new Client({ config: config.getInCluster(), version: "1.9"});
+    k8sClient = new Client({ config: config.getInCluster(), version: "1.9" });
 }
 
 const KUBE_NAMESPACE = process.env.KUBE_NAMESPACE || "default";
@@ -134,7 +134,7 @@ export async function containerCreate(operation: Operation, script: string, comm
 
     let imagePushRegistry: string;
 
-    if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
+    if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined) {
         imagePushRegistry = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
 
@@ -161,38 +161,38 @@ export async function containerCreate(operation: Operation, script: string, comm
         operation.containerName, String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode,
         operation.projectInfo.debugPort, (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry];
 
-        if (projectType == "liberty" || projectType == "spring") {
+    if (projectType == "liberty" || projectType == "spring") {
 
-            let userMavenSettings;
+        let userMavenSettings;
 
-            try {
-                logger.logProjectInfo("Checking for user Maven settings", projectID, projectName);
-                userMavenSettings = await getProjectMavenSettings(operation.projectInfo);
-            } catch (err) {
-                const errorMsg = "The project will not build due to invalid maven settings for project: " + projectName;
-                logger.logProjectError(errorMsg.concat("\n  Cause: " + err.message).concat("\n " + err.stack), projectID, projectName);
-                projectEvent.error = errorMsg;
-                await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.invalidMavenSettings");
-                io.emitOnListener(event, projectEvent);
-                return;
-            }
-
-            args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
-                String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
-                (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry, userMavenSettings];
-        } else if (projectType == "odo") {
-            const componentName: string = await getComponentName(projectName);
-
-            args = [
-                projectLocation,
-                operation.projectInfo.projectID,
-                command,
-                operation.projectInfo.language,
-                componentName,
-                logDir,
-                String(operation.projectInfo.autoBuildEnabled)
-            ];
+        try {
+            logger.logProjectInfo("Checking for user Maven settings", projectID, projectName);
+            userMavenSettings = await getProjectMavenSettings(operation.projectInfo);
+        } catch (err) {
+            const errorMsg = "The project will not build due to invalid maven settings for project: " + projectName;
+            logger.logProjectError(errorMsg.concat("\n  Cause: " + err.message).concat("\n " + err.stack), projectID, projectName);
+            projectEvent.error = errorMsg;
+            await projectStatusController.updateProjectStatus(STATE_TYPES.buildState, projectID, BuildState.failed, "buildscripts.invalidMavenSettings");
+            io.emitOnListener(event, projectEvent);
+            return;
         }
+
+        args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
+            String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
+            (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry, userMavenSettings];
+    } else if (projectType == "odo") {
+        const componentName: string = await getComponentName(projectName);
+
+        args = [
+            projectLocation,
+            operation.projectInfo.projectID,
+            command,
+            operation.projectInfo.language,
+            componentName,
+            logDir,
+            String(operation.projectInfo.autoBuildEnabled)
+        ];
+    }
 
     executeBuildScript(operation, script, args, event);
 
@@ -235,7 +235,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
 
     let imagePushRegistry: string;
 
-    if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined ) {
+    if (process.env.IN_K8 === "true" && operation.projectInfo.extensionID === undefined) {
         imagePushRegistry = await workspaceSettings.getImagePushRegistry();
         logger.logProjectInfo("Image Push Registry: " + imagePushRegistry, projectID);
 
@@ -563,7 +563,7 @@ export async function getProjectMavenSettings(projectInfo: ProjectInfo): Promise
     let userMavenSettings = "";
 
     if (profilesArr && profilesArr.length > 0) {
-        if (! (profilesArr.length == 1 && profilesArr[0] == "") ) {
+        if (!(profilesArr.length == 1 && profilesArr[0] == "")) {
             userMavenSettings = userMavenSettings.concat(MavenFlags.profile.concat(profilesArr.toString()));
         }
     }
@@ -1090,7 +1090,7 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
                     isGoodStatusCode = statusCode >= 200 && statusCode < 400;
 
                     if (!isGoodStatusCode) {
-                        handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.badStatusCode", { statusCode: statusCode}) });
+                        handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.badStatusCode", { statusCode: statusCode }) });
                     } else {
                         handler({ isAppUp: true });
                     }
@@ -1102,7 +1102,7 @@ export async function isApplicationUp(projectID: string, handler: any): Promise<
                     }
                 }).end();
             } else {
-                handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.badStatusCode", { statusCode: statusCode}) });
+                handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.badStatusCode", { statusCode: statusCode }) });
             }
         }).on("error", async (err) => {
             handler({ isAppUp: false, error: await locale.getTranslation("projectUtil.appStatusError.errorGetAppStatus", { errMsg: err.message }) });
@@ -1238,7 +1238,7 @@ export async function runScript(projectInfo: ProjectInfo, script: string, comman
     const logDir = await logHelper.getLogDir(projectInfo.projectID, projectInfo.projectName);
     const projectName = path.basename(projectInfo.location);
     let args = [projectInfo.location, LOCAL_WORKSPACE, projectID, command, containerName, String(projectInfo.autoBuildEnabled), logName, projectInfo.startMode,
-        projectInfo.debugPort, "NONE", logDir];
+    projectInfo.debugPort, "NONE", logDir];
 
     if (projectInfo.projectType == "odo") {
         const componentName: string = await getComponentName(projectName);
@@ -1469,7 +1469,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
                 throw Error(msg);
             }
             defaultChartLocation = defaultChartLocation + "/" + chartDir;
-            chartDirCounter ++;
+            chartDirCounter++;
         }
 
         logger.logProjectInfo("The chart location is: " + defaultChartLocation, buildInfo.projectID);
@@ -2000,41 +2000,41 @@ export async function restartProject(operation: Operation, startMode: string, ev
     if (portNumberChanged) {
         logger.logProjectInfo("Rebuilding the project due to debug port changed.", projectID);
         projectInfo.startMode = startMode;
-            projectHandler.rebuild(projectInfo).then(async () => {
-                await projectHandler.start(projectInfo);
-                const keyValuePair: UpdateProjectInfoPair = {
-                    key : "startMode",
-                    value: startMode,
-                    saveIntoJsonFile: true
-                };
-                projectsController.updateProjectInfo(projectID, keyValuePair);
-                logger.logProjectInfo("Project start for restart was successful", projectID);
-                const containerInfo: any = await getContainerInfo(projectInfo, true);
-                const data: any = {
-                    operationId: operation.operationId,
-                    projectID: projectID,
-                    status: "success",
-                    startMode: startMode,
-                    ports: {
-                        exposedPort: containerInfo.exposedPort,
-                        internalPort: containerInfo.internalPort
-                    }
-                };
-                if (containerInfo.containerId) {
-                    data.containerId = containerInfo.containerId;
+        projectHandler.rebuild(projectInfo).then(async () => {
+            await projectHandler.start(projectInfo);
+            const keyValuePair: UpdateProjectInfoPair = {
+                key: "startMode",
+                value: startMode,
+                saveIntoJsonFile: true
+            };
+            projectsController.updateProjectInfo(projectID, keyValuePair);
+            logger.logProjectInfo("Project start for restart was successful", projectID);
+            const containerInfo: any = await getContainerInfo(projectInfo, true);
+            const data: any = {
+                operationId: operation.operationId,
+                projectID: projectID,
+                status: "success",
+                startMode: startMode,
+                ports: {
+                    exposedPort: containerInfo.exposedPort,
+                    internalPort: containerInfo.internalPort
                 }
-                if (containerInfo.podName) {
-                    data.podName = containerInfo.podName;
-                }
-                if (containerInfo.exposedDebugPort) {
-                    data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
-                }
-                if (containerInfo.internalDebugPort) {
-                    data.ports.internalDebugPort = containerInfo.internalDebugPort;
-                }
+            };
+            if (containerInfo.containerId) {
+                data.containerId = containerInfo.containerId;
+            }
+            if (containerInfo.podName) {
+                data.podName = containerInfo.podName;
+            }
+            if (containerInfo.exposedDebugPort) {
+                data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
+            }
+            if (containerInfo.internalDebugPort) {
+                data.ports.internalDebugPort = containerInfo.internalDebugPort;
+            }
 
-                io.emitOnListener(eventName, data);
-        }, (err: Error)  => {
+            io.emitOnListener(eventName, data);
+        }, (err: Error) => {
             logger.logProjectError("Project rebuild failed with message: " + err.message, projectID);
             const data: any = {
                 operationId: operation.operationId,
@@ -2073,7 +2073,7 @@ export async function restartProject(operation: Operation, startMode: string, ev
                 projectInfo.startMode = startMode;
                 await projectHandler.start(projectInfo);
                 const keyValuePair: UpdateProjectInfoPair = {
-                    key : "startMode",
+                    key: "startMode",
                     value: startMode,
                     saveIntoJsonFile: true
                 };
