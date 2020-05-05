@@ -47,7 +47,6 @@ class PagePerformance extends React.Component {
             }
         }
         this.reloadMetrics = this.reloadMetrics.bind(this);
-        this.handleCapabilityClose = this.handleCapabilityClose.bind(this);
     }
 
     bindSocketHandlers() {
@@ -149,10 +148,6 @@ class PagePerformance extends React.Component {
         this.props.dispatch(reloadMetricsData(projectID, this.props.projectMetricTypes.types));
     }
 
-    handleCapabilityClose() {
-        this.setState({showCapabilities: false})
-    }
-
     render() {
         const { snapshot_1, snapshot_2, snapshot_3 } = this.state;
         const absolutePath = MetricsUtils.getEndpoint(this.props.loadRunnerConfig.config.path) ? MetricsUtils.getEndpoint(this.props.loadRunnerConfig.config.path) : '';
@@ -164,7 +159,7 @@ class PagePerformance extends React.Component {
             <Fragment>
                 {
                     this.props.navbarActions.displayCapabilitiesPanel ?
-                    <CapabilitiesPanel projectID={this.props.projectID} handleCapabilitiesClose={this.handleCapabilityClose}/>
+                    <CapabilitiesPanel projectID={this.props.projectID} />
                     : <Fragment/>
                 }
                 <div className='pageTitle' role="main" aria-label='main page'>

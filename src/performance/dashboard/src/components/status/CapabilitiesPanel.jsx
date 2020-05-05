@@ -246,7 +246,6 @@ const mapStateToProps = stores => {
 
 CapabilitiesPanel.propTypes = {
     projectID: PropTypes.string.isRequired,
-    handleCapabilitiesClose: PropTypes.func.isRequired,
 }
 
 export default connect(mapStateToProps)(CapabilitiesPanel);
