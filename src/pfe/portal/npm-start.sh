@@ -6,8 +6,6 @@ if [ ! -z "$ENABLE_CODE_COVERAGE" ] && [ "$ENABLE_CODE_COVERAGE" == "true" ]; th
   echo "Running with code coverage enabled through nyc ($NPM_CMD)"
 fi
 
-$NPM_CMD install is-mergeable-object@1.1.1
-
 if [ ! -z "$NODE_ENV" ] && [ "$NODE_ENV" == "development" ]; then
   echo "Found node environment set to dev. Running in development mode."
   $NPM_CMD run dev
