@@ -1,3 +1,14 @@
+/*******************************************************************************
+* Copyright (c) 2020 IBM Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v2.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v20.html
+*
+* Contributors:
+*     IBM Corporation - initial API and implementation
+******************************************************************************/
+
 const HtmlWebPackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -74,8 +85,19 @@ module.exports = {
   },
   devServer: {
     contentBase: path.join(__dirname, 'build'),
+    openPage: '../?project=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     compress: true,
-    port: 3001
+    port: 3001,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:9090/',
+        secure: false,
+      },
+      '/socket.io': {
+        target: 'http://localhost:9090/',
+        secure: false,
+      },
+    },
   },
   plugins: [
     new CleanWebpackPlugin(),

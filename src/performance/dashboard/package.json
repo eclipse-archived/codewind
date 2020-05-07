@@ -69,6 +69,10 @@
     "moduleNameMapper": {
       ".+\\.(css|styl|less|sass|scss|png|jpg|ttf|woff|woff2)$": "babel-jest",
       "@carbon/icons-react/.*$": "<rootDir>/src/tests/mocks/@carbon.js"
-    }
+    },
+    "roots": ["src"],
+    "testPathIgnorePatterns": [
+      "/node_modules/"
+    ]
   }
 }

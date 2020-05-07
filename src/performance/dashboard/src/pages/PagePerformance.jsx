@@ -28,7 +28,6 @@ import ResultsCard from '../components/resultsCard/ResultsCard';
 import ResultsCard_Blank from '../components/resultsCard/ResultsCard_Blank';
 import RunTestHistory from '../components/runTestHistory/RunTestHistory';
 import SocketContext from '../utils/sockets/SocketContext';
-import StatusPanel from '../components/status/StatusPanel';
 import * as MetricsUtils from '../modules/MetricsUtils';
 import CapabilitiesPanel from '../components/status/CapabilitiesPanel';
 import './PagePerformance.scss';
@@ -48,14 +47,13 @@ class PagePerformance extends React.Component {
             }
         }
         this.reloadMetrics = this.reloadMetrics.bind(this);
-        this.handleCapabilityClose = this.handleCapabilityClose.bind(this);
     }
 
     bindSocketHandlers() {
         const uiSocket = this.props.socket;
         let thisComponent = this;
         uiSocket.on(SocketEvents.RUNLOAD_STATUS_CHANGED, data => {
-            if (data.status === 'idle' && data.projectID === this.props.projectID) {
+            if (data.status === 'completed' && data.projectID === this.props.projectID) {
                 thisComponent.reloadMetrics(this.props.projectID);
             }
         });
@@ -150,10 +148,6 @@ class PagePerformance extends React.Component {
         this.props.dispatch(reloadMetricsData(projectID, this.props.projectMetricTypes.types));
     }
 
-    handleCapabilityClose() {
-        this.setState({showCapabilities: false})
-    }
-
     render() {
         const { snapshot_1, snapshot_2, snapshot_3 } = this.state;
         const absolutePath = MetricsUtils.getEndpoint(this.props.loadRunnerConfig.config.path) ? MetricsUtils.getEndpoint(this.props.loadRunnerConfig.config.path) : '';
@@ -161,23 +155,17 @@ class PagePerformance extends React.Component {
         const projectLanguage = (this.props.projectInfo.config.language) ? this.props.projectInfo.config.language : '';
         const showTip = !(this.state.chartData && this.state.chartData.CPU && this.state.chartData.CPU.columns && this.state.chartData.CPU.columns.length > 0);
 
-        // Show the capabilities panel as a full page
-        if (this.state.showCapabilities) {
-            return (
-                <div className='pageTitle' role="main" aria-label='main page'>
-                    <div className='main-title'>
-                            <div className='main-text' title='main page'>Performance</div>
-                    </div>
-                    <CapabilitiesPanel projectID={this.props.projectID} handleCapabilitiesClose={this.handleCapabilityClose}/>
-                </div>
-            )
-        }
-
         return (
             <Fragment>
+                {
+                    this.props.navbarActions.displayCapabilitiesPanel ?
+                    <CapabilitiesPanel projectID={this.props.projectID} />
+                    : <Fragment/>
+                }
                 <div className='pageTitle' role="main" aria-label='main page'>
+
                     <div className='pageTitle-content'>
-                        <div className='main-title'>
+                         <div className='main-title'>
                             <div className='main-text' title='main page'>Performance</div>
                             <div className='actions-main'>
                                 <ActionRunLoad small={true} kind="ghost" projectID={this.props.projectID} />
@@ -259,7 +247,8 @@ const mapStateToProps = stores => {
         projectMetricTypes: stores.projectMetricTypesReducer,
         projectMetrics: stores.projectMetricsReducer,
         lang: stores.localeReducer.lang,
-        loadRunnerConfig: stores.loadRunnerConfigReducer
+        loadRunnerConfig: stores.loadRunnerConfigReducer,
+        navbarActions: stores.navbarActionsReducer,
     }
 };
 

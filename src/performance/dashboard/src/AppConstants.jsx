@@ -10,8 +10,9 @@
 ******************************************************************************/
 
 export const APP_NAME = "codewind";
-const API_ROOT = location.pathname.substring(0, location.pathname.indexOf('/performance/'));
-export const API_SERVER = `${location.protocol}//${location.host}${API_ROOT}`;
+export const API_ROOT = location.pathname.substring(0, location.pathname.indexOf('/performance/'));
+export const API_HOST = `${location.protocol}//${location.host}`
+export const API_SERVER = `${API_HOST}${API_ROOT}`;
 export const MAX_DESC_LENGTH = 80;
 
 export const ROUTES_CHARTS = 'charts';

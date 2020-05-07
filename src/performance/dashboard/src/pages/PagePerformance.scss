@@ -16,14 +16,15 @@
 
 .pageTitle {
   @extend .bx--grid;
-  margin-top: $carbon--spacing-05;
 }
 
 .pageTitle-content {
   @extend .bx--row;
+  margin-top: $carbon--spacing-05;
 }
 
 .pageTitle .main-title {
+  
   @extend .bx--col-md-8;
   margin-right: 10px;
 }

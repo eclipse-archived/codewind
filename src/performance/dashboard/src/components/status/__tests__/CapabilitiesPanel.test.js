@@ -54,20 +54,6 @@ describe('<CapabilitiesPanel />', () => {
         expect(document.querySelectorAll('.Capabilities').length).toBe(1);
     });
 
-    test('panel has a valid heading', () => {
-        render(wrapper);
-        expect(document.querySelector('.Capabilities .panelTitle').innerHTML).toBe('Project capabilities');
-    });
-
-    test('panel has an action bar', () => {
-        render(wrapper);
-        expect(document.querySelector('.Capabilities .actions').childElementCount).toEqual(1);
-    });
-
-    test('panel has exactly 4 status cards', () => {
-        render(wrapper);
-        expect(document.querySelector('.Capabilities .rows').childElementCount).toEqual(4);
-    });
 
     describe('Status message card tests', () => {
         describe('ProjectStatus card rendering', () => {
@@ -102,24 +88,5 @@ describe('<CapabilitiesPanel />', () => {
             });
         });
     });
-
-    describe('Action button tests', () => {
-        test('the action bar has a continue action button', () => {
-            render(wrapper);
-            const { getAllByText } = render(wrapper);
-            const continueButton = getAllByText('Continue')[0];
-            expect(continueButton.disabled).toEqual(false)
-        });
-
-        test('clicking the continue button requests the panel to close', () => {
-            render(wrapper);
-            const { getAllByText } = render(wrapper);
-            const continueButton = getAllByText('Continue')[0];
-            fireEvent.click(continueButton);
-            const onClickFunction = componentProps.handleCapabilitiesClose;
-            expect(onClickFunction).toHaveBeenCalled();
-        });
-    });
-
 });
 

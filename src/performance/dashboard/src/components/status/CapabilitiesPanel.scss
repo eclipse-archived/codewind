@@ -14,28 +14,26 @@
 @import "~@carbon/grid/scss/grid";
 
 .Capabilities {
-  margin: $carbon--spacing-03;
-  padding: $carbon--spacing-04;
+  margin-top:0;
+  margin-bottom: $carbon--spacing-08;
+  padding: 0 0 $carbon--spacing-05 0;
   background-color: $carbon--gray-80;
 }
 
-.Capabilities .bannerPanel{
-  width: 100%;
-  padding: $carbon--spacing-04;
-  margin: 0;
+.Capabilities .closeButton {
+  margin-right:8px;
 }
 
-.Capabilities .panelTitle{
-  @include properties($productive-heading-04);
+.Capabilities .closeButton .bx--btn--ghost:hover .bx--btn__icon,
+.Capabilities .closeButton .bx--btn--ghost:active .bx--btn__icon {
+  fill: white;
 }
 
-.Capabilities .panelSubTitle{
-  @include properties($body-short-02);
-  margin-top: $carbon--spacing-01;
-  margin-bottom: $carbon--spacing-07;
-  border-top: 1px solid $carbon__gray-50;
-  margin-top: 10px;
-  padding-top: 10px;
+.Capabilities .closeButton .bx--btn__icon {
+  fill: white;
+  height: 1.5rem;
+  width: 1.5rem;
+  margin:0;
 }
 
 .Capabilities .rows {
@@ -50,8 +48,8 @@
 }
 
 .Capabilities .row{
-  @extend .bx--col-lg-4;
-  @extend .bx--col-md-4;
+  @extend .bx--col-lg-16;
+  @extend .bx--col-md-8;
   @extend .bx--col-sm-4;
   @include properties($body-short-01);
   padding-bottom: $carbon--spacing-04;
@@ -60,8 +58,8 @@
 
 
 .Capabilities .row .headline {
-  margin-top:$carbon--spacing-04;
-  margin-bottom:$carbon--spacing-04;
+  margin-top:0;
+  margin-bottom:$carbon--spacing-01;
   padding-left: $carbon--spacing-05 ;
   vertical-align: middle;
 }
@@ -82,7 +80,5 @@
 }
 
 .Capabilities .actions {
-  margin-top: $carbon--spacing-02;
-  padding-top:$carbon--spacing-08;
   text-align: right;
 }
