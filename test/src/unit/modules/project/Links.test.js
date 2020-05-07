@@ -26,6 +26,7 @@ chai.use(chaiAsPromised);
 
 const dummyLink = {
     projectID: 'dummyID',
+    projectName: 'dummyName',
     projectURL: 'projectURL',
     envName: 'ENV_NAME',
 };
@@ -255,6 +256,7 @@ describe('Links.js', function() {
                 const links = [{ envName: 'existing' }];
                 const newLink = {
                     projectID: 'id',
+                    projectName: 'name',
                     envName: 'existing',
                     projectURL: 'some',
                 };
@@ -264,6 +266,7 @@ describe('Links.js', function() {
             it('returns a validated link object', () => {
                 const newLink = {
                     projectID: 'id',
+                    projectName: 'name',
                     envName: 'existing',
                     projectURL: 'some',
                 };
