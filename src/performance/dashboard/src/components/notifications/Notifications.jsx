@@ -50,7 +50,7 @@ class Notifications extends Component {
                   minWidth: '30rem'
                 }}
                 subtitle={notification.subtitle}
-                timeout={0}
+                timeout={notification.timeout * 1000}
                 title={notification.title}
               />
             )

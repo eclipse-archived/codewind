@@ -18,7 +18,7 @@ import IconStop from '@carbon/icons-react/lib/close--outline/16';
 import { Button, InlineLoading } from 'carbon-components-react';
 import { SocketEvents } from '../../utils/sockets/SocketEvents';
 import SocketContext from '../../utils/sockets/SocketContext';
-import { addNotification, KIND_ERROR} from '../../store/actions/notificationsActions';
+import { addNotification, KIND_ERROR,  KIND_SUCCESS} from '../../store/actions/notificationsActions';
 import ModalRunTest from '../modals/ModalRunTest';
 import * as AppConstants from '../../AppConstants';
 
@@ -84,7 +84,8 @@ class ActionRunLoad extends React.Component {
                         // after receiving a loadrun completion message,  wait a bit,  then reset the button back to ready
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Completed...' });
                         setTimeout(() => {
-                            this.setState({ loadRunStatus: { status: 'idle' } })
+                            this.setState({ loadRunStatus: { status: 'idle' } });
+                            this.props.dispatch(addNotification({kind: KIND_SUCCESS, title:'Load runner finished', subtitle:'The test has completed successfully',  timeout: 6,}));
                         }, 3000);
                         break;
                     }

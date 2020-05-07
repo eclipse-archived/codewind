@@ -25,6 +25,7 @@ function createNotification(options) {
     caption: '',
     title: '',
     subtitle: '',
+    timeout: 0,
     ...options,
   };
 }
