@@ -189,6 +189,7 @@ function getProjectSourceRoot(project) {
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 // List all the files or directories under a given directory
+// getDirectories: true will return directories, false will return files
 async function recursivelyListFilesOrDirectories(getDirectories, absolutePath, relativePath = '') {
   const directoryContents = await fs.readdir(absolutePath);
   const completePathArray = await Promise.all(directoryContents.map(async dir => {
@@ -208,6 +209,16 @@ async function recursivelyListFilesOrDirectories(getDirectories, absolutePath, r
   return completePathArray.reduce((a, b) => a.concat(b), []);
 }
 
+// Returns the first file that matches the fileName
+async function findFile(fileName, directory) {
+  const currentFileList = await recursivelyListFilesOrDirectories(false, directory);
+  const foundFilePath = currentFileList.find(filePath => path.basename(filePath) === fileName);
+  if (foundFilePath) {
+    return path.join(directory, foundFilePath);
+  }
+  return null;
+}
+
 module.exports = {
   ...containerFunctions,
   timeout,
@@ -221,4 +232,5 @@ module.exports = {
   getProjectSourceRoot,
   deepClone,
   recursivelyListFilesOrDirectories,
+  findFile,
 }

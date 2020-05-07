@@ -25,7 +25,7 @@ const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
 const log = new Logger(__filename);
 const { validateReq } = require('../../middleware/reqValidator');
-const { recursivelyListFilesOrDirectories } = require('../utils/sharedFunctions');
+const { recursivelyListFilesOrDirectories } = require('../../modules/utils/sharedFunctions');
 
 let timerbindstart = 0;
 let timerbindend = 0;

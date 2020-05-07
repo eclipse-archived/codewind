@@ -67,34 +67,36 @@ async function inject(req, res) {
 
 async function auth(req, res) {
   const disableMetricsAuth = req.sanitizeBody('disable');
+  const user = req.cw_user;
   const project = getProjectFromReq(req);
-  const { projectID, language } = project;
   const projectDir = project.projectPath();
-  if (disableMetricsAuth) {
-    const disableAuthFilePath = await metricsService.disableMicroprofileMetricsAuth(language, projectDir);
-    const now = new Date();
-    const timestamp = now.getTime();
-    const IFileChangeEvent = [
-      {
-        path: disableAuthFilePath,
-        timestamp,
-        type: "MODIFY",
-        directory: false
-      },
-    ];
-    // req.cw_user.fileChanged(projectID, timestamp, 1, 1, IFileChangeEvent);
-    // req.cw_user.buildProject(project, "build");
-  // } else {
-  //   await metricsService.removeMetricsCollectorFromProject(project.projectType, project.language, projectDir);
+
+  try {
+    if (disableMetricsAuth) {
+      await metricsService.disableMicroprofileMetricsAuth(project.language, projectDir);
+    // } else {
+    //   await metricsService.removeMetricsCollectorFromProject(project.projectType, project.language, projectDir);
+    }
+    res.sendStatus(202);
+  } catch (err) {
+    log.error(err);
+    res.status(500).send(err.info || err.message);
+    return;
   }
-  res.sendStatus(202);
+
+  try {
+    await syncProjectFilesIntoBuildContainer(project, user);
+  } catch (err) {
+    log.error(err);
+  }
 }
 
 async function syncProjectFilesIntoBuildContainer(project, user){
   const globalProjectPath = project.projectPath();
   const projectRoot = cwUtils.getProjectSourceRoot(project);
   if (project.buildStatus != "inProgress") {
-    if (!global.codewind.RUNNING_IN_K8S) {
+    if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
+      (!project.extension || !project.extension.config.needsMount)) {
       await cwUtils.copyProjectContents(
         project,
         globalProjectPath,
