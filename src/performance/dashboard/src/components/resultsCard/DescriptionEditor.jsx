@@ -17,6 +17,7 @@ import IconEdit from '@carbon/icons-react/es/edit/16'
 
 import * as AppConstants from '../../AppConstants'
 import { formatDateToString } from '../../utils/dateTime';
+import { addNotification, KIND_ERROR} from '../../store/actions/notificationsActions';
 import { reloadMetricsData } from '../../store/actions/projectMetricsActions';
 import './DescriptionEditor.scss';
 
@@ -117,7 +118,7 @@ class DescriptionEditor extends React.Component {
                 this.setState({ isBeingSaved: false, errorText: result.statusText });
             }
         } catch (error) {
-            alert(error);
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Save failed', subtitle:'Unable to save description', caption:`${error}` })); 
             this.setState({ isBeingSaved: false, errorText: error });
         }
     }
