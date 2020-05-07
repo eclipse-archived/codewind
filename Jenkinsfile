@@ -599,7 +599,6 @@ pipeline {
             deleteDir() /* clean up our workspace */
         }
         failure {
-            echo 'The PR failed'
             sendEmailNotification()
         }
     }
