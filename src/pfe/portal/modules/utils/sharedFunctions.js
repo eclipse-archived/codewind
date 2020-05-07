@@ -12,6 +12,7 @@
 const http = require('follow-redirects').http;
 const https = require('follow-redirects').https;
 const fs = require('fs-extra');
+const path = require('path');
 const Logger = require('../utils/Logger');
 const log = new Logger('sharedFunctions.js');
 const { promisify } = require('util');
@@ -187,6 +188,26 @@ function getProjectSourceRoot(project) {
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
+// List all the files or directories under a given directory
+async function recursivelyListFilesOrDirectories(getDirectories, absolutePath, relativePath = '') {
+  const directoryContents = await fs.readdir(absolutePath);
+  const completePathArray = await Promise.all(directoryContents.map(async dir => {
+    const pathList = [];
+    const nextRelativePath = path.join(relativePath, dir);
+    const nextAbsolutePath = path.join(absolutePath, dir);
+    const stats = await fs.stat(nextAbsolutePath);
+    if (stats.isDirectory()) {
+      const subDirectories = await recursivelyListFilesOrDirectories(getDirectories, nextAbsolutePath, nextRelativePath);
+      if (getDirectories) pathList.push(nextRelativePath);
+      pathList.push(...subDirectories);
+    } else if (!getDirectories) {
+      pathList.push(nextRelativePath);
+    }
+    return pathList;
+  }))
+  return completePathArray.reduce((a, b) => a.concat(b), []);
+}
+
 module.exports = {
   ...containerFunctions,
   timeout,
@@ -199,4 +220,5 @@ module.exports = {
   isWindowsAbsolutePath,
   getProjectSourceRoot,
   deepClone,
+  recursivelyListFilesOrDirectories,
 }

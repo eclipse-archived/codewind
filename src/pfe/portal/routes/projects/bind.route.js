@@ -25,6 +25,8 @@ const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
 const log = new Logger(__filename);
 const { validateReq } = require('../../middleware/reqValidator');
+const { recursivelyListFilesOrDirectories } = require('../utils/sharedFunctions');
+
 let timerbindstart = 0;
 let timerbindend = 0;
 let timersyncstart = 0;
@@ -390,26 +392,6 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
     await cwUtils.timeout(5000)
     await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
   }
-}
-
-// List all the files or directories under a given directory
-async function recursivelyListFilesOrDirectories(getDirectories, absolutePath, relativePath = '') {
-  const directoryContents = await fs.readdir(absolutePath);
-  const completePathArray = await Promise.all(directoryContents.map(async dir => {
-    const pathList = [];
-    const nextRelativePath = path.join(relativePath, dir);
-    const nextAbsolutePath = path.join(absolutePath, dir);
-    const stats = await fs.stat(nextAbsolutePath);
-    if (stats.isDirectory()) {
-      const subDirectories = await recursivelyListFilesOrDirectories(getDirectories, nextAbsolutePath, nextRelativePath);
-      if (getDirectories) pathList.push(nextRelativePath);
-      pathList.push(...subDirectories);
-    } else if (!getDirectories) {
-      pathList.push(nextRelativePath);
-    }
-    return pathList;
-  }))
-  return completePathArray.reduce((a, b) => a.concat(b), []);
 }
 
 /**

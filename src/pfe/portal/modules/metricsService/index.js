@@ -18,6 +18,7 @@ const promiseAny = require('promise.any');
 
 const Logger = require('../utils/Logger');
 const nodeMetricsService = require('./node');
+const { recursivelyListFilesOrDirectories } = require('../utils/sharedFunctions');
 
 const log = new Logger(__filename);
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
@@ -570,10 +571,33 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
   return newBuildPlugins;
 }
 
+async function disableMicroprofileMetricsAuth(projectLanguage, projectDir) {
+  if (projectLanguage !== 'java') return null;
+  const contents = '<server>\n\t<mpMetrics authentication="false"/>\n</server>\n';
+  const fileName = 'codewind-override-disable-mpmetrics-auth.xml';
+  const pathToServerXmlDir = await findDirectoryOfFile('server.xml', projectDir);
+  // Use overrides as it has a higher priority than defaults
+  const overridesDir = path.join(pathToServerXmlDir, '/configDropins/overrides');
+  const filePath = path.join(overridesDir, fileName);
+  await fs.ensureDir(overridesDir);
+  await fs.writeFile(fileName, contents);
+  return filePath;
+}
+
+async function findDirectoryOfFile(fileName, directory) {
+  const currentFileList = await recursivelyListFilesOrDirectories(false, directory);
+  const foundFilePath = currentFileList.find(filePath => filePath.endsWith(fileName));
+  if (foundFilePath) {
+    return path.join(directory, path.dirname(foundFilePath));
+  }
+  return null;
+}
+
 module.exports = {
   injectMetricsCollectorIntoProject,
   removeMetricsCollectorFromProject,
   metricsCollectorInjectionFunctions,
   identifyProject,
   determineIfOpenLiberty,
+  disableMicroprofileMetricsAuth,
 }
