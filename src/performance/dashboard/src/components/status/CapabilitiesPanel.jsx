@@ -125,13 +125,13 @@ class CapabilitiesPanel extends React.Component {
             return
         }
 
-        if (capabilityData.appmetricsEndpointReachable && !capabilityData.hasTimedMetrics) {
+        if (capabilityData.appmetricsEndpoint && !capabilityData.hasTimedMetrics) {
             feature.status = Constants.STATUS_WARNING;
             feature.statusMessage = Constants.MESSAGE_COMPARISONS_INJECT_TIMED
             return
         }
 
-        if (capabilityData.appmetricsEndpointReachable) {
+        if (capabilityData.appmetricsEndpoint) {
             feature.status = Constants.STATUS_OK;
             feature.statusMessage = Constants.MESSAGE_COMPARISONS_AVAILABLE;
             return
