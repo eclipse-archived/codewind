@@ -599,9 +599,7 @@ pipeline {
             deleteDir() /* clean up our workspace */
         }
         failure {
-            sh '''#!/usr/bin/env bash
-                printf "The PR failed";
-            '''
+            echo 'The PR failed'
             sendEmailNotification()
         }
     }
