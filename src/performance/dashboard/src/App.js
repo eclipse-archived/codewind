@@ -48,7 +48,6 @@ function App() {
     <SocketContext.Provider value={socket}>
       <div className="App">
         <Fragment>
-          {/*  <GridDebug />  */}
           <ErrorBoundary>
             <NavBar projectID={projectID} />
           </ErrorBoundary>

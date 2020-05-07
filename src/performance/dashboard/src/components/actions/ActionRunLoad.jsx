@@ -86,9 +86,9 @@ class ActionRunLoad extends React.Component {
                     case 'completed': {
                         // after receiving a loadrun completion message,  wait a bit,  then reset the button back to ready
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Completed...' });
-                        let nextData = data;
-                        nextData.status = 'idle';
-                        setTimeout(() => this.setState({ loadRunStatus: nextData }), 3000);
+                        setTimeout(() => {
+                            this.setState({ loadRunStatus: { status: 'idle' } })
+                        }, 3000);
                         break;
                     }
                     case 'cancelling': {
@@ -97,9 +97,9 @@ class ActionRunLoad extends React.Component {
                     }
                     case 'cancelled': {
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Cancelled...' });
-                        let nextData = data;
-                        nextData.status = 'idle';
-                        setTimeout(() => this.setState({ loadRunStatus: nextData }), 2000); 
+                        setTimeout(() => {
+                            this.setState({ loadRunStatus: { status: 'idle' } })
+                        }, 2000);
                         break;
                     }
                     default: {

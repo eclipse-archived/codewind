@@ -9,20 +9,21 @@
 *     IBM Corporation - initial API and implementation
 ******************************************************************************/
 
-.StatusPanelWarning {
-    padding: 7px;
-    margin: 20px;
-    color: #f1c21b;
-    border: 1px dashed #f1c21d;
-    text-align: center;
-    line-height: 20px;
+import React, { PureComponent } from 'react'
+import ErrorBoundary from '../../utils/ErrorBoundary';
+import PropTypes from 'prop-types';
+
+export default class InlineHTML extends PureComponent {
+
+  render() {
+    return (
+      <ErrorBoundary>
+        <div className="InlineHTML" dangerouslySetInnerHTML={{ __html: this.props.markup }} />
+      </ErrorBoundary>
+    )
+  }
 }
 
-.StatusPanelMessage {
-    padding: 10px;
-    margin: 20px;
-    background-color: #da1e28;
-    color: white;
-    font-weight: bold;
+InlineHTML.propTypes = {
+  markup: PropTypes.string.isRequired,
 }
-
