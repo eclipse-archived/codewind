@@ -141,8 +141,6 @@ function deployK8s() {
 
 	# Add the necessary labels and serviceaccount to the chart
 	/file-watcher/scripts/kubeScripts/modify-helm-chart.sh $deploymentFile $serviceFile $project $PROJECT_ID $ROOT
-	# Overwrite the container args with `tail` so that we can restart the node process without the container dying
-	/file-watcher/scripts/kubeScripts/modify-helm-chart-node.sh "$deploymentFile"
 
 	# Push app container image to docker registry if one is set up
 	if [[ ! -z $IMAGE_PUSH_REGISTRY ]]; then
@@ -250,11 +248,6 @@ function deployK8s() {
 
 	# Delete any pods left that are terminating, to ensure they go away
 	/file-watcher/scripts/kubeScripts/clear-terminating-pods.sh $project
-
-	local podName
-	podName=$(getNameOfRunningProjectPod "$project")
-	kubectl cp /file-watcher/scripts/nodejsScripts "$podName":/scripts
-	kubectl exec "$podName" -- /scripts/noderun.sh start false "$START_MODE" "$HOST_OS"
 
 	echo -e "Touching application log file: "$LOG_FOLDER/$APP_LOG.log""
 	touch "$LOG_FOLDER/$APP_LOG.log"
