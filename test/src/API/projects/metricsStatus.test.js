@@ -28,7 +28,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
         this.timeout(testTimeout.short);
 
         const res = await getMetricsStatus('invalidId');
-        res.status.should.equal(404, res.text); // print res.text if assertion fails
+        res.status.should.equal(404, res.text);
     });
 
     describe('Node.js project with appmetrics-dash', function() {
@@ -36,21 +36,12 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
         const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
         let projectID;
 
-        before('git clone project to disk', async function() {
+        before('clone project and bind to PFE', async function() {
             this.timeout(testTimeout.med);
             await projectService.cloneProject(
                 templateOptions['nodejs'].url,
                 pathToLocalProject,
             );
-        });
-
-        after(async function() {
-            this.timeout(testTimeout.med);
-            await projectService.removeProject(pathToLocalProject, projectID);
-        });
-
-        it('returns 200 when binding project to Codewind reports appmetricsPackageFoundInBuildFile as true', async function() {
-            this.timeout(testTimeout.med);
 
             const { body: project } = await projectService.bindProject({
                 name: projectName,
@@ -59,21 +50,25 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'nodejs',
                 creationTime: Date.now(),
             });
-            // save projectID for cleanup
             projectID = project.projectID;
+        });
 
-            project.metricsAvailable.should.be.false;
-            project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
+        after(async function() {
+            this.timeout(testTimeout.med);
+            await projectService.removeProject(pathToLocalProject, projectID);
+        });
 
-            const res = await getMetricsStatus(project.projectID);
-            res.status.should.equal(200, res.text); // print res.text if assertion fails
+        it('returns 200 and correct metrics information before the project is running', async function() {
+            this.timeout(testTimeout.med);
+            const res = await getMetricsStatus(projectID);
+            res.status.should.equal(200, res.text);
             res.body.should.deep.equal({
                 liveMetricsAvailable: false,
                 metricsEndpoint: false,
                 appmetricsEndpoint: false,
                 microprofilePackageFoundInBuildFile: false,
                 appmetricsPackageFoundInBuildFile: true,
-                canMetricsBeInjected: true, // As is a Node.js project
+                canMetricsBeInjected: true,
                 projectRunning: false,
                 hasTimedMetrics: false,
             });
@@ -85,7 +80,7 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
         const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
         let projectID;
 
-        before('git clone project to disk and remove appmetrics-dash from package.json and server.js', async function() {
+        before('clone project, remove appmetrics-dash and bind to PFE', async function() {
             this.timeout(testTimeout.med);
             await projectService.cloneProject(
                 templateOptions['nodejs'].url,
@@ -101,15 +96,6 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 path.join(filesWithoutAppmetricsDash, 'serverJs'),
                 path.join(pathToLocalProject, 'server', 'server.js'),
             );
-        });
-
-        after(async function() {
-            this.timeout(testTimeout.med);
-            await projectService.removeProject(pathToLocalProject, projectID);
-        });
-
-        it('returns 200 when binding project to Codewind and reports appmetricsPackageFoundInBuildFile as false', async function() {
-            this.timeout(testTimeout.med);
 
             const { body: project } = await projectService.bindProject({
                 name: projectName,
@@ -118,21 +104,26 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'nodejs',
                 creationTime: Date.now(),
             });
-            // save projectID for cleanup
             projectID = project.projectID;
+        });
 
-            project.metricsAvailable.should.be.false;
-            project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
+        after(async function() {
+            this.timeout(testTimeout.med);
+            await projectService.removeProject(pathToLocalProject, projectID);
+        });
 
-            const res = await getMetricsStatus(project.projectID);
-            res.status.should.equal(200, res.text); // print res.text if assertion fails
+        it('returns 200 and correct metrics information before the project is running', async function() {
+            this.timeout(testTimeout.med);
+
+            const res = await getMetricsStatus(projectID);
+            res.status.should.equal(200, res.text);
             res.body.should.deep.equal({
                 liveMetricsAvailable: false,
                 metricsEndpoint: false,
                 appmetricsEndpoint: false,
                 microprofilePackageFoundInBuildFile: false,
                 appmetricsPackageFoundInBuildFile: false,
-                canMetricsBeInjected: true, // As is a Node.js project
+                canMetricsBeInjected: true,
                 projectRunning: false,
                 hasTimedMetrics: false,
             });
@@ -144,22 +135,13 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
         const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
         let projectID;
 
-        before('git clone project to disk', async function() {
+        before('clone project and bind to PFE', async function() {
             this.timeout(testTimeout.med);
-            await projectService.cloneProject(
+            await projectService.cloneProjectAndReplacePlaceholders(
                 templateOptions['liberty'].url,
                 pathToLocalProject,
+                projectName,
             );
-        });
-
-        after(async function() {
-            this.timeout(testTimeout.med);
-            await projectService.removeProject(pathToLocalProject, projectID);
-        });
-
-        it('returns 200 and when binding project to Codewind and reports the appmetricsPackageFoundInBuildFile and microprofilePackageFoundInBuildFile as true', async function() {
-            this.timeout(testTimeout.med);
-
             const { body: project } = await projectService.bindProject({
                 name: projectName,
                 path: pathToLocalProject,
@@ -167,21 +149,26 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 projectType: 'liberty',
                 creationTime: Date.now(),
             });
-            // save projectID for cleanup
             projectID = project.projectID;
+        });
 
-            project.metricsAvailable.should.be.false;
-            project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
+        after(async function() {
+            this.timeout(testTimeout.med);
+            await projectService.removeProject(pathToLocalProject, projectID);
+        });
 
-            const res = await getMetricsStatus(project.projectID);
-            res.status.should.equal(200, res.text); // print res.text if assertion fails
+        it('returns 200 and correct metrics information before the project is running', async function() {
+            this.timeout(testTimeout.med);
+
+            const res = await getMetricsStatus(projectID);
+            res.status.should.equal(200, res.text);
             res.body.should.deep.equal({
                 liveMetricsAvailable: false,
                 metricsEndpoint: false,
                 appmetricsEndpoint: false,
                 microprofilePackageFoundInBuildFile: true,
                 appmetricsPackageFoundInBuildFile: true,
-                canMetricsBeInjected: true, // As is a Java project
+                canMetricsBeInjected: true,
                 projectRunning: false,
                 hasTimedMetrics: false,
             });
@@ -193,12 +180,21 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
         const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
         let projectID;
 
-        before('git clone project to disk', async function() {
+        before('clone project and bind to PFE', async function() {
             this.timeout(testTimeout.med);
-            await projectService.cloneProject(
+            await projectService.cloneProjectAndReplacePlaceholders(
                 templateOptions['openliberty'].url,
                 pathToLocalProject,
+                projectName,
             );
+            const { body: project } = await projectService.bindProject({
+                name: projectName,
+                path: pathToLocalProject,
+                language: 'java',
+                projectType: 'docker',
+                creationTime: Date.now(),
+            });
+            projectID = project.projectID;
         });
 
         after(async function() {
