@@ -292,6 +292,68 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
     });
 });
 
+describe('Spring project with javametrics-dash', function() {
+    const projectName = `test-spring-project-metrics-java-dash-${Date.now()}`;
+    const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
+    let projectID;
+
+    before('clone project and bind to PFE', async function() {
+        this.timeout(testTimeout.med);
+        await projectService.cloneProjectAndReplacePlaceholders(
+            templateOptions['spring'].url,
+            pathToLocalProject,
+            projectName,
+        );
+
+        const { body: project } = await projectService.bindProject({
+            name: projectName,
+            path: pathToLocalProject,
+            language: 'java',
+            projectType: 'spring',
+            creationTime: Date.now(),
+        });
+        projectID = project.projectID;
+    });
+
+    after(async function() {
+        this.timeout(testTimeout.med);
+        await projectService.removeProject(pathToLocalProject, projectID);
+    });
+
+    it('returns 200 and correct metrics information before the project is running', async function() {
+        this.timeout(testTimeout.med);
+        const res = await getMetricsStatus(projectID);
+        res.status.should.equal(200, res.text);
+        res.body.should.deep.equal({
+            liveMetricsAvailable: false,
+            metricsEndpoint: false,
+            appmetricsEndpoint: false,
+            microprofilePackageFoundInBuildFile: false,
+            appmetricsPackageFoundInBuildFile: true,
+            canMetricsBeInjected: true,
+            projectRunning: false,
+            hasTimedMetrics: false,
+        });
+    });
+
+    it('returns 200 and the correct metrics information when the project is running', async function() {
+        if (process.env.JENKINS_HOME) {
+            this.skip();
+        }
+        this.timeout(testTimeout.maxTravis);
+        await projectService.awaitProjectStartedHTTP(projectID);
+
+        const res = await getMetricsStatus(projectID);
+        res.status.should.equal(200, res.text);
+        res.body.should.containSubset({
+            liveMetricsAvailable: true,
+            metricsEndpoint: false,
+            appmetricsEndpoint: '/javametrics-dash',
+            projectRunning: true,
+        });
+    });
+});
+
 function getMetricsStatus(projectID) {
     return reqService.chai
         .get(`/api/v1/projects/${projectID}/metrics/status`)
