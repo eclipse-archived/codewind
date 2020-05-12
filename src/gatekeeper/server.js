@@ -158,27 +158,42 @@ async function main() {
     app.get("/api/pfe/ready", function (req, res) {
         console.log(`/api/pfe/ready - req.originalUrl = ${req.originalUrl}`);
         req.url = '/health';
-        proxy.web(req, res, {
-            target: pfe_target,
-        });
+        try {
+            proxy.web(req, res, {
+                target: pfe_target,
+            });
+        } catch (err) {
+            console.log("Proxy /api/pfe/ready error: ", err);
+            res.sendStatus(502);
+        }
     });
 
     /* PFE handles socket IO authentication*/
     app.use('/socket.io/*', function (req, res) {
         console.log(`/socket.io/* - req.originalUrl = ${req.originalUrl}`);
         req.url = req.originalUrl;
-        proxy.web(req, res, {
-            target: pfe_target
-        });
+        try {
+            proxy.web(req, res, {
+                target: pfe_target
+            });
+        } catch (err) {
+            console.log("Proxy /socket.io/* error: ", err);
+            res.sendStatus(502);
+        }
     });
 
     /* Proxy Performance container routes */
     app.use('*', authMiddleware, function (req, res) {
         console.log(`* - req.originalUrl = ${req.originalUrl}`);
         req.url = req.originalUrl;
-        proxy.web(req, res, {
-            target: pfe_target
-          });
+        try {
+            proxy.web(req, res, {
+                target: pfe_target
+            });
+        } catch (err) {
+            console.log("Proxy * error: ", err);
+            res.sendStatus(502);
+        }
     });
 
     const https = require('https');
@@ -189,7 +204,12 @@ async function main() {
 
     server.on('upgrade', function (req, socket, head) {
         console.log("Proxy: websocket connect 'upgrade'")
-        proxy.ws(req, socket, head);
+        try {
+            proxy.ws(req, socket, head);
+        } catch (err) {
+            console.log("Proxy upgrade error:", err);
+            res.sendStatus(502);
+        }
     });
 
     server.listen(port, () => console.log(`Gatekeeper listening on port ${port}!`))
