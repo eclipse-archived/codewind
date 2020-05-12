@@ -582,7 +582,7 @@ describe('FileWatcher.js', () => {
         });
     });
     describe('handleFWProjectEvent(event, fwProject)', () => {
-        it('correctly updates the projectList, project.inf and UI', async() => {
+        it('correctly updates the projectList, project.inf and UI and calls setMetricsState as the appStatus is started', async() => {
             // arrange
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
@@ -592,18 +592,64 @@ describe('FileWatcher.js', () => {
                 status: 'mockStatus',
                 logStreams: 'mockLogStreams',
                 type: 'mockType',
+                appStatus: 'started',
             };
+            const setMetricsState = sinon.stub().resolves();
             const expectedProjectUpdate = {
                 projectID: mockFwProject.projectID,
                 logStreams: mockFwProject.logStreams,
                 type: mockFwProject.type,
+                appStatus: 'started',
             };
-            const setMetricsState = sinon.stub().resolves();
             const expectedProjectInfoForUI = {
                 projectID: mockFwProject.projectID,
                 status: mockFwProject.status,
                 error: mockFwProject.error,
                 type: mockFwProject.type,
+                setMetricsState,
+                appStatus: 'started',
+            };
+            const mockUser = {
+                projectList: {
+                    updateProject: sinon.stub().returns({ ...expectedProjectUpdate, setMetricsState }),
+                },
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+
+            // act
+            await fw.handleFWProjectEvent('mockEvent', mockFwProject);
+
+            // assert
+            fw.user.projectList.updateProject.should.have.been.calledOnceWith(expectedProjectUpdate);
+            fw.user.uiSocket.emit.should.have.been.calledOnceWith('mockEvent', expectedProjectInfoForUI);
+            setMetricsState.should.be.calledOnce;
+        });
+        it('correctly updates the projectList, project.inf and UI and does not call setMetricsState as the appStatus is starting', async() => {
+            // arrange
+            const mockFwProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                name: 'mockName',
+                operationId: 'mockOperationId',
+                error: 'mockError',
+                status: 'mockStatus',
+                logStreams: 'mockLogStreams',
+                type: 'mockType',
+                appStatus: 'starting',
+            };
+            const setMetricsState = sinon.stub().resolves();
+            const expectedProjectUpdate = {
+                projectID: mockFwProject.projectID,
+                logStreams: mockFwProject.logStreams,
+                type: mockFwProject.type,
+                appStatus: 'starting',
+            };
+            const expectedProjectInfoForUI = {
+                projectID: mockFwProject.projectID,
+                status: mockFwProject.status,
+                error: mockFwProject.error,
+                type: mockFwProject.type,
+                appStatus: 'starting',
                 setMetricsState,
             };
             const mockUser = {
@@ -620,6 +666,7 @@ describe('FileWatcher.js', () => {
             // assert
             fw.user.projectList.updateProject.should.have.been.calledOnceWith(expectedProjectUpdate);
             fw.user.uiSocket.emit.should.have.been.calledOnceWith('mockEvent', expectedProjectInfoForUI);
+            setMetricsState.should.not.be.called;
         });
     });
     describe('handleProjectClosed(fwProject, project)', () => {
