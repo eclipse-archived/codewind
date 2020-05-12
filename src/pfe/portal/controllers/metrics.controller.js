@@ -12,8 +12,6 @@ const metricsService = require('../modules/metricsService');
 const Logger = require('../modules/utils/Logger');
 const cwUtils = require('../modules/utils/sharedFunctions');
 const { getProjectFromReq } = require('../middleware/checkProjectExists');
-const path = require('path');
-const fs = require('fs-extra');
 
 const log = new Logger(__filename);
 
@@ -66,7 +64,7 @@ async function inject(req, res) {
 }
 
 async function auth(req, res) {
-  const disableMetricsAuth = req.sanitizeBody('disable');
+  const disableMetricsAuth = req.sanitizeBody('disable') === 'true';
   const user = req.cw_user;
   const project = getProjectFromReq(req);
   const projectDir = project.projectPath();

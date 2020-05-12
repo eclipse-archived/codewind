@@ -1001,6 +1001,39 @@ paths:
         404:
           description: Project not found
 
+  /api/v1/projects/{id}/metrics/auth:
+    post:
+      summary: Disable Microprofile metrics authentication
+      description: >
+        Injects a file into the project container which disables Microprofile metrics authentication
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: id of project
+      requestBody:
+        description: Value indicating whether the file that disables metrics authentication should be injected
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - disable
+              properties:
+                enable:
+                  type: boolean
+      responses:
+        202:
+          description: Successful update of project information and build triggered
+          content:
+            application/json:
+              schema:
+                type: object
+        404:
+          description: Project not found
+
 
   /api/v1/projects/{id}/metrics/types:
     post:

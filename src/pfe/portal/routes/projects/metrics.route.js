@@ -161,7 +161,7 @@ router.get('/api/v1/projects/:id/metrics/:type', async function (req, res) {
 
 router.post('/api/v1/projects/:id/metrics/inject', validateReq, metricsController.inject);
 
-router.post('/api/v1/projects/:id/metrics/auth', checkProjectExists, metricsController.auth);
+router.post('/api/v1/projects/:id/metrics/auth', validateReq, checkProjectExists, metricsController.auth);
 
 /**
 * Updates the description of a specific load-test run on a specified project
