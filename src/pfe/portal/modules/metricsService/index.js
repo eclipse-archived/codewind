@@ -576,6 +576,7 @@ async function disableMicroprofileMetricsAuth(projectLanguage, projectDir) {
   const contents = '<server>\n\t<mpMetrics authentication="false"/>\n</server>\n';
   const fileName = 'codewind-override-disable-mpmetrics-auth.xml';
   const pathToServerXml = await findFile('server.xml', projectDir);
+  if (!pathToServerXml) return null;
   const serverXmlDirectory = path.dirname(pathToServerXml);
   // Use overrides as it has a higher priority than /configDropins/defaults
   const overridesDir = path.join(serverXmlDirectory, '/configDropins/overrides');
@@ -585,6 +586,17 @@ async function disableMicroprofileMetricsAuth(projectLanguage, projectDir) {
   return filePath;
 }
 
+async function enableMicroprofileMetricsAuth(projectLanguage, projectDir) {
+  if (projectLanguage !== 'java') return null;
+  const fileName = 'codewind-override-disable-mpmetrics-auth.xml';
+  const pathToServerXml = await findFile('server.xml', projectDir);
+  if (!pathToServerXml) return null;
+  const serverXmlDirectory = path.dirname(pathToServerXml);
+  // Use overrides as it has a higher priority than /configDropins/defaults
+  const filePath = path.join(serverXmlDirectory, '/configDropins/overrides', fileName);
+  return fs.remove(filePath);
+}
+
 module.exports = {
   injectMetricsCollectorIntoProject,
   removeMetricsCollectorFromProject,
@@ -592,4 +604,5 @@ module.exports = {
   identifyProject,
   determineIfOpenLiberty,
   disableMicroprofileMetricsAuth,
+  enableMicroprofileMetricsAuth,
 }

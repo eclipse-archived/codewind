@@ -74,8 +74,8 @@ async function auth(req, res) {
   try {
     if (disableMetricsAuth) {
       await metricsService.disableMicroprofileMetricsAuth(project.language, projectDir);
-    // } else {
-    //   await metricsService.removeMetricsCollectorFromProject(project.projectType, project.language, projectDir);
+    } else {
+      await metricsService.enableMicroprofileMetricsAuth(project.language, projectDir);
     }
     res.sendStatus(202);
   } catch (err) {
