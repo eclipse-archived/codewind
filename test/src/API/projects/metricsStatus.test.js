@@ -11,6 +11,7 @@
 const chai = require('chai');
 const fs = require('fs-extra');
 const path = require('path');
+const chaiSubset = require('chai-subset');
 
 const projectService = require('../../../modules/project.service');
 const reqService = require('../../../modules/request.service');
@@ -22,6 +23,7 @@ const {
 } = require('../../../config');
 
 chai.should();
+chai.use(chaiSubset);
 
 describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
     it('returns 400 when the project does not exist', async function() {
@@ -71,6 +73,23 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 canMetricsBeInjected: true,
                 projectRunning: false,
                 hasTimedMetrics: false,
+            });
+        });
+
+        it('returns 200 and the correct metrics information when the project is running', async function() {
+            if (process.env.JENKINS_HOME) {
+                this.skip();
+            }
+            this.timeout(testTimeout.med);
+            await projectService.awaitProjectStartedHTTP(projectID);
+
+            const res = await getMetricsStatus(projectID);
+            res.status.should.equal(200, res.text);
+            res.body.should.containSubset({
+                liveMetricsAvailable: true,
+                metricsEndpoint: false,
+                appmetricsEndpoint: '/appmetrics-dash',
+                projectRunning: true,
             });
         });
     });
@@ -128,6 +147,23 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 hasTimedMetrics: false,
             });
         });
+
+        it('returns 200 and the correct metrics information when the project is running', async function() {
+            if (process.env.JENKINS_HOME) {
+                this.skip();
+            }
+            this.timeout(testTimeout.med);
+            await projectService.awaitProjectStartedHTTP(projectID);
+
+            const res = await getMetricsStatus(projectID);
+            res.status.should.equal(200, res.text);
+            res.body.should.containSubset({
+                liveMetricsAvailable: false,
+                metricsEndpoint: false,
+                appmetricsEndpoint: false,
+                projectRunning: true,
+            });
+        });
     });
 
     describe('Java Liberty project with javametrics-dash', function() {
@@ -173,6 +209,24 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
                 hasTimedMetrics: false,
             });
         });
+
+        it('returns 200 and the correct metrics information when the project is running', async function() {
+            if (process.env.JENKINS_HOME) {
+                this.skip();
+            }
+            this.timeout(testTimeout.maxTravis);
+            await projectService.awaitProjectStartedHTTP(projectID);
+
+            const res = await getMetricsStatus(projectID);
+            res.status.should.equal(200, res.text);
+            res.body.should.containSubset({
+                liveMetricsAvailable: true,
+                metricsEndpoint: '/metrics',
+                appmetricsEndpoint: '/javametrics-dash',
+                projectRunning: true,
+            });
+        });
+
     });
 
     describe('Java Open Liberty project without javametrics-dash', function() {
@@ -202,33 +256,37 @@ describe('Metrics Status tests (/projects/{id}/metrics/status)', function() {
             await projectService.removeProject(pathToLocalProject, projectID);
         });
 
-        it('returns 200 and when binding project to Codewind and reports the appmetricsPackageFoundInBuildFile as false but the microprofilePackageFoundInBuildFile as true', async function() {
+        it('returns 200 and correct metrics information before the project is running', async function() {
             this.timeout(testTimeout.med);
 
-            const { body: project } = await projectService.bindProject({
-                name: projectName,
-                path: pathToLocalProject,
-                language: 'java',
-                projectType: 'docker',
-                creationTime: Date.now(),
-            });
-            // save projectID for cleanup
-            projectID = project.projectID;
-
-            project.metricsAvailable.should.be.false;
-            project.metricsDashboard.should.deep.equal({ hosting: null, path: null });
-
-            const res = await getMetricsStatus(project.projectID);
-            res.status.should.equal(200, res.text); // print res.text if assertion fails
+            const res = await getMetricsStatus(projectID);
+            res.status.should.equal(200, res.text);
             res.body.should.deep.equal({
                 liveMetricsAvailable: false,
                 metricsEndpoint: false,
                 appmetricsEndpoint: false,
                 microprofilePackageFoundInBuildFile: true,
                 appmetricsPackageFoundInBuildFile: false,
-                canMetricsBeInjected: true, // As is an Open Liberty project
+                canMetricsBeInjected: true,
                 projectRunning: false,
                 hasTimedMetrics: false,
+            });
+        });
+
+        it('returns 200 and the correct metrics information when the project is running', async function() {
+            if (process.env.JENKINS_HOME) {
+                this.skip();
+            }
+            this.timeout(testTimeout.maxTravis);
+            await projectService.awaitProjectStartedHTTP(projectID);
+
+            const res = await getMetricsStatus(projectID);
+            res.status.should.equal(200, res.text);
+            res.body.should.containSubset({
+                liveMetricsAvailable: true,
+                metricsEndpoint: '/metrics',
+                appmetricsEndpoint: false,
+                projectRunning: true,
             });
         });
     });
