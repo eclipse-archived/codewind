@@ -26,6 +26,7 @@ import * as eventConfigs from "../configs/event.config";
 import * as timeoutConfigs from "../configs/timeout.config";
 import { fail } from "assert";
 import dockerode from "dockerode";
+import { getK8sClient } from "../../../src/utils/kubeutil";
 
 const chalk = require("chalk"); // tslint:disable-line:no-require-imports
 
@@ -43,9 +44,6 @@ export const readFileAsync = promisify(fs.readFile);
 export const openAsync = promisify(fs.open);
 export const readAsync = promisify(fs.readFile);
 
-const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
-const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
-
 const TEST_LOG_CONTEXTS = ["before", "after", "describe", "it", "info"];
 const TEST_LOG_COLORS: any = {
     [TEST_LOG_CONTEXTS[0]]: "yellowBright",
@@ -56,11 +54,6 @@ const TEST_LOG_COLORS: any = {
 };
 
 const docker = new dockerode();
-let k8sClient: any = undefined;
-
-if (process.env.IN_K8) {
-    k8sClient = new Client({ config: config.getInCluster(), version: "1.9"});
-}
 
 export function pingPFE(callback: request.RequestCallback): request.Request {
     const pingUrl = _.cloneDeep(pfeURL) + pfe_configs.pfeAPIs.projects;
@@ -312,6 +305,8 @@ export async function checkForDockerResources(projectID: string, exists: boolean
 }
 
 export async function checkForKubeResources(selectorType: string, selector: string, resources: Array<string> = ["deployments", "pods", "services"], exists: boolean = true): Promise<void> {
+
+    const k8sClient = getK8sClient();
     let deploymentResp, podResp, serviceResp;
     try {
         if (resources.includes("deployments")) {
