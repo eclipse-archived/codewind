@@ -90,7 +90,7 @@ describe('metricsStatusChecker.js', function() {
             unsetGlobal();
         });
         [
-            { language: 'java', fileContents: 'javametrics\n<artifactId>microprofile</artifactId>', mpPac: true, apEndpoint: '/javametrics-dash' },
+            { language: 'java', fileContents: 'javametrics\n<artifactId>microprofile</artifactId>', mpPac: true, apEndpoint: '/javametrics-dash/' },
             { language: 'nodejs', fileContents: '{"dependencies":{"appmetrics-dash": "1.0.0"}}', apEndpoint: '/appmetrics-dash' },
             { language: 'javascript', fileContents: '{"dependencies":{"appmetrics-dash": "1.0.0"}}', apEndpoint: '/appmetrics-dash' },
             { language: 'swift', fileContents: 'SwiftMetrics.git', apEndpoint: '/swiftmetrics-dash' },
@@ -128,7 +128,7 @@ describe('metricsStatusChecker.js', function() {
                     const mockedGetActiveMetricsURLs = sinon.stub().returns({
                         '/metrics': true,
                         '/appmetrics-dash': (language === 'nodejs' || language === 'javascript') ? true : false,
-                        '/javametrics-dash': (language === 'java') ? true : false,
+                        '/javametrics-dash/': (language === 'java') ? true : false,
                         '/swiftmetrics-dash': ((language === 'swift') ? true : false),
                         '/actuator/prometheus': true,
                     });
@@ -294,7 +294,7 @@ describe('metricsStatusChecker.js', function() {
             activeDashboardObject.should.deep.equal({
                 '/metrics': true,
                 '/appmetrics-dash': true,
-                '/javametrics-dash': true,
+                '/javametrics-dash/': true,
                 '/swiftmetrics-dash': true,
                 '/actuator/prometheus': true,
             });
@@ -413,14 +413,14 @@ describe('metricsStatusChecker.js', function() {
         const allActiveEndpoints = {
             '/metrics': true,
             '/appmetrics-dash': true,
-            '/javametrics-dash': true,
+            '/javametrics-dash/': true,
             '/swiftmetrics-dash': true,
             '/actuator/prometheus': true,
         };
         const allDisabledEndpoints = {
             '/metrics': false,
             '/appmetrics-dash': false,
-            '/javametrics-dash': false,
+            '/javametrics-dash/': false,
             '/swiftmetrics-dash': false,
             '/actuator/prometheus': false,
         };
@@ -430,8 +430,8 @@ describe('metricsStatusChecker.js', function() {
                 hosting.should.equal('performanceContainer');
                 path.should.equal('/performance/monitor/dashboard/java?theme=dark&projectID=projectid');
             });
-            it('returns hosting as the project as /metrics is disabled but /javametrics-dash is active', async function() {
-                const { hosting, path } = await getMetricsDashboardHostAndPath({ ...allDisabledEndpoints, '/javametrics-dash': true }, 'projectid', 'java');
+            it('returns hosting as the project as /metrics is disabled but /javametrics-dash/ is active', async function() {
+                const { hosting, path } = await getMetricsDashboardHostAndPath({ ...allDisabledEndpoints, '/javametrics-dash/': true }, 'projectid', 'java');
                 hosting.should.equal('project');
                 path.should.equal('/javametrics-dash/?theme=dark');
             });
