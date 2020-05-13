@@ -43,6 +43,7 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
 
     await project.createLink({
       projectID: targetProjectID,
+      projectName: targetProject.name,
       envName,
       projectURL,
     });

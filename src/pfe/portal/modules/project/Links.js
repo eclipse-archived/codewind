@@ -98,8 +98,8 @@ class Links {
 }
 
 function validateLink(newLink, links) {
-  const { projectID, envName, projectURL } = newLink;
-  if (!projectID || !envName || !projectURL) {
+  const { projectID, projectName, envName, projectURL } = newLink;
+  if (!projectID || !projectName || !envName || !projectURL) {
     log.error(newLink);
     throw new ProjectLinkError(`INVALID_PARAMETERS`, newLink.envName);
   }
