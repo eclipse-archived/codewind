@@ -15,11 +15,11 @@ import PropTypes from 'prop-types';
 
 import './styles.scss'
 
-export default class MPDisableEncrypt extends Component {
+export default class MPDisableAuth extends Component {
 
   render() {
     return (
-      <div className="MPDisableEncrypt">
+      <div className="MPDisableAuth">
         If you wish to see live metrics, you can disable authentication by modifying the server.xml file in your project.
         <br />
         You can locate this file at src/main/liberty/config/server.xml. Modify server.xml and add or update: <br /><br />&lt;mpMetrics authentication=&quot;false&quot;/&gt;
@@ -33,14 +33,12 @@ export default class MPDisableEncrypt extends Component {
           <br />&lt;mpMetrics authentication=&quot;false&quot;/&gt;
         </div>
         <br />
-        {
-          // Not for 0.12 <ActionDisableMicroProfileAuth projectID={this.props.projectID} />
-        }
+         <ActionDisableMicroProfileAuth projectID={this.props.projectID} />
       </div>
     )
   }
 }
 
-MPDisableEncrypt.propTypes = {
+MPDisableAuth.propTypes = {
   projectID: PropTypes.string.isRequired,
 }

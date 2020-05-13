@@ -13,7 +13,7 @@ import React, { Component, Fragment } from 'react'
 import PropTypes from 'prop-types';
 import InlineHTML from './messages/InlineHTML'
 import ErrorBoundary from '../utils/ErrorBoundary';
-import MPDisableEncrypt from './messages/MPDisableEncrypt'
+import MPDisableAuth from './messages/MPDisableAuth'
 import * as Constants from './Constants';
 
 import './DetailsPanel.scss'
@@ -29,7 +29,7 @@ class DetailPanel extends Component {
         detailSubComponent = <InlineHTML markup={this.props.messageText} />
         break;
       case Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE:
-        detailSubComponent = <MPDisableEncrypt projectID={this.props.projectID} />
+        detailSubComponent = <MPDisableAuth projectID={this.props.projectID} />
         break;
       default:
         detailSubComponent = <Fragment></Fragment>

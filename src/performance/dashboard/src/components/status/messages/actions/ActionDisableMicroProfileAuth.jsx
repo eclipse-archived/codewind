@@ -38,7 +38,6 @@ class ActionDisableMicroProfileAuth extends Component {
 
     setTimeout(async () => {
       const response = await this.dispatchRequest();
-      console.log("response;", response)
       if (response.status == 202) {
         setTimeout(() => {
           this.setState({success:true, description:"Accepted"});
@@ -47,9 +46,13 @@ class ActionDisableMicroProfileAuth extends Component {
           }, 1500);
         }, 2000);
       } else {
-        this.setState({isSubmitting: false, success:false, description:"Failed", ariaLive:'assertive',  errorMessage:`HTTP  ${response.status} : ${response.statusText}`, disabled:true});
+        var message = ""
+        if (response != undefined && response.statusText != undefined) {
+          message = `HTTP ${response.status} : ${response.statusText}`
+        }
+        this.setState({isSubmitting: false, success:false, description:"Failed", ariaLive:'assertive',  errorMessage:message, disabled:true});
       }
-    }, 1500);
+    }, 1400);
   }
 
   /**
@@ -57,11 +60,11 @@ class ActionDisableMicroProfileAuth extends Component {
    * @param {string} projectID
    */
   async dispatchRequest() {
-    const response = fetch(`${AppConstants.API_SERVER}/api/v1/projects/${this.props.projectID}/metrics/disableauth`,
+    const response = fetch(`${AppConstants.API_SERVER}/api/v1/projects/${this.props.projectID}/metrics/sauth`,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: ""
+            body: JSON.stringify({enable:true})
         });
      const reply = await response;
      return reply;
@@ -70,7 +73,9 @@ class ActionDisableMicroProfileAuth extends Component {
   render() {
     const {disabled, isSubmitting, success, description, ariaLive, errorMessage} = this.state
     if (disabled) { return  (
-      <div className="ActionButton"><span className="errorMessage">{ errorMessage }</span> </div>
+      <div className="ActionButton">
+        <span className="errorMessage">{ errorMessage }</span> 
+      </div>
     )}
 
 
