@@ -235,8 +235,26 @@ module.exports = class FileWatcher {
       applicationPort: project.applicationPort,
       settings: settingsFileContents,
       language: project.language,
-      autoBuild: project.autoBuild
+      autoBuild: project.autoBuild,
+      // portMappings: {
+      //   3000: 7777,
+      // },
     };
+
+    if (project.ports) {
+      if (project.ports.exposedPort && project.ports.internalPort) {
+        projectAction.portMappings = {
+          ...projectAction.portMappings,
+          [project.ports.internalPort]: project.ports.exposedPort,
+        }
+      }
+      if (project.ports.exposedDebugPort && project.ports.internalDebugPort) {
+        projectAction.portMappings = {
+          ...projectAction.portMappings,
+          [project.ports.internalDebugPort]: project.ports.exposedDebugPort,
+        }
+      }
+    }
 
     log.info(`Calling filewatcher.createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
     let retval;
@@ -435,12 +453,12 @@ module.exports = class FileWatcher {
           refPaths: [],
         }
         if (fwProject.refPaths) {
-          data.refPaths = fwProject.refPaths.map((refPath) => ({ 
-            from: project.resolveMonitorPath(refPath.from), 
+          data.refPaths = fwProject.refPaths.map((refPath) => ({
+            from: project.resolveMonitorPath(refPath.from),
             to: refPath.to,
           }));
         }
-        const projectUpdate = { 
+        const projectUpdate = {
           projectID,
           projectWatchStateId,
           ignoredPaths,
@@ -473,7 +491,7 @@ module.exports = class FileWatcher {
       // Send all file watcher clients project related data when a new project is added or ignored paths has changed
       const ignoredPaths = fwProject.ignoredPaths;
       const pathToMonitor = project.pathToMonitor;
-  
+
       let time = Date.now()
       if (project.creationTime) {
         time = project.creationTime
@@ -491,7 +509,7 @@ module.exports = class FileWatcher {
       if (fwProject.refPaths) {
         data.refPaths = fwProject.refPaths.map((refPath) => ({
           from: project.resolveMonitorPath(refPath.from),
-          to: refPath.to 
+          to: refPath.to
         }));
       }
       const projectUpdate = {
