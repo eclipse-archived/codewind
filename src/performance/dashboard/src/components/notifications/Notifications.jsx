@@ -22,10 +22,6 @@ class Notifications extends Component {
     super(props);
   }
 
-  componentDidUpdate() {
-    console.log(this.props.notifications)
-  }
-
   handleRemoveNotification(id) {
     this.props.dispatch(removeNotification(id));
   }
@@ -37,6 +33,8 @@ class Notifications extends Component {
           this.props.notifications.map(notification => {
             return (
               <ToastNotification
+                className="ToastNotification"
+                key={`notification_${notification.id}`}
                 caption={notification.caption}
                 hideCloseButton={false}
                 iconDescription="remove notification"
