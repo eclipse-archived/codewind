@@ -18,6 +18,7 @@ const path = require('path');
 const zlib = require('zlib');
 const klawSync = require('klaw-sync');
 const globToRegExp = require('glob-to-regexp');
+const replace = require('replace-in-file');
 
 const { projectTypeToIgnoredPaths } = require('../../src/pfe/portal/modules/utils/ignoredPaths');
 const { ADMIN_COOKIE, templateOptions } = require('../config');
@@ -117,11 +118,11 @@ async function syncFiles(
         pathToLocalProject,
         pathsFromDirToModifiedFiles,
     );
-     
+
     responsesToUploadFile.forEach(res => {
         res.should.have.status(200);
     });
-    
+
     const options = {
         fileList,
         directoryList,
@@ -440,6 +441,16 @@ async function cloneProject(giturl, dest) {
     await git().clone(giturl, dest);
 }
 
+async function cloneProjectAndReplacePlaceholders(giturl, dest, projectName) {
+    await cloneProject(giturl, dest);
+    const options = {
+        files: `${dest}/*`,
+        from: /\[PROJ_NAME_PLACEHOLDER\]/g,
+        to: projectName,
+    };
+    await replace(options);
+}
+
 async function notifyPfeOfFileChangesAndAwaitMsg(array, projectID) {
     const deflateAsync = promisify(zlib.deflate);
     const str = JSON.stringify(array);
@@ -534,6 +545,7 @@ module.exports = {
     removeProject,
     buildProject,
     cloneProject,
+    cloneProjectAndReplacePlaceholders,
     notifyPfeOfFileChangesAndAwaitMsg,
     getProjectLinks,
     addProjectLink,
