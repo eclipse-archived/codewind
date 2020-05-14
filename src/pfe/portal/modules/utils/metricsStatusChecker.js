@@ -38,7 +38,7 @@ const VALID_METRIC_ENDPOINT = {
     hosting: METRICS_DASH_HOST.project,
   },
   javametricsDash: {
-    endpoint: '/javametrics-dash',
+    endpoint: '/javametrics-dash/',
     hosting: METRICS_DASH_HOST.project,
   },
   swiftmetricsDash: {
@@ -248,7 +248,7 @@ function getMetricsDashboardHostAndPath(endpoints, projectID, projectLanguage) {
 
 function getDashboardPath(metricsDashHost, projectMetricEndpoint, projectID, language, injectMetrics) {
   if (metricsDashHost === METRICS_DASH_HOST.project && !injectMetrics) {
-    return `${projectMetricEndpoint}/?theme=dark`;
+    return path.join(projectMetricEndpoint, '?theme=dark');
   }
 
   // Currently we only support java and nodejs on the performance dashboard
