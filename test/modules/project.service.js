@@ -416,6 +416,23 @@ async function cancelLoad(projectID) {
     return res;
 }
 
+
+async function queryProfileTree(projectID, testRun, jsonPath) {
+    const res = await reqService.chai
+        .post(`/api/v1/projects/${projectID}/profiling/${testRun}/querytree`)
+        .set('Cookie', ADMIN_COOKIE)
+        .send({ path: jsonPath });
+    return res;
+}
+
+async function queryProfileSummary(projectID, testRun, jsonPath) {
+    const res = await reqService.chai
+        .post(`/api/v1/projects/${projectID}/profiling/${testRun}/querysummary`)
+        .set('Cookie', ADMIN_COOKIE)
+        .send({ path: jsonPath });
+    return res;
+}
+
 async function getLogStreams(projectID) {
     const res = await reqService.chai
         .get(`/api/v1/projects/${projectID}/logs`)
@@ -531,6 +548,8 @@ module.exports = {
     awaitProjectBuilding,
     runLoad,
     cancelLoad,
+    queryProfileTree,
+    queryProfileSummary,
     getLogStreams,
     startLogStreams,
     bindProject,

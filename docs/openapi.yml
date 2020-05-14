@@ -593,6 +593,85 @@ paths:
         500:
           description: Internal error
 
+
+  /api/v1/projects/{id}/profiling/{testRunTime}/querytree:
+    post:
+      summary: Queries the profiling tree data for the given timestamp
+      description: >
+        Reads profiling data from pfe, runs the supplied JSONPath query against it and returns the results.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: id of project
+        - in: path
+          schema:
+            type: string
+          name: testRunTime
+          required: true
+          description: Time of loadtest run
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - path
+              properties:
+                path:
+                  type: string
+                  description: a JSONPath expression to run.
+      responses:
+        200:
+          description: Successful read of load run data
+        400:
+          description: Incorrect parameters given
+        404:
+          $ref: '#/components/responses/ProjectNotFound'
+        500:
+          description: Internal error
+
+  /api/v1/projects/{id}/profiling/{testRunTime}/querysummary:
+    post:
+      summary: Queries the profiling summary data for the given timestamp
+      description: >
+        Reads profiling summary data from pfe, runs the supplied JSONPath query against it and returns the results.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: id of project
+        - in: path
+          schema:
+            type: string
+          name: testRunTime
+          required: true
+          description: Time of loadtest run
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - path
+              properties:
+                path:
+                  type: string
+                  description: a JSONPath expression to run.
+      responses:
+        200:
+          description: Successful read of load run data
+        400:
+          description: Incorrect parameters given
+        404:
+          $ref: '#/components/responses/ProjectNotFound'
+        500:
+          description: Internal error
+
   /api/v1/projects/{id}/unbind:
       post:
         summary: Unbind a given project from codewind
