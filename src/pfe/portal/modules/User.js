@@ -526,7 +526,6 @@ module.exports = class User {
       if (err instanceof FilewatcherError && err.code == 'CONNECTION_FAILED') {
         let projectUpdate = {
           projectID: projectID,
-          ports: '',
           buildStatus: 'unknown',
           appStatus: 'unknown',
           state: Project.STATES.closed

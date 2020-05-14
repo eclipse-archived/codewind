@@ -580,7 +580,6 @@ module.exports = class FileWatcher {
     if (fwProject.status === 'success') {
       let projectUpdate = {
         projectID: fwProject.projectID,
-        ports: '',
         buildStatus: 'unknown',
         appStatus: 'unknown',
         state: Project.STATES.closed,

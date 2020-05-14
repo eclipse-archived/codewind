@@ -23,8 +23,8 @@ FORCE_ACTION=${10}
 FOLDER_NAME=${11}
 IMAGE_PUSH_REGISTRY=${12}
 # TODO:
-all_args=("$@")
-PORT_MAPPINGS=("${all_args[@]:12}")
+# PORT_MAPPINGS is an array of the rest of the arguments
+PORT_MAPPINGS="${@:13}"
 
 WORKSPACE=/codewind-workspace
 
@@ -285,9 +285,9 @@ function dockerRun() {
 	echo "Workspace path used for volume mounting is: "$workspace""
 
 	# TODO:
-	echo "*** PORT_MAPPINGS = $PORT_MAPPINGS"
-	MAPPED_PORTS=$(makePortMappings);
-	echo "*** MAPPED_PORTS = $MAPPED_PORTS"
+	echo "*** [nodejs] PORT_MAPPINGS = $PORT_MAPPINGS"
+	MAPPED_PORTS=$($util makePortMappings $PORT_MAPPINGS)
+	echo "*** [nodejs] MAPPED_PORTS = $MAPPED_PORTS"
 	$IMAGE_COMMAND run \
 		--network=codewind_network \
 		--env $heapdump \
@@ -306,7 +306,7 @@ function dockerRun() {
 }
 
 function makePortMappings() {
-	for externalToInternal in $PORT_MAPPINGS
+	for externalToInternal in "${PORT_MAPPINGS[@]}"
 	do
 		echo "--publish 127.0.0.1:$externalToInternal"
 	done

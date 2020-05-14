@@ -75,6 +75,13 @@ function getWorkspacePathForVolumeMounting() {
 	echo "$workspace"
 }
 
+function makePortMappings() {
+	for externalToInternal in "${PORT_MAPPINGS[@]}"
+	do
+		echo "--publish 127.0.0.1:$externalToInternal"
+	done
+}
+
 if [ "$COMMAND" == "updateAppState" ]; then
 	projectID=$1
 	state=$2
@@ -99,5 +106,9 @@ elif [ "$COMMAND" == "imagePushRegistryStatus" ]; then
 elif [ "$COMMAND" == "getWorkspacePathForVolumeMounting" ]; then
  	LOCAL_WORKSPACE=$1
  	retval=$( getWorkspacePathForVolumeMounting "$LOCAL_WORKSPACE" )
+	echo "$retval"
+elif [ "$COMMAND" == "makePortMappings" ]; then
+	PORT_MAPPINGS=("$@")
+	retval=$( makePortMappings );
 	echo "$retval"
 fi

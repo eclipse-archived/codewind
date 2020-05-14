@@ -21,6 +21,9 @@ DEBUG_PORT=$9
 FOLDER_NAME=${11}
 IMAGE_PUSH_REGISTRY=${12}
 MAVEN_SETTINGS=${13}
+# TODO:
+# PORT_MAPPINGS is an array of the rest of the arguments
+PORT_MAPPINGS="${@:14}"
 
 WORKSPACE=/codewind-workspace
 LOG_FOLDER=$WORKSPACE/.logs/"$FOLDER_NAME"
@@ -42,6 +45,7 @@ echo "*** FOLDER_NAME = $FOLDER_NAME"
 echo "*** LOG_FOLDER = $LOG_FOLDER"
 echo "*** IMAGE_PUSH_REGISTRY = $IMAGE_PUSH_REGISTRY"
 echo "*** MAVEN_SETTINGS = $MAVEN_SETTINGS"
+echo "*** PORT_MAPPINGS = $PORT_MAPPINGS"
 
 
 # Import general constants
@@ -268,10 +272,23 @@ function dockerRun() {
 		$IMAGE_COMMAND rm -f $project
 	fi
 
+	echo "*** [spring] PORT_MAPPINGS = $PORT_MAPPINGS"
+	MAPPED_PORTS=$($util makePortMappings $PORT_MAPPINGS)
+	echo "*** [spring] MAPPED_PORTS = $MAPPED_PORTS"
 	$IMAGE_COMMAND run --network=codewind_network \
 		--entrypoint "/scripts/new_entrypoint.sh" \
 		--name $project \
-		--expose 8080 -p 127.0.0.1::$DEBUG_PORT -P -dt $project
+		--expose 8080 \
+		--publish 127.0.0.1::$DEBUG_PORT \
+		$MAPPED_PORTS \
+		--publish-all \
+		--detach \
+		--tty \
+		$project
+	# $IMAGE_COMMAND run --network=codewind_network \
+	# 	--entrypoint "/scripts/new_entrypoint.sh" \
+	# 	--name $project \
+	# 	--expose 8080 -p 127.0.0.1::$DEBUG_PORT -P -dt $project
 	if [ $? -eq 0 ]; then
 		echo -e "Copying over source files"
 		docker cp "$WORKSPACE/$projectName"/. $project:/root/app
