@@ -60,7 +60,7 @@ class ActionDisableMicroProfileAuth extends Component {
    * @param {string} projectID
    */
   async dispatchRequest() {
-    const response = fetch(`${AppConstants.API_SERVER}/api/v1/projects/${this.props.projectID}/metrics/sauth`,
+    const response = fetch(`${AppConstants.API_SERVER}/api/v1/projects/${this.props.projectID}/metrics/auth`,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
