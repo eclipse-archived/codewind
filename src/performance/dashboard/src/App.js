@@ -21,6 +21,7 @@ import ModalNoProjectID from './components/modals/ModalNoProjectID';
 import NavBar from './components/navBar/NavBar';
 import PagePerformance from './pages/PagePerformance';
 import SocketContext from './utils/sockets/SocketContext';
+import Notifications from './components/notifications/Notifications';
 import * as ProjectIDChecker from './utils/projectUtils';
 import * as AppConstants from './AppConstants';
 
@@ -47,6 +48,9 @@ function App() {
   return (
     <SocketContext.Provider value={socket}>
       <div className="App">
+        <ErrorBoundary>
+            <Notifications/>
+        </ErrorBoundary>
         <Fragment>
           <ErrorBoundary>
             <NavBar projectID={projectID} />

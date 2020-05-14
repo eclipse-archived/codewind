@@ -18,8 +18,7 @@ import IconStop from '@carbon/icons-react/lib/close--outline/16';
 import { Button, InlineLoading } from 'carbon-components-react';
 import { SocketEvents } from '../../utils/sockets/SocketEvents';
 import SocketContext from '../../utils/sockets/SocketContext';
-import { reloadMetricsData } from '../../store/actions/projectMetricsActions';
-import RunTestNotificationFail from '../notifications/RunTestNotificationFail';
+import { addNotification, KIND_ERROR,  KIND_SUCCESS} from '../../store/actions/notificationsActions';
 import ModalRunTest from '../modals/ModalRunTest';
 import * as AppConstants from '../../AppConstants';
 
@@ -34,7 +33,6 @@ class ActionRunLoad extends React.Component {
             showModalRunTest: false,
             runTestDescription: '',
             inlineTextLabel: 'Running...',
-            showNotificationRunTestFail: false,
             notificationError: { result: 0, message: "" },
             timeRemaining: 0
         }
@@ -44,7 +42,6 @@ class ActionRunLoad extends React.Component {
         this.requestRunLoad = this.requestRunLoad.bind(this);
         this.handleCancelLoad = this.handleCancelLoad.bind(this);
         this.handleRunTestDlgStart = this.handleRunTestDlgStart.bind(this);
-        this.showStartTestNotificationFail = this.showStartTestNotificationFail.bind(this);
         this.startCountdown = this.startCountdown.bind(this);
         this.updateTimeRemaining = this.updateTimeRemaining.bind(this);
     }
@@ -87,7 +84,8 @@ class ActionRunLoad extends React.Component {
                         // after receiving a loadrun completion message,  wait a bit,  then reset the button back to ready
                         this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Completed...' });
                         setTimeout(() => {
-                            this.setState({ loadRunStatus: { status: 'idle' } })
+                            this.setState({ loadRunStatus: { status: 'idle' } });
+                            this.props.dispatch(addNotification({kind: KIND_SUCCESS, title:'Load runner finished', subtitle:'The test has completed successfully',  timeout: 6,}));
                         }, 3000);
                         break;
                     }
@@ -126,19 +124,21 @@ class ActionRunLoad extends React.Component {
                     break;
                 }
                 case 503: {
-                    instance.showStartTestNotificationFail({ result: result.status, message: "Reason: Your project is not running" });
+                    instance.props.dispatch(addNotification({kind: KIND_ERROR, title:'Unable to start load run', subtitle:'Your project is not running'}));
+                    instance.setState({ loadRunStatus: { status: 'idle' } })
                     break;
                 }
                 case 409: {
-                    instance.showStartTestNotificationFail({ result: result.status, message: "Reason: A load run is already in progress" });
+                    instance.props.dispatch(addNotification({kind: KIND_ERROR, title:'Unable to start load run', subtitle:'A load run is already in progress'}));
                     break;
                 }
                 default: {
-                    instance.showStartTestNotificationFail({ result: result.status, message: `${result.status} - Unable to accept request` });
-                }
+                    instance.props.dispatch(addNotification({kind: KIND_ERROR, title:'Unable to start load run', subtitle:'An error occurred', caption:`${result.status} - Unable to accept request` }));
+                    instance.setState({ loadRunStatus: { status: 'idle' } })
+               }
             }
         }).catch(function (err) {
-            alert(err);
+            instance.props.dispatch(addNotification({kind: KIND_ERROR, title:'Unable to start load run', subtitle:'An unexpected error occurred', caption:`${err}` }));
         });
     }
 
@@ -182,13 +182,6 @@ class ActionRunLoad extends React.Component {
         this.setState({ runTestDescription: '', showModalRunTest: true })
     }
 
-    showStartTestNotificationFail(err) {
-        this.setState(
-            { showNotificationRunTestFail: true, notificationError: err,  loadRunStatus: { status: '' } },
-            () => setTimeout(() => this.setState({ showNotificationRunTestFail: false }), 5000)
-        );
-    }
-
     updateTimeRemaining() {
         const timeRemaining = this.state.timeRemaining - 1;
         if (timeRemaining < 0) {
@@ -208,7 +201,7 @@ class ActionRunLoad extends React.Component {
     }
 
     render() {
-        const { showNotificationRunTestFail, loadRunStatus, inlineTextLabel, timeRemaining } = this.state;
+        const { loadRunStatus, inlineTextLabel, timeRemaining } = this.state;
 
         let loadRunCompleted = loadRunStatus.status === 'completed';
         const options = ['preparing', 'connecting', 'starting', 'started', 'running',  'collecting', 'completed', 'requesting', 'requested', 'cancelling', 'cancelled']
@@ -218,7 +211,6 @@ class ActionRunLoad extends React.Component {
 
         return (
             <Fragment>
-                <RunTestNotificationFail notification={showNotificationRunTestFail} titleMessage={'Request Failed!'} notificationError={this.state.notificationError} />
                 <div className="ActionRunLoad">
                     {
                         (showBusy) ? (

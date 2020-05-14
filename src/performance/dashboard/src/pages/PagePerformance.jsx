@@ -27,6 +27,7 @@ import ErrorBoundary from '../components/utils/ErrorBoundary';
 import ResultsCard from '../components/resultsCard/ResultsCard';
 import ResultsCard_Blank from '../components/resultsCard/ResultsCard_Blank';
 import RunTestHistory from '../components/runTestHistory/RunTestHistory';
+import { addNotification, KIND_ERROR} from '../store/actions/notificationsActions';
 import SocketContext from '../utils/sockets/SocketContext';
 import * as MetricsUtils from '../modules/MetricsUtils';
 import CapabilitiesPanel from '../components/status/CapabilitiesPanel';
@@ -75,7 +76,7 @@ class PagePerformance extends React.Component {
 
         const projectMetricTypes = this.props.projectMetricTypes;
         if (projectMetricTypes && projectMetricTypes.error) {
-            alert(projectMetricTypes.error.message + ' reason: ' + projectMetricTypes.error.err);
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading metric types', subtitle:projectMetricTypes.error.message , caption:`${projectMetricTypes.error.err}` }));
             return;
         }
 
@@ -84,9 +85,8 @@ class PagePerformance extends React.Component {
         const projectMetrics = this.props.projectMetrics;
 
         if (projectMetrics && projectMetrics.error) {
-            alert(projectMetrics.error.message + ' reason: ' + projectMetrics.error.err);
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading project metrics', subtitle:rojectMetrics.error.message  , caption:`${projectMetrics.error.err}` }));
         }
-
     }
 
     componentWillReceiveProps(nextProps) {

@@ -15,6 +15,7 @@ import { DataTable, OverflowMenu, OverflowMenuItem } from 'carbon-components-rea
 import { connect } from 'react-redux';
 import IconDelete from '@carbon/icons-react/es/delete/16';
 import { formatDateToString } from '../../utils/dateTime';
+import { addNotification, KIND_ERROR} from '../../store/actions/notificationsActions';
 
 import { postDeleteTests, reloadMetricsData } from '../../store/actions/projectMetricsActions';
 import DescriptionEditor from '../resultsCard/DescriptionEditor';
@@ -86,7 +87,7 @@ class RunTestHistory extends Component {
         if (result.status && result.status === 200) {
             await this.props.dispatch(reloadMetricsData(this.props.projectID, this.props.projectMetricTypes.types));
         } else {
-            alert(`Unable to delete test: ${result.message}`);
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Delete failed', subtitle:'Unable to delete test', caption:`${result.message}` }));
         }
         await this.setState({ deleteInProgress: false });
     }
@@ -103,7 +104,7 @@ class RunTestHistory extends Component {
                 await this.handleDeleteRow(deleteCandidates[i]);
             }
         } catch (err) {
-            alert("Delete failed:  " + err);
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Deleting failed', subtitle:'Unable to delete tests', caption:`${err}` }));
         }
 
         await this.setState({ deleteInProgress: false });
