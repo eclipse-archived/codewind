@@ -22,13 +22,32 @@ import { ProcessResult } from "./processManager";
 import { ProjectInfo } from "../projects/Project";
 import * as logHelper from "../projects/logHelper";
 
+const k8s = require("@kubernetes/client-node"); // tslint:disable-line:no-require-imports
+
+const Request = require("kubernetes-client/backends/request"); // tslint:disable-line:no-require-imports
 const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
-const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
+const config = require("kubernetes-client/backends/request").config; // tslint:disable-line:no-require-imports
 let k8sClient: any = undefined;
 
 if (process.env.IN_K8) {
-    k8sClient = new Client({ config: config.getInCluster(), version: "1.9"});
+    k8sClient = getK8sClient();
 }
+
+export function getK8sClient(): any {
+
+    if (process.env.IN_K8) {
+
+        const kubeconfig = new k8s.KubeConfig();
+
+        kubeconfig.loadFromCluster();
+        const backend = new Request({ kubeconfig });
+        return new Client({ backend: backend, version: "1.13" });
+
+    } else {
+        return undefined;
+    }
+}
+
 
 const KUBE_NAMESPACE = process.env.KUBE_NAMESPACE || "default";
 

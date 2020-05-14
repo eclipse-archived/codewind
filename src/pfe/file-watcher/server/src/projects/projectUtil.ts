@@ -41,14 +41,7 @@ import { projectConstants, ContainerStates, StartModes, MavenFlags } from "./con
 import * as locale from "../utils/locale";
 import { appStateMap, DetailedAppStatus } from "../controllers/projectStatusController";
 import * as constants from "./constants";
-
-const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
-const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
-let k8sClient: any = undefined;
-
-if (process.env.IN_K8) {
-    k8sClient = new Client({ config: config.getInCluster(), version: "1.9"});
-}
+import { getK8sClient } from "../utils/kubeutil";
 
 const KUBE_NAMESPACE = process.env.KUBE_NAMESPACE || "default";
 
@@ -1716,6 +1709,8 @@ export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: s
     let isPodFailed = false;
     const releaseLabel = "release=" + buildInfo.containerName;
     const intervalID: NodeJS.Timer = isApplicationPodUpIntervalMap.get(buildInfo.projectID);
+
+    const k8sClient = getK8sClient();
     const resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).pods.get({ qs: { labelSelector: releaseLabel } });
 
     // We are getting the list of pods by the release label

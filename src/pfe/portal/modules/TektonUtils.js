@@ -10,7 +10,8 @@
  *******************************************************************************/
 
 const Client = require('kubernetes-client').Client
-const config = require('kubernetes-client').config;
+const Request = require('kubernetes-client/backends/request')
+const config = require('kubernetes-client/backends/request').config
 
 const cwUtils = require('./utils/sharedFunctions');
 const Logger = require('./utils/Logger');
@@ -26,8 +27,9 @@ const log = new Logger(__filename);
  * Determine the Tekton API service connection details {host:port}
  */
 async function getTektonAPIService() {
-  try {
-    const client = new Client({ config: config.getInCluster(), version: '1.9' });
+  try {  
+    const client = new Client({ backend: new Request( config.getInCluster() ), version: '1.13' })
+
     const tktNamespaceName = process.env.TEKTON_PIPELINE;
     log.info(`Looking for services in Tekton namespace '${tktNamespaceName}'`);
     const services = await client.api.v1.namespaces(tktNamespaceName).services.get({ qs: { labelSelector: 'app=tekton-dashboard-internal' } });

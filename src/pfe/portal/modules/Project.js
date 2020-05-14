@@ -12,8 +12,11 @@
 const fs = require('fs-extra');
 const { extname, isAbsolute, join } = require('path');
 const uuidv1 = require('uuid/v1');
+
 const Client = require('kubernetes-client').Client
-const config = require('kubernetes-client').config;
+const Request = require('kubernetes-client/backends/request')
+const config = require("kubernetes-client/backends/request").config
+
 const rimraf = require('rimraf')
 
 const cwUtils = require('./utils/sharedFunctions');
@@ -135,7 +138,9 @@ module.exports = class Project {
       try {
         const namespace = process.env.KUBE_NAMESPACE
         const { projectID } = this;
-        const client = new Client({ config: config.getInCluster(), version: '1.9' });
+        
+        const client = new Client({ backend: new Request( config.getInCluster() ), version: '1.13' })
+    
         const services = await client.api.v1.namespaces(namespace).services.get({ qs: { labelSelector: 'projectID='+projectID } })
         const ingressPort = await cwUtils.getServicePortFromProjectIngress(projectID);
         if (services && services.body && services.body.items && services.body.items[0]) {

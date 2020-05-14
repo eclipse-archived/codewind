@@ -20,7 +20,7 @@ log.info(`Starting Codewind PFE container`);
 // Because main is async it can swallow exceptions (like syntax errors in
 // required files unless we handle them.
 let ready = false;
-main().catch(err => log.error(err)).finally(() => log.info(`Codewind PFE container startup ${ready?'complete':'failed'}`));
+main().catch(err => log.error(err)).finally(() => log.info(`Codewind PFE container startup ${ready ? 'complete' : 'failed'}`));
 
 // Wrap everything in an async function so we can use
 // await to serialize initialisation.
@@ -82,13 +82,16 @@ async function main() {
   };
 
   // Kubernetes-client v5
+
+  const Request = require('kubernetes-client/backends/request')
+  const k8config = require('kubernetes-client/backends/request').config
+
   const K8Client = require('kubernetes-client').Client
-  const k8config = require('kubernetes-client').config;
   let k8Client = null
 
   // find if running in kubernetes and build up a whitelist of allowed origins
   try {
-    k8Client = new K8Client({ config: k8config.getInCluster(), version: '1.9' });
+    k8Client = new K8Client({ backend: new Request(k8config.getInCluster()), version: '1.13' })
   }
   catch (err) {
     log.info('Codewind does not appear to be running in Kubernetes')
