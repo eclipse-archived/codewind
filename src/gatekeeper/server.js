@@ -2,6 +2,7 @@ const express = require('express')
 const Keycloak = require('keycloak-connect');
 const session = require('express-session');
 const httpProxy = require('http-proxy');
+const fs = require('fs-extra');
 const { promisify } = require('util');
 const https = require('https');
 
@@ -196,11 +197,19 @@ async function main() {
         }
     });
 
-    const https = require('https');
-    const pem = require('pem');
-    const createCertificateAsync = promisify(pem.createCertificate);
-    let keys = await createCertificateAsync({ selfSigned: true });
-    server = https.createServer({ key: keys.serviceKey, cert: keys.certificate }, app)
+    var serverCertificate;
+    var serverKey;
+    try {
+        serverCertificate = fs.readFileSync('/tlscerts/tls.crt');
+        serverKey = fs.readFileSync('/tlscerts/tls.key');
+    } catch (err) {
+        console.error ("**********  TLS certificates can not be loaded **********");
+        console.error ("The server is unable to start since it was unable to load a key and certificate from the mounted volume - check you have a TLS secret for this deployment containing a valid key and certificate");
+        process.exit(1);
+    }
+
+    server = https.createServer({ key: serverKey, cert: serverCertificate}, app)
+    console.log("TLS Certificates loaded and applied to https server");
 
     server.on('upgrade', function (req, socket, head) {
         console.log("Proxy: websocket connect 'upgrade'")
