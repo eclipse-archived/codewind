@@ -33,8 +33,10 @@ const defaultNodeProjectFileList = [
     '.cw-settings',
     '.dockerignore',
     '.gitignore',
+    '.npmrc',
     'Dockerfile',
     'Dockerfile-tools',
+    'README.md',
     'chart/node/Chart.yaml',
     'chart/node/templates/basedeployment.yaml',
     'chart/node/templates/deployment.yaml',
@@ -42,7 +44,6 @@ const defaultNodeProjectFileList = [
     'chart/node/templates/istio.yaml',
     'chart/node/templates/service.yaml',
     'chart/node/values.yaml',
-    'cli-config.yml',
     'images/header-logo.svg',
     'nodemon.json',
     'package.json',
@@ -275,7 +276,7 @@ function openProject(projectID, expectedResStatus) {
 /**
  * @param {String} projectID
  * @param {number} [expectedResStatus] e.g. 202
- * @param {boolean} [awaitSocketConfirmation] true by default, so will wait for projectClose. Set to false to make it skip confirmation
+ * @param {boolean} [awaitSocketConfirmation] if true, will wait for projectClose event. If false will not wait for it
  */
 function closeProject(
     projectID,
@@ -310,7 +311,7 @@ function restartProject(
     projectID,
     startMode,
     expectedResStatus,
-    awaitSocketConfirmation = false
+    awaitSocketConfirmation,
 ) {
     if (typeof projectID !== 'string') {
         throw new Error(`'${projectID}' should be a string`);
