@@ -41,7 +41,7 @@ describe('Metrics Auth tests (/api/v1/projects/{id}/metrics/auth)', function() {
         res.text.should.equal(`Project with ID \'${projectID}\' does not exist on the Codewind server`);
     });
 
-    describe('Disables and enables the metrics authentication of an open-liberty application (these `it` blocks depend on each other passing)', function() {
+    describe('Disables and enables the metrics authentication of an open-liberty application', function() {
         const projectName = `test-open-liberty-metrics-auth-${Date.now()}`;
         const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
         let projectID;
@@ -53,7 +53,7 @@ describe('Metrics Auth tests (/api/v1/projects/{id}/metrics/auth)', function() {
 
         after(async function() {
             this.timeout(testTimeout.med);
-            await projectService.removeProject(pathToLocalProject, projectID);
+            if (projectID) await projectService.removeProject(pathToLocalProject, projectID);
         });
 
         it('returns 202 to /metrics/auth and adds the disable metrics authentication file into the user\'s project', async function() {
@@ -66,6 +66,60 @@ describe('Metrics Auth tests (/api/v1/projects/{id}/metrics/auth)', function() {
             this.timeout(testTimeout.short);
             const res = await postMetricsAuth(projectID, { disable: false });
             res.status.should.equal(202, res.text); // print res.text if assertion fails
+        });
+    });
+    describe('Returns 500 as the project does not contain a server.xml (but is a Java project)', function() {
+        const projectName = `test-websphere-liberty-metrics-auth-${Date.now()}`;
+        const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
+        let projectID;
+
+        before('create a sample project and bind to Codewind, without building', async function() {
+            this.timeout(testTimeout.med);
+            projectID = await projectService.createProjectFromTemplate(projectName, 'lagom', pathToLocalProject); 
+        });
+
+        after(async function() {
+            this.timeout(testTimeout.med);
+            if (projectID) await projectService.removeProject(pathToLocalProject, projectID);
+        });
+
+        it('returns 500 to /metrics/auth as the project does not contain a server.xml', async function() {
+            this.timeout(testTimeout.short);
+            const res = await postMetricsAuth(projectID, { disable: true });
+            res.status.should.equal(500, res.text); // print res.text if assertion fails
+        });
+
+        it('returns 202 to /metrics/auth as the project does not contain a server.xml', async function() {
+            this.timeout(testTimeout.short);
+            const res = await postMetricsAuth(projectID, { disable: false });
+            res.status.should.equal(500, res.text); // print res.text if assertion fails
+        });
+    });
+    describe('Returns 500 as the project language is nodejs which is not supported', function() {
+        const projectName = `test-nodejs-metrics-auth-${Date.now()}`;
+        const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
+        let projectID;
+
+        before('create a sample project and bind to Codewind, without building', async function() {
+            this.timeout(testTimeout.med);
+            projectID = await projectService.createProjectFromTemplate(projectName, 'nodejs', pathToLocalProject); 
+        });
+
+        after(async function() {
+            this.timeout(testTimeout.med);
+            if (projectID) await projectService.removeProject(pathToLocalProject, projectID);
+        });
+
+        it('returns 500 to /metrics/auth as the project language is nodejs', async function() {
+            this.timeout(testTimeout.short);
+            const res = await postMetricsAuth(projectID, { disable: true });
+            res.status.should.equal(500, res.text); // print res.text if assertion fails
+        });
+
+        it('returns 202 to /metrics/auth as the project language is nodejs', async function() {
+            this.timeout(testTimeout.short);
+            const res = await postMetricsAuth(projectID, { disable: false });
+            res.status.should.equal(500, res.text); // print res.text if assertion fails
         });
     });
 });

@@ -74,8 +74,7 @@ const defaultNodeProjectDirList = [
  */
 async function createProjectFromTemplate(name, projectType, path, autoBuild = false) {
     const { url, language } = templateOptions[projectType];
-
-    const pfeProjectType = (['openliberty', 'go'].includes(projectType))
+    const pfeProjectType = (['openliberty', 'go', 'lagom'].includes(projectType))
         ? 'docker'
         : projectType;
 

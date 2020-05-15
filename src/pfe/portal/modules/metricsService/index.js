@@ -572,11 +572,15 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
 }
 
 async function disableMicroprofileMetricsAuth(projectLanguage, projectDir) {
-  if (projectLanguage !== 'java') return null;
+  if (projectLanguage !== 'java') {
+    throw new Error(`Disabling of Microprofile metrics authentication is not supported for projects of language '${projectLanguage}'`);
+  }
   const contents = '<server>\n\t<mpMetrics authentication="false"/>\n</server>\n';
   const fileName = 'codewind-override-disable-mpmetrics-auth.xml';
   const pathToServerXml = await findFile('server.xml', projectDir);
-  if (!pathToServerXml) return null;
+  if (!pathToServerXml) {
+    throw new Error(`Unable to determine 'server.xml' directory, cannot create Microprofile metrics authentication override file`);
+  }
   const serverXmlDirectory = path.dirname(pathToServerXml);
   // Use overrides as it has a higher priority than /configDropins/defaults
   const overridesDir = path.join(serverXmlDirectory, '/configDropins/overrides');
@@ -587,10 +591,14 @@ async function disableMicroprofileMetricsAuth(projectLanguage, projectDir) {
 }
 
 async function enableMicroprofileMetricsAuth(projectLanguage, projectDir) {
-  if (projectLanguage !== 'java') return null;
+  if (projectLanguage !== 'java') {
+    throw new Error(`Disabling of Microprofile metrics authentication is not supported for projects of language '${projectLanguage}'`);
+  }
   const fileName = 'codewind-override-disable-mpmetrics-auth.xml';
   const pathToServerXml = await findFile('server.xml', projectDir);
-  if (!pathToServerXml) return null;
+  if (!pathToServerXml) {
+    throw new Error(`Unable to determine 'server.xml' directory, cannot remove Microprofile metrics authentication override file`);
+  }
   const serverXmlDirectory = path.dirname(pathToServerXml);
   // Use overrides as it has a higher priority than /configDropins/defaults
   const filePath = path.join(serverXmlDirectory, '/configDropins/overrides', fileName);

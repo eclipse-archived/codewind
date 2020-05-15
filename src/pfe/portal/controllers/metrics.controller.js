@@ -64,7 +64,8 @@ async function inject(req, res) {
 }
 
 async function auth(req, res) {
-  const disableMetricsAuth = req.sanitizeBody('disable') === 'true';
+  // Handle true as a string or boolean
+  const disableMetricsAuth = req.sanitizeBody('disable') === 'true' || req.sanitizeBody('disable') === true;
   const user = req.cw_user;
   const project = getProjectFromReq(req);
   const projectDir = project.projectPath();
