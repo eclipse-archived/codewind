@@ -23,14 +23,15 @@ html {
   font-family: "Open Sans", sans-serif;
   background-image: linear-gradient(
     180deg,
-    #0083ca 0%,
-    #003462 100%,
-    #d8d8d8 100%
+    #0b3e69 0%,
+    #0b3e69 100%,
+    #0b3e69 100%
   );
 }
 
 body {
   margin: 0;
+  font-size: 14px;
 }
 
 .logo-container {
