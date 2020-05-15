@@ -49,10 +49,10 @@ let previousProjectErrorLog: String;
 let previousInfoLog: String;
 let previousErrorLog: String;
 
-setLoggingLevel(LogLevel.trace);
+setLoggingLevel(LogLevel.info);
 
 export async function setLoggingLevel(level: string): Promise<void> {
-    let logLevel = LogLevel.trace;
+    let logLevel = LogLevel.info;
     if (level in LogLevel) {
         logLevel = level;
     } else {

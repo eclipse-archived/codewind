@@ -18,7 +18,6 @@ CONTAINER_NAME=$5
 logName=$7
 FOLDER_NAME=${11}
 IMAGE_PUSH_REGISTRY=${12}
-# TODO:
 # PORT_MAPPINGS is an array of the rest of the arguments
 PORT_MAPPINGS="${@:13}"
 
@@ -254,11 +253,8 @@ function dockerRun() {
 			PROJECT_LINKS_PARAM="--env-file $PROJECT_LINKS_ENV_FILE"
 	fi
 
-	echo "*** [swift] PORT_MAPPINGS = $PORT_MAPPINGS"
 	MAPPED_PORTS=$($util makePortMappings $PORT_MAPPINGS)
-	echo "*** [swift] MAPPED_PORTS = $MAPPED_PORTS"
 
-	# TODO:
 	$IMAGE_COMMAND run --network=codewind_network \
 		$PROJECT_LINKS_PARAM \
 		--name "$project" \

@@ -213,7 +213,6 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         language: projInfo.language
     };
 
-    console.log("\n\n\n\n[createProject]portMappings");
     const portMappings: IPortMappings = req.portMappings;
     if (portMappings) {
         projectInfo.portMappings = portMappings;
@@ -1152,16 +1151,6 @@ export async function updateProjectInfo(projectID: string, keyValuePair: UpdateP
  */
 export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, saveIntoJsonFile: boolean = true): Promise<any> {
     return new Promise((resolve, reject) => {
-        // TODO:
-        // const projectInfo2 = {
-        //     ...projectInfo,
-        //     portMappings: {
-        //         3000: 44444,
-        //     }
-        // };
-        // console.log("projectInfo2");
-        // console.log(projectInfo2);
-        // const projectJSON = JSON.stringify(projectInfo2);
         const projectJSON = JSON.stringify(projectInfo);
         const infoFile = getProjectMetadataById(projectID).infoFile;
         projectInfoCache[infoFile] = projectJSON;

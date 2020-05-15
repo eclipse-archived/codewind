@@ -236,9 +236,6 @@ module.exports = class FileWatcher {
       settings: settingsFileContents,
       language: project.language,
       autoBuild: project.autoBuild,
-      // portMappings: {
-      //   3000: 7777,
-      // },
     };
 
     if (project.ports) {

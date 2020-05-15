@@ -22,7 +22,6 @@ DEBUG_PORT=$9
 FORCE_ACTION=${10}
 FOLDER_NAME=${11}
 IMAGE_PUSH_REGISTRY=${12}
-# TODO:
 # PORT_MAPPINGS is an array of the rest of the arguments
 PORT_MAPPINGS="${@:13}"
 
@@ -284,10 +283,8 @@ function dockerRun() {
 	workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
 	echo "Workspace path used for volume mounting is: "$workspace""
 
-	# TODO:
-	echo "*** [nodejs] PORT_MAPPINGS = $PORT_MAPPINGS"
 	MAPPED_PORTS=$($util makePortMappings $PORT_MAPPINGS)
-	echo "*** [nodejs] MAPPED_PORTS = $MAPPED_PORTS"
+
 	$IMAGE_COMMAND run \
 		--network=codewind_network \
 		--env $heapdump \
@@ -303,13 +300,6 @@ function dockerRun() {
 		echo -e "Copying over source files"
 		docker cp "$WORKSPACE/$projectName/." $project:/app
 	fi
-}
-
-function makePortMappings() {
-	for externalToInternal in "${PORT_MAPPINGS[@]}"
-	do
-		echo "--publish 127.0.0.1:$externalToInternal"
-	done
 }
 
 function deployLocal() {

@@ -12,7 +12,7 @@
 #*******************************************************************************
 
 # README FIRST !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#
+# 
 # NOTE: change of this file should be in sync with 'Jenkinsfile(stage: Build Docker images)'
 # Ping kjoseph@ca.ibm.com for details
 #
@@ -36,7 +36,6 @@ else
 fi
 
 ALL_IMAGES="$PFE $PERFORMANCE $KEYCLOAK $GATEKEEPER";
-ALL_IMAGES="$PFE";
 
 # Copy .env over to file-watcher
 if [ -f $DIR/.env ]; then
@@ -60,17 +59,17 @@ cp -r $DIR/docs ${SRC_DIR}/pfe/portal/
 # Copy the appsody and odo extension into portal. The zip file must have a version number e.g. codewind-appsody-extension-0.3.0.zip
 # in order for it to be accepted as a valid extension
 echo -e "\n+++   DOWNLOADING EXTENSIONS   +++\n";
-# mkdir -p ${SRC_DIR}/pfe/extensions
-# rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
-# # In case of ARCH = ppc64le, do not download the zip file.
-# if [ "$ARCH" == "ppc64le" ]; then
-#    echo -e "\n+++++   DISABLING APPSODY EXTENSION FOR PPC64LE ARCHITECTURE +++++\n";
-# else
-#    curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-9.9.9999.zip http://archive.eclipse.org/codewind/codewind-appsody-extension/master/latest/codewind-appsody-extension-9.9.9999.zip
-# fi
+mkdir -p ${SRC_DIR}/pfe/extensions
+rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
+# In case of ARCH = ppc64le, do not download the zip file.
+if [ "$ARCH" == "ppc64le" ]; then
+   echo -e "\n+++++   DISABLING APPSODY EXTENSION FOR PPC64LE ARCHITECTURE +++++\n";
+else
+   curl -Lo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-9.9.9999.zip http://archive.eclipse.org/codewind/codewind-appsody-extension/master/latest/codewind-appsody-extension-9.9.9999.zip
+fi
 
-# rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
-# curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-9.9.9999.zip http://archive.eclipse.org/codewind/codewind-odo-extension/master/latest/codewind-odo-extension-9.9.9999.zip
+rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
+curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-9.9.9999.zip http://archive.eclipse.org/codewind/codewind-odo-extension/master/latest/codewind-odo-extension-9.9.9999.zip
 
 # BUILD IMAGES
 # Uses a build file in each of the directories that we want to use
