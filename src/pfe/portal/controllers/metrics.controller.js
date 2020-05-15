@@ -11,6 +11,7 @@
 const metricsService = require('../modules/metricsService');
 const Logger = require('../modules/utils/Logger');
 const cwUtils = require('../modules/utils/sharedFunctions');
+const { getProjectFromReq } = require('../middleware/checkProjectExists');
 
 const log = new Logger(__filename);
 
@@ -62,11 +63,39 @@ async function inject(req, res) {
   }
 }
 
+async function auth(req, res) {
+  // Handle true as a string or boolean
+  const disableMetricsAuth = req.sanitizeBody('disable') === 'true' || req.sanitizeBody('disable') === true;
+  const user = req.cw_user;
+  const project = getProjectFromReq(req);
+  const projectDir = project.projectPath();
+
+  try {
+    if (disableMetricsAuth) {
+      await metricsService.disableMicroprofileMetricsAuth(project.language, projectDir);
+    } else {
+      await metricsService.enableMicroprofileMetricsAuth(project.language, projectDir);
+    }
+    res.sendStatus(202);
+  } catch (err) {
+    log.error(err);
+    res.status(500).send(err.info || err.message);
+    return;
+  }
+
+  try {
+    await syncProjectFilesIntoBuildContainer(project, user);
+  } catch (err) {
+    log.error(err);
+  }
+}
+
 async function syncProjectFilesIntoBuildContainer(project, user){
   const globalProjectPath = project.projectPath();
   const projectRoot = cwUtils.getProjectSourceRoot(project);
   if (project.buildStatus != "inProgress") {
-    if (!global.codewind.RUNNING_IN_K8S) {
+    if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
+      (!project.extension || !project.extension.config.needsMount)) {
       await cwUtils.copyProjectContents(
         project,
         globalProjectPath,
@@ -83,4 +112,5 @@ async function syncProjectFilesIntoBuildContainer(project, user){
 
 module.exports = {
   inject,
+  auth,
 }
