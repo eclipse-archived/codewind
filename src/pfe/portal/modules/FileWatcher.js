@@ -527,11 +527,16 @@ module.exports = class FileWatcher {
         results.error = error;
       }
       let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-      try {
-        // If updating the metrics fails, don't stop the status being emitted to the UI
-        await updatedProject.setMetricsState();
-      } catch(setMetricsStateErr) {
-        log.warn(`error updating the metrics state for ${updatedProject.name}, Error: ${setMetricsStateErr}`);
+
+      const { appStatus } = updatedProject;
+      // Only update metrics state when the project is running or stopped
+      if (appStatus === 'started' || appStatus === 'stopped') {
+        try {
+          // If updating the metrics fails, don't stop the status being emitted to the UI
+          await updatedProject.setMetricsState();
+        } catch(setMetricsStateErr) {
+          log.warn(`error updating the metrics state for ${updatedProject.name}, Error: ${setMetricsStateErr}`);
+        }
       }
 
       // remove fields which are not required by the UI
