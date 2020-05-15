@@ -29,6 +29,7 @@ public class ContainerRunTask {
         // https://docs.docker.com/engine/reference/run/#expose-incoming-ports
         // arg to be passed after -p to expose debug port to localhost only
         final String debugPortPublishArg = "127.0.0.1::" + context.getDebugPort();
+        final String mappedPorts = context.getFormattedPortMappings();
 
         String cmd = null;
         if (isWindows) {
@@ -46,8 +47,8 @@ public class ContainerRunTask {
                     + context.getImagePushRegistry();
         }  else {
             cmd = context.getArtifactsDirectory().getPath() + Constants.SLASH + "run_docker.sh "
-                    + context.getContainerName() + " " + context.getImageName() + " \"-p "
-                    + debugPortPublishArg + " -P\"" + " "
+                    + context.getContainerName() + " " + context.getImageName()
+                    + " \"" + mappedPorts + " -p " + debugPortPublishArg + " -P\"" + " "
                     + context.getAppDockerBase() + " " + context.getLocalWorkspaceOrigin() + " "
                     + context.getLogDir();
         }
