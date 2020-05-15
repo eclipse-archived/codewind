@@ -64,7 +64,7 @@ class ActionDisableMicroProfileAuth extends Component {
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({enable:true})
+            body: JSON.stringify({disable:true})
         });
      const reply = await response;
      return reply;
