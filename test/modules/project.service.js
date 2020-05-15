@@ -29,6 +29,7 @@ chai.should();
 const sleep = promisify(setTimeout);
 
 // These are for the default Codewind templates at https://github.com/codewind-resources
+// TODO: can we replace this with `const relativeFilepathsToUpload = getRelativeFilepathsToUpload(pathToDirToUpload, projectType);`? (see below)
 const defaultSyncLists = {
     nodejs: {
         fileList: [
@@ -114,6 +115,52 @@ const defaultSyncLists = {
             'src/test/java/application',
         ],
     },
+    liberty: {
+        fileList: [
+            'Dockerfile',
+            'Dockerfile-build',
+            'Dockerfile-tools',
+            'README.md',
+            'chart/javamicroprofiletemplate/Chart.yaml',
+            'chart/javamicroprofiletemplate/bindings.yaml',
+            'chart/javamicroprofiletemplate/templates/basedeployment.yaml',
+            'chart/javamicroprofiletemplate/templates/deployment.yaml',
+            'chart/javamicroprofiletemplate/templates/hpa.yaml',
+            'chart/javamicroprofiletemplate/templates/istio.yaml',
+            'chart/javamicroprofiletemplate/templates/service.yaml',
+            'chart/javamicroprofiletemplate/values.yaml',
+            'pom.xml',
+            'src/main/java/application/HealthEndpoint.java',
+            'src/main/java/application/rest/JaxrsApplication.java',
+            'src/main/java/application/rest/RootEndpoint.java',
+            'src/main/java/application/rest/v1/Example.java',
+            'src/main/liberty/config/jvm.options',
+            'src/main/liberty/config/jvmbx.options',
+            'src/main/liberty/config/server.xml',
+            'src/main/resources/index.html',
+            'src/main/webapp/WEB-INF/beans.xml',
+            'src/main/webapp/WEB-INF/ibm-web-ext.xml',
+            'src/test/java/it/HealthEndpointIT.java' ],
+        directoryList: [
+            'chart',
+            'chart/javamicroprofiletemplate',
+            'chart/javamicroprofiletemplate/templates',
+            'src',
+            'src/main',
+            'src/main/java',
+            'src/main/java/application',
+            'src/main/java/application/rest',
+            'src/main/java/application/rest/v1',
+            'src/main/liberty',
+            'src/main/liberty/config',
+            'src/main/resources',
+            'src/main/webapp',
+            'src/main/webapp/WEB-INF',
+            'src/test',
+            'src/test/java',
+            'src/test/java/it',
+        ],
+    },
 };
 
 /**
@@ -125,7 +172,6 @@ async function createProjectFromTemplate(name, projectType, path, autoBuild = fa
         ? 'docker'
         : projectType;
 
-    // TODO: check this works with all tests calling `createProjectFromTemplate`
     await cloneProjectAndReplacePlaceholders(url, path, name);
 
     const res = await bindProject({

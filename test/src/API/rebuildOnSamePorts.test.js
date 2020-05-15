@@ -23,173 +23,122 @@ const sleep = promisify(setTimeout);
 chai.should();
 
 describe('Rebuild project on same ports', function() {
-    describe('spring', function() {
-        const debugMode = 'debugNoInit';
-        const projectName = `test-rebuild-spring-project-on-same-ports-${Date.now()}`;
-        // const pathToLocalProject = '/Users/richard.waller@ibm.com/codewind-workspace/node10';
-        // const pathToLocalProject = path.join(__dirname, projectName);
-        const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
-        // const projectID = 'aa114bf0-9603-11ea-b740-4ffc8deaab98';
-        let projectID;
-        let originalPorts;
+    const tests = [
+        // {
+        //     projectType: 'nodejs',
+        //     debugMode: 'debugNoInit',
+        // },
+        // TODO: go
+        {
+            projectType: 'go',
+            debugMode: null,
+        },
+        // {
+        //     projectType: 'spring',
+        //     debugMode: 'debugNoInit',
+        // },
+        // TODO: swift
+        // {
+        //     projectType: 'swift',
+        //     debugMode: null,
+        // },
+        // {
+        //     projectType: 'liberty',
+        //     debugMode: 'debug',
+        // },
+    ];
+    tests.forEach((test) => {
+        const {
+            projectType,
+            debugMode,
+        } = test;
+        describe(projectType, function() {
+            if (process.env.JENKINS_HOME) {
+                this.skip();
+            }
+            const projectName = `test-rebuild-${projectType}-project-on-same-ports-${Date.now()}`;
+            const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
+            let projectID;
+            let originalPorts;
 
-        before('create a sample project, bind it to Codewind and wait for it start', async function() {
-            this.timeout(testTimeout.med);
-            projectID = await projectService.createProjectFromTemplate(projectName, 'spring', pathToLocalProject);
-            await projectService.awaitProjectStartedHTTP(projectID);
-            const { body: { ports } } = await projectService.getProject(projectID);
-            console.log('ports');
-            console.log(ports);
-            originalPorts = ports;
-        });
+            before(`create a sample ${projectType} project, bind it to Codewind and wait for it start`, async function() {
+                this.timeout(testTimeout.maxTravis);
+                projectID = await projectService.createProjectFromTemplate(projectName, projectType, pathToLocalProject);
+                await projectService.awaitProjectStartedHTTP(projectID);
+                const { body: { ports } } = await projectService.getProject(projectID);
+                // TODO: remove
+                console.log('ports');
+                console.log(ports);
+                originalPorts = ports;
+            });
 
-        after(async function() {
-            this.timeout(testTimeout.med);
-            await projectService.removeProject(pathToLocalProject, projectID);
-        });
+            after(async function() {
+                this.timeout(testTimeout.med);
+                await projectService.removeProject(pathToLocalProject, projectID);
+            });
 
-        it('restarts the project on the same port after user edits the Dockerfile', async function() {
-            this.timeout(testTimeout.med);
+            it('restarts the project on the same port after user edits the Dockerfile', async function() {
+                this.timeout(testTimeout.maxTravis);
 
-            editDockerfile(pathToLocalProject);
-            const res = await projectService.syncFiles(
-                projectID,
-                pathToLocalProject,
-                ['Dockerfile'],
-                projectService.defaultSyncLists.spring.fileList,
-                projectService.defaultSyncLists.spring.directoryList,
-            );
-            res.status.should.equal(200, res.text);
+                editDockerfile(pathToLocalProject);
+                const res = await projectService.syncFiles(
+                    projectID,
+                    pathToLocalProject,
+                    ['Dockerfile'],
+                    // TODO: Only nodejs, spring, and liberty have these set atm
+                    projectService.defaultSyncLists[projectType].fileList,
+                    projectService.defaultSyncLists[projectType].directoryList,
+                );
+                res.status.should.equal(200, res.text);
 
-            await sleep(3000); // PFE takes a moment to stop the project (to start rebuilding it)
-            await projectService.awaitProjectStartedHTTP(projectID);
+                await sleep(3000); // PFE takes a moment to stop the project (to start rebuilding it)
 
-            const { body: { ports } } = await projectService.getProject(projectID);
-            console.log('ports 2');
-            console.log(ports);
-            ports.should.deep.equal(originalPorts);
-        });
+                await projectService.awaitProjectStartedHTTP(projectID);
 
-        it('restarts the project on the same port after user disables then enables it in run mode', async function() {
-            this.timeout(testTimeout.med);
+                const { body: { ports } } = await projectService.getProject(projectID);
+                console.log('ports 2');
+                console.log(ports);
+                ports.should.deep.equal(originalPorts);
+            });
 
-            await projectService.closeProject(projectID, 202, true);
-            await projectService.openProject(projectID, 200);
-            await projectService.awaitProjectStartedHTTP(projectID);
+            it('restarts the project on the same port after user disables then enables it in run mode', async function() {
+                this.timeout(testTimeout.maxTravis);
 
-            const { body: { ports } } = await projectService.getProject(projectID);
-            console.log('ports 2');
-            console.log(ports);
-            ports.should.deep.equal(originalPorts);
-        });
+                await projectService.closeProject(projectID, 202, true);
+                await projectService.openProject(projectID, 200);
+                await projectService.awaitProjectStartedHTTP(projectID);
 
-        it('restarts the project on the same port after user disables then enables it in debug mode', async function() {
-            this.timeout(testTimeout.med);
+                const { body: { ports } } = await projectService.getProject(projectID);
+                console.log('ports 2');
+                console.log(ports);
+                ports.should.deep.equal(originalPorts);
+            });
 
-            await projectService.restartProject(projectID, debugMode, 202, true);
-            const { body: { ports: originalMorePorts } } = await projectService.getProject(projectID);
-            console.log('originalMorePorts');
-            console.log(originalMorePorts);
-            await projectService.closeProject(projectID, 202, true);
-            await projectService.openProject(projectID, 200);
-            await projectService.awaitProjectStartedHTTP(projectID);
+            it('restarts the project on the same port after user disables then enables it in debug mode', async function() {
+                if (!debugMode) {
+                    this.skip();
+                }
+                this.timeout(testTimeout.maxTravis);
 
-            const { body: { ports: newPorts } } = await projectService.getProject(projectID);
-            console.log('newPorts');
-            console.log(newPorts);
-            newPorts.should.deep.equal(originalPorts);
+                await projectService.restartProject(projectID, debugMode, 202, true);
+                const { body: { ports: originalMorePorts } } = await projectService.getProject(projectID);
+                console.log('originalMorePorts');
+                console.log(originalMorePorts);
+                await projectService.closeProject(projectID, 202, true);
+                await projectService.openProject(projectID, 200);
+                await projectService.awaitProjectStartedHTTP(projectID);
 
-            await projectService.restartProject(projectID, debugMode, 202, true);
-            const { body: { ports: newMorePorts } } = await projectService.getProject(projectID);
-            console.log('newMorePorts');
-            console.log(newMorePorts);
-            newMorePorts.should.deep.equal(originalMorePorts);
-        });
-    });
+                const { body: { ports: newPorts } } = await projectService.getProject(projectID);
+                console.log('newPorts');
+                console.log(newPorts);
+                newPorts.should.deep.equal(originalPorts);
 
-    describe('nodejs', function() {
-        const projectType = 'nodejs';
-        const debugMode = 'debugNoInit';
-        const projectName = `test-rebuild-${projectType}-project-on-same-ports-${Date.now()}`;
-        // const pathToLocalProject = '/Users/richard.waller@ibm.com/codewind-workspace/node10';
-        // const pathToLocalProject = path.join(__dirname, projectName);
-        const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
-        // const projectID = 'aa114bf0-9603-11ea-b740-4ffc8deaab98';
-        let projectID;
-        let originalPorts;
-
-        before(`create a sample ${projectType} project, bind it to Codewind and wait for it start`, async function() {
-            this.timeout(testTimeout.med);
-            projectID = await projectService.createProjectFromTemplate(projectName, projectType, pathToLocalProject);
-            await projectService.awaitProjectStartedHTTP(projectID);
-            const { body: { ports } } = await projectService.getProject(projectID);
-            console.log('ports');
-            console.log(ports);
-            originalPorts = ports;
-        });
-
-        after(async function() {
-            this.timeout(testTimeout.med);
-            await projectService.removeProject(pathToLocalProject, projectID);
-        });
-
-        it('restarts the project on the same port after user edits the Dockerfile', async function() {
-            this.timeout(testTimeout.med);
-
-            editDockerfile(pathToLocalProject);
-            const res = await projectService.syncFiles(
-                projectID,
-                pathToLocalProject,
-                ['Dockerfile'],
-                projectService.defaultSyncLists[projectType].fileList,
-                projectService.defaultSyncLists[projectType].directoryList,
-            );
-            res.status.should.equal(200, res.text);
-
-            await sleep(3000); // PFE takes a moment to stop the project (to start rebuilding it)
-
-            await projectService.awaitProjectStartedHTTP(projectID);
-
-            const { body: { ports } } = await projectService.getProject(projectID);
-            console.log('ports 2');
-            console.log(ports);
-            ports.should.deep.equal(originalPorts);
-        });
-
-        it('restarts the project on the same port after user disables then enables it in run mode', async function() {
-            this.timeout(testTimeout.med);
-
-            await projectService.closeProject(projectID, 202, true);
-            await projectService.openProject(projectID, 200);
-            await projectService.awaitProjectStartedHTTP(projectID);
-
-            const { body: { ports } } = await projectService.getProject(projectID);
-            console.log('ports 2');
-            console.log(ports);
-            ports.should.deep.equal(originalPorts);
-        });
-
-        it('restarts the project on the same port after user disables then enables it in debug mode', async function() {
-            this.timeout(testTimeout.med);
-
-            await projectService.restartProject(projectID, debugMode, 202, true);
-            const { body: { ports: originalMorePorts } } = await projectService.getProject(projectID);
-            console.log('originalMorePorts');
-            console.log(originalMorePorts);
-            await projectService.closeProject(projectID, 202, true);
-            await projectService.openProject(projectID, 200);
-            await projectService.awaitProjectStartedHTTP(projectID);
-
-            const { body: { ports: newPorts } } = await projectService.getProject(projectID);
-            console.log('newPorts');
-            console.log(newPorts);
-            newPorts.should.deep.equal(originalPorts);
-
-            await projectService.restartProject(projectID, debugMode, 202, true);
-            const { body: { ports: newMorePorts } } = await projectService.getProject(projectID);
-            console.log('newMorePorts');
-            console.log(newMorePorts);
-            newMorePorts.should.deep.equal(originalMorePorts);
+                await projectService.restartProject(projectID, debugMode, 202, true);
+                const { body: { ports: newMorePorts } } = await projectService.getProject(projectID);
+                console.log('newMorePorts');
+                console.log(newMorePorts);
+                newMorePorts.should.deep.equal(originalMorePorts);
+            });
         });
     });
 });
