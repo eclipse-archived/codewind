@@ -22,6 +22,8 @@ import NavBar from './components/navBar/NavBar';
 import PagePerformance from './pages/PagePerformance';
 import SocketContext from './utils/sockets/SocketContext';
 import Notifications from './components/notifications/Notifications';
+import SocketWatcherProjectStatus from './components/socketWatchers/ProjectStatus';
+import SocketWatcherProjectClosed from './components/socketWatchers/ProjectClosed';
 import * as ProjectIDChecker from './utils/projectUtils';
 import * as AppConstants from './AppConstants';
 
@@ -50,6 +52,10 @@ function App() {
       <div className="App">
         <ErrorBoundary>
             <Notifications/>
+        </ErrorBoundary>
+        <ErrorBoundary>
+            <SocketWatcherProjectClosed projectID={projectID}/>
+            <SocketWatcherProjectStatus projectID={projectID}/>
         </ErrorBoundary>
         <Fragment>
           <ErrorBoundary>

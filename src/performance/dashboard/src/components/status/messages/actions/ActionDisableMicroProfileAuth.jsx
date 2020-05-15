@@ -11,11 +11,12 @@
 
 import React, { Component, Fragment } from 'react'
 import PropTypes from 'prop-types'
+import { connect } from 'react-redux';
 import {Button, InlineLoading} from 'carbon-components-react'
-
 import IconEdit from '@carbon/icons-react/es/edit/16'
 
 import * as AppConstants from '../../../../AppConstants';
+import { showCapabilitiesPanel } from '../../../../store/actions/navbarActions';
 
 class ActionDisableMicroProfileAuth extends Component {
 
@@ -33,7 +34,7 @@ class ActionDisableMicroProfileAuth extends Component {
     this.dispatchRequest = this.dispatchRequest.bind(this);
 }
 
-   handleOnClick() {
+  handleOnClick() {
     this.setState({isSubmitting: true, success:false, description:"Requesting", ariaLive:'assertive', errorMessage:'',  disabled:false});
 
     setTimeout(async () => {
@@ -43,6 +44,7 @@ class ActionDisableMicroProfileAuth extends Component {
           this.setState({success:true, description:"Accepted"});
           setTimeout(() => {
             this.setState({isSubmitting: false, success:false, description:"", ariaLive:'off', disabled:true});
+            this.props.dispatch(showCapabilitiesPanel(false));
           }, 1500);
         }, 2000);
       } else {
@@ -74,10 +76,9 @@ class ActionDisableMicroProfileAuth extends Component {
     const {disabled, isSubmitting, success, description, ariaLive, errorMessage} = this.state
     if (disabled) { return  (
       <div className="ActionButton">
-        <span className="errorMessage">{ errorMessage }</span> 
+        <span className="errorMessage">{ errorMessage }</span>
       </div>
     )}
-
 
     return (
           <div className="ActionButton">
@@ -109,4 +110,11 @@ ActionDisableMicroProfileAuth.propTypes = {
   projectID: PropTypes.string.isRequired
 }
 
-export default ActionDisableMicroProfileAuth;
+
+// Mapped Redux Stores
+const mapStateToProps = stores => {
+  return {};
+};
+
+
+export default  connect(mapStateToProps)(ActionDisableMicroProfileAuth);
