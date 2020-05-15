@@ -28,48 +28,93 @@ const SocketService = require('./socket.service');
 chai.should();
 const sleep = promisify(setTimeout);
 
-// These are for the nodejs template at https://github.com/codewind-resources/nodeExpressTemplate
-const defaultNodeProjectFileList = [
-    '.cw-settings',
-    '.dockerignore',
-    '.gitignore',
-    '.npmrc',
-    'Dockerfile',
-    'Dockerfile-tools',
-    'README.md',
-    'chart/node/Chart.yaml',
-    'chart/node/templates/basedeployment.yaml',
-    'chart/node/templates/deployment.yaml',
-    'chart/node/templates/hpa.yaml',
-    'chart/node/templates/istio.yaml',
-    'chart/node/templates/service.yaml',
-    'chart/node/values.yaml',
-    'images/header-logo.svg',
-    'nodemon.json',
-    'package.json',
-    'public/404.html',
-    'public/500.html',
-    'public/index.html',
-    'server/config/local.json',
-    'server/routers/codewind.js',
-    'server/routers/health.js',
-    'server/routers/index.js',
-    'server/routers/public.js',
-    'server/server.js',
-    'test/test-demo.js',
-    'test/test-server.js',
-];
-const defaultNodeProjectDirList = [
-    'chart',
-    'chart/node',
-    'chart/node/templates',
-    'public',
-    'server',
-    'server/config',
-    'server/routers',
-    'test',
-    'images',
-];
+// These are for the default Codewind templates at https://github.com/codewind-resources
+const defaultSyncLists = {
+    nodejs: {
+        fileList: [
+            '.cw-settings',
+            '.dockerignore',
+            '.gitignore',
+            '.npmrc',
+            'Dockerfile',
+            'Dockerfile-tools',
+            'README.md',
+            'chart/node/Chart.yaml',
+            'chart/node/templates/basedeployment.yaml',
+            'chart/node/templates/deployment.yaml',
+            'chart/node/templates/hpa.yaml',
+            'chart/node/templates/istio.yaml',
+            'chart/node/templates/service.yaml',
+            'chart/node/values.yaml',
+            'images/header-logo.svg',
+            'nodemon.json',
+            'package.json',
+            'public/404.html',
+            'public/500.html',
+            'public/index.html',
+            'server/config/local.json',
+            'server/routers/codewind.js',
+            'server/routers/health.js',
+            'server/routers/index.js',
+            'server/routers/public.js',
+            'server/server.js',
+            'test/test-demo.js',
+            'test/test-server.js',
+        ],
+        directoryList: [
+            'chart',
+            'chart/node',
+            'chart/node/templates',
+            'public',
+            'server',
+            'server/config',
+            'server/routers',
+            'test',
+            'images',
+        ],
+    },
+    spring: {
+        fileList: [
+            'Dockerfile',
+            'Dockerfile-build',
+            'Dockerfile-tools',
+            'README.md',
+            'chart/springjavatemplate/Chart.yaml',
+            'chart/springjavatemplate/bindings.yaml',
+            'chart/springjavatemplate/templates/basedeployment.yaml',
+            'chart/springjavatemplate/templates/deployment.yaml',
+            'chart/springjavatemplate/templates/hpa.yaml',
+            'chart/springjavatemplate/templates/istio.yaml',
+            'chart/springjavatemplate/templates/service.yaml',
+            'chart/springjavatemplate/values.yaml',
+            'pom.xml',
+            'src/main/java/application/Info.java',
+            'src/main/java/application/SBApplication.java',
+            'src/main/java/application/rest/HealthEndpoint.java',
+            'src/main/java/application/rest/v1/Example.java',
+            'src/main/resources/application-local.properties',
+            'src/main/resources/application.properties',
+            'src/main/resources/public/index.html',
+            'src/test/java/application/HealthEndpointTest.java',
+        ],
+        directoryList: [
+            'chart',
+            'chart/springjavatemplate',
+            'chart/springjavatemplate/templates',
+            'src',
+            'src/main',
+            'src/main/java',
+            'src/main/java/application',
+            'src/main/java/application/rest',
+            'src/main/java/application/rest/v1',
+            'src/main/resources',
+            'src/main/resources/public',
+            'src/test',
+            'src/test/java',
+            'src/test/java/application',
+        ],
+    },
+};
 
 /**
  * Clone, bind and build one of our template projects
@@ -80,7 +125,8 @@ async function createProjectFromTemplate(name, projectType, path, autoBuild = fa
         ? 'docker'
         : projectType;
 
-    await cloneProject(url, path);
+    // TODO: check this works with all tests calling `createProjectFromTemplate`
+    await cloneProjectAndReplacePlaceholders(url, path, name);
 
     const res = await bindProject({
         name,
@@ -516,8 +562,7 @@ module.exports = {
     createProjects,
     createProjectFromTemplate,
     syncFiles,
-    defaultNodeProjectFileList,
-    defaultNodeProjectDirList,
+    defaultSyncLists,
     openProject,
     closeProject,
     restartProject,

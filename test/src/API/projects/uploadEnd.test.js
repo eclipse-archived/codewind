@@ -22,8 +22,8 @@ chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
 describe('Sync tests (POST projects/{id}/upload/end)', () => {
-    const validFileList = projectService.defaultNodeProjectFileList;
-    const validDirList = projectService.defaultNodeProjectDirList;
+    const validFileList = projectService.defaultSyncLists.nodejs.fileList;
+    const validDirList = projectService.defaultSyncLists.nodejs.directoryList;
 
     describe('Sync modified file (these `it` blocks depend on each other passing)', function() {
         const projectName = `test-sync-modified-file-${Date.now()}`;
@@ -249,7 +249,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             dirExistsInPfeProjectDir.should.be.false;
         });
     });
-    
+
     describe('Sync unchanged project (these `it` blocks depend on each other passing)', function() {
         const projectName = `test-sync-unchanged-project-${Date.now()}`;
         const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
