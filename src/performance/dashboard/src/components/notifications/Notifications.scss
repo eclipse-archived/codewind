@@ -20,3 +20,23 @@
 .bx--toast-notification--warning {
   background-color: #fff5d6
 }
+
+.ToastNotification {
+  max-height: 0;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-in-out forwards;
+  -webkit-animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+@-webkit-keyframes fadeIn {
+  to {
+    max-height: 500px;
+    opacity: 1;
+  }
+}
+@keyframes fadeIn {
+  to {
+    max-height: 500px;
+    opacity: 1;
+  }
+}
