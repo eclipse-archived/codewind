@@ -10,6 +10,9 @@
 ********************************************************************************/
 
 import React from 'react';
+import { createStore } from 'redux';
+import { Provider } from 'react-redux';
+import reducers from '../../../../../store/reducers/index';
 import { render, cleanup, fireEvent, waitForElement } from '@testing-library/react';
 import ActionDisableMicroProfileAuth from '../ActionDisableMicroProfileAuth';
 
@@ -18,18 +21,18 @@ const componentProps = {
   projectID: '4a8ccb90-7887-11e9-b7bb-6fc798faec9b'
 }
 
+// Initialize redux stores
+const store = createStore(reducers, {});
+
 // InlineHTML component to render
 const wrapper = (
-  <ActionDisableMicroProfileAuth {...componentProps} />
+  <Provider store={store}>
+    <ActionDisableMicroProfileAuth {...componentProps} />
+  </Provider>
 )
 
 // do not leak state
 afterEach(cleanup);
-
-// Mute console log warnings
-//console.error = () => { }
-
-// constants
 
 /**
  * Test functionality of the ActionDisableMicroProfileAuth dialog
@@ -56,7 +59,7 @@ describe('<ActionDisableMicroProfileAuth />', () => {
   });
 
   test('ActionButton sends an invalid request to API and displays a warning', async () => {
-    const { getByLabelText, container, getByText } = render(wrapper);
+    const { getByLabelText, getByText } = render(wrapper);
     const button = getByLabelText('Disable Authentication');
     global.fetch = jest.fn().mockImplementationOnce(() => {
       return new Promise((resolve, reject) => {
