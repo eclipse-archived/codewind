@@ -21,7 +21,6 @@ DEBUG_PORT=$9
 FOLDER_NAME=${11}
 IMAGE_PUSH_REGISTRY=${12}
 MAVEN_SETTINGS=${13}
-# TODO:
 # PORT_MAPPINGS is an array of the rest of the arguments
 PORT_MAPPINGS="${@:14}"
 

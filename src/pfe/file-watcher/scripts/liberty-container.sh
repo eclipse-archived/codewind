@@ -206,9 +206,7 @@ function create() {
 		/file-watcher/idc/idc set --debugPort=$DEBUG_PORT
 	fi
 
-	# TODO add port mappings
 	if [[ -n $PORT_MAPPINGS ]]; then
-	# TODO change this to support many port mappings
 		/file-watcher/idc/idc set --portMappings="$PORT_MAPPINGS"
 	fi
 
