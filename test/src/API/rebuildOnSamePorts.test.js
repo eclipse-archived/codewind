@@ -29,22 +29,22 @@ describe('Rebuild project on same ports', function() {
         //     debugMode: 'debugNoInit',
         // },
         // TODO: go
-        {
-            projectType: 'go',
-            debugMode: null,
-        },
+        // {
+        //     projectType: 'go',
+        //     debugMode: null,
+        // },
         // {
         //     projectType: 'spring',
         //     debugMode: 'debugNoInit',
+        // },
+        // {
+        //     projectType: 'liberty',
+        //     debugMode: 'debug',
         // },
         // TODO: swift
         // {
         //     projectType: 'swift',
         //     debugMode: null,
-        // },
-        // {
-        //     projectType: 'liberty',
-        //     debugMode: 'debug',
         // },
     ];
     tests.forEach((test) => {
@@ -57,6 +57,7 @@ describe('Rebuild project on same ports', function() {
                 this.skip();
             }
             const projectName = `test-rebuild-${projectType}-project-on-same-ports-${Date.now()}`;
+            // const pathToLocalProject = path.join(__dirname, projectName);
             const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
             let projectID;
             let originalPorts;
@@ -64,9 +65,18 @@ describe('Rebuild project on same ports', function() {
             before(`create a sample ${projectType} project, bind it to Codewind and wait for it start`, async function() {
                 this.timeout(testTimeout.maxTravis);
                 projectID = await projectService.createProjectFromTemplate(projectName, projectType, pathToLocalProject);
+                const { fileList, directoryList } = projectService.getPathsToUpload(pathToLocalProject, projectType);
+                console.log('fileList');
+                console.log(fileList);
+                console.log('projectService.defaultSyncLists[projectType].fileList');
+                console.log(projectService.defaultSyncLists[projectType].fileList);
+                console.log('directoryList 1');
+                console.log(directoryList);
+                console.log('projectService.defaultSyncLists[projectType].directoryList');
+                console.log(projectService.defaultSyncLists[projectType].directoryList);
                 await projectService.awaitProjectStartedHTTP(projectID);
                 const { body: { ports } } = await projectService.getProject(projectID);
-                // TODO: remove
+                // TODO remove logs
                 console.log('ports');
                 console.log(ports);
                 originalPorts = ports;
@@ -77,31 +87,46 @@ describe('Rebuild project on same ports', function() {
                 await projectService.removeProject(pathToLocalProject, projectID);
             });
 
+            // it.only('restarts the project on the same port after user edits the Dockerfile', async function() {
+            //     const p = projectService.isIgnoredFilepath('target/liberty/wlp/.installed', 'liberty');
+            //     console.log(p);
+            // });
+
             it('restarts the project on the same port after user edits the Dockerfile', async function() {
                 this.timeout(testTimeout.maxTravis);
 
                 editDockerfile(pathToLocalProject);
+                const { fileList, directoryList } = projectService.getPathsToUpload(pathToLocalProject, projectType);
+                console.log('fileList');
+                console.log(fileList);
+                console.log('projectService.defaultSyncLists[projectType].fileList');
+                console.log(projectService.defaultSyncLists[projectType].fileList);
+                console.log('directoryList');
+                console.log(directoryList);
+                console.log('projectService.defaultSyncLists[projectType].directoryList');
+                console.log(projectService.defaultSyncLists[projectType].directoryList);
                 const res = await projectService.syncFiles(
                     projectID,
                     pathToLocalProject,
                     ['Dockerfile'],
-                    // TODO: Only nodejs, spring, and liberty have these set atm
-                    projectService.defaultSyncLists[projectType].fileList,
-                    projectService.defaultSyncLists[projectType].directoryList,
+                    fileList,
+                    directoryList,
+                    // projectService.defaultSyncLists[projectType].fileList,
+                    // projectService.defaultSyncLists[projectType].directoryList,
                 );
                 res.status.should.equal(200, res.text);
 
-                await sleep(3000); // PFE takes a moment to stop the project (to start rebuilding it)
+                await sleep(3000); // PFE takes a moment to stop the project (before rebuilding it)
 
                 await projectService.awaitProjectStartedHTTP(projectID);
 
                 const { body: { ports } } = await projectService.getProject(projectID);
-                console.log('ports 2');
+                console.log('ports after editing Dockerfile');
                 console.log(ports);
                 ports.should.deep.equal(originalPorts);
             });
 
-            it('restarts the project on the same port after user disables then enables it in run mode', async function() {
+            it('restarts the project on the same port after user disables then enables the project in run mode', async function() {
                 this.timeout(testTimeout.maxTravis);
 
                 await projectService.closeProject(projectID, 202, true);
@@ -109,12 +134,12 @@ describe('Rebuild project on same ports', function() {
                 await projectService.awaitProjectStartedHTTP(projectID);
 
                 const { body: { ports } } = await projectService.getProject(projectID);
-                console.log('ports 2');
+                console.log('ports after renable in run mode');
                 console.log(ports);
                 ports.should.deep.equal(originalPorts);
             });
 
-            it('restarts the project on the same port after user disables then enables it in debug mode', async function() {
+            it('restarts the project on the same port after user disables then enables the project in debug mode', async function() {
                 if (!debugMode) {
                     this.skip();
                 }

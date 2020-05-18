@@ -29,7 +29,6 @@ chai.should();
 const sleep = promisify(setTimeout);
 
 // These are for the default Codewind templates at https://github.com/codewind-resources
-// TODO: can we replace this with `const relativeFilepathsToUpload = getRelativeFilepathsToUpload(pathToDirToUpload, projectType);`? (see below)
 const defaultSyncLists = {
     nodejs: {
         fileList: [
@@ -168,9 +167,6 @@ const defaultSyncLists = {
  */
 async function createProjectFromTemplate(name, projectType, path, autoBuild = false) {
     const { url, language } = templateOptions[projectType];
-    const pfeProjectType = (['openliberty', 'go', 'lagom'].includes(projectType))
-        ? 'docker'
-        : projectType;
 
     await cloneProjectAndReplacePlaceholders(url, path, name);
 
@@ -178,7 +174,7 @@ async function createProjectFromTemplate(name, projectType, path, autoBuild = fa
         name,
         path,
         language,
-        projectType: pfeProjectType,
+        projectType: getPFEProjectType(projectType),
         autoBuild,
         creationTime: Date.now(),
     });
@@ -226,7 +222,7 @@ async function syncFiles(
 }
 
 function recursivelyGetAllPaths(inputPath) {
-    const paths = klawSync(inputPath,  { nodir: true });
+    const paths = klawSync(inputPath, { nodir: true });
     const filePaths = paths.map((path) => path.path);
     return filePaths;
 };
@@ -256,8 +252,8 @@ async function uploadEnd(projectID, options) {
 };
 
 function uploadAllFiles(projectID, pathToDirToUpload, projectType) {
-    const relativeFilepathsToUpload = getRelativeFilepathsToUpload(pathToDirToUpload, projectType);
-    return uploadFiles(projectID, pathToDirToUpload, relativeFilepathsToUpload);
+    const { fileList } = getPathsToUpload(pathToDirToUpload, projectType);
+    return uploadFiles(projectID, pathToDirToUpload, fileList);
 }
 
 async function uploadFiles(projectID, pathToDirToUpload, relativeFilepathsToUpload) {
@@ -268,19 +264,56 @@ async function uploadFiles(projectID, pathToDirToUpload, relativeFilepathsToUplo
     return responses;
 }
 
-function getRelativeFilepathsToUpload(pathToDirToUpload, projectType) {
+function flat(array) {
+    return [].concat(...array);
+}
+
+function getPathsToUpload(pathToDirToUpload, projectType) {
     const filepaths = recursivelyGetAllPaths(pathToDirToUpload);
+    filepaths.forEach(p => {
+        if (p.includes('.settings')) {
+            console.log(p, 'p');
+        }
+    });
     const relativeFilepaths = filepaths.map(
         filePath => path.relative(pathToDirToUpload, filePath)
     );
     const relativeFilepathsToUpload = relativeFilepaths.filter(
         filepath => !isIgnoredFilepath(filepath, projectType)
     );
-    return relativeFilepathsToUpload;
+    const relativeDirs = flat(relativeFilepathsToUpload.map(
+        filepath => getRecursiveSubDirectories(filepath)
+    ));
+    const uniqueRelativeDirs = [...new Set(relativeDirs)];
+    const relativeDirsToUpload = uniqueRelativeDirs.filter(dirname => dirname !== '.');
+    return {
+        fileList: relativeFilepathsToUpload,
+        directoryList: relativeDirsToUpload,
+    };
+}
+
+function getRecursiveSubDirectories(filepath) {
+    const subDirs = [];
+    let dirname = path.dirname(filepath);
+    while (dirname !== '.') {
+        subDirs.push(dirname);
+        dirname = path.dirname(dirname);
+    }
+    return subDirs;
+}
+
+function getPFEProjectType(projectType) {
+    return (['openliberty', 'go', 'lagom'].includes(projectType))
+        ? 'docker'
+        : projectType;
 }
 
 function isIgnoredFilepath(relativeFilepath, projectType) {
-    const ignoredFilepaths = projectTypeToIgnoredPaths[projectType];
+    const pfeProjectType = getPFEProjectType(projectType);
+    const ignoredFilepaths = projectTypeToIgnoredPaths[pfeProjectType];
+    if (ignoredFilepaths.some(ignoredPath => `/${relativeFilepath}`.includes(ignoredPath))) {
+        return true;
+    }
     const regExpIgnoredFilepaths = ignoredFilepaths.map(path => globToRegExp(path));
     const isIgnored = regExpIgnoredFilepaths.some(
         ignoredPath => ignoredPath.test(`/${relativeFilepath}`)
@@ -609,6 +642,7 @@ module.exports = {
     createProjectFromTemplate,
     syncFiles,
     defaultSyncLists,
+    getPathsToUpload,
     openProject,
     closeProject,
     restartProject,
