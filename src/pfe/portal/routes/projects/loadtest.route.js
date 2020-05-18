@@ -210,6 +210,17 @@ router.get('/api/v1/projects/:id/profiling/:testRunTime', validateReq, async fun
   }
 });
 
+/**
+ * Function to query the profiling tree data for a given project and test time
+ * with a JSONPath query.
+ * @param id, the id of the project
+ * @param testRunTime, the timestamp of the load runner test
+ * @return 200 if project existed and the profiling tree was found
+ * @return 400 if input is invalid
+ * @return 404 if project is not found
+ * @return 500 on internal error
+ */
+// We use POST rather than GET as GET requests are not supposed to have a body.
 router.post('/api/v1/projects/:id/profiling/:testRunTime/querytree', validateReq, async function (req, res) {
   try {
     const user = req.cw_user;
@@ -239,6 +250,17 @@ router.post('/api/v1/projects/:id/profiling/:testRunTime/querytree', validateReq
   }
 });
 
+/**
+ * Function to query the profiling summary data for a given project and test time
+ * with a JSONPath query.
+ * @param id, the id of the project
+ * @param testRunTime, the timestamp of the load runner test
+ * @return 200 if project existed and the profiling summary was found
+ * @return 400 if input is invalid
+ * @return 404 if project is not found
+ * @return 500 on internal error
+ */
+// We use POST rather than GET as GET requests are not supposed to have a body.
 router.post('/api/v1/projects/:id/profiling/:testRunTime/querysummary', validateReq, async function (req, res) {
   try {
     const user = req.cw_user;

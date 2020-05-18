@@ -651,17 +651,34 @@ module.exports = class LoadRunner {
     const normalisedProfilingPath = this.project.getPathToProfilingTreeFile(this.metricsFolder);
     const mergeCommand = `${process.execPath} /portal/scripts/mergeNodeProfiles.js ${profilingPath} ${normalisedProfilingPath}`;
     log.debug(`Running: ${mergeCommand}`);
-    const mergeProcess = await exec(mergeCommand);
-    log.trace(mergeProcess.stdout);
-    log.trace(mergeProcess.stderr);
-    log.debug('Merging done');
+    try {
+      const mergeProcess = await exec(mergeCommand);
+      // Log these but they should be empty in the success case.
+      log.trace(mergeProcess.stdout);
+      log.trace(mergeProcess.stderr);
+      log.debug('Merging done');
+    } catch (err) {
+      // stdout/stderr may contain useful feedback if there was an error.
+      log.trace(err.stdout);
+      log.trace(err.stderr);
+      throw new Error(`Error running merge command. Exit code ${err.code}`);
+    }
 
     const summarisedProfilingPath = this.project.getPathToProfilingSummaryFile(this.metricsFolder);
     const summariseCommand = `${process.execPath} /portal/scripts/summariseProfile.js ${normalisedProfilingPath} ${summarisedProfilingPath}`;
     log.debug(`Running: ${summariseCommand}`);
-    const summariseProcess = await exec(summariseCommand);
-    log.trace(summariseProcess.stdout);
-    log.trace(summariseProcess.stderr);
+    try {
+      const summariseProcess = await exec(mergeCommand);
+      // Log these but they should be empty in the success case.
+      log.trace(summariseProcess.stdout);
+      log.trace(summariseProcess.stderr);
+      log.debug('Merging done');
+    } catch (err) {
+      // stdout/stderr may contain useful feedback if there was an error.
+      log.trace(err.stdout);
+      log.trace(err.stderr);
+      throw new Error(`Error running summarise command. Exit code ${err.code}`);
+    }
     log.debug('Summarising done');
   }
 
