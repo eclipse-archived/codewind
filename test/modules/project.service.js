@@ -28,140 +28,6 @@ const SocketService = require('./socket.service');
 chai.should();
 const sleep = promisify(setTimeout);
 
-// These are for the default Codewind templates at https://github.com/codewind-resources
-const defaultSyncLists = {
-    nodejs: {
-        fileList: [
-            '.cw-settings',
-            '.dockerignore',
-            '.gitignore',
-            '.npmrc',
-            'Dockerfile',
-            'Dockerfile-tools',
-            'README.md',
-            'chart/node/Chart.yaml',
-            'chart/node/templates/basedeployment.yaml',
-            'chart/node/templates/deployment.yaml',
-            'chart/node/templates/hpa.yaml',
-            'chart/node/templates/istio.yaml',
-            'chart/node/templates/service.yaml',
-            'chart/node/values.yaml',
-            'images/header-logo.svg',
-            'nodemon.json',
-            'package.json',
-            'public/404.html',
-            'public/500.html',
-            'public/index.html',
-            'server/config/local.json',
-            'server/routers/codewind.js',
-            'server/routers/health.js',
-            'server/routers/index.js',
-            'server/routers/public.js',
-            'server/server.js',
-            'test/test-demo.js',
-            'test/test-server.js',
-        ],
-        directoryList: [
-            'chart',
-            'chart/node',
-            'chart/node/templates',
-            'public',
-            'server',
-            'server/config',
-            'server/routers',
-            'test',
-            'images',
-        ],
-    },
-    spring: {
-        fileList: [
-            'Dockerfile',
-            'Dockerfile-build',
-            'Dockerfile-tools',
-            'README.md',
-            'chart/springjavatemplate/Chart.yaml',
-            'chart/springjavatemplate/bindings.yaml',
-            'chart/springjavatemplate/templates/basedeployment.yaml',
-            'chart/springjavatemplate/templates/deployment.yaml',
-            'chart/springjavatemplate/templates/hpa.yaml',
-            'chart/springjavatemplate/templates/istio.yaml',
-            'chart/springjavatemplate/templates/service.yaml',
-            'chart/springjavatemplate/values.yaml',
-            'pom.xml',
-            'src/main/java/application/Info.java',
-            'src/main/java/application/SBApplication.java',
-            'src/main/java/application/rest/HealthEndpoint.java',
-            'src/main/java/application/rest/v1/Example.java',
-            'src/main/resources/application-local.properties',
-            'src/main/resources/application.properties',
-            'src/main/resources/public/index.html',
-            'src/test/java/application/HealthEndpointTest.java',
-        ],
-        directoryList: [
-            'chart',
-            'chart/springjavatemplate',
-            'chart/springjavatemplate/templates',
-            'src',
-            'src/main',
-            'src/main/java',
-            'src/main/java/application',
-            'src/main/java/application/rest',
-            'src/main/java/application/rest/v1',
-            'src/main/resources',
-            'src/main/resources/public',
-            'src/test',
-            'src/test/java',
-            'src/test/java/application',
-        ],
-    },
-    liberty: {
-        fileList: [
-            'Dockerfile',
-            'Dockerfile-build',
-            'Dockerfile-tools',
-            'README.md',
-            'chart/javamicroprofiletemplate/Chart.yaml',
-            'chart/javamicroprofiletemplate/bindings.yaml',
-            'chart/javamicroprofiletemplate/templates/basedeployment.yaml',
-            'chart/javamicroprofiletemplate/templates/deployment.yaml',
-            'chart/javamicroprofiletemplate/templates/hpa.yaml',
-            'chart/javamicroprofiletemplate/templates/istio.yaml',
-            'chart/javamicroprofiletemplate/templates/service.yaml',
-            'chart/javamicroprofiletemplate/values.yaml',
-            'pom.xml',
-            'src/main/java/application/HealthEndpoint.java',
-            'src/main/java/application/rest/JaxrsApplication.java',
-            'src/main/java/application/rest/RootEndpoint.java',
-            'src/main/java/application/rest/v1/Example.java',
-            'src/main/liberty/config/jvm.options',
-            'src/main/liberty/config/jvmbx.options',
-            'src/main/liberty/config/server.xml',
-            'src/main/resources/index.html',
-            'src/main/webapp/WEB-INF/beans.xml',
-            'src/main/webapp/WEB-INF/ibm-web-ext.xml',
-            'src/test/java/it/HealthEndpointIT.java' ],
-        directoryList: [
-            'chart',
-            'chart/javamicroprofiletemplate',
-            'chart/javamicroprofiletemplate/templates',
-            'src',
-            'src/main',
-            'src/main/java',
-            'src/main/java/application',
-            'src/main/java/application/rest',
-            'src/main/java/application/rest/v1',
-            'src/main/liberty',
-            'src/main/liberty/config',
-            'src/main/resources',
-            'src/main/webapp',
-            'src/main/webapp/WEB-INF',
-            'src/test',
-            'src/test/java',
-            'src/test/java/it',
-        ],
-    },
-};
-
 /**
  * Clone, bind and build one of our template projects
  */
@@ -270,11 +136,6 @@ function flat(array) {
 
 function getPathsToUpload(pathToDirToUpload, projectType) {
     const filepaths = recursivelyGetAllPaths(pathToDirToUpload);
-    filepaths.forEach(p => {
-        if (p.includes('.settings')) {
-            console.log(p, 'p');
-        }
-    });
     const relativeFilepaths = filepaths.map(
         filePath => path.relative(pathToDirToUpload, filePath)
     );
@@ -421,8 +282,8 @@ function closeProject(
 }
 
 async function removeProject(pathToProjectDir, projectID){
-    fs.removeSync(pathToProjectDir);
     await unbind(projectID);
+    fs.removeSync(pathToProjectDir);
 }
 
 /**
@@ -568,12 +429,25 @@ async function cloneProject(giturl, dest) {
 
 async function cloneProjectAndReplacePlaceholders(giturl, dest, projectName) {
     await cloneProject(giturl, dest);
+    replacePlaceholdersInFiles(dest, projectName);
+    replacePlaceholdersInFilenames(dest, projectName);
+}
+
+function replacePlaceholdersInFiles(rootDir, projectName) {
     const options = {
-        files: `${dest}/*`,
+        files: `${rootDir}/*`,
         from: /\[PROJ_NAME_PLACEHOLDER\]/g,
         to: projectName,
     };
-    await replace(options);
+    replace.sync(options);
+}
+
+function replacePlaceholdersInFilenames(rootDir, projectName) {
+    // currently needed only for swift projects
+    const pathToSwiftFileWithPlaceholder = path.join(rootDir, 'Sources/[PROJ_NAME_PLACEHOLDER]/main.swift');
+    if (fs.existsSync(pathToSwiftFileWithPlaceholder)) {
+        fs.moveSync(pathToSwiftFileWithPlaceholder, path.join(rootDir, `Sources/${projectName}/main.swift`));
+    }
 }
 
 async function notifyPfeOfFileChangesAndAwaitMsg(array, projectID) {
@@ -641,7 +515,6 @@ module.exports = {
     createProjects,
     createProjectFromTemplate,
     syncFiles,
-    defaultSyncLists,
     getPathsToUpload,
     openProject,
     closeProject,
