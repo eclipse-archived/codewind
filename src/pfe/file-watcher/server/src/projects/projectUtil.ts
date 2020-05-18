@@ -1367,11 +1367,14 @@ export async function buildAndRun(operation: Operation, command: string): Promis
         await projectsController.updateProjectInfo(projectID, keyValuePair);
 
         try {
-            logger.logProjectInfo(`Adding existing portMappings to buildInfo: ${JSON.stringify(operation.projectInfo.portMappings)}`, projectID);
-            for (const [internalPort, externalPort] of Object.entries(operation.projectInfo.portMappings)) {
-                // Cast unknown typed externalPort to String
-                buildInfo.hostPorts.push(String(externalPort));
-                buildInfo.containerPorts.push(internalPort);
+            if (operation.projectInfo && operation.projectInfo.portMappings) {
+                const portMappings = operation.projectInfo.portMappings;
+                logger.logProjectInfo(`Adding existing portMappings to buildInfo: ${JSON.stringify(portMappings)}`, projectID);
+                for (const [internalPort, externalPort] of Object.entries(portMappings)) {
+                    // Cast unknown typed externalPort to String
+                    buildInfo.hostPorts.push(String(externalPort));
+                    buildInfo.containerPorts.push(internalPort);
+                }
             }
             logger.logProjectInfo("Beginning container build and run stage", projectID, projectName);
             await containerBuildAndRun(event, buildInfo, operation);
