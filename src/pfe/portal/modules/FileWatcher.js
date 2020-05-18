@@ -222,36 +222,9 @@ module.exports = class FileWatcher {
     log.debug(`Received filewatcher module response: ${inspect(msg)}`)
   }
 
-
   async buildAndRunProject(project){
-    let settingsFileContents = await project.readSettingsFile();
-    let projectAction = {
-      projectID: project.projectID,
-      projectType: project.projectType,
-      extension: project.extension,
-      contextroot: project.contextRoot,
-      startMode: project.startMode,
-      location: project.projectPath(),
-      applicationPort: project.applicationPort,
-      settings: settingsFileContents,
-      language: project.language,
-      autoBuild: project.autoBuild,
-    };
-
-    if (project.ports) {
-      if (project.ports.exposedPort && project.ports.internalPort) {
-        projectAction.portMappings = {
-          ...projectAction.portMappings,
-          [project.ports.internalPort]: project.ports.exposedPort,
-        }
-      }
-      if (project.ports.exposedDebugPort && project.ports.internalDebugPort) {
-        projectAction.portMappings = {
-          ...projectAction.portMappings,
-          [project.ports.internalDebugPort]: project.ports.exposedDebugPort,
-        }
-      }
-    }
+    const settingsFileContents = await project.readSettingsFile();
+    const projectAction = createProjectActionForBuildAndRun(project, settingsFileContents);
 
     log.info(`Calling filewatcher.createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
     let retval;
@@ -755,4 +728,51 @@ function logEvent(event, projectData) {
   }
 }
 
+function createProjectActionForBuildAndRun(project, settings) {
+  const {
+    projectID,
+    projectType,
+    extension,
+    contextRoot: contextroot,
+    startMode,
+    applicationPort,
+    language,
+    autoBuild,
+    ports,
+  } = project;
+  const location = project.projectPath();
+
+  const projectAction = {
+    projectID,
+    projectType,
+    extension,
+    contextroot,
+    startMode,
+    location,
+    applicationPort,
+    settings,
+    language,
+    autoBuild,
+  };
+
+  if (ports) {
+    const { exposedPort, internalPort, exposedDebugPort, internalDebugPort } = ports;
+    if (exposedPort && internalPort) {
+      projectAction.portMappings = {
+        ...projectAction.portMappings,
+        [internalPort]: exposedPort,
+      }
+    }
+    if (exposedDebugPort && internalDebugPort) {
+      projectAction.portMappings = {
+        ...projectAction.portMappings,
+        [internalDebugPort]: exposedDebugPort,
+      }
+    }
+  }
+
+  return projectAction;
+}
+
 module.exports.handleProjectActionResponse = handleProjectActionResponse;
+module.exports.createProjectActionForBuildAndRun = createProjectActionForBuildAndRun;
