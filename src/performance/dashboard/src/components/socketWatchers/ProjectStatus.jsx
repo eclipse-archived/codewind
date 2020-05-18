@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2019 IBM Corporation and others.
+* Copyright (c) 2020 IBM Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License v2.0
 * which accompanies this distribution, and is available at
@@ -16,9 +16,24 @@ import queryString from 'query-string';
 
 import { SocketEvents } from '../../utils/sockets/SocketEvents';
 import SocketContext from '../../utils/sockets/SocketContext';
+import { fetchProjectConfig } from '../../store/actions/projectInfoActions';
 import { addNotification, KIND_INFO, KIND_WARNING, KIND_SUCCESS, NOTIFICATION_TIMEOUT_MEDIUM } from '../../store/actions/notificationsActions';
 
 class ProjectStatus extends Component {
+
+  constructor() {
+    super();
+    this.state = {
+      lastProjectReceivedAt: 0
+    }
+  }
+
+  componentDidUpdate(nextProps) {
+    if (nextProps.projectInfo.receivedAt !== this.state.lastProjectReceivedAt) {
+        this.setState({lastProjectReceivedAt: nextProps.projectInfo.receivedAt})
+    }
+      return null
+  }
 
   componentDidMount() {
     if (!this.props.projectID) { return; }
@@ -36,6 +51,7 @@ class ProjectStatus extends Component {
       if (data.projectID === this.props.projectID) {
         switch (data.appStatus) {
           case 'stopping': {
+            thisComponent.props.dispatch(fetchProjectConfig(this.props.projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -48,6 +64,7 @@ class ProjectStatus extends Component {
           }
 
           case 'stopped': {
+            thisComponent.props.dispatch(fetchProjectConfig(this.props.projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -59,6 +76,7 @@ class ProjectStatus extends Component {
             break;
           }
           case 'starting': {
+            thisComponent.props.dispatch(fetchProjectConfig(this.props.projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -70,6 +88,7 @@ class ProjectStatus extends Component {
             break;
           }
           case 'started': {
+            thisComponent.props.dispatch(fetchProjectConfig(this.props.projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_SUCCESS,
@@ -103,6 +122,7 @@ const ProjectStatusWithSocket = props => (
 const mapStateToProps = stores => {
   return {
     notifications: stores.notificationsReducer,
+    projectInfo: stores.projectInfoReducer,
   }
 };
 

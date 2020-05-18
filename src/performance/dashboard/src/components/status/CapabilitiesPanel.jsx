@@ -30,6 +30,7 @@ class CapabilitiesPanel extends React.Component {
     constructor() {
         super();
         this.state = {
+            lastProjectUpdateTime: 0,
             lastUpdated: 0,
             detailMessage:"",
             detailSubComponent:"",
@@ -52,6 +53,9 @@ class CapabilitiesPanel extends React.Component {
         if (newProps.projectCapabilities.receivedAt !== this.state.lastUpdated) {
             this.setState({ lastUpdated: newProps.projectCapabilities.receivedAt })
         }
+        if (newProps.projectInfo.receivedAt !== this.state.lastUpdated) {
+            this.setState({ lastProjectUpdateTime: newProps.projectInfo.receivedAt })
+        }
     }
 
     getIconMarkup(status) {
@@ -69,7 +73,7 @@ class CapabilitiesPanel extends React.Component {
     }
 
     getCapabilityProjectStatus(capabilityData, feature) {
-        if (capabilityData.projectRunning) {
+        if (this.props.projectInfo.config.appStatus == "started") {
             feature.status = Constants.STATUS_OK;
             feature.statusMessage = Constants.MESSAGE_PROJECT_RUNNING;
         } else {
@@ -79,7 +83,7 @@ class CapabilitiesPanel extends React.Component {
     }
 
     getCapabilityLoadRunnerStatus(capabilityData, feature) {
-        if (capabilityData.projectRunning) {
+        if (this.props.projectInfo.config.appStatus == "started") {
             feature.status = Constants.STATUS_OK
             feature.statusMessage = Constants.MESSAGE_LOADRUNNER_AVAILABLE;
         } else {
@@ -89,7 +93,7 @@ class CapabilitiesPanel extends React.Component {
     }
 
     getCapabilityLiveMetrics(capabilityData, feature) {
-        if (!capabilityData.projectRunning) {
+        if (this.props.projectInfo.config.appStatus !== "started" ) {
             feature.status = Constants.STATUS_ERROR
             feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
             return
@@ -119,7 +123,7 @@ class CapabilitiesPanel extends React.Component {
     }
 
     getCapabilityComparisons(capabilityData, feature) {
-        if (!capabilityData.projectRunning) {
+        if (this.props.projectInfo.config.appStatus !== "started" ) {
             feature.status = Constants.STATUS_WARNING
             feature.statusMessage = Constants.MESSAGE_COMPARISONS_NOT_RUNNING;
             return
@@ -196,7 +200,7 @@ class CapabilitiesPanel extends React.Component {
 
     render() {
         const dataModel = this.buildDisplayModel();
-        const fetching = this.props.projectCapabilities.fetching
+        const fetching = this.props.projectCapabilities.fetching;
         return (
             <Fragment>
                 <div className="Capabilities">
@@ -240,6 +244,7 @@ class CapabilitiesPanel extends React.Component {
 const mapStateToProps = stores => {
     return {
         projectCapabilities: stores.projectCapabilitiesReducer,
+        projectInfo: stores.projectInfoReducer,
         navbarActions: stores.navbarActionsReducer,
     }
 };

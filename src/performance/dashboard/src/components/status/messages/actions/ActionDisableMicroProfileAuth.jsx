@@ -13,7 +13,7 @@ import React, { Component, Fragment } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux';
 import {Button, InlineLoading} from 'carbon-components-react'
-import IconEdit from '@carbon/icons-react/es/edit/16'
+import IconAction from '@carbon/icons-react/es/tools/20'
 
 import * as AppConstants from '../../../../AppConstants';
 import { showCapabilitiesPanel } from '../../../../store/actions/navbarActions';
@@ -94,7 +94,7 @@ class ActionDisableMicroProfileAuth extends Component {
               <Button
               kind="tertiary"
               disabled={disabled}
-              renderIcon={IconEdit}
+              renderIcon={IconAction}
               aria-label="Disable Authentication"
               tabIndex={0}
               size="small"
