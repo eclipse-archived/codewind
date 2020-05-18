@@ -782,7 +782,6 @@ describe('User.js', () => {
             const { user, project } = await createSimpleUserWithProject();
             const expectedProjectContents = {
                 projectID: project.projectID,
-                ports: '',
                 buildStatus: 'unknown',
                 appStatus: 'unknown',
                 state: Project.STATES.closed,
@@ -802,7 +801,6 @@ describe('User.js', () => {
             const { user, project } = await createSimpleUserWithProject();
             const expectedProjectContents = {
                 projectID: project.projectID,
-                ports: '',
                 buildStatus: 'unknown',
                 appStatus: 'unknown',
                 state: Project.STATES.closed,
