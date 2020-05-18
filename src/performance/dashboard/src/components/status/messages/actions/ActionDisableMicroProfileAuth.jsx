@@ -44,7 +44,6 @@ class ActionDisableMicroProfileAuth extends Component {
           this.setState({success:true, description:"Accepted"});
           setTimeout(() => {
             this.setState({isSubmitting: false, success:false, description:"", ariaLive:'off', disabled:true});
-            this.props.dispatch(showCapabilitiesPanel(false));
           }, 1500);
         }, 2000);
       } else {
