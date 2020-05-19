@@ -23,9 +23,6 @@ const sleep = promisify(setTimeout);
 chai.should();
 
 describe('Rebuild project on same ports', function() {
-    if (process.env.JENKINS_HOME) {
-        this.skip();
-    }
     const tests = [
         {
             projectType: 'go',
