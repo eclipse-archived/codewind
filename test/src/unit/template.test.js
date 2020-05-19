@@ -274,7 +274,7 @@ describe('Templates.js', function() {
                 });
                 it(`returns ['Codewind', 'Appsody']`, async function() {
                     const output = await templateController.getAllTemplateStyles();
-                    output.should.deep.equal(['Codewind', 'Appsody']);
+                    output.should.deep.equalInAnyOrder(['Codewind', 'Appsody']);
                 });
             });
         });
