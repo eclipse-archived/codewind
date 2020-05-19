@@ -124,7 +124,16 @@ module.exports = class Project {
 
     this.metricsAvailable = false; // Default to false as metrics won't be available until the project has started
     this.metricsDashboard = { hosting: null, path: null };
-    this.metricsCapabilities = (args.metricsCapabilities) ? args.metricsCapabilities : {};
+    // Default all values to false as they will be updated once the project is started
+    this.metricsCapabilities = {
+      liveMetricsAvailable: false,
+      metricsEndpoint: false,
+      appmetricsEndpoint: false,
+      microprofilePackageFoundInBuildFile: false,
+      appmetricsPackageFoundInBuildFile: false,
+      hasTimedMetrics: false,
+      microprofilePackageAuthenticationDisabled: false,
+    };
 
     this.links = new Links(this.projectPath(), args.links);
 
@@ -166,11 +175,11 @@ module.exports = class Project {
 
   async setMetricsState() {
     const { capabilities, metricsDashHost: { hosting, path } } = await metricsStatusChecker.getMetricStatusForProject(this);
-    this.metricsCapabilities = capabilities;
+    this.metricsCapabilities = { ...this.metricsCapabilities, ...capabilities };
     this.metricsAvailable = (hosting !== null && path !== null);
     this.metricsDashboard = { hosting, path };
     await this.writeInformationFile();
-    return { capabilities };
+    return { capabilities: this.metricsCapabilities };
   }
 
   getMetricsCapabilities() {

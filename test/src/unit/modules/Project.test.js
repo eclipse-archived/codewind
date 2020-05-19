@@ -84,9 +84,6 @@ describe('Project.js', function() {
                 buildLogPath: '/codewind-workspace/.logs/my-java-project-9318ab10-fef9-11e9-8761-9bf62d92b58b-9318ab10-fef9-11e9-8761-9bf62d92b58b/docker.build.log',
                 state: 'open',
                 autoBuild: false,
-                metricsCapabilities: {
-                    metricsAvailable: true,
-                },
             };
             const project = createProjectAndCheckIsAnObject(args, global.codewind.CODEWIND_WORKSPACE);
             project.should.containSubset(args);
@@ -126,6 +123,7 @@ describe('Project.js', function() {
                 microprofilePackageFoundInBuildFile: false,
                 appmetricsPackageFoundInBuildFile: false,
                 hasTimedMetrics: false,
+                microprofilePackageAuthenticationDisabled: false,
             };
             const project = createDefaultProjectAndCheckIsAnObject();
 
@@ -158,6 +156,7 @@ describe('Project.js', function() {
                     microprofilePackageFoundInBuildFile: true,
                     appmetricsPackageFoundInBuildFile: true,
                     hasTimedMetrics: false,
+                    microprofilePackageAuthenticationDisabled: false,
                 },
                 metricsDashHost: {
                     hosting: 'project',
@@ -185,6 +184,38 @@ describe('Project.js', function() {
                 metricsCapabilities: mockedMetricStatusReturn.capabilities,
             });
         });
+        it('does not change or remove the microprofilePackageAuthenticationDisabled field', async() => {
+            // arrange
+            const mockedMetricStatusReturn = {
+                capabilities: {
+                    liveMetricsAvailable: true,
+                    metricsEndpoint: '/metrics',
+                    appmetricsEndpoint: '/appmetrics-dash',
+                    microprofilePackageFoundInBuildFile: true,
+                    appmetricsPackageFoundInBuildFile: true,
+                    hasTimedMetrics: false,
+                },
+                metricsDashHost: {
+                    hosting: 'project',
+                    path: '/appmetrics-dash',
+                },
+            };
+            Project.__set__('metricsStatusChecker', {
+                getMetricStatusForProject: sinon.stub().returns(mockedMetricStatusReturn),
+            });
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.metricsCapabilities.microprofilePackageAuthenticationDisabled = 'isNotOverwritten';
+
+            // act
+            await project.setMetricsState();
+
+            // assert
+            const capabilities = project.getMetricsCapabilities();
+            capabilities.should.deep.equal({
+                ...mockedMetricStatusReturn.capabilities,
+                microprofilePackageAuthenticationDisabled: 'isNotOverwritten',
+            });
+        });
         it('throws an error when metricsStatusChecker.getMetricStatusForProject is rejected', () => {
             Project.__set__('metricsStatusChecker', {
                 getMetricStatusForProject: sinon.stub().rejects,
@@ -195,10 +226,18 @@ describe('Project.js', function() {
         });
     });
     describe('getMetricsCapabilities()', () => {
-        it('returns the metricsCapabilities object from a project', () => {
+        it('returns the default metricsCapabilities object from a project', () => {
             const project = createDefaultProjectAndCheckIsAnObject();
             const metricsCapabilities = project.getMetricsCapabilities();
-            metricsCapabilities.should.deep.equal({});
+            metricsCapabilities.should.deep.equal({
+                liveMetricsAvailable: false,
+                metricsEndpoint: false,
+                appmetricsEndpoint: false,
+                microprofilePackageFoundInBuildFile: false,
+                appmetricsPackageFoundInBuildFile: false,
+                hasTimedMetrics: false,
+                microprofilePackageAuthenticationDisabled: false,
+            });
         });
     });
     describe('setOpenLiberty()', () => {

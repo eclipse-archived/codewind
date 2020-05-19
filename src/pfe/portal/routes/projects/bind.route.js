@@ -429,6 +429,13 @@ async function bindEnd(req, res) {
       log.warn(error);
     }
 
+    try {
+      // Set the initial metrics state for the project (updates the file system)
+      await project.setMetricsState();
+    } catch(setMetricsStateErr) {
+      log.warn(`error updating the metrics state for ${updatedProject.name}, Error: ${setMetricsStateErr}`);
+    }
+
     // debug logic to identify bind time
     timerbindend = Date.now();
     let totalbindtime = (timerbindend - timerbindstart) / 1000;
