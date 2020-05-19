@@ -16,7 +16,6 @@ import {Button, InlineLoading} from 'carbon-components-react'
 import IconAction from '@carbon/icons-react/es/tools/20'
 
 import * as AppConstants from '../../../../AppConstants';
-import { showCapabilitiesPanel } from '../../../../store/actions/navbarActions';
 
 class ActionDisableMicroProfileAuth extends Component {
 

@@ -17,7 +17,7 @@ import queryString from 'query-string';
 import { SocketEvents } from '../../utils/sockets/SocketEvents';
 import SocketContext from '../../utils/sockets/SocketContext';
 import { fetchProjectConfig } from '../../store/actions/projectInfoActions';
-import { addNotification, KIND_INFO, KIND_WARNING, KIND_SUCCESS, NOTIFICATION_TIMEOUT_MEDIUM } from '../../store/actions/notificationsActions';
+import { addNotification, KIND_INFO, KIND_SUCCESS, NOTIFICATION_TIMEOUT_MEDIUM } from '../../store/actions/notificationsActions';
 
 class ProjectStatus extends Component {
 
@@ -81,7 +81,8 @@ class ProjectStatus extends Component {
               {
                 kind: KIND_INFO,
                 title: 'Project status: starting',
-                caption: 'The project is starting, please wait.',
+                subtitle: 'Please wait whilst the project launches',
+                caption: 'Expect a followup notification once the project has started',
                 timeout: NOTIFICATION_TIMEOUT_MEDIUM,
               }
             ));
