@@ -98,6 +98,7 @@ class DescriptionEditor extends React.Component {
       * 
       */
     async handleDescSave() {
+        const accessToken = localStorage.getItem("cw-access-token");
         const projectid = this.props.projectID;
         this.setState({ isBeingSaved: true, editMode: false });
         try {
@@ -105,14 +106,15 @@ class DescriptionEditor extends React.Component {
                 method: 'put',
                 headers: {
                     'Accept': 'application/json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${accessToken}`
                 },
                 body: JSON.stringify({ description: this.state.descFieldValue })
             });
 
             await result.json();
             if (result.status === 200) {
-                this.props.dispatch(reloadMetricsData(projectid, this.props.projectMetricTypes.types));
+                this.props.dispatch(reloadMetricsData(localStorage.getItem('cw-access-token'), projectid, this.props.projectMetricTypes.types));
                 this.setState({ isBeingSaved: false, text: this.state.descFieldValue });
             } else {
                 this.setState({ isBeingSaved: false, errorText: result.statusText });

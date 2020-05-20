@@ -61,18 +61,19 @@ class PagePerformance extends React.Component {
     }
 
     async componentDidMount() {
+        
         // Check if page was called with a projectID.  If note, the render() will display further instructions.
         if (!this.props.projectID) { return; }
         this.bindSocketHandlers();
 
         // read the project configuration
-        await this.props.dispatch(fetchProjectConfig(this.props.projectID));
+        await this.props.dispatch(fetchProjectConfig(localStorage.getItem("cw-access-token"), this.props.projectID));
 
         // read the load runner configuration
-        await this.props.dispatch(fetchProjectLoadConfig(this.props.projectID));
+        await this.props.dispatch(fetchProjectLoadConfig(localStorage.getItem("cw-access-token"), this.props.projectID));
 
         // Determine which metrics are available for this project
-        await this.props.dispatch(fetchProjectMetricTypes(this.props.projectMetricTypes, this.props.projectID));
+        await this.props.dispatch(fetchProjectMetricTypes(localStorage.getItem("cw-access-token"), this.props.projectMetricTypes, this.props.projectID));
 
         const projectMetricTypes = this.props.projectMetricTypes;
         if (projectMetricTypes && projectMetricTypes.error) {
@@ -81,11 +82,11 @@ class PagePerformance extends React.Component {
         }
 
         // Get the metrics for the project
-        await this.props.dispatch(fetchProjectMetrics(this.props.projectMetrics, this.props.projectID, projectMetricTypes.types));
+        await this.props.dispatch(fetchProjectMetrics(localStorage.getItem("cw-access-token"), this.props.projectMetrics, this.props.projectID, projectMetricTypes.types));
         const projectMetrics = this.props.projectMetrics;
 
         if (projectMetrics && projectMetrics.error) {
-            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading project metrics', subtitle:rojectMetrics.error.message  , caption:`${projectMetrics.error.err}` }));
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading project metrics', subtitle:projectMetrics.error.message  , caption:`${projectMetrics.error.err}` }));
         }
     }
 
@@ -145,7 +146,7 @@ class PagePerformance extends React.Component {
     }
 
     reloadMetrics(projectID) {
-        this.props.dispatch(reloadMetricsData(projectID, this.props.projectMetricTypes.types));
+        this.props.dispatch(reloadMetricsData(localStorage.getItem('cw-access-token'), projectID, this.props.projectMetricTypes.types));
     }
 
     render() {

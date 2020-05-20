@@ -43,6 +43,38 @@ socket.on('connect', function(){
   }
 });
 
+socket.on('connect_error', function(error) {
+  console.error("Dashboard Socket connect_error: ", error);
+});
+
+socket.on('connect_timeout', function(timeout) {
+  console.warn("Dashboard Socket connect_timeout: ", timeout);
+});
+
+socket.on('error', function(error) {
+  console.error("Dashboard Socket error: ", error);
+});
+
+socket.on('disconnect', function(reason) {
+  console.warn("Dashboard Socket disconnect: ", reason);
+});
+
+socket.on('reconnect', function(attemptNumber) {
+  console.warn("Dashboard Socket reconnect.  Attempt # ", attemptNumber);
+});
+
+socket.on('reconnecting', function(attemptNumber) {
+  console.warn("Dashboard Socket reconnecting. Attempt #", attemptNumber);
+});
+
+socket.on('reconnect_error', function(error) {
+  console.error("Dashboard Socket reconnect_error : ", error);
+});
+
+socket.on('reconnect_failed', function() {
+  console.error("Dashboard Socket reconnect_failed");
+});
+
 function App() {
 
   const projectID = ProjectIDChecker.projectID();

@@ -33,10 +33,14 @@ function fetchRejected(json) {
     };
 }
 
-function fetchMetricTypes(projectID) {
+function fetchMetricTypes(access_token, projectID) {
     return dispatch => {
         dispatch(requestMetricTypes());
-        return fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectID}/metrics`)
+        return fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectID}/metrics`,
+        {
+            method: "GET",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${access_token}` },
+        })
             .then(function (response) {
                 let data = response.json();
 
@@ -78,10 +82,10 @@ function shouldFetchMetricTypes(data) {
 /**
 Consumers should call this function to retrieve a list of which metrics are available
 */
-function fetchProjectMetricTypes(data, projectID) {
+function fetchProjectMetricTypes(access_token, data, projectID) {
     return (dispatch) => {
         if (shouldFetchMetricTypes(data)) {
-            return dispatch(fetchMetricTypes(projectID));
+            return dispatch(fetchMetricTypes(access_token, projectID));
         }
         return Promise.resolve();
     };

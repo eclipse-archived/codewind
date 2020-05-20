@@ -33,13 +33,13 @@ function fetchRejected(json) {
     };
 }
 
-function fetchConfig(projectID) {
+function fetchConfig(access_token, projectID) {
     return dispatch => {
         dispatch(requestConfig());
         return fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectID}`,
             {
                 method: "GET",
-                headers: { "Content-Type": "application/json" }
+                headers: { "Content-Type": "application/json",  Authorization: `Bearer ${access_token}` }
             }
         ).then(function (response) {
             let data = response.json();
@@ -70,9 +70,9 @@ function fetchConfig(projectID) {
 /**
 Consumers should call this function to retrieve the config
 */
-function fetchProjectConfig(projectID) {
+function fetchProjectConfig(access_token, projectID) {
     return (dispatch) => {
-        return dispatch(fetchConfig(projectID));
+        return dispatch(fetchConfig(access_token, projectID));
     };
 }
 

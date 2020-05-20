@@ -43,7 +43,7 @@ class CapabilitiesPanel extends React.Component {
     async componentDidMount() {
         if (!this.props.projectID) return;
         try {
-            await this.props.dispatch(fetchProjectCapabilities(this.props.projectID))
+            await this.props.dispatch(fetchProjectCapabilities(localStorage.getItem('cw-access-token'), this.props.projectID))
         } catch (err) {
             console.log("Error loading capabilities: ", err)
         }
@@ -229,9 +229,6 @@ class CapabilitiesPanel extends React.Component {
     render() {
         const dataModel = this.buildDisplayModel();
         const fetching = this.props.projectCapabilities.fetching;
-
-        console.log('this.props.projectInfo.config.appStatus', this.props.projectInfo.config.appStatus);
-
         return (
             <Fragment>
                 <div className="Capabilities">
@@ -245,7 +242,7 @@ class CapabilitiesPanel extends React.Component {
                                     <div key={row.id} className="row " role="gridcell">
                                         <Fragment>
                                             <div className="headline">
-                                                <div className="icon"> 
+                                                <div className="icon">
                                                     { (fetching) ? <InlineLoading description="" iconDescription="Active loading indicator" status="active"/> : this.getIconMarkup(row.status) }
                                                 </div>
                                                 <div className="capability">

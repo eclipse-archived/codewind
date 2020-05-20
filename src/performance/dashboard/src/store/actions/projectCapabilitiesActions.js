@@ -33,13 +33,13 @@ function fetchRejected(json) {
   };
 }
 
-function fetchCapabilities(projectID) {
+function fetchCapabilities(access_token, projectID) {
   return dispatch => {
     dispatch(requestCapabilities());
     return fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectID}/metrics/status`,
       {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',  Authorization: `Bearer ${access_token}` },
       },
     ).then(function(response) {
       const data = response.json();
@@ -69,9 +69,9 @@ function fetchCapabilities(projectID) {
 /**
 Consumers should call this function to retrieve the project capabilities
 */
-function fetchProjectCapabilities(projectID) {
+function fetchProjectCapabilities(access_token, projectID) {
   return (dispatch) => {
-    return dispatch(fetchCapabilities(projectID));
+    return dispatch(fetchCapabilities(access_token, projectID));
   };
 }
 
