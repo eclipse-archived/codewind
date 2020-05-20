@@ -503,4 +503,32 @@ async function unbind(req, res) {
   }
 }
 
+/**
+ * API Function to return an array of files the given project contains
+ * @param id, the id of the project
+ * @return 200 if the action was successful
+ * @return 404 if the project with id was not found
+ */
+
+router.get('/api/v1/projects/:id/fileList', validateReq, async (req, res) => {
+  const user = req.cw_user;
+  const projectID = req.sanitizeParams('id');
+  let project;
+  try {
+    project = user.projectList.retrieveProject(projectID);
+    if (!project) {
+      res.status(404).send(`Unable to find project ${projectID}`);
+      return;
+    }
+    const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
+  
+    const files  = await recursivelyListFilesOrDirectories(false, pathToTempProj);
+    res.status(200).send(files);
+  } catch (err) {
+    log.error(err.info || err);
+    res.status(500).send(err.info || err);
+  }
+
+});
+
 module.exports = router;
