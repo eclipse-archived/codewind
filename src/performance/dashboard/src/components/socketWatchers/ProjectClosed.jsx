@@ -16,6 +16,8 @@ import queryString from 'query-string';
 
 import { SocketEvents } from '../../utils/sockets/SocketEvents';
 import SocketContext from '../../utils/sockets/SocketContext';
+import { fetchProjectConfig } from '../../store/actions/projectInfoActions';
+import { fetchProjectCapabilities } from '../../store/actions/projectCapabilitiesActions';
 import { addNotification, KIND_WARNING, NOTIFICATION_TIMEOUT_MEDIUM } from '../../store/actions/notificationsActions';
 
 class ProjectClosed extends Component {
@@ -23,6 +25,12 @@ class ProjectClosed extends Component {
   componentDidMount() {
     if (!this.props.projectID) { return; }
     this.bindSocketHandlers();
+    this.refreshModels = this.refreshModels.bind(this);
+  }
+
+  refreshModels(thisComponent) {
+    thisComponent.props.dispatch(fetchProjectConfig(thisComponent.props.projectID));
+    thisComponent.props.dispatch(fetchProjectCapabilities(thisComponent.props.projectID));
   }
 
   bindSocketHandlers() {
@@ -34,6 +42,7 @@ class ProjectClosed extends Component {
         console.log(`SocketIO RX: ${SocketEvents.PROJECT_CLOSED}`, data);
       }
       if (data.projectID === this.props.projectID) {
+        thisComponent.refreshModels(thisComponent);
         thisComponent.props.dispatch(addNotification(
           {
             kind: KIND_INFO,
@@ -64,6 +73,8 @@ const ProjectClosedWithSocket = props => (
 const mapStateToProps = stores => {
   return {
     notifications: stores.notificationsReducer,
+    projectCapabilities: stores.projectCapabilitiesReducer,
+    projectInfo: stores.projectInfoReducer,
   }
 };
 

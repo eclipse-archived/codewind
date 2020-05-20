@@ -17,6 +17,7 @@ import queryString from 'query-string';
 import { SocketEvents } from '../../utils/sockets/SocketEvents';
 import SocketContext from '../../utils/sockets/SocketContext';
 import { fetchProjectConfig } from '../../store/actions/projectInfoActions';
+import { fetchProjectCapabilities } from '../../store/actions/projectCapabilitiesActions';
 import { addNotification, KIND_INFO, KIND_SUCCESS, NOTIFICATION_TIMEOUT_MEDIUM } from '../../store/actions/notificationsActions';
 
 class ProjectStatus extends Component {
@@ -26,6 +27,7 @@ class ProjectStatus extends Component {
     this.state = {
       lastProjectReceivedAt: 0
     }
+    this.refreshModels = this.refreshModels.bind(this);
   }
 
   componentDidUpdate(nextProps) {
@@ -40,6 +42,11 @@ class ProjectStatus extends Component {
     this.bindSocketHandlers();
   }
 
+  refreshModels(thisComponent) {
+    thisComponent.props.dispatch(fetchProjectConfig(thisComponent.props.projectID));
+    thisComponent.props.dispatch(fetchProjectCapabilities(thisComponent.props.projectID));
+  }
+
   bindSocketHandlers() {
     const uiSocket = this.props.socket;
     let thisComponent = this;
@@ -51,7 +58,7 @@ class ProjectStatus extends Component {
       if (data.projectID === this.props.projectID) {
         switch (data.appStatus) {
           case 'stopping': {
-            thisComponent.props.dispatch(fetchProjectConfig(this.props.projectID));
+            thisComponent.refreshModels(thisComponent);
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -64,7 +71,7 @@ class ProjectStatus extends Component {
           }
 
           case 'stopped': {
-            thisComponent.props.dispatch(fetchProjectConfig(this.props.projectID));
+            thisComponent.refreshModels(thisComponent);
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -76,7 +83,7 @@ class ProjectStatus extends Component {
             break;
           }
           case 'starting': {
-            thisComponent.props.dispatch(fetchProjectConfig(this.props.projectID));
+            thisComponent.refreshModels(thisComponent);
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -89,7 +96,7 @@ class ProjectStatus extends Component {
             break;
           }
           case 'started': {
-            thisComponent.props.dispatch(fetchProjectConfig(this.props.projectID));
+            thisComponent.refreshModels(thisComponent);
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_SUCCESS,
@@ -124,6 +131,7 @@ const mapStateToProps = stores => {
   return {
     notifications: stores.notificationsReducer,
     projectInfo: stores.projectInfoReducer,
+    projectCapabilities: stores.projectCapabilitiesReducer,
   }
 };
 

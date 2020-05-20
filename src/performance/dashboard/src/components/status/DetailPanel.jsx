@@ -11,9 +11,10 @@
 
 import React, { Component, Fragment } from 'react'
 import PropTypes from 'prop-types';
-import InlineHTML from './messages/InlineHTML'
+import InlineHTML from './messages/InlineHTML';
 import ErrorBoundary from '../utils/ErrorBoundary';
-import MPDisableAuth from './messages/MPDisableAuth'
+import MPDisableAuth from './messages/MPDisableAuth';
+import MPEnableAuth from './messages/MPEnableAuth';
 import * as Constants from './Constants';
 
 import './DetailsPanel.scss'
@@ -28,8 +29,11 @@ class DetailPanel extends Component {
       case Constants.MESSAGE_COMPONENT_SIMPLE:
         detailSubComponent = <InlineHTML markup={this.props.messageText} />
         break;
-      case Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE:
+      case Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_DISABLE_AUTH:
         detailSubComponent = <MPDisableAuth projectID={this.props.projectID} />
+        break;
+      case  Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_ENABLE_AUTH:
+        detailSubComponent = <MPEnableAuth></MPEnableAuth>
         break;
       default:
         detailSubComponent = <Fragment></Fragment>

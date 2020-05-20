@@ -73,12 +73,28 @@ class CapabilitiesPanel extends React.Component {
     }
 
     getCapabilityProjectStatus(capabilityData, feature) {
-        if (this.props.projectInfo.config.appStatus == "started") {
-            feature.status = Constants.STATUS_OK;
-            feature.statusMessage = Constants.MESSAGE_PROJECT_RUNNING;
-        } else {
-            feature.status = Constants.STATUS_ERROR;
-            feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
+        switch (this.props.projectInfo.config.appStatus) {
+            case 'starting': {
+                feature.status = Constants.STATUS_WARNING;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_STARTING;
+                break;
+            }
+            case 'started': {
+                feature.status = Constants.STATUS_OK;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_RUNNING;
+                break;
+            }
+
+            case 'stopping': {
+                feature.status = Constants.STATUS_WARNING;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_STOPPING;
+                break;
+            }
+
+            default: {
+                feature.status = Constants.STATUS_ERROR;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
+            }
         }
     }
 
@@ -105,10 +121,22 @@ class CapabilitiesPanel extends React.Component {
             return
         }
 
-        if (capabilityData.microprofilePackageFoundInBuildFile) {
+        // Show the re-enable auth button
+        if (capabilityData.microprofilePackageAuthenticationDisabled &&
+            !capabilityData.metricsEndpoint &&
+            capabilityData.microprofilePackageFoundInBuildFile)
+            {
+            feature.status = Constants.STATUS_OK
+            feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE_ISDISABLED;
+            feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_ENABLE_AUTH;
+            return
+        }
+
+        // Show the MP disable auth button
+         if (capabilityData.microprofilePackageFoundInBuildFile) {
             feature.status = Constants.STATUS_WARNING
             feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE;
-            feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE;
+            feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_DISABLE_AUTH;
             return
         }
 
@@ -201,6 +229,9 @@ class CapabilitiesPanel extends React.Component {
     render() {
         const dataModel = this.buildDisplayModel();
         const fetching = this.props.projectCapabilities.fetching;
+
+        console.log('this.props.projectInfo.config.appStatus', this.props.projectInfo.config.appStatus);
+
         return (
             <Fragment>
                 <div className="Capabilities">
