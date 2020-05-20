@@ -30,6 +30,7 @@ class CapabilitiesPanel extends React.Component {
     constructor() {
         super();
         this.state = {
+            lastProjectUpdateTime: 0,
             lastUpdated: 0,
             detailMessage:"",
             detailSubComponent:"",
@@ -52,6 +53,9 @@ class CapabilitiesPanel extends React.Component {
         if (newProps.projectCapabilities.receivedAt !== this.state.lastUpdated) {
             this.setState({ lastUpdated: newProps.projectCapabilities.receivedAt })
         }
+        if (newProps.projectInfo.receivedAt !== this.state.lastUpdated) {
+            this.setState({ lastProjectUpdateTime: newProps.projectInfo.receivedAt })
+        }
     }
 
     getIconMarkup(status) {
@@ -69,17 +73,33 @@ class CapabilitiesPanel extends React.Component {
     }
 
     getCapabilityProjectStatus(capabilityData, feature) {
-        if (capabilityData.projectRunning) {
-            feature.status = Constants.STATUS_OK;
-            feature.statusMessage = Constants.MESSAGE_PROJECT_RUNNING;
-        } else {
-            feature.status = Constants.STATUS_ERROR;
-            feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
+        switch (this.props.projectInfo.config.appStatus) {
+            case 'starting': {
+                feature.status = Constants.STATUS_WARNING;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_STARTING;
+                break;
+            }
+            case 'started': {
+                feature.status = Constants.STATUS_OK;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_RUNNING;
+                break;
+            }
+
+            case 'stopping': {
+                feature.status = Constants.STATUS_WARNING;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_STOPPING;
+                break;
+            }
+
+            default: {
+                feature.status = Constants.STATUS_ERROR;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
+            }
         }
     }
 
     getCapabilityLoadRunnerStatus(capabilityData, feature) {
-        if (capabilityData.projectRunning) {
+        if (this.props.projectInfo.config.appStatus == "started") {
             feature.status = Constants.STATUS_OK
             feature.statusMessage = Constants.MESSAGE_LOADRUNNER_AVAILABLE;
         } else {
@@ -89,7 +109,7 @@ class CapabilitiesPanel extends React.Component {
     }
 
     getCapabilityLiveMetrics(capabilityData, feature) {
-        if (!capabilityData.projectRunning) {
+        if (this.props.projectInfo.config.appStatus !== "started" ) {
             feature.status = Constants.STATUS_ERROR
             feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
             return
@@ -101,10 +121,22 @@ class CapabilitiesPanel extends React.Component {
             return
         }
 
-        if (capabilityData.microprofilePackageFoundInBuildFile) {
+        // Show the re-enable auth button
+        if (capabilityData.microprofilePackageAuthenticationDisabled &&
+            !capabilityData.metricsEndpoint &&
+            capabilityData.microprofilePackageFoundInBuildFile)
+            {
+            feature.status = Constants.STATUS_OK
+            feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE_ISDISABLED;
+            feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_ENABLE_AUTH;
+            return
+        }
+
+        // Show the MP disable auth button
+         if (capabilityData.microprofilePackageFoundInBuildFile) {
             feature.status = Constants.STATUS_WARNING
             feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE;
-            feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE;
+            feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_DISABLE_AUTH;
             return
         }
 
@@ -119,7 +151,7 @@ class CapabilitiesPanel extends React.Component {
     }
 
     getCapabilityComparisons(capabilityData, feature) {
-        if (!capabilityData.projectRunning) {
+        if (this.props.projectInfo.config.appStatus !== "started" ) {
             feature.status = Constants.STATUS_WARNING
             feature.statusMessage = Constants.MESSAGE_COMPARISONS_NOT_RUNNING;
             return
@@ -196,7 +228,10 @@ class CapabilitiesPanel extends React.Component {
 
     render() {
         const dataModel = this.buildDisplayModel();
-        const fetching = this.props.projectCapabilities.fetching
+        const fetching = this.props.projectCapabilities.fetching;
+
+        console.log('this.props.projectInfo.config.appStatus', this.props.projectInfo.config.appStatus);
+
         return (
             <Fragment>
                 <div className="Capabilities">
@@ -240,6 +275,7 @@ class CapabilitiesPanel extends React.Component {
 const mapStateToProps = stores => {
     return {
         projectCapabilities: stores.projectCapabilitiesReducer,
+        projectInfo: stores.projectInfoReducer,
         navbarActions: stores.navbarActionsReducer,
     }
 };

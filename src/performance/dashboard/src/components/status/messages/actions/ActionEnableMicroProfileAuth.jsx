@@ -17,7 +17,7 @@ import IconAction from '@carbon/icons-react/es/tools/20'
 
 import * as AppConstants from '../../../../AppConstants';
 
-class ActionDisableMicroProfileAuth extends Component {
+class ActionEnableMicroProfileAuth extends Component {
 
   constructor() {
     super();
@@ -56,7 +56,7 @@ class ActionDisableMicroProfileAuth extends Component {
   }
 
   /**
-   * Send a post to the api to turn off authentication
+   * Send a post to the api to turn on authentication
    * @param {string} projectID
    */
   async dispatchRequest() {
@@ -64,7 +64,7 @@ class ActionDisableMicroProfileAuth extends Component {
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({disable:true})
+            body: JSON.stringify({disable:false})
         });
      const reply = await response;
      return reply;
@@ -93,10 +93,10 @@ class ActionDisableMicroProfileAuth extends Component {
               kind="tertiary"
               disabled={disabled}
               renderIcon={IconAction}
-              aria-label="Disable Authentication"
+              aria-label="Enable Authentication"
               tabIndex={0}
               size="small"
-              onClick={() => this.handleOnClick()}>Disable authentication</Button>
+              onClick={() => this.handleOnClick()}>Enable authentication</Button>
               </Fragment>
             )}
           </div>
@@ -104,7 +104,7 @@ class ActionDisableMicroProfileAuth extends Component {
   }
 }
 
-ActionDisableMicroProfileAuth.propTypes = {
+ActionEnableMicroProfileAuth.propTypes = {
   projectID: PropTypes.string.isRequired
 }
 
@@ -115,4 +115,4 @@ const mapStateToProps = stores => {
 };
 
 
-export default  connect(mapStateToProps)(ActionDisableMicroProfileAuth);
+export default  connect(mapStateToProps)(ActionEnableMicroProfileAuth);

@@ -10,19 +10,22 @@
 ******************************************************************************/
 
 import React, { Component } from 'react'
-import ActionDisableMicroProfileAuth from './actions/ActionDisableMicroProfileAuth'
+import ActionEnableMicroProfileAuth from './actions/ActionEnableMicroProfileAuth'
 import PropTypes from 'prop-types';
 
 import './styles.scss'
 
-export default class MPDisableEncrypt extends Component {
+export default class MPEnableAuth extends Component {
 
   render() {
     return (
-      <div className="MPDisableEncrypt">
-        If you wish to see live metrics, you can disable authentication by modifying the server.xml file in your project.
+      <div className="MPEnableAuth">
+        You can re-protect the metrics endpoint in your application forcing authentication by modifying the src/main/liberty/config/server.xml file in your project.
         <br />
-        You can locate this file at src/main/liberty/config/server.xml. Modify server.xml and add or update: <br /><br />&lt;mpMetrics authentication=&quot;false&quot;/&gt;
+        Note: <span className="note">Doing this will block Codewind from displaying metrics.</span>
+        <br/>
+        <br/>
+        To continue, modify the server.xml and add or update: <br /><br />&lt;mpMetrics authentication=&quot;true&quot;/&gt;
         <br /><br />
         for example:
         <br /><br />
@@ -30,17 +33,15 @@ export default class MPDisableEncrypt extends Component {
           &lt;featureManager&gt;
           <br />&nbsp;&nbsp;&lt;feature&gt;microProfile-2.0&lt;/feature&gt;
           <br />&lt;/featureManager&gt;
-          <br />&lt;mpMetrics authentication=&quot;false&quot;/&gt;
+          <br />&lt;mpMetrics authentication=&quot;true&quot;/&gt;
         </div>
         <br />
-        {
-          // Not for 0.12 <ActionDisableMicroProfileAuth projectID={this.props.projectID} />
-        }
+      <ActionEnableMicroProfileAuth projectID={this.props.projectID} />
       </div>
     )
   }
 }
 
-MPDisableEncrypt.propTypes = {
+MPEnableAuth.propTypes = {
   projectID: PropTypes.string.isRequired,
 }

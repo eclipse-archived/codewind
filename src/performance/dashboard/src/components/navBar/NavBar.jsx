@@ -13,8 +13,8 @@ import React, { } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux';
 import { Button } from 'carbon-components-react';
-import IconNotification from '@carbon/icons-react/es/notification/20';
-import IconNotificationFill from '@carbon/icons-react/es/notification--filled/20';
+import IconNotification from '@carbon/icons-react/es/list--checked/20';
+import IconNotificationFill from '@carbon/icons-react/es/list--checked/20';
 import { fetchProjectConfig } from '../../store/actions/projectInfoActions';
 import { showCapabilitiesPanel } from '../../store/actions/navbarActions';
 import logo from './logo@1x.png';

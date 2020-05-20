@@ -51,7 +51,7 @@ class ActionRunLoad extends React.Component {
             if (data.projectID === this.props.projectID) {
 
                 if (queryString.parse(location.search).debugsocket) {
-                    console.log("SocketIO RX: ", data);
+                   console.log(`SocketIO RX: ${SocketEvents.RUNLOAD_STATUS_CHANGED}`, data);
                 }
 
                 switch (data.status) {
