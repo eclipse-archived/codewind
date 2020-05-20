@@ -1916,6 +1916,30 @@ paths:
         500:
           description: Internal server error
 
+  /api/v1/projects/{id}/fileList:
+    get:
+      summary: Return a list of files for this project
+      parameters:
+        - in: path
+          name: id
+          schema:
+            $ref: '#/components/schemas/ProjectID'
+          required: true
+          description: id of project
+      responses:
+        200:
+          description: The list of files this project contains
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string    
+        404:
+          description: Project not found
+        500:
+          description: Internal server error
+
 components:
   schemas:
     Project:
