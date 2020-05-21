@@ -80,7 +80,13 @@ async function postRepositories(req, res, next) {
     await sendRepositories(req, res, next);
   } catch (error) {
     log.error(error);
-    const knownErrorCodes = ['INVALID_URL', 'DUPLICATE_URL', 'URL_DOES_NOT_POINT_TO_INDEX_JSON', 'ADD_TO_PROVIDER_FAILURE'];
+    const knownErrorCodes = ['INVALID_URL',
+      'DUPLICATE_URL',
+      'URL_DOES_NOT_POINT_TO_INDEX_JSON',
+      'REPO_FILE_DOES_NOT_POINT_TO_INDEX_JSON',
+      'GET_TEMPLATE_SUMMARIES_FAILED',
+      'ADD_TO_PROVIDER_FAILURE'
+    ];
     if (error instanceof TemplateError) {
       if (knownErrorCodes.includes(error.code)) {
         res.status(400).send(error.message);
