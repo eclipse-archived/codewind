@@ -115,20 +115,18 @@ class CapabilitiesPanel extends React.Component {
             return
         }
 
-        if (capabilityData.liveMetricsAvailable) {
-            feature.status = Constants.STATUS_OK
-            feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_AVAILABLE;
-            return
-        }
-
         // Show the re-enable auth button
-        if (capabilityData.microprofilePackageAuthenticationDisabled &&
-            !capabilityData.metricsEndpoint &&
-            capabilityData.microprofilePackageFoundInBuildFile)
-            {
+        if (capabilityData.microprofilePackageAuthenticationDisabled) {
             feature.status = Constants.STATUS_OK
             feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE_ISDISABLED;
             feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_ENABLE_AUTH;
+            return
+        }
+
+        // If live metrics is enabled - everything is good
+        if (capabilityData.liveMetricsAvailable) {
+            feature.status = Constants.STATUS_OK
+            feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_AVAILABLE;
             return
         }
 
