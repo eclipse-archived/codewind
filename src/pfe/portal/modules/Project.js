@@ -133,6 +133,8 @@ module.exports = class Project {
       appmetricsPackageFoundInBuildFile: false,
       hasTimedMetrics: false,
       microprofilePackageAuthenticationDisabled: false,
+      // Overwrite with previous values
+      ...args.metricsCapabilities,
     };
 
     this.links = new Links(this.projectPath(), args.links);

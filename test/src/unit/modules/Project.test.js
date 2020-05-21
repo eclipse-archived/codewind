@@ -84,6 +84,10 @@ describe('Project.js', function() {
                 buildLogPath: '/codewind-workspace/.logs/my-java-project-9318ab10-fef9-11e9-8761-9bf62d92b58b-9318ab10-fef9-11e9-8761-9bf62d92b58b/docker.build.log',
                 state: 'open',
                 autoBuild: false,
+                metricsCapabilities: {
+                    liveMetricsAvailable: true,
+                    microprofilePackageAuthenticationDisabled: true,
+                },
             };
             const project = createProjectAndCheckIsAnObject(args, global.codewind.CODEWIND_WORKSPACE);
             project.should.containSubset(args);
