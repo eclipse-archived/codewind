@@ -668,18 +668,17 @@ module.exports = class LoadRunner {
     const summariseCommand = `${process.execPath} /portal/scripts/summariseProfile.js ${normalisedProfilingPath} ${summarisedProfilingPath}`;
     log.debug(`Running: ${summariseCommand}`);
     try {
-      const summariseProcess = await exec(mergeCommand);
+      const summariseProcess = await exec(summariseCommand);
       // Log these but they should be empty in the success case.
       log.trace(summariseProcess.stdout);
       log.trace(summariseProcess.stderr);
-      log.debug('Merging done');
+      log.debug('Summarising done');
     } catch (err) {
       // stdout/stderr may contain useful feedback if there was an error.
       log.trace(err.stdout);
       log.trace(err.stderr);
       throw new Error(`Error running summarise command. Exit code ${err.code}`);
     }
-    log.debug('Summarising done');
   }
 
   async cancelProfiling() {
