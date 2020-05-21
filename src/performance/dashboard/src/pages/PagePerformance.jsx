@@ -61,20 +61,27 @@ class PagePerformance extends React.Component {
     }
 
     async componentDidMount() {
-        
+
         // Check if page was called with a projectID.  If note, the render() will display further instructions.
         if (!this.props.projectID) { return; }
         this.bindSocketHandlers();
 
         // read the project configuration
         await this.props.dispatch(fetchProjectConfig(localStorage.getItem("cw-access-token"), this.props.projectID));
+        if (this.props.projectConfig && this.props.projectConfig.error) {
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading project details', subtitle:this.props.projectConfig.error.message , caption:`${this.props.projectConfig.error.err}` }));
+            return;
+        }
 
         // read the load runner configuration
         await this.props.dispatch(fetchProjectLoadConfig(localStorage.getItem("cw-access-token"), this.props.projectID));
+        if (this.props.loadRunnerConfig && this.props.loadRunnerConfig.error) {
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading test parameters', subtitle:this.props.loadRunnerConfig.error.message , caption:`${this.props.loadRunnerConfig.error.err}` }));
+            return;
+        }
 
         // Determine which metrics are available for this project
         await this.props.dispatch(fetchProjectMetricTypes(localStorage.getItem("cw-access-token"), this.props.projectMetricTypes, this.props.projectID));
-
         const projectMetricTypes = this.props.projectMetricTypes;
         if (projectMetricTypes && projectMetricTypes.error) {
             this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading metric types', subtitle:projectMetricTypes.error.message , caption:`${projectMetricTypes.error.err}` }));
@@ -84,7 +91,6 @@ class PagePerformance extends React.Component {
         // Get the metrics for the project
         await this.props.dispatch(fetchProjectMetrics(localStorage.getItem("cw-access-token"), this.props.projectMetrics, this.props.projectID, projectMetricTypes.types));
         const projectMetrics = this.props.projectMetrics;
-
         if (projectMetrics && projectMetrics.error) {
             this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading project metrics', subtitle:projectMetrics.error.message  , caption:`${projectMetrics.error.err}` }));
         }
