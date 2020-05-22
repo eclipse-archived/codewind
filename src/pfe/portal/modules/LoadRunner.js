@@ -13,6 +13,7 @@ const dateFormat = require('dateformat');
 const fs = require('fs-extra');
 const io = require('socket.io-client');
 const { promisify } = require('util');
+const exec = promisify(require('child_process').exec);
 const path = require('path');
 const http = require('http');
 
@@ -626,6 +627,14 @@ module.exports = class LoadRunner {
         log.error(err);
       }
       log.info(`profiling.json saved for project ${this.project.name}`);
+
+      try {
+        await this.postProcessProfilingData();
+      } catch (err) {
+        log.error('endProfiling: Error post processing profiling data.');
+        log.error(err);
+      }
+
       const data = { projectID: this.project.projectID, status: 'profilingReady', timestamp: this.metricsFolder }
       this.user.uiSocket.emit('runloadStatusChanged', data);
       this.profilingSocket.emit('disableprofiling');
@@ -634,6 +643,42 @@ module.exports = class LoadRunner {
       this.profilingSamples = null;
     }
     this.emitCompleted();
+  }
+
+  async postProcessProfilingData() {
+    /* Run the merge out of process as the profiling data could potentially be quite large. */
+    const profilingPath = path.join(this.workingDir + '/profiling.json');
+    const normalisedProfilingPath = this.project.getPathToProfilingTreeFile(this.metricsFolder);
+    const mergeCommand = `${process.execPath} /portal/scripts/mergeNodeProfiles.js ${profilingPath} ${normalisedProfilingPath}`;
+    log.debug(`Running: ${mergeCommand}`);
+    try {
+      const mergeProcess = await exec(mergeCommand);
+      // Log these but they should be empty in the success case.
+      log.trace(mergeProcess.stdout);
+      log.trace(mergeProcess.stderr);
+      log.debug('Merging done');
+    } catch (err) {
+      // stdout/stderr may contain useful feedback if there was an error.
+      log.trace(err.stdout);
+      log.trace(err.stderr);
+      throw new Error(`Error running merge command. Exit code ${err.code}`);
+    }
+
+    const summarisedProfilingPath = this.project.getPathToProfilingSummaryFile(this.metricsFolder);
+    const summariseCommand = `${process.execPath} /portal/scripts/summariseProfile.js ${normalisedProfilingPath} ${summarisedProfilingPath}`;
+    log.debug(`Running: ${summariseCommand}`);
+    try {
+      const summariseProcess = await exec(summariseCommand);
+      // Log these but they should be empty in the success case.
+      log.trace(summariseProcess.stdout);
+      log.trace(summariseProcess.stderr);
+      log.debug('Summarising done');
+    } catch (err) {
+      // stdout/stderr may contain useful feedback if there was an error.
+      log.trace(err.stdout);
+      log.trace(err.stderr);
+      throw new Error(`Error running summarise command. Exit code ${err.code}`);
+    }
   }
 
   async cancelProfiling() {

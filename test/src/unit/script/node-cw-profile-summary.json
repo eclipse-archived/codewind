@@ -1,0 +1,2567 @@
+{
+  "total_count": 20779,
+  "functions": [
+    {
+      "self_ids": [
+        0
+      ],
+      "location": {
+        "file": "(root)"
+      },
+      "total_self_count": 0,
+      "total_child_count": 20779
+    },
+    {
+      "self_ids": [
+        1
+      ],
+      "location": {
+        "file": "",
+        "name": "(root)",
+        "line": 0
+      },
+      "total_self_count": 0,
+      "total_child_count": 20779
+    },
+    {
+      "self_ids": [
+        2
+      ],
+      "location": {
+        "file": "",
+        "name": "(program)",
+        "line": 0
+      },
+      "total_self_count": 20725,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        3
+      ],
+      "location": {
+        "file": "internal/process/next_tick.js",
+        "name": "_tickDomainCallback",
+        "line": 194
+      },
+      "total_self_count": 1,
+      "total_child_count": 16
+    },
+    {
+      "self_ids": [
+        4
+      ],
+      "location": {
+        "file": "internal/process/next_tick.js",
+        "name": "_combinedTickCallback",
+        "line": 130
+      },
+      "total_self_count": 0,
+      "total_child_count": 15
+    },
+    {
+      "self_ids": [
+        5,
+        126,
+        132,
+        140,
+        224,
+        287
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/glue.js",
+        "name": "",
+        "line": 162
+      },
+      "total_self_count": 0,
+      "total_child_count": 27
+    },
+    {
+      "self_ids": [
+        6,
+        227
+      ],
+      "location": {
+        "file": "_stream_writable.js",
+        "name": "afterWrite",
+        "line": 459
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        7
+      ],
+      "location": {
+        "file": "_stream_writable.js",
+        "name": "onCorkedFinish",
+        "line": 632
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        8
+      ],
+      "location": {
+        "file": "/app/node_modules/engine.io/lib/transports/websocket.js",
+        "name": "onEnd",
+        "line": 117
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        9,
+        22,
+        39,
+        52,
+        165,
+        188,
+        254,
+        270,
+        297,
+        305
+      ],
+      "location": {
+        "file": "events.js",
+        "name": "emit",
+        "line": 156
+      },
+      "total_self_count": 1,
+      "total_child_count": 25
+    },
+    {
+      "self_ids": [
+        10,
+        23,
+        40,
+        166
+      ],
+      "location": {
+        "file": "events.js",
+        "name": "emitNone",
+        "line": 104
+      },
+      "total_self_count": 0,
+      "total_child_count": 12
+    },
+    {
+      "self_ids": [
+        11,
+        202
+      ],
+      "location": {
+        "file": "/app/node_modules/engine.io/lib/socket.js",
+        "name": "Socket.flush",
+        "line": 416
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        12,
+        203
+      ],
+      "location": {
+        "file": "/app/node_modules/engine.io/lib/transports/websocket.js",
+        "name": "WebSocket.send",
+        "line": 89
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        13,
+        204
+      ],
+      "location": {
+        "file": "/app/node_modules/engine.io-parser/lib/index.js",
+        "name": "exports.encodePacket",
+        "line": 55
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        14,
+        205
+      ],
+      "location": {
+        "file": "/app/node_modules/engine.io/lib/transports/websocket.js",
+        "name": "send",
+        "line": 97
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        15,
+        206
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/websocket.js",
+        "name": "send",
+        "line": 326
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        16,
+        207
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/sender.js",
+        "name": "send",
+        "line": 252
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        17,
+        208
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/sender.js",
+        "name": "dispatch",
+        "line": 313
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        18,
+        231
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/sender.js",
+        "name": "sendFrame",
+        "line": 378
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        19,
+        232
+      ],
+      "location": {
+        "file": "_stream_writable.js",
+        "name": "Writable.uncork",
+        "line": 302
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        20,
+        233
+      ],
+      "location": {
+        "file": "_stream_writable.js",
+        "name": "clearBuffer",
+        "line": 478
+      },
+      "total_self_count": 1,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        21
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "endReadableNT",
+        "line": 1059
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        24,
+        167
+      ],
+      "location": {
+        "file": "events.js",
+        "name": "onceWrapper",
+        "line": 307
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        25
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "onend",
+        "line": 593
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        26
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/lib/aspect.js",
+        "name": "newFunc",
+        "line": 100
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        27
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/probes/http-probe.js",
+        "name": "",
+        "line": 52
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        28
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/probes/http-probe.js",
+        "name": "HttpProbe.metricsEnd",
+        "line": 102
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        29
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/index.js",
+        "name": "module.exports.emit",
+        "line": 279
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        30
+      ],
+      "location": {
+        "file": "",
+        "name": "getObjectHistogram",
+        "line": 0
+      },
+      "total_self_count": 3,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        31
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "",
+        "line": 1985
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        32,
+        168
+      ],
+      "location": {
+        "file": "internal/streams/destroy.js",
+        "name": "destroy",
+        "line": 4
+      },
+      "total_self_count": 1,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        33
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "ReadStream._destroy",
+        "line": 2070
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        34
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "ReadStream.close",
+        "line": 2077
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        35,
+        122
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/index.js",
+        "name": "",
+        "line": 576
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        36,
+        244,
+        280
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/glue.js",
+        "name": "wrapCallback",
+        "line": 391
+      },
+      "total_self_count": 1,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        37
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/glue.js",
+        "name": "union",
+        "line": 60
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        38
+      ],
+      "location": {
+        "file": "_http_outgoing.js",
+        "name": "onFinish",
+        "line": 719
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        41
+      ],
+      "location": {
+        "file": "/app/node_modules/pino-http/logger.js",
+        "name": "onResFinished",
+        "line": 58
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        42
+      ],
+      "location": {
+        "file": "/app/node_modules/pino/lib/tools.js",
+        "name": "LOG",
+        "line": 30
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        43
+      ],
+      "location": {
+        "file": "/app/node_modules/pino/lib/proto.js",
+        "name": "write",
+        "line": 122
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        44
+      ],
+      "location": {
+        "file": "/app/node_modules/sonic-boom/index.js",
+        "name": "SonicBoom.write",
+        "line": 160
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        45
+      ],
+      "location": {
+        "file": "/app/node_modules/sonic-boom/index.js",
+        "name": "actualWrite",
+        "line": 272
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        46
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "fs.writeSync",
+        "line": 727
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        47
+      ],
+      "location": {
+        "file": "",
+        "name": "writeString",
+        "line": 0
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        48
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "listOnTimeout",
+        "line": 231
+      },
+      "total_self_count": 3,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        49
+      ],
+      "location": {
+        "file": "internal/linkedlist.js",
+        "name": "remove",
+        "line": 15
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        50
+      ],
+      "location": {
+        "file": "_http_common.js",
+        "name": "parserOnHeadersComplete",
+        "line": 62
+      },
+      "total_self_count": 0,
+      "total_child_count": 6
+    },
+    {
+      "self_ids": [
+        51
+      ],
+      "location": {
+        "file": "_http_server.js",
+        "name": "parserOnIncoming",
+        "line": 596
+      },
+      "total_self_count": 0,
+      "total_child_count": 6
+    },
+    {
+      "self_ids": [
+        53
+      ],
+      "location": {
+        "file": "events.js",
+        "name": "emitTwo",
+        "line": 124
+      },
+      "total_self_count": 0,
+      "total_child_count": 6
+    },
+    {
+      "self_ids": [
+        54
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io/lib/index.js",
+        "name": "",
+        "line": 336
+      },
+      "total_self_count": 0,
+      "total_child_count": 6
+    },
+    {
+      "self_ids": [
+        55
+      ],
+      "location": {
+        "file": "/app/node_modules/engine.io/lib/server.js",
+        "name": "",
+        "line": 463
+      },
+      "total_self_count": 0,
+      "total_child_count": 6
+    },
+    {
+      "self_ids": [
+        56,
+        85
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/express.js",
+        "name": "app",
+        "line": 38
+      },
+      "total_self_count": 0,
+      "total_child_count": 10
+    },
+    {
+      "self_ids": [
+        57,
+        86
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/application.js",
+        "name": "handle",
+        "line": 158
+      },
+      "total_self_count": 0,
+      "total_child_count": 10
+    },
+    {
+      "self_ids": [
+        58,
+        87,
+        112,
+        148
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/router/index.js",
+        "name": "handle",
+        "line": 136
+      },
+      "total_self_count": 0,
+      "total_child_count": 14
+    },
+    {
+      "self_ids": [
+        59,
+        65,
+        71,
+        77,
+        88,
+        94,
+        100,
+        106,
+        113,
+        142,
+        149,
+        257
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/router/index.js",
+        "name": "next",
+        "line": 176
+      },
+      "total_self_count": 0,
+      "total_child_count": 42
+    },
+    {
+      "self_ids": [
+        60,
+        66,
+        72,
+        78,
+        89,
+        95,
+        101,
+        107,
+        114,
+        143,
+        150
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/router/index.js",
+        "name": "process_params",
+        "line": 327
+      },
+      "total_self_count": 1,
+      "total_child_count": 40
+    },
+    {
+      "self_ids": [
+        61,
+        67,
+        73,
+        79,
+        90,
+        96,
+        102,
+        108,
+        115,
+        144,
+        151
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/router/index.js",
+        "name": "",
+        "line": 275
+      },
+      "total_self_count": 0,
+      "total_child_count": 40
+    },
+    {
+      "self_ids": [
+        62,
+        68,
+        74,
+        80,
+        91,
+        97,
+        103,
+        109,
+        116,
+        145
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/router/index.js",
+        "name": "trim_prefix",
+        "line": 288
+      },
+      "total_self_count": 0,
+      "total_child_count": 39
+    },
+    {
+      "self_ids": [
+        63,
+        69,
+        75,
+        81,
+        92,
+        98,
+        104,
+        110,
+        117,
+        146,
+        152,
+        155
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/router/layer.js",
+        "name": "handle",
+        "line": 86
+      },
+      "total_self_count": 0,
+      "total_child_count": 41
+    },
+    {
+      "self_ids": [
+        64,
+        93
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/middleware/query.js",
+        "name": "query",
+        "line": 39
+      },
+      "total_self_count": 0,
+      "total_child_count": 10
+    },
+    {
+      "self_ids": [
+        70,
+        99
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/middleware/init.js",
+        "name": "expressInit",
+        "line": 29
+      },
+      "total_self_count": 1,
+      "total_child_count": 8
+    },
+    {
+      "self_ids": [
+        76
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics-dash/lib/appmetrics-dash.js",
+        "name": "defaultMiddleware",
+        "line": 56
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        82
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics-dash/lib/appmetrics-dash.js",
+        "name": "",
+        "line": 217
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        83
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/lib/aspect.js",
+        "name": "args.(anonymous function)",
+        "line": 25
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        84
+      ],
+      "location": {
+        "file": "/app/node_modules/ibmapm-embed/appmetrics-zipkin/lib/aspect.js",
+        "name": "args.(anonymous function)",
+        "line": 26
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        105
+      ],
+      "location": {
+        "file": "/app/node_modules/pino-http/logger.js",
+        "name": "loggingMiddleware",
+        "line": 83
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        111,
+        147
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/router/index.js",
+        "name": "router",
+        "line": 46
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        118
+      ],
+      "location": {
+        "file": "/app/node_modules/serve-static/index.js",
+        "name": "serveStatic",
+        "line": 72
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        119
+      ],
+      "location": {
+        "file": "/app/node_modules/send/index.js",
+        "name": "pipe",
+        "line": 510
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        120
+      ],
+      "location": {
+        "file": "/app/node_modules/send/index.js",
+        "name": "sendIndex",
+        "line": 757
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        121
+      ],
+      "location": {
+        "file": "/app/node_modules/send/index.js",
+        "name": "next",
+        "line": 761
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        123
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "fs.stat",
+        "line": 923
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        124
+      ],
+      "location": {
+        "file": "",
+        "name": "stat",
+        "line": 0
+      },
+      "total_self_count": 3,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        125
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "",
+        "line": 151
+      },
+      "total_self_count": 0,
+      "total_child_count": 7
+    },
+    {
+      "self_ids": [
+        127
+      ],
+      "location": {
+        "file": "/app/node_modules/send/index.js",
+        "name": "",
+        "line": 770
+      },
+      "total_self_count": 0,
+      "total_child_count": 6
+    },
+    {
+      "self_ids": [
+        128
+      ],
+      "location": {
+        "file": "/app/node_modules/send/index.js",
+        "name": "send",
+        "line": 606
+      },
+      "total_self_count": 0,
+      "total_child_count": 6
+    },
+    {
+      "self_ids": [
+        129
+      ],
+      "location": {
+        "file": "/app/node_modules/send/index.js",
+        "name": "stream",
+        "line": 789
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        130
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "Readable.pipe",
+        "line": 554
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        131
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "pipeOnDrain",
+        "line": 699
+      },
+      "total_self_count": 2,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        133
+      ],
+      "location": {
+        "file": "net.js",
+        "name": "onconnection",
+        "line": 1539
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        134
+      ],
+      "location": {
+        "file": "net.js",
+        "name": "Socket",
+        "line": 189
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        135
+      ],
+      "location": {
+        "file": "_stream_duplex.js",
+        "name": "Duplex",
+        "line": 47
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        136
+      ],
+      "location": {
+        "file": "events.js",
+        "name": "once",
+        "line": 338
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        137
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "processImmediate",
+        "line": 720
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        138
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "tryOnImmediate",
+        "line": 763
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        139
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "runCallback",
+        "line": 802
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        141
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/router/index.js",
+        "name": "",
+        "line": 629
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        153
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/router/route.js",
+        "name": "dispatch",
+        "line": 98
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        154
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/router/route.js",
+        "name": "next",
+        "line": 114
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        156
+      ],
+      "location": {
+        "file": "/app/server/routers/health.js",
+        "name": "",
+        "line": 6
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        157
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/response.js",
+        "name": "json",
+        "line": 239
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        158
+      ],
+      "location": {
+        "file": "/app/node_modules/express/lib/response.js",
+        "name": "header",
+        "line": 754
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        159,
+        283
+      ],
+      "location": {
+        "file": "_http_outgoing.js",
+        "name": "setHeader",
+        "line": 497
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        160,
+        284
+      ],
+      "location": {
+        "file": "_http_outgoing.js",
+        "name": "validateHeader",
+        "line": 485
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        161,
+        285
+      ],
+      "location": {
+        "file": "_http_common.js",
+        "name": "checkIsHttpToken",
+        "line": 281
+      },
+      "total_self_count": 2,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        162
+      ],
+      "location": {
+        "file": "net.js",
+        "name": "afterShutdown",
+        "line": 321
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        163
+      ],
+      "location": {
+        "file": "_stream_writable.js",
+        "name": "stream._final",
+        "line": 584
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        164
+      ],
+      "location": {
+        "file": "_stream_writable.js",
+        "name": "finishMaybe",
+        "line": 607
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        169
+      ],
+      "location": {
+        "file": "net.js",
+        "name": "Socket._destroy",
+        "line": 541
+      },
+      "total_self_count": 1,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        170
+      ],
+      "location": {
+        "file": "",
+        "name": "close",
+        "line": 0
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        171
+      ],
+      "location": {
+        "file": "",
+        "name": "(garbage collector)",
+        "line": 0
+      },
+      "total_self_count": 4,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        172
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "resume_",
+        "line": 819
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        173
+      ],
+      "location": {
+        "file": "_http_incoming.js",
+        "name": "read",
+        "line": 93
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        174,
+        247,
+        292
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "Readable.read",
+        "line": 365
+      },
+      "total_self_count": 1,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        175
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "endReadable",
+        "line": 1045
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        176,
+        242
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/index.js",
+        "name": "",
+        "line": 626
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        177,
+        243,
+        259
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/index.js",
+        "name": "fallback",
+        "line": 612
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        178
+      ],
+      "location": {
+        "file": "internal/process/next_tick.js",
+        "name": "nextTick",
+        "line": 246
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        179,
+        218,
+        234,
+        310
+      ],
+      "location": {
+        "file": "_stream_writable.js",
+        "name": "doWrite",
+        "line": 388
+      },
+      "total_self_count": 0,
+      "total_child_count": 5
+    },
+    {
+      "self_ids": [
+        180,
+        235
+      ],
+      "location": {
+        "file": "net.js",
+        "name": "Socket._writev",
+        "line": 781
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        181,
+        236
+      ],
+      "location": {
+        "file": "net.js",
+        "name": "Socket._writeGeneric",
+        "line": 715
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        182,
+        237
+      ],
+      "location": {
+        "file": "",
+        "name": "writev",
+        "line": 0
+      },
+      "total_self_count": 3,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        183
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/appmetrics-api.js",
+        "name": "events",
+        "line": 238
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        184
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/appmetrics-api.js",
+        "name": "raiseEvent",
+        "line": 32
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        185
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/appmetrics-api.js",
+        "name": "formatProfiling",
+        "line": 180
+      },
+      "total_self_count": 0,
+      "total_child_count": 4
+    },
+    {
+      "self_ids": [
+        186
+      ],
+      "location": {
+        "file": "",
+        "name": "forEach",
+        "line": 0
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        187
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/appmetrics-api.js",
+        "name": "",
+        "line": 189
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        189,
+        255,
+        271,
+        306
+      ],
+      "location": {
+        "file": "events.js",
+        "name": "emitOne",
+        "line": 114
+      },
+      "total_self_count": 0,
+      "total_child_count": 7
+    },
+    {
+      "self_ids": [
+        190
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics-dash/lib/appmetrics-dash.js",
+        "name": "",
+        "line": 277
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        191
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io/lib/index.js",
+        "name": "Server.(anonymous function)",
+        "line": 504
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        192
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/lib/aspect.js",
+        "name": "newFunc",
+        "line": 79
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        193
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io/lib/namespace.js",
+        "name": "Namespace.emit",
+        "line": 211
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        194
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io-adapter/index.js",
+        "name": "Adapter.broadcast",
+        "line": 122
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        195
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io-parser/index.js",
+        "name": "Encoder.encode",
+        "line": 128
+      },
+      "total_self_count": 0,
+      "total_child_count": 3
+    },
+    {
+      "self_ids": [
+        196
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io-adapter/index.js",
+        "name": "",
+        "line": 136
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        197
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io/lib/socket.js",
+        "name": "Socket.packet",
+        "line": 220
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        198
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io/lib/client.js",
+        "name": "Client.packet",
+        "line": 162
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        199
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io/lib/client.js",
+        "name": "writeToEngine",
+        "line": 167
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        200
+      ],
+      "location": {
+        "file": "/app/node_modules/engine.io/lib/socket.js",
+        "name": "Socket.send.Socket.write",
+        "line": 366
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        201
+      ],
+      "location": {
+        "file": "/app/node_modules/engine.io/lib/socket.js",
+        "name": "Socket.sendPacket",
+        "line": 380
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        209
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/permessage-deflate.js",
+        "name": "compress",
+        "line": 319
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        210
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/limiter.js",
+        "name": "add",
+        "line": 32
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        211
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/limiter.js",
+        "name": "",
+        "line": 42
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        212
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/permessage-deflate.js",
+        "name": "zlibLimiter.add",
+        "line": 320
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        213
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/permessage-deflate.js",
+        "name": "_compress",
+        "line": 397
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        214,
+        215
+      ],
+      "location": {
+        "file": "zlib.js",
+        "name": "DeflateRaw",
+        "line": 565
+      },
+      "total_self_count": 1,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        216,
+        308
+      ],
+      "location": {
+        "file": "_stream_writable.js",
+        "name": "Writable.write",
+        "line": 264
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        217,
+        309
+      ],
+      "location": {
+        "file": "_stream_writable.js",
+        "name": "writeOrBuffer",
+        "line": 348
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        219
+      ],
+      "location": {
+        "file": "_stream_transform.js",
+        "name": "Transform._write",
+        "line": 164
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        220
+      ],
+      "location": {
+        "file": "_stream_transform.js",
+        "name": "Transform._read",
+        "line": 181
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        221
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/index.js",
+        "name": "",
+        "line": 582
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        222
+      ],
+      "location": {
+        "file": "zlib.js",
+        "name": "_transform",
+        "line": 360
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        223
+      ],
+      "location": {
+        "file": "zlib.js",
+        "name": "callback",
+        "line": 447
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        225
+      ],
+      "location": {
+        "file": "_stream_transform.js",
+        "name": "afterTransform",
+        "line": 73
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        226
+      ],
+      "location": {
+        "file": "_stream_writable.js",
+        "name": "onwrite",
+        "line": 431
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        228
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/permessage-deflate.js",
+        "name": "_deflate.flush",
+        "line": 428
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        229
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/permessage-deflate.js",
+        "name": "_compress",
+        "line": 321
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        230
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/sender.js",
+        "name": "perMessageDeflate.compress",
+        "line": 322
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        238
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "unrefdHandle",
+        "line": 608
+      },
+      "total_self_count": 2,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        239
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "Readable.on",
+        "line": 771
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        240
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "Readable.resume",
+        "line": 802
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        241
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "resume",
+        "line": 812
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        245,
+        281
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/glue.js",
+        "name": "asyncWrap",
+        "line": 137
+      },
+      "total_self_count": 2,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        246
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "flow",
+        "line": 843
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        248
+      ],
+      "location": {
+        "file": "/app/node_modules/on-finished/index.js",
+        "name": "onFinished",
+        "line": 45
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        249
+      ],
+      "location": {
+        "file": "/app/node_modules/on-finished/index.js",
+        "name": "attachListener",
+        "line": 140
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        250
+      ],
+      "location": {
+        "file": "/app/node_modules/send/index.js",
+        "name": "onstat",
+        "line": 721
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        251
+      ],
+      "location": {
+        "file": "/app/node_modules/send/index.js",
+        "name": "next",
+        "line": 732
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        252
+      ],
+      "location": {
+        "file": "/app/node_modules/send/index.js",
+        "name": "onStatError",
+        "line": 416
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        253
+      ],
+      "location": {
+        "file": "/app/node_modules/send/index.js",
+        "name": "error",
+        "line": 267
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        256
+      ],
+      "location": {
+        "file": "/app/node_modules/serve-static/index.js",
+        "name": "error",
+        "line": 115
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        258
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/index.js",
+        "name": "",
+        "line": 644
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        260
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "setImmediate",
+        "line": 842
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        261
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "createImmediate",
+        "line": 877
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        262
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "Immediate",
+        "line": 824
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        263
+      ],
+      "location": {
+        "file": "domain.js",
+        "name": "get",
+        "line": 43
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        264
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io-parser/index.js",
+        "name": "encodeAsString",
+        "line": 147
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        265
+      ],
+      "location": {
+        "file": "/app/node_modules/socket.io-parser/index.js",
+        "name": "tryStringify",
+        "line": 182
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        266
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/probes/http-probe.js",
+        "name": "",
+        "line": 42
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        267
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/lib/probe.js",
+        "name": "Probe.metricsStart",
+        "line": 62
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        268
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/lib/timer.js",
+        "name": "exports.start",
+        "line": 33
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        269
+      ],
+      "location": {
+        "file": "/app/node_modules/appmetrics/lib/timer.js",
+        "name": "Timer",
+        "line": 18
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        272
+      ],
+      "location": {
+        "file": "_http_server.js",
+        "name": "connectionListener",
+        "line": 312
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        273
+      ],
+      "location": {
+        "file": "internal/async_hooks.js",
+        "name": "defaultTriggerAsyncIdScope",
+        "line": 273
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        274
+      ],
+      "location": {
+        "file": "_http_server.js",
+        "name": "connectionListenerInternal",
+        "line": 318
+      },
+      "total_self_count": 1,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        275
+      ],
+      "location": {
+        "file": "internal/http.js",
+        "name": "nowDate",
+        "line": 8
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        276
+      ],
+      "location": {
+        "file": "internal/http.js",
+        "name": "cache",
+        "line": 18
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        277
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "exports._unrefActive",
+        "line": 157
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        278
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "insert",
+        "line": 167
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        279
+      ],
+      "location": {
+        "file": "timers.js",
+        "name": "createTimersList",
+        "line": 196
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        282
+      ],
+      "location": {
+        "file": "internal/process/promises.js",
+        "name": "emitPendingUnhandledRejections",
+        "line": 100
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        286
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "wrapper",
+        "line": 656
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        288
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "fs.read",
+        "line": 2046
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        289,
+        302
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "Readable.push",
+        "line": 191
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        290,
+        303
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "readableAddChunk",
+        "line": 216
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        291,
+        304
+      ],
+      "location": {
+        "file": "_stream_readable.js",
+        "name": "addChunk",
+        "line": 261
+      },
+      "total_self_count": 0,
+      "total_child_count": 2
+    },
+    {
+      "self_ids": [
+        293
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "ReadStream._read",
+        "line": 2013
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        294
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/index.js",
+        "name": "",
+        "line": 600
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        295
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "fs.read",
+        "line": 649
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        296
+      ],
+      "location": {
+        "file": "",
+        "name": "read",
+        "line": 0
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        298
+      ],
+      "location": {
+        "file": "/app/node_modules/pino/lib/tools.js",
+        "name": "asJson",
+        "line": 73
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        299
+      ],
+      "location": {
+        "file": "/app/node_modules/pino/lib/tools.js",
+        "name": "stringify",
+        "line": 358
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        300
+      ],
+      "location": {
+        "file": "",
+        "name": "now",
+        "line": 0
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        301
+      ],
+      "location": {
+        "file": "net.js",
+        "name": "onread",
+        "line": 583
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        307
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/websocket.js",
+        "name": "socketOnData",
+        "line": 875
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        311
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/receiver.js",
+        "name": "_write",
+        "line": 72
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        312
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/receiver.js",
+        "name": "startLoop",
+        "line": 123
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        313
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/receiver.js",
+        "name": "getData",
+        "line": 336
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        314
+      ],
+      "location": {
+        "file": "/app/node_modules/ws/lib/receiver.js",
+        "name": "dataMessage",
+        "line": 406
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        315
+      ],
+      "location": {
+        "file": "buffer.js",
+        "name": "Buffer.toString",
+        "line": 609
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    },
+    {
+      "self_ids": [
+        316
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "fs.createReadStream",
+        "line": 1930
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        317
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "ReadStream",
+        "line": 1937
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        318
+      ],
+      "location": {
+        "file": "fs.js",
+        "name": "ReadStream.open",
+        "line": 1994
+      },
+      "total_self_count": 0,
+      "total_child_count": 1
+    },
+    {
+      "self_ids": [
+        319
+      ],
+      "location": {
+        "file": "/app/node_modules/async-listener/index.js",
+        "name": "",
+        "line": 588
+      },
+      "total_self_count": 1,
+      "total_child_count": 0
+    }
+  ]
+}

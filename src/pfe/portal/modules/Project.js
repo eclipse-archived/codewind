@@ -408,7 +408,25 @@ module.exports = class Project {
     }
     log.info(`Returning profiling file stream ${pathToProfilingFile} for ${this.name}`);
     return profilingStream;
-  } 
+  }
+
+  /**
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  getPathToProfilingTreeFile(timeOfTestRun) {
+    const pathToLoadTestDir = join(this.loadTestPath, String(timeOfTestRun));
+    const pathToProfilingJson = join(pathToLoadTestDir, 'cw-profile.json');
+    return pathToProfilingJson;
+  }
+
+  /**
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  getPathToProfilingSummaryFile(timeOfTestRun) {
+    const pathToLoadTestDir = join(this.loadTestPath, String(timeOfTestRun));
+    const pathToProfilingJson = join(pathToLoadTestDir, 'cw-profile-summary.json');
+    return pathToProfilingJson;
+  }
 
   /**
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format

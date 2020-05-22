@@ -207,6 +207,36 @@ describe('Load Runner Tests', function() {
             res.status.should.equal(409, res.text); // print res.text if assertion fails
         });
     });
+
+    describe('query profiling data (POST /profiling/:testRunTime/querytree and /profiling/:testRunTime/querysummary)', function() {
+        it('querytree fails with 404 against a project with an invalid id', async function() {
+            this.timeout(testTimeout.short);
+            const res = await projectService.queryProfileTree('invalidID', '20200101', '{"path": "$.total_count"}');
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
+            res.should.satisfyApiSpec;
+        });
+
+        it('querysummary fails with 404 on a project with an invalid id', async function() {
+            this.timeout(testTimeout.short);
+            const res = await projectService.queryProfileSummary('invalidID', '20200101', '{"path": "$.total_count"}');
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
+            res.should.satisfyApiSpec;
+        });
+
+        it('querytree fails with 404 against a testrun with an invalid id', async function() {
+            this.timeout(testTimeout.short);
+            const res = await projectService.queryProfileTree(projectID, 'invalidID', '{"path": "$.total_count"}');
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
+            res.should.satisfyApiSpec;
+        });
+
+        it('querysummary fails with 404 on a testrun with an invalid id', async function() {
+            this.timeout(testTimeout.short);
+            const res = await projectService.queryProfileSummary(projectID, 'invalidID', '{"path": "$.total_count"}');
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
+            res.should.satisfyApiSpec;
+        });
+    });
 });
 
 async function writeToLoadTestConfig(projectID, configOptions) {

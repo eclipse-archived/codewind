@@ -10,6 +10,8 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const express = require('express');
+const fs = require('fs-extra');
+const {JSONPath} = require('jsonpath-plus');
 const path = require('path');
 const queryString = require('query-string');
 
@@ -202,6 +204,86 @@ router.get('/api/v1/projects/:id/profiling/:testRunTime', validateReq, async fun
     res.status(200)
     profilingStream.on('end', () => res.end());
     profilingStream.pipe(res);
+  } catch (err) {
+    log.error(err.info || err);
+    res.status(500).send(err.info || err);
+  }
+});
+
+/**
+ * Function to query the profiling tree data for a given project and test time
+ * with a JSONPath query.
+ * @param id, the id of the project
+ * @param testRunTime, the timestamp of the load runner test
+ * @return 200 if project existed and the profiling tree was found
+ * @return 400 if input is invalid
+ * @return 404 if project is not found
+ * @return 500 on internal error
+ */
+// We use POST rather than GET as GET requests are not supposed to have a body.
+router.post('/api/v1/projects/:id/profiling/:testRunTime/querytree', validateReq, async function (req, res) {
+  try {
+    const user = req.cw_user;
+    const projectID = req.sanitizeParams('id');
+    const project = user.projectList.retrieveProject(projectID);
+    if (!project) {
+      res.status(404).send(`Unable to find project ${projectID}`);
+      return;
+    }
+    const testRunTime = req.sanitizeParams('testRunTime');
+    const profilingTreeFile = await project.getPathToProfilingTreeFile(testRunTime);
+    if (!await fs.pathExists(profilingTreeFile)) {
+      res.status(404).send(`Unable to find profiling tree for ${testRunTime}`);
+      return;
+    }
+    // eslint-disable-next-line microclimate-portal-eslint/sanitise-body-parameters
+    const path = req.body['path'];
+    const options = {
+      wrap: false,
+    }
+    const profilingTree = await fs.readJSON(profilingTreeFile);
+    const result = JSONPath({options, path, json: profilingTree});
+    res.status(200).send(result);
+  } catch (err) {
+    log.error(err.info || err);
+    res.status(500).send(err.info || err);
+  }
+});
+
+/**
+ * Function to query the profiling summary data for a given project and test time
+ * with a JSONPath query.
+ * @param id, the id of the project
+ * @param testRunTime, the timestamp of the load runner test
+ * @return 200 if project existed and the profiling summary was found
+ * @return 400 if input is invalid
+ * @return 404 if project is not found
+ * @return 500 on internal error
+ */
+// We use POST rather than GET as GET requests are not supposed to have a body.
+router.post('/api/v1/projects/:id/profiling/:testRunTime/querysummary', validateReq, async function (req, res) {
+  try {
+    const user = req.cw_user;
+    const projectID = req.sanitizeParams('id');
+    const project = user.projectList.retrieveProject(projectID);
+    if (!project) {
+      res.status(404).send(`Unable to find project ${projectID}`);
+      return;
+    }
+    const testRunTime = req.sanitizeParams('testRunTime');
+    const profilingSummaryFile = await project.getPathToProfilingSummaryFile(testRunTime);
+    if (!await fs.pathExists(profilingSummaryFile)) {
+      res.status(404).send(`Unable to find profiling summary for ${testRunTime}`);
+      return;
+    }
+    // eslint-disable-next-line microclimate-portal-eslint/sanitise-body-parameters
+    const path = req.body['path'];
+    const options = {
+      wrap: false,
+    }
+    const profilingTree = await fs.readJSON(profilingSummaryFile);
+    const result = JSONPath({options, path, json: profilingTree});
+    res.status(200).send(result);
   } catch (err) {
     log.error(err.info || err);
     res.status(500).send(err.info || err);
