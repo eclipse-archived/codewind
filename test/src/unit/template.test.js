@@ -614,7 +614,7 @@ describe('Templates.js', function() {
                             url,
                             description: 'description',
                         });
-                        return func().should.be.rejectedWith(`${url} is already a template repository`);
+                        return func().should.be.rejectedWith(`URL ${url} is already a template repository`);
                     });
                 });
                 describe('(<validUrlNotPointingToIndexJson>, <validDesc>)', function() {
@@ -624,7 +624,7 @@ describe('Templates.js', function() {
                             url,
                             description: 'description',
                         });
-                        return func().should.be.rejectedWith(`${url} does not point to a JSON file of the correct form`);
+                        return func().should.be.rejectedWith(`URL '${url}' does not point to a JSON file of the correct form`);
                     });
                 });
                 describe('(<validUrlPointingToIndexJson>, <validDesc>, <validName>)', function() {
@@ -1278,11 +1278,11 @@ describe('Templates.js', function() {
             });
             it('throws a useful error when a valid URL is given but it does not point to JSON', function() {
                 const func = () => getTemplatesFromRepo({ url: 'https://www.google.com/' });
-                return func().should.be.rejectedWith(`URL 'https://www.google.com/' did not return JSON`);
+                return func().should.be.rejectedWith(`URL 'https://www.google.com/' does not point to a JSON file of the correct form`);
             });
             it('throws a useful error when an invalid file path is given', function() {
                 const func = () => getTemplatesFromRepo({ url: 'file://something.json' });
-                return func().should.be.rejectedWith(`repo file 'file://something.json/' did not return JSON`);
+                return func().should.be.rejectedWith(`repo file 'file://something.json/' does not point to a JSON file of the correct form`);
             });
         });
         describe('getTemplateSummaries(givenURL)', () => {
@@ -1342,11 +1342,11 @@ describe('Templates.js', function() {
             });
             it('should be rejected as URL does not point to JSON', () => {
                 const func = () => getTemplateSummaries('https://www.google.com/');
-                return func().should.be.rejectedWith(`URL 'https://www.google.com/' did not return JSON`);
+                return func().should.be.rejectedWith(`URL 'https://www.google.com/' does not point to a JSON file of the correct form`);
             });
             it('should be rejected as filepath does not exist', function() {
                 const func = () => getTemplateSummaries('file://something.json');
-                return func().should.be.rejectedWith(`repo file 'file://something.json/' did not return JSON`);
+                return func().should.be.rejectedWith(`repo file 'file://something.json/' does not point to a JSON file of the correct form`);
             });
         });
         describe('filterTemplatesByStyle(templates, projectStyle)', function() {
