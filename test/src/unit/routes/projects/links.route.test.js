@@ -256,26 +256,26 @@ describe('links.route.js', () => {
                 };
                 const spiedCwUtils = sandbox.spy(cwUtils);
                 Links.__set__('cwUtils', spiedCwUtils);
-                const spiedRestartAppsodyKubernetes = sandbox.spy(() => {});
-                Links.__set__('restartAppsodyKubernetes', spiedRestartAppsodyKubernetes);
+                const spiedRestartExtensionKubernetes = sandbox.spy(() => {});
+                Links.__set__('restartExtensionKubernetes', spiedRestartExtensionKubernetes);
                 await restartProjectToPickupLinks({}, { links: { getEnvPairObject: () => ({}) } });
                 const { getNetworkConfigMap, updateConfigMap, patchProjectDeployments } = spiedCwUtils;
                 getNetworkConfigMap.should.be.calledOnce;
                 updateConfigMap.should.be.calledOnce;
                 patchProjectDeployments.should.be.calledOnce;
-                spiedRestartAppsodyKubernetes.should.not.be.called;
+                spiedRestartExtensionKubernetes.should.not.be.called;
             });
-            it(`calls restartAppsodyKubernetes as the project is an extension`, async() => {
+            it(`calls restartExtensionKubernetes as the project is an extension`, async() => {
                 const spiedUpdateNetworkConfigMap = sandbox.spy(() => {});
-                const spiedRestartAppsodyKubernetes = sandbox.spy(() => {});
+                const spiedRestartExtensionKubernetes = sandbox.spy(() => {});
 
                 Links.__set__('updateNetworkConfigMap', spiedUpdateNetworkConfigMap);
-                Links.__set__('restartAppsodyKubernetes', spiedRestartAppsodyKubernetes);
+                Links.__set__('restartExtensionKubernetes', spiedRestartExtensionKubernetes);
 
                 await restartProjectToPickupLinks({}, { extension: true });
 
                 spiedUpdateNetworkConfigMap.should.not.be.called;
-                spiedRestartAppsodyKubernetes.should.be.calledOnce;
+                spiedRestartExtensionKubernetes.should.be.calledOnce;
             });
         });
     });
@@ -526,14 +526,15 @@ describe('links.route.js', () => {
             checkIfEnvsExistInArray({ links }, arrayOfEnvs).should.be.false;
         });
     });
-    describe('restartAppsodyKubernetes(user, project)', () => {
-        const restartAppsodyKubernetes = Links.__get__('restartAppsodyKubernetes');
+    describe('restartExtensionKubernetes(user, project)', () => {
+        const restartExtensionKubernetes = Links.__get__('restartExtensionKubernetes');
         const sandbox = sinon.createSandbox();
         const mockedUser = {
             restartProject: () => null,
             projectList: {
                 retrieveProject: () => true,
             },
+            buildProject: () => true,
         };
         const mockedProject = {
             name: null,
@@ -554,11 +555,17 @@ describe('links.route.js', () => {
                     retrieveProject: () => false,
                 },
             };
-            return restartAppsodyKubernetes(user, mockedProject).should.not.be.rejected;
+            return restartExtensionKubernetes(user, mockedProject).should.not.be.rejected;
         });
-        it('throws an error as getProjectDeployments throws an error that does not have a statusCode of 404', () => {
+        it('calls user.buildProject when the deployment is not found', async() => {
             Links.__set__('cwUtils', { getProjectDeployments: () => { throw new Error(); } });
-            return restartAppsodyKubernetes(mockedUser, mockedProject).should.be.rejected;
+            const spiedBuildProject = sinon.stub().returns();
+            const mockUserWithSpiedBuildProject = {
+                ...mockedUser,
+                buildProject: spiedBuildProject,
+            };
+            await restartExtensionKubernetes(mockUserWithSpiedBuildProject, mockedProject).should.be.fulfilled;
+            spiedBuildProject.should.be.calledOnce;
         });
         describe('buildStatus == inProgress or deployment in null', () => {
             const project = {
@@ -568,23 +575,23 @@ describe('links.route.js', () => {
             afterEach(() => {
                 sandbox.restore();
             });
-            it('calls restartAppsodyKubernetes once as buildStatus == inProgress', async() => {
+            it('calls restartExtensionKubernetes once as buildStatus == inProgress', async() => {
                 Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => [true] });
-                const spiedRestartAppsodyKubernetes = sandbox.spy(() => null);
-                Links.__set__('restartAppsodyKubernetes', spiedRestartAppsodyKubernetes);
-                await restartAppsodyKubernetes(mockedUser, project);
-                spiedRestartAppsodyKubernetes.should.be.calledOnce;
+                const spiedRestartExtensionKubernetes = sandbox.spy(() => null);
+                Links.__set__('restartExtensionKubernetes', spiedRestartExtensionKubernetes);
+                await restartExtensionKubernetes(mockedUser, project);
+                spiedRestartExtensionKubernetes.should.be.calledOnce;
             });
-            it('calls restartAppsodyKubernetes once as deployment == null (restartAppsodyKubernetes throws 404 statusCode)', async() => {
+            it('calls restartExtensionKubernetes once as deployment == null (restartExtensionKubernetes throws 404 statusCode)', async() => {
                 Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
                     const err = new Error();
                     err.statusCode = 404;
                     throw err;
                 } });
-                const spiedRestartAppsodyKubernetes = sandbox.spy(() => null);
-                Links.__set__('restartAppsodyKubernetes', spiedRestartAppsodyKubernetes);
-                await restartAppsodyKubernetes(mockedUser, project);
-                spiedRestartAppsodyKubernetes.should.be.calledOnce;
+                const spiedRestartExtensionKubernetes = sandbox.spy(() => null);
+                Links.__set__('restartExtensionKubernetes', spiedRestartExtensionKubernetes);
+                await restartExtensionKubernetes(mockedUser, project);
+                spiedRestartExtensionKubernetes.should.be.calledOnce;
             });
         });
         describe('buildStatus != inProgress && container is a populated object', () => {
@@ -617,7 +624,7 @@ describe('links.route.js', () => {
                     }];
                 } });
                 sandbox.spy(user, 'buildProject');
-                await restartAppsodyKubernetes(user, mockedProject);
+                await restartExtensionKubernetes(user, mockedProject);
                 const { buildProject } = user;
                 buildProject.should.be.calledOnce;
             });
@@ -643,7 +650,7 @@ describe('links.route.js', () => {
                     }];
                 } });
                 sandbox.spy(user, 'buildProject');
-                await restartAppsodyKubernetes(user, mockedProject);
+                await restartExtensionKubernetes(user, mockedProject);
                 const { buildProject } = user;
                 buildProject.should.not.be.called;
             });
