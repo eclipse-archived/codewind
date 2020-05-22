@@ -700,6 +700,7 @@ describe('LoadRunner.js', () => {
             const loadRunner = new LoadRunner(mockProject);
             loadRunner.user = mockUser;
             loadRunner.metricsFolder = expectedMetricsFolder;
+            loadRunner.postProcessProfilingData = () => true;
             const logInfoSpy = sandbox.spy(MockLogger.prototype, 'info');
             const expectedData = {
                 projectID: mockProject.projectID,

@@ -5,6 +5,20 @@ if [ $EC -ne 0 ]; then
     exit 1;
 fi
 
+# monitoring-api.jar is required by the profiling-parser to parse .hcd files.
+# It isn't published to a maven repository.
+docker container rm profiling-parser-deps
+docker run --name profiling-parser-deps websphere-liberty:19.0.0.9-webProfile7 true
+docker cp profiling-parser-deps:/opt/ibm/java/jre/lib/tools/monitoring-api.jar profiling-parser/monitoring-api.jar
+mvn install:install-file -Dfile=profiling-parser/monitoring-api.jar -DgroupId=com.ibm.java.diagnostics.healthcenter -DartifactId=com.ibm.java.diagnostics.healthcenter -Dversion=1.0 -Dpackaging=jar
+
+mvn -f profiling-parser/pom.xml clean package -DskipTests
+EC=$?
+if [ $EC -ne 0 ]; then
+    echo "profiling-parser build failed with exit code " $EC
+    exit 1;
+fi
+
 # read and source the .env file
 env_file=./devbuild.env
 

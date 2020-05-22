@@ -1,0 +1,53 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.eclipse.codewind.HCProfileToJSON</groupId>
+  <artifactId>hc-profile-to-json</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>hc-profile-to-json</name>
+  <url>http://maven.apache.org</url>
+  <build>
+    <finalName>profiling-parser</finalName>
+    <pluginManagement>
+        <plugins>
+            <!-- Default java version was 1.5, to change the default version added this plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-jar-plugin</artifactId>
+              <configuration>
+                  <archive>
+                      <manifest>
+                          <mainClass>
+                              org.eclipse.codewind.HCProfileToJSON
+                          </mainClass>
+                      </manifest>
+                  </archive>
+              </configuration>
+          </plugin>
+        </plugins>
+    </pluginManagement>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- mvn install:install-file -Dfile=deps/monitoring-api.jar -DgroupId=com.ibm.java.diagnostics.healthcenter -DartifactId=com.ibm.java.diagnostics.healthcenter -Dversion=1.0 -Dpackaging=jar -->
+    <dependency>
+			<groupId>com.ibm.java.diagnostics.healthcenter</groupId>
+			<artifactId>com.ibm.java.diagnostics.healthcenter</artifactId>
+			<version>1.0</version>
+		</dependency>
+  </dependencies>
+</project>
