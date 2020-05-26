@@ -155,12 +155,14 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
         }
 
         // iterate through the available ports and store both the internal and exposed ports
-        for ( let i = 0 ; i < resp.body.items.length ; i++ ) {
-            if (projectInfo.projectType != "odo" || (projectInfo.projectType == "odo" && resp.body.items[i].spec.selector.deploymentconfig == deploymentconfig)) {
-                info.serviceName = resp.body.items[i].metadata.name;
-                for (let j = 0; j < resp.body.items[i].spec.ports.length; j++) {
-                    internalPorts.push(String(resp.body.items[i].spec.ports[j].targetPort));
-                    exposedPorts.push(String(resp.body.items[i].spec.ports[j].nodePort));
+        for (const item of resp.body.items) {
+            if (projectInfo.projectType != "odo" || (projectInfo.projectType == "odo" && item.spec.selector
+            && item.spec.selector.deploymentconfig && item.spec.selector.deploymentconfig == deploymentconfig)) {
+
+                info.serviceName = item.metadata.name;
+                for (let j = 0; j < item.spec.ports.length; j++) {
+                    internalPorts.push(String(item.spec.ports[j].targetPort));
+                    exposedPorts.push(String(item.spec.ports[j].nodePort));
                 }
             }
         }
