@@ -337,7 +337,7 @@ function getMode(project) {
 async function syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID) {
   // If the current project is being built, we do not want to copy the files as this will
   // interfere with the current build
-  if (project.buildStatus != "inProgress") {
+  if (project.buildStatus != "inProgress" && project.loadRunner.isIdle()) {
     const globalProjectPath = project.projectPath();
     // We now need to remove any files that have been deleted from the global workspace
     await Promise.all(filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(globalProjectPath, oldFile))));
@@ -388,7 +388,7 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
     }
     user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
   } else {
-    // if a build is in progress, wait 5 seconds and try again
+    // if a build or loadrun is in progress, wait 5 seconds and try again
     await cwUtils.timeout(5000)
     await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
   }

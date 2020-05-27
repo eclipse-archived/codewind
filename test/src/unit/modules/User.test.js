@@ -16,6 +16,7 @@ const chai = require('chai');
 const sinonChai = require('sinon-chai');
 const chaiSubset = require('chai-subset');
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
+const chaiExclude = require('chai-exclude');
 
 const ProjectList = require('../../../../src/pfe/portal/modules/ProjectList');
 const ExtensionList = require('../../../../src/pfe/portal/modules/ExtensionList');
@@ -40,7 +41,7 @@ class MockTemplates {
     getTemplates() { return []; }
 };
 
-class MockLoadRunner {};
+class MockLoadRunner { isIdle() { return true; } };
 
 class MockFileWatcher {
     setLocale() {}
@@ -90,6 +91,7 @@ const Project = proxyquire('../../../../src/pfe/portal/modules/Project', {
 chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
 chai.use(sinonChai);
+chai.use(chaiExclude);
 const should = chai.should();
 const { assert } = chai;
 
@@ -139,6 +141,7 @@ describe('User.js', () => {
                 'secure',
                 'dockerConfigFile',
                 'codewindPFESecretName',
+                'cancelRequests',
             ]);
             user.user_id.should.equal('default');
             user.workspace.should.equal(testWorkspace);
@@ -169,6 +172,7 @@ describe('User.js', () => {
                 'dockerConfigFile',
                 'codewindPFESecretName',
                 'k8Client',
+                'cancelRequests',
             ]);
             user.user_id.should.equal('default');
             user.workspace.should.equal(testWorkspace);
@@ -209,7 +213,7 @@ describe('User.js', () => {
                 'extensionList',
                 'templates',
                 'fw',
-                'loadRunner',
+                'cancelRequests',
             ]);
             user.user_id.should.equal('default');
             user.workspace.should.equal(testWorkspace);
@@ -230,7 +234,6 @@ describe('User.js', () => {
             user.extensionList.should.deep.equal(new ExtensionList());
             user.templates.should.deep.equal(new MockTemplates());
             user.fw.should.deep.equal(new MockFileWatcher());
-            user.loadRunner.should.deep.equal(new MockLoadRunner());
 
             fs.readdirSync(testWorkspace).should.equalInAnyOrder([
                 '.config',
@@ -282,6 +285,7 @@ describe('User.js', () => {
                 infLockFlag,
                 logStreams,
                 tempDirName,
+                loadRunner,
                 /* eslint-enable no-unused-vars */
                 ...expectedProjectInf
             } = createdProject;
@@ -318,7 +322,6 @@ describe('User.js', () => {
 
             await user.runLoad(project)
                 .should.eventually.be.rejectedWith('Load Runner service is not available');
-            project.loadInProgress.should.be.false;
             should.equal(project.loadConfig, null);
         });
     });
@@ -331,18 +334,18 @@ describe('User.js', () => {
         });
         it('errors if a load run is not already in progress on the project', async() => {
             const { user, project } = await createSimpleUserWithProject();
-            project.loadInProgress = false;
-            
-            await user.cancelLoad(project)
-                .should.eventually.be.rejectedWith(`Unable to cancel, no load run in progress.\nFor project ${sampleProjectID}`);
-        });
-        it('gets to LoadRunner.cancelRunLoad() then errors because we are not connected to the LoadRunner container', async() => {
-            const { user, project } = await createSimpleUserWithProject();
-            project.loadInProgress = true;
+            project.loadRunner = new MockLoadRunner;
 
             await user.cancelLoad(project)
-                .should.eventually.be.rejectedWith('Load Runner service is not available');
+                .should.eventually.be.rejectedWith('Unable to cancel, no load run in progress.');
         }).timeout(testTimeout.short);
+        it('errors if a cancel request has already been made on the load run', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            project.loadRunner = new MockLoadRunner;
+            user.cancelRequests[project.projectID] = true;
+
+            await user.cancelLoad(project).should.eventually.be.rejectedWith('Cancel request already in progress.');
+        });
         it.skip('returns the cancelLoad response', async() => {
             const { user, project } = await createSimpleUserWithProject();
             user.loadRunner.cancelRunLoad = () => 200;
@@ -546,7 +549,7 @@ describe('User.js', () => {
             await user.initialiseExistingProjects();
 
             // assert
-            user.projectList.should.deep.equal(expectedProjectList);
+            assert.deepEqualExcludingEvery(user.projectList, expectedProjectList, ['loadRunner']);
         });
     });
     

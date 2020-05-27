@@ -445,6 +445,7 @@ describe('Project.js', function() {
             infJson.should.have.property('projectID').and.equal(project.projectID);
 
             const projectFromInf = createProjectAndCheckIsAnObject(infJson, global.codewind.CODEWIND_WORKSPACE);
+            projectFromInf.loadRunner = project.loadRunner = null;
             projectFromInf.should.deep.equal(project);
         });
         it('Checks the Project cannot be written when it is locked', function() {
