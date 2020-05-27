@@ -168,7 +168,7 @@ async function restartProjectToPickupLinks(user, project) {
   if (global.codewind.RUNNING_IN_K8S) {
     const { extension } = project;
     if (extension) {
-      await restartAppsodyKubernetes(user, project);
+      await restartExtensionKubernetes(user, project);
     } else {
       // In K8s we use configmaps and restart Pods for our templates
       await updateNetworkConfigMap(project);
@@ -277,7 +277,7 @@ function checkIfEnvsExistInArray(project, array) {
 }
 
 
-async function restartAppsodyKubernetes(user, project) {
+async function restartExtensionKubernetes(user, project) {
   const { name, buildStatus, projectID } = project;
   // As this function will be repeated until it has verified whether the envs exist in the container
   // we need to ensure that the project has not been deleted
@@ -286,39 +286,33 @@ async function restartAppsodyKubernetes(user, project) {
     return;
   }
 
-  let deployment;
-  try {
-    [deployment] = await cwUtils.getProjectDeployments(project.projectID);
-  } catch (err) {
-    const { statusCode } = err;
-    // If container is not found keep waiting
-    if (statusCode && statusCode === 404) {
-      deployment = null;
-    } else {
-      throw err;
-    }
-  }
+  if (buildStatus != "inProgress") {
+    try {
+      const [deployment] = await cwUtils.getProjectDeployments(project.projectID);
+      const { containers } = deployment.spec.template.spec;
+      // Combine all the containers envs,
+      // if one container contains all the link envs the deployment has been updated
+      const containerEnvArrays = containers.map(({ env: envs }) => {
+        return envs.map(({ name, value }) => `${name}=${value}`);
+      });
+      // Merge all container env arrays into one array
+      const containerEnvs = [].concat(...containerEnvArrays);
 
-  if (buildStatus != "inProgress" && deployment) {
-    const { containers } = deployment.spec.template.spec;
-    // Combine all the containers envs,
-    // if one container contains all the link envs the deployment has been updated
-    const containerEnvArrays = containers.map(({ env: envs }) => {
-      return envs.map(({ name, value }) => `${name}=${value}`);
-    });
-    // Merge all container env arrays into one array
-    const containerEnvs = [].concat(...containerEnvArrays);
-
-    const linksExistInContainer = await checkIfEnvsExistInArray(project, containerEnvs);
-    // Only build and run the project if the links are not in the container
-    if (!linksExistInContainer) {
-      log.info(`Rebuilding ${name} to pick up network environment variables`);
+      const linksExistInContainer = await checkIfEnvsExistInArray(project, containerEnvs);
+      // Only build and run the project if the links are not in the container
+      if (!linksExistInContainer) {
+        log.info(`Rebuilding ${name} to pick up network environment variables - links not found in deployment`);
+        await user.buildProject(project, 'build');
+      }
+    } catch (err) {
+      // Fall back to assuming that the project needs rebuilding
+      log.info(`Rebuilding ${name} to pick up network environment variables - deployment not found`);
       await user.buildProject(project, 'build');
     }
   } else {
     // if a build is in progress, wait 5 seconds and try again
     await cwUtils.timeout(5000);
-    await restartAppsodyKubernetes(user, project);
+    await restartExtensionKubernetes(user, project);
   }
 }
 
