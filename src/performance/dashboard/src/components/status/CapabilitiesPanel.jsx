@@ -11,7 +11,7 @@
 
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Button, SkeletonText, InlineLoading } from 'carbon-components-react';
+import { Button, InlineLoading } from 'carbon-components-react';
 import IconSuccess from '@carbon/icons-react/es/checkmark--outline/20';
 import IconFailure from '@carbon/icons-react/es/error--outline/16';
 import IconWarning from '@carbon/icons-react/es/warning/20';
@@ -241,14 +241,14 @@ class CapabilitiesPanel extends React.Component {
                                         <Fragment>
                                             <div className="headline">
                                                 <div className="icon">
-                                                    { (fetching) ? <InlineLoading description="" iconDescription="Active loading indicator" status="active"/> : this.getIconMarkup(row.status) }
+                                                    { this.getIconMarkup(row.status) }
                                                 </div>
                                                 <div className="capability">
-                                                    { (fetching) ? <SkeletonText/> : row.label  }
+                                                    { row.label }
                                                 </div>
                                             </div>
                                             <div className="description">
-                                                { (fetching) ? <SkeletonText/> : row.statusMessage }
+                                                { row.statusMessage }
                                             </div>
                                         </Fragment>
                                         {
