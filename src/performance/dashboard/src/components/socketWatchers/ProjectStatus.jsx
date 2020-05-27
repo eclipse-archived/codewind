@@ -44,6 +44,7 @@ class ProjectStatus extends Component {
   bindSocketHandlers() {
     const uiSocket = this.props.socket;
     let thisComponent = this;
+    const projectID = this.props.projectID;
 
     uiSocket.on(SocketEvents.PROJECT_STATUS_CHANGED, data => {
       if (queryString.parse(location.search).debugsocket) {
@@ -52,7 +53,7 @@ class ProjectStatus extends Component {
       if (data.projectID === this.props.projectID) {
         switch (data.appStatus) {
           case 'stopping': {
-            thisComponent.props.dispatch(fetchProjectConfig(thisComponent.props.projectID));
+            thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'),  projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -65,7 +66,7 @@ class ProjectStatus extends Component {
           }
 
           case 'stopped': {
-            thisComponent.props.dispatch(fetchProjectConfig(thisComponent.props.projectID));
+            thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'), projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -77,7 +78,7 @@ class ProjectStatus extends Component {
             break;
           }
           case 'starting': {
-            thisComponent.props.dispatch(fetchProjectConfig(thisComponent.props.projectID));
+            thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'), projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -90,8 +91,8 @@ class ProjectStatus extends Component {
             break;
           }
           case 'started': {
-            thisComponent.props.dispatch(fetchProjectConfig(thisComponent.props.projectID));
-            thisComponent.props.dispatch(fetchProjectCapabilities(thisComponent.props.projectID));
+            thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'), projectID));
+            thisComponent.props.dispatch(fetchProjectCapabilities(localStorage.getItem('cw-access-token'), projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_SUCCESS,
