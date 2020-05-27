@@ -19,6 +19,7 @@ const promiseAny = require('promise.any');
 const Logger = require('../utils/Logger');
 const nodeMetricsService = require('./node');
 const { findFile } = require('../utils/sharedFunctions');
+const ProjectMetricsError = require('../utils/errors/ProjectMetricsError');
 
 const log = new Logger(__filename);
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
@@ -573,13 +574,13 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
 
 async function disableMicroprofileMetricsAuth(projectLanguage, projectDir) {
   if (projectLanguage !== 'java') {
-    throw new Error(`Disabling of Microprofile metrics authentication is not supported for projects of language '${projectLanguage}'`);
+    throw new ProjectMetricsError('DISABLE_METRICS_AUTH_UNSUPPORTED', projectLanguage);
   }
   const contents = '<server>\n\t<mpMetrics authentication="false"/>\n</server>\n';
   const fileName = 'codewind-override-disable-mpmetrics-auth.xml';
   const pathToServerXml = await findFile('server.xml', projectDir);
   if (!pathToServerXml) {
-    throw new Error(`Unable to determine 'server.xml' directory, cannot create Microprofile metrics authentication override file`);
+    throw new ProjectMetricsError('SERVER_XML_NOT_FOUND', projectDir, 'Cannot remove Microprofile metrics authentication override file');
   }
   const serverXmlDirectory = path.dirname(pathToServerXml);
   // Use overrides as it has a higher priority than /configDropins/defaults
@@ -592,12 +593,12 @@ async function disableMicroprofileMetricsAuth(projectLanguage, projectDir) {
 
 async function enableMicroprofileMetricsAuth(projectLanguage, projectDir) {
   if (projectLanguage !== 'java') {
-    throw new Error(`Disabling of Microprofile metrics authentication is not supported for projects of language '${projectLanguage}'`);
+    throw new ProjectMetricsError('DISABLE_METRICS_AUTH_UNSUPPORTED', projectLanguage);
   }
   const fileName = 'codewind-override-disable-mpmetrics-auth.xml';
   const pathToServerXml = await findFile('server.xml', projectDir);
   if (!pathToServerXml) {
-    throw new Error(`Unable to determine 'server.xml' directory, cannot remove Microprofile metrics authentication override file`);
+    throw new ProjectMetricsError('SERVER_XML_NOT_FOUND', projectDir, 'Cannot remove Microprofile metrics authentication override file');
   }
   const serverXmlDirectory = path.dirname(pathToServerXml);
   // Use overrides as it has a higher priority than /configDropins/defaults

@@ -526,6 +526,11 @@ async function deleteProjectLink(projectID, envName) {
     return res;
 }
 
+function getMetricsStatus(projectID) {
+    return reqService.chai
+        .get(`/api/v1/projects/${projectID}/metrics/status`)
+        .set('cookie', ADMIN_COOKIE);
+}
 
 module.exports = {
     generateUniqueName,
@@ -569,4 +574,5 @@ module.exports = {
     addProjectLink,
     updateProjectLink,
     deleteProjectLink,
+    getMetricsStatus,
 };
