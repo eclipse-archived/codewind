@@ -75,6 +75,11 @@
   margin-left:$carbon--spacing-04;
 }
 
+.Capabilities .capability_nomargin {
+  @include properties($productive-heading-02);
+  display: inline;
+}
+
 .Capabilities .description{
   @include properties($body-short-01);
   margin-left:$carbon--spacing-09;
