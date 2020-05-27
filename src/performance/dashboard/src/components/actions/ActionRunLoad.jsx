@@ -150,10 +150,11 @@ class ActionRunLoad extends React.Component {
     // eslint-disable-next-line class-methods-use-this
     async requestRunLoad(desc) {
         let descriptionPayload = JSON.stringify({ description: desc });
+        const accessToken = localStorage.getItem("cw-access-token");
         const response = await fetch(`${AppConstants.API_SERVER}/api/v1/projects/${this.props.projectID}/loadtest`,
             {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
                 body: descriptionPayload
             });
         const reply = await response;
@@ -162,10 +163,11 @@ class ActionRunLoad extends React.Component {
 
     async handleCancelLoad() {
         try {
+            const accessToken = localStorage.getItem("cw-access-token");
             const response = await fetch(`${AppConstants.API_SERVER}/api/v1/projects/${this.props.projectID}/loadtest/cancel`,
                 {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" }
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` }
                 });
             const reply = await response;
             console.error("Cancel accepted")

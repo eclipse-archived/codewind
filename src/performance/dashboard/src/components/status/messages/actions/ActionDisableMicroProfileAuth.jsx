@@ -60,10 +60,11 @@ class ActionDisableMicroProfileAuth extends Component {
    * @param {string} projectID
    */
   async dispatchRequest() {
+    const accessToken = localStorage.getItem('cw-access-token');
     const response = fetch(`${AppConstants.API_SERVER}/api/v1/projects/${this.props.projectID}/metrics/auth`,
         {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}`},
             body: JSON.stringify({disable:true})
         });
      const reply = await response;

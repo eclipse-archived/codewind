@@ -32,7 +32,7 @@ class NavBar extends React.Component {
 
     async componentDidMount() {
         try {
-            await this.props.dispatch(fetchProjectConfig(this.props.projectID));
+            await this.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'), this.props.projectID));
         } catch (err) {
             this.setState({ projectName: '' });
         }

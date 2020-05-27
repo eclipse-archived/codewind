@@ -85,7 +85,7 @@ class RunTestHistory extends Component {
         this.setState({ deleteInProgress: true });
         const result = await postDeleteTests(this.props.projectID, rowID);
         if (result.status && result.status === 200) {
-            await this.props.dispatch(reloadMetricsData(this.props.projectID, this.props.projectMetricTypes.types));
+            await this.props.dispatch(reloadMetricsData(localStorage.getItem('cw-access-token'), this.props.projectID, this.props.projectMetricTypes.types));
         } else {
             this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Delete failed', subtitle:'Unable to delete test', caption:`${result.message}` }));
         }
@@ -109,7 +109,7 @@ class RunTestHistory extends Component {
 
         await this.setState({ deleteInProgress: false });
         this.refs.tableTestHistory.handleOnCancel(); // deselect all rows & hide batch action bar
-        this.props.dispatch(reloadMetricsData(this.props.projectID, this.props.projectMetricTypes.types));
+        this.props.dispatch(reloadMetricsData(localStorage.getItem('cw-access-token'), this.props.projectID, this.props.projectMetricTypes.types));
     }
 
     componentWillReceiveProps(nextprops) {

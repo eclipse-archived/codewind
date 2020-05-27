@@ -45,15 +45,15 @@ class ModalModifyLoadTests extends React.Component {
     }
 
     /**
-     * New props provided, 
+     * New props provided,
      * Re-load configuration from the server if dialogbox is opening
-     * @param {*} nextProps 
+     * @param {*} nextProps
      */
     async componentWillReceiveProps(nextProps) {
         if (nextProps.open !== this.state.dialogStateOpen) {
             this.setState({ dialogStateOpen: nextProps.open, modalErrorText: '', saveInProgress: false, loadingData: true });
             if (nextProps.open) {
-                await this.props.dispatch(fetchProjectLoadConfig(ProjectIDChecker.projectID()));
+                await this.props.dispatch(fetchProjectLoadConfig(localStorage.getItem("cw-access-token"), ProjectIDChecker.projectID()));
                 if (this.props.loadRunnerConfig.fetched) {
                     const formFields = { ...this.props.loadRunnerConfig.config }
                     if (formFields['body']) {
@@ -137,11 +137,10 @@ class ModalModifyLoadTests extends React.Component {
             "concurrency": this.state.formFields.concurrency,
             "maxSeconds": this.state.formFields.maxSeconds
         };
-
-        await this.props.dispatch(saveProjectLoadConfig(projectID, newConfigPayload));
+        await this.props.dispatch(saveProjectLoadConfig(localStorage.getItem('cw-access-token'), projectID, newConfigPayload));
 
         if (!this.props.loadRunnerConfig.error && this.props.loadRunnerConfig.fetched) {
-            await this.props.dispatch(reloadMetricsData(projectID, this.props.projectMetricTypes.types));
+            await this.props.dispatch(reloadMetricsData(localStorage.getItem('cw-access-token'), projectID, this.props.projectMetricTypes.types));
             this.props.closeModalWindow();
         } else {
             this.setState({ modalErrorText: this.props.loadRunnerConfig.error.message, saveInProgress: false });

@@ -43,8 +43,8 @@ class ProjectStatus extends Component {
   }
 
   refreshModels(thisComponent) {
-    thisComponent.props.dispatch(fetchProjectConfig(thisComponent.props.projectID));
-    thisComponent.props.dispatch(fetchProjectCapabilities(thisComponent.props.projectID));
+    thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'), thisComponent.props.projectID));
+    thisComponent.props.dispatch(fetchProjectCapabilities(localStorage.getItem('cw-access-token'), thisComponent.props.projectID));
   }
 
   bindSocketHandlers() {
