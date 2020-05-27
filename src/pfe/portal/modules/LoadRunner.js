@@ -450,9 +450,7 @@ module.exports = class LoadRunner {
   * Function to cancel the loadrunner
   */
   async cancelRunLoad(loadConfig) {
-    if (this.heartbeatID !== null) {
-      clearTimeout(this.heartbeatID);
-    }
+    this.heartbeat('cancelling');
     try {
       let options = {
         host: this.hostname,

@@ -139,6 +139,7 @@ describe('User.js', () => {
                 'secure',
                 'dockerConfigFile',
                 'codewindPFESecretName',
+                'cancelRequests',
             ]);
             user.user_id.should.equal('default');
             user.workspace.should.equal(testWorkspace);
@@ -169,6 +170,7 @@ describe('User.js', () => {
                 'dockerConfigFile',
                 'codewindPFESecretName',
                 'k8Client',
+                'cancelRequests',
             ]);
             user.user_id.should.equal('default');
             user.workspace.should.equal(testWorkspace);
@@ -210,6 +212,7 @@ describe('User.js', () => {
                 'templates',
                 'fw',
                 'loadRunner',
+                'cancelRequests',
             ]);
             user.user_id.should.equal('default');
             user.workspace.should.equal(testWorkspace);
@@ -335,6 +338,12 @@ describe('User.js', () => {
             
             await user.cancelLoad(project)
                 .should.eventually.be.rejectedWith(`Unable to cancel, no load run in progress.\nFor project ${sampleProjectID}`);
+        });
+        it('errors if a cancel request has already been made on the load run', async() => {
+            const { user, project } = await createSimpleUserWithProject();
+            user.cancelRequests[project.projectID] = true;
+
+            await user.cancelLoad(project).should.eventually.be.rejectedWith('Cancel request already in progress.');
         });
         it('gets to LoadRunner.cancelRunLoad() then errors because we are not connected to the LoadRunner container', async() => {
             const { user, project } = await createSimpleUserWithProject();

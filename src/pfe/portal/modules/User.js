@@ -60,6 +60,7 @@ module.exports = class User {
     if (global.codewind.RUNNING_IN_K8S == true) {
       this.k8Client = global.codewind.k8Client;
     }
+    this.cancelRequests = {};
   }
 
   /**
@@ -184,31 +185,32 @@ module.exports = class User {
    */
   async cancelLoad(project) {
     log.debug("cancelLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
+    if (this.cancelRequests[project.projectID]) {
+      throw new Error("Cancel request already in progress.");
+    }
     if (project.loadInProgress) {
       log.debug("Cancelling load for config: " + JSON.stringify(project.loadConfig));
+      this.cancelRequests[project.projectID] = true;
       const res = await retry((bail, number) => {
-        log.info(`Attempting to cancel load run. Attempt ${number}/30`);
-        this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelling' });
+        log.info(`Attempting to cancel load run. Attempt ${number}/10`);
         return this.callCancelRunLoad(project)
           .catch(function (err) {
             if (err.code !== "CANCEL_RUN_LOAD_ERROR") {
+              this.cancelRequests[project.projectID] = false;
               bail(err); 
             } else {
-              this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
               throw err;
             }
           });
       }, {
-        retries: 30,
-        minTimeout: 1000,
-        maxTimeout: 1000,
+        retries: 10,
+        minTimeout: 3000,
+        maxTimeout: 3000,
       });
       project.loadInProgress = false;
-      this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
+      this.cancelRequests[project.projectID] = false;
       return res;
     }
-    
-    this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
     throw new LoadRunError("NO_RUN_IN_PROGRESS", `For project ${project.projectID}`);
   }
 
