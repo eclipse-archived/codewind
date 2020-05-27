@@ -32,8 +32,8 @@ class DetailPanel extends Component {
       case Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_DISABLE_AUTH:
         detailSubComponent = <MPDisableAuth projectID={this.props.projectID} />
         break;
-      case  Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_ENABLE_AUTH:
-        detailSubComponent = <MPEnableAuth projectID={this.props.projectID} />
+      case Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_ENABLE_AUTH:
+        detailSubComponent = <MPEnableAuth  projectID={this.props.projectID} />
         break;
       default:
         detailSubComponent = <Fragment></Fragment>

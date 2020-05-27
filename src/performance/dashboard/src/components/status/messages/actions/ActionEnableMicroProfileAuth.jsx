@@ -16,6 +16,7 @@ import {Button, InlineLoading} from 'carbon-components-react'
 import IconAction from '@carbon/icons-react/es/tools/20'
 
 import * as AppConstants from '../../../../AppConstants';
+import './styles.scss';
 
 class ActionEnableMicroProfileAuth extends Component {
 
@@ -44,7 +45,7 @@ class ActionEnableMicroProfileAuth extends Component {
           setTimeout(() => {
             this.setState({isSubmitting: false, success:false, description:"", ariaLive:'off', disabled:true});
           }, 1500);
-        }, 2000);
+        }, 500);
       } else {
         var message = ""
         if (response != undefined && response.statusText != undefined) {
@@ -73,7 +74,7 @@ class ActionEnableMicroProfileAuth extends Component {
 
   render() {
     const {disabled, isSubmitting, success, description, ariaLive, errorMessage} = this.state
-    if (disabled) { return  (
+    if (!success && errorMessage!="") { return  (
       <div className="ActionButton">
         <span className="errorMessage">{ errorMessage }</span>
       </div>
@@ -94,10 +95,10 @@ class ActionEnableMicroProfileAuth extends Component {
               kind="tertiary"
               disabled={disabled}
               renderIcon={IconAction}
-              aria-label="Enable Authentication"
+              aria-label="Secure metrics endpoint"
               tabIndex={0}
               size="small"
-              onClick={() => this.handleOnClick()}>Enable authentication</Button>
+              onClick={() => this.handleOnClick()}>Secure metrics</Button>
               </Fragment>
             )}
           </div>

@@ -27,7 +27,6 @@ class ProjectStatus extends Component {
     this.state = {
       lastProjectReceivedAt: 0
     }
-    this.refreshModels = this.refreshModels.bind(this);
   }
 
   componentDidUpdate(nextProps) {
@@ -42,14 +41,10 @@ class ProjectStatus extends Component {
     this.bindSocketHandlers();
   }
 
-  refreshModels(thisComponent) {
-    thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'), thisComponent.props.projectID));
-    thisComponent.props.dispatch(fetchProjectCapabilities(localStorage.getItem('cw-access-token'), thisComponent.props.projectID));
-  }
-
   bindSocketHandlers() {
     const uiSocket = this.props.socket;
     let thisComponent = this;
+    const projectID = this.props.projectID;
 
     uiSocket.on(SocketEvents.PROJECT_STATUS_CHANGED, data => {
       if (queryString.parse(location.search).debugsocket) {
@@ -58,7 +53,7 @@ class ProjectStatus extends Component {
       if (data.projectID === this.props.projectID) {
         switch (data.appStatus) {
           case 'stopping': {
-            thisComponent.refreshModels(thisComponent);
+            thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'),  projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -71,7 +66,7 @@ class ProjectStatus extends Component {
           }
 
           case 'stopped': {
-            thisComponent.refreshModels(thisComponent);
+            thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'), projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -83,7 +78,7 @@ class ProjectStatus extends Component {
             break;
           }
           case 'starting': {
-            thisComponent.refreshModels(thisComponent);
+            thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'), projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_INFO,
@@ -96,7 +91,8 @@ class ProjectStatus extends Component {
             break;
           }
           case 'started': {
-            thisComponent.refreshModels(thisComponent);
+            thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'), projectID));
+            thisComponent.props.dispatch(fetchProjectCapabilities(localStorage.getItem('cw-access-token'), projectID));
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_SUCCESS,

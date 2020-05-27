@@ -11,7 +11,7 @@
 
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Button, SkeletonText, InlineLoading } from 'carbon-components-react';
+import { Button, InlineLoading } from 'carbon-components-react';
 import IconSuccess from '@carbon/icons-react/es/checkmark--outline/20';
 import IconFailure from '@carbon/icons-react/es/error--outline/16';
 import IconWarning from '@carbon/icons-react/es/warning/20';
@@ -64,8 +64,10 @@ class CapabilitiesPanel extends React.Component {
                 return <IconSuccess className='bx--btn__icon' style={{ 'fill': '#42be65' }} />
             case Constants.STATUS_ERROR:
                 return <IconFailure className='bx--btn__icon' style={{ 'fill': '#da1e28' }} />
+            case Constants.STATUS_BUSY:
+                return <div style={{ display: 'inline-block', verticalAlign: "middle" }}><InlineLoading /></div>
         }
-        return <IconWarning className='bx--btn__icon' style={{ 'fill': '#f1c21b' }} />
+        return <IconWarning style={{ 'fill': '#f1c21b' }} />
     }
 
     handleCloseClick() {
@@ -75,7 +77,7 @@ class CapabilitiesPanel extends React.Component {
     getCapabilityProjectStatus(capabilityData, feature) {
         switch (this.props.projectInfo.config.appStatus) {
             case 'starting': {
-                feature.status = Constants.STATUS_WARNING;
+                feature.status = Constants.STATUS_BUSY;
                 feature.statusMessage = Constants.MESSAGE_PROJECT_STARTING;
                 break;
             }
@@ -99,21 +101,13 @@ class CapabilitiesPanel extends React.Component {
     }
 
     getCapabilityLoadRunnerStatus(capabilityData, feature) {
-        if (this.props.projectInfo.config.appStatus == "started") {
             feature.status = Constants.STATUS_OK
             feature.statusMessage = Constants.MESSAGE_LOADRUNNER_AVAILABLE;
-        } else {
-            feature.status = Constants.STATUS_ERROR
-            feature.statusMessage = Constants.MESSAGE_LOADRUNNER_NOT_AVAILABLE;
-        }
+
     }
 
     getCapabilityLiveMetrics(capabilityData, feature) {
-        if (this.props.projectInfo.config.appStatus !== "started" ) {
-            feature.status = Constants.STATUS_ERROR
-            feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
-            return
-        }
+
 
         // Show the re-enable auth button
         if (capabilityData.microprofilePackageAuthenticationDisabled) {
@@ -148,13 +142,8 @@ class CapabilitiesPanel extends React.Component {
         feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_COMPATIBLE;
     }
 
-    getCapabilityComparisons(capabilityData, feature) {
-        if (this.props.projectInfo.config.appStatus !== "started" ) {
-            feature.status = Constants.STATUS_WARNING
-            feature.statusMessage = Constants.MESSAGE_COMPARISONS_NOT_RUNNING;
-            return
-        }
-
+    getCapabilityBenchmarks(capabilityData, feature) {
+ 
         if (capabilityData.appmetricsEndpoint && !capabilityData.hasTimedMetrics) {
             feature.status = Constants.STATUS_WARNING;
             feature.statusMessage = Constants.MESSAGE_COMPARISONS_INJECT_TIMED
@@ -211,7 +200,7 @@ class CapabilitiesPanel extends React.Component {
             this.getCapabilityLiveMetrics(capabilityData, feature);
 
             feature = displayModelTemplate.find(element => element.id == "Comparisons");
-            this.getCapabilityComparisons(capabilityData, feature);
+            this.getCapabilityBenchmarks(capabilityData, feature);
         }
         return displayModelTemplate;
     }
@@ -241,14 +230,14 @@ class CapabilitiesPanel extends React.Component {
                                         <Fragment>
                                             <div className="headline">
                                                 <div className="icon">
-                                                    { (fetching) ? <InlineLoading description="" iconDescription="Active loading indicator" status="active"/> : this.getIconMarkup(row.status) }
+                                                    { this.getIconMarkup(row.status) }
                                                 </div>
-                                                <div className="capability">
-                                                    { (fetching) ? <SkeletonText/> : row.label  }
+                                                <div className={row.status!= Constants.STATUS_BUSY ? 'capability' : 'capability_nomargin'}>
+                                                    { row.label }
                                                 </div>
                                             </div>
                                             <div className="description">
-                                                { (fetching) ? <SkeletonText/> : row.statusMessage }
+                                                { row.statusMessage }
                                             </div>
                                         </Fragment>
                                         {
