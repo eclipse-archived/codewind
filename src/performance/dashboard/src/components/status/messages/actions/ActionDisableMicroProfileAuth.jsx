@@ -94,10 +94,10 @@ class ActionDisableMicroProfileAuth extends Component {
               kind="tertiary"
               disabled={disabled}
               renderIcon={IconAction}
-              aria-label="Disable Authentication"
+              aria-label="Allow anonymous connections"
               tabIndex={0}
               size="small"
-              onClick={() => this.handleOnClick()}>Disable authentication</Button>
+              onClick={() => this.handleOnClick()}>Allow anonymous connections</Button>
               </Fragment>
             )}
           </div>

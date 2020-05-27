@@ -20,19 +20,8 @@ export default class MPDisableAuth extends Component {
   render() {
     return (
       <div className="MPDisableAuth">
-        If you wish to see live metrics, you can disable authentication by modifying the server.xml file in your project.
-        <br />
-        You can locate this file at src/main/liberty/config/server.xml. Modify server.xml and add or update: <br /><br />&lt;mpMetrics authentication=&quot;false&quot;/&gt;
-        <br /><br />
-        for example:
-        <br /><br />
-        <div className="CodeBlock">
-          &lt;featureManager&gt;
-          <br />&nbsp;&nbsp;&lt;feature&gt;microProfile-2.0&lt;/feature&gt;
-          <br />&lt;/featureManager&gt;
-          <br />&lt;mpMetrics authentication=&quot;false&quot;/&gt;
-        </div>
-        <br />
+        You can temporarily allow anonymous access to the project metrics collector here:
+        <br /> <br />
          <ActionDisableMicroProfileAuth projectID={this.props.projectID} />
       </div>
     )

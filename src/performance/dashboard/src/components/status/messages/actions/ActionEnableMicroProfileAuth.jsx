@@ -94,10 +94,10 @@ class ActionEnableMicroProfileAuth extends Component {
               kind="tertiary"
               disabled={disabled}
               renderIcon={IconAction}
-              aria-label="Enable Authentication"
+              aria-label="Secure metrics endpoint"
               tabIndex={0}
               size="small"
-              onClick={() => this.handleOnClick()}>Enable authentication</Button>
+              onClick={() => this.handleOnClick()}>Secure metrics endpoint</Button>
               </Fragment>
             )}
           </div>
