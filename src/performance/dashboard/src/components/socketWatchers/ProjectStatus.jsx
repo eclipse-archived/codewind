@@ -84,7 +84,7 @@ class ProjectStatus extends Component {
                 kind: KIND_INFO,
                 title: 'Project status: starting',
                 subtitle: 'Please wait whilst the project launches',
-                caption: 'Expect a followup notification once the project has started',
+                caption: 'Expect a follow-up notification once the project has started',
                 timeout: NOTIFICATION_TIMEOUT_MEDIUM,
               }
             ));
