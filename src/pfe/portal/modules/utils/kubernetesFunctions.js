@@ -126,17 +126,66 @@ async function getProjectIngress(projectID) {
 }
 
 async function getServicePortFromProjectIngress(projectID) {
-  const ingress = await getProjectIngress(projectID);
-  // sanitise the response ingress
-  if (!ingress || !ingress.spec || !ingress.spec.rules
-    || !ingress.spec.rules[0] || !ingress.spec.rules[0].http
-    || !ingress.spec.rules[0].http.paths || !ingress.spec.rules[0].http.paths.length > 0
-    || !ingress.spec.rules[0].http.paths[0].backend) {
+  try {
+    const ingress = await getProjectIngress(projectID);
+    // sanitise the response ingress
+    if (!ingress || !ingress.spec || !ingress.spec.rules
+      || !ingress.spec.rules[0] || !ingress.spec.rules[0].http
+      || !ingress.spec.rules[0].http.paths || !ingress.spec.rules[0].http.paths.length > 0
+      || !ingress.spec.rules[0].http.paths[0].backend) {
+      return null;
+    }
+    // Assume that we want the first rule and the first path in the http rules
+    const { servicePort } = ingress.spec.rules[0].http.paths[0].backend;
+    return servicePort;
+  } catch(err) {
+    // If getProjectIngress throws an error return null
+    log.debug('Unable to get the service port from ingress');
     return null;
   }
-  // Assume that we want the first rule and the first path in the http rules
-  const { servicePort } = ingress.spec.rules[0].http.paths[0].backend;
-  return servicePort;
+}
+
+async function getProjectRoute(projectID) {
+  // We need the client to have the openshift custom resource definitions,
+  // if the client doesn't know about them, loadSpec to get them
+  if (!client.apis.hasOwnProperty('route.openshift.io')) {
+    await client.loadSpec();
+  }
+
+  const res = await client.apis['route.openshift.io'].v1.ns(K8S_NAME_SPACE).routes.get({ qs: { labelSelector: `projectID=${projectID}` } });
+  if (!res || !res.body || !res.body.items || res.body.items.length === 0) {
+    return null;
+  }
+  const { items: routes } = res.body;
+  const [route] = routes; // we don't support multiple routes so get the first item in the list
+  return route;
+}
+
+async function getServicePortFromProjectRoute(projectID) {
+  try {
+    const route = await getProjectRoute(projectID);
+    // sanitise the response route
+    if (!route || !route.spec || !route.spec.port || !route.spec.port.targetPort) {
+      return null;
+    }
+
+    const { targetPort } = route.spec.port;
+    return targetPort;
+  } catch(err) {
+    // If getProjectRoute throws an error return null
+    log.debug('Unable to get the service port from route');
+    return null;
+  }
+}
+
+async function getServicePortFromProjectIngressOrRoute(projectID) {
+  const servicePorts = await Promise.all([
+    getServicePortFromProjectIngress(projectID),
+    getServicePortFromProjectRoute(projectID),
+  ]);
+  // return the first non null value (or null if all are null)
+  const servicePort = servicePorts.find(port => !!port);
+  return servicePort || null;
 }
 
 module.exports = {
@@ -151,4 +200,7 @@ module.exports = {
   patchProjectDeployments,
   getProjectIngress,
   getServicePortFromProjectIngress,
+  getProjectRoute,
+  getServicePortFromProjectRoute,
+  getServicePortFromProjectIngressOrRoute,
 }

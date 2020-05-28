@@ -11,6 +11,7 @@
 const proxyquire = require('proxyquire');
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
+const sinon = require('sinon');
 
 const { testTimeout } = require('../../../../config');
 
@@ -90,40 +91,7 @@ describe('kubernetesFunctions.js', function() {
     });
     describe('getServicePortFromProjectIngress(projectID)', function() {
         it('returns 9080 as the mockResponse returned from the kubernetes-client is valid and contains the servicePort 9080', async function() {
-            const mockResponse = {
-                body: {
-                    items: [
-                        {
-                            spec: { rules: [
-                                {
-                                    http: {
-                                        paths: [
-                                            {
-                                                backend: {
-                                                    servicePort: 9080,
-                                                },
-                                            },
-                                        ],
-                                    },
-                                },
-                            ] },
-                        },
-                    ],
-                },
-            };
-            const { getServicePortFromProjectIngress } = proxyquireKubernetesFunctions({
-                apis: {
-                    extensions: {
-                        v1beta1: {
-                            ns: () => ({
-                                ingresses: {
-                                    get: () => mockResponse,
-                                },
-                            }),
-                        },
-                    },
-                },
-            });
+            const { getServicePortFromProjectIngress } = proxyquireServicePortFromIngressAndRoute(9080, null);
             const port = await getServicePortFromProjectIngress('projectID');
             port.should.equal(9080);
         });
@@ -150,7 +118,7 @@ describe('kubernetesFunctions.js', function() {
             const port = await getServicePortFromProjectIngress('projectID');
             chai.expect(port).to.equal(null);
         });
-        it('throws an error when the kubernetes-client throws an error', function() {
+        it('returns null the kubernetes-client throws an error', async function() {
             const { getServicePortFromProjectIngress } = proxyquireKubernetesFunctions({
                 apis: {
                     extensions: {
@@ -164,7 +132,145 @@ describe('kubernetesFunctions.js', function() {
                     },
                 },
             });
-            return getServicePortFromProjectIngress('projectID').should.eventually.rejected;
+            const port = await getServicePortFromProjectIngress('projectID');
+            chai.expect(port).to.equal(null);
+        });
+    });
+    describe('getProjectRoute(projectID)', function() {
+        const sandbox = sinon.createSandbox();
+        afterEach(() => {
+            sandbox.restore();
+        });
+        it('returns the first route when the items array has a length of atleast one', async function() {
+            const mockResponse = {
+                body: {
+                    items: [
+                        'firstroute',
+                        'secondroute',
+                    ],
+                },
+            };
+            const { getProjectRoute } = proxyquireKubernetesFunctions({
+                apis: {
+                    ['route.openshift.io']: {
+                        v1: {
+                            ns: () => ({
+                                routes: {
+                                    get: () => mockResponse,
+                                },
+                            }),
+                        },
+                    },
+                },
+            });
+            const ingress = await getProjectRoute('projectID');
+            ingress.should.equal('firstroute');
+        });
+        it('returns the null when the items array is empty', async function() {
+            const mockResponse = {
+                body: {
+                    items: [],
+                },
+            };
+            const { getProjectRoute } = proxyquireKubernetesFunctions({
+                apis: {
+                    ['route.openshift.io']: {
+                        v1: {
+                            ns: () => ({
+                                routes: {
+                                    get: () => mockResponse,
+                                },
+                            }),
+                        },
+                    },
+                },
+            });
+            const ingress = await getProjectRoute('projectID');
+            chai.expect(ingress).to.equal(null);
+        });
+        it('calls client.loadSpec when \'route.openshift.io\' does not exist in the apis object', async function() {
+            const apis = {};
+            const spiedLoadSpec = sinon.spy(() => {
+                // simulate loadSpec updating the apis
+                apis['route.openshift.io'] = {
+                    v1: {
+                        ns: () => ({
+                            routes: {
+                                get: () => [],
+                            },
+                        }),
+                    },
+                };
+            });
+            const { getProjectRoute } = proxyquireKubernetesFunctions({
+                apis,
+                loadSpec: spiedLoadSpec,
+            });
+            await getProjectRoute('projectID');
+            spiedLoadSpec.should.be.calledOnce;
+        });
+    });
+    describe('getServicePortFromProjectRoute(projectID)', function() {
+        it('returns 9080 as the mockResponse returned from the kubernetes-client is valid and contains the servicePort 9080', async function() {
+            const { getServicePortFromProjectRoute } = proxyquireServicePortFromIngressAndRoute(null, 9080);
+            const port = await getServicePortFromProjectRoute('projectID');
+            port.should.equal(9080);
+        });
+        it('returns null as the mockResponse returned from the kubernetes-client is invalid', async function() {
+            const { getServicePortFromProjectRoute } = proxyquireKubernetesFunctions({
+                apis: {
+                    ['route.openshift.io']: {
+                        v1: {
+                            ns: () => ({
+                                routes: {
+                                    get: () => [{ invalidResponse: true }],
+                                },
+                            }),
+                        },
+                    },
+                },
+            });
+            const port = await getServicePortFromProjectRoute('projectID');
+            chai.expect(port).to.equal(null);
+        });
+        it('returns null the kubernetes-client throws an error', async function() {
+            const { getServicePortFromProjectRoute } = proxyquireKubernetesFunctions({
+                apis: {
+                    ['route.openshift.io']: {
+                        v1: {
+                            ns: () => ({
+                                routes: {
+                                    get: () => { throw Error('expected error'); },
+                                },
+                            }),
+                        },
+                    },
+                },
+            });
+            const port = await getServicePortFromProjectRoute('projectID');
+            chai.expect(port).to.equal(null);
+        });
+    });
+    describe('getServicePortFromProjectIngressOrRoute(projectID)', function() {
+        it('returns the ingress port as it takes priority when both the ingress and route ports are returned', async function() {
+            const { getServicePortFromProjectIngressOrRoute } = proxyquireServicePortFromIngressAndRoute('ingress', 'route');
+            const port = await getServicePortFromProjectIngressOrRoute('projectID');
+            port.should.equal('ingress');
+        });
+        it('returns the ingress port as route is null', async function() {
+            const { getServicePortFromProjectIngressOrRoute } = proxyquireServicePortFromIngressAndRoute('ingress', null);
+            const port = await getServicePortFromProjectIngressOrRoute('projectID');
+            port.should.equal('ingress');
+        });
+        it('returns the route port as ingress is null', async function() {
+            const { getServicePortFromProjectIngressOrRoute } = proxyquireServicePortFromIngressAndRoute(null, 'route');
+            const port = await getServicePortFromProjectIngressOrRoute('projectID');
+            port.should.equal('route');
+        });
+        it('returns null as both the ingress and route ports are false', async function() {
+            const { getServicePortFromProjectIngressOrRoute } = proxyquireServicePortFromIngressAndRoute(false, false);
+            const port = await getServicePortFromProjectIngressOrRoute('projectID');
+            chai.expect(port).to.equal(null);
         });
     });
 });
@@ -187,4 +293,61 @@ function proxyquireKubernetesFunctions(functionsToAdd, noCallThru = true) {
         'kubernetes-client': mockedKubernetesClient,
     });
     return proxiedKubernetesFunctions;
+}
+
+function proxyquireServicePortFromIngressAndRoute(ingressResponse, routeResponse) {
+    return proxyquireKubernetesFunctions({
+        apis: {
+            ['route.openshift.io']: {
+                v1: {
+                    ns: () => ({
+                        routes: {
+                            get: () => ({
+                                body: {
+                                    items: [
+                                        {
+                                            spec: {
+                                                port: {
+                                                    targetPort: routeResponse,
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            }),
+                        },
+                    }),
+                },
+            },
+            extensions: {
+                v1beta1: {
+                    ns: () => ({
+                        ingresses: {
+                            get: () => ({
+                                body: {
+                                    items: [
+                                        {
+                                            spec: { rules: [
+                                                {
+                                                    http: {
+                                                        paths: [
+                                                            {
+                                                                backend: {
+                                                                    servicePort: ingressResponse,
+                                                                },
+                                                            },
+                                                        ],
+                                                    },
+                                                },
+                                            ] },
+                                        },
+                                    ],
+                                },
+                            }),
+                        },
+                    }),
+                },
+            },
+        },
+    });
 }
