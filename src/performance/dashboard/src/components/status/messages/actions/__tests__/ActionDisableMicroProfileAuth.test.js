@@ -45,7 +45,7 @@ describe('<ActionDisableMicroProfileAuth />', () => {
 
   test('ActionButton sends a valid request to API and displays accepted', async () => {
     const { getByLabelText, container, getByText } = render(wrapper);
-    const button = getByLabelText('Disable Authentication');
+    const button = getByLabelText('Allow anonymous connections');
     global.fetch = jest.fn().mockImplementationOnce(() => {
       return new Promise((resolve, reject) => {
         resolve({
@@ -60,7 +60,7 @@ describe('<ActionDisableMicroProfileAuth />', () => {
 
   test('ActionButton sends an invalid request to API and displays a warning', async () => {
     const { getByLabelText, getByText } = render(wrapper);
-    const button = getByLabelText('Disable Authentication');
+    const button = getByLabelText('Allow anonymous connections');
     global.fetch = jest.fn().mockImplementationOnce(() => {
       return new Promise((resolve, reject) => {
         resolve({
