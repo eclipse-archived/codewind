@@ -14,7 +14,7 @@ import PropTypes from 'prop-types';
 import ProjectIDChecker from '../../utils/projectUtils';
 import { reloadMetricsData } from '../../store/actions/projectMetricsActions';
 import { connect } from 'react-redux';
-import { Modal, TextInput, TextInputSkeleton, TextArea, Dropdown } from 'carbon-components-react';
+import { Modal, TextInput, TextInputSkeleton, TextAreaSkeleton, TextArea, Dropdown } from 'carbon-components-react';
 import { fetchProjectLoadConfig, saveProjectLoadConfig } from '../../store/actions/loadRunnerConfigActions';
 import { TESTRUN_MAX_REQUEST_PER_SEC, TESTRUN_MAX_CONCURRENT, TESTRUN_MAX_DURATION } from '../../AppConstants';
 import * as AppConstants from '../../AppConstants';
@@ -148,7 +148,7 @@ class ModalModifyLoadTests extends React.Component {
     }
 
     render() {
-        let { formFields, dialogStateOpen, saveInProgress, modalErrorText } = this.state;
+        let { formFields, dialogStateOpen, saveInProgress, modalErrorText, loadingData } = this.state;
 
         if (!formFields) {
             return <Fragment />
@@ -186,8 +186,8 @@ class ModalModifyLoadTests extends React.Component {
                                     <tr>
                                         <td className='fieldLabel'><label>Method</label></td>
                                         <td>
-                                            {this.state.loadingData ?
-                                                <TextInputSkeleton hideLabel /> :
+                                            {loadingData ?
+                                                <TextInputSkeleton hideLabel className="sizeSmall"/> :
                                                 <Dropdown
                                                     id="method"
                                                     light
@@ -207,8 +207,8 @@ class ModalModifyLoadTests extends React.Component {
                                     <tr>
                                         <td className='fieldLabel'><label>Path</label></td>
                                         <td>
-                                            {this.state.loadingData ?
-                                                <TextInputSkeleton hideLabel /> :
+                                            {loadingData ?
+                                                <div className="sizeSmall"><TextInputSkeleton hideLabel/></div> :
                                                 <TextInput
                                                     className="inputField"
                                                     id='path'
@@ -228,8 +228,8 @@ class ModalModifyLoadTests extends React.Component {
                                     <tr>
                                         <td className='fieldLabel'><label>Requests/second</label></td>
                                         <td>
-                                            {this.state.loadingData ?
-                                                <TextInputSkeleton hideLabel /> :
+                                            {loadingData ?
+                                                <div className="sizeSmall"><TextInputSkeleton hideLabel/></div> :
                                                 <TextInput
                                                     className="inputField"
                                                     id='requestsPerSecond'
@@ -249,12 +249,12 @@ class ModalModifyLoadTests extends React.Component {
                                     <tr>
                                         <td className='fieldLabel'><label>Concurrent</label></td>
                                         <td>
-                                            {this.state.loadingData ?
-                                                <TextInputSkeleton hideLabel /> :
+                                            {loadingData ?
+                                                <div className="sizeSmall"><TextInputSkeleton hideLabel/></div> :
                                                 <TextInput
                                                     className="inputField"
                                                     id='concurrency'
-                                                    disabled={saveInProgress}
+                                                    disabled={this.state.loadingData || saveInProgress}
                                                     autoComplete="off"
                                                     invalid={!isConcurrentValid.valid}
                                                     invalidText={`${isConcurrentValid.message}`}
@@ -270,12 +270,12 @@ class ModalModifyLoadTests extends React.Component {
                                     <tr>
                                         <td className='fieldLabel'><label>Duration</label></td>
                                         <td>
-                                            {this.state.loadingData ?
-                                                <TextInputSkeleton hideLabel /> :
+                                        {loadingData ?
+                                                <div className="sizeSmall"><TextInputSkeleton hideLabel/></div> :
                                                 <TextInput
                                                     className="inputField"
                                                     id='maxSeconds'
-                                                    disabled={saveInProgress}
+                                                    disabled={this.state.loadingData || saveInProgress}
                                                     autoComplete="off"
                                                     invalid={!isDurationValid.valid}
                                                     invalidText={`${isDurationValid.message}`}
@@ -285,20 +285,20 @@ class ModalModifyLoadTests extends React.Component {
                                                     value={formFields['maxSeconds']}
                                                     onChange={e => this.fieldValueChanged(e)}
                                                     placeholder='Test run duration' />
-                                            }
+                                        }
                                         </td>
                                     </tr>
-                                    <tr>
+                                    <tr className="rowMultiLine">
                                         <td className='fieldLabel'><label>JSON Body</label></td>
                                         <td>
-                                            {this.state.loadingData ?
-                                                <TextInputSkeleton hideLabel /> :
+                                            {loadingData ?
+                                                <TextAreaSkeleton hideLabel /> :
                                                 <TextArea
                                                     className="inputField"
                                                     style={{ "resize": "none" }}
                                                     id='body'
                                                     light={true}
-                                                    disabled={saveInProgress}
+                                                    disabled={loadingData || saveInProgress}
                                                     autoComplete="off"
                                                     invalid={!isBodyValid.valid}
                                                     invalidText={`${isBodyValid.message}`}

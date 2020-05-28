@@ -16,6 +16,18 @@
   vertical-align: middle;
 }
 
+.ModalModifyLoadTest tr.rowMultiLine {
+  height: 110px;
+}
+
+.ModalModifyLoadTest td.fieldLabel {
+  width:140px;
+}
+
+.ModalModifyLoadTest .sizeSmall {
+  width: 180px;
+}
+
 .ModalModifyLoadTest .errorMessage {
   color: red;
   text-align: left;
