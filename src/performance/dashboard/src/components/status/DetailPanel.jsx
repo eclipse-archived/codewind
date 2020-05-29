@@ -55,6 +55,7 @@ class DetailPanel extends Component {
 DetailPanel.propTypes = {
   show: PropTypes.bool.isRequired,
   messageText: PropTypes.string.isRequired,
+  detailSubComponent: PropTypes.string.isRequired,
 }
 
 export default DetailPanel;
