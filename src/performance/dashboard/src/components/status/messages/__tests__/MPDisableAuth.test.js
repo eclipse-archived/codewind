@@ -45,7 +45,7 @@ console.log = () => { }
 // constants
 
 /**s
- * Test functionality of the ModelRunTest dialog
+ * Test functionality of the MPDisableAuth panel
  */
 describe('<MPDisableAuth />', () => {
     test('panel displays without error', () => {

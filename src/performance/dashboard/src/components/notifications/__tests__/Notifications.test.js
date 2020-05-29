@@ -71,7 +71,7 @@ describe('<Notifications />', () => {
     expect(document.querySelectorAll('.ToastNotification').length).toBe(2);
   });
 
-  test('Attempting to add two messages that are the same will not add the second notification', () => {
+  test('Attempting to spam the notification queue with the same message will not add the duplicate notification', () => {
     const store = createStore(reducers, {
       notificationsReducer: []
     });
@@ -221,7 +221,7 @@ describe('<Notifications />', () => {
     });
 
     describe('Global notifications reducer - interactive', () => {
-      it('Clicking an actions dismiss button will remove notification from view', async () => {
+      it('removes the notification when the notifications dismiss button is pressed', async () => {
 
       // Create notification
       const storeWithMessages = createStore(reducers, {
@@ -244,7 +244,7 @@ describe('<Notifications />', () => {
       expect(notificationNodes.length).toBe(3);
       const buttons = await waitForElement(() => getAllByLabelText("remove notification"));
 
-      // click the second notification's remove button
+      // click the second notification's dismiss button
       const removeButton = buttons[1];
       fireEvent.click(removeButton);
 

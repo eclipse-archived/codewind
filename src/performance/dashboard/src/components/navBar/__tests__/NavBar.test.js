@@ -82,7 +82,7 @@ describe('<NavBar />', () => {
             const button = await waitForElement(() => getByLabelText('project capabilities'));
             expect(button.type).toEqual("button");
         });
-        test('Clicking the capabilities toggles capabilities panel on then off', async () => {
+        test('Clicking the capabilities button toggles the capabilities panel on then off', async () => {
             const {getByLabelText} = render(wrapper);
             const button = await waitForElement(() => getByLabelText('project capabilities'));
             expect(store.getState().navbarActionsReducer.displayCapabilitiesPanel).toEqual(false);

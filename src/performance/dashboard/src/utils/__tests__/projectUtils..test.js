@@ -18,7 +18,7 @@ const testProjectID = '4a8ccb90-7887-11e9-b7bb-6fc798faec9b';
 
 
 // run test
-describe('Validate project ID from browser address field/>', () => {
+describe('Validate reading projectID from browser location/>', () => {
 
   it('outputs an error message to the console and returns null if filtering failed', () => {
     let errorOutput = '';
