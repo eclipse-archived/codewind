@@ -220,7 +220,7 @@ class CapabilitiesPanel extends React.Component {
             <Fragment>
                 <div className="Capabilities">
                     <div className="actions">
-                        <Button className="closeButton" kind="ghost" size="small" renderIcon={IconClose} iconDescription="Close capabilities panel" onClick={() => this.handleCloseClick()}/>
+                        <Button aria-label="Close panel" className="closeButton" kind="ghost" size="small" renderIcon={IconClose} iconDescription="Close capabilities panel" onClick={() => this.handleCloseClick()}/>
                     </div>
                     <div className="rows" role="grid">
                         {
