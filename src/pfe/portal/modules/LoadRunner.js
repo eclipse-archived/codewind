@@ -720,15 +720,6 @@ module.exports = class LoadRunner {
     }
     if (this.timerID !== null) {
       clearTimeout(this.timerID);
-      log.info(`cancelProfiling: Stopping liberty server`);
-      const stopCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server stop; `];
-      await cwUtils.spawnContainerProcess(this.project, stopCommand);
-      await this.waitForHealth(false);
-      log.info(`cancelProfiling: Starting liberty server`); 
-      const startCommand = ['bash', '-c', `source $HOME/artifacts/envvars.sh; $HOME/artifacts/server_setup.sh; cd $WLP_USER_DIR;  /opt/ibm/wlp/bin/server start; `];
-      await cwUtils.spawnContainerProcess(this.project, startCommand);
-      await cwUtils.deleteFile(this.project, cwUtils.getProjectSourceRoot(this.project), `load-test/${this.metricsFolder}`);
-      await this.waitForHealth(true);
       await this.project.removeProfilingData(this.metricsFolder);
       this.timerID = null;
     }

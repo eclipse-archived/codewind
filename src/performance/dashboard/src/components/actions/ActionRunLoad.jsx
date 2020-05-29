@@ -21,6 +21,7 @@ import SocketContext from '../../utils/sockets/SocketContext';
 import { addNotification, KIND_ERROR,  KIND_SUCCESS} from '../../store/actions/notificationsActions';
 import ModalRunTest from '../modals/ModalRunTest';
 import * as AppConstants from '../../AppConstants';
+import { fetchProjectCapabilities } from '../../store/actions/projectCapabilitiesActions';
 
 import './ActionRunLoad.scss';
 
@@ -87,6 +88,7 @@ class ActionRunLoad extends React.Component {
                             this.setState({ loadRunStatus: { status: 'idle' } });
                             this.props.dispatch(addNotification({kind: KIND_SUCCESS, title:'Load runner finished', subtitle:'The test has completed successfully',  timeout: 6,}));
                         }, 3000);
+                        this.props.dispatch(fetchProjectCapabilities(localStorage.getItem('cw-access-token'), this.props.projectID));
                         break;
                     }
                     case 'cancelling': {

@@ -17,7 +17,7 @@ import queryString from 'query-string';
 import { SocketEvents } from '../../utils/sockets/SocketEvents';
 import SocketContext from '../../utils/sockets/SocketContext';
 import { fetchProjectConfig } from '../../store/actions/projectInfoActions';
-import { fetchProjectCapabilities } from '../../store/actions/projectCapabilitiesActions';
+
 import { addNotification, KIND_INFO, KIND_SUCCESS, NOTIFICATION_TIMEOUT_MEDIUM } from '../../store/actions/notificationsActions';
 
 class ProjectStatus extends Component {
@@ -92,7 +92,7 @@ class ProjectStatus extends Component {
           }
           case 'started': {
             thisComponent.props.dispatch(fetchProjectConfig(localStorage.getItem('cw-access-token'), projectID));
-            thisComponent.props.dispatch(fetchProjectCapabilities(localStorage.getItem('cw-access-token'), projectID));
+ 
             thisComponent.props.dispatch(addNotification(
               {
                 kind: KIND_SUCCESS,
