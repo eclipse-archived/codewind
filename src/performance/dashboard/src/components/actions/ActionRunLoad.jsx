@@ -21,6 +21,7 @@ import SocketContext from '../../utils/sockets/SocketContext';
 import { addNotification, KIND_ERROR,  KIND_SUCCESS} from '../../store/actions/notificationsActions';
 import ModalRunTest from '../modals/ModalRunTest';
 import * as AppConstants from '../../AppConstants';
+import { fetchProjectCapabilities } from '../../store/actions/projectCapabilitiesActions';
 
 import './ActionRunLoad.scss';
 
@@ -77,24 +78,25 @@ class ActionRunLoad extends React.Component {
                         break;
                     }
                     case 'collecting': {
-                        this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Collecting...' });
+                        this.setState({ timeRemaining:0, showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Collecting...' });
                         break;
                     }
                     case 'completed': {
                         // after receiving a loadrun completion message,  wait a bit,  then reset the button back to ready
-                        this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Completed...' });
+                        this.setState({ timeRemaining:0, showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Completed...' });
                         setTimeout(() => {
                             this.setState({ loadRunStatus: { status: 'idle' } });
                             this.props.dispatch(addNotification({kind: KIND_SUCCESS, title:'Load runner finished', subtitle:'The test has completed successfully',  timeout: 6,}));
                         }, 3000);
+                        this.props.dispatch(fetchProjectCapabilities(localStorage.getItem('cw-access-token'), this.props.projectID));
                         break;
                     }
                     case 'cancelling': {
-                        this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Cancelling...' });
+                        this.setState({ timeRemaining:0, showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Cancelling...' });
                         break;
                     }
                     case 'cancelled': {
-                        this.setState({ showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Cancelled...' });
+                        this.setState({ timeRemaining:0, showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Cancelled...' });
                         setTimeout(() => {
                             this.setState({ loadRunStatus: { status: 'idle' } })
                         }, 2000);
@@ -220,9 +222,13 @@ class ActionRunLoad extends React.Component {
                                 <div style={{ display: 'inline-block', verticalAlign: "middle" }}>
                                     <InlineLoading style={{ marginLeft: '1rem' }} description={inlineTextLabelFormatted} success={loadRunCompleted} />
                                 </div>
-                                <div style={{ display: 'inline-block', verticalAlign: "middle", float: 'right' }}>
-                                    <Button onClick={() => this.handleCancelLoad()} style={{ verticalAlign: "middle", padding: 0, margin: 0 }} renderIcon={IconStop} kind="ghost" small iconDescription="Stop the load run"></Button>
-                                </div>
+                                {
+                                    loadRunStatus.status === "running" ? (
+                                    <div style={{ display: 'inline-block', verticalAlign: "middle", float: 'right' }}>
+                                        <Button onClick={() => this.handleCancelLoad()} style={{ verticalAlign: "middle", padding: 0, margin: 0 }} renderIcon={IconStop} kind="ghost" small iconDescription="Stop the load run"></Button>
+                                    </div>
+                                    ) : <Fragment/>
+                                }
                             </Fragment>
                         ) : (
                                 <Fragment>
