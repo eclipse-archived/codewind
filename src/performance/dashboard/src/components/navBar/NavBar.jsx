@@ -59,7 +59,7 @@ class NavBar extends React.Component {
                     <span className='projectName'>{this.state.projectName}</span>
                 </div>
                 <div className="utilities">
-                    <Button size="small" kind="ghost" style={{float:"right"}}renderIcon={this.props.navbarActions.displayCapabilitiesPanel ? IconNotificationFill : IconNotification} onClick={() => this.toggleCapabilityPanel()}/>
+                    <Button iconDescription="project capabilities" aria-label="project capabilities" size="small" kind="ghost" style={{float:"right"}} renderIcon={this.props.navbarActions.displayCapabilitiesPanel ? IconNotificationFill : IconNotification} onClick={() => this.toggleCapabilityPanel()}/>
                 </div>
             </div>
         )
