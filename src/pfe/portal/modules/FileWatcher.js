@@ -146,24 +146,19 @@ module.exports = class FileWatcher {
     }
 
     case "projectLogsListChanged" : {
-      let logType;
-      if (fwProject.build) {
-        logType = 'build'
-      } else if (fwProject.app) {
-        logType = 'app'
-      } else {
-        log.error('projectLogsListChanged: Unknown log type.');
-        break;
+      // fwProject is of type ILogFilesResult, use its type field as the logType.
+      let logType = fwProject.type;
+      if (fwProject[logType][0] && fwProject[logType][0].files && fwProject[logType][0].files[0]) {
+        let file = fwProject[logType][0].files[0];
+        let logName = path.basename(file);
+        let logObject = { logName: logName }
+        if (fwProject[logType][0].origin == 'workspace') {
+          logObject.workspaceLogPath = path.dirname(file);
+        }
+        let message = { projectID: fwProject.projectID };
+        message[logType] = [logObject];
+        this.user.uiSocket.emit('projectLogsListChanged', message);
       }
-      let file = fwProject[logType][0].files[0];
-      let logName = path.basename(file);
-      let logObject = { logName: logName }
-      if (fwProject[logType][0].origin == 'workspace') {
-        logObject.workspaceLogPath = path.dirname(file);
-      }
-      let message = { projectID: fwProject.projectID };
-      message[logType] = [logObject];
-      this.user.uiSocket.emit('projectLogsListChanged', message);
       break;
     }
 
