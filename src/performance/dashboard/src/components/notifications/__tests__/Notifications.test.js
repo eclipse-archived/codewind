@@ -12,7 +12,7 @@
 import React from 'react';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
-import { render, cleanup } from '@testing-library/react';
+import { render, cleanup, waitForElement, fireEvent } from '@testing-library/react';
 
 import * as actions from '../../../store/actions/notificationsActions';
 import * as types from '../../../store/actions/types';
@@ -70,6 +70,25 @@ describe('<Notifications />', () => {
     render(wrapper_updated);
     expect(document.querySelectorAll('.ToastNotification').length).toBe(2);
   });
+
+  test('Attempting to add two messages that are the same will not add the second notification', () => {
+    const store = createStore(reducers, {
+      notificationsReducer: []
+    });
+
+    store.dispatch( actions.addNotification({ id: 1, title: "MyNotification100", kind: "info", timeout: 0 } ));
+    expect(store.getState().notificationsReducer.length).toBe(1);
+    
+    // only 1 of these should get added 
+    store.dispatch( actions.addNotification({ id: 2, title: "MyNotification200", kind: "info", timeout: 0 } ));
+    store.dispatch( actions.addNotification({ id: 3, title: "MyNotification200", kind: "info", timeout: 0 } ));
+    store.dispatch( actions.addNotification({ id: 4, title: "MyNotification200", kind: "info", timeout: 0 } ));
+    expect(store.getState().notificationsReducer.length).toBe(2);
+    
+    store.dispatch( actions.addNotification({ id: 5, title: "MyNotification300", kind: "info", timeout: 0 } ));
+    expect(store.getState().notificationsReducer.length).toBe(3);
+  });
+
 
   test('Adding 1 error and 1 info and 1 warning message renders one of each type', async () => {
     const storeWith3Messages = createStore(reducers, {
@@ -199,6 +218,41 @@ describe('<Notifications />', () => {
       ).toEqual(
         [testNotification_1, testNotification_3]
       )
+    });
+
+    describe('Global notifications reducer - interactive', () => {
+      it('Clicking an actions dismiss button will remove notification from view', async () => {
+
+      // Create notification
+      const storeWithMessages = createStore(reducers, {
+        notificationsReducer: [
+          testNotification_1,
+          testNotification_2,
+          testNotification_3
+        ]});
+
+      const wrapper_updated = (
+        <Provider store={storeWithMessages}>
+          <Notifications {...componentProps} />
+        </Provider>
+      )
+
+      const {getAllByLabelText} = render(wrapper_updated)
+
+      // Check all are rendering
+      const notificationNodes = document.querySelectorAll('.ToastNotification');
+      expect(notificationNodes.length).toBe(3);
+      const buttons = await waitForElement(() => getAllByLabelText("remove notification"));
+
+      // click the second notification's remove button
+      const removeButton = buttons[1];
+      fireEvent.click(removeButton);
+
+      // assert the item was removed
+      const remainingNotifications = document.querySelectorAll('.ToastNotification');
+      expect(remainingNotifications.length).toBe(2);
+
+      });
     });
   });
 });
