@@ -24,6 +24,7 @@ export const MESSAGE_LOADRUNNER_NOT_AVAILABLE = 'Your project is not running. Lo
 export const MESSAGE_LIVEMETRICS_AVAILABLE = 'Lives monitoring is available for your project';
 export const MESSAGE_LIVEMETRICS_MICROPROFILE = 'Your project has all the prerequisite modules. However this feature it is not currently available because the metrics capability has been secured.';
 export const MESSAGE_LIVEMETRICS_MICROPROFILE_ISDISABLED = 'Metrics endpoint allows anonymous access';
+export const MESSAGE_LIVEMETRICS_PROJECT_NOT_RUNNING = "Unable to detect capability because the project is not running"
 export const MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_DISABLE_AUTH = 'MPDisableAuth';
 export const MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_ENABLE_AUTH = 'MPEnableAuth';
 export const MESSAGE_LIVEMETRICS_INJECT_REQUIRED = 'Action required: Inject AppMetrics into your project using your IDE.';

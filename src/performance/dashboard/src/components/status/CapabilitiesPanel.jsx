@@ -108,6 +108,12 @@ class CapabilitiesPanel extends React.Component {
 
     getCapabilityLiveMetrics(capabilityData, feature) {
 
+        // When the project is not running we can not determine if it supports live metrics
+        if (this.props.projectInfo.config.appStatus !=='running' && !this.props.projectInfo.config.host) {
+            feature.status = Constants.STATUS_WARNING
+            feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_PROJECT_NOT_RUNNING;
+            return
+        }
 
         // Show the re-enable auth button
         if (capabilityData.microprofilePackageAuthenticationDisabled) {
