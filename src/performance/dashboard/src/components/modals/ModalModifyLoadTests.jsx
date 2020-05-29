@@ -11,7 +11,6 @@
 
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import ProjectIDChecker from '../../utils/projectUtils';
 import { reloadMetricsData } from '../../store/actions/projectMetricsActions';
 import { connect } from 'react-redux';
 import { Modal, TextInput, TextInputSkeleton, TextAreaSkeleton, TextArea, Dropdown } from 'carbon-components-react';
@@ -53,7 +52,7 @@ class ModalModifyLoadTests extends React.Component {
         if (nextProps.open !== this.state.dialogStateOpen) {
             this.setState({ dialogStateOpen: nextProps.open, modalErrorText: '', saveInProgress: false, loadingData: true });
             if (nextProps.open) {
-                await this.props.dispatch(fetchProjectLoadConfig(localStorage.getItem("cw-access-token"), ProjectIDChecker.projectID()));
+                await this.props.dispatch(fetchProjectLoadConfig(localStorage.getItem("cw-access-token"), this.props.projectID ));
                 if (this.props.loadRunnerConfig.fetched) {
                     const formFields = { ...this.props.loadRunnerConfig.config }
                     if (formFields['body']) {
@@ -126,8 +125,6 @@ class ModalModifyLoadTests extends React.Component {
 
     // Save form fields
     async handleDialogSave() {
-        const projectID = ProjectIDChecker.projectID();
-
         this.setState({ saveInProgress: true });
         const newConfigPayload = {
             "method": this.state.formFields.method,
@@ -136,11 +133,10 @@ class ModalModifyLoadTests extends React.Component {
             "requestsPerSecond": this.state.formFields.requestsPerSecond,
             "concurrency": this.state.formFields.concurrency,
             "maxSeconds": this.state.formFields.maxSeconds
-        };
-        await this.props.dispatch(saveProjectLoadConfig(localStorage.getItem('cw-access-token'), projectID, newConfigPayload));
-
+        }
+        await this.props.dispatch(saveProjectLoadConfig(localStorage.getItem('cw-access-token'), this.props.projectID, newConfigPayload));
         if (!this.props.loadRunnerConfig.error && this.props.loadRunnerConfig.fetched) {
-            await this.props.dispatch(reloadMetricsData(localStorage.getItem('cw-access-token'), projectID, this.props.projectMetricTypes.types));
+            await this.props.dispatch(reloadMetricsData(localStorage.getItem('cw-access-token'), this.props.projectID, this.props.projectMetricTypes.types));
             this.props.closeModalWindow();
         } else {
             this.setState({ modalErrorText: this.props.loadRunnerConfig.error.message, saveInProgress: false });
@@ -331,7 +327,8 @@ const mapStateToProps = stores => {
 };
 
 ModalModifyLoadTests.propTypes = {
-    open: PropTypes.bool.isRequired,  // should modal dialog be displaye
+    projectID: PropTypes.string.isRequired, // ProjectID
+    open: PropTypes.bool.isRequired,  // should modal dialog be opened
     closeModalWindow: PropTypes.func.isRequired // callback to close modal
 };
 

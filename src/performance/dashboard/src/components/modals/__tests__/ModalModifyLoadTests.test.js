@@ -10,9 +10,10 @@
 **/
 
 import React from 'react';
-import { createStore } from 'redux';
-import { Provider } from 'react-redux';
+import { createStore, applyMiddleware  } from 'redux';
+import { Provider} from 'react-redux';
 import { render, cleanup, fireEvent } from '@testing-library/react';
+import thunk from 'redux-thunk';
 
 import reducers from '../../../store/reducers/index';
 import * as DataProjectInfo from '../../../tests/data/ProjectInfo';
@@ -21,15 +22,16 @@ import ModalModifyLoadTests from '../ModalModifyLoadTests';
 
 // initialize component props
 const componentProps = {
+    projectID: DataProjectInfo.projectInfo.projectID,
     open: true,
-    closeModalWindow: jest.fn()
+    closeModalWindow: jest.fn(),
 }
 
 // Initialize redux stores
 const store = createStore(reducers, {
     projectInfoReducer: { config: DataProjectInfo.projectInfo, receivedAt: Date.now(), fetched: true },
     loadRunnerConfigReducer: { config: LoadRunnerConfig.projectLoadRunnerConfig, receivedAt: Date.now(), fetched: true }
-});
+}, applyMiddleware(thunk));
 
 // component to render
 const wrapper = (
@@ -44,7 +46,7 @@ console.error = () => { }
 // dont leak state
 afterEach(cleanup);
 
-/** 
+/**
  * Test functionality of the ModalModifyLoadTests dialog
  */
 describe('<ModalModifyLoadTests />', () => {
@@ -228,12 +230,61 @@ describe('<ModalModifyLoadTests />', () => {
     });
 
     describe('Test dialog button actions', () => {
-        test('calls dialog close when the "cancel" button is clicked', () => {
+        test('calls dialog close when the "close" button is clicked', () => {
             const { getByText } = render(wrapper);
             const cancelButton = getByText('Cancel');
             fireEvent.click(cancelButton);
             const onClickFunction = componentProps.closeModalWindow;
             expect(onClickFunction).toHaveBeenCalled();
+        });
+
+        test('calls dialog close when the "cancel" button is clicked', () => {
+            const { container } = render(wrapper);
+            const closeButton = container.querySelector('.bx--btn--secondary');
+            fireEvent.click(closeButton);
+            const onClickFunction = componentProps.closeModalWindow;
+            expect(onClickFunction).toHaveBeenCalled();
+        });
+
+        test('clicking save xposts to the API and updates local stores', () => {
+            // Mock response from API
+            global.fetch = jest.fn().mockImplementation(() => {
+                return new Promise((resolve, reject) => {
+                    resolve({});
+                });
+            });
+
+            const { container, getByText, getByPlaceholderText } = render(wrapper);
+            // CHOOSE POST
+            const dropDown = container.querySelector('#method .bx--list-box__field');
+            fireEvent.click(dropDown);
+            const OPTION_POST = document.querySelectorAll('#method  .bx--list-box__menu-item__option')[1];
+            expect(OPTION_POST.textContent).toBe("POST");
+            fireEvent.click(OPTION_POST);
+
+            fireEvent.input(document.querySelector("#method"), { target: { selectedItem: { id: 'POST', text: 'POST' } } });
+            fireEvent.input(getByPlaceholderText(/eg: \/myapi/i), { target: { value: '/rootedPath' } });
+            fireEvent.input(getByPlaceholderText(/Requests per second eg: 30/i), { target: { value: '30' } });
+            fireEvent.input(getByPlaceholderText(/Concurrent threads/i), { target: { value: '40' } });
+            fireEvent.input(getByPlaceholderText(/Test run duration/i), { target: { value: '50' } });
+            fireEvent.input(getByPlaceholderText(/{"id": 1, "message":"hello"}/i), { target: { value: '{"field1":"test1", "field2":"test2"}' } });
+            const saveButton = getByText('Save');
+
+            // Check initial values in store before being saved
+            expect(store.getState().loadRunnerConfigReducer.config.method).toBe('GET');
+            expect(store.getState().loadRunnerConfigReducer.config.path).toBe('/');
+            expect(store.getState().loadRunnerConfigReducer.config.requestsPerSecond).toBe('100');
+            expect(store.getState().loadRunnerConfigReducer.config.concurrency).toBe('20');
+            expect(store.getState().loadRunnerConfigReducer.config.maxSeconds).toBe('180');
+
+            fireEvent.click(saveButton);
+            expect(store.getState().loadRunnerConfigReducer.fetched).toBe(true);
+            expect(store.getState().loadRunnerConfigReducer.config.method).toBe('POST');
+            expect(store.getState().loadRunnerConfigReducer.config.path).toBe('/rootedPath');
+            expect(store.getState().loadRunnerConfigReducer.config.requestsPerSecond).toBe('30');
+            expect(store.getState().loadRunnerConfigReducer.config.concurrency).toBe('40');
+            expect(store.getState().loadRunnerConfigReducer.config.maxSeconds).toBe('50');
+            expect(componentProps.closeModalWindow).toHaveBeenCalled();
         });
     });
 });

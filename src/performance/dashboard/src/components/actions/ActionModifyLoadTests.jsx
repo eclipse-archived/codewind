@@ -11,6 +11,7 @@
 
 import React, { Fragment } from 'react'
 import { Button } from 'carbon-components-react';
+import PropTypes from 'prop-types';
 import ModalModifyLoadTests from '../modals/ModalModifyLoadTests';
 import Edit from '@carbon/icons-react/lib/edit/16';
 
@@ -36,12 +37,15 @@ class ActionModifyLoadTests extends React.Component {
     render() {
         return (
             <Fragment>
-                <ModalModifyLoadTests open={this.state.showModal} closeModalWindow={this.handleCloseModal} />
+                <ModalModifyLoadTests projectID={this.props.projectID} open={this.state.showModal} closeModalWindow={this.handleCloseModal} />
                 <Button renderIcon={Edit} small kind="secondary" data-testid="modifyConfig" onClick={() => this.handleShowModal()}>Edit load run settings</Button>
             </Fragment>
         )
     }
 }
 
+ActionModifyLoadTests.propTypes = {
+    projectID: PropTypes.string.isRequired,
+}
 
 export default (ActionModifyLoadTests);
