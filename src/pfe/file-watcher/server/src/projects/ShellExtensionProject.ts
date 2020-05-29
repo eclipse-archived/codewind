@@ -204,8 +204,20 @@ export class ShellExtensionProject implements IExtensionProject {
      * @param projectInfo <Required | ProjectInfo> - The metadata information for the project.
      */
     start = async (projectInfo: ProjectInfo): Promise<void> => {
+
         await projectUtil.runScript(projectInfo, path.join(this.fullPath, "entrypoint.sh"), "start");
-        await projectUtil.exposeOverIngress(projectInfo);
+
+        if (process.env.IN_K8) {
+            let port = undefined;
+            const ports = this.getDefaultAppPort();
+            if (Array.isArray(ports)) {
+                port = parseInt(ports[0]);
+            }
+            else if (ports) {
+                port = parseInt(ports);
+            }
+            await projectUtil.exposeOverIngress(projectInfo, port);
+        }
     }
 
     /**
