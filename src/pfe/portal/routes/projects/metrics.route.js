@@ -67,7 +67,8 @@ router.get('/api/v1/projects/:id/metrics/status', checkProjectExists, async func
   try {
     const project = getProjectFromReq(req);
     const { canMetricsBeInjected, appStatus } = project;
-    let capabilities = await project.setMetricsState();
+    const { capabilities: updatedCapabilities } = await project.setMetricsState();
+    let capabilities = updatedCapabilities;
     const projectRunning = (appStatus === 'started');
     res.status(200).send({ ...capabilities, canMetricsBeInjected, projectRunning });
   } catch (err) {
