@@ -452,7 +452,8 @@ async function bindEnd(req, res) {
     await user.buildAndRunProject(project);
 
     res.status(200).send(project);
-    user.uiSocket.emit('projectBind', { status: 'success', ...project });
+    const projectInfoForUI = project.toJSON()
+    user.uiSocket.emit('projectBind', { status: 'success', ...projectInfoForUI });
     log.info(`Successfully created project - name: ${project.name}, ID: ${project.projectID}`);
 
   } catch (err) {
