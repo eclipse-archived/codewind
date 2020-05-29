@@ -43,7 +43,7 @@ const wrapper = (
 // Mute modal dataIconPath warnings
 console.error = () => { }
 
-// dont leak state
+// do not leak state
 afterEach(cleanup);
 
 /**
@@ -246,7 +246,7 @@ describe('<ModalModifyLoadTests />', () => {
             expect(onClickFunction).toHaveBeenCalled();
         });
 
-        test('clicking save xposts to the API and updates local stores', () => {
+        test('clicking save posts changes to the API and updates local stores', () => {
             // Mock response from API
             global.fetch = jest.fn().mockImplementation(() => {
                 return new Promise((resolve, reject) => {
@@ -270,7 +270,7 @@ describe('<ModalModifyLoadTests />', () => {
             fireEvent.input(getByPlaceholderText(/{"id": 1, "message":"hello"}/i), { target: { value: '{"field1":"test1", "field2":"test2"}' } });
             const saveButton = getByText('Save');
 
-            // Check initial values in store before being saved
+            // Check initial values in store before saving
             expect(store.getState().loadRunnerConfigReducer.config.method).toBe('GET');
             expect(store.getState().loadRunnerConfigReducer.config.path).toBe('/');
             expect(store.getState().loadRunnerConfigReducer.config.requestsPerSecond).toBe('100');
