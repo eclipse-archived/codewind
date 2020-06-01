@@ -389,17 +389,12 @@ public class IDCContext {
 		return this.imagesFormatString;
 	}
 
-	public String getFormattedPortMappings() {
+	public ArrayList<String> getPortMappings() {
+		ArrayList<String> portMappingsArr = new ArrayList<String>();
 		if(appDb.get(Constants.DB_PORT_MAPPINGS) != null) {
 			String portMappingsAsString = appDb.get(Constants.DB_PORT_MAPPINGS);
-			ArrayList<String> portMappingsArr = new ArrayList<String>(Arrays.asList(portMappingsAsString.split(",")));
-			String formattedPortMappings = "";
-			for (int i = 0; i < portMappingsArr.size(); i++) {
-				formattedPortMappings += " --publish 127.0.0.1:" + portMappingsArr.get(i) + " ";
-			}
-			return formattedPortMappings;
-		} else {
-			return "";
+			portMappingsArr.addAll(Arrays.asList(portMappingsAsString.split(",")));
 		}
+		return portMappingsArr;
 	}
 }
