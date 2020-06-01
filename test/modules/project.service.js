@@ -282,8 +282,11 @@ function closeProject(
 }
 
 async function removeProject(pathToProjectDir, projectID){
-    await unbind(projectID);
-    fs.removeSync(pathToProjectDir);
+    try {
+        await unbind(projectID);
+    } finally {
+        fs.removeSync(pathToProjectDir);
+    }
 }
 
 /**
@@ -373,6 +376,16 @@ async function awaitProjectStarted(projectID) {
     const expectedSocketMsg = {
         projectID,
         msgType: 'projectStarted',
+    };
+    await socketService.checkForMsg(expectedSocketMsg);
+    socketService.close();
+}
+
+async function awaitProjectStarting(projectID) {
+    const socketService = await SocketService.createSocket();
+    const expectedSocketMsg = {
+        projectID,
+        msgType: 'projectStarting',
     };
     await socketService.checkForMsg(expectedSocketMsg);
     socketService.close();
@@ -527,6 +540,7 @@ module.exports = {
     awaitProject,
     awaitProjectStartedHTTP,
     awaitProjectStarted,
+    awaitProjectStarting,
     awaitProjectBuilding,
     runLoad,
     cancelLoad,

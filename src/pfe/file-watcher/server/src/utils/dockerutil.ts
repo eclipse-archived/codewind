@@ -171,6 +171,30 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, cont
   return info;
 }
 
+// /**
+//  * @function
+//  * @description Get docker image exposed ports.
+//  *
+//  * @param projectInfo <Required | ProjectInfo> - The metadata information for a project.
+//  * @param imageName <Required | String> - The docker image name.
+//  *
+//  * @returns Promise<array>
+//  */
+// export async function getApplicationImagePorts(projectID: string, imageName: string): Promise<Array<string>> {
+//   try {
+//     const image = await docker.getImage(imageName);
+//     const imageInfo = await image.inspect();
+//     const { Config: { ExposedPorts } }: any = imageInfo;
+//     // logger.logProjectError(`RW: ExposedPorts ${JSON.stringify(ExposedPorts)}`, projectInfo.projectID);
+//     const exposedPorts = Object.keys(ExposedPorts).map((portSlashProtocol) => portSlashProtocol.split("/")[0]);
+//     logger.logProjectError(`RW: exposedPorts ${JSON.stringify(exposedPorts)}`, projectID);
+//     return exposedPorts;
+//   } catch (err) {
+//     logger.logProjectError(`Failed to retrieve container information: ${err}`, projectID);
+//     return [];
+//   }
+// }
+
 /**
  * @function
  * @description Find out if internal debug port has been changed for a running container.
@@ -446,16 +470,25 @@ export async function buildImage(projectID: string, projectLanguage: string, ima
  * @returns Promise<ProcessResult>
  */
 export async function runContainer(buildInfo: BuildRequest, containerName: string): Promise<ProcessResult> {
-  // Default to -P to allow docker to assign ports for the first time
+    // Default to -P to allow docker to assign ports for the first time
   let portArgs = ["-P"];
+
+  // const portsToExpose = await getApplicationImagePorts(buildInfo.projectID, containerName);
+  // logger.logProjectError(`RW portsToExpose ${JSON.stringify(portsToExpose)}`, buildInfo.projectID);
 
   // If there are existing ports, reuse them
   if (buildInfo.containerPorts && buildInfo.containerPorts.length > 0 && buildInfo.containerPorts.length === buildInfo.hostPorts.length) {
     portArgs = [];
     for (let i = 0; i < buildInfo.containerPorts.length; i++) {
-      if (buildInfo.hostPorts[i] !== "") {
+      const hostPort = buildInfo.hostPorts[i];
+      const containerPort = buildInfo.containerPorts[i];
+      // logger.logProjectError(`RW hostPort ${hostPort}`, buildInfo.projectID);
+      // logger.logProjectError(`RW containerPort ${containerPort}`, buildInfo.projectID);
+      if (hostPort !== "") {
+      // if (hostPort !== "" && portsToExpose.includes(containerPort)) {
+        // logger.logProjectError("portArgs.push(-p)", buildInfo.projectID);
         portArgs.push("-p");
-        portArgs.push(`127.0.0.1:${buildInfo.hostPorts[i]}:${buildInfo.containerPorts[i]}`);
+        portArgs.push(`127.0.0.1:${hostPort}:${containerPort}`);
       }
     }
   }

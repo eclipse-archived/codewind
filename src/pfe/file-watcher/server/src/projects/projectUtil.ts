@@ -185,9 +185,15 @@ export async function containerCreate(operation: Operation, script: string, comm
             ];
         }
 
+    console.log("[containerCreate] portMappings");
+    console.log(projectInfo.portMappings);
+    // const exposedImagePorts = await dockerutil.getApplicationImagePorts(operation.projectInfo, operation.containerName);
+    // logger.logProjectInfo(`[containerCreate] RW: exposedImagePorts: ${exposedImagePorts}`, projectInfo.projectID);
     if (projectInfo.portMappings) {
         for (const [internalPort, externalPort] of Object.entries(projectInfo.portMappings)) {
+            // if (exposedImagePorts.includes(internalPort)) {
             args.push(`${externalPort}:${internalPort}`);
+            // }
         }
     }
 
@@ -292,9 +298,15 @@ export async function containerUpdate(operation: Operation, script: string, comm
         ];
     }
 
+    console.log("[containerUpdate] portMappings");
+    console.log(projectInfo.portMappings);
+    // const exposedImagePorts = await dockerutil.getApplicationImagePorts(operation.projectInfo, operation.containerName);
+    // logger.logProjectInfo(`[containerUpdate] RW: exposedImagePorts: ${exposedImagePorts}`, projectInfo.projectID);
     if (projectInfo.portMappings) {
         for (const [internalPort, externalPort] of Object.entries(projectInfo.portMappings)) {
+            // if (exposedImagePorts.includes(internalPort)) {
             args.push(`${externalPort}:${internalPort}`);
+            // }
         }
     }
 

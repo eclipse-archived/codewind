@@ -32,10 +32,10 @@ describe('Rebuild project on same ports', function() {
             projectType: 'nodejs',
             debugMode: 'debugNoInit',
         },
-        {
-            projectType: 'spring',
-            debugMode: 'debugNoInit',
-        },
+        // {
+        //     projectType: 'spring',
+        //     debugMode: 'debugNoInit',
+        // },
         // Skip these tests by default because they are slow
         // {
         //     projectType: 'liberty',

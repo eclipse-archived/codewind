@@ -22,7 +22,7 @@ FOLDER_NAME=${11}
 IMAGE_PUSH_REGISTRY=${12}
 MAVEN_SETTINGS=${13}
 # PORT_MAPPINGS is an array of the rest of the arguments
-PORT_MAPPINGS="${@:14}"
+PORT_MAPPINGS=("${@:14}")
 
 WORKSPACE=/codewind-workspace
 LOG_FOLDER=$WORKSPACE/.logs/"$FOLDER_NAME"
@@ -44,7 +44,7 @@ echo "*** FOLDER_NAME = $FOLDER_NAME"
 echo "*** LOG_FOLDER = $LOG_FOLDER"
 echo "*** IMAGE_PUSH_REGISTRY = $IMAGE_PUSH_REGISTRY"
 echo "*** MAVEN_SETTINGS = $MAVEN_SETTINGS"
-echo "*** PORT_MAPPINGS = $PORT_MAPPINGS"
+echo "*** PORT_MAPPINGS =" "${PORT_MAPPINGS[@]}"
 
 
 # Import general constants
@@ -271,14 +271,18 @@ function dockerRun() {
 		$IMAGE_COMMAND rm -f $project
 	fi
 
-	MAPPED_PORTS=$($util makePortMappings $PORT_MAPPINGS)
+	local portPublishArgs
+	portPublishArgs=$($util makePortPublishArgs "$project" "${PORT_MAPPINGS[@]}")
+	echo portPublishArgs $portPublishArgs
+	echo portPublishArgsArr "${portPublishArgs[@]}"
 
+	# TODO: get rid of --expose 8080
 	$IMAGE_COMMAND run --network=codewind_network \
 		--entrypoint "/scripts/new_entrypoint.sh" \
 		--name $project \
 		--expose 8080 \
 		--publish 127.0.0.1::$DEBUG_PORT \
-		$MAPPED_PORTS \
+		$portPublishArgs \
 		--publish-all \
 		--detach \
 		--tty \

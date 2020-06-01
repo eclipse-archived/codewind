@@ -21,7 +21,7 @@ const fs = require('fs-extra');
 const { promisify } = require('util');
 const { exec } = require('child-process-promise');
 
-const { 
+const {
     WORKSPACE_DIR,
     USING_K8S,
     containerDir,
@@ -187,19 +187,23 @@ async function awaitProjectInfFile(projectID) {
     return getProjectInfJSON(projectID);
 }
 
+async function getContainer(projectName, projectID) {
+    const containerInfoList = await helperService.getAppContainers();
+    const containerName = helperService.getContainerName(projectName, projectID);
+    const container = containerInfoList.find(
+        (containerInfo) => (containerInfo.name.startsWith(containerName) && !containerInfo.name.endsWith('-build'))
+    );
+    return container;
+}
+
 /**
  * Periodically checks for the project container until it is found, at which point this returns the containerInfo as a JSON
  * @returns {Promise<JSON>} containerInfo
  */
 async function awaitContainer(projectName, projectID) {
-    const containerInfoList = await helperService.getAppContainers();
-    const containerName = helperService.getContainerName(projectName, projectID);
-
-    for (const containerInfo of containerInfoList) {
-        containerInfo.should.have.property('name');
-        if (containerInfo.name.startsWith(containerName) && !containerInfo.name.endsWith('-build') ) {
-            return containerInfo;
-        }
+    const containerInfo = await getContainer(projectName, projectID);
+    if (containerInfo) {
+        return containerInfo;
     }
     await sleep(1000);
     return awaitContainer(projectName, projectID);
@@ -265,6 +269,7 @@ module.exports = {
     getProjectInfJSON,
     getCWSettingsJSON,
     awaitProjectInfFile,
+    getContainer,
     awaitContainer,
     createProjectAndZip,
     createProjectInFolder,
