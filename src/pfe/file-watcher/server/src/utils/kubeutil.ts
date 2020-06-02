@@ -450,7 +450,7 @@ export async function exposeOverIngress(projectID: string, projectName: string, 
     const ingressDomainLength = ingressDomain.length;
 
     // Generate four random alphanumeric characters and add it to the front of the project name to ensure uniqueness
-    const projectIngress = Math.random().toString(36).substring(2, 6) + "-" + projectName;
+    const projectIngress = Math.random().toString(36).substring(2, 6) + "-" + projectName.toLowerCase();
 
     let projectIngressURL = projectIngress + "-" + ingressDomain;
     if (ingressDomainLength < 62 && projectIngressURL.length >= 62) {

@@ -11,7 +11,7 @@
 
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Button, SkeletonText, InlineLoading } from 'carbon-components-react';
+import { Button, InlineLoading } from 'carbon-components-react';
 import IconSuccess from '@carbon/icons-react/es/checkmark--outline/20';
 import IconFailure from '@carbon/icons-react/es/error--outline/16';
 import IconWarning from '@carbon/icons-react/es/warning/20';
@@ -30,6 +30,7 @@ class CapabilitiesPanel extends React.Component {
     constructor() {
         super();
         this.state = {
+            lastProjectUpdateTime: 0,
             lastUpdated: 0,
             detailMessage:"",
             detailSubComponent:"",
@@ -42,7 +43,7 @@ class CapabilitiesPanel extends React.Component {
     async componentDidMount() {
         if (!this.props.projectID) return;
         try {
-            await this.props.dispatch(fetchProjectCapabilities(this.props.projectID))
+            await this.props.dispatch(fetchProjectCapabilities(localStorage.getItem('cw-access-token'), this.props.projectID))
         } catch (err) {
             console.log("Error loading capabilities: ", err)
         }
@@ -52,6 +53,9 @@ class CapabilitiesPanel extends React.Component {
         if (newProps.projectCapabilities.receivedAt !== this.state.lastUpdated) {
             this.setState({ lastUpdated: newProps.projectCapabilities.receivedAt })
         }
+        if (newProps.projectInfo.receivedAt !== this.state.lastUpdated) {
+            this.setState({ lastProjectUpdateTime: newProps.projectInfo.receivedAt })
+        }
     }
 
     getIconMarkup(status) {
@@ -60,8 +64,10 @@ class CapabilitiesPanel extends React.Component {
                 return <IconSuccess className='bx--btn__icon' style={{ 'fill': '#42be65' }} />
             case Constants.STATUS_ERROR:
                 return <IconFailure className='bx--btn__icon' style={{ 'fill': '#da1e28' }} />
+            case Constants.STATUS_BUSY:
+                return <div style={{ display: 'inline-block', verticalAlign: "middle" }}><InlineLoading /></div>
         }
-        return <IconWarning className='bx--btn__icon' style={{ 'fill': '#f1c21b' }} />
+        return <IconWarning style={{ 'fill': '#f1c21b' }} />
     }
 
     handleCloseClick() {
@@ -69,42 +75,66 @@ class CapabilitiesPanel extends React.Component {
     }
 
     getCapabilityProjectStatus(capabilityData, feature) {
-        if (capabilityData.projectRunning) {
-            feature.status = Constants.STATUS_OK;
-            feature.statusMessage = Constants.MESSAGE_PROJECT_RUNNING;
-        } else {
-            feature.status = Constants.STATUS_ERROR;
-            feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
+        switch (this.props.projectInfo.config.appStatus) {
+            case 'starting': {
+                feature.status = Constants.STATUS_BUSY;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_STARTING;
+                break;
+            }
+            case 'started': {
+                feature.status = Constants.STATUS_OK;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_RUNNING;
+                break;
+            }
+
+            case 'stopping': {
+                feature.status = Constants.STATUS_WARNING;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_STOPPING;
+                break;
+            }
+
+            default: {
+                feature.status = Constants.STATUS_ERROR;
+                feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
+            }
         }
     }
 
     getCapabilityLoadRunnerStatus(capabilityData, feature) {
-        if (capabilityData.projectRunning) {
             feature.status = Constants.STATUS_OK
             feature.statusMessage = Constants.MESSAGE_LOADRUNNER_AVAILABLE;
-        } else {
-            feature.status = Constants.STATUS_ERROR
-            feature.statusMessage = Constants.MESSAGE_LOADRUNNER_NOT_AVAILABLE;
-        }
+
     }
 
     getCapabilityLiveMetrics(capabilityData, feature) {
-        if (!capabilityData.projectRunning) {
-            feature.status = Constants.STATUS_ERROR
-            feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_RUNNING;
+
+        // When the project is not running we can not determine if it supports live metrics
+        if (this.props.projectInfo.config.appStatus !=='running' && !this.props.projectInfo.config.host) {
+            feature.status = Constants.STATUS_WARNING
+            feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_PROJECT_NOT_RUNNING;
             return
         }
 
+        // Show the re-enable auth button
+        if (capabilityData.microprofilePackageAuthenticationDisabled) {
+            feature.status = Constants.STATUS_OK
+            feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE_ISDISABLED;
+            feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_ENABLE_AUTH;
+            return
+        }
+
+        // If live metrics is enabled - everything is good
         if (capabilityData.liveMetricsAvailable) {
             feature.status = Constants.STATUS_OK
             feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_AVAILABLE;
             return
         }
 
-        if (capabilityData.microprofilePackageFoundInBuildFile) {
+        // Show the MP disable auth button
+         if (capabilityData.microprofilePackageFoundInBuildFile) {
             feature.status = Constants.STATUS_WARNING
             feature.statusMessage = Constants.MESSAGE_LIVEMETRICS_MICROPROFILE;
-            feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE;
+            feature.detailSubComponent = Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_DISABLE_AUTH;
             return
         }
 
@@ -118,13 +148,8 @@ class CapabilitiesPanel extends React.Component {
         feature.statusMessage = Constants.MESSAGE_PROJECT_NOT_COMPATIBLE;
     }
 
-    getCapabilityComparisons(capabilityData, feature) {
-        if (!capabilityData.projectRunning) {
-            feature.status = Constants.STATUS_WARNING
-            feature.statusMessage = Constants.MESSAGE_COMPARISONS_NOT_RUNNING;
-            return
-        }
-
+    getCapabilityBenchmarks(capabilityData, feature) {
+ 
         if (capabilityData.appmetricsEndpoint && !capabilityData.hasTimedMetrics) {
             feature.status = Constants.STATUS_WARNING;
             feature.statusMessage = Constants.MESSAGE_COMPARISONS_INJECT_TIMED
@@ -181,7 +206,7 @@ class CapabilitiesPanel extends React.Component {
             this.getCapabilityLiveMetrics(capabilityData, feature);
 
             feature = displayModelTemplate.find(element => element.id == "Comparisons");
-            this.getCapabilityComparisons(capabilityData, feature);
+            this.getCapabilityBenchmarks(capabilityData, feature);
         }
         return displayModelTemplate;
     }
@@ -196,7 +221,7 @@ class CapabilitiesPanel extends React.Component {
 
     render() {
         const dataModel = this.buildDisplayModel();
-        const fetching = this.props.projectCapabilities.fetching
+        const fetching = this.props.projectCapabilities.fetching;
         return (
             <Fragment>
                 <div className="Capabilities">
@@ -210,15 +235,15 @@ class CapabilitiesPanel extends React.Component {
                                     <div key={row.id} className="row " role="gridcell">
                                         <Fragment>
                                             <div className="headline">
-                                                <div className="icon"> 
-                                                    { (fetching) ? <InlineLoading description="" iconDescription="Active loading indicator" status="active"/> : this.getIconMarkup(row.status) }
+                                                <div className="icon">
+                                                    { this.getIconMarkup(row.status) }
                                                 </div>
-                                                <div className="capability">
-                                                    { (fetching) ? <SkeletonText/> : row.label  }
+                                                <div className={row.status!= Constants.STATUS_BUSY ? 'capability' : 'capability_nomargin'}>
+                                                    { row.label }
                                                 </div>
                                             </div>
                                             <div className="description">
-                                                { (fetching) ? <SkeletonText/> : row.statusMessage }
+                                                { row.statusMessage }
                                             </div>
                                         </Fragment>
                                         {
@@ -240,6 +265,7 @@ class CapabilitiesPanel extends React.Component {
 const mapStateToProps = stores => {
     return {
         projectCapabilities: stores.projectCapabilitiesReducer,
+        projectInfo: stores.projectInfoReducer,
         navbarActions: stores.navbarActionsReducer,
     }
 };

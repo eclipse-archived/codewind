@@ -130,7 +130,7 @@ module.exports = class FileWatcher {
         await this.user.projectList.updateProject(fwProject);
         this.user.uiSocket.emit('projectValidated', fwProject);
       } catch (err) {
-        log.error(err);
+        log.error(`Error validating project ${fwProject.projectID}: ${inspect(err)}`);
       }
       break;
     }
@@ -194,6 +194,7 @@ module.exports = class FileWatcher {
       await this.user.projectList.updateProject(projectUpdate);
       this.user.uiSocket.emit('projectChanged', projectUpdate);
     } catch (err) {
+      log.error(`Error handling capabilities update to project ${fwProject.projectID}: ${inspect(err)}`);
       log.error(err);
     }
   }
@@ -350,7 +351,7 @@ module.exports = class FileWatcher {
         throw new Error(`check project logs ${retval.statusCode} ${retval.error.msg}`);
       }
     } catch (err) {
-      log.error(err);
+      log.error(`Error checking for new log file for project ${projectID}: ${inspect(err)}`);
     }
   }
 
@@ -369,7 +370,7 @@ module.exports = class FileWatcher {
         throw new Error(`project update ${retval.statusCode} ${retval.error.msg}`);
       }
     } catch (err) {
-      log.error(err);
+      log.error(`Error updating project status ${inspect(err)}`);
     }
   }
 
@@ -379,7 +380,7 @@ module.exports = class FileWatcher {
       retval = await filewatcher.imagePushRegistryStatus(body);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(err);
+      log.error(`Error with image registry status: ${inspect(err)}`);
     }
     if (retval.statusCode != 200) {
       throw new Error(`imagePushRegistryStatus ${retval.statusCode} ${retval.error.msg}`);
@@ -396,7 +397,7 @@ module.exports = class FileWatcher {
         throw new Error(`project update ${retval.statusCode} ${retval.error.msg}`);
       }
     } catch (err) {
-      log.error(err);
+      log.error(`Error handling project file change for project ${projectID}: ${inspect(err)}`);
     }
   }
 
@@ -446,7 +447,7 @@ module.exports = class FileWatcher {
         await this.handleFWProjectEvent(event, fwProject);
       }
     } catch (err) {
-      log.error(err);
+      log.error(`Error handling project update for project ${fwProject.projectID}: ${inspect(err)}`);
     }
   }
 
@@ -491,7 +492,7 @@ module.exports = class FileWatcher {
       await this.handleFWProjectEvent(event, projectUpdate);
       WebSocket.watchListChanged(data);
     } catch (err) {
-      log.error(err);
+      log.error(`Error handling new project ${fwProject.projectID}: ${inspect(err)}`);
     }
   }
 
@@ -517,8 +518,8 @@ module.exports = class FileWatcher {
       let updatedProject = await this.user.projectList.updateProject(projectUpdate);
 
       const { appStatus } = updatedProject;
-      // Only update metrics state when the project is running or stopped
-      if (appStatus === 'started' || appStatus === 'stopped') {
+      // Update the metrics state if its just been added or is running
+      if (event === 'newProjectAdded' || appStatus === 'started') {
         try {
           // If updating the metrics fails, don't stop the status being emitted to the UI
           await updatedProject.setMetricsState();
@@ -528,7 +529,7 @@ module.exports = class FileWatcher {
       }
 
       // remove fields which are not required by the UI
-      const { logStreams, ...projectInfoForUI } = updatedProject
+      const projectInfoForUI = updatedProject.toJSON()
       this.user.uiSocket.emit(event, { ...results, ...projectInfoForUI })
       if (fwProject.buildStatus === 'inProgress') {
         // Reset build logs.
@@ -540,7 +541,7 @@ module.exports = class FileWatcher {
         updatedProject.resetLogStream('app');
       }
     } catch (err) {
-      log.error(err);
+      log.error(`Error handling project event for ${fwProject.projectID}: ${inspect(err)}`);
     }
   }
 
@@ -566,7 +567,7 @@ module.exports = class FileWatcher {
     // (Storing the status in the project object is bad as it is
     // only about this close operation.)
     // remove fields which are not required by the UI
-    const { logStreams, ...projectInfoForUI } = updatedProject;
+    const projectInfoForUI = updatedProject.toJSON()
     this.user.uiSocket.emit('projectClosed', {...projectInfoForUI, status: fwProject.status});
     log.debug(`project ${fwProject.projectID} successfully closed`);
   }
@@ -600,7 +601,7 @@ module.exports = class FileWatcher {
       retval = await filewatcher.testImagePushRegistry(address, namespace);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(`Error in testImagePushRegistry`);
+      log.error(`Error in testImagePushRegistry: ${inspect(err)}`);
       throw err;
     }
 
@@ -613,7 +614,7 @@ module.exports = class FileWatcher {
       retval = await filewatcher.readWorkspaceSettings();
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(err);
+      log.error(`Error in readWorkspaceSettings: ${inspect(err)}`);
     }
     if (retval.statusCode != 200) {
       throw new Error(`readWorkspaceSettings ${retval.statusCode} ${retval.workspaceSettings.msg}`);
@@ -626,7 +627,7 @@ module.exports = class FileWatcher {
       retval = await filewatcher.writeWorkspaceSettings(address, namespace);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(`Error in writeWorkspaceSettings`);
+      log.error(`Error in writeWorkspaceSettings: ${inspect(err)}`);
       throw err;
     }
     if (retval.statusCode != 200) {
@@ -641,7 +642,7 @@ module.exports = class FileWatcher {
       retval = await filewatcher.removeImagePushRegistry(address);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(`Error in removeImagePushRegistry`);
+      log.error(`Error in removeImagePushRegistry: ${inspect(err)}`);
       throw err;
     }
     return retval;
@@ -675,7 +676,7 @@ module.exports = class FileWatcher {
     try {
       await filewatcher.setLoggingLevel(this.level);
     } catch (err) {
-      log.error(err);
+      log.error(`Error in setLoggingLevel: ${inspect(err)}`);
     }
   }
 

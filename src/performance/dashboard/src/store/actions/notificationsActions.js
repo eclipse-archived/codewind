@@ -12,6 +12,11 @@
 const ActionTypes = require('./types');
 let notificationID = 0;
 
+export const NOTIFICATION_TIMEOUT_SHORT = 5;
+export const NOTIFICATION_TIMEOUT_MEDIUM = 15;
+export const NOTIFICATION_TIMEOUT_LONG = 30;
+
+
 export const KIND_INFO    = 'info';
 export const KIND_SUCCESS = 'success';
 export const KIND_WARNING = 'warning';

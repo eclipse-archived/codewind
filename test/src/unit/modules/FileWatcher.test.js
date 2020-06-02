@@ -594,12 +594,18 @@ describe('FileWatcher.js', () => {
                 type: 'mockType',
                 appStatus: 'started',
             };
+            mockFwProject.toJSON = function() {
+                // eslint-disable-next-line no-unused-vars
+                const { toJSON, name, operationId, logStreams, ...filteredProject } = this;
+                return filteredProject;
+            };
             const setMetricsState = sinon.stub().resolves();
             const expectedProjectUpdate = {
                 projectID: mockFwProject.projectID,
                 logStreams: mockFwProject.logStreams,
                 type: mockFwProject.type,
                 appStatus: 'started',
+                toJSON: mockFwProject.toJSON,
             };
             const expectedProjectInfoForUI = {
                 projectID: mockFwProject.projectID,
@@ -637,12 +643,18 @@ describe('FileWatcher.js', () => {
                 type: 'mockType',
                 appStatus: 'starting',
             };
+            mockFwProject.toJSON = function() {
+                // eslint-disable-next-line no-unused-vars
+                const { toJSON, name, operationId, logStreams, ...filteredProject } = this;
+                return filteredProject;
+            };
             const setMetricsState = sinon.stub().resolves();
             const expectedProjectUpdate = {
                 projectID: mockFwProject.projectID,
                 logStreams: mockFwProject.logStreams,
                 type: mockFwProject.type,
                 appStatus: 'starting',
+                toJSON: mockFwProject.toJSON,
             };
             const expectedProjectInfoForUI = {
                 projectID: mockFwProject.projectID,
@@ -678,6 +690,11 @@ describe('FileWatcher.js', () => {
             const mockProject = {
                 logStreams: 'should not be emitted to UI',
             };
+            mockProject.toJSON = function() {
+                // eslint-disable-next-line no-unused-vars
+                const { toJSON, logStreams, ... filteredProject } = this;
+                return filteredProject;
+            };
             const mockUser = {
                 uiSocket: { emit: sinon.mock() },
             };
@@ -707,9 +724,24 @@ describe('FileWatcher.js', () => {
                 detailedAppStatus: undefined, // eslint-disable-line no-undefined
                 containerId: '',
             };
+            const expectedProjectUpdateToJSON = {
+                projectID: mockFwProject.projectID,
+                ports: '',
+                buildStatus: 'unknown',
+                appStatus: 'unknown',
+                state: 'closed',
+                capabilitiesReady: false,
+                detailedAppStatus: undefined, // eslint-disable-line no-undefined
+                containerId: '',
+            };
+            expectedProjectUpdateToJSON.toJSON = function() {
+                // eslint-disable-next-line no-unused-vars
+                const { toJSON, ... filteredProject } = this;
+                return filteredProject;
+            };
             const mockUser = {
-                projectList: {
-                    updateProject: sinon.stub().returns(expectedProjectUpdate),
+                projectList: { 
+                    updateProject: sinon.stub().returns(expectedProjectUpdateToJSON),
                     deleteProjectKey: () => {},
                 },
                 uiSocket: { emit: sinon.mock() },

@@ -66,12 +66,18 @@
 
 .Capabilities .icon {
   display: inline;
+  vertical-align:middle;
 }
 
 .Capabilities .capability {
   @include properties($productive-heading-02);
   display: inline;
   margin-left:$carbon--spacing-04;
+}
+
+.Capabilities .capability_nomargin {
+  @include properties($productive-heading-02);
+  display: inline;
 }
 
 .Capabilities .description{

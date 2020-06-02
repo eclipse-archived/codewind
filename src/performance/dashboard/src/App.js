@@ -22,6 +22,8 @@ import NavBar from './components/navBar/NavBar';
 import PagePerformance from './pages/PagePerformance';
 import SocketContext from './utils/sockets/SocketContext';
 import Notifications from './components/notifications/Notifications';
+import SocketWatcherProjectStatus from './components/socketWatchers/ProjectStatus';
+import SocketWatcherProjectClosed from './components/socketWatchers/ProjectClosed';
 import * as ProjectIDChecker from './utils/projectUtils';
 import * as AppConstants from './AppConstants';
 
@@ -41,6 +43,38 @@ socket.on('connect', function(){
   }
 });
 
+socket.on('connect_error', function(error) {
+  console.error("Dashboard Socket connect_error: ", error);
+});
+
+socket.on('connect_timeout', function(timeout) {
+  console.warn("Dashboard Socket connect_timeout: ", timeout);
+});
+
+socket.on('error', function(error) {
+  console.error("Dashboard Socket error: ", error);
+});
+
+socket.on('disconnect', function(reason) {
+  console.warn("Dashboard Socket disconnect: ", reason);
+});
+
+socket.on('reconnect', function(attemptNumber) {
+  console.warn("Dashboard Socket reconnect.  Attempt # ", attemptNumber);
+});
+
+socket.on('reconnecting', function(attemptNumber) {
+  console.warn("Dashboard Socket reconnecting. Attempt #", attemptNumber);
+});
+
+socket.on('reconnect_error', function(error) {
+  console.error("Dashboard Socket reconnect_error : ", error);
+});
+
+socket.on('reconnect_failed', function() {
+  console.error("Dashboard Socket reconnect_failed");
+});
+
 function App() {
 
   const projectID = ProjectIDChecker.projectID();
@@ -50,6 +84,10 @@ function App() {
       <div className="App">
         <ErrorBoundary>
             <Notifications/>
+        </ErrorBoundary>
+        <ErrorBoundary>
+            <SocketWatcherProjectClosed projectID={projectID}/>
+            <SocketWatcherProjectStatus projectID={projectID}/>
         </ErrorBoundary>
         <Fragment>
           <ErrorBoundary>

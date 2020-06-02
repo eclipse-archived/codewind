@@ -33,6 +33,9 @@ describe('Link tests (/api/v1/project/:id/links)', () => {
         // Use GO applications as these tests require two running applications
         projectID = await projectService.createProjectFromTemplate(nodeProjectName, 'nodejs', pathToNodeProject);
         targetProjectID = await projectService.createProjectFromTemplate(goProjectName, 'go', pathToGoProject, true);
+        // Close first project so it isn't built
+        await projectService.closeProject(projectID, 202, true);
+        // Ensure the target project is started
         await projectService.awaitProjectStartedHTTP(targetProjectID);
     });
 

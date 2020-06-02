@@ -2050,6 +2050,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                 }
                 if (containerInfo.podName) {
                     data.podName = containerInfo.podName;
+                    if (projectInfo.appBaseURL) {
+                        data.appBaseURL = projectInfo.appBaseURL;
+                    }
                 }
                 if (containerInfo.exposedDebugPort) {
                     data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
@@ -2123,6 +2126,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                 }
                 if (containerInfo.podName) {
                     data.podName = containerInfo.podName;
+                    if (projectInfo.appBaseURL) {
+                        data.appBaseURL = projectInfo.appBaseURL;
+                    }
                 }
                 if (containerInfo.exposedDebugPort) {
                     data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
@@ -2186,5 +2192,20 @@ export async function updateDetailedAppStatus(projectID: string, ip: string, por
 
     if (oldState === AppState.starting) {
         projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathEvent);
+    }
+}
+
+/**
+ * Expose a project over ingress when IN_K8
+ *
+ * @param projectInfo The project's info
+ * @param appPort Optional service port number
+ */
+export async function exposeOverIngress(projectInfo: ProjectInfo, appPort?: number): Promise<void> {
+    if (process.env.IN_K8) {
+        const projectID = projectInfo.projectID;
+        const projectName = projectInfo.location.split("/").pop();
+        projectInfo.appBaseURL = await kubeutil.exposeOverIngress(projectID, projectName, projectInfo.isHttps, appPort);
+        await projectsController.saveProjectInfo(projectID, projectInfo, true);
     }
 }

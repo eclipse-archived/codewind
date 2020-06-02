@@ -56,13 +56,13 @@ function fetchWriteRejected(json) {
 }
 
 
-function fetchConfig(projectID) {
+function fetchConfig(access_token, projectID) {
     return dispatch => {
         dispatch(requestConfig());
         return fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectID}/loadtest/config`,
             {
                 method: "GET",
-                headers: { "Content-Type": "application/json" }
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${access_token}` },
             }
         ).then(function (response) {
             let data = response.json();
@@ -104,7 +104,7 @@ function fetchConfig(projectID) {
 * }
 * 
 */
-function saveConfig(projectID, config) {
+function saveConfig(access_token, projectID, config) {
 
     // Clone the config then update it with path and query in the form requwired by the loadtest/config API
     let formattedContents = Object.assign({}, config);
@@ -117,8 +117,8 @@ function saveConfig(projectID, config) {
         return fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectID}/loadtest/config`,
             {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formattedContents)
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${access_token}` },
+                body: JSON.stringify(formattedContents),
             }
         ).then(function (response) {
             if (response.status !== 200) {
@@ -148,9 +148,9 @@ function saveConfig(projectID, config) {
 /**
 Consumers should call this function to retrieve the config
 */
-function fetchProjectLoadConfig(projectID) {
+function fetchProjectLoadConfig(accessToken, projectID) {
     return (dispatch) => {
-        return dispatch(fetchConfig(projectID));
+        return dispatch(fetchConfig(accessToken, projectID));
     };
 }
 
@@ -158,9 +158,9 @@ function fetchProjectLoadConfig(projectID) {
 * @param {*} projectID           Project to update
 * @param {*} newConfigFileContents  JSONObject contents of the config.json file
 */
-function saveProjectLoadConfig(projectID, newConfigFileContents) {
+function saveProjectLoadConfig(access_token, projectID, newConfigFileContents) {
     return (dispatch) => {
-        return dispatch(saveConfig(projectID, newConfigFileContents));
+        return dispatch(saveConfig(access_token, projectID, newConfigFileContents));
     };
 }
 

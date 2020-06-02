@@ -27,6 +27,7 @@ const Logger = require('./utils/Logger');
 const LogStream = require('./LogStream');
 const metricsService = require('./metricsService');
 const Links = require('./project/Links');
+const LoadRunner = require('./LoadRunner');
 
 const log = new Logger(__filename);
 
@@ -124,11 +125,24 @@ module.exports = class Project {
 
     this.metricsAvailable = false; // Default to false as metrics won't be available until the project has started
     this.metricsDashboard = { hosting: null, path: null };
-    this.metricsCapabilities = (args.metricsCapabilities) ? args.metricsCapabilities : {};
+    // Default all values to false as they will be updated once the project is started
+    this.metricsCapabilities = {
+      liveMetricsAvailable: false,
+      metricsEndpoint: false,
+      appmetricsEndpoint: false,
+      microprofilePackageFoundInBuildFile: false,
+      appmetricsPackageFoundInBuildFile: false,
+      hasTimedMetrics: false,
+      microprofilePackageAuthenticationDisabled: false,
+      // Overwrite with previous values
+      ...args.metricsCapabilities,
+    };
 
     this.links = new Links(this.projectPath(), args.links);
 
     this.perfDashboardPath = `/performance/charts?project=${this.projectID}`;
+    log.debug(`Creating LoadRunner for project ${this.projectID}`);
+    this.loadRunner = new LoadRunner(this);
   }
 
 
@@ -166,11 +180,11 @@ module.exports = class Project {
 
   async setMetricsState() {
     const { capabilities, metricsDashHost: { hosting, path } } = await metricsStatusChecker.getMetricStatusForProject(this);
-    this.metricsCapabilities = capabilities;
+    this.metricsCapabilities = { ...this.metricsCapabilities, ...capabilities };
     this.metricsAvailable = (hosting !== null && path !== null);
     this.metricsDashboard = { hosting, path };
     await this.writeInformationFile();
-    return { capabilities };
+    return { capabilities: this.metricsCapabilities };
   }
 
   getMetricsCapabilities() {
@@ -302,7 +316,7 @@ module.exports = class Project {
   toJSON() {
     // Strip out fields we don't want to attempt to turn into JSON.
     // (This is our guard against trying to write circular references.)
-    const { logStreams, loadInProgress, loadConfig, operation, ...filteredProject } = this;
+    const { logStreams, loadInProgress, loadConfig, operation, loadRunner, ...filteredProject } = this;
     return filteredProject;
   }
 
@@ -408,7 +422,25 @@ module.exports = class Project {
     }
     log.info(`Returning profiling file stream ${pathToProfilingFile} for ${this.name}`);
     return profilingStream;
-  } 
+  }
+
+  /**
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  getPathToProfilingTreeFile(timeOfTestRun) {
+    const pathToLoadTestDir = join(this.loadTestPath, String(timeOfTestRun));
+    const pathToProfilingJson = join(pathToLoadTestDir, 'cw-profile.json');
+    return pathToProfilingJson;
+  }
+
+  /**
+   * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format
+   */
+  getPathToProfilingSummaryFile(timeOfTestRun) {
+    const pathToLoadTestDir = join(this.loadTestPath, String(timeOfTestRun));
+    const pathToProfilingJson = join(pathToLoadTestDir, 'cw-profile-summary.json');
+    return pathToProfilingJson;
+  }
 
   /**
    * @param {String|Int} timeOfTestRun in 'yyyymmddHHMMss' format

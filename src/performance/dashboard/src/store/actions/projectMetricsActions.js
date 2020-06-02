@@ -9,7 +9,7 @@
 *     IBM Corporation - initial API and implementation
 *******************************************************************************/
 
-var AppConstants = require('../../AppConstants');
+const AppConstants = require('../../AppConstants');
 const ActionTypes = require('./types');
 
 function requestMetrics() {
@@ -33,10 +33,10 @@ function fetchRejected(json) {
     };
 }
 
-function fetchMetrics(projectID, availableTypes) {
+function fetchMetrics(access_token, projectID, availableTypes) {
 
-    let validTypes = {};
-    // extract the availble types eg :   ["cpu", "memory", 'http'];
+    const validTypes = {};
+    // extract the available types eg :   ["cpu", "memory", 'http'];
     validTypes.types = availableTypes.map(t => t.type);
 
     return dispatch => {
@@ -44,12 +44,12 @@ function fetchMetrics(projectID, availableTypes) {
         return fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectID}/metrics/types`,
             {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${access_token}` },
                 body: JSON.stringify(validTypes),
             }
         )
             .then(function (response) {
-                let data = response.json();
+                const data = response.json();
 
                 // 422 is expected for a project with empty load-test history
                 if (response.status === 422) { return []; }
@@ -90,20 +90,20 @@ function shouldFetchMetrics(data) {
 /**
 Consumers should call this function to retrieve metrics data
 */
-function fetchProjectMetrics(data, projectID, availableTypes) {
+function fetchProjectMetrics(access_token, data, projectID, availableTypes) {
     return (dispatch) => {
         if (shouldFetchMetrics(data)) {
-            return dispatch(fetchMetrics(projectID, availableTypes));
+            return dispatch(fetchMetrics(access_token, projectID, availableTypes));
         }
         return Promise.resolve();
     };
 }
 
-function postDeleteTests(projectID, idToDelete) {
+function postDeleteTests(access_token, projectID, idToDelete) {
     return fetch(`${AppConstants.API_SERVER}/api/v1/projects/${projectID}/metrics/${idToDelete}`,
         {
             method: "DELETE",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${access_token}` },
         })
         .then(response => {
             if (response.status === 200) {
@@ -119,9 +119,9 @@ function postDeleteTests(projectID, idToDelete) {
         });
 }
 
-function reloadMetricsData(projectID, availableTypes) {
+function reloadMetricsData(access_token, projectID, availableTypes) {
     return (dispatch) => {
-        return dispatch(fetchMetrics(projectID, availableTypes));
+        return dispatch(fetchMetrics(access_token, projectID, availableTypes));
     };
 }
 

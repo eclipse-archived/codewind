@@ -205,6 +205,7 @@ export class ShellExtensionProject implements IExtensionProject {
      */
     start = async (projectInfo: ProjectInfo): Promise<void> => {
         await projectUtil.runScript(projectInfo, path.join(this.fullPath, "entrypoint.sh"), "start");
+        await projectUtil.exposeOverIngress(projectInfo);
     }
 
     /**

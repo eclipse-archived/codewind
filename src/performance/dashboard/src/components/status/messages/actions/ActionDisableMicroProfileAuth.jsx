@@ -11,11 +11,12 @@
 
 import React, { Component, Fragment } from 'react'
 import PropTypes from 'prop-types'
+import { connect } from 'react-redux';
 import {Button, InlineLoading} from 'carbon-components-react'
-
-import IconEdit from '@carbon/icons-react/es/edit/16'
+import IconAction from '@carbon/icons-react/es/tools/20'
 
 import * as AppConstants from '../../../../AppConstants';
+import './styles.scss';
 
 class ActionDisableMicroProfileAuth extends Component {
 
@@ -33,23 +34,26 @@ class ActionDisableMicroProfileAuth extends Component {
     this.dispatchRequest = this.dispatchRequest.bind(this);
 }
 
-   handleOnClick() {
+  handleOnClick() {
     this.setState({isSubmitting: true, success:false, description:"Requesting", ariaLive:'assertive', errorMessage:'',  disabled:false});
 
     setTimeout(async () => {
       const response = await this.dispatchRequest();
-      console.log("response;", response)
       if (response.status == 202) {
         setTimeout(() => {
           this.setState({success:true, description:"Accepted"});
           setTimeout(() => {
             this.setState({isSubmitting: false, success:false, description:"", ariaLive:'off', disabled:true});
           }, 1500);
-        }, 2000);
+        }, 500);
       } else {
-        this.setState({isSubmitting: false, success:false, description:"Failed", ariaLive:'assertive',  errorMessage:`HTTP  ${response.status} : ${response.statusText}`, disabled:true});
+        var message = ""
+        if (response != undefined && response.statusText != undefined) {
+          message = `HTTP ${response.status} : ${response.statusText}`
+        }
+        this.setState({isSubmitting: false, success:false, description:"Failed", ariaLive:'assertive',  errorMessage:message, disabled:true});
       }
-    }, 1500);
+    }, 1400);
   }
 
   /**
@@ -57,11 +61,12 @@ class ActionDisableMicroProfileAuth extends Component {
    * @param {string} projectID
    */
   async dispatchRequest() {
-    const response = fetch(`${AppConstants.API_SERVER}/api/v1/projects/${this.props.projectID}/metrics/disableauth`,
+    const accessToken = localStorage.getItem('cw-access-token');
+    const response = fetch(`${AppConstants.API_SERVER}/api/v1/projects/${this.props.projectID}/metrics/auth`,
         {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: ""
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}`},
+            body: JSON.stringify({disable:true})
         });
      const reply = await response;
      return reply;
@@ -69,10 +74,11 @@ class ActionDisableMicroProfileAuth extends Component {
 
   render() {
     const {disabled, isSubmitting, success, description, ariaLive, errorMessage} = this.state
-    if (disabled) { return  (
-      <div className="ActionButton"><span className="errorMessage">{ errorMessage }</span> </div>
+    if (!success && errorMessage!="") { return  (
+      <div className="ActionButton">
+        <span className="errorMessage">{ errorMessage }</span>
+      </div>
     )}
-
 
     return (
           <div className="ActionButton">
@@ -88,11 +94,11 @@ class ActionDisableMicroProfileAuth extends Component {
               <Button
               kind="tertiary"
               disabled={disabled}
-              renderIcon={IconEdit}
-              aria-label="Disable Authentication"
+              renderIcon={IconAction}
+              aria-label="Allow anonymous connections"
               tabIndex={0}
               size="small"
-              onClick={() => this.handleOnClick()}>Disable authentication</Button>
+              onClick={() => this.handleOnClick()}>Allow anonymous connections</Button>
               </Fragment>
             )}
           </div>
@@ -104,4 +110,11 @@ ActionDisableMicroProfileAuth.propTypes = {
   projectID: PropTypes.string.isRequired
 }
 
-export default ActionDisableMicroProfileAuth;
+
+// Mapped Redux Stores
+const mapStateToProps = stores => {
+  return {};
+};
+
+
+export default  connect(mapStateToProps)(ActionDisableMicroProfileAuth);
