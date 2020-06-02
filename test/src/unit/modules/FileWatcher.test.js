@@ -374,7 +374,7 @@ describe('FileWatcher.js', () => {
     });
     describe('handleCapabilitiesUpdated(fwProject)', () => {
         it('updates the project object, project.inf, and UI with `capabilitiesReady: true` when updating the project.inf succeeds', async() => {
-                // arrange
+            // arrange
             const mockUser = {
                 projectList: { updateProject: sinon.mock() },
                 uiSocket: { emit: sinon.mock() },
@@ -382,10 +382,10 @@ describe('FileWatcher.js', () => {
             const fw = new FileWatcher(mockUser);
             const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
 
-                // act
+            // act
             await fw.handleCapabilitiesUpdated(mockFwProject);
 
-                // assert
+            // assert
             const expectedProjectUpdate = {
                 projectID: mockFwProject.projectID,
                 capabilitiesReady: true,
@@ -394,7 +394,7 @@ describe('FileWatcher.js', () => {
             fw.user.uiSocket.emit.should.have.been.calledOnceWith('projectChanged', expectedProjectUpdate);
         });
         it('does not update the UI when updating the project.inf fails', async() => {
-                // arrange
+            // arrange
             const mockUser = {
                 projectList: { updateProject: () => { throw new Error('error updating project.inf'); } },
                 uiSocket: { emit: sinon.mock() },
@@ -402,10 +402,10 @@ describe('FileWatcher.js', () => {
             const fw = new FileWatcher(mockUser);
             const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
 
-                // act
+            // act
             await fw.handleCapabilitiesUpdated(mockFwProject);
 
-                // assert
+            // assert
             fw.user.uiSocket.emit.should.not.have.been.called;
         });
     });
@@ -510,21 +510,21 @@ describe('FileWatcher.js', () => {
             },
         };
         it('does nothing when the fwProject contains no useful information', async() => {
-                // arrange
+            // arrange
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
             };
             const fw = new FileWatcher(mockUser);
             const handleFWProjectEvent = sinon.spy(fw, 'handleFWProjectEvent');
 
-                // act
+            // act
             await fw.handleUpdatedProject('mockEvent', mockFwProject);
 
-                // assert
+            // assert
             handleFWProjectEvent.should.not.have.been.called;
         });
         it('handles the event when the fwProject contains `ignoredPaths`', async() => {
-                // arrange
+            // arrange
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 ignoredPaths: 'mockIgnoredPaths',
@@ -533,14 +533,14 @@ describe('FileWatcher.js', () => {
             const fw = new FileWatcher(mockUser);
             const handleFWProjectEvent = sinon.stub(fw, 'handleFWProjectEvent');
 
-                // act
+            // act
             await fw.handleUpdatedProject('mockEvent', mockFwProject);
 
-                // assert
+            // assert
             handleFWProjectEvent.should.have.been.calledWithMatch('mockEvent', mockFwProject);
         });
         it('handles the event when the fwProject contains `contextRoot`', async() => {
-                // arrange
+            // arrange
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 contextRoot: 'mockContextRoot',
@@ -548,10 +548,10 @@ describe('FileWatcher.js', () => {
             const fw = new FileWatcher(mockUser);
             const handleFWProjectEvent = sinon.stub(fw, 'handleFWProjectEvent');
 
-                // act
+            // act
             await fw.handleUpdatedProject('mockEvent', mockFwProject);
 
-                // assert
+            // assert
             handleFWProjectEvent.should.have.been.calledOnceWithExactly('mockEvent', mockFwProject);
         });
     });
@@ -565,7 +565,7 @@ describe('FileWatcher.js', () => {
             },
         };
         it('handles the event when the fwProject contains `ignoredPaths`', async() => {
-                // arrange
+            // arrange
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 ignoredPaths: 'mockIgnoredPaths',
@@ -574,16 +574,16 @@ describe('FileWatcher.js', () => {
             const fw = new FileWatcher(mockUser);
             const handleFWProjectEvent = sinon.stub(fw, 'handleFWProjectEvent');
 
-                // act
+            // act
             await fw.handleNewProjectAdded('mockEvent', mockFwProject);
 
-                // assert
+            // assert
             handleFWProjectEvent.should.have.been.calledWithMatch('mockEvent', mockFwProject);
         });
     });
     describe('handleFWProjectEvent(event, fwProject)', () => {
         it('correctly updates the projectList, project.inf and UI and calls setMetricsState as the appStatus is started', async() => {
-                // arrange
+            // arrange
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 name: 'mockName',
@@ -623,16 +623,16 @@ describe('FileWatcher.js', () => {
             };
             const fw = new FileWatcher(mockUser);
 
-                // act
+            // act
             await fw.handleFWProjectEvent('mockEvent', mockFwProject);
 
-                // assert
+            // assert
             fw.user.projectList.updateProject.should.have.been.calledOnceWith(expectedProjectUpdate);
             fw.user.uiSocket.emit.should.have.been.calledOnceWith('mockEvent', expectedProjectInfoForUI);
             setMetricsState.should.be.calledOnce;
         });
         it('correctly updates the projectList, project.inf and UI and does not call setMetricsState as the appStatus is starting', async() => {
-                // arrange
+            // arrange
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 name: 'mockName',
@@ -672,10 +672,10 @@ describe('FileWatcher.js', () => {
             };
             const fw = new FileWatcher(mockUser);
 
-                // act
+            // act
             await fw.handleFWProjectEvent('mockEvent', mockFwProject);
 
-                // assert
+            // assert
             fw.user.projectList.updateProject.should.have.been.calledOnceWith(expectedProjectUpdate);
             fw.user.uiSocket.emit.should.have.been.calledOnceWith('mockEvent', expectedProjectInfoForUI);
             setMetricsState.should.not.be.called;
@@ -683,7 +683,7 @@ describe('FileWatcher.js', () => {
     });
     describe('handleProjectClosed(fwProject, project)', () => {
         it('correctly updates the UI when fwProject.status is not `success`', async() => {
-                // arrange
+            // arrange
             const mockFwProject = {
                 status: 'mockStatus',
             };
@@ -700,14 +700,14 @@ describe('FileWatcher.js', () => {
             };
             const fw = new FileWatcher(mockUser);
 
-                // act
+            // act
             await fw.handleProjectClosed(mockFwProject, mockProject);
 
-                // assert
+            // assert
             fw.user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectClosed', mockFwProject);
         });
         it('correctly updates the projectList, project.inf and UI when fwProject.status is `success`', async() => {
-                // arrange
+            // arrange
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 status: 'success',
@@ -748,10 +748,10 @@ describe('FileWatcher.js', () => {
             };
             const fw = new FileWatcher(mockUser);
 
-                // act
+            // act
             await fw.handleProjectClosed(mockFwProject, mockProject);
 
-                // assert
+            // assert
             fw.user.projectList.updateProject.should.have.been.calledOnceWithExactly(expectedProjectUpdate);
             fw.user.uiSocket.emit.should.have.been.calledOnceWithExactly('projectClosed', {
                 ...expectedProjectUpdate,
