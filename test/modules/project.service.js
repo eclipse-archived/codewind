@@ -235,7 +235,7 @@ async function buildProject(projectID, action) {
 
 function generateUniqueName(baseName = 'test') {
     const uniqueNumbers = uuidv4()
-        .replace(/[^0-9]/gi, '')
+        .replace(/[^0-9]/g, '')
         .substring(0,10);
     return `${baseName}${uniqueNumbers}`;
 }

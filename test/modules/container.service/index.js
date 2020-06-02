@@ -190,9 +190,7 @@ async function awaitProjectInfFile(projectID) {
 async function getContainer(projectName, projectID) {
     const containerInfoList = await helperService.getAppContainers();
     const containerName = helperService.getContainerName(projectName, projectID);
-    const container = containerInfoList.find(
-        (containerInfo) => (containerInfo.name.startsWith(containerName) && !containerInfo.name.endsWith('-build'))
-    );
+    const container = containerInfoList.find(({ name }) => name.includes(containerName));
     return container;
 }
 

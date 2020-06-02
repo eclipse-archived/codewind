@@ -81,15 +81,15 @@ function makePortPublishArgs() {
     # echo B 3 $3
 
 	local imageName
-	local imagePortsToExposeMap
+	local imagePortsToExposeStr
 	local imagePortsToExpose
 
 	imageName=$1
 	# echo imageName $imageName
-	imagePortsToExposeMap=$(docker image inspect --format='{{.Config.ExposedPorts}}' "$imageName")
-	# echo imagePortsToExposeMap $imagePortsToExposeMap
-	imagePortsToExpose=$(echo "$imagePortsToExposeMap" | grep -o "[0-9]\{1,5\}")
-	# echo imagePortsToExpose $imagePortsToExpose
+	imagePortsToExposeStr=$(docker image inspect --format='{{range $port, $config := .Config.ExposedPorts}}{{ index (split $port "/") 0 }} {{end}}' "$imageName")
+	# echo imagePortsToExposeStr[0] "$imagePortsToExposeStr"
+    # echo imagePortsToExpose "$imagePortsToExpose"
+    IFS=', ' read -r -a imagePortsToExpose <<< "$imagePortsToExposeStr"
 
 	portMappings=("${@:2}")
 	# echo makePortPublishArgs: portMappings "${portMappings[@]}"
@@ -100,7 +100,7 @@ function makePortPublishArgs() {
 		internalPort=$(echo "$externalToInternal" | grep -o "[0-9]\{1,5\}$")
 		# echo internalPort $internalPort
 		for imagePort in "${imagePortsToExpose[@]}"; do
-			# echo imagePort $imagePort
+			# echo imagePort "$imagePort"
 			if [ "$imagePort" = "$internalPort" ]; then
 				echo "--publish 127.0.0.1:$externalToInternal"
                 # echo

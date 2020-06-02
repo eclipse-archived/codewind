@@ -9,6 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 const chai = require('chai');
+const chaiSubset = require('chai-subset');
 const path = require('path');
 const fs = require('fs-extra');
 const { promisify } = require('util');
@@ -20,25 +21,25 @@ const {
     TEMP_TEST_DIR,
 } = require('../../config');
 
-const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 const sleep = promisify(setTimeout);
 chai.should();
+chai.use(chaiSubset);
 
-describe.only('Rebuild after edit Dockerfile expose port tests', function() {
+describe('Rebuild after edit Dockerfile expose port tests', function() {
     const tests = [
         // {
         //     projectType: 'go', // Go needs 2 restarts, even on master
         // },
-        {
-            projectType: 'nodejs',
-        },
+        // {
+        //     projectType: 'nodejs',
+        // },
         // {
         //     projectType: 'spring', // Spring needs the template change merged, then take out --expose 8080
         // },
         // Skip these tests by default because they are slow
-        // {
-        //     projectType: 'liberty',
-        // },
+        {
+            projectType: 'liberty',
+        },
         // {
         //     projectType: 'swift',
         // },
@@ -48,15 +49,31 @@ describe.only('Rebuild after edit Dockerfile expose port tests', function() {
         const {
             projectType,
         } = test;
-        describe(projectType, function() {
+        describe.only(projectType, function() {
             const projectName = `test-rebuild-${projectType}-project-after-edit-dockerfile-${Date.now()}`;
             const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
+            const pathToDockerfile = path.join(pathToLocalProject, 'Dockerfile');
+            const newPort = '9999';
             let projectID;
+            let originalPorts;
+            let originalAppPortMapping;
+            let originalDockerfile;
 
             before(`create a sample project, bind it to Codewind and wait for it start`, async function() {
                 this.timeout(testTimeout.maxTravis);
                 projectID = await projectService.createProjectFromTemplate(projectName, projectType, pathToLocalProject);
                 await projectService.awaitProjectStartedHTTP(projectID);
+
+                const { ports } = await containerService.getContainer(projectName, projectID);
+                originalPorts = ports;
+                console.log('originalPorts');
+                console.log(originalPorts);
+                const { body: { ports: { internalPort } } } = await projectService.getProject(projectID);
+                originalAppPortMapping = ports.find(portMapping => portMapping.internal === internalPort);
+                console.log('originalAppPortMapping');
+                console.log(originalAppPortMapping);
+
+                originalDockerfile = fs.readFileSync(pathToDockerfile, 'utf8');
             });
 
             after(async function() {
@@ -67,8 +84,7 @@ describe.only('Rebuild after edit Dockerfile expose port tests', function() {
             it('exposes a different port after user edits the Dockerfile to do so', async function() {
                 this.timeout(testTimeout.maxTravis);
 
-                const newPort = '9999';
-                editDockerfileExposePort(pathToLocalProject, newPort);
+                exposeNewPortInDockerfile(pathToDockerfile, newPort);
                 const { fileList, directoryList } = projectService.getPathsToUpload(pathToLocalProject, projectType);
                 const res = await projectService.syncFiles(
                     projectID,
@@ -78,36 +94,59 @@ describe.only('Rebuild after edit Dockerfile expose port tests', function() {
                     directoryList,
                 );
                 res.status.should.equal(200, res.text);
+                await sleep(5000); // PFE takes a moment to stop the project (before rebuilding it)
+                await projectService.awaitProjectStartedHTTP(projectID);
 
-                await projectService.awaitProjectStarting(projectID);
-                await sleep(5000); // PFE takes a moment to update the project ports
+                const { ports } = await containerService.getContainer(projectName, projectID);
+                console.log('ports');
+                console.log(ports);
+                // ports.should.deep.include(originalAppPortMapping);
+                // ports.should.have.length(originalPorts.length + 1);
+                // ports.should.containSubset([{ internal: newPort }]);
 
-                const containerInfo = await containerService.getContainer(projectID);
-                console.log('containerInfo');
-                console.log(containerInfo);
+                const { body: { ports: { internalPort: newAppPort } } } = await projectService.getProject(projectID);
+                console.log('newAppPort');
+                console.log(newAppPort);
+                // newAppPort.should.equal(originalAppPortMapping.internal);
+            });
 
-                const { body: { ports } } = await projectService.getProject(projectID);
-                ports.internalPort.should.equal(newPort);
+            it('exposes the original ports after user restores the original Dockerfile', async function() {
+                this.timeout(testTimeout.maxTravis);
+
+                restoreDockerfile(pathToDockerfile, originalDockerfile);
+                const { fileList, directoryList } = projectService.getPathsToUpload(pathToLocalProject, projectType);
+                const res = await projectService.syncFiles(
+                    projectID,
+                    pathToLocalProject,
+                    ['Dockerfile'],
+                    fileList,
+                    directoryList,
+                );
+                res.status.should.equal(200, res.text);
+                await sleep(5000); // PFE takes a moment to stop the project (before rebuilding it)
+                await projectService.awaitProjectStartedHTTP(projectID);
+
+                const { ports } = await containerService.getContainer(projectName, projectID);
+                console.log('ports');
+                console.log(ports);
+                // ports.should.have.length(originalPorts.length);
+                // ports.should.deep.include(originalAppPortMapping);
+
+                const { body: { ports: { internalPort: newAppPort } } } = await projectService.getProject(projectID);
+                console.log('newAppPort');
+                console.log(newAppPort);
+                // newAppPort.should.equal(originalAppPortMapping.internal);
             });
         });
     });
 });
 
-function editDockerfileExposePort(pathToLocalProject, newPort){
-    const filepath = path.join(pathToLocalProject, 'Dockerfile');
-    const originalFileContents = fs.readFileSync(filepath, 'utf8');
-    const newFileContents = getDockerfileExposingDifferentPort(originalFileContents, newPort);
-    fs.writeFileSync(filepath, newFileContents);
+function exposeNewPortInDockerfile(pathToDockerfile, newPort){
+    const originalFileContents = fs.readFileSync(pathToDockerfile, 'utf8');
+    const newFileContents = `${originalFileContents}EXPOSE ${newPort}\n`;
+    fs.writeFileSync(pathToDockerfile, newFileContents);
 }
 
-function getDockerfileExposingDifferentPort(originalDockerfile, newPort) {
-    const newExposeLine = `EXPOSE ${newPort}`;
-
-    const splitOriginalDockerfile = originalDockerfile.split('\n');
-    const indexOfExposeLine = splitOriginalDockerfile.findIndex(line => line.includes('EXPOSE'));
-
-    let newDockerfile = deepClone(splitOriginalDockerfile);
-    newDockerfile[indexOfExposeLine] = newExposeLine;
-    newDockerfile = newDockerfile.join('\n');
-    return newDockerfile;
+function restoreDockerfile(pathToDockerfile, originalDockerfile){
+    fs.writeFileSync(pathToDockerfile, originalDockerfile);
 }
