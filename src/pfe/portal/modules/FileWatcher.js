@@ -530,8 +530,8 @@ module.exports = class FileWatcher {
       let updatedProject = await this.user.projectList.updateProject(projectUpdate);
 
       const { appStatus } = updatedProject;
-      // Update the metrics state if its just been added, or is running or stopped
-      if (event === 'newProjectAdded' || (appStatus === 'started' || appStatus === 'stopped')) {
+      // Update the metrics state if its just been added or is running
+      if (event === 'newProjectAdded' || appStatus === 'started') {
         try {
           // If updating the metrics fails, don't stop the status being emitted to the UI
           await updatedProject.setMetricsState();
