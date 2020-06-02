@@ -12,7 +12,6 @@ const chai = require('chai');
 const chaiSubset = require('chai-subset');
 const path = require('path');
 const fs = require('fs-extra');
-const { promisify } = require('util');
 
 const projectService = require('../../modules/project.service');
 const containerService = require('../../modules/container.service');
@@ -21,35 +20,21 @@ const {
     TEMP_TEST_DIR,
 } = require('../../config');
 
-const sleep = promisify(setTimeout);
 chai.should();
 chai.use(chaiSubset);
 
 describe('Rebuild after edit Dockerfile expose port tests', function() {
     const tests = [
-        // {
-        //     projectType: 'go', // Go needs 2 restarts, even on master
-        // },
-        // {
-        //     projectType: 'nodejs',
-        // },
-        // {
-        //     projectType: 'spring', // Spring needs the template change merged, then take out --expose 8080
-        // },
-        // Skip these tests by default because they are slow
         {
-            projectType: 'liberty',
+            projectType: 'nodejs',
         },
-        // {
-        //     projectType: 'swift',
-        // },
     ];
 
     tests.forEach((test) => {
         const {
             projectType,
         } = test;
-        describe.only(projectType, function() {
+        describe(projectType, function() {
             const projectName = `test-rebuild-${projectType}-project-after-edit-dockerfile-${Date.now()}`;
             const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
             const pathToDockerfile = path.join(pathToLocalProject, 'Dockerfile');
@@ -66,12 +51,8 @@ describe('Rebuild after edit Dockerfile expose port tests', function() {
 
                 const { ports } = await containerService.getContainer(projectName, projectID);
                 originalPorts = ports;
-                console.log('originalPorts');
-                console.log(originalPorts);
                 const { body: { ports: { internalPort } } } = await projectService.getProject(projectID);
                 originalAppPortMapping = ports.find(portMapping => portMapping.internal === internalPort);
-                console.log('originalAppPortMapping');
-                console.log(originalAppPortMapping);
 
                 originalDockerfile = fs.readFileSync(pathToDockerfile, 'utf8');
             });
@@ -94,20 +75,15 @@ describe('Rebuild after edit Dockerfile expose port tests', function() {
                     directoryList,
                 );
                 res.status.should.equal(200, res.text);
-                await sleep(5000); // PFE takes a moment to stop the project (before rebuilding it)
-                await projectService.awaitProjectStartedHTTP(projectID);
+                await projectService.awaitProjectRestartedHTTP(projectID);
 
                 const { ports } = await containerService.getContainer(projectName, projectID);
-                console.log('ports');
-                console.log(ports);
-                // ports.should.deep.include(originalAppPortMapping);
-                // ports.should.have.length(originalPorts.length + 1);
-                // ports.should.containSubset([{ internal: newPort }]);
+                ports.should.deep.include(originalAppPortMapping);
+                ports.should.have.length(originalPorts.length + 1);
+                ports.should.containSubset([{ internal: newPort }]);
 
                 const { body: { ports: { internalPort: newAppPort } } } = await projectService.getProject(projectID);
-                console.log('newAppPort');
-                console.log(newAppPort);
-                // newAppPort.should.equal(originalAppPortMapping.internal);
+                newAppPort.should.equal(originalAppPortMapping.internal);
             });
 
             it('exposes the original ports after user restores the original Dockerfile', async function() {
@@ -123,19 +99,14 @@ describe('Rebuild after edit Dockerfile expose port tests', function() {
                     directoryList,
                 );
                 res.status.should.equal(200, res.text);
-                await sleep(5000); // PFE takes a moment to stop the project (before rebuilding it)
-                await projectService.awaitProjectStartedHTTP(projectID);
+                await projectService.awaitProjectRestartedHTTP(projectID);
 
                 const { ports } = await containerService.getContainer(projectName, projectID);
-                console.log('ports');
-                console.log(ports);
-                // ports.should.have.length(originalPorts.length);
-                // ports.should.deep.include(originalAppPortMapping);
+                ports.should.have.length(originalPorts.length);
+                ports.should.deep.include(originalAppPortMapping);
 
                 const { body: { ports: { internalPort: newAppPort } } } = await projectService.getProject(projectID);
-                console.log('newAppPort');
-                console.log(newAppPort);
-                // newAppPort.should.equal(originalAppPortMapping.internal);
+                newAppPort.should.equal(originalAppPortMapping.internal);
             });
         });
     });

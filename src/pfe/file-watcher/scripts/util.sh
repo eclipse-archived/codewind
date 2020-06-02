@@ -76,34 +76,21 @@ function getWorkspacePathForVolumeMounting() {
 }
 
 function makePortPublishArgs() {
-	# echo B 1 $1
-	# echo B 2 $2
-    # echo B 3 $3
-
 	local imageName
 	local imagePortsToExposeStr
 	local imagePortsToExpose
-
 	imageName=$1
-	# echo imageName $imageName
-	imagePortsToExposeStr=$(docker image inspect --format='{{range $port, $config := .Config.ExposedPorts}}{{ index (split $port "/") 0 }} {{end}}' "$imageName")
-	# echo imagePortsToExposeStr[0] "$imagePortsToExposeStr"
-    # echo imagePortsToExpose "$imagePortsToExpose"
-    IFS=', ' read -r -a imagePortsToExpose <<< "$imagePortsToExposeStr"
 
+	imagePortsToExposeStr=$(docker image inspect --format='{{range $port, $config := .Config.ExposedPorts}}{{ index (split $port "/") 0 }} {{end}}' "$imageName")
+    IFS=', ' read -r -a imagePortsToExpose <<< "$imagePortsToExposeStr"
 	portMappings=("${@:2}")
-	# echo makePortPublishArgs: portMappings "${portMappings[@]}"
 
 	for externalToInternal in "${portMappings[@]}"; do
-		# echo externalToInternal $externalToInternal
 		local internalPort
 		internalPort=$(echo "$externalToInternal" | grep -o "[0-9]\{1,5\}$")
-		# echo internalPort $internalPort
 		for imagePort in "${imagePortsToExpose[@]}"; do
-			# echo imagePort "$imagePort"
 			if [ "$imagePort" = "$internalPort" ]; then
 				echo "--publish 127.0.0.1:$externalToInternal"
-                # echo
 			fi
 		done
 	done
@@ -135,12 +122,7 @@ elif [ "$COMMAND" == "getWorkspacePathForVolumeMounting" ]; then
  	retval=$( getWorkspacePathForVolumeMounting "$LOCAL_WORKSPACE" )
 	echo "$retval"
 elif [ "$COMMAND" == "makePortPublishArgs" ]; then
-	# echo A 1 $1
-	# echo A 2 $2
-	# echo A 3 $3
 	all_args=("$@")
-	# echo util all_args "${all_args[@]}"
-    # echo
 	retval=$( makePortPublishArgs "${all_args[@]}" );
 	echo "$retval"
 fi

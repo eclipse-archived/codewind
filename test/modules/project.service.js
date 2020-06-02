@@ -362,6 +362,19 @@ async function awaitProject(id) {
     return awaitProject(id);
 }
 
+async function awaitProjectRestartedHTTP(id) {
+    await awaitProjectStoppedHTTP(id);
+    await awaitProjectStartedHTTP(id);
+}
+
+async function awaitProjectStoppedHTTP(id) {
+    const { body: project } = await getProject(id);
+    if (project.appStatus !== 'stopped') {
+        await sleep(1000); // wait one second
+        await awaitProjectStoppedHTTP(id);
+    }
+}
+
 async function awaitProjectStartedHTTP(id) {
     const { body: project } = await getProject(id);
     const { containerId, appStatus } = project;
@@ -376,16 +389,6 @@ async function awaitProjectStarted(projectID) {
     const expectedSocketMsg = {
         projectID,
         msgType: 'projectStarted',
-    };
-    await socketService.checkForMsg(expectedSocketMsg);
-    socketService.close();
-}
-
-async function awaitProjectStarting(projectID) {
-    const socketService = await SocketService.createSocket();
-    const expectedSocketMsg = {
-        projectID,
-        msgType: 'projectStarting',
     };
     await socketService.checkForMsg(expectedSocketMsg);
     socketService.close();
@@ -538,9 +541,9 @@ module.exports = {
     getProjectIDs,
     countProjects,
     awaitProject,
+    awaitProjectRestartedHTTP,
     awaitProjectStartedHTTP,
     awaitProjectStarted,
-    awaitProjectStarting,
     awaitProjectBuilding,
     runLoad,
     cancelLoad,

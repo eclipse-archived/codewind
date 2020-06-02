@@ -255,8 +255,6 @@ function dockerRun() {
 
 	local portPublishArgs
 	portPublishArgs=$($util makePortPublishArgs "$project" "${PORT_MAPPINGS[@]}")
-	echo portPublishArgs $portPublishArgs
-	echo portPublishArgsArr "${portPublishArgs[@]}"
 
 	$IMAGE_COMMAND run --network=codewind_network \
 		$PROJECT_LINKS_PARAM \

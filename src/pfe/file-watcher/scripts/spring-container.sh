@@ -273,10 +273,7 @@ function dockerRun() {
 
 	local portPublishArgs
 	portPublishArgs=$($util makePortPublishArgs "$project" "${PORT_MAPPINGS[@]}")
-	echo portPublishArgs $portPublishArgs
-	echo portPublishArgsArr "${portPublishArgs[@]}"
 
-	# TODO: get rid of --expose 8080
 	$IMAGE_COMMAND run --network=codewind_network \
 		--entrypoint "/scripts/new_entrypoint.sh" \
 		--name $project \
