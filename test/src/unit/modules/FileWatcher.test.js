@@ -726,7 +726,6 @@ describe('FileWatcher.js', () => {
             };
             const expectedProjectUpdateToJSON = {
                 projectID: mockFwProject.projectID,
-                ports: '',
                 buildStatus: 'unknown',
                 appStatus: 'unknown',
                 state: 'closed',
@@ -740,7 +739,7 @@ describe('FileWatcher.js', () => {
                 return filteredProject;
             };
             const mockUser = {
-                projectList: { 
+                projectList: {
                     updateProject: sinon.stub().returns(expectedProjectUpdateToJSON),
                     deleteProjectKey: () => {},
                 },
