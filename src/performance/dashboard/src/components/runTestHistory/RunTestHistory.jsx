@@ -83,7 +83,7 @@ class RunTestHistory extends Component {
      */
     async handleDeleteRow(rowID) {
         this.setState({ deleteInProgress: true });
-        const result = await postDeleteTests(this.props.projectID, rowID);
+        const result = await postDeleteTests(localStorage.getItem('cw-access-token'),this.props.projectID, rowID);
         if (result.status && result.status === 200) {
             await this.props.dispatch(reloadMetricsData(localStorage.getItem('cw-access-token'), this.props.projectID, this.props.projectMetricTypes.types));
         } else {
