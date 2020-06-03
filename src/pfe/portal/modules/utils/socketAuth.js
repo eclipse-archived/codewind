@@ -20,6 +20,9 @@ module.exports.verifySocketUser = function verifySocketUser (token, keycloakPubl
   return new Promise((resolve, reject) => {
     log.trace(`UISocket : [verifySocketUser] - token: ${token} `)
     log.trace(`UISocket : [verifySocketUser] - publickey: ${keycloakPublicKey}`)
+    if (!keycloakPublicKey) {
+      return reject('KEYCLOAK_PUBLIC_KEY_MISSING');
+    }
     jwt.verify(token, keycloakPublicKey, function (err, decoded) {
       if (err) {
         log.error(`UISocket : [verifySocketUser] - ${err.message}s`)
@@ -35,8 +38,8 @@ module.exports.verifySocketUser = function verifySocketUser (token, keycloakPubl
   });
 };
 
-// fetch the public key from Keycloak service
-module.exports.getKeycloakPublicKey = async function getKeycloakPublicKey() {
+// Fetch the Keycloak Public key for the Codewind realm
+async function fetchKeycloakPublicKey() {
   const currentTLSReject = process.env["NODE_TLS_REJECT_UNAUTHORIZED"]
   const BEGIN_KEY = '-----BEGIN PUBLIC KEY-----\n';
   const END_KEY = '\n-----END PUBLIC KEY-----\n';
@@ -71,7 +74,7 @@ module.exports.getKeycloakPublicKey = async function getKeycloakPublicKey() {
       break;
     }
     default: {
-      log.error(`UISocket : [getKeycloakPublicKey] - unable to fetch public key ${secKeycloakHost}${certsURL}`);
+      log.error(`UISocket : [getKeycloakPublicKey] - unable to fetch public key from https://${secKeycloakHost}${certsURL}`);
       break;
     }
     }
@@ -83,22 +86,37 @@ module.exports.getKeycloakPublicKey = async function getKeycloakPublicKey() {
 }
 
 // Add a socket authenticator to the UI Socket
-module.exports.addAuthenticationToUISocket = async function addAuthenticationToUISocket(uiSocket) {
+module.exports.addAuthenticationToUISocket = function addAuthenticationToUISocket(uiSocket) {
   // cache the public key from Keycloak to avoid polling on each connection
-  let keycloakPublicKey = null
-  try {
-    keycloakPublicKey = await this.getKeycloakPublicKey();
-    log.info(`keycloakPublicKey = \n${keycloakPublicKey}`);
-  } catch (err) {
-    console.dir(err);
+  let keycloakPublicKey = null;
+
+  // Returns the cached public key if one has already been downloaded, else fetch the key now
+  async function getCodewindRealmPublicKey() {
+    if (keycloakPublicKey) {
+      return keycloakPublicKey;
+    }
+    try {
+      log.info('getCodewindRealmPublicKey: Please wait, fetching the latest public key from Keycloak');
+      keycloakPublicKey = await fetchKeycloakPublicKey();
+      log.info(`getCodewindRealmPublicKey: keycloakPublicKey: \n\n${keycloakPublicKey}`);
+    } catch (err) {
+      keycloakPublicKey = null;
+      log.error('getCodewindRealmPublicKey: Aborting - fetching public key from Keycloak failed');
+      console.dir(err);
+    }
+    return keycloakPublicKey;
   }
 
   socketAuth(uiSocket, {
     authenticate: async (socket, data, callback) => {
-      log.info("UISocket : [pre-authenticate]");
+      log.info("UISocket : [pre-authenticate] - the socket wants to authenticate");
+      const publicKey = await getCodewindRealmPublicKey();
+      if (publicKey) {
+        log.info('UISocket : [pre-authenticate] - verifying the user supplied access token with the previously retrieved public key');
+      }
       const { token } = data;
       try {
-        const authenticatedSocket = await this.verifySocketUser(token, keycloakPublicKey);
+        const authenticatedSocket = await this.verifySocketUser(token, publicKey);
         socket.user = authenticatedSocket;
         return callback(null, true);
       } catch (e) {
