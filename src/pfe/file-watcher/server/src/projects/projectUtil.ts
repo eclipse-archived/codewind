@@ -352,8 +352,7 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
     // The sentProjectInfo is introduced to prevent from setting app status to started before projectInfo has been sent to portal
     keyValuePair.key = "sentProjectInfo";
     keyValuePair.value = false;
-    await projectsController.updateProjectInfo(projectID, keyValuePair);
-
+    const existingProjectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
     let argList = script + " ";
     for (const arg of args) { argList += arg + " "; }
     argList = argList.trim();
@@ -434,7 +433,7 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         const servicePort = parseInt(containerInfo.internalPort, 10);
 
                         // Expose an ingress for the project
-                        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, operation.projectInfo.isHttps, servicePort);
+                        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, operation.projectInfo.isHttps, servicePort, existingProjectInfo.appBaseURL);
 
                         // Set the appBaseURL to the ingress we exposed earlier
                         projectInfo.appBaseURL = baseURL;
@@ -1963,7 +1962,7 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
 
         // Expose an ingress for the project
         const servicePort = parseInt(containerInfo.internalPort, 10);
-        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, operation.projectInfo.isHttps, servicePort);
+        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, operation.projectInfo.isHttps, servicePort, projectInfo.appBaseURL);
 
         // Set the appBaseURL to the ingress URL of the project
         const updatedProjectInfo: ProjectInfo = operation.projectInfo;
@@ -2205,7 +2204,7 @@ export async function exposeOverIngress(projectInfo: ProjectInfo, appPort?: numb
     if (process.env.IN_K8) {
         const projectID = projectInfo.projectID;
         const projectName = projectInfo.location.split("/").pop();
-        projectInfo.appBaseURL = await kubeutil.exposeOverIngress(projectID, projectName, projectInfo.isHttps, appPort);
+        projectInfo.appBaseURL = await kubeutil.exposeOverIngress(projectID, projectName, projectInfo.isHttps, appPort, projectInfo.appBaseURL);
         await projectsController.saveProjectInfo(projectID, projectInfo, true);
     }
 }

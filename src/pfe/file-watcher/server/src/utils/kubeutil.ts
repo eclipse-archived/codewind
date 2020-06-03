@@ -416,7 +416,7 @@ export async function installChart(projectID: string, deploymentName: string, ch
     return response;
 }
 
-export async function exposeOverIngress(projectID: string, projectName: string, isHTTPS: boolean, appPort?: number): Promise<string> {
+export async function exposeOverIngress(projectID: string, projectName: string, isHTTPS: boolean, appPort: number, existingAppBaseURL: string): Promise<string> {
     let ownerReferenceName: string;
     let ownerReferenceUID: string;
     let serviceName: string;
@@ -444,23 +444,28 @@ export async function exposeOverIngress(projectID: string, projectName: string, 
         throw err;
     }
 
-    // Calculate the ingress domain
-    // Thanks to Kubernetes and Ingress, some ingress controllers impose a character limitation on the host name, so:
-    // If the ingress domain prefix is < 62 characters and the resultant project ingress >= 62, trim
-    // Otherwise, don't trim the ingress.
-    const ingressDomain = process.env.INGRESS_PREFIX;
-    const ingressDomainLength = ingressDomain.length;
+    let projectIngressURL;
+    if (existingAppBaseURL) {
+        projectIngressURL = existingAppBaseURL.split("://").pop();
+    } else {
+        // Calculate the ingress domain
+        // Thanks to Kubernetes and Ingress, some ingress controllers impose a character limitation on the host name, so:
+        // If the ingress domain prefix is < 62 characters and the resultant project ingress >= 62, trim
+        // Otherwise, don't trim the ingress.
+        const ingressDomain = process.env.INGRESS_PREFIX;
+        const ingressDomainLength = ingressDomain.length;
 
-    // Generate four random alphanumeric characters and add it to the front of the project name to ensure uniqueness
-    const projectIngress = Math.random().toString(36).substring(2, 6) + "-" + projectName.toLowerCase();
+        // Generate four random alphanumeric characters and add it to the front of the project name to ensure uniqueness
+        const projectIngress = Math.random().toString(36).substring(2, 6) + "-" + projectName.toLowerCase();
 
-    let projectIngressURL = projectIngress + "-" + ingressDomain;
-    if (ingressDomainLength < 62 && projectIngressURL.length >= 62) {
-        // Calculate how many characters we can keep
-        const spaceRemaining = 62 - ingressDomainLength;
+        projectIngressURL = projectIngress + "-" + ingressDomain;
+        if (ingressDomainLength < 62 && projectIngressURL.length >= 62) {
+            // Calculate how many characters we can keep
+            const spaceRemaining = 62 - ingressDomainLength;
 
-        // Trim the project's ingress to fit within the limit
-        projectIngressURL = projectIngress.substring(0, spaceRemaining) + "-" + ingressDomain;
+            // Trim the project's ingress to fit within the limit
+            projectIngressURL = projectIngress.substring(0, spaceRemaining) + "-" + ingressDomain;
+        }
     }
 
     logger.logProjectInfo("*** Ingress: " + projectIngressURL, projectID);
