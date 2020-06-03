@@ -223,21 +223,9 @@ module.exports = class FileWatcher {
     log.debug(`Received filewatcher module response: ${inspect(msg)}`)
   }
 
-
   async buildAndRunProject(project){
-    let settingsFileContents = await project.readSettingsFile();
-    let projectAction = {
-      projectID: project.projectID,
-      projectType: project.projectType,
-      extension: project.extension,
-      contextroot: project.contextRoot,
-      startMode: project.startMode,
-      location: project.projectPath(),
-      applicationPort: project.applicationPort,
-      settings: settingsFileContents,
-      language: project.language,
-      autoBuild: project.autoBuild
-    };
+    const settingsFileContents = await project.readSettingsFile();
+    const projectAction = createProjectActionForBuildAndRun(project, settingsFileContents);
 
     log.info(`Calling filewatcher.createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
     let retval;
@@ -436,12 +424,12 @@ module.exports = class FileWatcher {
           refPaths: [],
         }
         if (fwProject.refPaths) {
-          data.refPaths = fwProject.refPaths.map((refPath) => ({ 
-            from: project.resolveMonitorPath(refPath.from), 
+          data.refPaths = fwProject.refPaths.map((refPath) => ({
+            from: project.resolveMonitorPath(refPath.from),
             to: refPath.to,
           }));
         }
-        const projectUpdate = { 
+        const projectUpdate = {
           projectID,
           projectWatchStateId,
           ignoredPaths,
@@ -474,7 +462,7 @@ module.exports = class FileWatcher {
       // Send all file watcher clients project related data when a new project is added or ignored paths has changed
       const ignoredPaths = fwProject.ignoredPaths;
       const pathToMonitor = project.pathToMonitor;
-  
+
       let time = Date.now()
       if (project.creationTime) {
         time = project.creationTime
@@ -492,7 +480,7 @@ module.exports = class FileWatcher {
       if (fwProject.refPaths) {
         data.refPaths = fwProject.refPaths.map((refPath) => ({
           from: project.resolveMonitorPath(refPath.from),
-          to: refPath.to 
+          to: refPath.to
         }));
       }
       const projectUpdate = {
@@ -563,7 +551,6 @@ module.exports = class FileWatcher {
     if (fwProject.status === 'success') {
       let projectUpdate = {
         projectID: fwProject.projectID,
-        ports: '',
         buildStatus: 'unknown',
         appStatus: 'unknown',
         state: Project.STATES.closed,
@@ -742,4 +729,51 @@ function logEvent(event, projectData) {
   }
 }
 
+function createProjectActionForBuildAndRun(project, settings) {
+  const {
+    projectID,
+    projectType,
+    extension,
+    contextRoot: contextroot,
+    startMode,
+    applicationPort,
+    language,
+    autoBuild,
+    ports,
+  } = project;
+  const location = project.projectPath();
+
+  const projectAction = {
+    projectID,
+    projectType,
+    extension,
+    contextroot,
+    startMode,
+    location,
+    applicationPort,
+    settings,
+    language,
+    autoBuild,
+  };
+
+  if (ports) {
+    const { exposedPort, internalPort, exposedDebugPort, internalDebugPort } = ports;
+    if (exposedPort && internalPort) {
+      projectAction.portMappings = {
+        ...projectAction.portMappings,
+        [internalPort]: exposedPort,
+      }
+    }
+    if (exposedDebugPort && internalDebugPort) {
+      projectAction.portMappings = {
+        ...projectAction.portMappings,
+        [internalDebugPort]: exposedDebugPort,
+      }
+    }
+  }
+
+  return projectAction;
+}
+
 module.exports.handleProjectActionResponse = handleProjectActionResponse;
+module.exports.createProjectActionForBuildAndRun = createProjectActionForBuildAndRun;

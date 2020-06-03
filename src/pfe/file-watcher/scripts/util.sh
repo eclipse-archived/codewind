@@ -75,6 +75,27 @@ function getWorkspacePathForVolumeMounting() {
 	echo "$workspace"
 }
 
+function makePortPublishArgs() {
+	local imageName
+	local imagePortsToExposeStr
+	local imagePortsToExpose
+	imageName=$1
+
+	imagePortsToExposeStr=$(docker image inspect --format='{{range $port, $config := .Config.ExposedPorts}}{{ index (split $port "/") 0 }} {{end}}' "$imageName")
+    IFS=', ' read -r -a imagePortsToExpose <<< "$imagePortsToExposeStr"
+	portMappings=("${@:2}")
+
+	for externalToInternal in "${portMappings[@]}"; do
+		local internalPort
+		internalPort=$(echo "$externalToInternal" | grep -o "[0-9]\{1,5\}$")
+		for imagePort in "${imagePortsToExpose[@]}"; do
+			if [ "$imagePort" = "$internalPort" ]; then
+				echo "--publish 127.0.0.1:$externalToInternal"
+			fi
+		done
+	done
+}
+
 if [ "$COMMAND" == "updateAppState" ]; then
 	projectID=$1
 	state=$2
@@ -99,5 +120,9 @@ elif [ "$COMMAND" == "imagePushRegistryStatus" ]; then
 elif [ "$COMMAND" == "getWorkspacePathForVolumeMounting" ]; then
  	LOCAL_WORKSPACE=$1
  	retval=$( getWorkspacePathForVolumeMounting "$LOCAL_WORKSPACE" )
+	echo "$retval"
+elif [ "$COMMAND" == "makePortPublishArgs" ]; then
+	all_args=("$@")
+	retval=$( makePortPublishArgs "${all_args[@]}" );
 	echo "$retval"
 fi

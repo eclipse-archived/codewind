@@ -101,7 +101,6 @@ const projectEventErrorMsgs = {
  * @returns void
  */
 export async function containerCreate(operation: Operation, script: string, command: string): Promise<void> {
-
     const event = "projectCreation";
     const projectLocation = operation.projectInfo.location;
     const projectID = operation.projectInfo.projectID;
@@ -109,7 +108,6 @@ export async function containerCreate(operation: Operation, script: string, comm
     const projectType = operation.projectInfo.projectType;
     if (projectList.indexOf(projectID) === -1)
         projectList.push(projectID);
-
     logger.logProjectInfo("Creating container for " + operation.projectInfo.projectType + " project " + projectLocation, projectID, projectName);
     operation.containerName = await getContainerName(operation.projectInfo);
     // Refer to the comment in getLogName function for this usage
@@ -186,6 +184,12 @@ export async function containerCreate(operation: Operation, script: string, comm
                 String(operation.projectInfo.autoBuildEnabled)
             ];
         }
+
+    if (projectInfo.portMappings) {
+        for (const [internalPort, externalPort] of Object.entries(projectInfo.portMappings)) {
+            args.push(`${externalPort}:${internalPort}`);
+        }
+    }
 
     executeBuildScript(operation, script, args, event);
 
@@ -286,6 +290,12 @@ export async function containerUpdate(operation: Operation, script: string, comm
             logDir,
             String(operation.projectInfo.autoBuildEnabled)
         ];
+    }
+
+    if (projectInfo.portMappings) {
+        for (const [internalPort, externalPort] of Object.entries(projectInfo.portMappings)) {
+            args.push(`${externalPort}:${internalPort}`);
+        }
     }
 
     executeBuildScript(operation, script, args, event);
@@ -505,6 +515,17 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                             projectInfo.ports.internalDebugPort = containerInfo.internalDebugPort;
                         }
                         logger.logProjectInfo("Found container information: " + JSON.stringify(containerInfo), projectID, projectName);
+
+
+                        const portMappings: any = {};
+                        containerInfo.containerPorts.forEach((port, i) => {
+                            portMappings[port] = containerInfo.hostPorts[i];
+                        });
+
+                        await projectsController.updateProjectInfo(projectID, {
+                            key: "portMappings",
+                            value:  portMappings,
+                        });
                     } else {
                         containerInfoMap.delete(operation.projectInfo.projectID);
                         containerInfoForceRefreshMap.delete(operation.projectInfo.projectID);
@@ -1346,6 +1367,15 @@ export async function buildAndRun(operation: Operation, command: string): Promis
         await projectsController.updateProjectInfo(projectID, keyValuePair);
 
         try {
+            if (operation.projectInfo && operation.projectInfo.portMappings) {
+                const portMappings = operation.projectInfo.portMappings;
+                logger.logProjectInfo(`Adding existing portMappings to buildInfo: ${JSON.stringify(portMappings)}`, projectID);
+                for (const [internalPort, externalPort] of Object.entries(portMappings)) {
+                    // Cast unknown typed externalPort to String
+                    buildInfo.hostPorts.push(String(externalPort));
+                    buildInfo.containerPorts.push(internalPort);
+                }
+            }
             logger.logProjectInfo("Beginning container build and run stage", projectID, projectName);
             await containerBuildAndRun(event, buildInfo, operation);
         } catch (err) {

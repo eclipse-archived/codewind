@@ -28,64 +28,19 @@ const SocketService = require('./socket.service');
 chai.should();
 const sleep = promisify(setTimeout);
 
-// These are for the nodejs template at https://github.com/codewind-resources/nodeExpressTemplate
-const defaultNodeProjectFileList = [
-    '.cw-settings',
-    '.dockerignore',
-    '.gitignore',
-    'Dockerfile',
-    'Dockerfile-tools',
-    'chart/node/Chart.yaml',
-    'chart/node/templates/basedeployment.yaml',
-    'chart/node/templates/deployment.yaml',
-    'chart/node/templates/hpa.yaml',
-    'chart/node/templates/istio.yaml',
-    'chart/node/templates/service.yaml',
-    'chart/node/values.yaml',
-    'cli-config.yml',
-    'images/header-logo.svg',
-    'nodemon.json',
-    'package.json',
-    'public/404.html',
-    'public/500.html',
-    'public/index.html',
-    'server/config/local.json',
-    'server/routers/codewind.js',
-    'server/routers/health.js',
-    'server/routers/index.js',
-    'server/routers/public.js',
-    'server/server.js',
-    'test/test-demo.js',
-    'test/test-server.js',
-];
-const defaultNodeProjectDirList = [
-    'chart',
-    'chart/node',
-    'chart/node/templates',
-    'public',
-    'server',
-    'server/config',
-    'server/routers',
-    'test',
-    'images',
-];
-
 /**
  * Clone, bind and build one of our template projects
  */
 async function createProjectFromTemplate(name, projectType, path, autoBuild = false) {
     const { url, language } = templateOptions[projectType];
-    const pfeProjectType = (['openliberty', 'go', 'lagom'].includes(projectType))
-        ? 'docker'
-        : projectType;
 
-    await cloneProject(url, path);
+    await cloneProjectAndReplacePlaceholders(url, path, name);
 
     const res = await bindProject({
         name,
         path,
         language,
-        projectType: pfeProjectType,
+        projectType: getPFEProjectType(projectType),
         autoBuild,
         creationTime: Date.now(),
     });
@@ -133,7 +88,7 @@ async function syncFiles(
 }
 
 function recursivelyGetAllPaths(inputPath) {
-    const paths = klawSync(inputPath,  { nodir: true });
+    const paths = klawSync(inputPath, { nodir: true });
     const filePaths = paths.map((path) => path.path);
     return filePaths;
 };
@@ -163,8 +118,8 @@ async function uploadEnd(projectID, options) {
 };
 
 function uploadAllFiles(projectID, pathToDirToUpload, projectType) {
-    const relativeFilepathsToUpload = getRelativeFilepathsToUpload(pathToDirToUpload, projectType);
-    return uploadFiles(projectID, pathToDirToUpload, relativeFilepathsToUpload);
+    const { fileList } = getPathsToUpload(pathToDirToUpload, projectType);
+    return uploadFiles(projectID, pathToDirToUpload, fileList);
 }
 
 async function uploadFiles(projectID, pathToDirToUpload, relativeFilepathsToUpload) {
@@ -175,7 +130,11 @@ async function uploadFiles(projectID, pathToDirToUpload, relativeFilepathsToUplo
     return responses;
 }
 
-function getRelativeFilepathsToUpload(pathToDirToUpload, projectType) {
+function flat(array) {
+    return [].concat(...array);
+}
+
+function getPathsToUpload(pathToDirToUpload, projectType) {
     const filepaths = recursivelyGetAllPaths(pathToDirToUpload);
     const relativeFilepaths = filepaths.map(
         filePath => path.relative(pathToDirToUpload, filePath)
@@ -183,11 +142,39 @@ function getRelativeFilepathsToUpload(pathToDirToUpload, projectType) {
     const relativeFilepathsToUpload = relativeFilepaths.filter(
         filepath => !isIgnoredFilepath(filepath, projectType)
     );
-    return relativeFilepathsToUpload;
+    const relativeDirs = flat(relativeFilepathsToUpload.map(
+        filepath => getRecursiveSubDirectories(filepath)
+    ));
+    const uniqueRelativeDirs = [...new Set(relativeDirs)];
+    const relativeDirsToUpload = uniqueRelativeDirs.filter(dirname => dirname !== '.');
+    return {
+        fileList: relativeFilepathsToUpload,
+        directoryList: relativeDirsToUpload,
+    };
+}
+
+function getRecursiveSubDirectories(filepath) {
+    const subDirs = [];
+    let dirname = path.dirname(filepath);
+    while (dirname !== '.') {
+        subDirs.push(dirname);
+        dirname = path.dirname(dirname);
+    }
+    return subDirs;
+}
+
+function getPFEProjectType(projectType) {
+    return (['openliberty', 'go', 'lagom'].includes(projectType))
+        ? 'docker'
+        : projectType;
 }
 
 function isIgnoredFilepath(relativeFilepath, projectType) {
-    const ignoredFilepaths = projectTypeToIgnoredPaths[projectType];
+    const pfeProjectType = getPFEProjectType(projectType);
+    const ignoredFilepaths = projectTypeToIgnoredPaths[pfeProjectType];
+    if (ignoredFilepaths.some(ignoredPath => `/${relativeFilepath}`.includes(ignoredPath))) {
+        return true;
+    }
     const regExpIgnoredFilepaths = ignoredFilepaths.map(path => globToRegExp(path));
     const isIgnored = regExpIgnoredFilepaths.some(
         ignoredPath => ignoredPath.test(`/${relativeFilepath}`)
@@ -248,7 +235,7 @@ async function buildProject(projectID, action) {
 
 function generateUniqueName(baseName = 'test') {
     const uniqueNumbers = uuidv4()
-        .replace(/[^0-9]/gi, '')
+        .replace(/[^0-9]/g, '')
         .substring(0,10);
     return `${baseName}${uniqueNumbers}`;
 }
@@ -275,7 +262,7 @@ function openProject(projectID, expectedResStatus) {
 /**
  * @param {String} projectID
  * @param {number} [expectedResStatus] e.g. 202
- * @param {boolean} [awaitSocketConfirmation] true by default, so will wait for projectClose. Set to false to make it skip confirmation
+ * @param {boolean} [awaitSocketConfirmation] if true, will wait for projectClose event. If false will not wait for it
  */
 function closeProject(
     projectID,
@@ -295,8 +282,11 @@ function closeProject(
 }
 
 async function removeProject(pathToProjectDir, projectID){
-    fs.removeSync(pathToProjectDir);
-    await unbind(projectID);
+    try {
+        await unbind(projectID);
+    } finally {
+        fs.removeSync(pathToProjectDir);
+    }
 }
 
 /**
@@ -310,7 +300,7 @@ function restartProject(
     projectID,
     startMode,
     expectedResStatus,
-    awaitSocketConfirmation = false
+    awaitSocketConfirmation,
 ) {
     if (typeof projectID !== 'string') {
         throw new Error(`'${projectID}' should be a string`);
@@ -370,6 +360,19 @@ async function awaitProject(id) {
 
     await sleep(1000);
     return awaitProject(id);
+}
+
+async function awaitProjectRestartedHTTP(id) {
+    await awaitProjectStoppedHTTP(id);
+    await awaitProjectStartedHTTP(id);
+}
+
+async function awaitProjectStoppedHTTP(id) {
+    const { body: project } = await getProject(id);
+    if (project.appStatus !== 'stopped') {
+        await sleep(1000); // wait one second
+        await awaitProjectStoppedHTTP(id);
+    }
 }
 
 async function awaitProjectStartedHTTP(id) {
@@ -459,12 +462,25 @@ async function cloneProject(giturl, dest) {
 
 async function cloneProjectAndReplacePlaceholders(giturl, dest, projectName) {
     await cloneProject(giturl, dest);
+    replacePlaceholdersInFiles(dest, projectName);
+    replacePlaceholdersInFilenames(dest, projectName);
+}
+
+function replacePlaceholdersInFiles(rootDir, projectName) {
     const options = {
-        files: `${dest}/*`,
+        files: `${rootDir}/*`,
         from: /\[PROJ_NAME_PLACEHOLDER\]/g,
         to: projectName,
     };
-    await replace(options);
+    replace.sync(options);
+}
+
+function replacePlaceholdersInFilenames(rootDir, projectName) {
+    // currently needed only for swift projects
+    const pathToSwiftFileWithPlaceholder = path.join(rootDir, 'Sources/[PROJ_NAME_PLACEHOLDER]/main.swift');
+    if (fs.existsSync(pathToSwiftFileWithPlaceholder)) {
+        fs.moveSync(pathToSwiftFileWithPlaceholder, path.join(rootDir, `Sources/${projectName}/main.swift`));
+    }
 }
 
 async function notifyPfeOfFileChangesAndAwaitMsg(array, projectID) {
@@ -537,8 +553,7 @@ module.exports = {
     createProjects,
     createProjectFromTemplate,
     syncFiles,
-    defaultNodeProjectFileList,
-    defaultNodeProjectDirList,
+    getPathsToUpload,
     openProject,
     closeProject,
     restartProject,
@@ -548,6 +563,7 @@ module.exports = {
     getProjectIDs,
     countProjects,
     awaitProject,
+    awaitProjectRestartedHTTP,
     awaitProjectStartedHTTP,
     awaitProjectStarted,
     awaitProjectBuilding,

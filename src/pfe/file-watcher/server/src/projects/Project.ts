@@ -37,6 +37,7 @@ export interface ProjectInfo {
     appBaseURL?: string;
     compositeAppName?: string;
     statusPingTimeout?: number;
+    portMappings?: object;
 }
 
 export interface ProjectMetadata {

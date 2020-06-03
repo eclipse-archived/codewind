@@ -212,6 +212,13 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         extensionID: projInfo.extensionID,
         language: projInfo.language
     };
+
+    const portMappings: IPortMappings = req.portMappings;
+    if (portMappings) {
+        projectInfo.portMappings = portMappings;
+        logger.logProjectInfo("Initial port mappings for project " + projectID + " is: " + JSON.stringify(portMappings), projectID, projectName);
+    }
+
     const startMode = req.startMode;
     if (startMode) {
         if (!(startMode in constants.StartModes)) {
@@ -1260,6 +1267,11 @@ export interface ICreateProjectParams {
     extension?: IProjectExtension;
     language?: string;
     autoBuild?: boolean;
+    portMappings?: IPortMappings;
+}
+
+export interface IPortMappings {
+    [key: string]: string;
 }
 
 export interface IProjectExtension {

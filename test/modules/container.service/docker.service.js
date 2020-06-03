@@ -28,8 +28,14 @@ function getCommands(containerName) {
     };
 }
 
-function getContainerName(projectName) {
-    return `/cw-${projectName}`;
+function getContainerName(projectName, projectID) {
+    const cleanProjectName = projectName.replace(/-/g, '');
+    return `/cw-${cleanProjectName}-${projectID}`;
+}
+
+function isAppContainer(container) {
+    return container.NetworkSettings.Networks.codewind_network
+        && !container.Config.Image.includes('eclipse/');
 }
 
 /**
@@ -37,10 +43,9 @@ function getContainerName(projectName) {
  */
 async function getAppContainers() {
     const containers = await getAllContainers();
-    const cwContainers = containers.filter(container => (
-        container.NetworkSettings.Networks.codewind_network
-    ));
-    return summariseContainerInfo(cwContainers);
+    const appContainers = containers.filter(container => isAppContainer(container));
+    const summaryList = appContainers.map(container => summariseContainerInfo(container));
+    return summaryList;
 }
 
 async function getAllContainers() {
@@ -51,19 +56,25 @@ async function getAllContainers() {
     return containers;
 }
 
-function summariseContainerInfo(cwContainers) {
-    return cwContainers.map(container => {
-        const containerInfo = { id: container.Id };
-        containerInfo.name = getAppName(container.Name);
-        const { Networks, Ports } = container.NetworkSettings;
-        containerInfo.ip = Networks.codewind_network.IPAddress; // non-cw containers won't have this, so this will error
-        if (Ports) {
-            const [internalPortAndProtocol] = Object.keys(Ports);
-            containerInfo.exposedPort = Ports[internalPortAndProtocol][0].HostPort;
-            [containerInfo.internalPort] = internalPortAndProtocol.split('/');
-        }
-        return containerInfo;
-    });
+function summariseContainerInfo(container) {
+    const { Networks, Ports } = container.NetworkSettings;
+    const summary = {
+        id: container.Id,
+        name: getAppName(container.Name),
+        ip: Networks.codewind_network.IPAddress, // non-cw containers won't have this, so this would error
+    };
+    if (Ports) {
+        summary.ports = Object.entries(Ports).map(
+            ([internalPortAndProtocol, { 0: { HostPort } }]) => {
+                const internalPort = internalPortAndProtocol.split('/')[0];
+                return {
+                    internal: internalPort,
+                    external: HostPort,
+                };
+            }
+        );
+    }
+    return summary;
 }
 
 /**

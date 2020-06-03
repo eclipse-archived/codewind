@@ -248,4 +248,14 @@ public class DockerUtils {
 		}
 	}
 
+	public static String[] getExposedPortsFromImage(IDCContext context) throws IOException, InterruptedException {
+		String imageCommand = context.getImageCommand();
+		String imageName = context.getImageName();
+
+		String goTemplate = "'{{range $port, $config := .Config.ExposedPorts}}{{ index (split $port \"/\") 0 }} {{end}}'";
+		ProcessRunner pr = TaskUtils.runCmd(imageCommand + " image inspect --format " + goTemplate + " " + imageName, context, false);
+
+		String[] exposedPorts = pr.getReceived().trim().split(" ");
+		return exposedPorts;
+	}
 }

@@ -22,9 +22,6 @@ chai.use(chaiResValidator(pathToApiSpec));
 chai.should();
 
 describe('Sync tests (POST projects/{id}/upload/end)', () => {
-    const validFileList = projectService.defaultNodeProjectFileList;
-    const validDirList = projectService.defaultNodeProjectDirList;
-
     describe('Sync modified file (these `it` blocks depend on each other passing)', function() {
         const projectName = `test-sync-modified-file-${Date.now()}`;
         const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
@@ -68,9 +65,10 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
 
         it('returns 200 and correctly syncs the project when POST upload/end is called', async function() {
             this.timeout(testTimeout.med);
+            const { fileList, directoryList } = projectService.getPathsToUpload(pathToLocalProject, 'nodejs');
             const options = {
-                fileList: validFileList,
-                directoryList: validDirList,
+                fileList,
+                directoryList,
                 modifiedList: [
                     pathFromDirToModifiedFile,
                 ],
@@ -128,12 +126,10 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
 
         it('returns 200 and correctly syncs the project when POST upload/end is called', async function() {
             this.timeout(testTimeout.med);
+            const { fileList, directoryList } = projectService.getPathsToUpload(pathToLocalProject, 'nodejs');
             const options = {
-                fileList: [
-                    ...validFileList,
-                    pathFromDirToNewFile,
-                ],
-                directoryList: validDirList,
+                fileList,
+                directoryList,
                 modifiedList: [
                     pathFromDirToNewFile,
                 ],
@@ -178,11 +174,10 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
 
         it('returns 200 and correctly syncs the project when POST upload/end is called', async function() {
             this.timeout(testTimeout.med);
+            const { fileList, directoryList } = projectService.getPathsToUpload(pathToLocalProject, 'nodejs');
             const options = {
-                fileList: validFileList.filter(
-                    filepath => filepath !== pathFromDirToDeletedFile
-                ),
-                directoryList: validDirList,
+                fileList,
+                directoryList,
                 modifiedList: null,
                 timeStamp: Date.now(),
             };
@@ -225,13 +220,10 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
 
         it('returns 200 and correctly syncs the project when POST upload/end is called', async function() {
             this.timeout(testTimeout.med);
+            const { fileList, directoryList } = projectService.getPathsToUpload(pathToLocalProject, 'nodejs');
             const options = {
-                fileList: validFileList.filter(
-                    filepath => !filepath.startsWith('test/')
-                ),
-                directoryList: validDirList.filter(
-                    dirpath => dirpath !== pathFromDirToDeletedDir
-                ),
+                fileList,
+                directoryList,
                 modifiedList: null,
                 timeStamp: Date.now(),
             };
@@ -249,7 +241,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             dirExistsInPfeProjectDir.should.be.false;
         });
     });
-    
+
     describe('Sync unchanged project (these `it` blocks depend on each other passing)', function() {
         const projectName = `test-sync-unchanged-project-${Date.now()}`;
         const pathToLocalProject = path.join(TEMP_TEST_DIR, projectName);
@@ -267,9 +259,10 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
 
         it('returns 200 and does nothing else when POST upload/end is called', async function() {
             this.timeout(testTimeout.med);
+            const { fileList, directoryList } = projectService.getPathsToUpload(pathToLocalProject, 'nodejs');
             const options = {
-                fileList: validFileList,
-                directoryList: validDirList,
+                fileList,
+                directoryList,
                 modifiedList: null,
                 timeStamp: Date.now(),
             };
@@ -285,7 +278,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             this.timeout(testTimeout.short);
             const projectID = '00000000-0000-0000-0000-000000000000';
             const options = {
-                directoryList: validDirList,
+                directoryList: ['validDirList'],
                 modifiedList: null,
                 timeStamp: Date.now(),
             };
@@ -298,7 +291,7 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             this.timeout(testTimeout.short);
             const projectID = '00000000-0000-0000-0000-000000000000';
             const options = {
-                fileList: validFileList,
+                fileList: ['validFileList'],
                 modifiedList: null,
                 timeStamp: Date.now(),
             };
@@ -311,8 +304,8 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             this.timeout(testTimeout.short);
             const projectID = '00000000-0000-0000-0000-000000000000';
             const options = {
-                fileList: validFileList,
-                directoryList: validDirList,
+                fileList: ['validFileList'],
+                directoryList: ['validDirList'],
                 timeStamp: Date.now(),
             };
             const res = await projectService.uploadEnd(projectID, options);
@@ -324,8 +317,8 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             this.timeout(testTimeout.short);
             const projectID = '00000000-0000-0000-0000-000000000000';
             const options = {
-                fileList: validFileList,
-                directoryList: validDirList,
+                fileList: ['validFileList'],
+                directoryList: ['validDirList'],
                 modifiedList: null,
             };
             const res = await projectService.uploadEnd(projectID, options);
@@ -337,8 +330,8 @@ describe('Sync tests (POST projects/{id}/upload/end)', () => {
             this.timeout(testTimeout.short);
             const idMatchingNoProjects = '00000000-0000-0000-0000-000000000000';
             const options = {
-                fileList: validFileList,
-                directoryList: validDirList,
+                fileList: ['validFileList'],
+                directoryList: ['validDirList'],
                 modifiedList: null,
                 timeStamp: Date.now(),
             };
