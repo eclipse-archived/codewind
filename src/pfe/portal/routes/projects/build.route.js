@@ -32,12 +32,19 @@ async function buildProject(req, res) {
     const project = user.projectList.retrieveProject(id);
     const action = req.sanitizeBody('action');
     if (!project) {
-      res.status(400).send(`Unable to find project ${id}`);
+      res.status(404).send(`Unable to find project ${id}`);
       return;
     }
     
-    if (project.isClosed() || project.isClosing() || project.isDeleting() || !project.loadRunner.isIdle()) {
-      const msg = `Cannot perform build action ${action} on ${project.name} because it is in state ${project.state}. Or a load run is in progress.`;
+    if (project.isClosed() || project.isClosing() || project.isDeleting()) {
+      const msg = `Cannot perform build action ${action} on ${project.name} because it is in state ${project.state}.`;
+      res.status(400).send(msg);
+      log.error(msg);
+      return;
+    }
+
+    if (!project.loadRunner.isIdle()) {
+      const msg = `Cannot perform build action ${action} on ${project.name} because there is a load run in progress.`;
       res.status(400).send(msg);
       log.error(msg);
       return;
