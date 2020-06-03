@@ -152,18 +152,19 @@ module.exports = class Project {
       try {
         const namespace = process.env.KUBE_NAMESPACE
         const { projectID } = this;
-        
+
         const client = new Client({ backend: new Request( config.getInCluster() ), version: '1.13' })
-    
+
         const services = await client.api.v1.namespaces(namespace).services.get({ qs: { labelSelector: 'projectID='+projectID } })
-        const ingressPort = await cwUtils.getServicePortFromProjectIngress(projectID);
+        const discoveredPort = await cwUtils.getPortFromProjectIngressOrRoute(projectID);
+
         if (services && services.body && services.body.items && services.body.items[0]) {
           const ipAddress = services.body.items[0].spec.clusterIP
           const targetPort = services.body.items[0].spec.ports[0].targetPort
           const serviceName = services.body.items[0].metadata.name
 
-          // prefer the ingress port if available
-          const port = ingressPort ? ingressPort : targetPort;
+          // prefer the discovered port if available
+          const port = discoveredPort ? discoveredPort : targetPort;
 
           // update service host
           this.kubeServiceHost = ipAddress
