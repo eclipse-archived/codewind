@@ -125,7 +125,7 @@ async function getProjectIngress(projectID) {
   return ingress;
 }
 
-async function getServicePortFromProjectIngress(projectID) {
+async function getPortFromProjectIngress(projectID) {
   try {
     const ingress = await getProjectIngress(projectID);
     // sanitise the response ingress
@@ -161,7 +161,7 @@ async function getProjectRoute(projectID) {
   return route;
 }
 
-async function getServicePortFromProjectRoute(projectID) {
+async function getPortFromProjectRoute(projectID) {
   try {
     const route = await getProjectRoute(projectID);
     // sanitise the response route
@@ -178,14 +178,14 @@ async function getServicePortFromProjectRoute(projectID) {
   }
 }
 
-async function getServicePortFromProjectIngressOrRoute(projectID) {
-  const servicePorts = await Promise.all([
-    getServicePortFromProjectIngress(projectID),
-    getServicePortFromProjectRoute(projectID),
+async function getPortFromProjectIngressOrRoute(projectID) {
+  const ports = await Promise.all([
+    getPortFromProjectIngress(projectID),
+    getPortFromProjectRoute(projectID),
   ]);
   // return the first non null value (or null if all are null)
-  const servicePort = servicePorts.find(port => !!port);
-  return servicePort || null;
+  const port = ports.find(port => !!port);
+  return port || null;
 }
 
 module.exports = {
@@ -198,5 +198,5 @@ module.exports = {
   updateConfigMap,
   getProjectDeployments,
   patchProjectDeployments,
-  getServicePortFromProjectIngressOrRoute,
+  getPortFromProjectIngressOrRoute,
 }

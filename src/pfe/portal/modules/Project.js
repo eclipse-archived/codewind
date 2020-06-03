@@ -156,7 +156,7 @@ module.exports = class Project {
         const client = new Client({ backend: new Request( config.getInCluster() ), version: '1.13' })
 
         const services = await client.api.v1.namespaces(namespace).services.get({ qs: { labelSelector: 'projectID='+projectID } })
-        const discoveredPort = await cwUtils.getServicePortFromProjectIngressOrRoute(projectID);
+        const discoveredPort = await cwUtils.getPortFromProjectIngressOrRoute(projectID);
 
         if (services && services.body && services.body.items && services.body.items[0]) {
           const ipAddress = services.body.items[0].spec.clusterIP
