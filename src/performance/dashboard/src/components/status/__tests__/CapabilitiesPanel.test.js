@@ -10,7 +10,8 @@
 **/
 
 import React from 'react';
-import { createStore } from 'redux';
+import { createStore, applyMiddleware} from 'redux';
+import thunk from 'redux-thunk';
 import { Provider } from 'react-redux';
 import { render, cleanup, fireEvent } from '@testing-library/react';
 
@@ -27,8 +28,9 @@ const componentProps = {
 
 // Initialize redux stores
 const store = createStore(reducers, {
-  projectCapabilitiesReducer: { config: ProjectCapabilitiesInfo.capabilitiesData, receivedAt: Date.now(), fetched: true }
-});
+  projectCapabilitiesReducer: { config: ProjectCapabilitiesInfo.capabilitiesData, receivedAt: Date.now(), fetched: true },
+  navbarActionsReducer:{ displayCapabilitiesPanel: true },
+}, applyMiddleware(thunk));
 
 // component to render
 const wrapper = (
@@ -53,7 +55,6 @@ describe('<CapabilitiesPanel />', () => {
         render(wrapper);
         expect(document.querySelectorAll('.Capabilities').length).toBe(1);
     });
-
 
     describe('Status message card tests', () => {
         describe('ProjectStatus card rendering', () => {
@@ -86,6 +87,23 @@ describe('<CapabilitiesPanel />', () => {
                 expect(document.querySelector('.rows .row:nth-of-type(4) .capability').innerHTML).toEqual("Benchmarks");
                 expect(document.querySelector('.rows .row:nth-of-type(4) .description').innerHTML).toEqual("Unable to determine status");
             });
+        });
+    });
+
+    describe('CapabilitiesPanel actions', () => {
+
+        test('the panel has a close button', () => {
+            const {getAllByLabelText, getByLabelText} = render(wrapper);
+            const buttons = getAllByLabelText("Close panel");
+            expect(buttons.length).toBe(1);
+        });
+
+        test('the panel closes when the close button is clicked', () => {
+            const {getByLabelText} = render(wrapper);
+            const closeButton = getByLabelText("Close panel");
+            expect (store.getState().navbarActionsReducer.displayCapabilitiesPanel).toBe(true);
+            fireEvent.click(closeButton);
+            expect (store.getState().navbarActionsReducer.displayCapabilitiesPanel).toBe(false);
         });
     });
 });

@@ -10,9 +10,10 @@
 **/
 
 import React from 'react';
-import { createStore } from 'redux';
+import { createStore, applyMiddleware} from 'redux';  
 import { Provider } from 'react-redux';
-import { render, cleanup } from '@testing-library/react';
+import { render, cleanup, waitForElement, fireEvent } from '@testing-library/react';
+import thunk from 'redux-thunk';
 import NavBar from '../NavBar';
 import reducers from '../../../store/reducers/index';
 import * as DataProjectInfo from '../../../tests/data/ProjectInfo';
@@ -24,8 +25,9 @@ const componentProps = {
 
 // initialize redux stores
 const store = createStore(reducers, {
-    projectInfoReducer: { config: DataProjectInfo.projectInfo, receivedAt: Date.now(), fetched: true }
-});
+    projectInfoReducer: { config: DataProjectInfo.projectInfo, receivedAt: Date.now(), fetched: true },
+    navbarActionsReducer: { displayCapabilitiesPanel: false },
+}, applyMiddleware(thunk));
 
 // component to render
 const wrapper = (
@@ -74,4 +76,20 @@ describe('<NavBar />', () => {
         expect(container.querySelector('.projectName').innerHTML).toBe(CONST_NEW_PROJECT_NAME);
     });
 
+    describe('Navbar actions', () => {
+        test('There is exactly 1 capabilities action button', async () => {
+            const {getByLabelText} = render(wrapper);
+            const button = await waitForElement(() => getByLabelText('project capabilities'));
+            expect(button.type).toEqual("button");
+        });
+        test('Clicking the capabilities button toggles the capabilities panel on then off', async () => {
+            const {getByLabelText} = render(wrapper);
+            const button = await waitForElement(() => getByLabelText('project capabilities'));
+            expect(store.getState().navbarActionsReducer.displayCapabilitiesPanel).toEqual(false);
+            fireEvent.click(button);
+            expect(store.getState().navbarActionsReducer.displayCapabilitiesPanel).toEqual(true);
+            fireEvent.click(button);
+            expect(store.getState().navbarActionsReducer.displayCapabilitiesPanel).toEqual(false);
+        });
+    });
 });

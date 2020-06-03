@@ -14,7 +14,7 @@ import { createStore } from 'redux';
 import { Provider } from 'react-redux';
 import reducers from '../../../../../store/reducers/index';
 import { render, cleanup, fireEvent, waitForElement, waitForElementToBeRemoved } from '@testing-library/react';
-import ActionDisableMicroProfileAuth from '../ActionDisableMicroProfileAuth';
+import ActionEnableMicroProfileAuth from '../ActionEnableMicroProfileAuth';
 
 // initialize component props
 const componentProps = {
@@ -27,7 +27,7 @@ const store = createStore(reducers, {});
 // InlineHTML component to render
 const wrapper = (
   <Provider store={store}>
-    <ActionDisableMicroProfileAuth {...componentProps} />
+    <ActionEnableMicroProfileAuth {...componentProps} />
   </Provider>
 )
 
@@ -35,9 +35,9 @@ const wrapper = (
 afterEach(cleanup);
 
 /**
- * Test functionality of the ActionDisableMicroProfileAuth dialog
+ * Test functionality of the ActionEnableMicroProfileAuth dialog
  */
-describe('<ActionDisableMicroProfileAuth />', () => {
+describe('<ActionEnableMicroProfileAuth />', () => {
   test('component renders without crashing', () => {
     render(wrapper);
     expect(document.querySelectorAll('.ActionButton').length).toBe(1);
@@ -45,11 +45,11 @@ describe('<ActionDisableMicroProfileAuth />', () => {
 
   test('ActionButton sends a valid request to API and displays accepted', async () => {
     const { getByLabelText, container, getByText } = render(wrapper);
-    const button = getByLabelText('Allow anonymous connections');
+    const button = getByLabelText('Secure metrics endpoint');
     global.fetch = jest.fn().mockImplementationOnce(() => {
       return new Promise((resolve, reject) => {
         resolve({
-          status: 202
+          status:202
         });
       });
     });
@@ -60,14 +60,14 @@ describe('<ActionDisableMicroProfileAuth />', () => {
     await waitForElementToBeRemoved(() => getByText('Accepted'));
   });
 
-  test('ActionButton sends an invalid request to API and displays a 404 warning', async () => {
+  test('ActionButton sends an invalid request to API and displays a 404 error', async () => {
     const { getByLabelText, getByText } = render(wrapper);
-    const button = getByLabelText('Allow anonymous connections');
+    const button = getByLabelText('Secure metrics endpoint');
     global.fetch = jest.fn().mockImplementationOnce(() => {
       return new Promise((resolve, reject) => {
         resolve({
-          status: 404,
-          statusText: "Not found",
+          status:404,
+          statusText: "Not found"
         });
       });
     });

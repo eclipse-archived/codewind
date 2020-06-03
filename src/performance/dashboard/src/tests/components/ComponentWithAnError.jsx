@@ -1,5 +1,6 @@
+
 /*******************************************************************************
-* Copyright (c) 2019 IBM Corporation and others.
+* Copyright (c) 2020 IBM Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License v2.0
 * which accompanies this distribution, and is available at
@@ -7,15 +8,21 @@
 *
 * Contributors:
 *     IBM Corporation - initial API and implementation
-******************************************************************************/
+*******************************************************************************/
 
+import React, {Fragment} from 'react';
 
-// Sample data from the API:  /api/v1/projects/{id}/loadtest/config
+class ComponentWithAnError extends React.Component {
 
-export const projectLoadRunnerConfig = {
-  method: 'GET',
-  path: '/',
-  requestsPerSecond: '100',
-  concurrency: '20',
-  maxSeconds: '180',
-};
+  componentDidMount() {
+    throw new Error("oops")
+  }
+
+  render() {
+    return (
+      <Fragment/>
+    );
+  }
+
+}
+export default ComponentWithAnError;
