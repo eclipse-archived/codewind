@@ -198,9 +198,5 @@ module.exports = {
   updateConfigMap,
   getProjectDeployments,
   patchProjectDeployments,
-  getProjectIngress,
-  getServicePortFromProjectIngress,
-  getProjectRoute,
-  getServicePortFromProjectRoute,
   getServicePortFromProjectIngressOrRoute,
 }
