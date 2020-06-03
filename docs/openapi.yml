@@ -119,6 +119,12 @@ paths:
             text/html:
               schema:
                 type: string
+        400:
+          description: Cannot perform action
+          content:
+            text/html:
+              schema:
+                type: string
         404:
           description: Unknown action or Project not found
           content:
