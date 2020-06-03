@@ -994,17 +994,17 @@ export function deleteFolder(dir: string): Promise<void> {
                 if (err) {
                     return reject(err);
                 }
-                // Delete all files in the directory
-                Promise.all(files.map((file) => {
-                    return deleteFile(dir, file);
-                })).then(() => {
-                    rimraf(dir, (err) => {
-                        if (err) {
-                            return reject(err);
-                        }
-                        resolve();
-                    });
-                }).catch(reject);
+                // Delete log folder and log files inside log folder
+                const option: rimraf.Options = {
+                    maxBusyTries: 15,
+                };
+
+                rimraf(dir, option, (err) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    resolve();
+                });
             });
         });
     });
