@@ -449,9 +449,6 @@ export async function runContainer(buildInfo: BuildRequest, containerName: strin
   // Default to -P to allow docker to assign ports for the first time
   let portArgs = ["-P"];
 
-  // const portsToExpose = await getApplicationImagePorts(buildInfo.projectID, containerName);
-  // logger.logProjectError(`RW portsToExpose ${JSON.stringify(portsToExpose)}`, buildInfo.projectID);
-
   // If there are existing ports, reuse them
   if (buildInfo.containerPorts && buildInfo.containerPorts.length > 0 && buildInfo.containerPorts.length === buildInfo.hostPorts.length) {
     portArgs = [];
