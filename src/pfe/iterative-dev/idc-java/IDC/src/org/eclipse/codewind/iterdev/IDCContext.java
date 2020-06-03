@@ -129,10 +129,10 @@ public class IDCContext {
 		
 		this.portMappings = portMappings;
 		if (this.portMappings != null && this.portMappings.size() > 0) {
-			// Convert to string, use ',' as delimeter so we can reparse it as an array later
+			// Convert to string, use ',' as delimiter so we can reparse it as an array later
 			// The ports will never have a ','
-			String portMappinsAsString = String.join(",", this.portMappings);
-			appDb.put(Constants.DB_PORT_MAPPINGS, portMappinsAsString);
+			String portMappingsAsString = String.join(",", this.portMappings);
+			appDb.put(Constants.DB_PORT_MAPPINGS, portMappingsAsString);
 		}
 
 		this.artifactsDirectory = getArtifactsFromInstallDir();
