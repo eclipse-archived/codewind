@@ -23,6 +23,7 @@ const extensionsPattern = /^(\S+)-(\d+\.\d+\.\d+|latest)\.zip$/; // e.g. extensi
 const versionPattern = /^\d+[.]\d+[.]\d+$/; // e.g. 0.0.1
 const SUFFIX_OLD = '__old';
 const odoExtensionName = "codewind-odo-extension";
+const odoDevfileExtensionName = "codewind-odo-extension-devfile";
 
 /**
  * Install (unzip) built-in extensions that are stored in /extensions to the
@@ -56,8 +57,9 @@ async function installBuiltInExtension(file, targetDir, extensionsDir) {
   if (file.isFile() && (match = extensionsPattern.exec(file.name))) {
     const name = match[1];
     const version = match[2];
+    log.trace(`extensionPattern - name: ${name}, version ${version}`);
 
-    if ((name == odoExtensionName) && (process.env.ON_OPENSHIFT != 'true')) {
+    if (([odoExtensionName, odoDevfileExtensionName].includes(name)) && (process.env.ON_OPENSHIFT != 'true')) {
       return;
     }
 

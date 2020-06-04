@@ -285,12 +285,13 @@ export class OdoExtensionProject implements IExtensionProject {
         const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
         const projectLocation = projectInfo.location;
         const projectName = path.basename(projectLocation);
+        const componentName: string = await projectUtil.getComponentName(projectName);
         const args: string[] = [
             projectLocation,
             "",
             "getPort",
             "",
-            "",
+            componentName,
             "",
             ""
         ];
@@ -323,12 +324,13 @@ export class OdoExtensionProject implements IExtensionProject {
         const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
         const projectLocation = projectInfo.location;
         const projectName = path.basename(projectLocation);
+        const componentName: string = await projectUtil.getComponentName(projectName);
         const args: string[] = [
             projectLocation,
             "",
             "getURL",
             "",
-            "",
+            componentName,
             "",
             ""
         ];

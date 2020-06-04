@@ -147,6 +147,14 @@ describe('installBuiltInExtensions.js', () => {
             await installBuiltInExtension(file, targetDir, extensionDir).should.eventually.be.fulfilled;
             assertExtensionIsNotInstalled(targetDir);
         });
+        it('Function returns as the odo-devfile file is given and process.env.ON_OPENSHIFT is not set to true', async() => {
+            const filePath = path.join(extensionDir, 'codewind-odo-extension-devfile-9.9.9.zip');
+            await fs.ensureFile(filePath);
+            const file = await fs.stat(filePath);
+            file.name = 'codewind-odo-extension-devfile-9.9.9.zip';
+            await installBuiltInExtension(file, targetDir, extensionDir).should.eventually.be.fulfilled;
+            assertExtensionIsNotInstalled(targetDir);
+        });
         describe('Valid extension', () => {
             const fileName = 'valid-extension';
             const zipFileName = 'valid-extension-1.0.0.zip';
