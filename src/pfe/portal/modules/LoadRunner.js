@@ -539,15 +539,13 @@ module.exports = class LoadRunner {
     * Socket event for connection timeout
     * Logs the error and starts reconnect procedure
     */
-    this.socket.on('connect_timeout', data => {
-      if (data.projectID === this.project.projectID) {
-        log.info('Loadrunner has timed out')
-        // If this.up is false we're already trying to reconnect
-        if (this.up) {
-          // socket.io-client will automatically reconnect and trigger the connect event.
-          this.up = false;
-        }
-      }  
+    this.socket.on('connect_timeout', () => {
+      log.info('Loadrunner has timed out')
+      // If this.up is false we're already trying to reconnect
+      if (this.up) {
+        // socket.io-client will automatically reconnect and trigger the connect event.
+        this.up = false;
+      }
     });
 
     /**
