@@ -1001,7 +1001,7 @@ export function deleteFolder(dir: string): Promise<void> {
                 if (err) {
                     return reject(err);
                 }
-                // Delete log folder and log files inside log folder
+                // Delete all files in the directory and the directory
                 const option: rimraf.Options = {
                     maxBusyTries: 15,
                 };
