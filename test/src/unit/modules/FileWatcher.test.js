@@ -273,6 +273,7 @@ describe('FileWatcher.js', () => {
         it('handles `projectLogsListChanged` event with build, origin', async() => {
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                type: 'build',
                 build: [
                     {
                         origin: 'workspace',
@@ -302,6 +303,7 @@ describe('FileWatcher.js', () => {
         it('handles `projectLogsListChanged` event with app, no origin', async() => {
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                type: 'app',
                 app: [
                     {
                         origin: 'application',
@@ -330,6 +332,7 @@ describe('FileWatcher.js', () => {
         it('handles `projectLogsListChanged` event with unknown log type', async() => {
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                type: 'container',
                 container: [
                     {
                         origin: 'docker',
