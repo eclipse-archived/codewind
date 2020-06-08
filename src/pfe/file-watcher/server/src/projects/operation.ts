@@ -9,7 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 "use strict";
-import crypto from "crypto";
+import * as crypto from "crypto";
 import { ProjectInfo } from "./Project";
 
 /**

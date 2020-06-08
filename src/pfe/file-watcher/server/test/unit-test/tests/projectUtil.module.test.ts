@@ -12,7 +12,7 @@ import { expect } from "chai";
 import * as path from "path";
 import * as fs from "fs";
 import * as fse from "fs-extra";
-import crypto from "crypto";
+import * as crypto from "crypto";
 import { TransformOptions } from "stream";
 import * as projectUtil from "../../../../server/src/projects/projectUtil";
 import * as logHelperModule from "../lib/logHelper.module";
@@ -30,7 +30,7 @@ export function projectUtilTestModule(): void {
         const projectLocation = "directory/testproject";
         const hash = crypto.createHash("sha1", <TransformOptions>"utf8").update(projectLocation);
 
-        const expectedResult = projectConstants.containerPrefix + projectID + "-" + hash.digest("hex");
+        const expectedResult  = projectConstants.containerPrefix + projectID + "-" + hash.digest("hex");
         const actualResult = await projectUtil.getLogName(projectID, projectLocation);
         expect(actualResult).to.equal(expectedResult);
     });
@@ -39,7 +39,7 @@ export function projectUtilTestModule(): void {
         const projectID = "testProjectID";
         const projectLocation = "directory/testproject";
         const hash = crypto.createHash("sha1", <TransformOptions>"utf8").update(projectLocation);
-        let expectedResult = projectConstants.containerPrefix + projectID + "-" + hash.digest("hex");
+        let expectedResult  = projectConstants.containerPrefix + projectID + "-" + hash.digest("hex");
         if (expectedResult.length > 53) {
             expectedResult = expectedResult.substring(0, 53);
         }
@@ -103,7 +103,7 @@ export function projectUtilTestModule(): void {
             const data = combinations[combo]["data"];
             const expectedResult = combinations[combo]["result"];
             const K8 = combinations[combo]["K8"];
-            it(combo + " => data: " + JSON.stringify(data), async () => {
+            it(combo + " => data: " + JSON.stringify(data), async() => {
                 if (K8) {
                     process.env.IN_K8 = "true";
                 }
@@ -180,7 +180,7 @@ export function projectUtilTestModule(): void {
             const data = combinations[combo]["data"];
             const expectedResult = combinations[combo]["result"];
 
-            it(combo + " => data: " + JSON.stringify(data), async () => {
+            it(combo + " => data: " + JSON.stringify(data), async() => {
                 try {
                     const actualResult = await projectUtil.getProjectMavenSettings(data);
                     expect(actualResult).to.equal(expectedResult);
@@ -252,7 +252,7 @@ export function projectUtilTestModule(): void {
                     logSuffixes: ["log1"],
                     projectType: "liberty"
                 },
-                "result": {
+                "result":  {
                     "build": [],
                     "app": []
                 }
@@ -264,7 +264,7 @@ export function projectUtilTestModule(): void {
                     logSuffixes: [logHelper.buildLogs.dockerBuild, logHelper.buildLogs.mavenBuild],
                     projectType: "liberty"
                 },
-                "result": {
+                "result":  {
                     "build": [{
                         "origin": "workspace",
                         "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
@@ -281,7 +281,7 @@ export function projectUtilTestModule(): void {
                     projectType: "spring"
                 },
                 "appLogTest": true,
-                "result": {
+                "result":  {
                     "build": [{
                         "origin": "workspace",
                         "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
@@ -299,7 +299,7 @@ export function projectUtilTestModule(): void {
                     logSuffixes: ["log1"],
                     projectType: "invalidProjectType"
                 },
-                "result": {
+                "result":  {
                     "build": [],
                     "app": []
                 }
@@ -312,10 +312,10 @@ export function projectUtilTestModule(): void {
                     projectType: "nodejs"
                 },
                 "appLogTest": true,
-                "result": {
+                "result":  {
                     "build": [{
                         "origin": "workspace",
-                        "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
+                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
                     }],
                     "app": [{
                         "origin": "workspace",
@@ -331,7 +331,7 @@ export function projectUtilTestModule(): void {
                     projectType: "swift"
                 },
                 "appLogTest": true,
-                "result": {
+                "result":  {
                     "build": [{
                         "origin": "workspace",
                         "files": [
@@ -354,10 +354,10 @@ export function projectUtilTestModule(): void {
                     projectType: "docker"
                 },
                 "appLogTest": true,
-                "result": {
+                "result":  {
                     "build": [{
                         "origin": "workspace",
-                        "files": [process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
+                        "files": [ process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId + "/" + logHelper.buildLogs.dockerBuild + ".log"]
                     }],
                     "app": [{
                         "origin": "workspace",
@@ -373,41 +373,41 @@ export function projectUtilTestModule(): void {
             const expectedResult = combinations[combo]["result"];
             const appLogTest = combinations[combo]["appLogTest"];
             const logSuffixes: string[] = data.logSuffixes;
-            it(combo + " => data: " + JSON.stringify(data), async () => {
-                for (const suffix of logSuffixes) {
-                    const file = suffix + logHelperModule.getlogExtension();
-                    const filePath = path.resolve(logDirectory, file);
-                    await writeAsync(filePath, "some data");
-                }
-                if (appLogTest && data.projectType === "liberty") {
-                    const consoleLogPath = path.resolve(appLogDirectory, logHelper.libertyAppLogs.console + ".log");
-                    await writeAsync(consoleLogPath, "some data");
-                    const messagesLogPath = path.resolve(appLogDirectory, logHelper.libertyAppLogs.messages + ".log");
-                    await writeAsync(messagesLogPath, "some data");
-                    const ffdcDir = path.resolve(appLogDirectory, "ffdc");
-                    await mkdirAsync(ffdcDir);
-                } else if (appLogTest) {
-                    const appLogPath = path.resolve(process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId, logHelper.appLogs.app + ".log");
-                    await writeAsync(appLogPath, "some data");
-                }
-                const actualResult = await projectUtil.getProjectLogs(data);
-                expect(actualResult.build.length).to.equal(expectedResult.build.length);
-                expect(actualResult.app.length).to.equal(expectedResult.app.length);
-                if (expectedResult.build.length > 0) {
-                    for (let i = 0; i < expectedResult.build.length; i++) {
-                        expect(actualResult.build[i].files.length).to.equal(expectedResult.build[i].files.length);
-                        expect(actualResult.build[i].files).to.have.all.members(expectedResult.build[i].files);
+            it(combo + " => data: " + JSON.stringify(data), async() => {
+                    for (const suffix of logSuffixes) {
+                        const file = suffix + logHelperModule.getlogExtension();
+                        const filePath = path.resolve(logDirectory, file);
+                        await writeAsync(filePath, "some data");
                     }
-                }
-                if (expectedResult.app.length > 0) {
-                    for (let i = 0; i < expectedResult.app.length; i++) {
-                        expect(actualResult.app[i].files.length).to.equal(expectedResult.app[i].files.length);
-                        expect(actualResult.app[i].files).to.have.all.members(expectedResult.app[i].files);
-                        if (expectedResult.app[i].dirs) {
-                            expect(actualResult.app[i].dirs).to.equal(expectedResult.app[i].dirs);
+                    if (appLogTest && data.projectType === "liberty") {
+                        const consoleLogPath = path.resolve(appLogDirectory, logHelper.libertyAppLogs.console + ".log" );
+                        await writeAsync(consoleLogPath, "some data");
+                        const messagesLogPath = path.resolve(appLogDirectory, logHelper.libertyAppLogs.messages + ".log");
+                        await writeAsync(messagesLogPath, "some data");
+                        const ffdcDir = path.resolve(appLogDirectory, "ffdc" );
+                        await mkdirAsync(ffdcDir);
+                    } else if (appLogTest) {
+                        const appLogPath = path.resolve(process.env.CW_LOGS_DIR + "/" + testProjectName + "-" + testProjectId, logHelper.appLogs.app + ".log");
+                        await writeAsync(appLogPath, "some data");
+                    }
+                    const actualResult = await projectUtil.getProjectLogs(data);
+                    expect(actualResult.build.length).to.equal(expectedResult.build.length);
+                    expect(actualResult.app.length).to.equal(expectedResult.app.length);
+                    if (expectedResult.build.length > 0) {
+                        for (let i = 0; i < expectedResult.build.length; i++) {
+                            expect(actualResult.build[i].files.length).to.equal(expectedResult.build[i].files.length);
+                            expect(actualResult.build[i].files).to.have.all.members(expectedResult.build[i].files);
                         }
                     }
-                }
+                    if (expectedResult.app.length > 0) {
+                        for (let i = 0; i < expectedResult.app.length; i++) {
+                            expect(actualResult.app[i].files.length).to.equal(expectedResult.app[i].files.length);
+                            expect(actualResult.app[i].files).to.have.all.members(expectedResult.app[i].files);
+                            if (expectedResult.app[i].dirs) {
+                                expect(actualResult.app[i].dirs).to.equal(expectedResult.app[i].dirs);
+                            }
+                        }
+                    }
             });
         }
     });
@@ -443,7 +443,7 @@ export function projectUtilTestModule(): void {
 
             const projectType = combinations[combo]["projectType"];
             const expectedResult = combinations[combo]["result"];
-            it(combo + " => projectType: " + projectType, async () => {
+            it(combo + " => projectType: " + projectType, async() => {
                 const actualResult = await projectUtil.getUserFriendlyProjectType(projectType);
                 expect(actualResult).to.equal(expectedResult);
             });
