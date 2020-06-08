@@ -40,6 +40,7 @@ public class Constants {
 	public static final String DB_IMAGE_PUSH_REGISTRY = "IMAGE_PUSH_REGISTRY";
 	public static final String DB_START_MODE = "START_MODE";
 	public static final String DB_DEBUG_PORT = "DEBUG_PORT";
+	public static final String DB_PORT_MAPPINGS = "PORT_MAPPINGS";
 	
 	
 	// IDC modes
@@ -144,6 +145,9 @@ public class Constants {
 	
 	public static final String DB_CHARTDIR_HASH = "CHARTDIR_HASH";
 	
+	public static final String PORT_MAPPINGS = "PORT_MAPPINGS";
+	public static final String PORT_MAPPINGS_KEY = "--portMappings=";
+
 	enum ErrorCode {
 		dummyEC("Error Code needs to start from exit code 1"),
 		unexpectedError("An unexpected error occurred"),

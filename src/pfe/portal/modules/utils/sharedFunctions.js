@@ -12,6 +12,7 @@
 const http = require('follow-redirects').http;
 const https = require('follow-redirects').https;
 const fs = require('fs-extra');
+const path = require('path');
 const Logger = require('../utils/Logger');
 const log = new Logger('sharedFunctions.js');
 const { promisify } = require('util');
@@ -187,6 +188,37 @@ function getProjectSourceRoot(project) {
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
+// List all the files or directories under a given directory
+// getDirectories: true will return directories, false will return files
+async function recursivelyListFilesOrDirectories(getDirectories, absolutePath, relativePath = '') {
+  const directoryContents = await fs.readdir(absolutePath);
+  const completePathArray = await Promise.all(directoryContents.map(async dir => {
+    const pathList = [];
+    const nextRelativePath = path.join(relativePath, dir);
+    const nextAbsolutePath = path.join(absolutePath, dir);
+    const stats = await fs.stat(nextAbsolutePath);
+    if (stats.isDirectory()) {
+      const subDirectories = await recursivelyListFilesOrDirectories(getDirectories, nextAbsolutePath, nextRelativePath);
+      if (getDirectories) pathList.push(nextRelativePath);
+      pathList.push(...subDirectories);
+    } else if (!getDirectories) {
+      pathList.push(nextRelativePath);
+    }
+    return pathList;
+  }))
+  return completePathArray.reduce((a, b) => a.concat(b), []);
+}
+
+// Returns the first file that matches the fileName
+async function findFile(fileName, directory) {
+  const currentFileList = await recursivelyListFilesOrDirectories(false, directory);
+  const foundFilePath = currentFileList.find(filePath => path.basename(filePath) === fileName);
+  if (foundFilePath) {
+    return path.join(directory, foundFilePath);
+  }
+  return null;
+}
+
 module.exports = {
   ...containerFunctions,
   timeout,
@@ -199,4 +231,6 @@ module.exports = {
   isWindowsAbsolutePath,
   getProjectSourceRoot,
   deepClone,
+  recursivelyListFilesOrDirectories,
+  findFile,
 }

@@ -61,14 +61,15 @@ async function init() {
             } else {
                 console.info(`Dashboard - authenticated`);
             }
+
+            localStorage.setItem("cw-access-token", keycloak.token);
+            localStorage.setItem("cw-refresh-token", keycloak.refreshToken);
+
             ReactDOM.render(
                 <Provider store={configureStore}>
                     <App />
                 </Provider>
                 , document.getElementById('root'));
-
-            localStorage.setItem("cw-access-token", keycloak.token);
-            localStorage.setItem("cw-refresh-token", keycloak.refreshToken);
 
             // Access token refresh
             setTimeout(() => {

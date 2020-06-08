@@ -13,10 +13,9 @@
 // Sample data from the API:  /api/v1/projects/{id}/loadtest/config
 
 export const projectLoadRunnerConfig = {
-  path: "/",
-  requestsPerSecond: "100",
-  concurrency: "20",
-  maxSeconds: "20"
-}
-
-
+  method: 'GET',
+  path: '/',
+  requestsPerSecond: '100',
+  concurrency: '20',
+  maxSeconds: '180',
+};

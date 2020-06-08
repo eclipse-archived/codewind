@@ -18,6 +18,8 @@ CONTAINER_NAME=$5
 logName=$7
 FOLDER_NAME=${11}
 IMAGE_PUSH_REGISTRY=${12}
+# PORT_MAPPINGS is an array of the rest of the arguments
+PORT_MAPPINGS=("${@:13}")
 
 
 WORKSPACE=/codewind-workspace
@@ -38,6 +40,7 @@ echo "*** CONTAINER_NAME = $CONTAINER_NAME"
 echo "*** FOLDER_NAME = $FOLDER_NAME"
 echo "*** LOG_FOLDER = $LOG_FOLDER"
 echo "*** IMAGE_PUSH_REGISTRY = $IMAGE_PUSH_REGISTRY"
+echo "*** PORT_MAPPINGS =" "${PORT_MAPPINGS[@]}"
 
 
 tag=microclimate-dev-swift
@@ -250,7 +253,19 @@ function dockerRun() {
 			PROJECT_LINKS_PARAM="--env-file $PROJECT_LINKS_ENV_FILE"
 	fi
 
-	$IMAGE_COMMAND run $PROJECT_LINKS_PARAM --network=codewind_network --name "$project" -dt -P -w /swift-project "$project"
+	local portPublishArgs
+	portPublishArgs=$($util makePortPublishArgs "$project" "${PORT_MAPPINGS[@]}")
+
+	$IMAGE_COMMAND run --network=codewind_network \
+		$PROJECT_LINKS_PARAM \
+		--name "$project" \
+		$portPublishArgs \
+		--publish-all \
+		--detach \
+		--tty \
+		-w /swift-project \
+		"$project"
+
 	if [ $? -eq 0 ]; then
 		echo -e "Copying over source files"
 		docker cp "$workspace/$projectName"/. "$project":/swift-project

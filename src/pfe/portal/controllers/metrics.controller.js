@@ -11,6 +11,8 @@
 const metricsService = require('../modules/metricsService');
 const Logger = require('../modules/utils/Logger');
 const cwUtils = require('../modules/utils/sharedFunctions');
+const { getProjectFromReq } = require('../middleware/checkProjectExists');
+const ProjectMetricsError = require('../modules/utils/errors/ProjectMetricsError');
 
 const log = new Logger(__filename);
 
@@ -62,11 +64,70 @@ async function inject(req, res) {
   }
 }
 
+async function auth(req, res) {
+  // Handle true as a string or boolean
+  const disableMetricsAuth = req.sanitizeBody('disable') === 'true' || req.sanitizeBody('disable') === true;
+  const user = req.cw_user;
+  const project = getProjectFromReq(req);
+  const { projectID, language, metricsCapabilities } = project;
+  const projectDir = project.projectPath();
+
+  const { microprofilePackageFoundInBuildFile, microprofilePackageAuthenticationDisabled } = project.getMetricsCapabilities();
+  // If the project does not have the microprofile metrics found in its file system, this functionality is unsupported
+  if (!microprofilePackageFoundInBuildFile) {
+    const unsupportedError = new ProjectMetricsError('DISABLE_METRICS_AUTH_UNSUPPORTED', projectID, 'Project does not have microprofile metrics');
+    log.error(unsupportedError);
+    res.status(400).send(unsupportedError.message);
+    return;
+  }
+
+  try {
+    if (disableMetricsAuth) {
+      if (microprofilePackageAuthenticationDisabled) {
+        res.status(400).send('Metrics authentication is disabled');
+        return;
+      }
+      await metricsService.disableMicroprofileMetricsAuth(language, projectDir);
+    } else {
+      if (!microprofilePackageAuthenticationDisabled) {
+        res.status(400).send('Metrics authentication is not disabled');
+        return;
+      }
+      await metricsService.enableMicroprofileMetricsAuth(language, projectDir);
+    }
+
+    await user.projectList.updateProject({
+      projectID: projectID,
+      metricsCapabilities: {
+        ...metricsCapabilities,
+        microprofilePackageAuthenticationDisabled: disableMetricsAuth,
+      },
+    });
+
+    res.sendStatus(202);
+  } catch (err) {
+    log.error(err);
+    if (err.code === ProjectMetricsError.CODES.DISABLE_METRICS_AUTH_UNSUPPORTED) {
+      res.status(400).send(err.info || err.message);
+    } else {
+      res.status(500).send(err.info || err.message);
+    }
+    return;
+  }
+
+  try {
+    await syncProjectFilesIntoBuildContainer(project, user);
+  } catch (err) {
+    log.error(err);
+  }
+}
+
 async function syncProjectFilesIntoBuildContainer(project, user){
   const globalProjectPath = project.projectPath();
   const projectRoot = cwUtils.getProjectSourceRoot(project);
   if (project.buildStatus != "inProgress") {
-    if (!global.codewind.RUNNING_IN_K8S) {
+    if (!global.codewind.RUNNING_IN_K8S && project.projectType != 'docker' &&
+      (!project.extension || !project.extension.config.needsMount)) {
       await cwUtils.copyProjectContents(
         project,
         globalProjectPath,
@@ -83,4 +144,5 @@ async function syncProjectFilesIntoBuildContainer(project, user){
 
 module.exports = {
   inject,
+  auth,
 }

@@ -37,13 +37,19 @@ function constructMessage(code, identifier, message) {
     output = `Invalid URL: ${identifier}`;
     break;
   case 'DUPLICATE_URL':
-    output = `${identifier} is already a template repository`;
+    output = `URL ${identifier} is already a template repository`;
     break;
   case 'URL_DOES_NOT_POINT_TO_INDEX_JSON':
-    output = `${identifier} does not point to a JSON file of the correct form`;
+    output = `URL '${identifier}' does not point to a JSON file of the correct form`;
+    break;
+  case 'REPO_FILE_DOES_NOT_POINT_TO_INDEX_JSON':
+    output = `repo file '${identifier}' does not point to a JSON file of the correct form`;
     break;
   case 'ADD_TO_PROVIDER_FAILURE':
     output = `A template provider failed to add the ${identifier} repository`;
+    break;
+  case 'GET_TEMPLATE_SUMMARIES_FAILED':
+    output = `Get template summaries failed.`
     break;
   case 'REPOSITORY_DOES_NOT_EXIST':
     output = `${identifier} does not exist`;

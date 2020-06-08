@@ -27,8 +27,8 @@ import ErrorBoundary from '../components/utils/ErrorBoundary';
 import ResultsCard from '../components/resultsCard/ResultsCard';
 import ResultsCard_Blank from '../components/resultsCard/ResultsCard_Blank';
 import RunTestHistory from '../components/runTestHistory/RunTestHistory';
+import { addNotification, KIND_ERROR} from '../store/actions/notificationsActions';
 import SocketContext from '../utils/sockets/SocketContext';
-import StatusPanel from '../components/status/StatusPanel';
 import * as MetricsUtils from '../modules/MetricsUtils';
 import CapabilitiesPanel from '../components/status/CapabilitiesPanel';
 import './PagePerformance.scss';
@@ -48,7 +48,6 @@ class PagePerformance extends React.Component {
             }
         }
         this.reloadMetrics = this.reloadMetrics.bind(this);
-        this.handleCapabilityClose = this.handleCapabilityClose.bind(this);
     }
 
     bindSocketHandlers() {
@@ -62,33 +61,39 @@ class PagePerformance extends React.Component {
     }
 
     async componentDidMount() {
+
         // Check if page was called with a projectID.  If note, the render() will display further instructions.
         if (!this.props.projectID) { return; }
         this.bindSocketHandlers();
 
         // read the project configuration
-        await this.props.dispatch(fetchProjectConfig(this.props.projectID));
+        await this.props.dispatch(fetchProjectConfig(localStorage.getItem("cw-access-token"), this.props.projectID));
+        if (this.props.projectConfig && this.props.projectConfig.error) {
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading project details', subtitle:this.props.projectConfig.error.message , caption:`${this.props.projectConfig.error.err}` }));
+            return;
+        }
 
         // read the load runner configuration
-        await this.props.dispatch(fetchProjectLoadConfig(this.props.projectID));
+        await this.props.dispatch(fetchProjectLoadConfig(localStorage.getItem("cw-access-token"), this.props.projectID));
+        if (this.props.loadRunnerConfig && this.props.loadRunnerConfig.error) {
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading test parameters', subtitle:this.props.loadRunnerConfig.error.message , caption:`${this.props.loadRunnerConfig.error.err}` }));
+            return;
+        }
 
         // Determine which metrics are available for this project
-        await this.props.dispatch(fetchProjectMetricTypes(this.props.projectMetricTypes, this.props.projectID));
-
+        await this.props.dispatch(fetchProjectMetricTypes(localStorage.getItem("cw-access-token"), this.props.projectMetricTypes, this.props.projectID));
         const projectMetricTypes = this.props.projectMetricTypes;
         if (projectMetricTypes && projectMetricTypes.error) {
-            alert(projectMetricTypes.error.message + ' reason: ' + projectMetricTypes.error.err);
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading metric types', subtitle:projectMetricTypes.error.message , caption:`${projectMetricTypes.error.err}` }));
             return;
         }
 
         // Get the metrics for the project
-        await this.props.dispatch(fetchProjectMetrics(this.props.projectMetrics, this.props.projectID, projectMetricTypes.types));
+        await this.props.dispatch(fetchProjectMetrics(localStorage.getItem("cw-access-token"), this.props.projectMetrics, this.props.projectID, projectMetricTypes.types));
         const projectMetrics = this.props.projectMetrics;
-
         if (projectMetrics && projectMetrics.error) {
-            alert(projectMetrics.error.message + ' reason: ' + projectMetrics.error.err);
+            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Error loading project metrics', subtitle:projectMetrics.error.message  , caption:`${projectMetrics.error.err}` }));
         }
-
     }
 
     componentWillReceiveProps(nextProps) {
@@ -147,12 +152,7 @@ class PagePerformance extends React.Component {
     }
 
     reloadMetrics(projectID) {
-        this.props.dispatch(reloadMetricsData(projectID, this.props.projectMetricTypes.types));
-    }
-
-    handleCapabilityClose() {
-        this.reloadMetrics(this.props.projectID);
-        this.setState({showCapabilities: false})
+        this.props.dispatch(reloadMetricsData(localStorage.getItem('cw-access-token'), projectID, this.props.projectMetricTypes.types));
     }
 
     render() {
@@ -162,23 +162,17 @@ class PagePerformance extends React.Component {
         const projectLanguage = (this.props.projectInfo.config.language) ? this.props.projectInfo.config.language : '';
         const showTip = !(this.state.chartData && this.state.chartData.CPU && this.state.chartData.CPU.columns && this.state.chartData.CPU.columns.length > 0);
 
-        // Show the capabilities panel as a full page
-        if (this.state.showCapabilities) {
-            return (
-                <div className='pageTitle' role="main" aria-label='main page'>
-                    <div className='main-title'>
-                            <div className='main-text' title='main page'>Performance</div>
-                    </div>
-                    <CapabilitiesPanel projectID={this.props.projectID} handleCapabilitiesClose={this.handleCapabilityClose}/>
-                </div>
-            )
-        }
-
         return (
             <Fragment>
+                {
+                    this.props.navbarActions.displayCapabilitiesPanel ?
+                    <CapabilitiesPanel projectID={this.props.projectID} />
+                    : <Fragment/>
+                }
                 <div className='pageTitle' role="main" aria-label='main page'>
+
                     <div className='pageTitle-content'>
-                        <div className='main-title'>
+                         <div className='main-title'>
                             <div className='main-text' title='main page'>Performance</div>
                             <div className='actions-main'>
                                 <ActionRunLoad small={true} kind="ghost" projectID={this.props.projectID} />
@@ -260,7 +254,8 @@ const mapStateToProps = stores => {
         projectMetricTypes: stores.projectMetricTypesReducer,
         projectMetrics: stores.projectMetricsReducer,
         lang: stores.localeReducer.lang,
-        loadRunnerConfig: stores.loadRunnerConfigReducer
+        loadRunnerConfig: stores.loadRunnerConfigReducer,
+        navbarActions: stores.navbarActionsReducer,
     }
 };
 

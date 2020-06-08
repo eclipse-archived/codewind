@@ -13,7 +13,10 @@ package org.eclipse.codewind.iterdev;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.codewind.iterdev.Constants.ErrorCode;
@@ -38,6 +41,7 @@ public class IDC {
 	private static String IMAGE_PUSH_REGISTRY = System.getProperty(Constants.IMAGE_PUSH_REGISTRY, null);
 	private static String START_MODE = System.getProperty(Constants.START_MODE, null);
 	private static String DEBUG_PORT = System.getProperty(Constants.DEBUG_PORT, null);
+	private static ArrayList<String> PORT_MAPPINGS = new ArrayList<String>();
 
 	private static String rootPassword = null;
 
@@ -111,6 +115,20 @@ public class IDC {
 							DEBUG_PORT = args[i].replace(Constants.DEBUG_PORT_KEY, "");
 							Logger.info("The debug port is set to " + DEBUG_PORT);
 						}
+						
+						if (args[i].startsWith(Constants.PORT_MAPPINGS_KEY)) {
+							String pm = args[i].replace(Constants.PORT_MAPPINGS_KEY, "");
+							// Port mappings may pass in many arguments so create an array
+							// and append to it while the arguments satisfy the port mappings regex
+							PORT_MAPPINGS.add(pm);
+							Pattern validPortRegex = Pattern.compile("^[0-9]{1,5}:[0-9]{1,5}");
+							for (int j = i + 1; j < args.length; j++) {
+								Matcher m = validPortRegex.matcher(args[j]);
+								if (m.find()) {
+									PORT_MAPPINGS.add(args[j]);
+								}
+							}
+						}
 
 					}
 				}
@@ -159,8 +177,7 @@ public class IDC {
 			// }
 
 			// Create the application context object -- this object contains (mostly) immutable values which are commonly used to implement command functionality across IDC  
-			IDCContext context = new IDCContext(rootPassword, LOCAL_WORKSPACE_ORIGIN, CONTAINER_NAME, PROJECT_ID, LOG_NAME, IMAGE_PUSH_REGISTRY, START_MODE, DEBUG_PORT);
-			
+			IDCContext context = new IDCContext(rootPassword, LOCAL_WORKSPACE_ORIGIN, CONTAINER_NAME, PROJECT_ID, LOG_NAME, IMAGE_PUSH_REGISTRY, START_MODE, DEBUG_PORT, PORT_MAPPINGS);
 			// Set up IDC options and exit. Should not attempt to build/run container.
 			if (cmd.equalsIgnoreCase(Constants.OPTION_SET)) {
 				if (HOST_OS.contains("windows")) {

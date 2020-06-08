@@ -1,0 +1,320 @@
+/* ###############################################################################
+# Copyright (c) 2019 IBM Corporation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v2.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v20.html
+#
+# Contributors:
+#     IBM Corporation - initial API and implementation
+################################################################################*/
+
+html {
+  height: 100%;
+  font-size: 14px;
+}
+
+body {
+  background-image: linear-gradient(
+    180deg,
+    #0b3e69 0%,
+    #0b3e69 100%,
+    #0b3e69 100%
+  );
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-size: 14px;
+}
+
+header .navbar {
+  margin-bottom: 0;
+  min-height: inherit;
+}
+
+.btn {
+  box-shadow: 0;
+}
+
+.btn-primary {
+  background-color: #215891;
+  background-image: linear-gradient(#0083c9, #0083c9);
+  background-repeat: repeat-x;
+  border-color: #215891;
+  color: #fff;
+}
+
+.header .container {
+  position: relative;
+}
+
+.navbar-title {
+  background-image: url("../img/header-logo.svg");
+  background-size: 150px 33px;
+  height: 40px;
+  background-repeat: no-repeat;
+  width: 150px;
+  margin: 10px 10px 5px;
+  text-indent: -99999px;
+}
+
+.navbar-pf {
+  border-top: 3px solid #000;
+}
+
+.navbar-pf .navbar-utility {
+  right: 20px;
+  top: -34px;
+  font-size: 12px;
+}
+
+.navbar-pf .navbar-utility > li > a {
+  color: #fff !important;
+  padding-bottom: 12px;
+  padding-top: 11px;
+  border-left: medium none;
+}
+
+.container {
+  height: 100%;
+}
+
+.content-area {
+  background-color: #fff;
+  border-color: #cecece;
+  border-style: solid;
+  border-width: 0 1px;
+  height: 100%;
+  padding: 0 30px;
+}
+
+.margin-bottom {
+  margin-bottom: 10px;
+}
+
+/* Sidebar */
+
+.bs-sidebar {
+  background-color: rgba(0, 0, 0, 0);
+  padding-top: 44px;
+  padding-right: 0;
+  padding-left: 0;
+  z-index: 20;
+}
+.bs-sidebar ul {
+  list-style: none;
+  padding-left: 12px;
+}
+
+.bs-sidebar ul li {
+  margin-bottom: 0.5em;
+  margin-left: -1em;
+}
+.bs-sidebar ul li a {
+  font-size: 14px;
+  padding-left: 25px;
+  color: #fff;
+  line-height: 28px;
+  display: block;
+  border-width: 1px 0 1px 1px;
+  border-style: solid;
+  border-color: #b7d5e8;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.bs-sidebar ul li a:hover,
+.bs-sidebar ul li a:focus {
+  text-decoration: none;
+  color: #d0e7ff;
+  border-right: 2px solid #fff;
+  border-color: #fff;
+}
+.bs-sidebar ul li.active a {
+  background-color: #a7daff;
+  border-color: #0083c9;
+  color: #0083c9;
+  font-weight: bold;
+  background-image: url(../img/icon-sidebar-active.png);
+  background-repeat: no-repeat;
+  background-position: right center;
+}
+
+.bs-sidebar ul li.active a:hover {
+  border-right: none;
+}
+
+.content-area h2 {
+  font-family: "Open Sans", sans-serif;
+  font-weight: 100;
+  font-size: 24px;
+  margin-bottom: 25px;
+  margin-top: 25px;
+}
+
+.subtitle {
+  text-align: right;
+  margin-top: 30px;
+  color: #909090;
+}
+
+.required {
+  color: #cb2915;
+}
+
+.alert {
+  margin-top: 30px;
+  margin-bottom: 0;
+}
+
+.feedback-aligner .alert {
+  background-position: 1.27273em center;
+  background-repeat: no-repeat;
+  border-radius: 2px;
+  border-width: 1px;
+  color: #4d5258;
+  display: inline-block;
+  font-size: 1.1em;
+  line-height: 1.4em;
+  margin: 0;
+  padding: 0.909091em 3.63636em;
+  position: relative;
+  text-align: left;
+}
+.alert.alert-success {
+  background-color: #e4f1e1;
+  border-color: #4b9e39;
+}
+.alert.alert-error {
+  background-color: #f8e7e7;
+  border-color: #b91415;
+}
+.alert.alert-warning {
+  background-color: #fef1e9;
+  border-color: #f17528;
+}
+.alert.alert-info {
+  background-color: #e4f3fa;
+  border-color: #5994b2;
+}
+
+.form-horizontal {
+  border-top: 1px solid #e9e8e8;
+  padding-top: 23px;
+}
+
+.form-horizontal .control-label {
+  color: #000;
+  line-height: 1.4em;
+  padding-top: 5px;
+  position: relative;
+  text-align: right;
+  width: 100%;
+}
+
+.form-group {
+  position: relative;
+}
+
+.control-label + .required {
+  position: absolute;
+  right: -2px;
+  top: 0;
+}
+
+#kc-form-buttons {
+  text-align: right;
+  margin-top: 10px;
+}
+
+#kc-form-buttons .btn-primary {
+  float: right;
+  margin-left: 8px;
+}
+
+/* Authenticator page */
+
+ol {
+  padding-left: 40px;
+}
+
+ol li {
+  font-size: 13px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+ol li img {
+  margin-top: 15px;
+  margin-bottom: 5px;
+  border: 1px solid #eee;
+}
+
+hr + .form-horizontal {
+  border: none;
+  padding-top: 0;
+}
+
+.kc-dropdown {
+  position: relative;
+}
+.kc-dropdown > a {
+  display: block;
+  padding: 11px 10px 12px;
+  line-height: 12px;
+  font-size: 12px;
+  color: #fff !important;
+  text-decoration: none;
+}
+.kc-dropdown > a::after {
+  content: "\2c5";
+  margin-left: 4px;
+}
+.kc-dropdown:hover > a {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+.kc-dropdown ul li a {
+  padding: 1px 11px;
+  font-size: 12px;
+  color: #000 !important;
+  border: 1px solid #fff;
+  text-decoration: none;
+  display: block;
+  line-height: 20px;
+}
+.kc-dropdown ul li a:hover {
+  color: #4d5258;
+  background-color: #d4edfa;
+  border-color: #b3d3e7;
+}
+.kc-dropdown ul {
+  position: absolute;
+  z-index: 2000;
+  list-style: none;
+  display: none;
+  padding: 5px 0px;
+  margin: 0px;
+  background-color: #fff !important;
+  border: 1px solid #b6b6b6;
+  border-radius: 1px;
+  -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+  background-clip: padding-box;
+  min-width: 100px;
+}
+.kc-dropdown:hover ul {
+  display: block;
+}
+
+#kc-totp-secret-key {
+  border: 1px solid #eee;
+  font-size: 16px;
+  padding: 10px;
+  margin: 50px 0;
+}
+
+@media (min-width: 768px) {
+  .navbar-pf .navbar-utility > li > a,
+  .navbar-pf .navbar-utility > li > button {
+    font-size: 15px;
+  }
+}

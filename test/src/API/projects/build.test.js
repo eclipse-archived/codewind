@@ -74,12 +74,12 @@ describe('Project Build Tests', function() {
             res.text.should.equal('Error while validating request: request.body.action should be equal to one of the allowed values');
         });
         
-        it('returns 400 when project does not exist', async function() {
+        it('returns 404 when project does not exist', async function() {
             this.timeout(testTimeout.short);
             const projectID = '00000000-0000-0000-0000-000000000000';
             const res = await projectService.buildProject(projectID, 'build');
             
-            res.status.should.equal(400, res.text); // print res.text if assertion fails
+            res.status.should.equal(404, res.text); // print res.text if assertion fails
             res.should.satisfyApiSpec;
             res.text.should.equal(`Unable to find project ${projectID}`);
         });

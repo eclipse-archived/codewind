@@ -11,7 +11,11 @@
 
 package org.eclipse.codewind.iterdev.tasks;
 
+import java.io.IOException;
+import java.util.ArrayList;
+
 import org.eclipse.codewind.iterdev.Constants;
+import org.eclipse.codewind.iterdev.DockerUtils;
 import org.eclipse.codewind.iterdev.IConsoleFilter;
 import org.eclipse.codewind.iterdev.IDCContext;
 import org.eclipse.codewind.iterdev.Logger;
@@ -44,12 +48,12 @@ public class ContainerRunTask {
                     + context.getprojectID() + " "
                     + context.getLogDir() + " "
                     + context.getImagePushRegistry();
-        }  else {
+        } else {
+            String portPublishArgs = createPortPublishArguments(context);
             cmd = context.getArtifactsDirectory().getPath() + Constants.SLASH + "run_docker.sh "
-                    + context.getContainerName() + " " + context.getImageName() + " \"-p "
-                    + debugPortPublishArg + " -P\"" + " "
-                    + context.getAppDockerBase() + " " + context.getLocalWorkspaceOrigin() + " "
-                    + context.getLogDir();
+                    + context.getContainerName() + " " + context.getImageName() + " \"" + portPublishArgs + " -p "
+                    + debugPortPublishArg + " -P\"" + " " + context.getAppDockerBase() + " "
+                    + context.getLocalWorkspaceOrigin() + " " + context.getLogDir();
         }
 
         ProcessRunner pr = runContainer(cmd, context);
@@ -152,5 +156,22 @@ public class ContainerRunTask {
 
         return pr;
 
+    }
+
+    private static String createPortPublishArguments(IDCContext context) throws IOException, InterruptedException {
+        ArrayList<String> mappedPorts = context.getPortMappings();
+        String[] exposedPorts = DockerUtils.getExposedPortsFromImage(context);
+
+        String portPublishArgs = " ";
+        for (String externalToInternal : mappedPorts) {
+            String internalPort = externalToInternal.split(":")[1];
+            for (String exposedPort : exposedPorts) {
+                if (internalPort.equals(exposedPort)) {
+                    portPublishArgs += "--publish 127.0.0.1:" + externalToInternal + " ";
+                }
+            }
+        }
+
+        return portPublishArgs;
     }
 }

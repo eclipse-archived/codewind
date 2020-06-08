@@ -41,14 +41,7 @@ import { projectConstants, ContainerStates, StartModes, MavenFlags } from "./con
 import * as locale from "../utils/locale";
 import { appStateMap, DetailedAppStatus } from "../controllers/projectStatusController";
 import * as constants from "./constants";
-
-const Client = require("kubernetes-client").Client; // tslint:disable-line:no-require-imports
-const config = require("kubernetes-client").config; // tslint:disable-line:no-require-imports
-let k8sClient: any = undefined;
-
-if (process.env.IN_K8) {
-    k8sClient = new Client({ config: config.getInCluster(), version: "1.9" });
-}
+import { getK8sClient } from "../utils/kubeutil";
 
 const KUBE_NAMESPACE = process.env.KUBE_NAMESPACE || "default";
 
@@ -108,7 +101,6 @@ const projectEventErrorMsgs = {
  * @returns void
  */
 export async function containerCreate(operation: Operation, script: string, command: string): Promise<void> {
-
     const event = "projectCreation";
     const projectLocation = operation.projectInfo.location;
     const projectID = operation.projectInfo.projectID;
@@ -116,7 +108,6 @@ export async function containerCreate(operation: Operation, script: string, comm
     const projectType = operation.projectInfo.projectType;
     if (projectList.indexOf(projectID) === -1)
         projectList.push(projectID);
-
     logger.logProjectInfo("Creating container for " + operation.projectInfo.projectType + " project " + projectLocation, projectID, projectName);
     operation.containerName = await getContainerName(operation.projectInfo);
     // Refer to the comment in getLogName function for this usage
@@ -192,6 +183,12 @@ export async function containerCreate(operation: Operation, script: string, comm
             logDir,
             String(operation.projectInfo.autoBuildEnabled)
         ];
+    }
+
+    if (projectInfo.portMappings) {
+        for (const [internalPort, externalPort] of Object.entries(projectInfo.portMappings)) {
+            args.push(`${externalPort}:${internalPort}`);
+        }
     }
 
     executeBuildScript(operation, script, args, event);
@@ -295,6 +292,12 @@ export async function containerUpdate(operation: Operation, script: string, comm
         ];
     }
 
+    if (projectInfo.portMappings) {
+        for (const [internalPort, externalPort] of Object.entries(projectInfo.portMappings)) {
+            args.push(`${externalPort}:${internalPort}`);
+        }
+    }
+
     executeBuildScript(operation, script, args, event);
 
 }
@@ -349,8 +352,7 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
     // The sentProjectInfo is introduced to prevent from setting app status to started before projectInfo has been sent to portal
     keyValuePair.key = "sentProjectInfo";
     keyValuePair.value = false;
-    await projectsController.updateProjectInfo(projectID, keyValuePair);
-
+    const existingProjectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
     let argList = script + " ";
     for (const arg of args) { argList += arg + " "; }
     argList = argList.trim();
@@ -431,7 +433,7 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         const servicePort = parseInt(containerInfo.internalPort, 10);
 
                         // Expose an ingress for the project
-                        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, operation.projectInfo.isHttps, servicePort);
+                        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, operation.projectInfo.isHttps, servicePort, existingProjectInfo.appBaseURL);
 
                         // Set the appBaseURL to the ingress we exposed earlier
                         projectInfo.appBaseURL = baseURL;
@@ -512,6 +514,17 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                             projectInfo.ports.internalDebugPort = containerInfo.internalDebugPort;
                         }
                         logger.logProjectInfo("Found container information: " + JSON.stringify(containerInfo), projectID, projectName);
+
+
+                        const portMappings: any = {};
+                        containerInfo.containerPorts.forEach((port, i) => {
+                            portMappings[port] = containerInfo.hostPorts[i];
+                        });
+
+                        await projectsController.updateProjectInfo(projectID, {
+                            key: "portMappings",
+                            value:  portMappings,
+                        });
                     } else {
                         containerInfoMap.delete(operation.projectInfo.projectID);
                         containerInfoForceRefreshMap.delete(operation.projectInfo.projectID);
@@ -1353,6 +1366,15 @@ export async function buildAndRun(operation: Operation, command: string): Promis
         await projectsController.updateProjectInfo(projectID, keyValuePair);
 
         try {
+            if (operation.projectInfo && operation.projectInfo.portMappings) {
+                const portMappings = operation.projectInfo.portMappings;
+                logger.logProjectInfo(`Adding existing portMappings to buildInfo: ${JSON.stringify(portMappings)}`, projectID);
+                for (const [internalPort, externalPort] of Object.entries(portMappings)) {
+                    // Cast unknown typed externalPort to String
+                    buildInfo.hostPorts.push(String(externalPort));
+                    buildInfo.containerPorts.push(internalPort);
+                }
+            }
             logger.logProjectInfo("Beginning container build and run stage", projectID, projectName);
             await containerBuildAndRun(event, buildInfo, operation);
         } catch (err) {
@@ -1716,6 +1738,8 @@ export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: s
     let isPodFailed = false;
     const releaseLabel = "release=" + buildInfo.containerName;
     const intervalID: NodeJS.Timer = isApplicationPodUpIntervalMap.get(buildInfo.projectID);
+
+    const k8sClient = getK8sClient();
     const resp = await k8sClient.api.v1.namespaces(KUBE_NAMESPACE).pods.get({ qs: { labelSelector: releaseLabel } });
 
     // We are getting the list of pods by the release label
@@ -1938,7 +1962,7 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
 
         // Expose an ingress for the project
         const servicePort = parseInt(containerInfo.internalPort, 10);
-        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, operation.projectInfo.isHttps, servicePort);
+        const baseURL = await kubeutil.exposeOverIngress(projectID, projectName, operation.projectInfo.isHttps, servicePort, projectInfo.appBaseURL);
 
         // Set the appBaseURL to the ingress URL of the project
         const updatedProjectInfo: ProjectInfo = operation.projectInfo;
@@ -2000,24 +2024,40 @@ export async function restartProject(operation: Operation, startMode: string, ev
     if (portNumberChanged) {
         logger.logProjectInfo("Rebuilding the project due to debug port changed.", projectID);
         projectInfo.startMode = startMode;
-        projectHandler.rebuild(projectInfo).then(async () => {
-            await projectHandler.start(projectInfo);
-            const keyValuePair: UpdateProjectInfoPair = {
-                key: "startMode",
-                value: startMode,
-                saveIntoJsonFile: true
-            };
-            projectsController.updateProjectInfo(projectID, keyValuePair);
-            logger.logProjectInfo("Project start for restart was successful", projectID);
-            const containerInfo: any = await getContainerInfo(projectInfo, true);
-            const data: any = {
-                operationId: operation.operationId,
-                projectID: projectID,
-                status: "success",
-                startMode: startMode,
-                ports: {
-                    exposedPort: containerInfo.exposedPort,
-                    internalPort: containerInfo.internalPort
+            projectHandler.rebuild(projectInfo).then(async () => {
+                await projectHandler.start(projectInfo);
+                const keyValuePair: UpdateProjectInfoPair = {
+                    key : "startMode",
+                    value: startMode,
+                    saveIntoJsonFile: true
+                };
+                projectsController.updateProjectInfo(projectID, keyValuePair);
+                logger.logProjectInfo("Project start for restart was successful", projectID);
+                const containerInfo: any = await getContainerInfo(projectInfo, true);
+                const data: any = {
+                    operationId: operation.operationId,
+                    projectID: projectID,
+                    status: "success",
+                    startMode: startMode,
+                    ports: {
+                        exposedPort: containerInfo.exposedPort,
+                        internalPort: containerInfo.internalPort
+                    }
+                };
+                if (containerInfo.containerId) {
+                    data.containerId = containerInfo.containerId;
+                }
+                if (containerInfo.podName) {
+                    data.podName = containerInfo.podName;
+                    if (projectInfo.appBaseURL) {
+                        data.appBaseURL = projectInfo.appBaseURL;
+                    }
+                }
+                if (containerInfo.exposedDebugPort) {
+                    data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
+                }
+                if (containerInfo.internalDebugPort) {
+                    data.ports.internalDebugPort = containerInfo.internalDebugPort;
                 }
             };
             if (containerInfo.containerId) {
@@ -2098,6 +2138,9 @@ export async function restartProject(operation: Operation, startMode: string, ev
                 }
                 if (containerInfo.podName) {
                     data.podName = containerInfo.podName;
+                    if (projectInfo.appBaseURL) {
+                        data.appBaseURL = projectInfo.appBaseURL;
+                    }
                 }
                 if (containerInfo.exposedDebugPort) {
                     data.ports.exposedDebugPort = containerInfo.exposedDebugPort;
@@ -2161,5 +2204,20 @@ export async function updateDetailedAppStatus(projectID: string, ip: string, por
 
     if (oldState === AppState.starting) {
         projectStatusController.updateProjectStatus(STATE_TYPES.appState, projectID, AppState.starting, oldMsg, undefined, undefined, oldMsg, pingPathEvent);
+    }
+}
+
+/**
+ * Expose a project over ingress when IN_K8
+ *
+ * @param projectInfo The project's info
+ * @param appPort Optional service port number
+ */
+export async function exposeOverIngress(projectInfo: ProjectInfo, appPort?: number): Promise<void> {
+    if (process.env.IN_K8) {
+        const projectID = projectInfo.projectID;
+        const projectName = projectInfo.location.split("/").pop();
+        projectInfo.appBaseURL = await kubeutil.exposeOverIngress(projectID, projectName, projectInfo.isHttps, appPort, projectInfo.appBaseURL);
+        await projectsController.saveProjectInfo(projectID, projectInfo, true);
     }
 }

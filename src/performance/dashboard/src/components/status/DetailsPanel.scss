@@ -15,32 +15,13 @@
 @import "~@carbon/grid/scss/grid";
 
 .DetailsPanel {
-  @extend .bx--col-lg-16;
-  @extend .bx--col-md-8;
-  @extend .bx--col-sm-4;
-  margin-top: $carbon--spacing-05;
-  margin-bottom: $carbon--spacing-05;
-  max-height: 0;
+  padding:0 50px;
   overflow: hidden;
   transition: max-height 0.5s ease-out;
-  background-color:black;
-}
-
-.DetailsPanel.reveal{
-  max-height: 600px;
-  overflow-y: auto;
-  transition: max-height 0.5s ease-in;
 }
 
 .DetailsPanel .detailPanelBox {
-  padding: $carbon--spacing-06;
-}
-
-.DetailsPanel .detailTitle {
-  @include properties($body-short-02);
-  margin-bottom:$carbon--spacing-05;
-  padding-bottom: $carbon--spacing-02;
-  border-bottom: 1px solid $carbon__gray-50;
+  padding: $carbon--spacing-04 0;
 }
 
 .DetailsPanel .detailBody {

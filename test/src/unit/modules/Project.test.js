@@ -85,7 +85,8 @@ describe('Project.js', function() {
                 state: 'open',
                 autoBuild: false,
                 metricsCapabilities: {
-                    metricsAvailable: true,
+                    liveMetricsAvailable: true,
+                    microprofilePackageAuthenticationDisabled: true,
                 },
             };
             const project = createProjectAndCheckIsAnObject(args, global.codewind.CODEWIND_WORKSPACE);
@@ -126,6 +127,7 @@ describe('Project.js', function() {
                 microprofilePackageFoundInBuildFile: false,
                 appmetricsPackageFoundInBuildFile: false,
                 hasTimedMetrics: false,
+                microprofilePackageAuthenticationDisabled: false,
             };
             const project = createDefaultProjectAndCheckIsAnObject();
 
@@ -158,6 +160,7 @@ describe('Project.js', function() {
                     microprofilePackageFoundInBuildFile: true,
                     appmetricsPackageFoundInBuildFile: true,
                     hasTimedMetrics: false,
+                    microprofilePackageAuthenticationDisabled: false,
                 },
                 metricsDashHost: {
                     hosting: 'project',
@@ -185,6 +188,38 @@ describe('Project.js', function() {
                 metricsCapabilities: mockedMetricStatusReturn.capabilities,
             });
         });
+        it('does not change or remove the microprofilePackageAuthenticationDisabled field', async() => {
+            // arrange
+            const mockedMetricStatusReturn = {
+                capabilities: {
+                    liveMetricsAvailable: true,
+                    metricsEndpoint: '/metrics',
+                    appmetricsEndpoint: '/appmetrics-dash',
+                    microprofilePackageFoundInBuildFile: true,
+                    appmetricsPackageFoundInBuildFile: true,
+                    hasTimedMetrics: false,
+                },
+                metricsDashHost: {
+                    hosting: 'project',
+                    path: '/appmetrics-dash',
+                },
+            };
+            Project.__set__('metricsStatusChecker', {
+                getMetricStatusForProject: sinon.stub().returns(mockedMetricStatusReturn),
+            });
+            const project = createDefaultProjectAndCheckIsAnObject();
+            project.metricsCapabilities.microprofilePackageAuthenticationDisabled = 'isNotOverwritten';
+
+            // act
+            await project.setMetricsState();
+
+            // assert
+            const capabilities = project.getMetricsCapabilities();
+            capabilities.should.deep.equal({
+                ...mockedMetricStatusReturn.capabilities,
+                microprofilePackageAuthenticationDisabled: 'isNotOverwritten',
+            });
+        });
         it('throws an error when metricsStatusChecker.getMetricStatusForProject is rejected', () => {
             Project.__set__('metricsStatusChecker', {
                 getMetricStatusForProject: sinon.stub().rejects,
@@ -195,10 +230,18 @@ describe('Project.js', function() {
         });
     });
     describe('getMetricsCapabilities()', () => {
-        it('returns the metricsCapabilities object from a project', () => {
+        it('returns the default metricsCapabilities object from a project', () => {
             const project = createDefaultProjectAndCheckIsAnObject();
             const metricsCapabilities = project.getMetricsCapabilities();
-            metricsCapabilities.should.deep.equal({});
+            metricsCapabilities.should.deep.equal({
+                liveMetricsAvailable: false,
+                metricsEndpoint: false,
+                appmetricsEndpoint: false,
+                microprofilePackageFoundInBuildFile: false,
+                appmetricsPackageFoundInBuildFile: false,
+                hasTimedMetrics: false,
+                microprofilePackageAuthenticationDisabled: false,
+            });
         });
     });
     describe('setOpenLiberty()', () => {
@@ -402,6 +445,7 @@ describe('Project.js', function() {
             infJson.should.have.property('projectID').and.equal(project.projectID);
 
             const projectFromInf = createProjectAndCheckIsAnObject(infJson, global.codewind.CODEWIND_WORKSPACE);
+            projectFromInf.loadRunner = project.loadRunner = null;
             projectFromInf.should.deep.equal(project);
         });
         it('Checks the Project cannot be written when it is locked', function() {

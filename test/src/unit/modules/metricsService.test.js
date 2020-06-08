@@ -19,6 +19,7 @@ const xml2js = require('xml2js');
 const { suppressLogOutput } = require('../../../modules/log.service');
 const metricsService = rewire('../../../../src/pfe/portal/modules/metricsService');
 const nodeMetricsService = rewire('../../../../src/pfe/portal/modules/metricsService/node');
+const ProjectMetricsError = require('../../../../src/pfe/portal/modules/utils/errors/ProjectMetricsError');
 
 chai.use(chaiAsPromised);
 chai.use(deepEqualInAnyOrder);
@@ -944,6 +945,76 @@ describe('metricsService/index.js', () => {
                     output.should.have.deep.members(originalDependencies);
                 });
             });
+        });
+    });
+    describe('disableMicroprofileMetricsAuth(projectLanguage, projectDir)', () => {
+        const testDir = path.join(projectDir, 'disableMicroprofileMetricsAuth');
+        beforeEach(() => {
+            fs.ensureDirSync(testDir);
+        });
+        afterEach(() => {
+            fs.removeSync(testDir);
+        });
+        it('returns the filePath and creates the override file as the projectLanguage is java and the server.xml can be found', async() => {
+            await fs.ensureFile(path.join(testDir, 'server.xml'));
+
+            const filePath = await metricsService.disableMicroprofileMetricsAuth('java', testDir);
+            filePath.should.equal(path.join(testDir, '/configDropins/overrides', 'codewind-override-disable-mpmetrics-auth.xml'));
+            const fileContents = await fs.readFile(filePath, 'utf8');
+            fileContents.should.equal('<server>\n\t<mpMetrics authentication="false"/>\n</server>\n');
+        });
+        it('throws an error as the language is not java', () => {
+            return metricsService.disableMicroprofileMetricsAuth('notjava', testDir)
+                .should.eventually.be.rejectedWith(ProjectMetricsError)
+                .and.have.property('code', ProjectMetricsError.CODES.DISABLE_METRICS_AUTH_UNSUPPORTED);
+        });
+        it('throws an error as the server.xml does not exist', () => {
+            return metricsService.disableMicroprofileMetricsAuth('java', testDir)
+                .should.eventually.be.rejectedWith(ProjectMetricsError)
+                .and.have.property('code', ProjectMetricsError.CODES.SERVER_XML_NOT_FOUND);
+        });
+    });
+    describe('enableMicroprofileMetricsAuth(projectLanguage, projectDir)', () => {
+        const testDir = path.join(projectDir, 'enableMicroprofileMetricsAuth');
+        beforeEach(() => {
+            fs.ensureDirSync(testDir);
+        });
+        afterEach(() => {
+            fs.removeSync(testDir);
+        });
+        it('removes the override file as the projectType is java, the server.xml can be found and the override file exists', async() => {
+            await fs.ensureFile(path.join(testDir, 'server.xml'));
+            const filePath = path.join(testDir, '/configDropins/overrides', 'codewind-override-disable-mpmetrics-auth.xml');
+            await fs.ensureFile(filePath);
+            await metricsService.enableMicroprofileMetricsAuth('java', testDir);
+            const fileExists = await fs.pathExists(filePath);
+            fileExists.should.be.false;
+        });
+        it('does nothing when the override file does not exist', async() => {
+            await fs.ensureFile(path.join(testDir, 'server.xml'));
+            const filePath = path.join(testDir, '/configDropins/overrides', 'codewind-override-disable-mpmetrics-auth.xml');
+            await metricsService.enableMicroprofileMetricsAuth('java', testDir);
+            const fileExists = await fs.pathExists(filePath);
+            fileExists.should.be.false;
+        });
+        it('throws an error when the projectType is not java', async() => {
+            await fs.ensureFile(path.join(testDir, 'server.xml'));
+            const filePath = path.join(testDir, '/configDropins/overrides', 'codewind-override-disable-mpmetrics-auth.xml');
+            await fs.ensureFile(filePath);
+            await metricsService.enableMicroprofileMetricsAuth('notjava', testDir)
+                .should.eventually.be.rejectedWith(ProjectMetricsError)
+                .and.have.property('code', ProjectMetricsError.CODES.DISABLE_METRICS_AUTH_UNSUPPORTED);
+            const fileExists = await fs.pathExists(filePath);
+            fileExists.should.be.true;
+        });
+        it('throws an error when the server.xml cannot be found', async() => {
+            const filePath = path.join(testDir, '/configDropins/overrides', 'codewind-override-disable-mpmetrics-auth.xml');
+            await fs.ensureFile(filePath);
+            await metricsService.enableMicroprofileMetricsAuth('java', testDir)
+                .should.eventually.be.rejectedWith(ProjectMetricsError)
+                .and.have.property('code', ProjectMetricsError.CODES.SERVER_XML_NOT_FOUND);
+            const fileExists = await fs.pathExists(filePath);
+            fileExists.should.be.true;
         });
     });
 });

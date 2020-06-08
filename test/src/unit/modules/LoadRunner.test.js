@@ -42,7 +42,7 @@ describe('LoadRunner.js', () => {
     beforeEach(() => {
         sandbox.restore();
     });
-    describe('new LoadRunner(user)', () => {
+    describe('new LoadRunner(project)', () => {
         it('returns a new LoadRunner and connects to the loadrunner container socket', () => {
             // arrange
             const ioConnectStub = sandbox.stub();
@@ -56,14 +56,14 @@ describe('LoadRunner.js', () => {
             });
 
             // act
-            const loadRunner = new LoadRunner('mockUser');
+            const loadRunner = new LoadRunner('mockProject');
 
             // assert
             loadRunner.should.containSubset({
-                user: 'mockUser',
+                user: null,
                 hostname: 'codewind-performance',
                 port: '9095',
-                project: null,
+                project: 'mockProject',
                 runDescription: null,
                 up: false,
                 collectionUri: null,
@@ -206,14 +206,14 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
-            const loadRunner = new LoadRunner(mockUser);
             const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
                 getPort: () => 'mockPort',
             };
-            loadRunner.project = mockProject;
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = mockUser;
             loadRunner.metricsFeatures = { timedMetrics: false };
 
             // act
@@ -249,14 +249,14 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
-            const loadRunner = new LoadRunner(mockUser);
             const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
                 getPort: () => 'mockPort',
             };
-            loadRunner.project = mockProject;
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = mockUser;
             loadRunner.metricsFeatures = { timedMetrics: true };
             const seconds = 500;
 
@@ -290,7 +290,6 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
-            const loadRunner = new LoadRunner(mockUser);
             const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
@@ -299,7 +298,8 @@ describe('LoadRunner.js', () => {
                 kubeServiceHost: 'mockKubeServiceHost',
                 kubeServicePort: 'mockKubeServicePort',
             };
-            loadRunner.project = mockProject;
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = mockUser;
             loadRunner.metricsFeatures = { timedMetrics: true };
             const seconds = 500;
 
@@ -332,14 +332,14 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: () => {} },
             };
-            const loadRunner = new LoadRunner(mockUser);
             const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
                 getPort: () => 'mockPort',
             };
-            loadRunner.project = mockProject;
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = mockUser;
 
             // act
             const output = await loadRunner.createCollection();
@@ -370,14 +370,14 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: () => {} },
             };
-            const loadRunner = new LoadRunner(mockUser);
             const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
                 getPort: () => 'mockPort',
             };
-            loadRunner.project = mockProject;
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = mockUser;
 
             // act
             const output = await loadRunner.createCollection();
@@ -406,14 +406,14 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: () => {} },
             };
-            const loadRunner = new LoadRunner(mockUser);
             const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 host: 'mockHost',
                 getMetricsContextRoot: () => 'mockMetricsContextRoot',
                 getPort: () => 'mockPort',
             };
-            loadRunner.project = mockProject;
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = mockUser;
 
             // act
             await loadRunner.createCollection();
@@ -492,18 +492,19 @@ describe('LoadRunner.js', () => {
             on: () => {},
             connect: () => {},
         });
-        it('throws the correct error when loadRunner already has a project', async() => {
+        it('throws the correct error when loadRunner is not idle', async() => {
             // arrange
             const LoadRunner = proxyquire(pathToLoadRunnerJs, {
                 'socket.io-client': mockIo,
                 './utils/Logger': MockLogger,
             });
-            const loadRunner = new LoadRunner('mockUser');
             const mockProject = {
                 name: 'mockName',
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
             };
-            loadRunner.project = mockProject;
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = 'mockUser';
+            loadRunner.status.CURRENT_STATE = 'RUNNING';
 
             // act & assert
             await loadRunner.runLoad().should.eventually.be.rejectedWith(`Load run already in progress.\nFor project ${mockProject.name} (${mockProject.projectID})`);
@@ -542,13 +543,14 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
-            const loadRunner = new LoadRunner(mockUser);
-            loadRunner.up = true;
             const mockProject = {
                 name: 'mockName',
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 getProjectKubeService: sandbox.stub(),
             };
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = mockUser;
+            loadRunner.up = true;
 
             const mockLoadConfig = { maxSeconds: 999 };
 
@@ -603,7 +605,8 @@ describe('LoadRunner.js', () => {
                 './utils/sharedFunctions': { asyncHttpRequest: asyncHttpRequestStub },
                 './utils/Logger': MockLogger,
             });
-            const loadRunner = new LoadRunner('mockUser');
+            const loadRunner = new LoadRunner({ projectID: 'mockID' });
+            loadRunner.user = 'mockUser';
             const expectedOptions = {
                 host: 'codewind-performance',
                 port: '9095',
@@ -615,10 +618,10 @@ describe('LoadRunner.js', () => {
             };
 
             // act
-            const output = await loadRunner.cancelRunLoad('mockLoadConfig');
+            const output = await loadRunner.cancelRunLoad();
 
             // assert
-            asyncHttpRequestStub.should.have.been.calledOnceWithExactly(expectedOptions, 'mockLoadConfig');
+            asyncHttpRequestStub.should.have.been.calledOnceWithExactly(expectedOptions, { projectID: 'mockID' });
             output.should.equal('mockCancelLoadResponse');
         });
     });
@@ -631,7 +634,8 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
-            const loadRunner = new LoadRunner(mockUser);
+            const loadRunner = new LoadRunner('mockProject');
+            loadRunner.user = mockUser;
             loadRunner.project = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
             const logErrorSpy = sandbox.spy(MockLogger.prototype, 'error');
 
@@ -650,8 +654,8 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
-            const loadRunner = new LoadRunner(mockUser);
-            loadRunner.project = null;
+            const loadRunner = new LoadRunner(null);
+            loadRunner.user = mockUser;
             const logWarnSpy = sandbox.spy(MockLogger.prototype, 'warn');
 
             // act
@@ -668,8 +672,8 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
-            const loadRunner = new LoadRunner(mockUser);
-            loadRunner.project = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
+            const loadRunner = new LoadRunner({ projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' });
+            loadRunner.user = mockUser;
             const logInfoSpy = sandbox.spy(MockLogger.prototype, 'info');
             const gJHCDSpy = sandbox.spy(loadRunner, 'getJavaHealthCenterData');
 
@@ -689,12 +693,12 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
-            const loadRunner = new LoadRunner(mockUser);
             const mockProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
                 getProfilingByTime: () => {},
             };
-            loadRunner.project = mockProject;
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = mockUser;
             loadRunner.metricsFolder = expectedMetricsFolder;
             const logInfoSpy = sandbox.spy(MockLogger.prototype, 'info');
             const expectedData = {
@@ -715,7 +719,6 @@ describe('LoadRunner.js', () => {
             logInfoSpy.should.have.been.calledOnceWithExactly('getJavaHealthCenterData: .hcd copied to PFE');
             loadRunner.user.uiSocket.emit.should.have.been.called.calledWith('runloadStatusChanged', expectedData);
             loadRunner.user.uiSocket.emit.should.have.been.called.calledWith('runloadStatusChanged', expectedDataForPerfUI);
-            should.equal(loadRunner.project, null);
 
         });
     });
@@ -829,13 +832,13 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
-            const loadRunner = new LoadRunner(mockUser);
-            loadRunner.profilingSocket = mockProfilingSocket;
             const mockProject = {
                 name: 'mockName',
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
             };
-            loadRunner.project = mockProject;
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = mockUser;
+            loadRunner.profilingSocket = mockProfilingSocket;
             loadRunner.metricsFolder = expectedMetricsFolder;
             loadRunner.workingDir = workingDir;
             loadRunner.profilingSamples = expectedObject;
@@ -866,7 +869,6 @@ describe('LoadRunner.js', () => {
             should.equal(loadRunner.profilingSocket, null);
             should.equal(loadRunner.profilingSamples, null);
             loadRunner.user.uiSocket.emit.should.have.been.calledWith('runloadStatusChanged', expectedDataForPerfUI);
-            should.equal(loadRunner.project, null);
         });
         it('still notifies the UI the perf run has completed if profilingSocket is null', async() => {
             // arrange
@@ -875,13 +877,13 @@ describe('LoadRunner.js', () => {
             const mockUser = {
                 uiSocket: { emit: sandbox.stub() },
             };
-            const loadRunner = new LoadRunner(mockUser);
-            loadRunner.profilingSocket = null;
             const mockProject = {
                 name: 'mockName',
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
             };
-            loadRunner.project = mockProject;
+            const loadRunner = new LoadRunner(mockProject);
+            loadRunner.user = mockUser;
+            loadRunner.profilingSocket = null;
             loadRunner.metricsFolder = expectedMetricsFolder;
 
             const expectedData = {

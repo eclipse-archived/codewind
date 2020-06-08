@@ -18,6 +18,8 @@ const promiseAny = require('promise.any');
 
 const Logger = require('../utils/Logger');
 const nodeMetricsService = require('./node');
+const { findFile } = require('../utils/sharedFunctions');
+const ProjectMetricsError = require('../utils/errors/ProjectMetricsError');
 
 const log = new Logger(__filename);
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
@@ -570,10 +572,46 @@ function getNewPomXmlBuildPlugins(originalBuildPlugins) {
   return newBuildPlugins;
 }
 
+async function disableMicroprofileMetricsAuth(projectLanguage, projectDir) {
+  if (projectLanguage !== 'java') {
+    throw new ProjectMetricsError('DISABLE_METRICS_AUTH_UNSUPPORTED', projectLanguage);
+  }
+  const contents = '<server>\n\t<mpMetrics authentication="false"/>\n</server>\n';
+  const fileName = 'codewind-override-disable-mpmetrics-auth.xml';
+  const pathToServerXml = await findFile('server.xml', projectDir);
+  if (!pathToServerXml) {
+    throw new ProjectMetricsError('SERVER_XML_NOT_FOUND', projectDir, 'Cannot remove Microprofile metrics authentication override file');
+  }
+  const serverXmlDirectory = path.dirname(pathToServerXml);
+  // Use overrides as it has a higher priority than /configDropins/defaults
+  const overridesDir = path.join(serverXmlDirectory, '/configDropins/overrides');
+  const filePath = path.join(overridesDir, fileName);
+  await fs.ensureDir(overridesDir);
+  await fs.writeFile(filePath, contents);
+  return filePath;
+}
+
+async function enableMicroprofileMetricsAuth(projectLanguage, projectDir) {
+  if (projectLanguage !== 'java') {
+    throw new ProjectMetricsError('DISABLE_METRICS_AUTH_UNSUPPORTED', projectLanguage);
+  }
+  const fileName = 'codewind-override-disable-mpmetrics-auth.xml';
+  const pathToServerXml = await findFile('server.xml', projectDir);
+  if (!pathToServerXml) {
+    throw new ProjectMetricsError('SERVER_XML_NOT_FOUND', projectDir, 'Cannot remove Microprofile metrics authentication override file');
+  }
+  const serverXmlDirectory = path.dirname(pathToServerXml);
+  // Use overrides as it has a higher priority than /configDropins/defaults
+  const filePath = path.join(serverXmlDirectory, '/configDropins/overrides', fileName);
+  return fs.remove(filePath);
+}
+
 module.exports = {
   injectMetricsCollectorIntoProject,
   removeMetricsCollectorFromProject,
   metricsCollectorInjectionFunctions,
   identifyProject,
   determineIfOpenLiberty,
+  disableMicroprofileMetricsAuth,
+  enableMicroprofileMetricsAuth,
 }

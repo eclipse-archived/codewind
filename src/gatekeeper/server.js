@@ -2,6 +2,7 @@ const express = require('express')
 const Keycloak = require('keycloak-connect');
 const session = require('express-session');
 const httpProxy = require('http-proxy');
+const fs = require('fs-extra');
 const { promisify } = require('util');
 const https = require('https');
 
@@ -158,38 +159,66 @@ async function main() {
     app.get("/api/pfe/ready", function (req, res) {
         console.log(`/api/pfe/ready - req.originalUrl = ${req.originalUrl}`);
         req.url = '/health';
-        proxy.web(req, res, {
-            target: pfe_target,
-        });
+        try {
+            proxy.web(req, res, {
+                target: pfe_target,
+            });
+        } catch (err) {
+            console.log("Proxy /api/pfe/ready error: ", err);
+            res.sendStatus(502);
+        }
     });
 
     /* PFE handles socket IO authentication*/
     app.use('/socket.io/*', function (req, res) {
         console.log(`/socket.io/* - req.originalUrl = ${req.originalUrl}`);
         req.url = req.originalUrl;
-        proxy.web(req, res, {
-            target: pfe_target
-        });
+        try {
+            proxy.web(req, res, {
+                target: pfe_target
+            });
+        } catch (err) {
+            console.log("Proxy /socket.io/* error: ", err);
+            res.sendStatus(502);
+        }
     });
 
     /* Proxy Performance container routes */
     app.use('*', authMiddleware, function (req, res) {
         console.log(`* - req.originalUrl = ${req.originalUrl}`);
         req.url = req.originalUrl;
-        proxy.web(req, res, {
-            target: pfe_target
-          });
+        try {
+            proxy.web(req, res, {
+                target: pfe_target
+            });
+        } catch (err) {
+            console.log("Proxy * error: ", err);
+            res.sendStatus(502);
+        }
     });
 
-    const https = require('https');
-    const pem = require('pem');
-    const createCertificateAsync = promisify(pem.createCertificate);
-    let keys = await createCertificateAsync({ selfSigned: true });
-    server = https.createServer({ key: keys.serviceKey, cert: keys.certificate }, app)
+    var serverCertificate;
+    var serverKey;
+    try {
+        serverCertificate = fs.readFileSync('/tlscerts/tls.crt');
+        serverKey = fs.readFileSync('/tlscerts/tls.key');
+    } catch (err) {
+        console.error ("**********  TLS certificates can not be loaded **********");
+        console.error ("The server is unable to start since it was unable to load a key and certificate from the mounted volume - check you have a TLS secret for this deployment containing a valid key and certificate");
+        process.exit(1);
+    }
+
+    server = https.createServer({ key: serverKey, cert: serverCertificate}, app)
+    console.log("TLS Certificates loaded and applied to https server");
 
     server.on('upgrade', function (req, socket, head) {
         console.log("Proxy: websocket connect 'upgrade'")
-        proxy.ws(req, socket, head);
+        try {
+            proxy.ws(req, socket, head);
+        } catch (err) {
+            console.log("Proxy upgrade error:", err);
+            res.sendStatus(502);
+        }
     });
 
     server.listen(port, () => console.log(`Gatekeeper listening on port ${port}!`))

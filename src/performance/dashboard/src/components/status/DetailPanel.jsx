@@ -9,42 +9,53 @@
 *     IBM Corporation - initial API and implementation
 ******************************************************************************/
 
-import React, { Component } from 'react'
+import React, { Component, Fragment } from 'react'
 import PropTypes from 'prop-types';
+import InlineHTML from './messages/InlineHTML';
+import ErrorBoundary from '../utils/ErrorBoundary';
+import MPDisableAuth from './messages/MPDisableAuth';
+import MPEnableAuth from './messages/MPEnableAuth';
+import * as Constants from './Constants';
 
 import './DetailsPanel.scss'
 
 class DetailPanel extends Component {
 
-  constructor() {
-    super();
-    this.state = {
-      display: false
-    };
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.show != this.state.display) {
-      this.state.display = nextProps.show
-    }
-  }
-
   render() {
+
+    let detailSubComponent;
+
+    switch (this.props.detailSubComponent) {
+      case Constants.MESSAGE_COMPONENT_SIMPLE:
+        detailSubComponent = <InlineHTML markup={this.props.messageText} />
+        break;
+      case Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_DISABLE_AUTH:
+        detailSubComponent = <MPDisableAuth projectID={this.props.projectID} />
+        break;
+      case Constants.MESSAGE_COMPONENT_LIVEMETRICS_MICROPROFILE_ENABLE_AUTH:
+        detailSubComponent = <MPEnableAuth  projectID={this.props.projectID} />
+        break;
+      default:
+        detailSubComponent = <Fragment></Fragment>
+    }
     return (
-      <div className={this.state.display ? "DetailsPanel reveal" : "DetailsPanel"}>
+      <div className={this.props.show ? "DetailsPanel reveal" : "DetailsPanel"}>
         <div className="detailPanelBox">
-          <div className="detailTitle">Additional information</div>
-          <div className="detailBody" dangerouslySetInnerHTML={{__html: this.props.messageText }}></div>
+          <div className="detailBody">
+            <ErrorBoundary>
+              {detailSubComponent}
+            </ErrorBoundary>
+          </div>
         </div>
       </div>
     )
   }
-
 }
 
 DetailPanel.propTypes = {
   show: PropTypes.bool.isRequired,
   messageText: PropTypes.string.isRequired,
+  detailSubComponent: PropTypes.string.isRequired,
 }
 
 export default DetailPanel;

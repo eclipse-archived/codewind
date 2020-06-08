@@ -10,7 +10,8 @@
 **/
 
 import React from 'react';
-import { createStore } from 'redux';
+import { createStore, applyMiddleware} from 'redux';
+import thunk from 'redux-thunk';
 import { Provider } from 'react-redux';
 import { render, cleanup, fireEvent } from '@testing-library/react';
 
@@ -27,8 +28,9 @@ const componentProps = {
 
 // Initialize redux stores
 const store = createStore(reducers, {
-  projectCapabilitiesReducer: { config: ProjectCapabilitiesInfo.capabilitiesData, receivedAt: Date.now(), fetched: true }
-});
+  projectCapabilitiesReducer: { config: ProjectCapabilitiesInfo.capabilitiesData, receivedAt: Date.now(), fetched: true },
+  navbarActionsReducer:{ displayCapabilitiesPanel: true },
+}, applyMiddleware(thunk));
 
 // component to render
 const wrapper = (
@@ -52,21 +54,6 @@ describe('<CapabilitiesPanel />', () => {
     test('panel displays without error', () => {
         render(wrapper);
         expect(document.querySelectorAll('.Capabilities').length).toBe(1);
-    });
-
-    test('panel has a valid heading', () => {
-        render(wrapper);
-        expect(document.querySelector('.Capabilities .panelTitle').innerHTML).toBe('Project capabilities');
-    });
-
-    test('panel has an action bar', () => {
-        render(wrapper);
-        expect(document.querySelector('.Capabilities .actions').childElementCount).toEqual(1);
-    });
-
-    test('panel has exactly 4 status cards', () => {
-        render(wrapper);
-        expect(document.querySelector('.Capabilities .rows').childElementCount).toEqual(4);
     });
 
     describe('Status message card tests', () => {
@@ -103,23 +90,21 @@ describe('<CapabilitiesPanel />', () => {
         });
     });
 
-    describe('Action button tests', () => {
-        test('the action bar has a continue action button', () => {
-            render(wrapper);
-            const { getAllByText } = render(wrapper);
-            const continueButton = getAllByText('Continue')[0];
-            expect(continueButton.disabled).toEqual(false)
+    describe('CapabilitiesPanel actions', () => {
+
+        test('the panel has a close button', () => {
+            const {getAllByLabelText, getByLabelText} = render(wrapper);
+            const buttons = getAllByLabelText("Close panel");
+            expect(buttons.length).toBe(1);
         });
 
-        test('clicking the continue button requests the panel to close', () => {
-            render(wrapper);
-            const { getAllByText } = render(wrapper);
-            const continueButton = getAllByText('Continue')[0];
-            fireEvent.click(continueButton);
-            const onClickFunction = componentProps.handleCapabilitiesClose;
-            expect(onClickFunction).toHaveBeenCalled();
+        test('the panel closes when the close button is clicked', () => {
+            const {getByLabelText} = render(wrapper);
+            const closeButton = getByLabelText("Close panel");
+            expect (store.getState().navbarActionsReducer.displayCapabilitiesPanel).toBe(true);
+            fireEvent.click(closeButton);
+            expect (store.getState().navbarActionsReducer.displayCapabilitiesPanel).toBe(false);
         });
     });
-
 });
 

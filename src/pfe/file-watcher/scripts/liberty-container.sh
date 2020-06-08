@@ -22,6 +22,8 @@ DEBUG_PORT=$9
 FOLDER_NAME=${11}
 IMAGE_PUSH_REGISTRY=${12}
 MAVEN_SETTINGS=${13}
+# PORT_MAPPINGS is an array of the rest of the arguments
+PORT_MAPPINGS="${@:14}"
 
 WORKSPACE=/codewind-workspace
 APP_LOG=app
@@ -39,6 +41,7 @@ echo "*** DEBUG_PORT = $DEBUG_PORT"
 echo "*** HOST_OS = $HOST_OS"
 echo "*** IMAGE_PUSH_REGISTRY = $IMAGE_PUSH_REGISTRY"
 echo "*** MAVEN_SETTINGS = $MAVEN_SETTINGS"
+echo "*** PORT_MAPPINGS = $PORT_MAPPINGS"
 
 # Import general constants
 source /file-watcher/scripts/constants.sh
@@ -201,6 +204,10 @@ function create() {
 
 	if [[ -n $DEBUG_PORT ]]; then
 		/file-watcher/idc/idc set --debugPort=$DEBUG_PORT
+	fi
+
+	if [[ -n $PORT_MAPPINGS ]]; then
+		/file-watcher/idc/idc set --portMappings="$PORT_MAPPINGS"
 	fi
 
 

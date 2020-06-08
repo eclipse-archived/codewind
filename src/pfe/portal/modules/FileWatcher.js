@@ -130,7 +130,7 @@ module.exports = class FileWatcher {
         await this.user.projectList.updateProject(fwProject);
         this.user.uiSocket.emit('projectValidated', fwProject);
       } catch (err) {
-        log.error(err);
+        log.error(`Error validating project ${fwProject.projectID}: ${inspect(err)}`);
       }
       break;
     }
@@ -146,24 +146,19 @@ module.exports = class FileWatcher {
     }
 
     case "projectLogsListChanged" : {
-      let logType;
-      if (fwProject.build) {
-        logType = 'build'
-      } else if (fwProject.app) {
-        logType = 'app'
-      } else {
-        log.error('projectLogsListChanged: Unknown log type.');
-        break;
+      // fwProject is of type ILogFilesResult, use its type field as the logType.
+      let logType = fwProject.type;
+      if (fwProject[logType][0] && fwProject[logType][0].files && fwProject[logType][0].files[0]) {
+        let file = fwProject[logType][0].files[0];
+        let logName = path.basename(file);
+        let logObject = { logName: logName }
+        if (fwProject[logType][0].origin == 'workspace') {
+          logObject.workspaceLogPath = path.dirname(file);
+        }
+        let message = { projectID: fwProject.projectID };
+        message[logType] = [logObject];
+        this.user.uiSocket.emit('projectLogsListChanged', message);
       }
-      let file = fwProject[logType][0].files[0];
-      let logName = path.basename(file);
-      let logObject = { logName: logName }
-      if (fwProject[logType][0].origin == 'workspace') {
-        logObject.workspaceLogPath = path.dirname(file);
-      }
-      let message = { projectID: fwProject.projectID };
-      message[logType] = [logObject];
-      this.user.uiSocket.emit('projectLogsListChanged', message);
       break;
     }
 
@@ -194,6 +189,7 @@ module.exports = class FileWatcher {
       await this.user.projectList.updateProject(projectUpdate);
       this.user.uiSocket.emit('projectChanged', projectUpdate);
     } catch (err) {
+      log.error(`Error handling capabilities update to project ${fwProject.projectID}: ${inspect(err)}`);
       log.error(err);
     }
   }
@@ -222,21 +218,9 @@ module.exports = class FileWatcher {
     log.debug(`Received filewatcher module response: ${inspect(msg)}`)
   }
 
-
   async buildAndRunProject(project){
-    let settingsFileContents = await project.readSettingsFile();
-    let projectAction = {
-      projectID: project.projectID,
-      projectType: project.projectType,
-      extension: project.extension,
-      contextroot: project.contextRoot,
-      startMode: project.startMode,
-      location: project.projectPath(),
-      applicationPort: project.applicationPort,
-      settings: settingsFileContents,
-      language: project.language,
-      autoBuild: project.autoBuild
-    };
+    const settingsFileContents = await project.readSettingsFile();
+    const projectAction = createProjectActionForBuildAndRun(project, settingsFileContents);
 
     log.info(`Calling filewatcher.createProject() for project ${project.name} ${JSON.stringify(projectAction)}`);
     let retval;
@@ -362,7 +346,7 @@ module.exports = class FileWatcher {
         throw new Error(`check project logs ${retval.statusCode} ${retval.error.msg}`);
       }
     } catch (err) {
-      log.error(err);
+      log.error(`Error checking for new log file for project ${projectID}: ${inspect(err)}`);
     }
   }
 
@@ -381,7 +365,7 @@ module.exports = class FileWatcher {
         throw new Error(`project update ${retval.statusCode} ${retval.error.msg}`);
       }
     } catch (err) {
-      log.error(err);
+      log.error(`Error updating project status ${inspect(err)}`);
     }
   }
 
@@ -391,7 +375,7 @@ module.exports = class FileWatcher {
       retval = await filewatcher.imagePushRegistryStatus(body);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(err);
+      log.error(`Error with image registry status: ${inspect(err)}`);
     }
     if (retval.statusCode != 200) {
       throw new Error(`imagePushRegistryStatus ${retval.statusCode} ${retval.error.msg}`);
@@ -408,7 +392,7 @@ module.exports = class FileWatcher {
         throw new Error(`project update ${retval.statusCode} ${retval.error.msg}`);
       }
     } catch (err) {
-      log.error(err);
+      log.error(`Error handling project file change for project ${projectID}: ${inspect(err)}`);
     }
   }
 
@@ -435,12 +419,12 @@ module.exports = class FileWatcher {
           refPaths: [],
         }
         if (fwProject.refPaths) {
-          data.refPaths = fwProject.refPaths.map((refPath) => ({ 
-            from: project.resolveMonitorPath(refPath.from), 
+          data.refPaths = fwProject.refPaths.map((refPath) => ({
+            from: project.resolveMonitorPath(refPath.from),
             to: refPath.to,
           }));
         }
-        const projectUpdate = { 
+        const projectUpdate = {
           projectID,
           projectWatchStateId,
           ignoredPaths,
@@ -458,7 +442,7 @@ module.exports = class FileWatcher {
         await this.handleFWProjectEvent(event, fwProject);
       }
     } catch (err) {
-      log.error(err);
+      log.error(`Error handling project update for project ${fwProject.projectID}: ${inspect(err)}`);
     }
   }
 
@@ -473,7 +457,7 @@ module.exports = class FileWatcher {
       // Send all file watcher clients project related data when a new project is added or ignored paths has changed
       const ignoredPaths = fwProject.ignoredPaths;
       const pathToMonitor = project.pathToMonitor;
-  
+
       let time = Date.now()
       if (project.creationTime) {
         time = project.creationTime
@@ -491,7 +475,7 @@ module.exports = class FileWatcher {
       if (fwProject.refPaths) {
         data.refPaths = fwProject.refPaths.map((refPath) => ({
           from: project.resolveMonitorPath(refPath.from),
-          to: refPath.to 
+          to: refPath.to
         }));
       }
       const projectUpdate = {
@@ -503,7 +487,7 @@ module.exports = class FileWatcher {
       await this.handleFWProjectEvent(event, projectUpdate);
       WebSocket.watchListChanged(data);
     } catch (err) {
-      log.error(err);
+      log.error(`Error handling new project ${fwProject.projectID}: ${inspect(err)}`);
     }
   }
 
@@ -527,15 +511,20 @@ module.exports = class FileWatcher {
         results.error = error;
       }
       let updatedProject = await this.user.projectList.updateProject(projectUpdate);
-      try {
-        // If updating the metrics fails, don't stop the status being emitted to the UI
-        await updatedProject.setMetricsState();
-      } catch(setMetricsStateErr) {
-        log.warn(`error updating the metrics state for ${updatedProject.name}, Error: ${setMetricsStateErr}`);
+
+      const { appStatus } = updatedProject;
+      // Update the metrics state if its just been added or is running
+      if (event === 'newProjectAdded' || appStatus === 'started') {
+        try {
+          // If updating the metrics fails, don't stop the status being emitted to the UI
+          await updatedProject.setMetricsState();
+        } catch(setMetricsStateErr) {
+          log.warn(`error updating the metrics state for ${updatedProject.name}, Error: ${setMetricsStateErr}`);
+        }
       }
 
       // remove fields which are not required by the UI
-      const { logStreams, ...projectInfoForUI } = updatedProject
+      const projectInfoForUI = updatedProject.toJSON()
       this.user.uiSocket.emit(event, { ...results, ...projectInfoForUI })
       if (fwProject.buildStatus === 'inProgress') {
         // Reset build logs.
@@ -547,7 +536,7 @@ module.exports = class FileWatcher {
         updatedProject.resetLogStream('app');
       }
     } catch (err) {
-      log.error(err);
+      log.error(`Error handling project event for ${fwProject.projectID}: ${inspect(err)}`);
     }
   }
 
@@ -557,7 +546,6 @@ module.exports = class FileWatcher {
     if (fwProject.status === 'success') {
       let projectUpdate = {
         projectID: fwProject.projectID,
-        ports: '',
         buildStatus: 'unknown',
         appStatus: 'unknown',
         state: Project.STATES.closed,
@@ -574,7 +562,7 @@ module.exports = class FileWatcher {
     // (Storing the status in the project object is bad as it is
     // only about this close operation.)
     // remove fields which are not required by the UI
-    const { logStreams, ...projectInfoForUI } = updatedProject;
+    const projectInfoForUI = updatedProject.toJSON()
     this.user.uiSocket.emit('projectClosed', {...projectInfoForUI, status: fwProject.status});
     log.debug(`project ${fwProject.projectID} successfully closed`);
   }
@@ -608,7 +596,7 @@ module.exports = class FileWatcher {
       retval = await filewatcher.testImagePushRegistry(address, namespace);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(`Error in testImagePushRegistry`);
+      log.error(`Error in testImagePushRegistry: ${inspect(err)}`);
       throw err;
     }
 
@@ -621,7 +609,7 @@ module.exports = class FileWatcher {
       retval = await filewatcher.readWorkspaceSettings();
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(err);
+      log.error(`Error in readWorkspaceSettings: ${inspect(err)}`);
     }
     if (retval.statusCode != 200) {
       throw new Error(`readWorkspaceSettings ${retval.statusCode} ${retval.workspaceSettings.msg}`);
@@ -634,7 +622,7 @@ module.exports = class FileWatcher {
       retval = await filewatcher.writeWorkspaceSettings(address, namespace);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(`Error in writeWorkspaceSettings`);
+      log.error(`Error in writeWorkspaceSettings: ${inspect(err)}`);
       throw err;
     }
     if (retval.statusCode != 200) {
@@ -649,7 +637,7 @@ module.exports = class FileWatcher {
       retval = await filewatcher.removeImagePushRegistry(address);
       this.logFWReturnedMsg(retval);
     } catch (err) {
-      log.error(`Error in removeImagePushRegistry`);
+      log.error(`Error in removeImagePushRegistry: ${inspect(err)}`);
       throw err;
     }
     return retval;
@@ -683,7 +671,7 @@ module.exports = class FileWatcher {
     try {
       await filewatcher.setLoggingLevel(this.level);
     } catch (err) {
-      log.error(err);
+      log.error(`Error in setLoggingLevel: ${inspect(err)}`);
     }
   }
 
@@ -736,4 +724,51 @@ function logEvent(event, projectData) {
   }
 }
 
+function createProjectActionForBuildAndRun(project, settings) {
+  const {
+    projectID,
+    projectType,
+    extension,
+    contextRoot: contextroot,
+    startMode,
+    applicationPort,
+    language,
+    autoBuild,
+    ports,
+  } = project;
+  const location = project.projectPath();
+
+  const projectAction = {
+    projectID,
+    projectType,
+    extension,
+    contextroot,
+    startMode,
+    location,
+    applicationPort,
+    settings,
+    language,
+    autoBuild,
+  };
+
+  if (ports) {
+    const { exposedPort, internalPort, exposedDebugPort, internalDebugPort } = ports;
+    if (exposedPort && internalPort) {
+      projectAction.portMappings = {
+        ...projectAction.portMappings,
+        [internalPort]: exposedPort,
+      }
+    }
+    if (exposedDebugPort && internalDebugPort) {
+      projectAction.portMappings = {
+        ...projectAction.portMappings,
+        [internalDebugPort]: exposedDebugPort,
+      }
+    }
+  }
+
+  return projectAction;
+}
+
 module.exports.handleProjectActionResponse = handleProjectActionResponse;
+module.exports.createProjectActionForBuildAndRun = createProjectActionForBuildAndRun;

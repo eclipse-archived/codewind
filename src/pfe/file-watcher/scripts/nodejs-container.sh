@@ -22,6 +22,8 @@ DEBUG_PORT=$9
 FORCE_ACTION=${10}
 FOLDER_NAME=${11}
 IMAGE_PUSH_REGISTRY=${12}
+# PORT_MAPPINGS is an array of the rest of the arguments
+PORT_MAPPINGS=("${@:13}")
 
 WORKSPACE=/codewind-workspace
 
@@ -45,6 +47,7 @@ echo "*** FORCE_ACTION = $FORCE_ACTION"
 echo "*** LOG_FOLDER = $LOG_FOLDER"
 echo "*** IMAGE_PUSH_REGISTRY = $IMAGE_PUSH_REGISTRY"
 echo "*** HOST_OS = $HOST_OS"
+echo "*** PORT_MAPPINGS =" "${PORT_MAPPINGS[@]}"
 
 tag=microclimate-dev-nodejs
 projectName=$( basename "$ROOT" )
@@ -280,11 +283,15 @@ function dockerRun() {
 	workspace=`$util getWorkspacePathForVolumeMounting $LOCAL_WORKSPACE`
 	echo "Workspace path used for volume mounting is: "$workspace""
 
+	local portPublishArgs
+	portPublishArgs=$($util makePortPublishArgs "$project" "${PORT_MAPPINGS[@]}")
+
 	$IMAGE_COMMAND run \
 		--network=codewind_network \
 		--env $heapdump \
 		--name $project \
 		--publish 127.0.0.1::$DEBUG_PORT \
+		$portPublishArgs \
 		--publish-all \
 		--detach \
 		--tty \
@@ -294,7 +301,6 @@ function dockerRun() {
 		echo -e "Copying over source files"
 		docker cp "$WORKSPACE/$projectName/." $project:/app
 	fi
-
 }
 
 function deployLocal() {

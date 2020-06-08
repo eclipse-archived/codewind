@@ -19,7 +19,18 @@ module.exports = class ProjectMetricsError extends BaseError {
 }
 
 // Error codes
-module.exports.NOT_FOUND = 'NOT_FOUND';
+const CODES = {
+  NOT_FOUND: 'NOT_FOUND',
+  DOCKER_CP: 'DOCKER_CP',
+  HCD_NOT_FOUND: 'HCD_NOT_FOUND',
+  PROFILING_NOT_FOUND: 'PROFILING_NOT_FOUND',
+  STREAM_FAILED: 'STREAM_FAILED',
+  DISABLE_METRICS_AUTH_UNSUPPORTED: 'DISABLE_METRICS_AUTH_UNSUPPORTED',
+  SERVER_XML_NOT_FOUND: 'SERVER_XML_NOT_FOUND',
+}
+
+module.exports.CODES = CODES;
+module.exports.NOT_FOUND = CODES.NOT_FOUND;
 
 /**
  * Function to construct an error message based on the given error code
@@ -30,20 +41,26 @@ module.exports.NOT_FOUND = 'NOT_FOUND';
 function constructMessage(code, identifier, message) {
   let output = '';
   switch(code) {
-  case 'NOT_FOUND':
+  case CODES.NOT_FOUND:
     output = `Unable to find metrics for project ${identifier}`;
     break;
-  case 'DOCKER_CP':
+  case CODES.DOCKER_CP:
     output = `Unable to perform docker cp for project ${identifier}`;
     break;
-  case 'HCD_NOT_FOUND':
+  case CODES.HCD_NOT_FOUND:
     output = `Unable to find .hcd saved in project ${identifier}`
     break;
-  case 'PROFILING_NOT_FOUND':
+  case CODES.PROFILING_NOT_FOUND:
     output = `Unable to find profiling.json saved in project ${identifier}`;
     break;
-  case 'STREAM_FAILED':
+  case CODES.STREAM_FAILED:
     output = `Unable to create read stream for file ${identifier}`;
+    break;
+  case CODES.DISABLE_METRICS_AUTH_UNSUPPORTED:
+    output = `Disabling of Microprofile metrics authentication is not supported for projects of language '${identifier}'`;
+    break;
+  case CODES.SERVER_XML_NOT_FOUND:
+    output = `Unable to determine 'server.xml' in ${identifier}`;
     break;
   default:
     output = `Unknown project metrics error`;

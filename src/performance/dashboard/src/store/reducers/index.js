@@ -17,6 +17,8 @@ import loadRunnerConfigReducer from './loadRunnerConfigReducer';
 import projectInfoReducer from './projectInfoReducer';
 import chartCountersReducer from './chartCountersReducer';
 import projectCapabilitiesReducer from './projectCapabilitiesReducer';
+import navbarActionsReducer from './navbarActionsReducer';
+import notificationsReducer from './notificationsReducer';
 
 export default combineReducers(
   {
@@ -27,5 +29,7 @@ export default combineReducers(
     projectInfoReducer,
     projectMetricsReducer,
     projectMetricTypesReducer,
+    navbarActionsReducer,
+    notificationsReducer,
   },
 );

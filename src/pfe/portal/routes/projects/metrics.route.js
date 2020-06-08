@@ -67,12 +67,8 @@ router.get('/api/v1/projects/:id/metrics/status', checkProjectExists, async func
   try {
     const project = getProjectFromReq(req);
     const { canMetricsBeInjected, appStatus } = project;
-    let capabilities = project.getMetricsCapabilities();
-    if (!capabilities || Object.keys(capabilities).length === 0) {
-      // If projectMetrics is an empty object, fetch them first
-      const { capabilities: updatedCapabilities } = await project.setMetricsState();
-      capabilities = updatedCapabilities;
-    }
+    const { capabilities: updatedCapabilities } = await project.setMetricsState();
+    let capabilities = updatedCapabilities;
     const projectRunning = (appStatus === 'started');
     res.status(200).send({ ...capabilities, canMetricsBeInjected, projectRunning });
   } catch (err) {
@@ -160,6 +156,8 @@ router.get('/api/v1/projects/:id/metrics/:type', async function (req, res) {
 });
 
 router.post('/api/v1/projects/:id/metrics/inject', validateReq, metricsController.inject);
+
+router.post('/api/v1/projects/:id/metrics/auth', validateReq, checkProjectExists, metricsController.auth);
 
 /**
 * Updates the description of a specific load-test run on a specified project

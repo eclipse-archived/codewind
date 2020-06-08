@@ -20,7 +20,8 @@ function overwriteContainerArgsWithTail() {
     yq w -i "$deploymentFile" -- "$argsPath" []
     yq w -i "$deploymentFile" -- "$argsPath"[0] "tail"
     yq w -i "$deploymentFile" -- "$argsPath"[1] "-F"
-    yq w -i "$deploymentFile" -- "$argsPath"[2] "/app/package.json"
+    yq w -i "$deploymentFile" -- "$argsPath"[2] "/output/container.log"
+    yq w -i "$deploymentFile" -- "$argsPath"[3] "2>/dev/null"
 }
 
 overwriteContainerArgsWithTail

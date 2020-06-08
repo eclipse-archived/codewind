@@ -14,7 +14,6 @@ const path = require('path');
 const crypto = require('crypto');
 const ProjectList = require('./ProjectList');
 const FileWatcher = require('./FileWatcher');
-const LoadRunner = require('./LoadRunner');
 const Project = require('./Project');
 const ExtensionList = require('./ExtensionList');
 const Templates = require('./Templates');
@@ -60,6 +59,7 @@ module.exports = class User {
     if (global.codewind.RUNNING_IN_K8S == true) {
       this.k8Client = global.codewind.k8Client;
     }
+    this.cancelRequests = {};
   }
 
   /**
@@ -134,8 +134,6 @@ module.exports = class User {
       // Create the FileWatcher and LoadRunner classes for this user
       log.debug(`Creating FileWatcher for user ${this.user_id}`);
       this.fw = new FileWatcher(this);
-      log.debug(`Creating LoadRunner for user ${this.user_id}`);
-      this.loadRunner = new LoadRunner(this);
       this.fw.setLocale(["en"]);
       log.info(`Starting existing projects for user ${this.user_id}`)
       this.startExistingProjects();
@@ -149,9 +147,6 @@ module.exports = class User {
    * Function to run load on project
    */
   async runLoad(project, description) {
-    log.info("runLoad: project " + project.projectID + " loadInProgress was =" + project.loadInProgress);
-    project.loadInProgress = true;
-    log.info("runLoad: project " + project.projectID + " loadInProgress now =" + project.loadInProgress);
     try {
       let config = await project.getLoadTestConfig();
 
@@ -169,12 +164,11 @@ module.exports = class User {
       config.url = `${projectProtocol}${projectHost}:${projectPort}${config.path}`;
       project.loadConfig = config;
       log.info(`Requesting load on project: ${project.projectID} config: ${JSON.stringify(config)}`);
-      const runLoadResp = await this.loadRunner.runLoad(config, project, description);
+      const runLoadResp = await project.loadRunner.runLoad(config, this, description);
       return runLoadResp;
     } catch (err) {
       // Reset run load flag and config in the project, and re-throw the error
       project.loadConfig = null;
-      project.loadInProgress = false;
       throw err;
     }
   }
@@ -184,31 +178,32 @@ module.exports = class User {
    */
   async cancelLoad(project) {
     log.debug("cancelLoad: project " + project.projectID + " loadInProgress=" + project.loadInProgress);
-    if (project.loadInProgress) {
+    if (this.cancelRequests[project.projectID]) {
+      throw new Error("Cancel request already in progress.");
+    }
+    if (!project.loadRunner.isIdle()) {
       log.debug("Cancelling load for config: " + JSON.stringify(project.loadConfig));
+      this.cancelRequests[project.projectID] = true;
       const res = await retry((bail, number) => {
-        log.info(`Attempting to cancel load run. Attempt ${number}/30`);
-        this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelling' });
+        log.info(`Attempting to cancel load run. Attempt ${number}/10`);
         return this.callCancelRunLoad(project)
-          .catch(function (err) {
+          .catch(err => {
             if (err.code !== "CANCEL_RUN_LOAD_ERROR") {
+              this.cancelRequests[project.projectID] = false;
               bail(err); 
             } else {
-              this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
               throw err;
             }
           });
       }, {
-        retries: 30,
-        minTimeout: 1000,
-        maxTimeout: 1000,
+        retries: 10,
+        minTimeout: 3000,
+        maxTimeout: 3000,
       });
       project.loadInProgress = false;
-      this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
+      this.cancelRequests[project.projectID] = false;
       return res;
     }
-    
-    this.uiSocket.emit('runloadStatusChanged', { projectID: project.projectID, status: 'cancelled' });
     throw new LoadRunError("NO_RUN_IN_PROGRESS", `For project ${project.projectID}`);
   }
 
@@ -218,7 +213,7 @@ module.exports = class User {
   async callCancelRunLoad(project) {
     let cancelLoadResp
     try {
-      cancelLoadResp = await this.loadRunner.cancelRunLoad(project.loadConfig); 
+      cancelLoadResp = await project.loadRunner.cancelRunLoad(project.loadConfig); 
     } catch (error) {
       throw error;
     }
@@ -526,7 +521,6 @@ module.exports = class User {
       if (err instanceof FilewatcherError && err.code == 'CONNECTION_FAILED') {
         let projectUpdate = {
           projectID: projectID,
-          ports: '',
           buildStatus: 'unknown',
           appStatus: 'unknown',
           state: Project.STATES.closed

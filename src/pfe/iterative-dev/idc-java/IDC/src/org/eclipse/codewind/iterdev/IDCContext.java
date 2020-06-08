@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -44,6 +46,8 @@ public class IDCContext {
 
 	private final String debugPort;
 
+	private final ArrayList<String> portMappings;
+
 	private final DBMap globalDb;
 
 	private final File appDirectory;
@@ -62,7 +66,7 @@ public class IDCContext {
 
 	private final String imagesFormatString;
 	
-	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String imagePushRegistry, String startMode, String debugPort) throws IOException {
+	public IDCContext(String rootPassword, String localWorkspaceOrigin, String containerName, String projectID, String logName, String imagePushRegistry, String startMode, String debugPort, ArrayList<String> portMappings) throws IOException {
 
 		this.rootPassword = rootPassword;
 
@@ -121,6 +125,14 @@ public class IDCContext {
 		this.debugPort = debugPort;
 		if (this.debugPort != null) {
 			appDb.put(Constants.DB_DEBUG_PORT, this.debugPort);
+		}
+		
+		this.portMappings = portMappings;
+		if (this.portMappings != null && this.portMappings.size() > 0) {
+			// Convert to string, use ',' as delimiter so we can reparse it as an array later
+			// The ports will never have a ','
+			String portMappingsAsString = String.join(",", this.portMappings);
+			appDb.put(Constants.DB_PORT_MAPPINGS, portMappingsAsString);
 		}
 
 		this.artifactsDirectory = getArtifactsFromInstallDir();
@@ -375,5 +387,14 @@ public class IDCContext {
 
 	public String getImagesFormatString() {
 		return this.imagesFormatString;
+	}
+
+	public ArrayList<String> getPortMappings() {
+		ArrayList<String> portMappingsArr = new ArrayList<String>();
+		if(appDb.get(Constants.DB_PORT_MAPPINGS) != null) {
+			String portMappingsAsString = appDb.get(Constants.DB_PORT_MAPPINGS);
+			portMappingsArr.addAll(Arrays.asList(portMappingsAsString.split(",")));
+		}
+		return portMappingsArr;
 	}
 }

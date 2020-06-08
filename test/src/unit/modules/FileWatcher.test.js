@@ -46,7 +46,7 @@ class MockFw {
  requires FileWatcher.js it will also require 'file-watcher', which will error.
  See https://github.com/thlorenz/proxyquire#preventing-call-thru-to-original-dependency
 */
-MockFw['@noCallThru'] = true; 
+MockFw['@noCallThru'] = true;
 
 const FileWatcher = proxyquire('../../../../src/pfe/portal/modules/FileWatcher', {
     'file-watcher': MockFw,
@@ -273,6 +273,7 @@ describe('FileWatcher.js', () => {
         it('handles `projectLogsListChanged` event with build, origin', async() => {
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                type: 'build',
                 build: [
                     {
                         origin: 'workspace',
@@ -302,6 +303,7 @@ describe('FileWatcher.js', () => {
         it('handles `projectLogsListChanged` event with app, no origin', async() => {
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                type: 'app',
                 app: [
                     {
                         origin: 'application',
@@ -330,6 +332,7 @@ describe('FileWatcher.js', () => {
         it('handles `projectLogsListChanged` event with unknown log type', async() => {
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                type: 'container',
                 container: [
                     {
                         origin: 'docker',
@@ -366,7 +369,7 @@ describe('FileWatcher.js', () => {
         it('does nothing when event is unexpected', async() => {
             const fw = new FileWatcher('mockUser');
             const handleFWProjectEvent = sinon.stub(fw, 'handleFWProjectEvent');
-            
+
             await fw.handleEvent('unexpectedEvent', 'mockFwProject');
 
             handleFWProjectEvent.should.not.have.been.called;
@@ -381,10 +384,10 @@ describe('FileWatcher.js', () => {
             };
             const fw = new FileWatcher(mockUser);
             const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
-            
+
             // act
             await fw.handleCapabilitiesUpdated(mockFwProject);
-            
+
             // assert
             const expectedProjectUpdate = {
                 projectID: mockFwProject.projectID,
@@ -401,7 +404,7 @@ describe('FileWatcher.js', () => {
             };
             const fw = new FileWatcher(mockUser);
             const mockFwProject = { projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9' };
-            
+
             // act
             await fw.handleCapabilitiesUpdated(mockFwProject);
 
@@ -427,7 +430,7 @@ describe('FileWatcher.js', () => {
     describe('buildAndRunProject(project)', () => {
         it('asks fw to build and run the project then returns the response when successful', async() => {
             const fw = new FileWatcher('mockUser');
-            const mockProject = { 
+            const mockProject = {
                 readSettingsFile: () => 'mock settingsFileContents',
                 projectPath: () => 'mock location',
             };
@@ -506,7 +509,7 @@ describe('FileWatcher.js', () => {
         };
         const mockUser = {
             projectList: {
-                retrieveProject: () => mockProject, 
+                retrieveProject: () => mockProject,
             },
         };
         it('does nothing when the fwProject contains no useful information', async() => {
@@ -561,7 +564,7 @@ describe('FileWatcher.js', () => {
         };
         const mockUser = {
             projectList: {
-                retrieveProject: () => mockProject, 
+                retrieveProject: () => mockProject,
             },
         };
         it('handles the event when the fwProject contains `ignoredPaths`', async() => {
@@ -582,7 +585,7 @@ describe('FileWatcher.js', () => {
         });
     });
     describe('handleFWProjectEvent(event, fwProject)', () => {
-        it('correctly updates the projectList, project.inf and UI', async() => {
+        it('correctly updates the projectList, project.inf and UI and calls setMetricsState as the appStatus is started', async() => {
             // arrange
             const mockFwProject = {
                 projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
@@ -592,18 +595,76 @@ describe('FileWatcher.js', () => {
                 status: 'mockStatus',
                 logStreams: 'mockLogStreams',
                 type: 'mockType',
+                appStatus: 'started',
             };
+            mockFwProject.toJSON = function() {
+                // eslint-disable-next-line no-unused-vars
+                const { toJSON, name, operationId, logStreams, ...filteredProject } = this;
+                return filteredProject;
+            };
+            const setMetricsState = sinon.stub().resolves();
             const expectedProjectUpdate = {
                 projectID: mockFwProject.projectID,
                 logStreams: mockFwProject.logStreams,
                 type: mockFwProject.type,
+                appStatus: 'started',
+                toJSON: mockFwProject.toJSON,
             };
-            const setMetricsState = sinon.stub().resolves();
             const expectedProjectInfoForUI = {
                 projectID: mockFwProject.projectID,
                 status: mockFwProject.status,
                 error: mockFwProject.error,
                 type: mockFwProject.type,
+                setMetricsState,
+                appStatus: 'started',
+            };
+            const mockUser = {
+                projectList: {
+                    updateProject: sinon.stub().returns({ ...expectedProjectUpdate, setMetricsState }),
+                },
+                uiSocket: { emit: sinon.mock() },
+            };
+            const fw = new FileWatcher(mockUser);
+
+            // act
+            await fw.handleFWProjectEvent('mockEvent', mockFwProject);
+
+            // assert
+            fw.user.projectList.updateProject.should.have.been.calledOnceWith(expectedProjectUpdate);
+            fw.user.uiSocket.emit.should.have.been.calledOnceWith('mockEvent', expectedProjectInfoForUI);
+            setMetricsState.should.be.calledOnce;
+        });
+        it('correctly updates the projectList, project.inf and UI and does not call setMetricsState as the appStatus is starting', async() => {
+            // arrange
+            const mockFwProject = {
+                projectID: 'be4ea4e0-5239-11ea-abf6-f10edc5370f9',
+                name: 'mockName',
+                operationId: 'mockOperationId',
+                error: 'mockError',
+                status: 'mockStatus',
+                logStreams: 'mockLogStreams',
+                type: 'mockType',
+                appStatus: 'starting',
+            };
+            mockFwProject.toJSON = function() {
+                // eslint-disable-next-line no-unused-vars
+                const { toJSON, name, operationId, logStreams, ...filteredProject } = this;
+                return filteredProject;
+            };
+            const setMetricsState = sinon.stub().resolves();
+            const expectedProjectUpdate = {
+                projectID: mockFwProject.projectID,
+                logStreams: mockFwProject.logStreams,
+                type: mockFwProject.type,
+                appStatus: 'starting',
+                toJSON: mockFwProject.toJSON,
+            };
+            const expectedProjectInfoForUI = {
+                projectID: mockFwProject.projectID,
+                status: mockFwProject.status,
+                error: mockFwProject.error,
+                type: mockFwProject.type,
+                appStatus: 'starting',
                 setMetricsState,
             };
             const mockUser = {
@@ -620,6 +681,7 @@ describe('FileWatcher.js', () => {
             // assert
             fw.user.projectList.updateProject.should.have.been.calledOnceWith(expectedProjectUpdate);
             fw.user.uiSocket.emit.should.have.been.calledOnceWith('mockEvent', expectedProjectInfoForUI);
+            setMetricsState.should.not.be.called;
         });
     });
     describe('handleProjectClosed(fwProject, project)', () => {
@@ -630,6 +692,11 @@ describe('FileWatcher.js', () => {
             };
             const mockProject = {
                 logStreams: 'should not be emitted to UI',
+            };
+            mockProject.toJSON = function() {
+                // eslint-disable-next-line no-unused-vars
+                const { toJSON, logStreams, ... filteredProject } = this;
+                return filteredProject;
             };
             const mockUser = {
                 uiSocket: { emit: sinon.mock() },
@@ -653,7 +720,6 @@ describe('FileWatcher.js', () => {
             };
             const expectedProjectUpdate = {
                 projectID: mockFwProject.projectID,
-                ports: '',
                 buildStatus: 'unknown',
                 appStatus: 'unknown',
                 state: 'closed',
@@ -661,9 +727,23 @@ describe('FileWatcher.js', () => {
                 detailedAppStatus: undefined, // eslint-disable-line no-undefined
                 containerId: '',
             };
+            const expectedProjectUpdateToJSON = {
+                projectID: mockFwProject.projectID,
+                buildStatus: 'unknown',
+                appStatus: 'unknown',
+                state: 'closed',
+                capabilitiesReady: false,
+                detailedAppStatus: undefined, // eslint-disable-line no-undefined
+                containerId: '',
+            };
+            expectedProjectUpdateToJSON.toJSON = function() {
+                // eslint-disable-next-line no-unused-vars
+                const { toJSON, ... filteredProject } = this;
+                return filteredProject;
+            };
             const mockUser = {
-                projectList: { 
-                    updateProject: sinon.stub().returns(expectedProjectUpdate),
+                projectList: {
+                    updateProject: sinon.stub().returns(expectedProjectUpdateToJSON),
                     deleteProjectKey: () => {},
                 },
                 uiSocket: { emit: sinon.mock() },
@@ -692,7 +772,7 @@ describe('FileWatcher.js', () => {
         it('throws the correct error when res.statusCode is 400', () => {
             const mockResponse = {
                 statusCode: 400,
-                error: { msg: 'mock error msg' }, 
+                error: { msg: 'mock error msg' },
             };
             const func = () => FileWatcher.handleProjectActionResponse(mockResponse, mockProjectID);
             func.should.throw(`Request error for project ${mockProjectID}.\nmock error msg`);
@@ -705,7 +785,7 @@ describe('FileWatcher.js', () => {
         it('throws the correct error when res.statusCode is 500', () => {
             const mockResponse = {
                 statusCode: 500,
-                error: { msg: 'mock error msg' }, 
+                error: { msg: 'mock error msg' },
             };
             const func = () => FileWatcher.handleProjectActionResponse(mockResponse, mockProjectID);
             func.should.throw(`Project ${mockProjectID} internal error occurred.\nmock error msg`);
@@ -713,10 +793,58 @@ describe('FileWatcher.js', () => {
         it('throws the correct error when res.statusCode is unexpected', () => {
             const mockResponse = {
                 statusCode: 299,
-                error: { msg: 'mock error msg' }, 
+                error: { msg: 'mock error msg' },
             };
             const func = () => FileWatcher.handleProjectActionResponse(mockResponse, mockProjectID);
             func.should.throw(`Project ${mockProjectID} internal error occurred.\nmock error msg`);
+        });
+    });
+    describe('createProjectActionForBuildAndRun(project, settings)', function() {
+        it('returns the project action with no ports', function() {
+            const mockProject = {
+                projectID: 'projectID',
+                projectType: 'projectType',
+                extension: true,
+                contextRoot: 'contextRoot',
+                startMode: 'run',
+                applicationPort: '3000',
+                language: 'java',
+                autoBuild: true,
+                projectPath: () => 'projectPath',
+            };
+
+            const projectAction = FileWatcher.createProjectActionForBuildAndRun(mockProject, 'settings');
+            projectAction.should.deep.equal({
+                projectID: 'projectID',
+                projectType: 'projectType',
+                extension: true,
+                contextroot: 'contextRoot',
+                startMode: 'run',
+                applicationPort: '3000',
+                language: 'java',
+                autoBuild: true,
+                settings: 'settings',
+                location: 'projectPath',
+            });
+        });
+        it('returns the project action with ports as the mockProject has ', function() {
+            const mockProject = {
+                ports: {
+                    internalPort: 3000,
+                    exposedPort: 31000,
+                    internalDebugPort: 7777,
+                    exposedDebugPort: 31001,
+                },
+                projectPath: () => 'projectPath',
+            };
+
+            const projectAction = FileWatcher.createProjectActionForBuildAndRun(mockProject, 'settings');
+            projectAction.should.containSubset({
+                portMappings: {
+                    3000: 31000,
+                    7777: 31001,
+                },
+            });
         });
     });
 });

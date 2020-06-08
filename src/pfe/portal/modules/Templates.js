@@ -521,17 +521,17 @@ async function getTemplateSummaries(givenURL, gitCredentials) {
         templateSummaries = await fs.readJSON(parsedURL.pathname);
       }
     } catch (err) {
-      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', null, `repo file '${parsedURL}' did not return JSON`);
+      throw new TemplateError('REPO_FILE_DOES_NOT_POINT_TO_INDEX_JSON', parsedURL);
     }
   } else {
     const res = await makeGetRequest(parsedURL, gitCredentials);
     if (res.statusCode !== 200) {
-      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', null, `Unexpected HTTP status for ${givenURL}: ${res.statusCode}`);
+      throw new TemplateError('GET_TEMPLATE_SUMMARIES_FAILED', null, `Unexpected HTTP status for ${givenURL}: ${res.statusCode}`);
     }
     try {
       templateSummaries = JSON.parse(res.body);
     } catch (error) {
-      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', null, `URL '${parsedURL}' did not return JSON`);
+      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', parsedURL);
     }
   }
   return templateSummaries;

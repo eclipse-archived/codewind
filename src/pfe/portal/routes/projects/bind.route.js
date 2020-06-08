@@ -25,6 +25,8 @@ const { ILLEGAL_PROJECT_NAME_CHARS } = require('../../config/requestConfig');
 const router = express.Router();
 const log = new Logger(__filename);
 const { validateReq } = require('../../middleware/reqValidator');
+const { recursivelyListFilesOrDirectories } = require('../../modules/utils/sharedFunctions');
+
 let timerbindstart = 0;
 let timerbindend = 0;
 let timersyncstart = 0;
@@ -335,7 +337,7 @@ function getMode(project) {
 async function syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID) {
   // If the current project is being built, we do not want to copy the files as this will
   // interfere with the current build
-  if (project.buildStatus != "inProgress") {
+  if (project.buildStatus != "inProgress" && project.loadRunner.isIdle()) {
     const globalProjectPath = project.projectPath();
     // We now need to remove any files that have been deleted from the global workspace
     await Promise.all(filesToDelete.map(oldFile => cwUtils.forceRemove(path.join(globalProjectPath, oldFile))));
@@ -386,30 +388,10 @@ async function syncToBuildContainer(project, filesToDelete, modifiedList, timeSt
     }
     user.fileChanged(projectID, timeStamp, 1, 1, IFileChangeEvent);
   } else {
-    // if a build is in progress, wait 5 seconds and try again
+    // if a build or loadrun is in progress, wait 5 seconds and try again
     await cwUtils.timeout(5000)
     await syncToBuildContainer(project, filesToDelete, modifiedList, timeStamp, IFileChangeEvent, user, projectID);
   }
-}
-
-// List all the files or directories under a given directory
-async function recursivelyListFilesOrDirectories(getDirectories, absolutePath, relativePath = '') {
-  const directoryContents = await fs.readdir(absolutePath);
-  const completePathArray = await Promise.all(directoryContents.map(async dir => {
-    const pathList = [];
-    const nextRelativePath = path.join(relativePath, dir);
-    const nextAbsolutePath = path.join(absolutePath, dir);
-    const stats = await fs.stat(nextAbsolutePath);
-    if (stats.isDirectory()) {
-      const subDirectories = await recursivelyListFilesOrDirectories(getDirectories, nextAbsolutePath, nextRelativePath);
-      if (getDirectories) pathList.push(nextRelativePath);
-      pathList.push(...subDirectories);
-    } else if (!getDirectories) {
-      pathList.push(nextRelativePath);
-    }
-    return pathList;
-  }))
-  return completePathArray.reduce((a, b) => a.concat(b), []);
 }
 
 /**
@@ -447,6 +429,13 @@ async function bindEnd(req, res) {
       log.warn(error);
     }
 
+    try {
+      // Set the initial metrics state for the project (updates the file system)
+      await project.setMetricsState();
+    } catch(setMetricsStateErr) {
+      log.warn(`error updating the metrics state for ${updatedProject.name}, Error: ${setMetricsStateErr}`);
+    }
+
     // debug logic to identify bind time
     timerbindend = Date.now();
     let totalbindtime = (timerbindend - timerbindstart) / 1000;
@@ -463,7 +452,8 @@ async function bindEnd(req, res) {
     await user.buildAndRunProject(project);
 
     res.status(200).send(project);
-    user.uiSocket.emit('projectBind', { status: 'success', ...project });
+    const projectInfoForUI = project.toJSON()
+    user.uiSocket.emit('projectBind', { status: 'success', ...projectInfoForUI });
     log.info(`Successfully created project - name: ${project.name}, ID: ${project.projectID}`);
 
   } catch (err) {
@@ -520,5 +510,33 @@ async function unbind(req, res) {
     log.error(`Error deleting project: ${util.inspect(data)}`);
   }
 }
+
+/**
+ * API Function to return an array of files the given project contains
+ * @param id, the id of the project
+ * @return 200 if the action was successful
+ * @return 404 if the project with id was not found
+ */
+
+router.get('/api/v1/projects/:id/fileList', validateReq, async (req, res) => {
+  const user = req.cw_user;
+  const projectID = req.sanitizeParams('id');
+  let project;
+  try {
+    project = user.projectList.retrieveProject(projectID);
+    if (!project) {
+      res.status(404).send(`Unable to find project ${projectID}`);
+      return;
+    }
+    const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
+  
+    const files  = await recursivelyListFilesOrDirectories(false, pathToTempProj);
+    res.status(200).send(files);
+  } catch (err) {
+    log.error(err.info || err);
+    res.status(500).send(err.info || err);
+  }
+
+});
 
 module.exports = router;
