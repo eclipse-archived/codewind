@@ -19,7 +19,7 @@ import { actionMap } from "../projects/actions";
 import { ContainerStates } from "../projects/constants";
 import { ProjectInfo } from "../projects/Project";
 import * as constants from "../projects/constants";
-import * as crypto from "crypto";
+import as crypto from "crypto";
 
 export enum STATE_TYPES {
     appState = "appState",

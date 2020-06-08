@@ -9,7 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 "use strict";
-import * as crypto from "crypto";
+import crypto from "crypto";
 import * as fs from "fs";
 import * as http from "http";
 import * as https from "https";

@@ -12,7 +12,7 @@ import { expect } from "chai";
 import * as path from "path";
 import * as fs from "fs";
 import * as fse from "fs-extra";
-import * as crypto from "crypto";
+import crypto from "crypto";
 import { TransformOptions } from "stream";
 import * as projectUtil from "../../../../server/src/projects/projectUtil";
 import * as logHelperModule from "../lib/logHelper.module";
