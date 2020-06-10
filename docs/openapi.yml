@@ -2193,6 +2193,14 @@ components:
           type: boolean
         protected:
           type: boolean
+        authentication:
+          type: object
+          properties:
+            username:
+              description: user's github username
+              type: string
+              example: 'user'
+
     TemplateRepoSetting:
       type: object
       required:
