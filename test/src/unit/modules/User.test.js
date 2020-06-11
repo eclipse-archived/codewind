@@ -309,6 +309,63 @@ describe('User.js', () => {
             fs.readdirSync(pathToProjectInfDir).should.be.empty;
             fs.readdirSync(pathToTestTempDir).should.be.empty;
         });
+        describe('when a project is deleted, any links on other projects that target the deleted project are removed (cleans up links)', () => {
+            // Tests removeTargetLinksForDeletedProject(deletedProjectID, projects)
+            let user;
+            beforeEach(async() => {
+                await fs.ensureDir(testWorkspace);
+
+                // Create two projects and add them to the projectList
+                user = await createSimpleUser();
+                // projectList = new ProjectList();
+                const projectInf = {
+                    ...sampleProjectInf,
+                    workspace: testWorkspace,
+                };
+                const project1 = new Project({ ...projectInf, projectID: 'projectID1', directory: 'project1' });
+                const project2 = new Project({ ...projectInf, projectID: 'projectID2', directory: 'project2' });
+                const projectToDelete = new Project({ ...projectInf, projectID: 'projectID3', name: 'project3', directory: 'project3' });
+
+                // Ensure directories are created
+                await fs.ensureDir(project1.projectPath());
+                await fs.ensureDir(project2.projectPath());
+                await fs.ensureDir(projectToDelete.projectPath());
+
+                // Add to projectList
+                user.projectList.addProject(project1);
+                user.projectList.addProject(project2);
+                user.projectList.addProject(projectToDelete);
+            });
+            afterEach(() => {
+                fs.removeSync(testWorkspace);
+            });
+            it('deletes all the links that target the deletedProjectID', async() => {
+                // arrange
+                const project1 = user.projectList.retrieveProject('projectID1');
+                const project2 = user.projectList.retrieveProject('projectID2');
+                const projectToDelete = user.projectList.retrieveProject('projectID3');
+
+                const linkToDelete = {
+                    projectID: projectToDelete.projectID,
+                    projectName: projectToDelete.name,
+                    projectURL: 'url',
+                    envName: 'env',
+                };
+
+                await project1.links.add(linkToDelete);
+                await project2.links.add(linkToDelete);
+
+                project1.links.getAll().length.should.equal(1);
+                project2.links.getAll().length.should.equal(1);
+
+                // act
+                await user.deleteProjectFiles(projectToDelete);
+
+                // assert
+                project1.links.getAll().length.should.equal(0);
+                project2.links.getAll().length.should.equal(0);
+            });
+        });
     });
     describe('runLoad(project, description)', () => {
         beforeEach(() => {
@@ -1076,7 +1133,6 @@ describe('User.js', () => {
             }
         });
     });
-    
 });
 
 const uiSocketStub = {

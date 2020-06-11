@@ -95,6 +95,15 @@ class Links {
     log.info(`Link ${envName} deleted`);
     await updateEnvironmentFile(this.filePath, this.getEnvPairs());
   }
+
+  async deleteByTargetProjectID(targetProjectID) {
+    // Check that atleast one link exists with the targetProjectID
+    const targetProjectIDisValidLink = this.getAll().find(({ projectID }) => projectID === targetProjectID);
+    if (targetProjectIDisValidLink) {
+      this._links = this.getAll().filter(({ projectID }) => projectID !== targetProjectID);
+      await updateEnvironmentFile(this.filePath, this.getEnvPairs());
+    }
+  }
 }
 
 function validateLink(newLink, links) {

@@ -476,7 +476,7 @@ module.exports = class User {
    */
 
   async unbindProject(project) {
-    const projectID = project.projectID;
+    const { projectID } = project;
     const successMsg = {
       projectID: projectID,
       status: 'success'
@@ -536,12 +536,21 @@ module.exports = class User {
   }
 
   async deleteProjectFiles(project) {
+    const { projectID, workspace, directory } = project;
+
     // Remove from our list
-    await this.projectList.removeProject(project.projectID);
+    this.projectList.removeProject(projectID);
+
+    // Clean up any links that pointed to the deleted project
+    try {
+      await removeTargetLinksForDeletedProject(projectID, this.projectList.retrieveProjects());
+    } catch (err) {
+      log.error(`Error cleaning up links for ${projectID} during project deletion`, err);
+    }
 
     try {
       // Remove project meta inf
-      await fs.unlink(`${this.directories.workspace}.projects/${project.projectID}.inf`);
+      await fs.unlink(`${this.directories.workspace}.projects/${projectID}.inf`);
       const projectPath = project.projectPath();
       log.info(`Removing project directory at ${projectPath}`);
       await cwUtils.forceRemove(projectPath);
@@ -562,7 +571,7 @@ module.exports = class User {
       // Log file could be missing if the project never built.
     }
 
-    const cwTempPath = path.join(project.workspace, global.codewind.CODEWIND_TEMP_WORKSPACE, project.directory);
+    const cwTempPath = path.join(workspace, global.codewind.CODEWIND_TEMP_WORKSPACE, directory);
     log.trace(`Trying to remove project temp files at ${cwTempPath}`);
     try {
       await cwUtils.forceRemove(cwTempPath);
@@ -1021,4 +1030,11 @@ module.exports = class User {
       log.error(err);
     }
   }
+}
+
+function removeTargetLinksForDeletedProject(deletedProjectID, projects) {
+  // Use Promise.allSettled to try and remove as many links as possible
+  return Promise.allSettled(projects.map(({ links }) => {
+    return links.deleteByTargetProjectID(deletedProjectID);
+  }));
 }
