@@ -513,28 +513,32 @@ async function getTemplatesFromRepo(repository, gitCredentials) {
 
 async function getTemplateSummaries(givenURL, gitCredentials) {
   const parsedURL = new URL(givenURL);
-  let templateSummaries;
+
   // check if repository url points to a local file and read it accordingly
   if (parsedURL.protocol === 'file:') {
+    const fileExists = await fs.pathExists(parsedURL.pathname);
+    if (!fileExists) {
+      throw new TemplateError('REPO_FILE_DOES_NOT_EXIST', parsedURL);
+    }
     try {
-      if (await fs.pathExists(parsedURL.pathname) ) {
-        templateSummaries = await fs.readJSON(parsedURL.pathname);
-      }
+      const templateSummaries = await fs.readJSON(parsedURL.pathname);
+      return templateSummaries;
     } catch (err) {
       throw new TemplateError('REPO_FILE_DOES_NOT_POINT_TO_INDEX_JSON', parsedURL);
     }
-  } else {
-    const res = await makeGetRequest(parsedURL, gitCredentials);
-    if (res.statusCode !== 200) {
-      throw new TemplateError('GET_TEMPLATE_SUMMARIES_FAILED', null, `Unexpected HTTP status for ${givenURL}: ${res.statusCode}`);
-    }
-    try {
-      templateSummaries = JSON.parse(res.body);
-    } catch (error) {
-      throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', parsedURL);
-    }
   }
-  return templateSummaries;
+
+  // if the parsedURL is not a file, make a HTTP request
+  const res = await makeGetRequest(parsedURL, gitCredentials);
+  if (res.statusCode !== 200) {
+    throw new TemplateError('GET_TEMPLATE_SUMMARIES_FAILED', null, `Unexpected HTTP status for ${givenURL}: ${res.statusCode}`);
+  }
+  try {
+    const templateSummaries = JSON.parse(res.body);
+    return templateSummaries;
+  } catch (error) {
+    throw new TemplateError('URL_DOES_NOT_POINT_TO_INDEX_JSON', parsedURL);
+  }
 }
 
 function filterTemplatesByStyle(templates, projectStyle) {
@@ -570,7 +574,7 @@ async function getReposFromProviders(providers) {
       })
     }
     catch (err) {
-      log.error(err.message);
+      log.error(err);
     }
   }));
   return repos;

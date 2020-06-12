@@ -42,6 +42,9 @@ function constructMessage(code, identifier, message) {
   case 'URL_DOES_NOT_POINT_TO_INDEX_JSON':
     output = `URL '${identifier}' does not point to a JSON file of the correct form`;
     break;
+  case 'REPO_FILE_DOES_NOT_EXIST':
+    output = `repo file '${identifier}' does not exist`;
+    break;
   case 'REPO_FILE_DOES_NOT_POINT_TO_INDEX_JSON':
     output = `repo file '${identifier}' does not point to a JSON file of the correct form`;
     break;

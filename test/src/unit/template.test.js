@@ -1345,8 +1345,20 @@ describe('Templates.js', function() {
                 return func().should.be.rejectedWith(`URL 'https://www.google.com/' does not point to a JSON file of the correct form`);
             });
             it('should be rejected as filepath does not exist', function() {
-                const func = () => getTemplateSummaries('file://something.json');
-                return func().should.be.rejectedWith(`repo file 'file://something.json/' does not point to a JSON file of the correct form`);
+                const func = () => getTemplateSummaries('file:///something.json/');
+                return func().should.be.rejectedWith(`repo file 'file:///something.json/' does not exist`);
+            });
+            it('should be rejected as filepath is not valid json', function() {
+                // setup
+                const testFile = path.join(__dirname, 'doesURLPointToIndexJSON.json');
+
+                // test
+                fs.writeFileSync(testFile, 'string');
+                const func = () => getTemplateSummaries(`file://${testFile}`);
+                func().should.eventually.be.rejectedWith(`repo file 'file://${testFile}' does not point to a JSON file of the correct form`);
+
+                // teardown
+                fs.removeSync(testFile);
             });
         });
         describe('filterTemplatesByStyle(templates, projectStyle)', function() {
