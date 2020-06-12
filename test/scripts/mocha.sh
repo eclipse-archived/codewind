@@ -29,7 +29,7 @@ if [ $? != 0 ]; then
     exit 1;
 fi
 
-TZ=UTC $NYC_CMD node_modules/.bin/mocha ${@:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
+$NYC_CMD node_modules/.bin/mocha ${@:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
 rc=$?
 end=$(date +%F_%T)
 echo "\nTests finished at ${end}"

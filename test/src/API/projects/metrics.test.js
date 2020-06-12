@@ -11,7 +11,6 @@
 const chai = require('chai');
 const path = require('path');
 const fs = require('fs-extra');
-const dateFormat = require('dateformat');
 const chaiResValidator = require('chai-openapi-response-validator');
 
 const containerService = require('../../../modules/container.service');
@@ -91,9 +90,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
             const metricsResultsGroupedByType = await getProjectMetricsData(projectID);
             originalLoadTest.metricsResultsGroupedByType = metricsResultsGroupedByType;
 
-            //metrics time is in unix format, but dirnames are yyyymmddHHMMss
-            const unixTimeOfFirstTestRun = metricsResultsGroupedByType[0].metrics[0].time;
-            const timeOfFirstTestRun = dateFormat(unixTimeOfFirstTestRun, 'yyyymmddHHMMss'); 
+            const timeOfFirstTestRun = metricsResultsGroupedByType[0].metrics[0].container;
             originalLoadTest.testRunTime = timeOfFirstTestRun;
         });
 
@@ -190,7 +187,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
             const metricsFromTestRun = [];
             for (const metricsResults of metricsResultsGroupedByType) {
                 for (const result of metricsResults.metrics) {
-                    if (dateFormat(result.time, 'yyyymmddHHMMss') === testRunTime) {
+                    if (result.container === testRunTime) {
                         metricsFromTestRun.push(result);
                     }
                 }
@@ -214,9 +211,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
             const metricsResultsGroupedByType = await getProjectMetricsData(projectID);
             originalLoadTest.metricsResultsGroupedByType = metricsResultsGroupedByType;
 
-            //metrics time is in unix format, but dirnames are yyyymmddHHMMss
-            const unixTimeOfFirstTestRun = metricsResultsGroupedByType[0].metrics[0].time;
-            const timeOfFirstTestRun = dateFormat(unixTimeOfFirstTestRun, 'yyyymmddHHMMss'); 
+            const timeOfFirstTestRun = metricsResultsGroupedByType[0].metrics[0].container;
             originalLoadTest.testRunTime = timeOfFirstTestRun;
         });
 
@@ -269,7 +264,7 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                     const listOfMetricsResults = metricsResults.metrics;
                     for (const indexOfResult in listOfMetricsResults) {
                         const result = listOfMetricsResults[indexOfResult];
-                        if (dateFormat(result.time, 'yyyymmddHHMMss') === testRunTime) {
+                        if (result.container === testRunTime) {
                             listOfMetricsResults.splice(indexOfResult, 1);
                         }
                     }
@@ -324,12 +319,9 @@ describe('Project Metrics tests (/projects/{id}/metrics)', function() {
                 res.body.length.should.equal(metricsDirs.length);
 
                 res.body.forEach((metric, i) => {
-                    // metrics time is in unix format, but dirnames are yyyymmddHHMMss
-                    const testRunTimestamp = dateFormat(metric.time, 'yyyymmddHHMMss');
-                    
-                    // Timestamped data should have a corresponding directory
-                    metricsDirs.should.include(testRunTimestamp); 
-                    
+                    const testRunTimestamp = metric.container;
+                    metricsDirs.should.include(testRunTimestamp);
+
                     const pathToMetricsJson = path.join(localLoadTestPath, testRunTimestamp, 'metrics.json');
                     const metricsJson = fs.readJSONSync(pathToMetricsJson);
                     const expectedMetricData = {
