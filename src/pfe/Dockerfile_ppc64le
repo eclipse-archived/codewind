@@ -20,7 +20,7 @@ LABEL org.opencontainers.image.title="Codewind-PFE" org.opencontainers.image.des
 
 #ARG BUILDAH_RPM=https://cbs.centos.org/kojifiles/packages/buildah/1.11.4/4.el7/x86_64/buildah-1.11.4-4.el7.x86_64.rpm
 #ARG SLIRP=https://cbs.centos.org/kojifiles/packages/slirp4netns/0.3.0/2.git4992082.el7/x86_64/slirp4netns-0.3.0-2.git4992082.el7.x86_64.rpm
-ARG SLIRP=https://rpmfind.net/linux/opensuse/ports/ppc/distribution/leap/15.2/repo/oss/ppc64le/slirp4netns-0.3.0-lp152.1.3.ppc64le.rpm
+ARG SLIRP=https://rpmfind.net/linux/opensuse/ports/ppc/distribution/leap/15.2/repo/oss/ppc64le/slirp4netns-0.4.5-lp152.1.2.ppc64le.rpm
 #ARG LIBSEC=https://cbs.centos.org/kojifiles/packages/libseccomp/2.4.1/0.el7/x86_64/libseccomp-2.4.1-0.el7.x86_64.rpm
 
 # Download the buildah RPM
@@ -32,12 +32,12 @@ RUN curl -f -o slirp4netns.rpm $SLIRP
 #RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 
 RUN yum install -y epel-release \
-    && yum -y --enablerepo=epel install zip unzip sudo ca-certificates openssl  wget gcc-c++ make slirp4netns.rpm 
+    && yum -y --enablerepo=epel install zip unzip python2 sudo ca-certificates openssl  wget gcc-c++ make slirp4netns.rpm 
 
 
-RUN wget https://nodejs.org/download/release/latest-v13.x/node-v13.7.0-linux-ppc64le.tar.gz \
-    && tar xvzf  node-v13.7.0-linux-ppc64le.tar.gz
-ENV PATH=/node-v13.7.0-linux-ppc64le/bin:$PATH
+RUN wget https://nodejs.org/download/release/v13.13.0/node-v13.13.0-linux-ppc64le.tar.gz \
+    && tar xvzf  node-v13.13.0-linux-ppc64le.tar.gz
+ENV PATH=/node-v13.13.0-linux-ppc64le/bin:$PATH
 
 RUN yum install -y  --enablerepo=epel libseccomp buildah \
     && yum clean all \
@@ -118,7 +118,7 @@ RUN cd /tmp \
 WORKDIR /
 # Softlink to /codewind-workspace to /projects so paths
 # match in che.
-RUN mkdir -m 777 -p /codewind-workspace \
+RUN mkdir -m 777 -p /codewind-workspace && mkdir -m 777 ~/.npm-global \
     && ln -s /codewind-workspace /projects 
     
 
@@ -137,10 +137,10 @@ COPY /file-watcher/scripts /file-watcher/scripts
 COPY /file-watcher/server /file-watcher/server
 
 WORKDIR /file-watcher/server
-ENV PATH=/node-v13.7.0-linux-ppc64le/bin:$PATH
+ENV PATH=/node-v13.13.0-linux-ppc64le/bin:$PATH
 
 # Install w/ dev dependencies and do linting first, then delete node_modules and reinstall using production flag
-RUN npm ci \
+RUN npm config set prefix '~/.npm-global' &&  npm ci \
     && npm run build \
     && rm -rf node_modules \
     && npm ci --production \
@@ -183,7 +183,7 @@ FROM codewind-pfe-base
 COPY --from=codewind-pfe-portal /portal /portal
 WORKDIR /portal
 
-ENV PATH=/node-v13.7.0-linux-ppc64le/bin:$PATH
+ENV PATH=/node-v13.13.0-linux-ppc64le/bin:$PATH
 
 ARG NODE_ENV=production
 
