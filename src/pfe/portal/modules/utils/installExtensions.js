@@ -69,7 +69,7 @@ async function installBuiltInExtension(file, targetDir, extensionsDir) {
 
     try {
       if (await prepForUnzip(target, version)) {
-        const unzipCmd = `unzip ${source} -d ${targetDir}`;
+        const unzipCmd = `unzip -o ${source} -d ${targetDir}`;
         log.trace(`unzip command ${unzipCmd}`);
         await exec(unzipCmd);
 
