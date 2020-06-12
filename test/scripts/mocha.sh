@@ -10,7 +10,7 @@
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
 
-# $1 is the path given to npm test. This will run all tests from this directory recursively. 
+# $1 is the path given to npm test. This will run all tests from this directory recursively.
 # This is being passed in from test.sh via the package.json (e.g. npm run test /release)
 # If not set it defaults to all tests in 'src'
 
@@ -29,7 +29,7 @@ if [ $? != 0 ]; then
     exit 1;
 fi
 
-$NYC_CMD node_modules/.bin/mocha ${@:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
+TZ=UTC $NYC_CMD node_modules/.bin/mocha ${@:-src} --recursive --reporter mocha-multi-reporters --reporter-options configFile=scripts/config.json --exit
 rc=$?
 end=$(date +%F_%T)
 echo "\nTests finished at ${end}"
