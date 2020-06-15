@@ -239,12 +239,8 @@ async function getDockerContainerEnvs(project) {
     const { Config: { Env: containerEnvs }} = container;
     return containerEnvs;
   } catch (err) {
-    const { statusCode } = err;
-    // If container is not return an empty array
-    if (statusCode && statusCode === 404) {
-      return [];
-    }
-    throw err;
+    // If error, return an empty array
+    return [];
   }
 }
 

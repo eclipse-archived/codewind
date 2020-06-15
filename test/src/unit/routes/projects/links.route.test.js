@@ -466,10 +466,6 @@ describe('links.route.js', () => {
                 };
                 return restartProject(user, mockedProject, false).should.not.be.rejected;
             });
-            it('throws an error as inspect throws an error that does not have a statusCode of 404', () => {
-                Links.__set__('cwUtils', { inspect: () => { throw new Error(); } });
-                return restartProject(mockedUser, mockedProject, false).should.be.rejected;
-            });
             describe('buildStatus == inProgress or container is not populated', () => {
                 const project = {
                     ...mockedProject,
@@ -485,10 +481,9 @@ describe('links.route.js', () => {
                     await restartProject(mockedUser, project, false);
                     spiedRestartFunc.should.be.calledOnce;
                 });
-                it('calls restartDocker once as container == null (inspect throws 404 statusCode)', async() => {
+                it('calls restartDocker once as container == null', async() => {
                     Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => {
                         const err = new Error();
-                        err.statusCode = 404;
                         throw err;
                     } });
                     const spiedRestartFunc = sandbox.spy(() => null);
@@ -604,10 +599,9 @@ describe('links.route.js', () => {
                     await restartProject(mockedUser, project, false);
                     spiedRestartFunc.should.be.calledOnce;
                 });
-                it('calls restartProject once as deployment == null (restartExtensionKubernetes throws 404 statusCode)', async() => {
+                it('calls restartProject once as deployment == null (restartExtensionKubernetes throws)', async() => {
                     Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
                         const err = new Error();
-                        err.statusCode = 404;
                         throw err;
                     } });
                     const spiedRestartFunc = sandbox.spy(() => null);
