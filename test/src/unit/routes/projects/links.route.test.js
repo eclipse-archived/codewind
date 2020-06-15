@@ -11,12 +11,14 @@
 global.codewind = { RUNNING_IN_K8S: false };
 const rewire = require('rewire');
 const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
 const sinon = require('sinon');
 
 const Links = rewire('../../../../../src/pfe/portal/routes/projects/links.route');
 const ProjectLinkError = require('../../../../../src/pfe/portal/modules/utils/errors/ProjectLinkError');
 const { suppressLogOutput } = require('../../../../modules/log.service');
 
+chai.use(chaiAsPromised);
 chai.should();
 
 describe('links.route.js', () => {
@@ -199,7 +201,7 @@ describe('links.route.js', () => {
             });
         });
     });
-    describe('restartProjectToPickupLinks(user, project)', () => {
+    describe('restartProjectToPickupLinks(user, project, forceRebuild)', () => {
         const restartProjectToPickupLinks = Links.__get__('restartProjectToPickupLinks');
         describe('RUNNING_IN_K8S === false', () => {
             const originalK8s = global.codewind.RUNNING_IN_K8S;
@@ -332,7 +334,7 @@ describe('links.route.js', () => {
             mockedUser.restartProject.should.be.calledWith(mockedProject, 'debug');
         });
     });
-    describe('restartDocker(user, project)', () => {
+    describe('restartDocker(user, project, forceRebuild)', () => {
         const restartDocker = Links.__get__('restartDocker');
         const sandbox = sinon.createSandbox();
         const mockedUser = {
@@ -359,11 +361,11 @@ describe('links.route.js', () => {
                     retrieveProject: () => false,
                 },
             };
-            return restartDocker(user, mockedProject).should.not.be.rejected;
+            return restartDocker(user, mockedProject, false).should.not.be.rejected;
         });
         it('throws an error as inspect throws an error that does not have a statusCode of 404', () => {
             Links.__set__('cwUtils', { inspect: () => { throw new Error(); } });
-            return restartDocker(mockedUser, mockedProject).should.be.rejected;
+            return restartDocker(mockedUser, mockedProject, false).should.be.rejected;
         });
         describe('buildStatus == inProgress or container is not populated', () => {
             const project = {
@@ -377,7 +379,7 @@ describe('links.route.js', () => {
                 Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => true });
                 const spiedRestartDocker = sandbox.spy(() => null);
                 Links.__set__('restartDocker', spiedRestartDocker);
-                await restartDocker(mockedUser, project);
+                await restartDocker(mockedUser, project, false);
                 spiedRestartDocker.should.be.calledOnce;
             });
             it('calls restartDocker once as container == null (inspect throws 404 statusCode)', async() => {
@@ -388,7 +390,7 @@ describe('links.route.js', () => {
                 } });
                 const spiedRestartDocker = sandbox.spy(() => null);
                 Links.__set__('restartDocker', spiedRestartDocker);
-                await restartDocker(mockedUser, project);
+                await restartDocker(mockedUser, project, false);
                 spiedRestartDocker.should.be.calledOnce;
             });
         });
@@ -411,7 +413,7 @@ describe('links.route.js', () => {
                     };
                 } });
                 sandbox.spy(user, 'buildProject');
-                await restartDocker(user, mockedProject);
+                await restartDocker(user, mockedProject, false);
                 const { buildProject } = user;
                 buildProject.should.be.calledOnce;
             });
@@ -426,9 +428,34 @@ describe('links.route.js', () => {
                     };
                 } });
                 sandbox.spy(user, 'buildProject');
-                await restartDocker(user, mockedProject);
+                await restartDocker(user, mockedProject, false);
                 const { buildProject } = user;
                 buildProject.should.not.be.called;
+            });
+            it('calls user.buildProject once and does not call checkIfEnvsExistInArray as forceRebuild is true', async() => {
+                // setup
+                const mockedCheckIfEnvsExistInArray = sinon.stub();
+                const resetCwUtils = Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => {
+                    return {
+                        Config: {
+                            Env: [
+                                'env=val',
+                            ],
+                        },
+                    };
+                } });
+                const resetCheckIfEnvsExistInArray = Links.__set__('checkIfEnvsExistInArray', mockedCheckIfEnvsExistInArray);
+                sandbox.spy(user, 'buildProject');
+
+                // test
+                await restartDocker(user, mockedProject, true);
+                const { buildProject } = user;
+                buildProject.should.be.calledOnce;
+                mockedCheckIfEnvsExistInArray.should.not.be.called;
+
+                // clean up
+                resetCwUtils();
+                resetCheckIfEnvsExistInArray();
             });
         });
     });
@@ -526,7 +553,7 @@ describe('links.route.js', () => {
             checkIfEnvsExistInArray({ links }, arrayOfEnvs).should.be.false;
         });
     });
-    describe('restartExtensionKubernetes(user, project)', () => {
+    describe('restartExtensionKubernetes(user, project, forceRebuild)', () => {
         const restartExtensionKubernetes = Links.__get__('restartExtensionKubernetes');
         const sandbox = sinon.createSandbox();
         const mockedUser = {
@@ -555,7 +582,7 @@ describe('links.route.js', () => {
                     retrieveProject: () => false,
                 },
             };
-            return restartExtensionKubernetes(user, mockedProject).should.not.be.rejected;
+            return restartExtensionKubernetes(user, mockedProject, false).should.not.be.rejected;
         });
         it('calls user.buildProject when the deployment is not found', async() => {
             Links.__set__('cwUtils', { getProjectDeployments: () => { throw new Error(); } });
@@ -564,7 +591,7 @@ describe('links.route.js', () => {
                 ...mockedUser,
                 buildProject: spiedBuildProject,
             };
-            await restartExtensionKubernetes(mockUserWithSpiedBuildProject, mockedProject).should.be.fulfilled;
+            await restartExtensionKubernetes(mockUserWithSpiedBuildProject, mockedProject, false).should.be.fulfilled;
             spiedBuildProject.should.be.calledOnce;
         });
         describe('buildStatus == inProgress or deployment in null', () => {
@@ -579,7 +606,7 @@ describe('links.route.js', () => {
                 Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => [true] });
                 const spiedRestartExtensionKubernetes = sandbox.spy(() => null);
                 Links.__set__('restartExtensionKubernetes', spiedRestartExtensionKubernetes);
-                await restartExtensionKubernetes(mockedUser, project);
+                await restartExtensionKubernetes(mockedUser, project, false);
                 spiedRestartExtensionKubernetes.should.be.calledOnce;
             });
             it('calls restartExtensionKubernetes once as deployment == null (restartExtensionKubernetes throws 404 statusCode)', async() => {
@@ -590,7 +617,7 @@ describe('links.route.js', () => {
                 } });
                 const spiedRestartExtensionKubernetes = sandbox.spy(() => null);
                 Links.__set__('restartExtensionKubernetes', spiedRestartExtensionKubernetes);
-                await restartExtensionKubernetes(mockedUser, project);
+                await restartExtensionKubernetes(mockedUser, project, false);
                 spiedRestartExtensionKubernetes.should.be.calledOnce;
             });
         });
@@ -624,7 +651,7 @@ describe('links.route.js', () => {
                     }];
                 } });
                 sandbox.spy(user, 'buildProject');
-                await restartExtensionKubernetes(user, mockedProject);
+                await restartExtensionKubernetes(user, mockedProject, false);
                 const { buildProject } = user;
                 buildProject.should.be.calledOnce;
             });
@@ -650,9 +677,18 @@ describe('links.route.js', () => {
                     }];
                 } });
                 sandbox.spy(user, 'buildProject');
-                await restartExtensionKubernetes(user, mockedProject);
+                await restartExtensionKubernetes(user, mockedProject, false);
                 const { buildProject } = user;
                 buildProject.should.not.be.called;
+            });
+            it('calls user.buildProject and does not call cwUtils.getProjectDeployments as forceRebuild is true', async() => {
+                const mockedGetProjectDeployments = sinon.stub();
+                Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: mockedGetProjectDeployments });
+                sandbox.spy(user, 'buildProject');
+                await restartExtensionKubernetes(user, mockedProject, true);
+                const { buildProject } = user;
+                buildProject.should.be.calledOnce;
+                mockedGetProjectDeployments.should.not.be.called;
             });
         });
     });

@@ -53,7 +53,7 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
     res.sendStatus(202);
 
     if (project.isOpen()) {
-      await restartProjectToPickupLinks(user, project);
+      await restartProjectToPickupLinks(user, project, false);
     }
     emitStatusToUI(user, project, 'success');
   } catch (err) {
@@ -76,7 +76,7 @@ router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(
     res.sendStatus(202);
 
     if (project.isOpen()) {
-      await restartProjectToPickupLinks(user, project);
+      await restartProjectToPickupLinks(user, project, false);
     }
     emitStatusToUI(user, project, 'success');
   } catch (err) {
@@ -95,7 +95,8 @@ router.delete('/api/v1/projects/:id/links', validateReq, checkProjectExists, asy
     res.sendStatus(202);
 
     if (project.isOpen()) {
-      await restartProjectToPickupLinks(user, project);
+      // forceRestart on delete to ensure we remove the environment variable
+      await restartProjectToPickupLinks(user, project, true);
     }
     emitStatusToUI(user, project, 'success');
   } catch (err) {
@@ -164,11 +165,11 @@ async function getProjectURL(project) {
   return `${name}:${internalPort}`;
 }
 
-async function restartProjectToPickupLinks(user, project) {
+async function restartProjectToPickupLinks(user, project, forceRebuild) {
   if (global.codewind.RUNNING_IN_K8S) {
     const { extension } = project;
     if (extension) {
-      await restartExtensionKubernetes(user, project);
+      await restartExtensionKubernetes(user, project, forceRebuild);
     } else {
       // In K8s we use configmaps and restart Pods for our templates
       await updateNetworkConfigMap(project);
@@ -181,7 +182,7 @@ async function restartProjectToPickupLinks(user, project) {
     if (projectTypesThatPickUpEnvsThroughRestart.includes(projectType.toLowerCase())) {
       await restartNodeSpringLiberty(user, project);
     } else {
-      await restartDocker(user, project);
+      await restartDocker(user, project, forceRebuild);
     }
   }
 }
@@ -202,13 +203,13 @@ async function restartNodeSpringLiberty(user, project) {
   await user.restartProject(project, mode);
 }
 
-async function restartDocker(user, project) {
+async function restartDocker(user, project, forceBuild) {
   const { name, buildStatus, projectID } = project;
   // As this function will be repeated until it has verified whether the envs exist in the container
   // we need to ensure that the project has not been deleted
   const projectExists = user.projectList.retrieveProject(projectID);
   if (!projectExists) {
-    return;
+    return null;
   }
 
   let container;
@@ -225,18 +226,25 @@ async function restartDocker(user, project) {
   }
 
   if (buildStatus != "inProgress" && container) {
-    const { Config: { Env: containerEnvs }} = container;
-    const linksExistInContainer = await checkIfEnvsExistInArray(project, containerEnvs);
-    // Only build and run the project if the links are not in the container
-    if (!linksExistInContainer) {
-      log.info(`Rebuilding ${name} to pick up network environment variables`);
-      await user.buildProject(project, 'build');
+    if (forceBuild) {
+      // if forceBuild skip the logic below and just rebuild
+      log.info(`Rebuilding ${name} to pick up network environment variables - forceRebuild`);
+      return user.buildProject(project, 'build');
     }
-  } else {
-    // if a build is in progress, wait 5 seconds and try again
-    await cwUtils.timeout(5000);
-    await restartDocker(user, project);
+
+    const { Config: { Env: containerEnvs }} = container;
+    const linksExistInContainer = checkIfEnvsExistInArray(project, containerEnvs);
+    // Only build and run the project if the links are not in the container
+    if (linksExistInContainer) {
+      // Do nothing and return if the links are already in the container
+      return null;
+    }
+    log.info(`Rebuilding ${name} to pick up network environment variables`);
+    return user.buildProject(project, 'build');
   }
+  // if a build is in progress, wait 5 seconds and try again
+  await cwUtils.timeout(5000);
+  return restartDocker(user, project);
 }
 
 async function updateNetworkConfigMap(project) {
@@ -277,17 +285,26 @@ function checkIfEnvsExistInArray(project, array) {
 }
 
 
-async function restartExtensionKubernetes(user, project) {
+async function restartExtensionKubernetes(user, project, forceBuild) {
   const { name, buildStatus, projectID } = project;
   // As this function will be repeated until it has verified whether the envs exist in the container
   // we need to ensure that the project has not been deleted
   const projectExists = user.projectList.retrieveProject(projectID);
   if (!projectExists) {
-    return;
+    return null;
   }
 
   if (buildStatus != "inProgress") {
+    if (forceBuild) {
+      // if forceBuild skip the logic below and just rebuild
+      log.info(`Rebuilding ${name} to pick up network environment variables - forceRebuild`);
+      return user.buildProject(project, 'build');
+    }
+
     try {
+      // Check whether the deployment already contains the current link variables
+      // They could have already been picked up in a previous rebuild while the buildStatus was inProgress
+      // Should remove unneccessary rebuilds
       const [deployment] = await cwUtils.getProjectDeployments(project.projectID);
       const { containers } = deployment.spec.template.spec;
       // Combine all the containers envs,
@@ -300,20 +317,21 @@ async function restartExtensionKubernetes(user, project) {
 
       const linksExistInContainer = await checkIfEnvsExistInArray(project, containerEnvs);
       // Only build and run the project if the links are not in the container
-      if (!linksExistInContainer) {
-        log.info(`Rebuilding ${name} to pick up network environment variables - links not found in deployment`);
-        await user.buildProject(project, 'build');
+      if (linksExistInContainer) {
+        // Do nothing and return if the links are already in the container
+        return null;
       }
+      log.info(`Rebuilding ${name} to pick up network environment variables - links not found in deployment`);
+      return user.buildProject(project, 'build');
     } catch (err) {
       // Fall back to assuming that the project needs rebuilding
       log.info(`Rebuilding ${name} to pick up network environment variables - deployment not found`);
-      await user.buildProject(project, 'build');
+      return user.buildProject(project, 'build');
     }
-  } else {
-    // if a build is in progress, wait 5 seconds and try again
-    await cwUtils.timeout(5000);
-    await restartExtensionKubernetes(user, project);
   }
+  // if a build is in progress, wait 5 seconds and try again
+  await cwUtils.timeout(5000);
+  return restartExtensionKubernetes(user, project);
 }
 
 module.exports = router;
