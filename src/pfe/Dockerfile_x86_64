@@ -134,5 +134,8 @@ ENV NODE_ENV=${NODE_ENV} \
     FORCE_COLOR=1 \
     LOG_LEVEL=info
 
+# remove this python module, because we don't use it and it contains a security vulnerability
+RUN rm -rf usr/lib64/python3.6/email/_parseaddr.py
+
 WORKDIR /
 CMD [ "sh", "-c", " /file-watcher/scripts/root-watcher.sh ${HOST_WORKSPACE_DIRECTORY} ${CONTAINER_WORKSPACE_DIRECTORY} ; cd /portal ; npm start ;" ]
