@@ -71,6 +71,9 @@ fi
 rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
 curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-9.9.9999.zip http://archive.eclipse.org/codewind/codewind-odo-extension/master/latest/codewind-odo-extension-9.9.9999.zip
 
+rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-devfile-*.zip
+curl -Lo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-devfile-9.9.9999.zip http://archive.eclipse.org/codewind/codewind-odo-extension/master-devfile/latest/codewind-odo-extension-devfile-9.9.9999.zip
+
 # BUILD IMAGES
 # Uses a build file in each of the directories that we want to use
 echo -e "\n+++   BUILDING DOCKER IMAGES   +++\n";

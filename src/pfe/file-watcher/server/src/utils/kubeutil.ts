@@ -90,9 +90,11 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
         if (!projectInfo.compositeAppName) {
             return undefined;
         }
-
         const componentName = path.basename(projectInfo.location);
         releaseLabel = "deploymentconfig=" + "cw-" + componentName + "-" + projectInfo.compositeAppName;
+    } else if (projectInfo.projectType == "odo-devfile") {
+        const componentName = path.basename(projectInfo.location);
+        releaseLabel = "component=" + "cw-" + componentName;
     }
     const projectName = path.basename(projectLocation);
 
@@ -289,9 +291,11 @@ export async function getFilesOrFoldersInContainerWithTimestamp(projectID: strin
 export async function isContainerActive(containerName: string, projectInfo?: ProjectInfo): Promise<any> {
     try {
         let releaseLabel = "release=" + containerName;
-        if (projectInfo && projectInfo.projectType == "odo") {
+        if (projectInfo && ["odo", "odo-devfile"].includes(projectInfo.projectType)) {
             const componentName = path.basename(projectInfo.location);
-            releaseLabel = "deploymentconfig=" + "cw-" + componentName + "-" + projectInfo.compositeAppName;
+            releaseLabel = projectInfo.projectType === "odo"
+                ? "deploymentconfig=" + "cw-" + componentName + "-" + projectInfo.compositeAppName
+                : "component=" + "cw-" + componentName;
         }
         let containerState = {state: ContainerStates.containerNotFound};
         // We are getting the list of pods by the release label

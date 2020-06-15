@@ -171,7 +171,7 @@ export async function containerCreate(operation: Operation, script: string, comm
             args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
                 String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
                 (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry, userMavenSettings];
-        } else if (projectType == "odo") {
+        } else if (["odo", "odo-devfile"].includes(projectType)) {
             const componentName: string = await getComponentName(projectName);
 
             args = [
@@ -278,7 +278,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
         args = [projectLocation, LOCAL_WORKSPACE, operation.projectInfo.projectID, command, operation.containerName,
             String(operation.projectInfo.autoBuildEnabled), logName, operation.projectInfo.startMode, operation.projectInfo.debugPort,
             (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry, userMavenSettings];
-    } else if (projectType == "odo") {
+    } else if (["odo", "odo-devfile"].includes(projectType)) {
         const componentName: string = await getComponentName(projectName);
 
         args = [
@@ -416,7 +416,7 @@ async function executeBuildScript(operation: Operation, script: string, args: Ar
                         projectInfo.ports.internalDebugPort = operation.projectInfo.debugPort;
                     }
 
-                    if (operation.projectInfo.projectType == "odo") {
+                    if (["odo", "odo-devfile"].includes(operation.projectInfo.projectType)) {
                         const projectHandler = await projectExtensions.getProjectHandler(operation.projectInfo);
                         const odoProjectInfo: ProjectInfo = operation.projectInfo;
                         const appBaseURL: string = (await projectHandler.getAppBaseURL(projectID)).trim();
@@ -670,7 +670,7 @@ export async function containerDelete(projectInfo: ProjectInfo, script: string):
     try {
         let args: any[] = [projectInfo.location, LOCAL_WORKSPACE, projectID, "remove", containerName, undefined, undefined, undefined, undefined, undefined, undefined, imagePushRegistry];
 
-        if (projectInfo.projectType == "odo") {
+        if (["odo", "odo-devfile"].includes(projectInfo.projectType)) {
             const logDir: string = await logHelper.getLogDir(projectID, projectName);
             const componentName: string = await getComponentName(projectName);
 
@@ -1253,7 +1253,7 @@ export async function runScript(projectInfo: ProjectInfo, script: string, comman
     let args = [projectInfo.location, LOCAL_WORKSPACE, projectID, command, containerName, String(projectInfo.autoBuildEnabled), logName, projectInfo.startMode,
         projectInfo.debugPort, "NONE", logDir];
 
-    if (projectInfo.projectType == "odo") {
+    if (["odo", "odo-devfile"].includes(projectInfo.projectType)) {
         const componentName: string = await getComponentName(projectName);
 
         args = [

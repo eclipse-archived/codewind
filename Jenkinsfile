@@ -274,6 +274,7 @@ pipeline {
                         mkdir -p ${SRC_DIR}/pfe/extensions
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-*.zip
                         rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-extension-*.zip
+                        rm -f ${SRC_DIR}/pfe/extensions/codewind-odo-devfile-extension-*.zip
 
                         curl -Lfo ${SRC_DIR}/pfe/extensions/codewind-appsody-extension-$VERSION.zip http://archive.eclipse.org/codewind/codewind-appsody-extension/$BRANCH/latest/codewind-appsody-extension-$VERSION.zip
                         if [ $? -ne 0 ]; then
@@ -284,6 +285,13 @@ pipeline {
                         curl -Lfo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-$VERSION.zip http://archive.eclipse.org/codewind/codewind-odo-extension/$BRANCH/latest/codewind-odo-extension-$VERSION.zip
                         if [ $? -ne 0 ]; then
                             echo "Error downloading odo extension"
+                            exit 1
+                        fi
+
+                        ODO_DEVFILE_BRANCH="master-devfile"
+                        curl -Lfo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-devfile-$VERSION.zip http://archive.eclipse.org/codewind/codewind-odo-extension/$ODO_DEVFILE_BRANCH/latest/codewind-odo-extension-devfile-$VERSION.zip
+                        if [ $? -ne 0 ]; then
+                            echo "Error downloading odo-devfile extension"
                             exit 1
                         fi
 
