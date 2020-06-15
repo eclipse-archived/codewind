@@ -18,7 +18,6 @@ const log = new Logger('socketAuth.js');
 // Verify UI Socket user has a valid token
 module.exports.verifySocketUser = function verifySocketUser (token, keycloakPublicKey) {
   return new Promise((resolve, reject) => {
-    log.trace(`UISocket : [verifySocketUser] - token: ${token} `)
     log.trace(`UISocket : [verifySocketUser] - publickey: ${keycloakPublicKey}`)
     if (!keycloakPublicKey) {
       return reject('KEYCLOAK_PUBLIC_KEY_MISSING');
