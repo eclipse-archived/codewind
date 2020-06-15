@@ -428,6 +428,59 @@ describe('links.route.js', () => {
             checkIfEnvsExistInArray({ links }, arrayOfEnvs).should.be.false;
         });
     });
+    describe('getDockerContainerEnvs(project)', () => {
+        const getDockerContainerEnvs = Links.__get__('getDockerContainerEnvs');
+        it('returns an empty array as inspect throws an error', async() => {
+            Links.__set__('cwUtils', { inspect: () => { throw new Error(); } });
+            const envs = await getDockerContainerEnvs({ projectID: 'projectID' });
+            envs.should.deep.equal([]);
+        });
+        it('returns the environment variables in a container', async() => {
+            Links.__set__('cwUtils', { inspect: () => {
+                return {
+                    Config: {
+                        Env: [
+                            'env=notval',
+                        ],
+                    },
+                };
+            } });
+            const envs = await getDockerContainerEnvs({ projectID: 'projectID' });
+            envs.should.deep.equal(['env=notval']);
+        });
+    });
+    describe('getKubernetesDeploymentEnvs(project)', () => {
+        const getKubernetesDeploymentEnvs = Links.__get__('getKubernetesDeploymentEnvs');
+        it('returns an empty array as getProjectDeployments throws an error', async() => {
+            Links.__set__('cwUtils', { getProjectDeployments: () => { throw new Error(); } });
+            const envs = await getKubernetesDeploymentEnvs({ projectID: 'projectID' });
+            envs.should.deep.equal([]);
+        });
+        it('returns the environment variables in a deployment', async() => {
+            Links.__set__('cwUtils', { getProjectDeployments: () => {
+                return [{
+                    spec: {
+                        template: {
+                            spec: {
+                                containers: [
+                                    {
+                                        env: [
+                                            {
+                                                name: 'env',
+                                                value: 'notval',
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                }];
+            } });
+            const envs = await getKubernetesDeploymentEnvs({ projectID: 'projectID' });
+            envs.should.deep.equal(['env=notval']);
+        });
+    });
     describe('restartProject(user, project, forceRebuild)', () => {
         const restartProject = Links.__get__('restartProject');
         const sandbox = sinon.createSandbox();

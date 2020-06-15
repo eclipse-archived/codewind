@@ -249,7 +249,8 @@ async function getKubernetesDeploymentEnvs(project) {
     // Check whether the deployment already contains the current link variables
     // They could have already been picked up in a previous rebuild while the buildStatus was inProgress
     // Should remove unneccessary rebuilds
-    const [deployment] = await cwUtils.getProjectDeployments(project.projectID);
+    const { projectID } = project;
+    const [deployment] = await cwUtils.getProjectDeployments(projectID);
     const { containers } = deployment.spec.template.spec;
     // Combine all the containers envs,
     // if one container contains all the link envs the deployment has been updated
