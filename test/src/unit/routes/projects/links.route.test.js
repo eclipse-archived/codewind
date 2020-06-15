@@ -227,17 +227,17 @@ describe('links.route.js', () => {
                 });
             });
             ['swift', 'docker', 'appsody', 'anythingelse'].forEach(projectType => {
-                it(`calls restartDocker as the project type is ${projectType}`, async() => {
+                it(`calls restartProject as the project type is ${projectType}`, async() => {
                     const spiedRestartNodeSpringLiberty = sandbox.spy(() => {});
-                    const spiedRestartDocker = sandbox.spy(() => {});
+                    const spiedRestartProject = sandbox.spy(() => {});
 
                     Links.__set__('restartNodeSpringLiberty', spiedRestartNodeSpringLiberty);
-                    Links.__set__('restartDocker', spiedRestartDocker);
+                    Links.__set__('restartProject', spiedRestartProject);
 
                     await restartProjectToPickupLinks({}, { projectType });
 
                     spiedRestartNodeSpringLiberty.should.not.be.called;
-                    spiedRestartDocker.should.be.calledOnce;
+                    spiedRestartProject.should.be.calledOnce;
                 });
             });
         });
@@ -258,26 +258,26 @@ describe('links.route.js', () => {
                 };
                 const spiedCwUtils = sandbox.spy(cwUtils);
                 Links.__set__('cwUtils', spiedCwUtils);
-                const spiedRestartExtensionKubernetes = sandbox.spy(() => {});
-                Links.__set__('restartExtensionKubernetes', spiedRestartExtensionKubernetes);
+                const spiedRestartProject = sandbox.spy(() => {});
+                Links.__set__('restartProject', spiedRestartProject);
                 await restartProjectToPickupLinks({}, { links: { getEnvPairObject: () => ({}) } });
                 const { getNetworkConfigMap, updateConfigMap, patchProjectDeployments } = spiedCwUtils;
                 getNetworkConfigMap.should.be.calledOnce;
                 updateConfigMap.should.be.calledOnce;
                 patchProjectDeployments.should.be.calledOnce;
-                spiedRestartExtensionKubernetes.should.not.be.called;
+                spiedRestartProject.should.not.be.called;
             });
-            it(`calls restartExtensionKubernetes as the project is an extension`, async() => {
+            it(`calls restartProject as the project is an extension`, async() => {
                 const spiedUpdateNetworkConfigMap = sandbox.spy(() => {});
-                const spiedRestartExtensionKubernetes = sandbox.spy(() => {});
+                const spiedRestartProject = sandbox.spy(() => {});
 
                 Links.__set__('updateNetworkConfigMap', spiedUpdateNetworkConfigMap);
-                Links.__set__('restartExtensionKubernetes', spiedRestartExtensionKubernetes);
+                Links.__set__('restartProject', spiedRestartProject);
 
                 await restartProjectToPickupLinks({}, { extension: true });
 
                 spiedUpdateNetworkConfigMap.should.not.be.called;
-                spiedRestartExtensionKubernetes.should.be.calledOnce;
+                spiedRestartProject.should.be.calledOnce;
             });
         });
     });
@@ -332,131 +332,6 @@ describe('links.route.js', () => {
             const mockedProject = { startMode: 'debug', links: { ...mockedLinks, envFileExists: () => false } };
             await restartNodeSpringLiberty(mockedUser, mockedProject);
             mockedUser.restartProject.should.be.calledWith(mockedProject, 'debug');
-        });
-    });
-    describe('restartDocker(user, project, forceRebuild)', () => {
-        const restartDocker = Links.__get__('restartDocker');
-        const sandbox = sinon.createSandbox();
-        const mockedUser = {
-            restartProject: () => null,
-            projectList: {
-                retrieveProject: () => true,
-            },
-        };
-        const mockedProject = {
-            name: null,
-            buildStatus: null,
-            projectID: null,
-            links: {
-                getEnvPairs: () => ['env=val'],
-            },
-        };
-        const mockedCwUtils = {
-            timeout: () => null,
-        };
-        it('does nothing and does not error as the project does not exist', () => {
-            const user = {
-                ...mockedUser,
-                projectList: {
-                    retrieveProject: () => false,
-                },
-            };
-            return restartDocker(user, mockedProject, false).should.not.be.rejected;
-        });
-        it('throws an error as inspect throws an error that does not have a statusCode of 404', () => {
-            Links.__set__('cwUtils', { inspect: () => { throw new Error(); } });
-            return restartDocker(mockedUser, mockedProject, false).should.be.rejected;
-        });
-        describe('buildStatus == inProgress or container is not populated', () => {
-            const project = {
-                ...mockedProject,
-                buildStatus: 'inProgress',
-            };
-            afterEach(() => {
-                sandbox.restore();
-            });
-            it('calls restartDocker once as buildStatus == inProgress', async() => {
-                Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => true });
-                const spiedRestartDocker = sandbox.spy(() => null);
-                Links.__set__('restartDocker', spiedRestartDocker);
-                await restartDocker(mockedUser, project, false);
-                spiedRestartDocker.should.be.calledOnce;
-            });
-            it('calls restartDocker once as container == null (inspect throws 404 statusCode)', async() => {
-                Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => {
-                    const err = new Error();
-                    err.statusCode = 404;
-                    throw err;
-                } });
-                const spiedRestartDocker = sandbox.spy(() => null);
-                Links.__set__('restartDocker', spiedRestartDocker);
-                await restartDocker(mockedUser, project, false);
-                spiedRestartDocker.should.be.calledOnce;
-            });
-        });
-        describe('buildStatus != inProgress && container is a populated object', () => {
-            const user = {
-                ...mockedUser,
-                buildProject: () => true,
-            };
-            afterEach(() => {
-                sandbox.restore();
-            });
-            it('calls user.buildProject once as the linksExistInContainer is false', async() => {
-                Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => {
-                    return {
-                        Config: {
-                            Env: [
-                                'env=notval',
-                            ],
-                        },
-                    };
-                } });
-                sandbox.spy(user, 'buildProject');
-                await restartDocker(user, mockedProject, false);
-                const { buildProject } = user;
-                buildProject.should.be.calledOnce;
-            });
-            it('calls user.buildProject once as the linksExistInContainer is true', async() => {
-                Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => {
-                    return {
-                        Config: {
-                            Env: [
-                                'env=val',
-                            ],
-                        },
-                    };
-                } });
-                sandbox.spy(user, 'buildProject');
-                await restartDocker(user, mockedProject, false);
-                const { buildProject } = user;
-                buildProject.should.not.be.called;
-            });
-            it('calls user.buildProject once and does not call checkIfEnvsExistInArray as forceRebuild is true', async() => {
-                // setup
-                const mockedCheckIfEnvsExistInArray = sinon.stub();
-                const resetCwUtils = Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => {
-                    return {
-                        Config: {
-                            Env: [
-                                'env=val',
-                            ],
-                        },
-                    };
-                } });
-                const resetCheckIfEnvsExistInArray = Links.__set__('checkIfEnvsExistInArray', mockedCheckIfEnvsExistInArray);
-                sandbox.spy(user, 'buildProject');
-
-                // test
-                await restartDocker(user, mockedProject, true);
-                const { buildProject } = user;
-                buildProject.should.be.calledOnce;
-                mockedCheckIfEnvsExistInArray.should.not.be.called;
-
-                // clean up
-                resetCwUtils();
-                resetCheckIfEnvsExistInArray();
-            });
         });
     });
     describe('updateNetworkConfigMap(project)', () => {
@@ -553,8 +428,8 @@ describe('links.route.js', () => {
             checkIfEnvsExistInArray({ links }, arrayOfEnvs).should.be.false;
         });
     });
-    describe('restartExtensionKubernetes(user, project, forceRebuild)', () => {
-        const restartExtensionKubernetes = Links.__get__('restartExtensionKubernetes');
+    describe('restartProject(user, project, forceRebuild)', () => {
+        const restartProject = Links.__get__('restartProject');
         const sandbox = sinon.createSandbox();
         const mockedUser = {
             restartProject: () => null,
@@ -574,121 +449,242 @@ describe('links.route.js', () => {
         const mockedCwUtils = {
             timeout: () => null,
         };
+        describe('RUNNING_IN_K8S === false', () => {
+            const originalK8s = global.codewind.RUNNING_IN_K8S;
+            before(() => {
+                global.codewind.RUNNING_IN_K8S = false;
+            });
+            after(() => {
+                global.codewind.RUNNING_IN_K8S = originalK8s;
+            });
+            it('does nothing and does not error as the project does not exist', () => {
+                const user = {
+                    ...mockedUser,
+                    projectList: {
+                        retrieveProject: () => false,
+                    },
+                };
+                return restartProject(user, mockedProject, false).should.not.be.rejected;
+            });
+            it('throws an error as inspect throws an error that does not have a statusCode of 404', () => {
+                Links.__set__('cwUtils', { inspect: () => { throw new Error(); } });
+                return restartProject(mockedUser, mockedProject, false).should.be.rejected;
+            });
+            describe('buildStatus == inProgress or container is not populated', () => {
+                const project = {
+                    ...mockedProject,
+                    buildStatus: 'inProgress',
+                };
+                afterEach(() => {
+                    sandbox.restore();
+                });
+                it('calls restartDocker once as buildStatus == inProgress', async() => {
+                    Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => true });
+                    const spiedRestartFunc = sandbox.spy(() => null);
+                    Links.__set__('restartProject', spiedRestartFunc);
+                    await restartProject(mockedUser, project, false);
+                    spiedRestartFunc.should.be.calledOnce;
+                });
+                it('calls restartDocker once as container == null (inspect throws 404 statusCode)', async() => {
+                    Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => {
+                        const err = new Error();
+                        err.statusCode = 404;
+                        throw err;
+                    } });
+                    const spiedRestartFunc = sandbox.spy(() => null);
+                    Links.__set__('restartProject', spiedRestartFunc);
+                    await restartProject(mockedUser, project, false);
+                    spiedRestartFunc.should.be.calledOnce;
+                });
+            });
+            describe('buildStatus != inProgress && container is a populated object', () => {
+                const user = {
+                    ...mockedUser,
+                    buildProject: () => true,
+                };
+                afterEach(() => {
+                    sandbox.restore();
+                });
+                it('calls user.buildProject once as the linksExistInContainer is false', async() => {
+                    Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => {
+                        return {
+                            Config: {
+                                Env: [
+                                    'env=notval',
+                                ],
+                            },
+                        };
+                    } });
+                    sandbox.spy(user, 'buildProject');
+                    await restartProject(user, mockedProject, false);
+                    const { buildProject } = user;
+                    buildProject.should.be.calledOnce;
+                });
+                it('calls user.buildProject once as the linksExistInContainer is true', async() => {
+                    Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => {
+                        return {
+                            Config: {
+                                Env: [
+                                    'env=val',
+                                ],
+                            },
+                        };
+                    } });
+                    sandbox.spy(user, 'buildProject');
+                    await restartProject(user, mockedProject, false);
+                    const { buildProject } = user;
+                    buildProject.should.not.be.called;
+                });
+                it('calls user.buildProject once and does not call checkIfEnvsExistInArray as forceRebuild is true', async() => {
+                    // setup
+                    const mockedCheckIfEnvsExistInArray = sinon.stub();
+                    const resetCwUtils = Links.__set__('cwUtils', { ...mockedCwUtils, inspect: () => {
+                        return {
+                            Config: {
+                                Env: [
+                                    'env=val',
+                                ],
+                            },
+                        };
+                    } });
+                    const resetCheckIfEnvsExistInArray = Links.__set__('checkIfEnvsExistInArray', mockedCheckIfEnvsExistInArray);
+                    sandbox.spy(user, 'buildProject');
 
-        it('does nothing and does not error as the project does not exist', () => {
-            const user = {
-                ...mockedUser,
-                projectList: {
-                    retrieveProject: () => false,
-                },
-            };
-            return restartExtensionKubernetes(user, mockedProject, false).should.not.be.rejected;
-        });
-        it('calls user.buildProject when the deployment is not found', async() => {
-            Links.__set__('cwUtils', { getProjectDeployments: () => { throw new Error(); } });
-            const spiedBuildProject = sinon.stub().returns();
-            const mockUserWithSpiedBuildProject = {
-                ...mockedUser,
-                buildProject: spiedBuildProject,
-            };
-            await restartExtensionKubernetes(mockUserWithSpiedBuildProject, mockedProject, false).should.be.fulfilled;
-            spiedBuildProject.should.be.calledOnce;
-        });
-        describe('buildStatus == inProgress or deployment in null', () => {
-            const project = {
-                ...mockedProject,
-                buildStatus: 'inProgress',
-            };
-            afterEach(() => {
-                sandbox.restore();
-            });
-            it('calls restartExtensionKubernetes once as buildStatus == inProgress', async() => {
-                Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => [true] });
-                const spiedRestartExtensionKubernetes = sandbox.spy(() => null);
-                Links.__set__('restartExtensionKubernetes', spiedRestartExtensionKubernetes);
-                await restartExtensionKubernetes(mockedUser, project, false);
-                spiedRestartExtensionKubernetes.should.be.calledOnce;
-            });
-            it('calls restartExtensionKubernetes once as deployment == null (restartExtensionKubernetes throws 404 statusCode)', async() => {
-                Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
-                    const err = new Error();
-                    err.statusCode = 404;
-                    throw err;
-                } });
-                const spiedRestartExtensionKubernetes = sandbox.spy(() => null);
-                Links.__set__('restartExtensionKubernetes', spiedRestartExtensionKubernetes);
-                await restartExtensionKubernetes(mockedUser, project, false);
-                spiedRestartExtensionKubernetes.should.be.calledOnce;
+                    // test
+                    await restartProject(user, mockedProject, true);
+                    const { buildProject } = user;
+                    buildProject.should.be.calledOnce;
+                    mockedCheckIfEnvsExistInArray.should.not.be.called;
+
+                    // clean up
+                    resetCwUtils();
+                    resetCheckIfEnvsExistInArray();
+                });
             });
         });
-        describe('buildStatus != inProgress && container is a populated object', () => {
-            const user = {
-                ...mockedUser,
-                buildProject: () => true,
-            };
-            afterEach(() => {
-                sandbox.restore();
+        describe('RUNNING_IN_K8S === true', () => {
+            const originalK8s = global.codewind.RUNNING_IN_K8S;
+            before(() => {
+                global.codewind.RUNNING_IN_K8S = true;
             });
-            it('calls user.buildProject once as the linksExistInContainer is false', async() => {
-                Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
-                    return [{
-                        spec: {
-                            template: {
-                                spec: {
-                                    containers: [
-                                        {
-                                            env: [
-                                                {
-                                                    name: 'env',
-                                                    value: 'notval',
-                                                },
-                                            ],
-                                        },
-                                    ],
+            after(() => {
+                global.codewind.RUNNING_IN_K8S = originalK8s;
+            });
+            it('does nothing and does not error as the project does not exist', () => {
+                const user = {
+                    ...mockedUser,
+                    projectList: {
+                        retrieveProject: () => false,
+                    },
+                };
+                return restartProject(user, mockedProject, false).should.not.be.rejected;
+            });
+            it('calls user.buildProject when the deployment is not found', async() => {
+                Links.__set__('cwUtils', { getProjectDeployments: () => { throw new Error(); } });
+                const spiedBuildProject = sinon.stub().returns();
+                const mockUserWithSpiedBuildProject = {
+                    ...mockedUser,
+                    buildProject: spiedBuildProject,
+                };
+                await restartProject(mockUserWithSpiedBuildProject, mockedProject, false).should.be.fulfilled;
+                spiedBuildProject.should.be.calledOnce;
+            });
+            describe('buildStatus == inProgress or deployment in null', () => {
+                const project = {
+                    ...mockedProject,
+                    buildStatus: 'inProgress',
+                };
+                afterEach(() => {
+                    sandbox.restore();
+                });
+                it('calls restartProject once as buildStatus == inProgress', async() => {
+                    Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => [true] });
+                    const spiedRestartFunc = sandbox.spy(() => null);
+                    Links.__set__('restartProject', spiedRestartFunc);
+                    await restartProject(mockedUser, project, false);
+                    spiedRestartFunc.should.be.calledOnce;
+                });
+                it('calls restartProject once as deployment == null (restartExtensionKubernetes throws 404 statusCode)', async() => {
+                    Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
+                        const err = new Error();
+                        err.statusCode = 404;
+                        throw err;
+                    } });
+                    const spiedRestartFunc = sandbox.spy(() => null);
+                    Links.__set__('restartProject', spiedRestartFunc);
+                    await restartProject(mockedUser, project, false);
+                    spiedRestartFunc.should.be.calledOnce;
+                });
+            });
+            describe('buildStatus != inProgress && container is a populated object', () => {
+                const user = {
+                    ...mockedUser,
+                    buildProject: () => true,
+                };
+                afterEach(() => {
+                    sandbox.restore();
+                });
+                it('calls user.buildProject once as the linksExistInContainer is false', async() => {
+                    Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
+                        return [{
+                            spec: {
+                                template: {
+                                    spec: {
+                                        containers: [
+                                            {
+                                                env: [
+                                                    {
+                                                        name: 'env',
+                                                        value: 'notval',
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
                                 },
                             },
-                        },
-                    }];
-                } });
-                sandbox.spy(user, 'buildProject');
-                await restartExtensionKubernetes(user, mockedProject, false);
-                const { buildProject } = user;
-                buildProject.should.be.calledOnce;
-            });
-            it('calls user.buildProject once as the linksExistInContainer is true', async() => {
-                Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
-                    return [{
-                        spec: {
-                            template: {
-                                spec: {
-                                    containers: [
-                                        {
-                                            env: [
-                                                {
-                                                    name: 'env',
-                                                    value: 'val',
-                                                },
-                                            ],
-                                        },
-                                    ],
+                        }];
+                    } });
+                    sandbox.spy(user, 'buildProject');
+                    await restartProject(user, mockedProject, false);
+                    const { buildProject } = user;
+                    buildProject.should.be.calledOnce;
+                });
+                it('calls user.buildProject once as the linksExistInContainer is true', async() => {
+                    Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: () => {
+                        return [{
+                            spec: {
+                                template: {
+                                    spec: {
+                                        containers: [
+                                            {
+                                                env: [
+                                                    {
+                                                        name: 'env',
+                                                        value: 'val',
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
                                 },
                             },
-                        },
-                    }];
-                } });
-                sandbox.spy(user, 'buildProject');
-                await restartExtensionKubernetes(user, mockedProject, false);
-                const { buildProject } = user;
-                buildProject.should.not.be.called;
-            });
-            it('calls user.buildProject and does not call cwUtils.getProjectDeployments as forceRebuild is true', async() => {
-                const mockedGetProjectDeployments = sinon.stub();
-                Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: mockedGetProjectDeployments });
-                sandbox.spy(user, 'buildProject');
-                await restartExtensionKubernetes(user, mockedProject, true);
-                const { buildProject } = user;
-                buildProject.should.be.calledOnce;
-                mockedGetProjectDeployments.should.not.be.called;
+                        }];
+                    } });
+                    sandbox.spy(user, 'buildProject');
+                    await restartProject(user, mockedProject, false);
+                    const { buildProject } = user;
+                    buildProject.should.not.be.called;
+                });
+                it('calls user.buildProject and does not call cwUtils.getProjectDeployments as forceRebuild is true', async() => {
+                    const mockedGetProjectDeployments = sinon.stub();
+                    Links.__set__('cwUtils', { ...mockedCwUtils, getProjectDeployments: mockedGetProjectDeployments });
+                    sandbox.spy(user, 'buildProject');
+                    await restartProject(user, mockedProject, true);
+                    const { buildProject } = user;
+                    buildProject.should.be.calledOnce;
+                    mockedGetProjectDeployments.should.not.be.called;
+                });
             });
         });
     });
