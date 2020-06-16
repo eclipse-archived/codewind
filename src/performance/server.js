@@ -124,14 +124,14 @@ function runLoad(options) {
             io.emit('cancelled', {projectID: options.projectID});
         } else if (code != 0) { // error
             log.error(`error ${errOutput}`);
-            io.emit('error', {error: errOutput, projectID: options.projectID});
+            io.emit('loadrunError', {output: output, error: errOutput, projectID: options.projectID});
         } else { // success
             log.info(`completed - loadrun summary : ${output}`);
             io.emit('completed', {output: output, projectID: options.projectID});
         }
     }).on('error', (err) => {
         loadProcess[options.projectID] = null;
-        io.emit('error', {error: errOutput, projectID: options.projectID});
+        io.emit('loadrunError', {output: output, error: errOutput, projectID: options.projectID});
         log.error(err);
     });
     log.debug(`loadProcess = ${inspect(loadProcess[options.projectID])}`);

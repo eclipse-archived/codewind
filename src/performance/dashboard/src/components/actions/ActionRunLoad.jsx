@@ -102,6 +102,14 @@ class ActionRunLoad extends React.Component {
                         }, 2000);
                         break;
                     }
+                    case 'failed': {
+                        this.setState({ timeRemaining:0, showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Failed...' });
+                        setTimeout(() => {
+                            this.setState({ loadRunStatus: { status: 'idle' } })
+                            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Load run failed', subtitle:'An unexpected error occurred' }));
+                        }, 2000);
+                        break;
+                    }
                     default: {
                         if (queryString.parse(location.search).debugsocket) {
                             console.log("Ignoring UISocket RX: ",data);
