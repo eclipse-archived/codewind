@@ -243,26 +243,41 @@ describe('Links.js', function() {
         describe('deleteByTargetProjectID(targetProjectID)', () => {
             afterDeleteEnvFile();
             it('does nothing as there are no links', async() => {
+                // arrange
                 const links = new Links(TEMP_TEST_DIR);
                 links.getAll().length.should.equal(0);
+
+                // act
                 await links.deleteByTargetProjectID('projectID');
+
+                // assert
                 links.getAll().length.should.equal(0);
             });
             it('does nothing as no links match the projectID', async() => {
+                // arrange
                 const links = new Links(TEMP_TEST_DIR);
                 await links.add(dummyLink);
                 await links.add({ ...dummyLink, envName: 'otherEnv' });
                 links.getAll().length.should.equal(2);
+
+                // act
                 await links.deleteByTargetProjectID('projectID');
+
+                // assert
                 links.getAll().length.should.equal(2);
             });
             it('removes two links as they match the projectID', async() => {
+                // arrange
                 const links = new Links(TEMP_TEST_DIR);
                 await links.add({ ...dummyLink, projectID: 'projectID' });
                 await links.add({ ...dummyLink, projectID: 'projectID', envName: 'otherEnv' });
                 await links.add({ ...dummyLink, projectID: 'differentID', envName: 'invalidProjectIDEnv' });
                 links.getAll().length.should.equal(3);
+
+                // act
                 await links.deleteByTargetProjectID('projectID');
+
+                // assert
                 links.getAll().length.should.equal(1);
             });
         });
