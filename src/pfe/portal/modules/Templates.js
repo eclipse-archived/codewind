@@ -324,8 +324,12 @@ async function constructRepositoryObject(url, description, name, isRepoProtected
   if (isRepoProtected !== undefined) {
     repository.protected = isRepoProtected;
   }
-  if (gitCredentials && gitCredentials.username) {
-    repository.authentication = { username: gitCredentials.username };
+  if (gitCredentials) {
+    if (gitCredentials.username) {
+      repository.authentication = { username: gitCredentials.username }; 
+    } else if (gitCredentials.personalAccessToken) {
+      repository.authentication = {};
+    }
   }
   return repository;
 }
