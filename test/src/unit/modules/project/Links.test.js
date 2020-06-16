@@ -240,6 +240,50 @@ describe('Links.js', function() {
                     .and.eventually.have.property('code', 'NOT_FOUND');
             });
         });
+        describe('deleteByTargetProjectID(targetProjectID)', () => {
+            afterDeleteEnvFile();
+            it('does nothing as there are no links', async() => {
+                // arrange
+                const links = new Links(TEMP_TEST_DIR);
+                links.getAll().length.should.equal(0);
+
+                // act
+                const linksRemoved = await links.deleteByTargetProjectID('projectID');
+
+                // assert
+                links.getAll().length.should.equal(0);
+                linksRemoved.should.be.false;
+            });
+            it('does nothing as no links match the projectID', async() => {
+                // arrange
+                const links = new Links(TEMP_TEST_DIR);
+                await links.add(dummyLink);
+                await links.add({ ...dummyLink, envName: 'otherEnv' });
+                links.getAll().length.should.equal(2);
+
+                // act
+                const linksRemoved = await links.deleteByTargetProjectID('projectID');
+
+                // assert
+                links.getAll().length.should.equal(2);
+                linksRemoved.should.be.false;
+            });
+            it('removes two links as they match the projectID', async() => {
+                // arrange
+                const links = new Links(TEMP_TEST_DIR);
+                await links.add({ ...dummyLink, projectID: 'projectID' });
+                await links.add({ ...dummyLink, projectID: 'projectID', envName: 'otherEnv' });
+                await links.add({ ...dummyLink, projectID: 'differentID', envName: 'invalidProjectIDEnv' });
+                links.getAll().length.should.equal(3);
+
+                // act
+                const linksRemoved = await links.deleteByTargetProjectID('projectID');
+
+                // assert
+                links.getAll().length.should.equal(1);
+                linksRemoved.should.be.true;
+            });
+        });
     });
     describe('Local functions', () => {
         describe('validateLink(newLink, links', () => {

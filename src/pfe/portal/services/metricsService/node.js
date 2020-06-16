@@ -2,8 +2,8 @@ const fs = require('fs-extra');
 const path = require('path');
 const util = require('util');
 
-const Logger = require('../utils/Logger');
-const { deepClone } = require('../utils/sharedFunctions');
+const Logger = require('../../modules/utils/Logger');
+const { deepClone } = require('../../modules/utils/sharedFunctions');
 
 const log = new Logger(__filename);
 

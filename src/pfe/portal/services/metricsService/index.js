@@ -16,10 +16,10 @@ const xml2js = require('xml2js');
 const dir = require('node-dir');
 const promiseAny = require('promise.any');
 
-const Logger = require('../utils/Logger');
+const Logger = require('../../modules/utils/Logger');
 const nodeMetricsService = require('./node');
-const { findFile } = require('../utils/sharedFunctions');
-const ProjectMetricsError = require('../utils/errors/ProjectMetricsError');
+const { findFile } = require('../../modules/utils/sharedFunctions');
+const ProjectMetricsError = require('../../modules/utils/errors/ProjectMetricsError');
 
 const log = new Logger(__filename);
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));

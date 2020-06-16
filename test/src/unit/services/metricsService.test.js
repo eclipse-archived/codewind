@@ -17,8 +17,8 @@ const rewire = require('rewire');
 const xml2js = require('xml2js');
 
 const { suppressLogOutput } = require('../../../modules/log.service');
-const metricsService = rewire('../../../../src/pfe/portal/modules/metricsService');
-const nodeMetricsService = rewire('../../../../src/pfe/portal/modules/metricsService/node');
+const metricsService = rewire('../../../../src/pfe/portal/services/metricsService');
+const nodeMetricsService = rewire('../../../../src/pfe/portal/services/metricsService/node');
 const ProjectMetricsError = require('../../../../src/pfe/portal/modules/utils/errors/ProjectMetricsError');
 
 chai.use(chaiAsPromised);
