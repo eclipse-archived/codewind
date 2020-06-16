@@ -25,7 +25,7 @@ const ProjectError = require('./utils/errors/ProjectError');
 const ProjectMetricsError = require('./utils/errors/ProjectMetricsError');
 const Logger = require('./utils/Logger');
 const LogStream = require('./LogStream');
-const metricsService = require('./metricsService');
+const metricsService = require('../services/metricsService');
 const Links = require('./project/Links');
 const LoadRunner = require('./LoadRunner');
 

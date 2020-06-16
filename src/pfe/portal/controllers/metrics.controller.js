@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-const metricsService = require('../modules/metricsService');
+const metricsService = require('../services/metricsService');
 const Logger = require('../modules/utils/Logger');
 const cwUtils = require('../modules/utils/sharedFunctions');
 const { getProjectFromReq } = require('../middleware/checkProjectExists');
