@@ -98,7 +98,7 @@ class Links {
 
   async deleteByTargetProjectID(targetProjectID) {
     // Check that atleast one link exists with the targetProjectID
-    const targetProjectIDisValidLink = this.getAll().find(({ projectID }) => projectID === targetProjectID);
+    const targetProjectIDisValidLink = this.getAll().some(({ projectID }) => projectID === targetProjectID, false);
     if (targetProjectIDisValidLink) {
       this._links = this.getAll().filter(({ projectID }) => projectID !== targetProjectID);
       await updateEnvironmentFile(this.filePath, this.getEnvPairs());

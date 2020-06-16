@@ -248,10 +248,11 @@ describe('Links.js', function() {
                 links.getAll().length.should.equal(0);
 
                 // act
-                await links.deleteByTargetProjectID('projectID');
+                const linksRemoved = await links.deleteByTargetProjectID('projectID');
 
                 // assert
                 links.getAll().length.should.equal(0);
+                linksRemoved.should.be.false;
             });
             it('does nothing as no links match the projectID', async() => {
                 // arrange
@@ -261,10 +262,11 @@ describe('Links.js', function() {
                 links.getAll().length.should.equal(2);
 
                 // act
-                await links.deleteByTargetProjectID('projectID');
+                const linksRemoved = await links.deleteByTargetProjectID('projectID');
 
                 // assert
                 links.getAll().length.should.equal(2);
+                linksRemoved.should.be.false;
             });
             it('removes two links as they match the projectID', async() => {
                 // arrange
@@ -275,10 +277,11 @@ describe('Links.js', function() {
                 links.getAll().length.should.equal(3);
 
                 // act
-                await links.deleteByTargetProjectID('projectID');
+                const linksRemoved = await links.deleteByTargetProjectID('projectID');
 
                 // assert
                 links.getAll().length.should.equal(1);
+                linksRemoved.should.be.true;
             });
         });
     });
