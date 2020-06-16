@@ -25,7 +25,7 @@ router.get('/api/v1/projects/:id/links', validateReq, checkProjectExists, (req, 
     const { links } = getProjectFromReq(req);
     res.status(200).send(links.getAll());
   } catch (err) {
-    handleError(err, res);
+    handleHttpError(err, res);
   }
 });
 
@@ -41,23 +41,22 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
 
     const projectURL = await getProjectURL(targetProject);
 
-    await project.createLink({
+    const newLink = {
       projectID: targetProjectID,
       projectName: targetProject.name,
       envName,
       projectURL,
-    });
+    };
+    await project.createLink(newLink);
     log.info(`New project link created for ${project.name}`);
 
-    // Send status and then kick off the restart/rebuild
+    // Send status, emit projectChanged and then kick off the restart/rebuild
     res.sendStatus(202);
 
-    if (project.isOpen()) {
-      await restartProjectToPickupLinks(user, project, false);
-    }
-    emitStatusToUI(user, project, 'success');
+    // Restart the project, from here we only use Socket events if there is an error
+    await handleProjectRestartAndSocketEmit(user, project, newLink, false);
   } catch (err) {
-    handleError(err, res, user, project);
+    handleHttpError(err, res);
   }
 });
 
@@ -67,20 +66,20 @@ router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(
 
   const { cw_user: user } = req;
   const project = getProjectFromReq(req);
+  const { links } = project;
   try {
-    // If newEnvName or newProjectURL are not given through the API, default them to their old values
+    // If newEnvName are not given through the API, default them to their old values
     const updatedLinkEnvName = (newEnvName) ? newEnvName : currentEnvName;
     await project.updateLink(currentEnvName, updatedLinkEnvName);
+    const updatedLink = links.get(updatedLinkEnvName);
 
-    // Send status and then kick off the restart/rebuild
+    // Send status, emit projectChanged and then kick off the restart/rebuild
     res.sendStatus(202);
 
-    if (project.isOpen()) {
-      await restartProjectToPickupLinks(user, project, false);
-    }
-    emitStatusToUI(user, project, 'success');
+    // Restart the project, from here we only use Socket events if there is an error
+    await handleProjectRestartAndSocketEmit(user, project, updatedLink, false);
   } catch (err) {
-    handleError(err, res, user, project);
+    handleHttpError(err, res);
   }
 });
 
@@ -88,29 +87,23 @@ router.delete('/api/v1/projects/:id/links', validateReq, checkProjectExists, asy
   const envNameOfLinkToDelete = req.sanitizeBody('envName');
   const { cw_user: user } = req;
   const project = getProjectFromReq(req);
+  const { links } = project;
   try {
+    const linkToDelete = links.get(envNameOfLinkToDelete);
     await project.deleteLink(envNameOfLinkToDelete);
 
-    // Send status and then kick off the restart/rebuild
+    // Send status
     res.sendStatus(202);
 
-    if (project.isOpen()) {
-      // forceRestart on delete to ensure we remove the environment variable
-      await restartProjectToPickupLinks(user, project, true);
-    }
-    emitStatusToUI(user, project, 'success');
+    // Restart the project, from here we only use Socket events if there is an error
+    await handleProjectRestartAndSocketEmit(user, project, linkToDelete, true);
   } catch (err) {
-    handleError(err, res, user, project);
+    handleHttpError(err, res);
   }
 });
 
-function handleError(err, res, user = null, project = null) {
+function handleHttpError(err, res) {
   log.error(err);
-  // user and project will be null on API calls that don't require socket messages
-  if (res.headersSent && user != null && project != null) {
-    emitStatusToUI(user, project, 'failed', err);
-    return;
-  }
   switch(err.code) {
   case ProjectLinkError.CODES.INVALID_PARAMETERS:
     res.status(400).send(err);
@@ -130,17 +123,32 @@ function handleError(err, res, user = null, project = null) {
   }
 }
 
-function emitStatusToUI(user, project, status, err = null) {
+function emitStatusToUI(user, project, status, link, err = null) {
   const { name, projectID } = project;
   const error = (err && err.info) ? err.info : err;
   const data = {
     name,
     projectID,
+    link,
     status,
     error,
   };
   log.info(`emitting ${status} for link operation on ${projectID}`);
   user.uiSocket.emit('projectLink', data);
+}
+
+async function handleProjectRestartAndSocketEmit(user, project, link, forceRebuild) {
+  try {
+    // Restarting a project takes time so send a projectChanged event to update the UI
+    user.uiSocket.emit('projectChanged', project.toJSON());
+    if (project.isOpen()) {
+      // forceRestart on delete to ensure we remove the environment variable
+      await restartProjectToPickupLinks(user, project, forceRebuild);
+    }
+    emitStatusToUI(user, project, 'success', link);
+  } catch (err) {
+    emitStatusToUI(user, project, 'error', link, err);
+  }
 }
 
 function verifyTargetProjectExists(user, projectID) {

@@ -23,9 +23,8 @@ chai.should();
 
 describe('links.route.js', () => {
     suppressLogOutput(Links);
-    describe('handleError(err, res, user = null, project = null)', () => {
-        const sandbox = sinon.createSandbox();
-        const handleError = Links.__get__('handleError');
+    describe('handleHttpError(err, res)', () => {
+        const handleHttpError = Links.__get__('handleHttpError');
         const errorCodes = [
             { errCode: ProjectLinkError.CODES.INVALID_PARAMETERS, httpCode: 400 },
             { errCode: ProjectLinkError.CODES.NOT_FOUND, httpCode: 404 },
@@ -35,43 +34,20 @@ describe('links.route.js', () => {
             { errCode: ProjectLinkError.CODES.DEPLOYMENT_NOT_FOUND, httpCode: 404 },
             { errCode: 'UNKNOWN_ERROR', httpCode: 500 },
         ];
-        describe('res.headerSent === false', () => {
-            errorCodes.forEach(({ errCode, httpCode }) => {
-                it(`reports a status of ${httpCode} as the err.code is ${errCode} when res.headersSent is false`, () => {
-                    function status(code) {
-                        code.should.equal(httpCode);
-                        return this;
-                    };
-                    function send(err) {
-                        err.code.should.equal(errCode);
-                    };
-                    handleError({ code: errCode }, { status, send });
-                });
-            });
-        });
-        describe('res.headerSent === true and user and project do not equal null', () => {
-            errorCodes.forEach(({ errCode }) => {
-                it(`calls emitStatusToUI and doesn't call http.status().send()`, () => {
-                    const spiedEmitStatusToUI = sandbox.spy((user, project, status, err) => {
-                        user.should.be.true;
-                        project.should.be.true;
-                        status.should.equal('failed');
-                        err.code.should.equal(errCode);
-                    });
-                    const spiedStatus = sandbox.spy(() => {});
-                    const spiedSend = sandbox.spy(() => {});
-                    Links.__set__('emitStatusToUI', spiedEmitStatusToUI);
-
-                    handleError({ code: errCode }, { headersSent: true, status: spiedStatus, send: spiedSend }, true, true);
-
-                    spiedEmitStatusToUI.should.be.calledOnce;
-                    spiedStatus.should.not.be.called;
-                    spiedSend.should.not.be.called;
-                });
+        errorCodes.forEach(({ errCode, httpCode }) => {
+            it(`reports a status of ${httpCode} as the err.code is ${errCode} when res.headersSent is false`, () => {
+                function status(code) {
+                    code.should.equal(httpCode);
+                    return this;
+                };
+                function send(err) {
+                    err.code.should.equal(errCode);
+                };
+                handleHttpError({ code: errCode }, { status, send });
             });
         });
     });
-    describe('emitStatusToUI(user, project, status, err = null)', () => {
+    describe('emitStatusToUI(user, project, status, link, err = null)', () => {
         const emitStatusToUI = Links.__get__('emitStatusToUI');
         const defaultTest = {
             projectName: 'projectName',
@@ -79,13 +55,14 @@ describe('links.route.js', () => {
             status: 'failure',
         };
 
-        const testEmit = (name, projectID, status, error) => {
+        const testEmit = (name, projectID, status, link, error) => {
             return (event, data) => {
                 event.should.equal('projectLink');
                 data.should.deep.equal({
                     name,
                     projectID,
                     status,
+                    link,
                     error,
                 });
             };
@@ -94,22 +71,82 @@ describe('links.route.js', () => {
         it(`emits a success status with no error`, () => {
             const { name, projectID } = defaultTest;
             const status = 'success';
-            const emit = testEmit(name, projectID, status, null);
-            emitStatusToUI({ uiSocket: { emit } }, { name, projectID }, status);
+            const link = { projectID: 'dummyProjectID' };
+            const emit = testEmit(name, projectID, status, link, null);
+            emitStatusToUI({ uiSocket: { emit } }, { name, projectID }, status, link);
         });
         it(`emits a failure status with an error object that has no info property`, () => {
             const { name, projectID } = defaultTest;
             const status = 'success';
+            const link = { projectID: 'dummyProjectID' };
             const error = { code: 'noinfo' };
-            const emit = testEmit(name, projectID, status, error);
-            emitStatusToUI({ uiSocket: { emit } }, { name, projectID }, status, error);
+            const emit = testEmit(name, projectID, status, link, error);
+            emitStatusToUI({ uiSocket: { emit } }, { name, projectID }, status, link, error);
         });
         it(`emits a failure status with an error object that has an info property, so returns only the info property`, () => {
             const { name, projectID } = defaultTest;
             const status = 'success';
+            const link = { projectID: 'dummyProjectID' };
             const error = { info: { code: 'info' } };
-            const emit = testEmit(name, projectID, status, error.info);
-            emitStatusToUI({ uiSocket: { emit } }, { name, projectID }, status, error);
+            const emit = testEmit(name, projectID, status, link, error.info);
+            emitStatusToUI({ uiSocket: { emit } }, { name, projectID }, status, link, error);
+        });
+    });
+    describe('handleProjectRestartAndSocketEmit(user, project, link, forceRebuild)', () => {
+        const sandbox = sinon.createSandbox();
+        afterEach(() => {
+            sandbox.restore();
+        });
+        const handleProjectRestartAndSocketEmit = Links.__get__('handleProjectRestartAndSocketEmit');
+        const defaultTest = {
+            name: 'projectName',
+            projectID: 'projectID',
+            status: 'failure',
+        };
+
+        it(`emits a success status with no error when the project is closed`, () => {
+            const { name, projectID } = defaultTest;
+            const link = { projectID: 'targetProjectID' };
+            const emit = sinon.spy();
+            const mockedProject = {
+                name,
+                projectID,
+                toJSON: sinon.stub().returns({ name, projectID }),
+                isOpen: sinon.stub().returns(false),
+            };
+            handleProjectRestartAndSocketEmit({ uiSocket: { emit } }, mockedProject, link);
+            emit.should.be.calledTwice;
+            emit.firstCall.should.be.calledWith('projectChanged', mockedProject.toJSON());
+            emit.secondCall.should.be.calledWith('projectLink', {
+                projectID,
+                name,
+                status: 'success',
+                link,
+                error: null,
+            });
+        });
+        it(`emits a failure status when the project is open and restartProjectToPickupLinks throws an error`, () => {
+            const errorToThrow = new Error();
+            Links.__set__('restartProjectToPickupLinks', () => { throw errorToThrow; });
+            const { name, projectID } = defaultTest;
+            const link = { projectID: 'targetProjectID' };
+            const emit = sinon.spy();
+            const mockedProject = {
+                name,
+                projectID,
+                toJSON: sinon.stub().returns({ name, projectID }),
+                isOpen: sinon.stub().returns(true),
+            };
+            handleProjectRestartAndSocketEmit({ uiSocket: { emit } }, mockedProject, link);
+            emit.should.be.calledTwice;
+            emit.firstCall.should.be.calledWith('projectChanged', mockedProject.toJSON());
+            emit.secondCall.should.be.calledWith('projectLink', {
+                projectID,
+                name,
+                status: 'error',
+                link,
+                error: errorToThrow,
+            });
         });
     });
     describe('verifyTargetProjectExists(user, projectID)', () => {
