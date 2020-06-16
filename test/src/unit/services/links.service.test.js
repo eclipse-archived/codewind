@@ -73,7 +73,7 @@ describe('links.service.js', () => {
         afterEach(() => {
             sandbox.restore();
         });
-        const handleProjectRestartAndSocketEmit = Links.__get__('handleProjectRestartAndSocketEmit');
+        const { handleProjectRestartAndSocketEmit } = Links;
         const defaultTest = {
             name: 'projectName',
             projectID: 'projectID',
@@ -126,7 +126,7 @@ describe('links.service.js', () => {
         });
     });
     describe('verifyTargetProjectExists(user, projectID)', () => {
-        const verifyTargetProjectExists = Links.__get__('verifyTargetProjectExists');
+        const { verifyTargetProjectExists } = Links;
         it('throws an error as the project cannot be retrieved', () => {
             const user = {
                 projectList: {
@@ -147,7 +147,7 @@ describe('links.service.js', () => {
         });
     });
     describe('getProjectURL(project)', () => {
-        const getProjectURL = Links.__get__('getProjectURL');
+        const { getProjectURL } = Links;
         describe('RUNNING_IN_K8S === false', () => {
             const originalK8s = global.codewind.RUNNING_IN_K8S;
             before(() => {
@@ -215,7 +215,7 @@ describe('links.service.js', () => {
         });
     });
     describe('restartProjectToPickupLinks(user, project, forceRebuild)', () => {
-        const restartProjectToPickupLinks = Links.__get__('restartProjectToPickupLinks');
+        const { restartProjectToPickupLinks } = Links;
         describe('RUNNING_IN_K8S === false', () => {
             const originalK8s = global.codewind.RUNNING_IN_K8S;
             const sandbox = sinon.createSandbox();

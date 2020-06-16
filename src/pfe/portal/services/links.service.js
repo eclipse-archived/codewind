@@ -207,4 +207,5 @@ module.exports = {
   handleProjectRestartAndSocketEmit,
   verifyTargetProjectExists,
   getProjectURL,
+  restartProjectToPickupLinks,
 }
