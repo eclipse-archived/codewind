@@ -27,6 +27,7 @@ const log = new Logger('User.js');
 const util = require('util');
 const { installBuiltInExtensions } = require('./utils/installExtensions');
 const retry = require('async-retry')
+const linksService = require('../services/links.service');
 
 /**
  * The User class
@@ -543,7 +544,7 @@ module.exports = class User {
 
     // Clean up any links that pointed to the deleted project
     try {
-      await removeTargetLinksForDeletedProject(projectID, this.projectList.retrieveProjects());
+      await removeTargetLinksForDeletedProject(projectID, this.projectList.retrieveProjects(), this);
     } catch (err) {
       log.error(`Error cleaning up links for ${projectID} during project deletion`, err);
     }
@@ -1032,9 +1033,18 @@ module.exports = class User {
   }
 }
 
-function removeTargetLinksForDeletedProject(deletedProjectID, projects) {
-  // Use Promise.allSettled to try and remove as many links as possible
-  return Promise.allSettled(projects.map(({ links }) => {
-    return links.deleteByTargetProjectID(deletedProjectID);
+function removeTargetLinksForDeletedProject(deletedProjectID, projects, user) {
+  return Promise.all(projects.map(async(project) => {
+    try {
+      const { links } = project;
+      const projectRestartRequired = await links.deleteByTargetProjectID(deletedProjectID);
+      const projectIsOpen = project.isOpen();
+      if (projectRestartRequired && projectIsOpen) {
+        user.uiSocket.emit('projectChanged', project.toJSON());
+        await linksService.restartProjectToPickupLinks(user, project, true);
+      }
+    } catch (err) {
+      log.warn(`Error hit while cleaning up links targetting deleted project (${deletedProjectID}) for project ${project.name}. \nError: ${err}`);
+    }
   }));
 }

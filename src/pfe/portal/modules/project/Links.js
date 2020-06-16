@@ -103,6 +103,8 @@ class Links {
       this._links = this.getAll().filter(({ projectID }) => projectID !== targetProjectID);
       await updateEnvironmentFile(this.filePath, this.getEnvPairs());
     }
+    // Return whether the targetProject is a valid link (indicates whether project should be restarted)
+    return targetProjectIDisValidLink;
   }
 }
 

@@ -317,7 +317,7 @@ describe('User.js', () => {
 
                 // Create two projects and add them to the projectList
                 user = await createSimpleUser();
-                // projectList = new ProjectList();
+
                 const projectInf = {
                     ...sampleProjectInf,
                     workspace: testWorkspace,
@@ -345,6 +345,9 @@ describe('User.js', () => {
                 const project2 = user.projectList.retrieveProject('projectID2');
                 const projectToDelete = user.projectList.retrieveProject('projectID3');
 
+                project1.isOpen = sinon.stub().returns(false);
+                project2.isOpen = sinon.stub().returns(false);
+
                 const linkToDelete = {
                     projectID: projectToDelete.projectID,
                     projectName: projectToDelete.name,
@@ -364,6 +367,39 @@ describe('User.js', () => {
                 // assert
                 project1.links.getAll().length.should.equal(0);
                 project2.links.getAll().length.should.equal(0);
+            });
+            it('deletes all the links that target the deletedProjectID and calls restartProjectToPickupLinks when the project is open', async() => {
+                // arrange
+                const emit = sinon.spy();
+                user.uiSocket.emit = emit;
+
+                const project1 = user.projectList.retrieveProject('projectID1');
+                const project2 = user.projectList.retrieveProject('projectID2');
+                const projectToDelete = user.projectList.retrieveProject('projectID3');
+
+                project1.isOpen = sinon.stub().returns(true);
+                project2.isOpen = sinon.stub().returns(true);
+
+                const linkToDelete = {
+                    projectID: projectToDelete.projectID,
+                    projectName: projectToDelete.name,
+                    projectURL: 'url',
+                    envName: 'env',
+                };
+
+                await project1.links.add(linkToDelete);
+                await project2.links.add(linkToDelete);
+
+                project1.links.getAll().length.should.equal(1);
+                project2.links.getAll().length.should.equal(1);
+
+                // act
+                await user.deleteProjectFiles(projectToDelete);
+
+                // assert
+                project1.links.getAll().length.should.equal(0);
+                project2.links.getAll().length.should.equal(0);
+                emit.should.be.calledWith('projectChanged');
             });
         });
     });
