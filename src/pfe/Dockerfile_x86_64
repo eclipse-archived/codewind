@@ -116,6 +116,8 @@ RUN NODE_ENV=${NODE_ENV} npm ci \
 # and trigger all steps after this one to be executed instead of using the docker image cache. All steps after this one should be short
 # to save time on local builds.
 COPY /file-watcher/idc /file-watcher/idc
+COPY /profiling-parser/target/profiling-parser.jar /portal/scripts/
+COPY /profiling-parser/monitoring-api.jar /portal/scripts/
 
 # Move the license files to the root directory
 # to satisfy requirement from legal
