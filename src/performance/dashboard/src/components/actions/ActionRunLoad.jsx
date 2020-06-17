@@ -216,7 +216,7 @@ class ActionRunLoad extends React.Component {
         const { loadRunStatus, inlineTextLabel, timeRemaining } = this.state;
 
         let loadRunCompleted = loadRunStatus.status === 'completed';
-        const options = ['preparing', 'connecting', 'starting', 'started', 'running',  'collecting', 'completed', 'requesting', 'requested', 'cancelling', 'cancelled']
+        const options = ['preparing', 'connecting', 'starting', 'started', 'running',  'collecting', 'completed', 'requesting', 'requested', 'cancelling', 'cancelled', 'failed']
         const showBusy = options.includes(loadRunStatus.status)
 
         let inlineTextLabelFormatted = (timeRemaining !== 0) ? `${inlineTextLabel}${timeRemaining}` : `${inlineTextLabel}`
