@@ -102,6 +102,14 @@ class ActionRunLoad extends React.Component {
                         }, 2000);
                         break;
                     }
+                    case 'failed': {
+                        this.setState({ timeRemaining:0, showModalRunTest: false, loadRunStatus: data, inlineTextLabel: 'Failed...' });
+                        setTimeout(() => {
+                            this.setState({ loadRunStatus: { status: 'idle' } })
+                            this.props.dispatch(addNotification({kind: KIND_ERROR, title:'Load run failed', subtitle:'An unexpected error occurred' }));
+                        }, 2000);
+                        break;
+                    }
                     default: {
                         if (queryString.parse(location.search).debugsocket) {
                             console.log("Ignoring UISocket RX: ",data);
@@ -208,7 +216,7 @@ class ActionRunLoad extends React.Component {
         const { loadRunStatus, inlineTextLabel, timeRemaining } = this.state;
 
         let loadRunCompleted = loadRunStatus.status === 'completed';
-        const options = ['preparing', 'connecting', 'starting', 'started', 'running',  'collecting', 'completed', 'requesting', 'requested', 'cancelling', 'cancelled']
+        const options = ['preparing', 'connecting', 'starting', 'started', 'running',  'collecting', 'completed', 'requesting', 'requested', 'cancelling', 'cancelled', 'failed']
         const showBusy = options.includes(loadRunStatus.status)
 
         let inlineTextLabelFormatted = (timeRemaining !== 0) ? `${inlineTextLabel}${timeRemaining}` : `${inlineTextLabel}`

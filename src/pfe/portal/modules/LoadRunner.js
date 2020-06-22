@@ -553,15 +553,33 @@ module.exports = class LoadRunner {
     * Socket event for error
     * Logs the error and starts reconnect procedure
     */
-    this.socket.on('error', (err, data) => {
+    this.socket.on('error', (err) => {
+      log.error('LoadRunner socket error');
+      log.error(err);
+      // If this.up is false we're already trying to reconnect
+      if (this.up) {
+        // socket.io-client will automatically reconnect and trigger the connect event.
+        this.up = false;
+      }
+    });
+
+    /**
+     * Socket event for loadrunError
+     * Logs the error and notifies the UI the run failed.
+     */
+    this.socket.on('loadrunError', async data => {
       if (data.projectID === this.project.projectID) {
-        log.error('LoadRunner socket error');
-        log.error(err);
-        // If this.up is false we're already trying to reconnect
-        if (this.up) {
-          // socket.io-client will automatically reconnect and trigger the connect event.
-          this.up = false;
+        log.error('LoadRunner error');
+        // If there was output, log it so we can debug the failure.
+        if (data.output) {
+          log.error(data.output);
         }
+        if (data.error) {
+          log.error(data.error);
+        }
+        await this.cancelProfiling();
+        clearTimeout(this.heartbeatID);
+        this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'failed' });
         this.resetStatus();
       }
     });
@@ -582,7 +600,7 @@ module.exports = class LoadRunner {
       if (data.projectID === this.project.projectID) {
         log.info(`Load run on project ${this.project.projectID} cancelled`);
         this.heartbeat('cancelling');
-        this.cancelProfiling();
+        await this.cancelProfiling();
         clearTimeout(this.heartbeatID);
         this.user.uiSocket.emit('runloadStatusChanged', { projectID: this.project.projectID,  status: 'cancelled' });
         this.resetStatus();
