@@ -63,7 +63,6 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
 router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(req, res) => {
   const currentEnvName = req.sanitizeBody('envName');
   const newEnvName = req.sanitizeBody('updatedEnvName');
-
   const { cw_user: user } = req;
   const project = getProjectFromReq(req);
   const { links } = project;
