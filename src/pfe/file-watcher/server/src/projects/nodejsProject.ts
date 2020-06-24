@@ -59,12 +59,12 @@ const logsOrigin: logHelper.ILogTypes = {
  * .swp, swx, 4913 files are all temporary files created by vim & vi, need to ignore thoses files
  *
  */
-export const defaultIgnoredPath: string[] = ["/.project", "/run-dev", "/run-debug", "/package-lock.json*", "/nodejs_restclient.log", "/nodejs_dc.log",
-                                             "/manifest.yml", "/idt.js", "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.cfignore", "/load-test*",
-                                             "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913", "*/.dockerignore", "*/.gitignore",
-                                             "*/*~", "/.settings"];
+export const defaultIgnoredPath: string[] = [".project", "run-dev", "run-debug", "package-lock.json*", "nodejs_restclient.log", "nodejs_dc.log",
+                                             "manifest.yml", "idt.js", "cli-config.yml", "README.md", "Jenkinsfile", ".cfignore", "load-test*",
+                                             "*node_modules*", "*.git/*", "*.DS_Store", "*.swp", "*.swx", "*4913", "*.dockerignore", "*.gitignore",
+                                             "*~", ".settings"];
 if (!process.env.IN_K8) {
-    defaultIgnoredPath.push("/chart");
+    defaultIgnoredPath.push("chart");
 }
 
 /**
