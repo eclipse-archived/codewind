@@ -75,8 +75,8 @@ export class DockerProject implements ProjectExtension {
      * .swp, swx, 4913 files are all temporary files created by vim & vi, need to ignore thoses files
      *
      */
-    defaultIgnoredPath: string[] = ["/.project", "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913", "/load-test*",
-        "*/.dockerignore", "*/.gitignore", "*/*~", "/.settings"];
+    defaultIgnoredPath: string[] = [".project", "*node_modules*", "*.git/*", "*.DS_Store", "*.swp", "*.swx", "*4913", "load-test*",
+        "*.dockerignore", "*.gitignore", "*~", ".settings"];
 
     /**
      * @function

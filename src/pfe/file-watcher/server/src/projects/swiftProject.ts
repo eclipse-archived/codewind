@@ -57,13 +57,13 @@ const logsOrigin: logHelper.ILogTypes = {
  * only want to watch ["/Sources", "/Tests", "/Package.swift", "/Dockerfile", "/Dockerfile-tools", "/.cw-settings"], and "/chart" if on cloud
  * .swp, swx, 4913 files are all temporary files created by vim & vi, need to ignore thoses files
  */
-export const defaultIgnoredPath: string[] = ["/.project", "/LICENSE", "/Package.resolved", "README.rtf", "/debian", "/manifest.yml", "/load-test*",
-                                             "/cli-config.yml", "/README.md", "/Jenkinsfile", "/.bluemix", "/iterative-dev.sh", "/terraform",
-                                            ".swift-version", "/.build-ubuntu", "/.cfignore", "/.swiftservergenerator-project", "/.yo-rc.json",
-                                            "*/node_modules*", "*/.git/*", "*/.DS_Store", "*/*.swp", "*/*.swx", "*/4913", "*/.dockerignore",
-                                            "*/.gitignore", "*/*~", "/.settings"];
+export const defaultIgnoredPath: string[] = [".project", "LICENSE", "Package.resolved", "README.rtf", "debian", "manifest.yml", "load-test*",
+                                             "cli-config.yml", "README.md", "Jenkinsfile", ".bluemix", "iterative-dev.sh", "terraform",
+                                            ".swift-version", ".build-ubuntu", ".cfignore", ".swiftservergenerator-project", ".yo-rc.json",
+                                            "*node_modules*", "*.git/*", "*.DS_Store", "*.swp", "*.swx", "*4913", "*.dockerignore",
+                                            "*.gitignore", "*~", ".settings"];
 if (!process.env.IN_K8) {
-    defaultIgnoredPath.push("/chart");
+    defaultIgnoredPath.push("chart");
 }
 
 
