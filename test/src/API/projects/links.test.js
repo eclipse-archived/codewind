@@ -62,7 +62,7 @@ describe('Link tests (/api/v1/project/:id/links)', () => {
             const res = await projectService.addProjectLink(projectID, '00000000-0000-11ea-aaba-d5e958b858e9', 'ENVNAME');
             res.should.have.status(404);
             const { body: { code } } = res;
-            code.should.equal(ProjectLinkError.CODES.NOT_FOUND);
+            code.should.equal(ProjectLinkError.CODES.TARGET_PROJECT_NOT_FOUND);
         });
         it('fails to add a link as the request does not contain the required fields', async function() {
             const res = await projectService.addProjectLink(projectID, targetProjectID, null);
