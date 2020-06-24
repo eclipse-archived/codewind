@@ -58,7 +58,7 @@ describe('ignoredPaths API test', function() {
             const res = await getIgnoredPaths('docker');
             res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
-            res.body.should.include('*.DS_Store');
+            res.body.should.include('.DS_Store');
         });
     });
     describe('Unknown Type', () => {
@@ -66,7 +66,7 @@ describe('ignoredPaths API test', function() {
             const res = await getIgnoredPaths('unknown');
             res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
-            res.body.should.include('*.DS_Store');
+            res.body.should.include('.DS_Store');
         });
     });
 });
