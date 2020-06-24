@@ -34,7 +34,7 @@ describe('ignoredPaths API test', function() {
             const res = await getIgnoredPaths('liberty');
             res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
-            res.body.should.include('/libertyrepocache.zip');
+            res.body.should.include('libertyrepocache.zip');
         });
     });
     describe('Spring', () => {
@@ -42,7 +42,7 @@ describe('ignoredPaths API test', function() {
             const res = await getIgnoredPaths('spring');
             res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
-            res.body.should.include('/localm2cache.zip');
+            res.body.should.include('localm2cache.zip');
         });
     });
     describe('Node.js', () => {
@@ -50,7 +50,7 @@ describe('ignoredPaths API test', function() {
             const res = await getIgnoredPaths('node');
             res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
-            res.body.should.include('*/node_modules*');
+            res.body.should.include('*node_modules*');
         });
     });
     describe('Docker', () => {
@@ -58,7 +58,7 @@ describe('ignoredPaths API test', function() {
             const res = await getIgnoredPaths('docker');
             res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
-            res.body.should.include('*/.DS_Store');
+            res.body.should.include('.DS_Store');
         });
     });
     describe('Unknown Type', () => {
@@ -66,7 +66,7 @@ describe('ignoredPaths API test', function() {
             const res = await getIgnoredPaths('unknown');
             res.status.should.equal(200, res.text); // print res.text if assertion fails
             res.body.should.be.an('array');
-            res.body.should.include('*/.DS_Store');
+            res.body.should.include('.DS_Store');
         });
     });
 });
