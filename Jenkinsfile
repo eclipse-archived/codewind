@@ -289,7 +289,8 @@ pipeline {
                         fi
 
                         ODO_DEVFILE_BRANCH="master-devfile"
-                        curl -Lfo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-devfile-$VERSION.zip http://archive.eclipse.org/codewind/codewind-odo-extension/$ODO_DEVFILE_BRANCH/latest/codewind-odo-extension-devfile-$VERSION.zip
+                        ODO_MASTER_VERSION="9.9.9999"
+                        curl -Lfo ${SRC_DIR}/pfe/extensions/codewind-odo-extension-devfile-$VERSION.zip http://archive.eclipse.org/codewind/codewind-odo-extension/$ODO_DEVFILE_BRANCH/latest/codewind-odo-extension-devfile-$ODO_MASTER_VERSION.zip
                         if [ $? -ne 0 ]; then
                             echo "Error downloading odo-devfile extension"
                             exit 1
