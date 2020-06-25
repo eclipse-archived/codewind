@@ -22,6 +22,7 @@ ProjectLinkError.CODES = {
   NOT_FOUND: 'NOT_FOUND',
   INVALID_PARAMETERS: 'INVALID_PARAMETERS',
   EXISTS: 'EXISTS',
+  TARGET_PROJECT_NOT_FOUND: 'TARGET_PROJECT_NOT_FOUND',
   CONTAINER_NOT_FOUND: 'CONTAINER_NOT_FOUND',
   SERVICE_NOT_FOUND: 'SERVICE_NOT_FOUND',
   CONFIG_MAP_NOT_FOUND: 'CONFIG_MAP_NOT_FOUND',
@@ -45,6 +46,9 @@ function constructMessage(code, identifier, message) {
     break;
   case ProjectLinkError.CODES.EXISTS:
     output = `The envName '${identifier}' already exists as a link`;
+    break;
+  case ProjectLinkError.CODES.TARGET_PROJECT_NOT_FOUND:
+    output = `The target project '${identifier}' cannot be found on the Codewind server`;
     break;
   case ProjectLinkError.CODES.CONTAINER_NOT_FOUND:
     output = `The container for project '${identifier}' cannot be found`;

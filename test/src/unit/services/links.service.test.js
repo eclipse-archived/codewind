@@ -134,7 +134,7 @@ describe('links.service.js', () => {
                 },
             };
             (() => verifyTargetProjectExists(user, 'dummyid')).should.throw(ProjectLinkError)
-                .and.have.property('code', 'NOT_FOUND');
+                .and.have.property('code', 'TARGET_PROJECT_NOT_FOUND');
         });
         it('returns the project as it can be retrieved', () => {
             const user = {
