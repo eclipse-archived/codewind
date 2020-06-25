@@ -45,7 +45,7 @@ async function handleProjectRestartAndSocketEmit(user, project, link, forceRebui
 function verifyTargetProjectExists(user, projectID) {
   const project = user.projectList.retrieveProject(projectID);
   if (!project) {
-    throw new ProjectLinkError('NOT_FOUND', projectID);
+    throw new ProjectLinkError('TARGET_PROJECT_NOT_FOUND', projectID);
   }
   return project;
 }

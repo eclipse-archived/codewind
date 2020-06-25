@@ -28,6 +28,7 @@ describe('links.route.js', () => {
             { errCode: ProjectLinkError.CODES.INVALID_PARAMETERS, httpCode: 400 },
             { errCode: ProjectLinkError.CODES.NOT_FOUND, httpCode: 404 },
             { errCode: ProjectLinkError.CODES.EXISTS, httpCode: 409 },
+            { errCode: ProjectLinkError.CODES.TARGET_PROJECT_NOT_FOUND, httpCode: 404 },
             { errCode: ProjectLinkError.CODES.CONFIG_MAP_NOT_FOUND, httpCode: 404 },
             { errCode: ProjectLinkError.CODES.SERVICE_NOT_FOUND, httpCode: 404 },
             { errCode: ProjectLinkError.CODES.DEPLOYMENT_NOT_FOUND, httpCode: 404 },

@@ -63,7 +63,6 @@ router.post('/api/v1/projects/:id/links', validateReq, checkProjectExists, async
 router.put('/api/v1/projects/:id/links', validateReq, checkProjectExists, async(req, res) => {
   const currentEnvName = req.sanitizeBody('envName');
   const newEnvName = req.sanitizeBody('updatedEnvName');
-
   const { cw_user: user } = req;
   const project = getProjectFromReq(req);
   const { links } = project;
@@ -106,17 +105,18 @@ function handleHttpError(err, res) {
   log.error(err);
   switch(err.code) {
   case ProjectLinkError.CODES.INVALID_PARAMETERS:
-    res.status(400).send(err);
+    res.status(400).send(err.info || err);
     break;
   case ProjectLinkError.CODES.NOT_FOUND:
+  case ProjectLinkError.CODES.TARGET_PROJECT_NOT_FOUND:
   case ProjectLinkError.CODES.CONTAINER_NOT_FOUND:
   case ProjectLinkError.CODES.SERVICE_NOT_FOUND:
   case ProjectLinkError.CODES.CONFIG_MAP_NOT_FOUND:
   case ProjectLinkError.CODES.DEPLOYMENT_NOT_FOUND:
-    res.status(404).send(err);
+    res.status(404).send(err.info || err);
     break;
   case ProjectLinkError.CODES.EXISTS:
-    res.status(409).send(err);
+    res.status(409).send(err.info || err);
     break;
   default:
     res.status(500).send(err);
