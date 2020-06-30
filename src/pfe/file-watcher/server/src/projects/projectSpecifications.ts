@@ -19,7 +19,6 @@ import * as projectUtil from "./projectUtil";
 import { Operation } from "./operation";
 import * as io from "../utils/socket";
 import * as constants from "./constants";
-import { debug } from "console";
 const xss = require("xss"); // tslint:disable-line:no-require-imports
 
 export const specificationSettingMap = new Map<string, (args: any, operation: Operation) => any>();
