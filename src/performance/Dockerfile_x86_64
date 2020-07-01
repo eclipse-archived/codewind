@@ -14,10 +14,8 @@
 ################################################################################
 FROM centos:8.1.1911 AS node-base
 
-## Patch Python vulnerabilities
-RUN yum -y update platform-python-pip-9.0.3-16.el8.noarch  python3-libs-3.6.8-23.el8.x86_64 python3-dnf-4.2.17-6.el8.noarch python3-libcomps-0.1.11-4.el8.x86_64 python3-pip-wheel-9.0.3-16.el8.noarch
-
 RUN yum -y install nodejs \
+    && yum -y update platform-python-pip-9.0.3-16.el8.noarch  python3-libs-3.6.8-23.el8.x86_64 python3-dnf-4.2.17-6.el8.noarch python3-libcomps-0.1.11-4.el8.x86_64 python3-pip-wheel-9.0.3-16.el8.noarch \
     && yum clean all \
     && rm -rf /var/cache/yum
 
