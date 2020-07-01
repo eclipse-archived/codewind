@@ -42,21 +42,32 @@ const changeInternalDebugPort = async function (debugPort: string, operation: Op
 
     debugPort = debugPort.toString();
 
-    if ( !capabilities || ( !capabilities.hasStartMode("debug") && !capabilities.hasStartMode("debugNoInit") )) {
-            const errorMsg = "BAD_REQUEST: The project does not support debug mode.";
-            logger.logProjectError("Changing the debug port failed: " + errorMsg, projectID);
+    if (projectInfo.debugPort === debugPort) {
+        logger.logProjectInfo("The debug port is already set to: " + debugPort, projectID);
+        return;
+    }
 
-            const data: ProjectSettingsEvent = {
-                operationId: operation.operationId,
-                projectID: projectID,
-                ports: {
-                    internalDebugPort: debugPort
-                },
-                status: "failed",
-                error: errorMsg
-            };
-            io.emitOnListener("projectSettingsChanged", data);
+    if ( !capabilities || ( !capabilities.hasStartMode("debug") && !capabilities.hasStartMode("debugNoInit") )) {
+        // If the debugPort is an empty String don't show an error and don't update
+        // Guards against .cw-settings files being initialised with a debugPort when its not supported
+        if (debugPort.trim().length == 0) {
+            logger.logProjectInfo("The project does not support debug mode - but as debugPort was an empty string it has been skipped.", projectID);
             return;
+        }
+        const errorMsg = "BAD_REQUEST: The project does not support debug mode.";
+        logger.logProjectError("Changing the debug port failed: " + errorMsg, projectID);
+
+        const data: ProjectSettingsEvent = {
+            operationId: operation.operationId,
+            projectID: projectID,
+            ports: {
+                internalDebugPort: debugPort
+            },
+            status: "failed",
+            error: errorMsg
+        };
+        io.emitOnListener("projectSettingsChanged", data);
+        return;
     }
 
     if (debugPort.trim().length == 0) {
@@ -69,42 +80,37 @@ const changeInternalDebugPort = async function (debugPort: string, operation: Op
         logger.logProjectInfo("The debug port is empty, setting to the default debug port: " + debugPort, projectID);
     }
 
-    if (projectInfo.debugPort !== debugPort) {
-        const keyValuePair: UpdateProjectInfoPair = {
-                key: "debugPort",
-                value: debugPort,
-                saveIntoJsonFile: true
-        };
-        operation.projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
-        if (projectInfo.startMode === StartModes.debug || projectInfo.startMode === StartModes.debugNoInit) {
-            // call project restart to change the debug port
-            projectUtil.restartProject(operation, projectInfo.startMode, "projectSettingsChanged");
-        } else {
-            // Get the container info with the new ports
-            const containerInfo: any = await projectUtil.getContainerInfo(operation.projectInfo, true);
-            logger.logProjectInfo("changeDebugPort API: The containerInfo: " + JSON.stringify(containerInfo), projectInfo.projectID);
-
-            // return success status since no restart required
-            const data: ProjectSettingsEvent = {
-                operationId: operation.operationId,
-                projectID: projectID,
-                ports: {
-                    internalDebugPort: debugPort
-                },
-                status: "success"
-            };
-
-            if (containerInfo.internalPort && containerInfo.exposedPort) {
-                data.ports.exposedPort = containerInfo.exposedPort;
-                data.ports.internalPort = containerInfo.internalPort;
-            }
-
-            io.emitOnListener("projectSettingsChanged", data);
-        }
+    const keyValuePair: UpdateProjectInfoPair = {
+            key: "debugPort",
+            value: debugPort,
+            saveIntoJsonFile: true
+    };
+    operation.projectInfo = await projectsController.updateProjectInfo(projectID, keyValuePair);
+    if (projectInfo.startMode === StartModes.debug || projectInfo.startMode === StartModes.debugNoInit) {
+        // call project restart to change the debug port
+        projectUtil.restartProject(operation, projectInfo.startMode, "projectSettingsChanged");
     } else {
-        logger.logProjectInfo("The debug port is already set to: " + debugPort, projectID);
-    }
+        // Get the container info with the new ports
+        const containerInfo: any = await projectUtil.getContainerInfo(operation.projectInfo, true);
+        logger.logProjectInfo("changeDebugPort API: The containerInfo: " + JSON.stringify(containerInfo), projectInfo.projectID);
 
+        // return success status since no restart required
+        const data: ProjectSettingsEvent = {
+            operationId: operation.operationId,
+            projectID: projectID,
+            ports: {
+                internalDebugPort: debugPort
+            },
+            status: "success"
+        };
+
+        if (containerInfo.internalPort && containerInfo.exposedPort) {
+            data.ports.exposedPort = containerInfo.exposedPort;
+            data.ports.internalPort = containerInfo.internalPort;
+        }
+
+        io.emitOnListener("projectSettingsChanged", data);
+    }
 };
 
 /**
