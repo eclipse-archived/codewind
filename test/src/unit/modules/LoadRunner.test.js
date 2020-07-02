@@ -726,10 +726,8 @@ describe('LoadRunner.js', () => {
     describe('createResultsDirectory()', () => {
         it('creates the results directory', async() => {
             // arrange
-            const expectedMetricsFolder = dateFormat(new Date(), 'yyyymmddHHMMss');
             const workingDir = path.join('.', 'crd_test');
             await fs.mkdirp(workingDir);
-            const expectedPath = path.join(workingDir, expectedMetricsFolder);
             const LoadRunner = proxyquire(pathToLoadRunnerJs, {});
             const loadRunner = new LoadRunner('mockUser');
             const mockProject = {
@@ -738,13 +736,19 @@ describe('LoadRunner.js', () => {
             loadRunner.project = mockProject;
 
             // act
+            const originalDate = new Date();
             await loadRunner.createResultsDirectory();
-            const lRWorkingDir = loadRunner.workingDir;
-            loadRunner.workingDir = null;
-            await fs.remove(expectedPath);
 
             // assert
-            lRWorkingDir.should.be.equal(expectedPath);
+            const actualMetricsFolder = path.basename(loadRunner.workingDir);
+            const expectedMetricsFolder = dateFormat(originalDate, 'yyyymmddHHMMss');
+            const actualTime = parseInt(actualMetricsFolder, 10);
+            const originalTime = parseInt(expectedMetricsFolder, 10);
+            (actualTime - originalTime).should.be.at.most(1, 'Expected time2 to equal time1, or be at most 1s after time1');
+
+            // cleanup
+            const pathToActualMetricsFolder = path.join(workingDir, actualMetricsFolder);
+            await fs.remove(pathToActualMetricsFolder);
         });
     });
     describe('writeGitHash() ', () => {
