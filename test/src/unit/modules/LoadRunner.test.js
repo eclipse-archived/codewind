@@ -14,6 +14,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const sinon = require('sinon');
 const chai = require('chai');
+const chaiDatetime = require('chai-datetime');
 const chaiSubset = require('chai-subset');
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const { c } = require('compress-tag');
@@ -28,11 +29,24 @@ class MockLogger {
 };
 /* eslint-enable class-methods-use-this */
 
+chai.use(chaiDatetime);
 chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
 const should = chai.should();
 
 const pathToLoadRunnerJs = '../../../../src/pfe/portal/modules/LoadRunner';
+
+const parseFormattedDate = (formattedDate) => {
+    const dateTimeString = formattedDate.replace(
+        /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/,
+        '$1-$2-$3T$4:$5:$6',
+    );
+    const date = new Date(dateTimeString);
+    if (date.toString() === 'Invalid Date') {
+        throw new Error(date);
+    }
+    return date;
+};
 
 describe('LoadRunner.js', () => {
     let sandbox;
@@ -726,10 +740,8 @@ describe('LoadRunner.js', () => {
     describe('createResultsDirectory()', () => {
         it('creates the results directory', async() => {
             // arrange
-            const expectedMetricsFolder = dateFormat(new Date(), 'yyyymmddHHMMss');
             const workingDir = path.join('.', 'crd_test');
             await fs.mkdirp(workingDir);
-            const expectedPath = path.join(workingDir, expectedMetricsFolder);
             const LoadRunner = proxyquire(pathToLoadRunnerJs, {});
             const loadRunner = new LoadRunner('mockUser');
             const mockProject = {
@@ -738,13 +750,18 @@ describe('LoadRunner.js', () => {
             loadRunner.project = mockProject;
 
             // act
+            const originalDate = new Date();
             await loadRunner.createResultsDirectory();
-            const lRWorkingDir = loadRunner.workingDir;
-            loadRunner.workingDir = null;
-            await fs.remove(expectedPath);
 
             // assert
-            lRWorkingDir.should.be.equal(expectedPath);
+            const createdMetricsDir = path.basename(loadRunner.workingDir);
+            const dateOfCreatedMetricsDir = parseFormattedDate(createdMetricsDir);
+            dateOfCreatedMetricsDir.should.be.afterOrEqualDate(originalDate);
+            dateOfCreatedMetricsDir.should.be.closeToTime(originalDate, 1);
+
+            // cleanup
+            const pathToCreatedMetricsDir = path.join(workingDir, createdMetricsDir);
+            await fs.remove(pathToCreatedMetricsDir);
         });
     });
     describe('writeGitHash() ', () => {
