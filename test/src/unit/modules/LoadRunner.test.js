@@ -36,12 +36,16 @@ const should = chai.should();
 
 const pathToLoadRunnerJs = '../../../../src/pfe/portal/modules/LoadRunner';
 
-const reverseDateFormat = (formattedDateString) => {
-    const dateTimeString = formattedDateString.replace(
+const parseFormattedDate = (formattedDate) => {
+    const dateTimeString = formattedDate.replace(
         /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/,
         '$1-$2-$3T$4:$5:$6',
     );
-    return new Date(dateTimeString);
+    const date = new Date(dateTimeString);
+    if (date.toString() === 'Invalid Date') {
+        throw new Error(date);
+    }
+    return date;
 };
 
 describe('LoadRunner.js', () => {
@@ -751,7 +755,7 @@ describe('LoadRunner.js', () => {
 
             // assert
             const createdMetricsDir = path.basename(loadRunner.workingDir);
-            const dateOfCreatedMetricsDir = reverseDateFormat(createdMetricsDir);
+            const dateOfCreatedMetricsDir = parseFormattedDate(createdMetricsDir);
             dateOfCreatedMetricsDir.should.be.afterOrEqualDate(originalDate);
             dateOfCreatedMetricsDir.should.be.closeToTime(originalDate, 1);
 
