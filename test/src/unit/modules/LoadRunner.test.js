@@ -14,6 +14,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const sinon = require('sinon');
 const chai = require('chai');
+const chaiDatetime = require('chai-datetime');
 const chaiSubset = require('chai-subset');
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const { c } = require('compress-tag');
@@ -28,11 +29,20 @@ class MockLogger {
 };
 /* eslint-enable class-methods-use-this */
 
+chai.use(chaiDatetime);
 chai.use(chaiSubset);
 chai.use(deepEqualInAnyOrder);
 const should = chai.should();
 
 const pathToLoadRunnerJs = '../../../../src/pfe/portal/modules/LoadRunner';
+
+const reverseDateFormat = (formattedDateString) => {
+    const dateTimeString = formattedDateString.replace(
+        /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/,
+        '$1-$2-$3T$4:$5:$6',
+    );
+    return new Date(dateTimeString);
+};
 
 describe('LoadRunner.js', () => {
     let sandbox;
@@ -740,15 +750,14 @@ describe('LoadRunner.js', () => {
             await loadRunner.createResultsDirectory();
 
             // assert
-            const actualMetricsFolder = path.basename(loadRunner.workingDir);
-            const expectedMetricsFolder = dateFormat(originalDate, 'yyyymmddHHMMss');
-            const actualTime = parseInt(actualMetricsFolder, 10);
-            const originalTime = parseInt(expectedMetricsFolder, 10);
-            (actualTime - originalTime).should.be.at.most(1, 'Expected time2 to equal time1, or be at most 1s after time1');
+            const createdMetricsDir = path.basename(loadRunner.workingDir);
+            const dateOfCreatedMetricsDir = reverseDateFormat(createdMetricsDir);
+            dateOfCreatedMetricsDir.should.be.afterOrEqualDate(originalDate);
+            dateOfCreatedMetricsDir.should.be.closeToTime(originalDate, 1);
 
             // cleanup
-            const pathToActualMetricsFolder = path.join(workingDir, actualMetricsFolder);
-            await fs.remove(pathToActualMetricsFolder);
+            const pathToCreatedMetricsDir = path.join(workingDir, createdMetricsDir);
+            await fs.remove(pathToCreatedMetricsDir);
         });
     });
     describe('writeGitHash() ', () => {
