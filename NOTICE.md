@@ -1600,6 +1600,9 @@ lock - 1.1.0
 lodash - 4.17.15
  * License: MIT
 
+lodash - 4.17.19
+ * License: MIT
+
 lodash.debounce - 4.0.8
  * License: MIT
 
