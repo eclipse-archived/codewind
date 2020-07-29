@@ -207,10 +207,6 @@ ajv - 6.12.0
  * License: MIT
  * Copyright: Copyright (c) 2015-2017 Evgeny Poberezkin Copyright 2011 Gary Court. All rights reserved.
 
-ajv - 6.12.2
- * License: MIT
- * Copyright: Copyright 2011 Gary Court. All rights reserved. Copyright (c) 2015-2017 Evgeny Poberezkin
-
 ajv - 6.12.3
  * License: MIT
  * Copyright: Copyright (c) 2015-2017 Evgeny Poberezkin Copyright 2011 Gary Court. All rights reserved.
@@ -837,6 +833,10 @@ encoding - 0.1.12
  * License: MIT
  * Copyright: Copyright (c) 2012-2014 Andris Reinman
 
+encoding - 0.1.13
+ * License: MIT
+ * Copyright: Copyright (c) 2012-2014 Andris Reinman
+
 end-of-stream - 1.4.4
  * License: MIT
  * Copyright: Copyright (c) 2014 Mathias Buus
@@ -1286,6 +1286,10 @@ iconv-lite - 0.4.24
  * License: MIT
  * Copyright: Copyright (c) 2011 Alexander Shtuchkin Copyright (c) Microsoft Corporation. All rights reserved.
 
+iconv-lite - 0.6.2
+ * License: MIT
+ * Copyright: Copyright (c) 2011 Alexander Shtuchkin Copyright (c) Microsoft Corporation. All rights reserved.
+
 ieee754 - 1.1.13
  * License: BSD-3-Clause
  * Copyright: Copyright 2008 Fair Oaks Labs  Inc. Copyright (c) 2008  Fair Oaks Labs  Inc.
@@ -1594,6 +1598,9 @@ lock - 1.1.0
  * Copyright: Copyright (c) 2013 Dominic Tarr
 
 lodash - 4.17.15
+ * License: MIT
+
+lodash - 4.17.19
  * License: MIT
 
 lodash.debounce - 4.0.8
