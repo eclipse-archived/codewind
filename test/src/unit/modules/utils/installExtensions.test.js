@@ -173,8 +173,7 @@ describe('installBuiltInExtensions.js', () => {
                 file.name = zipFileName;
                 await installBuiltInExtension(file, targetDir, extensionDir).should.eventually.be.fulfilled;
                 const filesInTargetDir = await fs.readdir(targetDir);
-                filesInTargetDir.length.should.equal(1);
-                filesInTargetDir[0].should.equal(fileName);
+                filesInTargetDir.should.deep.equal(['valid-extension']);
                 // zip should not have been deleted
                 fs.existsSync(zipFilePath).should.be.true;
             });
@@ -228,8 +227,7 @@ describe('installBuiltInExtensions.js', () => {
                 file.name = zipFileName;
                 await installBuiltInExtension(file, targetDir, extensionDir).should.eventually.be.fulfilled;
                 const filesInTargetDir = await fs.readdir(targetDir);
-                filesInTargetDir.length.should.equal(1);
-                filesInTargetDir[0].should.equal(fileName);
+                filesInTargetDir.should.deep.equal(['valid-extension']);
                 // zip should not have been deleted
                 fs.existsSync(zipFilePath).should.be.true;
             });
