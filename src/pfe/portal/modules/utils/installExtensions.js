@@ -22,8 +22,7 @@ const defaultExtensionsDir = '/extensions';
 const extensionsPattern = /^(\S+)-(\d+\.\d+\.\d+|latest)\.zip$/; // e.g. extension-name-0.0.1.zip
 const versionPattern = /^\d+[.]\d+[.]\d+$/; // e.g. 0.0.1
 const SUFFIX_OLD = '__old';
-const odoExtensionName = "codewind-odo-extension";
-const odoDevfileExtensionName = "codewind-odo-extension-devfile";
+const odoExtensionNamePrefix = "codewind-odo";
 
 /**
  * Install (unzip) built-in extensions that are stored in /extensions to the
@@ -59,13 +58,13 @@ async function installBuiltInExtension(file, targetDir, extensionsDir) {
     const version = match[2];
     log.trace(`extensionPattern - name: ${name}, version ${version}`);
 
-    if (([odoExtensionName, odoDevfileExtensionName].includes(name)) && (process.env.ON_OPENSHIFT != 'true')) {
+    if (name.startsWith(odoExtensionNamePrefix) && (process.env.ON_OPENSHIFT != 'true')) {
       return;
     }
 
     const source = path.join(extensionsDir, file.name);
     const target = path.join(targetDir, name);
-    const directoryToUnzipTo = `temp_${target}`;
+    const directoryToUnzipTo = `${target}_temp`;
 
     try {
       if (await prepForUnzip(target, version)) {
@@ -76,7 +75,8 @@ async function installBuiltInExtension(file, targetDir, extensionsDir) {
 
         // Move unzipped files up a directory and to their final name
         const [parentDirFromZip] = await fs.readdir(directoryToUnzipTo);
-        await fs.rename(path.join(directoryToUnzipTo, parentDirFromZip), target);
+        const tempDir = path.join(directoryToUnzipTo, parentDirFromZip);
+        await fs.rename(tempDir, target);
       }
     }
     catch (err) {
