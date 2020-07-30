@@ -65,17 +65,18 @@ async function installBuiltInExtension(file, targetDir, extensionsDir) {
 
     const source = path.join(extensionsDir, file.name);
     const target = path.join(targetDir, name);
-    const targetWithVersion = target + '-' + version;
+    const directoryToUnzipTo = `temp_${target}`;
 
     try {
       if (await prepForUnzip(target, version)) {
-        const unzipCmd = `unzip -o ${source} -d ${targetDir}`;
+        await fs.ensureDir(directoryToUnzipTo);
+        const unzipCmd = `unzip -o ${source} -d ${directoryToUnzipTo}`;
         log.trace(`unzip command ${unzipCmd}`);
         await exec(unzipCmd);
 
-        // top-level directory in zip will have the version suffix
-        // rename to remove the version
-        await fs.rename(targetWithVersion, target);
+        // Move unzipped files up a directory and to their final name
+        const [parentDirFromZip] = await fs.readdir(directoryToUnzipTo);
+        await fs.rename(path.join(directoryToUnzipTo, parentDirFromZip), target);
       }
     }
     catch (err) {
@@ -83,8 +84,8 @@ async function installBuiltInExtension(file, targetDir, extensionsDir) {
       log.warn(err);
     }
     finally {
-      // to be safe, try to remove directory with version name if it still exist
-      await utils.forceRemove(targetWithVersion);
+      // to be safe, try to temp directory that was used for the unzipping if it still exist
+      await utils.forceRemove(directoryToUnzipTo);
     }
   }
 }
