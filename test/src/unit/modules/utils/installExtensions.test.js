@@ -19,7 +19,7 @@ const installExtensions = rewire('../../../../../src/pfe/portal/modules/utils/in
 const { installBuiltInExtensions, SUFFIX_OLD } = installExtensions;
 
 const { suppressLogOutput } = require('../../../../modules/log.service');
-const { 
+const {
     createCodewindYamlFile,
     deleteCodewindYamlFile,
 } = require('../../../../modules/extension.service');
@@ -157,11 +157,12 @@ describe('installBuiltInExtensions.js', () => {
         });
         describe('Valid extension', () => {
             const fileName = 'valid-extension';
+            const fileNameWithVersion = `${fileName}-1.0.0`;
             const zipFileName = 'valid-extension-1.0.0.zip';
             const zipFilePath = path.join(extensionDir, zipFileName);
             before(() => {
                 // Create extension zip file
-                const filePath = path.join(extensionDir, fileName);
+                const filePath = path.join(extensionDir, fileNameWithVersion);
                 fs.ensureFileSync(filePath);
                 execSync(`zip -j ${zipFilePath} ${filePath}`);
                 fs.existsSync(zipFilePath).should.be.true;
@@ -180,14 +181,15 @@ describe('installBuiltInExtensions.js', () => {
         });
         describe('Valid extension but a lower version than the existing extension', () => {
             const fileName = 'valid-extension';
+            const fileNameWithVersion = `${fileName}-1.0.0`;
             const zipFileName = 'valid-extension-1.0.0.zip';
             const zipFilePath = path.join(extensionDir, zipFileName);
             before(() => {
                 // Create existing extension (directory with codewind.yaml)
                 createCodewindYamlFile(path.join(targetDir, fileName), { version: '2.0.0' });
-                
+
                 // Create extension zip file
-                const filePath = path.join(extensionDir, fileName);
+                const filePath = path.join(extensionDir, fileNameWithVersion);
                 fs.ensureFileSync(filePath);
                 execSync(`zip -j ${zipFilePath} ${filePath}`);
                 fs.existsSync(zipFilePath).should.be.true;
@@ -202,6 +204,32 @@ describe('installBuiltInExtensions.js', () => {
                 filesInTargetDir.length.should.equal(1);
                 filesInTargetDir[0].name.should.equal(fileName);
                 filesInTargetDir[0].isDirectory().should.be.true;
+                // zip should not have been deleted
+                fs.existsSync(zipFilePath).should.be.true;
+            });
+        });
+        describe('Valid extension but the version is not at the end of the unzipped file name', () => {
+            // Instead of the unzipped directory being codewind-odo-extension-devfile-0.14.1
+            // it is codewind-odo-extension-0.14.1-devfile
+            const fileName = 'valid-extension';
+            const fileNameWithVersion = `${fileName}-1.0.0-devfile`;
+            const zipFileName = 'valid-extension-1.0.0.zip';
+            const zipFilePath = path.join(extensionDir, zipFileName);
+            before(() => {
+                // Create extension zip file
+                const filePath = path.join(extensionDir, fileNameWithVersion);
+                fs.ensureFileSync(filePath);
+                execSync(`zip -j ${zipFilePath} ${filePath}`);
+                fs.existsSync(zipFilePath).should.be.true;
+                fs.remove(filePath);
+            });
+            it('Successfully unzips an extension and moves it to the extension directory', async() => {
+                const file = await fs.stat(zipFilePath);
+                file.name = zipFileName;
+                await installBuiltInExtension(file, targetDir, extensionDir).should.eventually.be.fulfilled;
+                const filesInTargetDir = await fs.readdir(targetDir);
+                filesInTargetDir.length.should.equal(1);
+                filesInTargetDir[0].should.equal(fileName);
                 // zip should not have been deleted
                 fs.existsSync(zipFilePath).should.be.true;
             });

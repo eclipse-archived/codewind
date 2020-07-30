@@ -28,8 +28,8 @@ const odoDevfileExtensionName = "codewind-odo-extension-devfile";
 /**
  * Install (unzip) built-in extensions that are stored in /extensions to the
  * given target directory
- * 
- * @param {string} targetDir, the target directory to install extensions to 
+ *
+ * @param {string} targetDir, the target directory to install extensions to
  * @param {string} extensionsDir, the directory where the extension zips are located before being installed
  *                                defaults to defaultExtensionsDir variable
  */
@@ -44,9 +44,9 @@ async function installBuiltInExtensions(targetDir, extensionsDir = defaultExtens
 
 /**
  * Install (unzip) a single built-in extension to a target directory
- * 
+ *
  * @param {string} file, the file to unzip
- * @param {string} targetDir, the target directory to install extensions to 
+ * @param {string} targetDir, the target directory to install extensions to
  * @param {string} extensionsDir, the directory where the extension zips are located before being installed
  *                                defaults to defaultExtensionsDir variable
  */
@@ -91,7 +91,7 @@ async function installBuiltInExtension(file, targetDir, extensionsDir) {
 
 /**
  * Get the version of the given target extension.
- * 
+ *
  * @param {string} target extension location
  * @returns A version string, such as 0.0.1
  */
@@ -109,10 +109,10 @@ async function getVersion(target) {
   // couldn't figure out, return a default
   return '0.0.0';
 }
-  
+
 /**
  * Performs a version check, returns true if version is newer than existingVersion.
- * 
+ *
  * @param {string} version The version to check
  * @param {string} existingVersion The existing version
  * @returns True if version is newer than existingVersion
@@ -121,9 +121,9 @@ function isNewer(version, existingVersion) {
 
   const versions = version.split('.', 3);
   const existingVersions = existingVersion.split('.', 3);
-  
+
   for (let i = 0; i < 3; i++) {
-  
+
     const v = parseInt(versions[i]);
     const e = parseInt(existingVersions[i]);
 
@@ -133,11 +133,11 @@ function isNewer(version, existingVersion) {
 
   return false;
 }
-  
+
 /**
  * Prepare the directory where an extension will be unzipped to. If directory
  * exists with the same name, it will be renamed by appending the SUFFIX_OLD variable to it.
- * 
+ *
  * @param {string} target, the target directory to unzip to
  * @param {string} version, the version we are trying to unzip
  * @returns True if the install should proceed, false otherwise
