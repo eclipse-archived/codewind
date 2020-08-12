@@ -14,7 +14,6 @@ import * as io from "../utils/socket";
 import * as locale from "../utils/locale";
 import * as logger from "../utils/logger";
 import { Operation } from "./operation";
-import { getProjectNameFromPath } from "./projectUtil";
 
 /**
  * @class
@@ -58,7 +57,7 @@ export class Validator {
     async validateRequiredFiles (requiredFiles: string[]): Promise<void> {
         if (requiredFiles) {
             const projectID = this.projectID;
-            const projectName = getProjectNameFromPath(this.location);
+            const projectName = utils.getProjectNameFromPath(this.location);
             const OR_SPLIT = "|";
 
             try {
@@ -180,7 +179,7 @@ export class Validator {
      */
     sendResult(): void {
         const projectID = this.projectID;
-        const projectName = getProjectNameFromPath(this.location);
+        const projectName = utils.getProjectNameFromPath(this.location);
         logger.logProjectInfo("Sending validation result", projectID, projectName);
         io.emitOnListener("projectValidated", this.result());
     }

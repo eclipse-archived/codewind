@@ -13,6 +13,7 @@ import * as fs from "fs";
 import * as util from "util";
 import * as logger from "./logger";
 import * as fse from "fs-extra";
+import * as path from "path";
 
 const promisify = util.promisify;
 const accessAsync = promisify(fs.access);
@@ -155,4 +156,22 @@ export async function asyncReadDir(dir: string): Promise<Array<string>> {
         logger.logError(err);
         return undefined;
     }
+}
+
+/**
+ * Get the projectName from a path
+ *
+ * @param location The project's location
+ */
+export function getProjectNameFromPath(location: string): string {
+    const splitPaths = location.split("/");
+    const cwIndex = splitPaths.indexOf("codewind-workspace");
+    if (cwIndex === -1) {
+        logger.logError("Unable to get project name from path: codewind-workspace isn't in the path");
+        // Fall back to old method if codewind-workspace isn't in the path
+        return path.basename(location);
+    }
+    // Project name is the directory after codewind-workspace
+    const projectName = splitPaths[cwIndex + 1];
+    return projectName;
 }
