@@ -252,6 +252,42 @@ describe('bind.route.js', () => {
             });
         });
     });
+    describe('getSubDirectoryFromTemplate(templates, projectType, language)', () => {
+        const getSubDirectoryFromTemplate = bind.__get__('getSubDirectoryFromTemplate');
+        const templates = [
+            {
+                label: 'OpenShift Devfiles NodeJS Runtime',
+                description: 'Stack with NodeJS 12',
+                language: 'nodejs',
+                url: 'https://github.com/odo-devfiles/nodejs-ex',
+                projectType: 'odo-devfile',
+                subDirectory: '',
+                projectStyle: 'OpenShift Devfiles',
+                source: 'OpenShift Devfile templates',
+                sourceURL: 'file:///codewind-workspace/.extensions/codewind-odo-extension-devfile/templates/index.json',
+            },
+            {
+                label: 'OpenShift Devfiles Open Liberty',
+                description: 'Open Liberty microservice in Java',
+                language: 'java-openliberty',
+                url: 'https://github.com/OpenLiberty/application-stack',
+                projectType: 'odo-devfile',
+                subDirectory: '/templates/default',
+                projectStyle: 'OpenShift Devfiles',
+                source: 'OpenShift Devfile templates',
+                sourceURL: 'file:///codewind-workspace/.extensions/codewind-odo-extension-devfile/templates/index.json',
+            },
+        ];
+
+        it('returns the subDirectory when one exists', () => {
+            const subDirectory = getSubDirectoryFromTemplate(templates, 'odo-devfile', 'java-openliberty');
+            subDirectory.should.equal('/templates/default');
+        });
+        it('returns an empty string when the subDirectory is empty', () => {
+            const subDirectory = getSubDirectoryFromTemplate(templates, 'odo-devfile', 'nodejs');
+            subDirectory.should.equal('');
+        });
+    });
 });
 
 function createFilesFromArray(directory, fileArray) {
