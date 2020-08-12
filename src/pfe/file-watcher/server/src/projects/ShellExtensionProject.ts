@@ -112,7 +112,7 @@ export class ShellExtensionProject implements IExtensionProject {
     private setLanguage = async (projectInfo: ProjectInfo): Promise<void> => {
 
         const logDir = await logHelper.getLogDir(
-            projectInfo.projectID, path.basename(projectInfo.location));
+            projectInfo.projectID, projectUtil.getProjectNameFromPath(projectInfo.location));
 
         const args = [
             projectInfo.location,

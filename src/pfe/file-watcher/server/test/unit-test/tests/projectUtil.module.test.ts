@@ -450,7 +450,7 @@ export function projectUtilTestModule(): void {
         }
     });
 
-    describe.only("getProjectNameFromPath", () => {
+    describe("getProjectNameFromPath", () => {
         const tests = [
             {
                 title: "should return 'projectName' when it's the directory after 'codewind-workspace'",

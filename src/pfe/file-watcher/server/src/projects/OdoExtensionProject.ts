@@ -207,7 +207,7 @@ export class OdoExtensionProject implements IExtensionProject {
      */
     getContainerName = async (projectID: string, projectLocation: string): Promise<string> => {
         let podName: string = undefined;
-        const projectName: string = path.basename(projectLocation);
+        const projectName: string = projectUtil.getProjectNameFromPath(projectLocation);
         const componentName: string = await projectUtil.getComponentName(projectName);
         const args: string[] = [
             projectLocation,
@@ -246,7 +246,7 @@ export class OdoExtensionProject implements IExtensionProject {
         let appName: string = undefined;
         const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
         const projectLocation = projectInfo.location;
-        const projectName = path.basename(projectLocation);
+        const projectName = projectUtil.getProjectNameFromPath(projectLocation);
         const args: string[] = [
             projectLocation,
             "",
@@ -284,7 +284,7 @@ export class OdoExtensionProject implements IExtensionProject {
         let appPort: string = undefined;
         const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
         const projectLocation = projectInfo.location;
-        const projectName = path.basename(projectLocation);
+        const projectName = projectUtil.getProjectNameFromPath(projectLocation);
         const componentName: string = await projectUtil.getComponentName(projectName);
         const args: string[] = [
             projectLocation,
@@ -323,7 +323,7 @@ export class OdoExtensionProject implements IExtensionProject {
         let appBaseURL: string = undefined;
         const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
         const projectLocation = projectInfo.location;
-        const projectName = path.basename(projectLocation);
+        const projectName = projectUtil.getProjectNameFromPath(projectLocation);
         const componentName: string = await projectUtil.getComponentName(projectName);
         const args: string[] = [
             projectLocation,
