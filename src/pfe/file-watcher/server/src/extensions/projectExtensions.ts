@@ -164,7 +164,7 @@ export function getAllProjectTypes(): Array<string> {
 async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any> {
 
     const key = projectInfo.projectID;
-    const projectName = path.basename(projectInfo.location);
+    const projectName = utils.getProjectNameFromPath(projectInfo.location);
     let handler = extensionProjectHandlers[key];
 
     // is there an extension handler for the project?

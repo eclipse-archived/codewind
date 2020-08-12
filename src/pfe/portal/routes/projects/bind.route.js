@@ -102,8 +102,16 @@ async function bindStart(req, res) {
       let extension = user.extensionList.getExtensionForProjectType(projectType);
       if (extension) {
         projectDetails.extension = extension;
-        if (extension.config.needsMount && !global.codewind.RUNNING_IN_K8S)
+        if (extension.config.needsMount && !global.codewind.RUNNING_IN_K8S) {
           projectDetails.workspace = global.codewind.MOUNTED_WORKSPACE;
+        }
+
+        const allTemplates = user.templates.getTemplates(false);
+        // Check the template for this project to see if it has a subDirectory field
+        const subDirectory = getSubDirectoryFromTemplate(allTemplates, projectType, language);
+        // Add the subdirectory to the directory path so we sync the correct path to file-watcher
+        // For open-liberty it'll be something like /codewind-workspace/openlib/templates/default
+        projectDetails.extension.projectSubDirectory = subDirectory;
       }
     }
 
@@ -125,9 +133,9 @@ async function bindStart(req, res) {
   try {
     let tempDirName = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE);
     let dirName = newProject.projectPath();
-    await fs.mkdir(dirName);
+    await fs.ensureDir(dirName);
     let tempProjPath = path.join(tempDirName, newProject.name);
-    await fs.mkdir(tempProjPath);
+    await fs.ensureDir(tempProjPath);
 
     newProject.workspaceDir = dirName;
     log.debug(`Creating directory in ${dirName} and ${tempDirName}`);
@@ -209,19 +217,19 @@ async function uploadEnd(req, res) {
   const timeStamp = req.sanitizeBody('timeStamp');
   const IFileChangeEvent = [];
   const user = req.cw_user;
-  
+
   let project;
   let pathToTempProj;
   let directoriesToDelete;
   let filesToDelete;
-  
+
   try {
     project = user.projectList.retrieveProject(projectID);
     if (!project) {
       res.sendStatus(404);
       return;
     }
-      
+
     pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
     const tempProjectExists = await fs.pathExists(pathToTempProj);
     if (modifiedList.length === 0 && !tempProjectExists) {
@@ -255,13 +263,13 @@ async function uploadEnd(req, res) {
     }
 
     res.sendStatus(200);
-    
+
   } catch (err) {
     log.error(err);
     res.status(500).send(err);
     return;
   }
-      
+
   try {
     const wasProjectChanged = directoriesToDelete.length > 0
       || filesToDelete.length > 0
@@ -529,7 +537,7 @@ router.get('/api/v1/projects/:id/fileList', validateReq, async (req, res) => {
       return;
     }
     const pathToTempProj = path.join(global.codewind.CODEWIND_WORKSPACE, global.codewind.CODEWIND_TEMP_WORKSPACE, project.name);
-  
+
     const files  = await recursivelyListFilesOrDirectories(false, pathToTempProj);
     res.status(200).send(files);
   } catch (err) {
@@ -538,5 +546,15 @@ router.get('/api/v1/projects/:id/fileList', validateReq, async (req, res) => {
   }
 
 });
+
+function getSubDirectoryFromTemplate(templates, projectType, language) {
+  // Use the first template that matches the filter
+  const [{ subDirectory }] = templates.filter(template => (
+    template.projectType === projectType &&
+    template.language === language
+  ));
+
+  return subDirectory;
+}
 
 module.exports = router;

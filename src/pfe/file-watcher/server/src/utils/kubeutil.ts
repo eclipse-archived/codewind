@@ -21,6 +21,7 @@ import * as processManager from "./processManager";
 import { ProcessResult } from "./processManager";
 import { ProjectInfo } from "../projects/Project";
 import * as logHelper from "../projects/logHelper";
+import { getProjectNameFromPath } from "./utils";
 
 const k8s = require("@kubernetes/client-node"); // tslint:disable-line:no-require-imports
 
@@ -90,13 +91,13 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
         if (!projectInfo.compositeAppName) {
             return undefined;
         }
-        const componentName = path.basename(projectInfo.location);
+        const componentName = getProjectNameFromPath(projectInfo.location);
         releaseLabel = "deploymentconfig=" + "cw-" + componentName + "-" + projectInfo.compositeAppName;
     } else if (projectInfo.projectType == "odo-devfile") {
-        const componentName = path.basename(projectInfo.location);
+        const componentName = getProjectNameFromPath(projectInfo.location);
         releaseLabel = "component=" + "cw-" + componentName;
     }
-    const projectName = path.basename(projectLocation);
+    const projectName = getProjectNameFromPath(projectLocation);
 
     // Before deploying the application, we added a release label to the deployment, pod, and service,
     // Use that to get the application's pod and service names.
@@ -127,7 +128,7 @@ export async function getApplicationContainerInfo(projectInfo: ProjectInfo, oper
             logger.logProjectInfo("Pod name was not found while looking up service information for project.", projectID, projectName);
         }
     } catch (err) {
-        logger.logProjectError("Failed to get the pod name for: " + path.basename(projectLocation), projectID, projectName);
+        logger.logProjectError("Failed to get the pod name for: " + getProjectNameFromPath(projectLocation), projectID, projectName);
         logger.logProjectError(err, projectID, projectName);
     }
 
@@ -292,7 +293,7 @@ export async function isContainerActive(containerName: string, projectInfo?: Pro
     try {
         let releaseLabel = "release=" + containerName;
         if (projectInfo && ["odo", "odo-devfile"].includes(projectInfo.projectType)) {
-            const componentName = path.basename(projectInfo.location);
+            const componentName = getProjectNameFromPath(projectInfo.location);
             releaseLabel = projectInfo.projectType === "odo"
                 ? "deploymentconfig=" + "cw-" + componentName + "-" + projectInfo.compositeAppName
                 : "component=" + "cw-" + componentName;

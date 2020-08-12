@@ -14,6 +14,7 @@ import fs from "fs-extra";
 import * as path from "path";
 
 import * as projectUtil from "./projectUtil";
+import { getProjectNameFromPath } from "../utils/utils";
 import { Operation } from "./operation";
 import { ProjectInfo, BuildLog, AppLog, ProjectCapabilities, defaultProjectCapabilities } from "./Project";
 import { Validator } from "./Validator";
@@ -112,7 +113,7 @@ export class ShellExtensionProject implements IExtensionProject {
     private setLanguage = async (projectInfo: ProjectInfo): Promise<void> => {
 
         const logDir = await logHelper.getLogDir(
-            projectInfo.projectID, path.basename(projectInfo.location));
+            projectInfo.projectID, getProjectNameFromPath(projectInfo.location));
 
         const args = [
             projectInfo.location,

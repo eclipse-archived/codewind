@@ -326,7 +326,7 @@ async function constructRepositoryObject(url, description, name, isRepoProtected
   }
   if (gitCredentials) {
     if (gitCredentials.username) {
-      repository.authentication = { username: gitCredentials.username }; 
+      repository.authentication = { username: gitCredentials.username };
     } else if (gitCredentials.personalAccessToken) {
       repository.authentication = {};
     }
@@ -502,6 +502,9 @@ async function getTemplatesFromRepo(repository, gitCredentials) {
 
     if (summary.projectStyle) {
       template.projectStyle = summary.projectStyle;
+    }
+    if (summary.subDirectory || summary.subDirectory === "") {
+      template.subDirectory = summary.subDirectory;
     }
     if (repository.name) {
       template.source = repository.name;
