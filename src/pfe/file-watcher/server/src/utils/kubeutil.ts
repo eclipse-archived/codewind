@@ -21,7 +21,7 @@ import * as processManager from "./processManager";
 import { ProcessResult } from "./processManager";
 import { ProjectInfo } from "../projects/Project";
 import * as logHelper from "../projects/logHelper";
-import { getProjectNameFromPath } from "../projects/projectUtil";
+import { getProjectNameFromPath } from "./utils";
 
 const k8s = require("@kubernetes/client-node"); // tslint:disable-line:no-require-imports
 

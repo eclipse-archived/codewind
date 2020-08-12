@@ -15,7 +15,7 @@ import * as path from "path";
 import { promisify } from "util";
 import * as constants from "../projects/constants";
 import * as stackTrace from "stack-trace";
-import { getProjectNameFromPath } from "../projects/projectUtil";
+import { getProjectNameFromPath } from "./utils";
 const chalk = require("chalk"); // tslint:disable-line:no-require-imports
 
 const GENERAL_LOG_FILE_NAME = "Turbine.log";

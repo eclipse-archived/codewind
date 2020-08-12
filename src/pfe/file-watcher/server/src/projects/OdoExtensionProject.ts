@@ -22,6 +22,7 @@ import { ProjectInfo, BuildLog, AppLog, ProjectCapabilities, defaultProjectCapab
 import { Validator } from "./Validator";
 import { IExtensionProject } from "../extensions/IExtensionProject";
 import { IFileChangeEvent } from "../utils/fileChanges";
+import { getProjectNameFromPath } from "../utils/utils";
 
 // skeleton for the logs originated from the extension json
 const logsOrigin: logHelper.ILogTypes = {
@@ -207,7 +208,7 @@ export class OdoExtensionProject implements IExtensionProject {
      */
     getContainerName = async (projectID: string, projectLocation: string): Promise<string> => {
         let podName: string = undefined;
-        const projectName: string = projectUtil.getProjectNameFromPath(projectLocation);
+        const projectName: string = getProjectNameFromPath(projectLocation);
         const componentName: string = await projectUtil.getComponentName(projectName);
         const args: string[] = [
             projectLocation,
@@ -246,7 +247,7 @@ export class OdoExtensionProject implements IExtensionProject {
         let appName: string = undefined;
         const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
         const projectLocation = projectInfo.location;
-        const projectName = projectUtil.getProjectNameFromPath(projectLocation);
+        const projectName = getProjectNameFromPath(projectLocation);
         const args: string[] = [
             projectLocation,
             "",
@@ -284,7 +285,7 @@ export class OdoExtensionProject implements IExtensionProject {
         let appPort: string = undefined;
         const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
         const projectLocation = projectInfo.location;
-        const projectName = projectUtil.getProjectNameFromPath(projectLocation);
+        const projectName = getProjectNameFromPath(projectLocation);
         const componentName: string = await projectUtil.getComponentName(projectName);
         const args: string[] = [
             projectLocation,
@@ -323,7 +324,7 @@ export class OdoExtensionProject implements IExtensionProject {
         let appBaseURL: string = undefined;
         const projectInfo: ProjectInfo = await projectUtil.getProjectInfo(projectID);
         const projectLocation = projectInfo.location;
-        const projectName = projectUtil.getProjectNameFromPath(projectLocation);
+        const projectName = getProjectNameFromPath(projectLocation);
         const componentName: string = await projectUtil.getComponentName(projectName);
         const args: string[] = [
             projectLocation,

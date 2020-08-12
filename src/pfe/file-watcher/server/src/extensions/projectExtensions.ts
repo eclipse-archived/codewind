@@ -24,7 +24,6 @@ import { DockerProject } from "../projects/DockerProject";
 import { ShellExtensionProject } from "../projects/ShellExtensionProject";
 import { OdoExtensionProject } from "../projects/OdoExtensionProject";
 import { ProjectInfo, ProjectCapabilities, defaultProjectCapabilities } from "../projects/Project";
-import { getProjectNameFromPath } from "../projects/projectUtil";
 import { workspaceConstants } from "../projects/constants";
 
 export const DOCKER_TYPE = "docker";
@@ -165,7 +164,7 @@ export function getAllProjectTypes(): Array<string> {
 async function getExtensionProjectHandler(projectInfo: ProjectInfo): Promise<any> {
 
     const key = projectInfo.projectID;
-    const projectName = getProjectNameFromPath(projectInfo.location);
+    const projectName = utils.getProjectNameFromPath(projectInfo.location);
     let handler = extensionProjectHandlers[key];
 
     // is there an extension handler for the project?
