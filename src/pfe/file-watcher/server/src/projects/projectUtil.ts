@@ -173,7 +173,6 @@ export async function containerCreate(operation: Operation, script: string, comm
                 (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry, userMavenSettings];
         } else if (["odo", "odo-devfile"].includes(projectType)) {
             const componentName: string = await getComponentName(projectName);
-            const logDir: string = await logHelper.getLogDir(projectID, projectName);
 
             args = [
                 projectLocation,
@@ -281,7 +280,6 @@ export async function containerUpdate(operation: Operation, script: string, comm
             (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry, userMavenSettings];
     } else if (["odo", "odo-devfile"].includes(projectType)) {
         const componentName: string = await getComponentName(projectName);
-        const logDir: string = await logHelper.getLogDir(projectID, projectName);
 
         args = [
             projectLocation,
@@ -1257,7 +1255,6 @@ export async function runScript(projectInfo: ProjectInfo, script: string, comman
 
     if (["odo", "odo-devfile"].includes(projectInfo.projectType)) {
         const componentName: string = await getComponentName(projectName);
-        const logDir: string = await logHelper.getLogDir(projectID, projectName);
 
         args = [
             projectInfo.location,
