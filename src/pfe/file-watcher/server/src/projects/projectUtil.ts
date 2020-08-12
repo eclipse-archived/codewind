@@ -753,7 +753,7 @@ export function getDefaultContainerName(projectID: string, projectLocation: stri
     }
 
     // Sanitize project name to ensure project name only supports lower case letter and number
-    const projectNameOrigin: string = path.basename(projectLocation);
+    const projectNameOrigin: string = getProjectNameFromPath(projectLocation);
     const letterNumber: RegExp = /[A-Za-z0-9]/;
     const upperCaseLetter: RegExp = /[A-Z]/;
     const defaultProjectName: string = "cw";
@@ -1251,7 +1251,7 @@ export async function runScript(projectInfo: ProjectInfo, script: string, comman
     const containerName = await getContainerName(projectInfo);
     const logName = getLogName(projectInfo.projectID, projectInfo.location);
     const logDir = await logHelper.getLogDir(projectInfo.projectID, projectInfo.projectName);
-    const projectName = path.basename(projectInfo.location);
+    const projectName = getProjectNameFromPath(projectInfo.location);
     let args = [projectInfo.location, LOCAL_WORKSPACE, projectID, command, containerName, String(projectInfo.autoBuildEnabled), logName, projectInfo.startMode,
         projectInfo.debugPort, "NONE", logDir];
 
@@ -2223,7 +2223,7 @@ export function getProjectNameFromPath(location: string): string {
     if (cwIndex === -1) {
         logger.logError("Unable to get project name from path: codewind-workspace isn't in the path");
         // Fall back to old method if codewind-workspace isn't in the path
-        return splitPaths.pop();
+        return path.basename(location);
     }
     // Project name is the directory after codewind-workspace
     const projectName = splitPaths[cwIndex + 1];
