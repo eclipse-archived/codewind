@@ -736,7 +736,11 @@ function createProjectActionForBuildAndRun(project, settings) {
     autoBuild,
     ports,
   } = project;
-  const location = project.projectPath();
+
+  let location = project.projectPath();
+  if (extension && extension.projectSubDirectory) {
+    location = path.join(location, extension.projectSubDirectory);
+  }
 
   const projectAction = {
     projectID,

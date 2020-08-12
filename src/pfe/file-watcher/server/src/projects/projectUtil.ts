@@ -104,7 +104,7 @@ export async function containerCreate(operation: Operation, script: string, comm
     const event = "projectCreation";
     const projectLocation = operation.projectInfo.location;
     const projectID = operation.projectInfo.projectID;
-    const projectName = projectLocation.split("/").pop();
+    const projectName = getProjectNameFromPath(projectLocation);
     const projectType = operation.projectInfo.projectType;
     if (projectList.indexOf(projectID) === -1)
         projectList.push(projectID);
@@ -173,6 +173,7 @@ export async function containerCreate(operation: Operation, script: string, comm
                 (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry, userMavenSettings];
         } else if (["odo", "odo-devfile"].includes(projectType)) {
             const componentName: string = await getComponentName(projectName);
+            const logDir: string = await logHelper.getLogDir(projectID, projectName);
 
             args = [
                 projectLocation,
@@ -211,7 +212,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
 
     const projectLocation = operation.projectInfo.location;
     const projectID = operation.projectInfo.projectID;
-    const projectName = projectLocation.split("/").pop();
+    const projectName = getProjectNameFromPath(projectLocation);
     const projectType = operation.projectInfo.projectType;
     logger.logProjectInfo("Updating container for " + operation.projectInfo.projectType + " project " + projectLocation, projectID, projectName);
     operation.containerName = await getContainerName(operation.projectInfo);
@@ -280,6 +281,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
             (operation.projectInfo.forceAction) ? String(operation.projectInfo.forceAction) : "NONE", logDir, imagePushRegistry, userMavenSettings];
     } else if (["odo", "odo-devfile"].includes(projectType)) {
         const componentName: string = await getComponentName(projectName);
+        const logDir: string = await logHelper.getLogDir(projectID, projectName);
 
         args = [
             projectLocation,
@@ -316,7 +318,7 @@ export async function containerUpdate(operation: Operation, script: string, comm
 async function executeBuildScript(operation: Operation, script: string, args: Array<string>, event: string): Promise<void> {
     const projectID = operation.projectInfo.projectID;
     const projectLocation = operation.projectInfo.location;
-    const projectName = projectLocation.split("/").pop();
+    const projectName = getProjectNameFromPath(projectLocation);
     const projectInfo = {
         operationId: operation.operationId,
         projectID: operation.projectInfo.projectID
@@ -612,7 +614,7 @@ export async function getProjectMavenSettings(projectInfo: ProjectInfo): Promise
 export async function getProjectLogs(projectInfo: ProjectInfo): Promise<ProjectLog> {
     const projectID = projectInfo.projectID;
     const projectLocation = projectInfo.location;
-    const projectName = projectLocation.split("/").pop();
+    const projectName = getProjectNameFromPath(projectLocation);
     const projectType = projectInfo.projectType;
     const projectLogDir = await logHelper.getLogDir(projectID, projectName);
     const logDirectory = path.join(projectConstants.projectsLogDir, projectLogDir);
@@ -655,7 +657,7 @@ export async function getProjectLogs(projectInfo: ProjectInfo): Promise<ProjectL
 export async function containerDelete(projectInfo: ProjectInfo, script: string): Promise<void> {
 
     const projectID = projectInfo.projectID;
-    const projectName = projectInfo.location.split("/").pop();
+    const projectName = getProjectNameFromPath(projectInfo.location);
     const containerName = await getContainerName(projectInfo);
     const imagePushRegistry = projectInfo.deploymentRegistry;
     logger.logProjectInfo("containerDelete: Kill running processes and remove container... ", projectID, projectName);
@@ -725,7 +727,7 @@ export function getLogName(projectID: string, projectLocation: string): string {
     const hash = crypto.createHash("sha1", <TransformOptions>"utf8").update(projectLocation);
 
     let logName = projectConstants.containerPrefix + projectID + "-" + hash.digest("hex");
-    const projectName = projectLocation.split("/").pop();
+    const projectName = getProjectNameFromPath(projectLocation);
 
     if (process.env.IN_K8 === "true" && logName.length > 53) {
         logName = logName.substring(0, 53);
@@ -1255,6 +1257,7 @@ export async function runScript(projectInfo: ProjectInfo, script: string, comman
 
     if (["odo", "odo-devfile"].includes(projectInfo.projectType)) {
         const componentName: string = await getComponentName(projectName);
+        const logDir: string = await logHelper.getLogDir(projectID, projectName);
 
         args = [
             projectInfo.location,
@@ -1290,7 +1293,7 @@ export async function buildAndRun(operation: Operation, command: string): Promis
 
     const projectLocation = operation.projectInfo.location;
     const projectID = operation.projectInfo.projectID;
-    const projectName = projectLocation.split("/").pop();
+    const projectName = getProjectNameFromPath(projectLocation);
 
     if (projectList.indexOf(projectID) === -1)
         projectList.push(projectID);
@@ -1446,7 +1449,7 @@ export async function buildAndRun(operation: Operation, command: string): Promis
  */
 async function containerBuildAndRun(event: string, buildInfo: BuildRequest, operation: Operation): Promise<void> {
     const normalizedProjectLocation = path.resolve(buildInfo.projectLocation);
-    const projectName = normalizedProjectLocation.split("/").reverse()[0];
+    const projectName = getProjectNameFromPath(normalizedProjectLocation);
     const logDir = await logHelper.getLogDir(buildInfo.projectID, projectName);
     const dockerBuildLog = path.resolve(buildInfo.projectLocation + "/../.logs/" + logDir, logHelper.buildLogs.dockerBuild + logHelper.logExtension);
     if (process.env.IN_K8 === "true") {
@@ -1668,7 +1671,7 @@ async function containerBuildAndRun(event: string, buildInfo: BuildRequest, oper
  */
 async function runLocalContainer(buildInfo: BuildRequest): Promise<void> {
     const normalizedProjectLocation = path.resolve(buildInfo.projectLocation);
-    const projectName = normalizedProjectLocation.split("/").reverse()[0];
+    const projectName = getProjectNameFromPath(normalizedProjectLocation);
     const logDir = await logHelper.getLogDir(buildInfo.projectID, projectName);
     const appLog = path.resolve(buildInfo.projectLocation + "/../.logs/" + logDir, logHelper.appLogs.app + logHelper.logExtension);
     try {
@@ -1799,7 +1802,7 @@ export async function isApplicationPodUp(buildInfo: BuildRequest, projectName: s
 export async function removeProject(projectInfo: ProjectInfo): Promise<void> {
 
     const projectID = projectInfo.projectID;
-    const projectName = projectInfo.location.split("/").pop();
+    const projectName = getProjectNameFromPath(projectInfo.location);
     const containerName = await getContainerName(projectInfo);
     logger.logProjectInfo("removeProject: Kill running processes and remove container... ", projectID, projectName);
     logger.logProjectInfo("Project ID:        " + projectInfo.projectID, projectID, projectName);
@@ -1903,7 +1906,7 @@ async function getPODInfoAndSendToPortal(operation: Operation, event: string = "
     const projectInfo = operation.projectInfo;
     const projectLocation = projectInfo.location;
     const projectID = projectInfo.projectID;
-    const projectName = projectLocation.split("/").pop();
+    const projectName = getProjectNameFromPath(projectLocation);
     const keyValuePair: UpdateProjectInfoPair = {
         key: "buildRequest",
         value: false
@@ -2203,8 +2206,26 @@ export async function updateDetailedAppStatus(projectID: string, ip: string, por
 export async function exposeOverIngress(projectInfo: ProjectInfo, appPort?: number): Promise<void> {
     if (process.env.IN_K8) {
         const projectID = projectInfo.projectID;
-        const projectName = projectInfo.location.split("/").pop();
+        const projectName = getProjectNameFromPath(projectInfo.location);
         projectInfo.appBaseURL = await kubeutil.exposeOverIngress(projectID, projectName, projectInfo.isHttps, appPort, projectInfo.appBaseURL);
         await projectsController.saveProjectInfo(projectID, projectInfo, true);
     }
+}
+
+/**
+ * Get the projectName from a path
+ *
+ * @param location The project's location
+ */
+export function getProjectNameFromPath(location: string): string {
+    const splitPaths = location.split("/");
+    const cwIndex = splitPaths.indexOf("codewind-workspace");
+    if (cwIndex === -1) {
+        logger.logError("Unable to get project name from path: codewind-workspace isn't in the path");
+        // Fall back to old method if codewind-workspace isn't in the path
+        return splitPaths.pop();
+    }
+    // Project name is the directory after codewind-workspace
+    const projectName = splitPaths[cwIndex + 1];
+    return projectName;
 }

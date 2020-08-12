@@ -449,4 +449,35 @@ export function projectUtilTestModule(): void {
             });
         }
     });
+
+    describe.only("getProjectNameFromPath", () => {
+        const tests = [
+            {
+                title: "should return 'projectName' when it's the directory after 'codewind-workspace'",
+                path: '/codewind-workspace/projectName',
+                want: 'projectName',
+            },
+            {
+                title: "should return 'projectName' when the path is normalized",
+                path: path.resolve('/codewind-workspace/projectName'),
+                want: 'projectName',
+            },
+            {
+                title: "should return 'projectName' when subdirectories are given",
+                path: path.resolve('/codewind-workspace/projectName/templates/default'),
+                want: 'projectName',
+            },
+            {
+                title: "returns 'finalDir' as 'codewind-workspace' isn't in the path",
+                path: path.resolve('/projectName/templates/default/finalDir'),
+                want: 'finalDir',
+            },
+        ];
+        tests.forEach(({ title, path, want }) => {
+            it(`should return '${want}' when the input is '${path}'`, () => {
+                const got = projectUtil.getProjectNameFromPath(path);
+                expect(got).to.equal(want);
+            });
+        });
+    });
 }
