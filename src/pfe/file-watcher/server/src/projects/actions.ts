@@ -57,7 +57,7 @@ export const validate = async function(args: IProjectActionParams): Promise<{ op
         "projectType": projectType,
         "location": location
     } as ProjectInfo;
-    const projectName = location.split("/").pop();
+    const projectName = utils.getProjectNameFromPath(location);
     if (args.extensionID) {
         projectInfo.extensionID = args.extensionID;
     }
@@ -131,7 +131,7 @@ export const enableautobuild = async function (args: IProjectActionParams): Prom
 async function enableAndBuild(projectInfo: ProjectInfo): Promise<void> {
     const projectHandler = await projectExtensions.getProjectHandler(projectInfo);
     const projectID = projectInfo.projectID;
-    const projectName = projectInfo.location.split("/").pop();
+    const projectName = utils.getProjectNameFromPath(projectInfo.location);
 
     if (projectHandler.hasOwnProperty("setAutoBuild")) {
         const operation = new Operation("enableautobuild", projectInfo);

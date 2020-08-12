@@ -146,7 +146,7 @@ export async function createProject(req: ICreateProjectParams): Promise<ICreateP
         return { "statusCode": 400, "error": { "msg": "projectID, projectType and location are required parameters" }};
     }
 
-    const projectName = projectLocation.split("/").pop();
+    const projectName = utils.getProjectNameFromPath(projectLocation);
 
     // create log storing directory for the project
     logger.logInfo("Creating project logs directory");
@@ -658,7 +658,7 @@ export async function deleteProject(projectID: string): Promise<IDeleteProjectSu
 
         const projectInfo: ProjectInfo = await getProjectInfoFromFile(projectMetadata.infoFile);
         const projectLocation = projectInfo.location;
-        const projectName = projectLocation.split("/").pop();
+        const projectName = utils.getProjectNameFromPath(projectLocation);
 
         logger.logProjectTrace("Retrieved project information for project " + projectMetadata.infoFile, projectID);
         logger.logProjectTrace(JSON.stringify(projectInfo), projectID);
@@ -842,7 +842,7 @@ export async function projectDeletion(projectID: string): Promise<number> {
         const projectMetadata = getProjectMetadataById(projectID);
         const projectInfo: ProjectInfo = await getProjectInfoFromFile(projectMetadata.infoFile);
         const projectLocation = projectInfo.location;
-        const projectName = projectLocation.split("/").pop();
+        const projectName = utils.getProjectNameFromPath(projectLocation);
 
         logger.logProjectTrace("Retrieved project information for project " + projectMetadata.infoFile, projectID);
         logger.logProjectTrace(JSON.stringify(projectInfo), projectID);
@@ -1154,7 +1154,7 @@ export function saveProjectInfo(projectID: string, projectInfo: ProjectInfo, sav
         const projectJSON = JSON.stringify(projectInfo);
         const infoFile = getProjectMetadataById(projectID).infoFile;
         projectInfoCache[infoFile] = projectJSON;
-        const projectName = projectInfo.location.split("/").pop();
+        const projectName = utils.getProjectNameFromPath(projectInfo.location);
         logger.logProjectTrace(JSON.stringify(projectInfoCache), projectID);
         if (saveIntoJsonFile) {
             fs.writeFile(infoFile, projectJSON, "utf8", (err) => {

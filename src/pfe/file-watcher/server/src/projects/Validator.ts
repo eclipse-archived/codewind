@@ -57,7 +57,7 @@ export class Validator {
     async validateRequiredFiles (requiredFiles: string[]): Promise<void> {
         if (requiredFiles) {
             const projectID = this.projectID;
-            const projectName = this.location.split("/").pop();
+            const projectName = utils.getProjectNameFromPath(this.location);
             const OR_SPLIT = "|";
 
             try {
@@ -179,7 +179,7 @@ export class Validator {
      */
     sendResult(): void {
         const projectID = this.projectID;
-        const projectName = this.location.split("/").pop();
+        const projectName = utils.getProjectNameFromPath(this.location);
         logger.logProjectInfo("Sending validation result", projectID, projectName);
         io.emitOnListener("projectValidated", this.result());
     }

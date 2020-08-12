@@ -15,6 +15,7 @@ import * as path from "path";
 import { promisify } from "util";
 import * as constants from "../projects/constants";
 import * as stackTrace from "stack-trace";
+import { getProjectNameFromPath } from "./utils";
 const chalk = require("chalk"); // tslint:disable-line:no-require-imports
 
 const GENERAL_LOG_FILE_NAME = "Turbine.log";
@@ -101,7 +102,7 @@ export async function getProjectNameByProjectID(projectID: string): Promise<stri
     const data = await readFileAsync(projectDataFile, "utf8");
     const projectData = JSON.parse(data);
     const location = projectData.location;
-    const projectName = location.split("/").pop();
+    const projectName = getProjectNameFromPath(location);
     return projectName;
 }
 
