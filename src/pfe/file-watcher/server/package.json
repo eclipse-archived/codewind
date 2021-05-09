@@ -71,7 +71,7 @@
     "@types/xml2js": "^0.4.3",
     "chai": "^4.2.0",
     "eslint": "^5.16.0",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "mocha": "^6.1.4",
     "mocha-jenkins-reporter": "^0.4.3",
     "nodemon": "^2.0.2",
