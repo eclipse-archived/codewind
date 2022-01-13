@@ -25,7 +25,7 @@
     "express-async-errors": "^3.1.1",
     "express-openapi-validate": "^0.4.4",
     "file-watcher": "file:../file-watcher/server",
-    "follow-redirects": "^1.7.0",
+    "follow-redirects": "^1.14.7",
     "fs-extra": "^9.0.0",
     "got": "^10.6.0",
     "js-yaml": "^3.12.0",
