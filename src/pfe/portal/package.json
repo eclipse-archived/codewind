@@ -33,7 +33,7 @@
     "jsonwebtoken": "^8.5.1",
     "kubernetes-client": "^8.3.7",
     "lock": "^1.1.0",
-    "log4js": "^6.1.0",
+    "log4js": "^6.4.0",
     "moment-timezone": "^0.5.17",
     "node-dir": "^0.1.17",
     "pem": "^1.14.1",
