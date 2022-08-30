@@ -47,7 +47,7 @@
     "i18next-fs-backend": "^1.0.6",
     "kubernetes-client": "^8.3.7",
     "log4js": "^6.1.0",
-    "moment-timezone": "^0.5.17",
+    "moment-timezone": "^0.5.35",
     "rimraf": "^3.0.2",
     "stack-trace": "0.0.10",
     "utf-8-validate": "^5.0.2",
