@@ -34,7 +34,7 @@
     "kubernetes-client": "^8.3.7",
     "lock": "^1.1.0",
     "log4js": "^6.1.0",
-    "moment-timezone": "^0.5.17",
+    "moment-timezone": "^0.5.35",
     "node-dir": "^0.1.17",
     "pem": "^1.14.1",
     "promise.any": "^2.0.0",
